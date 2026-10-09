@@ -15,8 +15,15 @@ A :class:`ContractType` is wiring plus one small function:
   A flow between two entities has two legs that post the same amount in
   both books under one event id, which is how intercompany flows stay
   paired (card 5);
-* an **amounts** function: given the term values and a period, how much
-  each flow moves. That function is the only arithmetic in a contract type.
+* an **amounts** function: given the term values, a period and a read-only
+  view of the contract's own balances, how much each flow moves. Contract
+  state lives in the kernel (a loan's balance is its debt account), so the
+  function reads it rather than keeping a private copy;
+* optionally, **claims**: amounts *due* that Allocation decides whether to
+  pay (or, for a source such as a loan draw, how much to take). Each claim
+  names the leg posted for the part paid and, if the contract says so, the
+  leg posted for the part not paid (a PIK capitalisation). A claim with no
+  shortfall leg simply stays due: the payable balance carries it as arrears.
 
 Contract types are packs (:mod:`one_engine.packs.contracts`); this module
 is shared and holds no deal-specific arithmetic.
@@ -27,17 +34,30 @@ A flow's amount is DERIVED from the terms, unless a term it reads is a
 DEFAULT or a STAND_IN; then the amount takes the weakest of those states,
 so a guessed tariff is visible on every posting it produced.
 
-Not built yet (added when a case needs it)
-------------------------------------------
-Due versus paid. For now every amount due is posted as paid. Averta's
-shareholder loan (cash interest only as far as the waterfall allows) is the
-case that will add it, with Allocation returning what was paid.
+Due versus paid
+---------------
+Flows are posted as computed. Claims are not: the contract states what is
+due, Allocation returns what is paid, and the contract's own terms (its
+shortfall leg, or none) decide what the unpaid part becomes. Averta's
+shareholder loan, paid in cash only as far as the waterfall allows and
+capitalised otherwise, is the case that added this.
+
+Named legs, account names, references
+-------------------------------------
+* ``legs`` are named postings a rulebook may make under the contract with
+  an amount it decides: an equity contribution as the residual of a
+  funding plan, a distribution as the residual of a waterfall.
+* An account name may contain ``{id}``, replaced by the contract id, so
+  two loans in one book keep separate ``senior.debt`` and ``shl.debt``.
+* ``refs`` name terms whose value is another contract's id (a reserve
+  sized on a loan's debt service); the assembly resolves them to the
+  contract itself before the run.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from fractions import Fraction
-from typing import Any, Callable, Dict, List, Mapping, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 from one_engine.inputs import State, Value
 from one_engine.kernel import Nature
@@ -72,6 +92,23 @@ class FlowSpec:
 
 
 @dataclass(frozen=True)
+class ClaimSpec:
+    """A claim of a contract type: what is posted when it is paid, and when it is not.
+
+    ``kind`` is ``"pay"`` for an amount the party owes (paid out of cash) or
+    ``"source"`` for an amount the party may take (a draw into cash).
+    ``shortfall`` is the leg posted for the unpaid part in ``shortfall_phase``;
+    ``None`` leaves the unpaid part where it is (arrears, or an undrawn facility).
+    """
+
+    name: str
+    kind: str
+    leg: Leg
+    shortfall: Optional[Leg] = None
+    shortfall_phase: str = "close"
+
+
+@dataclass(frozen=True)
 class ContractType:
     """The wiring of one kind of agreement. See the module docstring."""
 
@@ -80,21 +117,67 @@ class ContractType:
     parties: Tuple[str, ...]
     accounts: Mapping[str, Tuple[Tuple[str, Nature], ...]]
     flows: Tuple[FlowSpec, ...]
-    amounts: Callable[[Mapping[str, Any], int], Mapping[str, Fraction]]
+    amounts: Callable[[Mapping[str, Any], int, "Balances"], Mapping[str, Fraction]]
+    claim_specs: Tuple[ClaimSpec, ...] = ()
+    claims: Optional[Callable[[Mapping[str, Any], int, "Balances"], Mapping[str, Fraction]]] = None
+    legs: Mapping[str, Leg] = field(default_factory=dict)
+    refs: Tuple[str, ...] = ()
 
     def __post_init__(self):
         names = [f.name for f in self.flows]
         if len(set(names)) != len(names):
             raise ContractError(f"type '{self.name}': flow names repeat")
-        for f in self.flows:
-            for leg in f.legs:
-                if leg.party not in self.parties:
-                    raise ContractError(f"type '{self.name}', flow '{f.name}': unknown party '{leg.party}'")
-                declared = {a for a, _ in self.accounts.get(leg.party, ())}
-                for acct in (leg.debit, leg.credit):
-                    if acct not in declared:
-                        raise ContractError(
-                            f"type '{self.name}', flow '{f.name}': account '{acct}' is not declared for '{leg.party}'")
+        if bool(self.claim_specs) != (self.claims is not None):
+            raise ContractError(f"type '{self.name}': claim_specs and claims go together")
+        for c in self.claim_specs:
+            if c.kind not in ("pay", "source"):
+                raise ContractError(f"type '{self.name}', claim '{c.name}': kind must be 'pay' or 'source'")
+        legs = [(f.name, leg) for f in self.flows for leg in f.legs]
+        legs += [(c.name, leg) for c in self.claim_specs for leg in (c.leg, c.shortfall) if leg]
+        legs += list(self.legs.items())
+        if not set(self.refs) <= set(self.terms):
+            raise ContractError(f"type '{self.name}': refs must be terms, got {self.refs}")
+        for fname, leg in legs:
+            if leg.party not in self.parties:
+                raise ContractError(f"type '{self.name}', '{fname}': unknown party '{leg.party}'")
+            declared = {a for a, _ in self.accounts.get(leg.party, ())}
+            for acct in (leg.debit, leg.credit):
+                if acct not in declared:
+                    raise ContractError(
+                        f"type '{self.name}', '{fname}': account '{acct}' is not declared for '{leg.party}'")
+
+
+class Balances:
+    """Read-only balances of one contract's accounts, for one period.
+
+    ``view(role, account)`` is the balance so far in the period;
+    ``view.opening(role, account)`` the balance at its start (what interest
+    accrues on). ``{id}`` in an account name is expanded.
+    """
+
+    def __init__(self, contract: "Contract", books: Mapping[str, Any], period: int):
+        self._c, self._books, self.period = contract, books, period
+
+    def __call__(self, role: str, account: str) -> Fraction:
+        return self._books[self._c.parties[role]].balance(self._c.acct(account), self.period)
+
+    def opening(self, role: str, account: str) -> Fraction:
+        return self._books[self._c.parties[role]].opening(self._c.acct(account), self.period)
+
+
+@dataclass(frozen=True)
+class Claim:
+    """An amount due under one claim of one contract in one period."""
+
+    contract: "Contract"
+    spec: ClaimSpec
+    period: int
+    due: Fraction
+    state: State
+
+    @property
+    def ref(self) -> str:
+        return f"{self.contract.id}.{self.spec.name}"
 
 
 @dataclass(frozen=True)
@@ -150,17 +233,31 @@ class Contract:
         weakest = min(states + [State.DERIVED], key=_WEAKNESS.index)
         self._state = weakest if _WEAKNESS.index(weakest) < _WEAKNESS.index(State.DERIVED) else State.DERIVED
 
+    def acct(self, name: str) -> str:
+        """An account name of this contract's type, with ``{id}`` expanded."""
+        return name.replace("{id}", self.id)
+
     def accounts(self) -> Dict[str, Tuple[Tuple[str, Nature], ...]]:
         """Entity -> the accounts this contract needs in that entity's book."""
         out: Dict[str, Tuple[Tuple[str, Nature], ...]] = {}
         for role, entity in self.parties.items():
-            out[entity] = out.get(entity, ()) + tuple(self.type.accounts.get(role, ()))
+            out[entity] = out.get(entity, ()) + tuple((self.acct(a), n) for a, n in self.type.accounts.get(role, ()))
         return out
 
-    def flows(self, period: int) -> List[Flow]:
+    def resolve(self, contracts: Mapping[str, "Contract"]) -> None:
+        """Replace each reference term's contract id by the contract it names."""
+        for k in self.type.refs:
+            v = self.terms[k]
+            if v.value not in contracts:
+                raise ContractError(f"contract '{self.id}': term '{k}' names unknown contract '{v.value}'")
+            self.terms[k] = Value(contracts[v.value], v.state, v.source)
+
+    def values(self) -> Dict[str, Any]:
+        return {k: v.value for k, v in self.terms.items()}
+
+    def flows(self, period: int, bal: Optional[Balances] = None) -> List[Flow]:
         """The flows of this contract in ``period``, in the type's declared order."""
-        values = {k: v.value for k, v in self.terms.items()}
-        amounts = self.type.amounts(values, period)
+        amounts = self.type.amounts(self.values(), period, bal)
         out = []
         for spec in self.type.flows:
             if spec.name not in amounts:
@@ -172,4 +269,18 @@ class Contract:
             if amount == 0:
                 continue
             out.append(Flow(f"{self.id}:{spec.name}:{period}", spec, period, amount, self._state))
+        return out
+
+    def claims(self, period: int, bal: Balances) -> List[Claim]:
+        """The claims due under this contract in ``period`` (zero claims omitted)."""
+        if self.type.claims is None:
+            return []
+        due = self.type.claims(self.values(), period, bal)
+        out = []
+        for spec in self.type.claim_specs:
+            amount = exact(due.get(spec.name, 0))
+            if amount < 0:
+                raise ContractError(f"contract '{self.id}', claim '{spec.name}', period {period}: negative due {amount}")
+            if amount > 0:
+                out.append(Claim(self, spec, period, amount, self._state))
         return out

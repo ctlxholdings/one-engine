@@ -8,6 +8,10 @@ a key nobody reads stops the run (the nightmare fixture's ignored
 
 A term is either a plain number (STATED, sourced to the case file and key)
 or ``{value, state, source}`` to carry another state, such as a stand-in.
+
+``rulebooks`` (optional) installs pack rulebooks (:mod:`one_engine.packs.pf`)
+in file order; within a phase, handlers run in that order. A rulebook may
+return named checks, which join the integrity verdicts.
 """
 from __future__ import annotations
 
@@ -22,6 +26,7 @@ from one_engine.cuts import Scheme, Series, cash_flow_cut
 from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.packs.contracts import REGISTRY
+from one_engine.packs.pf import RULEBOOKS
 
 MEASURES = {"irr": M.irr, "payback": M.payback}
 
@@ -36,6 +41,7 @@ class CaseResult:
     measures: Dict[str, Any]
     measure_cut: Dict[str, str]
     verdicts: Dict[str, list] = field(default_factory=dict)
+    rule_checks: Dict[str, List] = field(default_factory=dict)
 
     def cut(self, name: str) -> Series:
         return self.cuts[name]
@@ -47,7 +53,13 @@ class CaseResult:
         return set(self.cuts[self.measure_cut[name]].states)
 
     def failed_checks(self) -> List[str]:
-        return [f"{entity}:{v.name} {v.detail}" for entity, vs in self.verdicts.items() for v in vs if not v.passed]
+        out = [f"{entity}:{v.name} {v.detail}" for entity, vs in self.verdicts.items() for v in vs if not v.passed]
+        out += [f"{name}: {fails}" for name, fails in self.rule_checks.items() if fails]
+        return out
+
+    def records(self, kind: str) -> Dict[int, dict]:
+        """The rulebooks' records of one kind, by period (one per period)."""
+        return {r["period"]: r for r in self.group.records if r["kind"] == kind}
 
 
 def _term(raw: Any, where: str) -> Value:
@@ -83,12 +95,26 @@ def run_case(case: Union[str, pathlib.Path, Mapping[str, Any]]) -> CaseResult:
         tname = r.take("type")
         if tname not in REGISTRY:
             raise InputError(f"{src}: contract '{cid}' has unknown type '{tname}'")
-        terms = {k: _term(v, f"{src}:contracts.{cid}.terms.{k}") for k, v in r.take("terms").items()}
+        terms = {k: _term(v, f"{src}:contracts.{cid}.terms.{k}") for k, v in (r.take("terms") or {}).items()}
         group.add_contract(Contract(cid, REGISTRY[tname], r.take("parties"), terms, currency))
+        r.finish()
+    by_id = {c.id: c for c in group.contracts}
+    for c in group.contracts:
+        c.resolve(by_id)
+
+    schemes = {n: Scheme(n, dict(m)) for n, m in top.take("schemes").items()}
+    rule_check_fns = {}
+    rulebooks = top.take_or_default("rulebooks", {}, reason="a case with contracts only").value
+    for rname, raw in rulebooks.items():
+        r = Reader(raw, source=f"{src}:rulebooks.{rname}")
+        kind = r.take("kind")
+        if kind not in RULEBOOKS:
+            raise InputError(f"{src}: rulebook '{rname}' has unknown kind '{kind}'")
+        for cname, fn in (RULEBOOKS[kind](group, r, {"currency": currency, "schemes": schemes}) or {}).items():
+            rule_check_fns[f"{rname}.{cname}"] = fn
         r.finish()
     group.run()
 
-    schemes = {n: Scheme(n, dict(m)) for n, m in top.take("schemes").items()}
     cuts: Dict[str, Series] = {}
     for cname, raw in top.take("cuts").items():
         r = Reader(raw, source=f"{src}:cuts.{cname}")
@@ -99,10 +125,17 @@ def run_case(case: Union[str, pathlib.Path, Mapping[str, Any]]) -> CaseResult:
     measure_cut: Dict[str, str] = {}
     for mname, raw in top.take("measures").items():
         r = Reader(raw, source=f"{src}:measures.{mname}")
-        fn, cut = MEASURES[r.take("measure")], r.take("cut")
-        measures[mname] = fn(cuts[cut].values)
+        kind, cut = r.take("measure"), r.take("cut")
+        value = MEASURES[kind](cuts[cut].values)
+        if kind == "irr":
+            per_year = int(r.take_or_default("per_year", 1, reason="the stream's periods are years").value)
+            value = (1 + value) ** per_year - 1
+        measures[mname] = value
         measure_cut[mname] = cut
         r.finish()
+    wind_down = top.take_or_default("wind_down", {}, reason="no terminal wind-down declared").value
     top.finish()
-    verdicts = {e: integrity(b.table(), b.accounts) for e, b in group.books.items()}
-    return CaseResult(name, group, cuts, measures, measure_cut, verdicts)
+    verdicts = {e: integrity(b.table(), b.accounts, wind_down=tuple(wind_down.get(e, ())))
+                for e, b in group.books.items()}
+    rule_checks = {n: fn() for n, fn in rule_check_fns.items()}
+    return CaseResult(name, group, cuts, measures, measure_cut, verdicts, rule_checks)

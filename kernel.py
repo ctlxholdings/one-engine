@@ -241,6 +241,7 @@ class Book:
             raise KernelError(f"opening state does not balance: {bad}")
 
         self._moves: Dict[Tuple[str, int], Fraction] = defaultdict(Fraction)
+        self._closing: Dict[Tuple[str, int], Fraction] = {}   # filled as periods close
         self._states: Dict[Tuple[str, int], Set[State]] = defaultdict(set)
         self._postings: List[Posting] = []
         self._period = start_period          # current period on the clock
@@ -305,6 +306,8 @@ class Book:
         if bad:                                   # unreachable by construction; kept as a guard
             raise KernelError(f"period {period} does not balance: {bad}")
         self._closed_through = period
+        for name in self.accounts:
+            self._closing[(name, period)] = self.balance(name, period)
         if period + 1 < self.periods:
             self._period, self._phase = period + 1, 0
 
@@ -320,10 +323,18 @@ class Book:
         self._account(account)
         if period < self.start_period:
             raise KernelError(f"period {period} is before this book's start ({self.start_period})")
-        total = self._opening[account]
-        for t in range(self.start_period, period + 1):
-            total += self._moves.get((account, t), Fraction(0))
-        return total
+        if (account, period) in self._closing:
+            return self._closing[(account, period)]
+        return self.opening(account, period) + self._moves.get((account, period), Fraction(0))
+
+    def opening(self, account: str, period: int) -> Fraction:
+        """Natural balance of ``account`` at the start of ``period``."""
+        self._account(account)
+        if period <= self.start_period:
+            return self._opening[account]
+        if (account, period - 1) in self._closing:
+            return self._closing[(account, period - 1)]
+        return self.balance(account, period - 1)
 
     def imbalance(self, period: int) -> Dict[str, Fraction]:
         """Per-unit identity at the end of ``period``; every value must be 0."""

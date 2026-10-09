@@ -97,6 +97,17 @@ def irr(stream: Sequence[Number], lo: float = -0.99, hi: float = 10.0, grid: int
     return roots[0]
 
 
+def coverage(available: Number, service: Number):
+    """A coverage ratio (DSCR-style), exact; ``None`` when nothing is due.
+
+    ``None`` rather than infinity or a sentinel such as 999: what a missing
+    ratio means for a covenant is declared by the test (Conditions).
+    """
+    from one_engine.units import exact
+    service = exact(service)
+    return None if service == 0 else exact(available) / service
+
+
 def payback(stream: Sequence[Number]) -> Optional[float]:
     """Simple (undiscounted) payback in periods, interpolated within a period.
 
