@@ -111,8 +111,13 @@ def load_yaml_strict(text: str) -> Any:
         pass
 
     def _construct(loader, node, deep=False):
+        # A merge (``<<: *opex``) is how a shared number stays one number
+        # across several mappings; keys written next to it override it on
+        # purpose. Only keys written twice explicitly are refused.
         seen = set()
         for key_node, _ in node.value:
+            if key_node.tag == "tag:yaml.org,2002:merge":
+                continue
             key = loader.construct_object(key_node, deep=deep)
             if key in seen:
                 raise InputError(f"key '{key}' is written twice (line {key_node.start_mark.line + 1})")

@@ -33,25 +33,30 @@ contracts:
     parties: {seller: spv}
     terms:
       price: 65
+      payment_days: 0            # dso_days
+      days_per_year: 365
+      periods_per_year: 4
+      end: 100
       volume: [0, 0, 0, 0, 62500, 62421.7281, 62343.5542, 62265.4782, 62187.5, 62109.6194, 62031.8364, 61954.1508, 61876.5625, 61799.0713, 61721.6772, 61644.3801, 61567.1797, 61490.076, 61413.0689, 61336.1582, 61259.3438, 61182.6256, 61106.0035, 61029.4774, 60953.0471, 60876.7125, 60800.4735, 60724.33, 60648.2818, 60572.3289, 60496.4711, 60420.7083, 60345.0404, 60269.4673, 60193.9888, 60118.6048, 60043.3152, 59968.1199, 59893.0188, 59818.0118, 59743.0986, 59668.2793, 59593.5537, 59518.9217, 59444.3832, 59369.9379, 59295.586, 59221.3271, 59147.1612, 59073.0883, 58999.108, 58925.2205, 58851.4254, 58777.7228, 58704.1125, 58630.5944, 58557.1683, 58483.8342, 58410.5919, 58337.4414, 58264.3825, 58191.415, 58118.539, 58045.7542, 57973.0606, 57900.458, 57827.9463, 57755.5254, 57683.1952, 57610.9557, 57538.8065, 57466.7478, 57394.7793, 57322.9009, 57251.1125, 57179.414, 57107.8054, 57036.2864, 56964.857, 56893.517, 56822.2663, 56751.1049, 56680.0327, 56609.0494, 56538.155, 56467.3494, 56396.6325, 56326.0041, 56255.4642, 56185.0127, 56114.6493, 56044.3741, 55974.1869, 55904.0876, 55834.0761, 55764.1523, 55694.316, 55624.5672, 55554.9057, 55485.3315, 55415.8444]
   om:
-    type: fixed_cost
+    type: operating_cost
     parties: {payer: spv}
-    terms: {annual: 1500000, periods_per_year: 4, start: 4}
+    terms: {annual: 1500000, unit_rate: 0, volume: 0, periods_per_year: 4, start: 4, end: 100,
+            vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 365}
   epc:
     type: capex
     parties: {owner: spv}
-    terms: {schedule: [25000000, 25000000, 25000000, 25000000]}
+    terms: {schedule: [25000000, 25000000, 25000000, 25000000], vat_rate: 0, vat_refund_lag: 0, end: 100}
   senior:
     type: term_loan
     parties: {borrower: spv}
     terms: {commitment: 70000000, rate: 0.06, rate_from: 4, days_per_period: 91.25, day_count_basis: 360,
-             available_until: 3, repay_from: 4, repay_amount: 1750000}
+             available_until: 3, commitment_fee_rate: 0, repay_from: 4, repay_periods: 40}
   shl:
     type: shareholder_loan
     parties: {borrower: spv}
     terms: {commitment: 18000000, rate: 0.08, rate_from: 4, days_per_period: 91.25, day_count_basis: 360,
-             available_until: 3, repay_from: 4, repay_amount: 300000}
+             available_until: 3, commitment_fee_rate: 0, repay_from: 4, repay_periods: 60}
   dsra:
     type: debt_reserve
     parties: {holder: spv}
@@ -62,8 +67,8 @@ contracts:
     terms: {}
 schemes:
   cash_flow:
-    ppa.revenue: operating
-    om.expense: operating
+    ppa.receivable: operating
+    om.payable: operating
     cwip: investing
     tax_payable: tax
     dsra: reserve
@@ -79,7 +84,8 @@ rulebooks:
     entity: spv
     cash: cash
     phase: fund
-    uses: [epc.spend, dsra.prefund]
+    until: 3
+    uses: [{flow: epc.spend}, {flow: dsra.prefund}]
     sources:
       - {claim: senior.draw, share: 0.70, of: [epc.spend]}
       - {claim: shl.draw, share: 0.18, of: [epc.spend]}
@@ -110,7 +116,9 @@ rulebooks:
       depreciation: taxable
       disposal_loss: taxable
       senior.interest: taxable
+      senior.fees: taxable
       shl.interest: taxable
+      shl.fees: taxable
       tax_expense: non_deductible
   waterfall:
     kind: waterfall
@@ -127,6 +135,7 @@ rulebooks:
     residual: equity.distribute
     cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
     service: [senior.interest, senior.principal]
+    retain: {amount: 0, from: 0, until: 100}     # min_cash_balance
     tests:
       - {name: dscr_default, op: ">=", level: 1.05, if_missing: pass, consequence: report}
       - {name: dscr_lockup, op: ">=", level: 1.10, if_missing: pass, consequence: block,

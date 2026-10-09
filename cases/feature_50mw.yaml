@@ -1,0 +1,233 @@
+# 50MW feature-coverage solar SPV (plan step 7, first added case).
+#
+# Source: generic-framework generic_engine/tests/fixtures/50mw_feature_coverage.yaml
+# (41 quarters, COD Q4, EUR). It adds to the 100MW case: VAT on capex (20%)
+# and opex (10%) refunded after 4 quarters, receivables and payables on
+# payment terms (30 and 15 days), a commitment fee, construction interest
+# paid in cash, a DSRA covered by a letter of credit, a decommissioning
+# provision, a minimum cash balance and a bullet shareholder loan.
+# Every number is copied from the fixture; tests/test_case_feature.py
+# re-checks the copy against the stored old-engine reference.
+#
+# Declared choices (the fixture leaves them open):
+#   * construction funding: senior 70% and SHL 10% of the EPC spend (the
+#     fixture's draw schedules); development costs, fees, capex VAT and
+#     the senior's construction interest and commitment fee are uses
+#     funded by equity as the residual. The SHL's construction interest is
+#     capitalised (unpaid, no cash in construction);
+#   * VAT still outstanding at the end (opex VAT of Q37-Q40) is refunded
+#     at Q40, so the receivable winds down inside the horizon;
+#   * the minimum cash balance is a stock retained from COD to Q39 and
+#     released at Q40;
+#   * decommissioning (2M) accrues 2M/40 a quarter from COD with the
+#     balance trued up and paid at Q40 (the old engine's schedule); the
+#     accrual is treated as deductible (no deferred tax module yet; the
+#     old engine never deducts it);
+#   * depreciation from COD (first_charge: in_service), 40 quarters;
+#   * the bullet SHL is junior to nothing the sponsor does not also hold:
+#     distributions run each quarter while the bullet is not yet due, and
+#     what the last quarter cannot repay at Q40 is forgiven (a gain,
+#     treated as exempt; the old engine writes off 5.09M and never taxes
+#     it either);
+#   * lock-up on DSCR only; llcr_lockup and plcr_threshold not carried
+#     (see the 100MW case).
+case: feature-50mw-spv
+periods: 41
+phases: [accrue, fund, operate, tax, pay, close]
+currency: EUR
+floors:
+  spv.cash: 0
+contracts:
+  ppa:
+    type: offtake
+    parties: {seller: spv}
+    terms:
+      volume: &generation [0, 0, 0, 0, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+                           25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+                           25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+                           25000, 25000, 25000]
+      price: 100
+      payment_days: 30            # dso_days
+      days_per_year: 365
+      periods_per_year: 4
+      end: 40
+  om_fixed:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: &opex {annual: 800000, unit_rate: 0, volume: 0, periods_per_year: 4, start: 4, end: 40,
+                  vat_rate: 0.1, vat_refund_lag: 4, payment_days: 15, days_per_year: 365}
+  insurance:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 300000}
+  land_lease:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 200000}
+  om_variable:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 0, unit_rate: 2, volume: *generation}
+  epc:
+    type: capex
+    parties: {owner: spv}
+    terms: &capex {schedule: [12500000, 12500000, 12500000, 12500000], vat_rate: 0.2, vat_refund_lag: 4, end: 40}
+  development:
+    type: capex
+    parties: {owner: spv}
+    terms: {<<: *capex, schedule: [250000, 250000, 250000, 250000]}
+  fees:
+    type: capex
+    parties: {owner: spv}
+    terms: {<<: *capex, schedule: [500000]}
+  senior:
+    type: term_loan
+    parties: {borrower: spv}
+    terms: {commitment: 35000000, rate: 0.05, rate_from: 0, days_per_period: 91.25, day_count_basis: 360,
+            available_until: 3, commitment_fee_rate: 0.005, repay_from: 4, repay_periods: 36}
+  shl:
+    type: shareholder_loan
+    parties: {borrower: spv}
+    terms: {commitment: 5000000, rate: 0.08, rate_from: 0, days_per_period: 91.25, day_count_basis: 360,
+            available_until: 3, commitment_fee_rate: 0, repay_from: 40, repay_periods: 1}
+  dsra:
+    type: reserve_letter_of_credit
+    parties: {holder: spv}
+    terms: {covers: senior, periods_forward: 2, from: 4, fee_rate: 0.015, days_per_period: 91.25, day_count_basis: 365}
+  equity:
+    type: sponsor_equity
+    parties: {issuer: spv}
+    terms: {}
+schemes:
+  cash_flow:
+    ppa.receivable: operating
+    om_fixed.payable: operating
+    insurance.payable: operating
+    land_lease.payable: operating
+    om_variable.payable: operating
+    decommissioning: operating
+    vat_receivable: investing
+    cwip: investing
+    tax_payable: tax
+    dsra.fee_payable: senior
+    senior.debt: senior
+    senior.interest_payable: senior
+    senior.fee_payable: senior
+    shl.debt: shareholder
+    shl.interest_payable: shareholder
+    shl.capitalised_interest: shareholder
+    equity.capital: equity
+    equity.distributions: equity
+rulebooks:
+  funding:
+    kind: funding_plan
+    entity: spv
+    cash: cash
+    phase: fund
+    until: 3
+    uses:
+      - {flow: epc.spend}
+      - {flow: epc.vat}
+      - {flow: development.spend}
+      - {flow: development.vat}
+      - {flow: fees.spend}
+      - {flow: fees.vat}
+      - {claim: senior.interest}
+      - {claim: senior.fee}
+    sources:
+      - {claim: senior.draw, share: 0.70, of: [epc.spend]}
+      - {claim: shl.draw, share: 0.10, of: [epc.spend]}
+    residual: equity.contribute
+  assets:
+    kind: asset_register
+    entity: spv
+    phase: accrue
+    from: cwip
+    to: fixed_assets
+    expense: depreciation
+    disposal: disposal_loss
+    in_service: 4
+    life_periods: 40
+    first_charge: in_service
+    dispose_at: 40
+  decommissioning:
+    kind: provision
+    entity: spv
+    cash: cash
+    phase: accrue
+    pay_phase: operate
+    expense: decommissioning_expense
+    liability: decommissioning
+    amount: 2000000
+    start: 4
+    periods: 40
+    settle_at: 40
+  shl_forgiveness:
+    kind: forgiveness
+    entity: spv
+    phase: close
+    at: 40
+    accounts: [shl.capitalised_interest, shl.debt]
+    gain: shl_forgiven
+  tax:
+    kind: income_tax
+    entity: spv
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: 0.25
+    carry_forward_periods: null
+    scheme:
+      ppa.revenue: taxable
+      om_fixed.expense: taxable
+      insurance.expense: taxable
+      land_lease.expense: taxable
+      om_variable.expense: taxable
+      depreciation: taxable
+      disposal_loss: taxable
+      decommissioning_expense: taxable
+      senior.interest: taxable
+      senior.fees: taxable
+      shl.interest: taxable
+      shl.fees: taxable
+      dsra.fee: taxable
+      shl_forgiven: exempt
+      tax_expense: non_deductible
+  waterfall:
+    kind: waterfall
+    entity: spv
+    phase: pay
+    cash: cash
+    tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: dsra.fee}
+      - {claim: senior.interest}
+      - {claim: senior.fee}
+      - {claim: senior.principal}
+      - {claim: shl.interest}
+      - {claim: shl.fee}
+      - {claim: shl.capitalised}
+      - {claim: shl.principal}
+    residual: equity.distribute
+    cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+    service: [senior.interest, senior.principal]
+    retain: {amount: 500000, from: 4, until: 39}     # min_cash_balance
+    tests:
+      - {name: dscr_default, op: ">=", level: 1.05, if_missing: pass, consequence: report}
+      - {name: dscr_lockup, op: ">=", level: 1.20, if_missing: pass, consequence: block,
+         blocks: [shl.interest, shl.fee, shl.capitalised, shl.principal, equity.distribute]}
+      - {name: dscr_distribution, op: ">=", level: 1.10, if_missing: pass, consequence: block,
+         blocks: [equity.distribute]}
+cuts:
+  equity_flows: {entity: spv, account: cash, scheme: cash_flow, include: [equity]}
+  sponsor_flows: {entity: spv, account: cash, scheme: cash_flow, include: [equity, shareholder]}
+  project_flows: {entity: spv, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+measures:
+  equity_irr: {measure: irr, cut: equity_flows, per_year: 4}
+  sponsor_irr: {measure: irr, cut: sponsor_flows, per_year: 4}
+  project_irr: {measure: irr, cut: project_flows, per_year: 4}
+wind_down:
+  spv: [cash, cwip, fixed_assets, vat_receivable, ppa.receivable, om_fixed.payable, insurance.payable,
+        land_lease.payable, om_variable.payable, decommissioning, tax_payable, dsra.fee_payable,
+        senior.debt, senior.interest_payable, senior.fee_payable,
+        shl.debt, shl.interest_payable, shl.fee_payable, shl.capitalised_interest]

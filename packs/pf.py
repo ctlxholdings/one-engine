@@ -14,10 +14,11 @@ case's currency and classification schemes; it may return named checks
 Rulebooks
 ---------
 ``funding_plan``
-    Construction funding. Uses are named contract flows of the period
-    (``epc.spend``, ``dsra.prefund``). Sources are loan draw claims, each
-    capped at a share of the uses (or of the uses listed in its ``of``)
-    and at what remains of its commitment, in order; the named residual (``equity.contribute``) closes the gap.
+    Construction funding, through period ``until``. Uses are named
+    contract flows of the period (``epc.spend``, ``dsra.prefund``) or
+    claims due (construction interest paid in cash). Sources are loan
+    draw claims, each capped at a share of the uses (or of the uses listed
+    in its ``of``) and at what remains of its commitment, in order; the named residual (``equity.contribute``) closes the gap.
     Sources therefore equal uses at each step, and
     :func:`sources_equal_uses` re-checks that from the books. The old
     engine called equity on a schedule instead and left 23.6M of idle cash
@@ -34,13 +35,24 @@ Rulebooks
     of the book (:func:`~one_engine.tax.taxable_base`). The charge goes to
     ``tax_payable``; the waterfall pays it.
 
+``provision``
+    A liability charged straight-line and paid once
+    (:class:`~one_engine.measurement.Provision`): decommissioning.
+
+``forgiveness``
+    At a stated period, what is still owed on the listed liabilities (a
+    shareholder loan the sponsor will not be repaid) is forgiven: the
+    liability falls and a gain is booked. A forgiven debt is never posted
+    as a loss; the kernel's direction check refuses that (card 10).
+
 ``waterfall``
     In the pay phase, all cash above the floor is allocated over ordered
     tiers: contract claims (``senior.interest``) or payable accounts
     (``tax_payable``). DSCR is CFADS over the debt service due, where
     CFADS is the period's cash flow in the named classes less the named
-    tiers (tax). Each test blocks the tiers it lists when it fails, or
-    only reports. The residual goes to its leg (a distribution) unless a
+    tiers (tax). A minimum balance (``retain``) is a stock kept back in the
+    stated periods, not a deduction from each period's flow. Each test
+    blocks the tiers it lists when it fails, or only reports. The residual goes to its leg (a distribution) unless a
     test blocks it; blocked cash stays in the account and is offered again
     next period, which is how trapped cash is released when a lock-up
     clears. Unpaid claims follow their contract: arrears, or PIK.
@@ -56,7 +68,7 @@ from one_engine.cuts import Scheme, cash_flow_cut
 from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader
 from one_engine.kernel import Book, Nature, Posting
-from one_engine.measurement import Policy, Register
+from one_engine.measurement import Policy, Provision, Register
 from one_engine.measures import coverage
 from one_engine.tax import LossPool, TaxPolicy, taxable_base
 from one_engine.units import exact
@@ -71,24 +83,35 @@ def _ref(group: Group, ref: str):
 
 def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
     entity, cash = r.take("entity"), r.take("cash")
-    phase, uses = r.take("phase"), list(r.take("uses"))
+    phase, until = r.take("phase"), int(r.take("until"))
+    uses = []
+    for i, raw in enumerate(r.take("uses")):
+        ur = Reader(raw, source=f"funding_plan.uses[{i}]")
+        kind = "claim" if "claim" in raw else "flow"
+        uses.append((kind, ur.take(kind)))
+        ur.finish()
     sources = []
     for i, raw in enumerate(r.take("sources")):
         sr = Reader(raw, source=f"funding_plan.sources[{i}]")
-        base = sr.take_or_default("of", uses, reason="share of all uses").value
+        base = sr.take_or_default("of", [ref for _, ref in uses], reason="share of all uses").value
         sources.append((sr.take("claim"), exact(sr.take("share")), list(base)))
         sr.finish()
     residual = r.take("residual")
 
     def handler(g: Group, t: int) -> None:
-        def flow_amount(ref):
-            c, flow = _ref(g, ref)
-            return sum((f.amount for f in c.flows(t, g.view(c, t)) if f.spec.name == flow), Fraction(0))
-        each = {ref: flow_amount(ref) for ref in uses}
+        if t > until:
+            return
+        claims = g.claims(t)
+        each = {}
+        for kind, ref in uses:
+            if kind == "claim":
+                each[ref] = claims[ref].due if ref in claims else Fraction(0)
+            else:
+                c, flow = _ref(g, ref)
+                each[ref] = sum((f.amount for f in c.flows(t, g.view(c, t)) if f.spec.name == flow), Fraction(0))
         amount = sum(each.values(), Fraction(0))
         if amount == 0:
             return
-        claims = g.claims(t)
         tiers = [Tier(ref, min(share * sum((each[u] for u in base), Fraction(0)), claims[ref].due) if ref in claims else 0)
                  for ref, share, base in sources]
         a = allocate(amount, tiers, residual=residual)
@@ -97,7 +120,10 @@ def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
                 g.settle(claims[ref], a.paid[ref], phase)
         c, leg = _ref(g, residual)
         g.post_leg(c, leg, a.residual, t, phase)
-        g.record("funding", t, uses=amount, paid=dict(a.paid), residual=a.residual)
+        for kind, ref in uses:                      # claims funded here are paid now, in full
+            if kind == "claim" and each[ref]:
+                g.settle(claims[ref], each[ref], phase)
+        g.record("funding", t, uses=dict(each), paid=dict(a.paid), residual=a.residual)
 
     group.register(phase, handler)
     return {"sources_equal_uses": lambda: sources_equal_uses(group, entity, cash, phase)}
@@ -163,6 +189,53 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     group.register(phase, handler)
 
 
+# ── provision ─────────────────────────────────────────────────────────────
+
+def provision(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    entity, unit, cash = r.take("entity"), ctx["currency"], r.take("cash")
+    charge_phase, pay_phase = r.take("phase"), r.take("pay_phase")
+    expense, liability = r.take("expense"), r.take("liability")
+    prov = Provision(exact(r.take("amount")), int(r.take("start")), int(r.take("periods")), int(r.take("settle_at")))
+    group.declare(entity, expense, Nature.EXPENSE, unit)
+    group.declare(entity, liability, Nature.LIABILITY, unit)
+
+    def charge(g: Group, t: int) -> None:
+        x = prov.charge(t)
+        if x:
+            g.post(entity, Posting(t, charge_phase, expense, liability, x, {expense: 1, liability: 1},
+                                   "measurement", f"{liability}.charge:{t}"))
+
+    def pay(g: Group, t: int) -> None:
+        x = prov.payment(t)
+        if x:
+            g.post(entity, Posting(t, pay_phase, liability, cash, x, {liability: -1, cash: -1},
+                                   "measurement", f"{liability}.payment:{t}"))
+
+    group.register(charge_phase, charge)
+    group.register(pay_phase, pay)
+
+
+# ── forgiveness ───────────────────────────────────────────────────────────
+
+def forgiveness(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    entity, phase, at = r.take("entity"), r.take("phase"), int(r.take("at"))
+    accounts, gain = list(r.take("accounts")), r.take("gain")
+    group.declare(entity, gain, Nature.INCOME, ctx["currency"])
+
+    def handler(g: Group, t: int) -> None:
+        if t != at:
+            return
+        for acct in accounts:
+            x = g.book(entity).balance(acct, t)
+            if x:
+                # forgiven debt lowers the liability and is a gain, never a loss
+                g.post(entity, Posting(t, phase, acct, gain, x, {acct: -1, gain: 1}, "measurement",
+                                       f"{acct}.forgiven:{t}"))
+                g.record("forgiven", t, account=acct, amount=x)
+
+    group.register(phase, handler)
+
+
 # ── waterfall ─────────────────────────────────────────────────────────────
 
 def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
@@ -181,6 +254,9 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     scheme, classes, less = ctx["schemes"][cr.take("scheme")], cr.take("classes"), cr.take("less")
     cr.finish()
     service = r.take("service")
+    rr = Reader(r.take("retain"), source="waterfall.retain")
+    retain = (exact(rr.take("amount")), int(rr.take("from")), int(rr.take("until")))
+    rr.finish()
     tests = []
     for i, raw in enumerate(r.take("tests")):
         tr = Reader(raw, source=f"waterfall.tests[{i}]")
@@ -216,8 +292,9 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             if res.verdict == "fail":
                 for b in blocks:
                     blocked.setdefault(b, test.name)
-        floor = g.floors.get((entity, cash), Fraction(0))
-        available = book.balance(cash, t) - exact(floor)
+        floor = exact(g.floors.get((entity, cash), Fraction(0)))
+        kept = retain[0] if retain[1] <= t <= retain[2] else Fraction(0)
+        available = max(Fraction(0), book.balance(cash, t) - floor - kept)
         a = allocate(available, [Tier(n, due[n], blocked_by=blocked.get(n)) for n in names], residual=residual)
         for name, kind, ref in tiers_spec:
             if kind == "claim":
@@ -237,5 +314,5 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     group.register(phase, handler)
 
 
-RULEBOOKS = {"funding_plan": funding_plan, "asset_register": asset_register,
-             "income_tax": income_tax, "waterfall": waterfall}
+RULEBOOKS = {"funding_plan": funding_plan, "asset_register": asset_register, "income_tax": income_tax,
+             "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall}

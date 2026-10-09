@@ -89,6 +89,25 @@ MUTATIONS = [
      "test_case_vanilla.py::test_anchors"),
     ("packs/contracts.py", "/ exact(terms[\"day_count_basis\"])", "/ 365",
      "test_case_vanilla.py::test_parity_every_period"),
+
+    # step 7, 50MW feature case
+    ("inputs.py", "            if key_node.tag == \"tag:yaml.org,2002:merge\":\n                continue\n", "",
+     "test_inputs.py::test_a_merge_keeps_one_source_and_explicit_keys_override_it"),
+    ("measurement.py", "        if period == self.settle_at:\n            x = self.amount - self.charged",
+     "        if period == self.settle_at:\n            x = Fraction(0)",
+     "test_measurement.py::test_provision_accrues_then_trues_up_and_pays_once"),
+    ("packs/pf.py", "kept = retain[0] if retain[1] <= t <= retain[2] else Fraction(0)", "kept = Fraction(0)",
+     "test_case_feature.py::test_minimum_cash_is_a_stock_not_a_flow"),
+    ("packs/pf.py", "{acct: -1, gain: 1}", "{acct: -1, gain: -1}",
+     "test_case_feature.py::test_unpaid_bullet_shl_is_forgiven_as_a_gain"),
+    ("packs/contracts.py", "        if t <= int(terms[\"available_until\"]):\n            undrawn",
+     "        if True:\n            undrawn",
+     "test_case_feature.py::test_commitment_fee_stops_when_availability_ends"),
+    ("packs/contracts.py", "    return min(t + int(terms[\"vat_refund_lag\"]), int(terms[\"end\"]))",
+     "    return t + int(terms[\"vat_refund_lag\"])",
+     "test_case_feature.py::test_integrity_wind_down_and_sources_equal_uses"),
+    ("packs/contracts.py", "    if t >= int(terms[\"end\"]):\n        return exact(0)\n    return amount", "    return amount",
+     "test_case_feature.py::test_integrity_wind_down_and_sources_equal_uses"),
 ]
 
 

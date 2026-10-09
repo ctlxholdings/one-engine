@@ -4,9 +4,11 @@ Planted case: the nightmare fixture writes `financial.promote`, the old
 loader reads `financial.promote_terms`, so the promote is silently ignored
 (consolidation ASSEMBLY_TEST_PAPER.md §11.4). A Reader refuses that.
 """
+from decimal import Decimal
+
 import pytest
 
-from one_engine.inputs import InputError, Reader, State
+from one_engine.inputs import InputError, Reader, State, load_yaml_strict
 
 
 def test_unknown_key_refuses_at_finish():
@@ -48,3 +50,10 @@ def test_a_decimal_in_a_file_stays_the_decimal_it_names():
     from decimal import Decimal
     from one_engine.inputs import load_yaml_strict
     assert load_yaml_strict("tariff: 0.108\n") == {"tariff": Decimal("0.108")}
+
+
+def test_a_merge_keeps_one_source_and_explicit_keys_override_it():
+    data = load_yaml_strict("base: &b {rate: 0.1, annual: 5}\nother: {<<: *b, annual: 7}\n")
+    assert data["other"] == {"rate": Decimal("0.1"), "annual": 7}
+    with pytest.raises(InputError):
+        load_yaml_strict("other: {annual: 5, annual: 7}\n")

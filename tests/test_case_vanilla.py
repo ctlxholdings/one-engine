@@ -5,7 +5,7 @@ Referees, in order:
 1. analytic anchors computed by hand from the fixture's terms (Averta's
    BUILD_METHODOLOGY_DEBRIEF practice, tolerance 0.01);
 2. parity with the old engine (``cases/reference/vanilla_old_engine.json``,
-   written by ``consolidation/experiments/make_vanilla_reference.py``)
+   written by ``consolidation/experiments/make_reference.py``)
    wherever the old engine is sound;
 3. where it is not, the divergence must be exactly the documented defect,
    and the sponsor's total must reconcile to the old engine's through the
@@ -184,7 +184,8 @@ def test_an_unread_covenant_key_refuses():
 
 def test_planted_overfunding_fails_sources_equal_uses():
     g = Group(periods=1, phases=["fund"])
-    g.add_contract(Contract("epc", CAPEX, {"owner": "spv"}, {"schedule": Value([100], State.STATED, "t")}, "USD"))
+    terms = {"schedule": [100], "vat_rate": 0, "vat_refund_lag": 0, "end": 0}
+    g.add_contract(Contract("epc", CAPEX, {"owner": "spv"}, {k: Value(v, State.STATED, "t") for k, v in terms.items()}, "USD"))
     eq = Contract("equity", SPONSOR_EQUITY, {"issuer": "spv"}, {}, "USD")
     g.add_contract(eq)
     g.register("fund", lambda g, t: g.post_leg(eq, "contribute", 130, t, "fund"))   # 30 too much

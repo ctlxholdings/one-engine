@@ -12,7 +12,7 @@ from one_engine.packs.contracts import SHAREHOLDER_LOAN, SPONSOR_EQUITY, TERM_LO
 
 def _loan(ctype, cid="shl"):
     terms = dict(commitment=100, rate=F(1, 10), rate_from=1, days_per_period=360, day_count_basis=360,
-                 available_until=0, repay_from=5, repay_amount=50)
+                 available_until=0, commitment_fee_rate=0, repay_from=5, repay_periods=2)
     return Contract(cid, ctype, {"borrower": "spv"}, {k: Value(v, State.STATED, "t") for k, v in terms.items()}, "USD")
 
 
@@ -41,7 +41,8 @@ def _group(ctype, amount):
 
 def test_unpaid_interest_is_capitalised_for_a_shareholder_loan():
     b = _group(SHAREHOLDER_LOAN, amount=4).book("spv")
-    assert b.balance("shl.debt", 1) == 106 and b.balance("shl.interest_payable", 1) == 0
+    assert b.balance("shl.debt", 1) == 100 and b.balance("shl.capitalised_interest", 1) == 6
+    assert b.balance("shl.interest_payable", 1) == 0
 
 
 def test_unpaid_interest_stays_due_for_a_term_loan():

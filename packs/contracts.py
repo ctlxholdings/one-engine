@@ -13,20 +13,27 @@ Built so far, for the ERIA case (plan step 6):
   (kWh x tariff x performance) accrue to the client, which pays the
   provider a fixed share of them each period of the term.
 
-Added for Averta's 100MW SPV (plan step 6):
+Added for Averta's 100MW SPV (plan step 6) and the 50MW feature case
+(step 7):
 
 * ``term_loan``         drawn as a source, interest accrued on the opening
-  balance, interest and principal claimed each period; an unpaid amount
-  stays due (arrears);
+  balance, a commitment fee on the undrawn amount while available;
+  interest, fee and principal claimed each period; an unpaid amount stays
+  due (arrears);
 * ``shareholder_loan``  the same, except that unpaid interest is
-  capitalised at period close (PIK), so it is repaid through the principal
-  claim, which reads the balance;
-* ``offtake``           volume x price into revenue;
-* ``fixed_cost``        an annual cost paid per period from a start period;
-* ``capex``             a construction spend schedule into CWIP;
+  capitalised at period close (PIK) into its own account, repaid ahead of
+  principal against the scheduled balance;
+* ``offtake``           volume x price into revenue, collected on payment
+  terms (a receivable);
+* ``operating_cost``    a fixed annual cost plus a rate per unit, with
+  recoverable VAT, paid on payment terms (a payable);
+* ``capex``             a construction spend schedule into CWIP, with
+  recoverable VAT;
 * ``debt_reserve``      a reserve sized on a loan's next scheduled debt
   service: prefunded during construction, topped up as a claim, released
   as a flow when above target;
+* ``reserve_letter_of_credit`` the same requirement covered by a letter of
+  credit: no cash is set aside; a fee on the requirement is claimed;
 * ``sponsor_equity``    contributions and distributions as named legs whose
   amounts a funding plan or a waterfall decides.
 
@@ -90,7 +97,7 @@ SHARED_SAVINGS = ContractType(
     amounts=_shared_savings,
 )
 
-# ── project finance (Averta 100MW SPV) ─────────────────────────────────────
+# ── project finance (Averta 100MW SPV, 50MW feature case) ────────────────
 
 def _at(x, t):
     """A term that is a number or a per-period series, at period ``t``."""
@@ -101,101 +108,197 @@ def _at(x, t):
     return exact(x)
 
 
-def _year_fraction(terms):
-    return exact(terms["rate"]) * exact(terms["days_per_period"]) / exact(terms["day_count_basis"])
+def _days(terms):
+    return exact(terms["days_per_period"]) / exact(terms["day_count_basis"])
 
+
+def _refund_at(t, terms):
+    """Period in which VAT paid in period ``t`` comes back.
+
+    ``vat_refund_lag`` periods later, but never after the contract's
+    ``end``: what is still outstanding at the end is settled then, so the
+    receivable winds down inside the horizon (declared convention).
+    """
+    return min(t + int(terms["vat_refund_lag"]), int(terms["end"]))
+
+
+def _vat_refund(terms, t, base):
+    """VAT coming back in ``t``: rate x the bases of every period whose refund falls in ``t``."""
+    return sum((exact(terms["vat_rate"]) * base(p) for p in range(0, t + 1) if _refund_at(p, terms) == t),
+               exact(0))
+
+
+# Loans ------------------------------------------------------------------
 
 def loan_schedule(terms, t):
-    """Scheduled (principal, interest) of a loan in period ``t``, assuming full draw.
+    """Scheduled (principal, interest, closing balance) of a loan in ``t``, assuming full draw.
 
     The scheduled balance is the commitment until ``repay_from``, then falls
-    by ``repay_amount`` a period to zero. Interest is the scheduled opening
-    balance x rate x days_per_period / day_count_basis, from ``rate_from``. A debt reserve
-    is sized on this schedule, not on the actual balance (a reserve that
-    shrank because a payment was missed would defeat its purpose).
+    in ``repay_periods`` equal steps to zero (35M over 36 quarters has no
+    exact decimal amount, so the count is the term). Interest is the scheduled opening
+    balance x rate x days_per_period / day_count_basis, from ``rate_from``.
+    A debt reserve is sized on this schedule, not on the actual balance (a
+    reserve that shrank because a payment was missed would defeat its purpose).
     """
     def target(p):
         if p < int(terms["repay_from"]):
             return exact(terms["commitment"])
-        return max(exact(0), exact(terms["commitment"]) - exact(terms["repay_amount"]) * (p - int(terms["repay_from"]) + 1))
+        step = exact(terms["commitment"]) / int(terms["repay_periods"])
+        return max(exact(0), exact(terms["commitment"]) - step * (p - int(terms["repay_from"]) + 1))
     opening = target(t - 1) if t > 0 else exact(terms["commitment"])
-    interest = opening * _year_fraction(terms) if t >= int(terms["rate_from"]) else exact(0)
+    interest = opening * exact(terms["rate"]) * _days(terms) if t >= int(terms["rate_from"]) else exact(0)
     return opening - target(t), interest, target(t)
 
 
-def _loan_amounts(terms, t, bal=None):
-    if bal is None or t < int(terms["rate_from"]):
-        return {}
-    return {"interest": bal.opening("borrower", "{id}.debt") * _year_fraction(terms)}
+def _loan(name, capitalise):
+    """A term loan, or (``capitalise``) a shareholder loan whose unpaid interest is capitalised.
 
+    Capitalised interest has its own account. The debt account then holds
+    only what was drawn less principal repaid, which is what the
+    commitment, the undrawn fee and the draw limit are measured against;
+    interest accrues on both. Capitalised interest is repaid ahead of
+    principal, against the same scheduled balance.
+    """
+    borrower = [("cash", Nature.ASSET), ("{id}.debt", Nature.LIABILITY), ("{id}.interest", Nature.EXPENSE),
+                ("{id}.interest_payable", Nature.LIABILITY), ("{id}.fees", Nature.EXPENSE),
+                ("{id}.fee_payable", Nature.LIABILITY)]
+    if capitalise:
+        borrower.append(("{id}.capitalised_interest", Nature.LIABILITY))
 
-def _loan_claims(terms, t, bal):
-    debt = bal("borrower", "{id}.debt")
-    _, _, target = loan_schedule(terms, t)
-    draw = max(exact(0), exact(terms["commitment"]) - debt) if t <= int(terms["available_until"]) else exact(0)
-    return {"draw": draw,
-            "interest": bal("borrower", "{id}.interest_payable"),
-            "principal": max(exact(0), debt - target) if t >= int(terms["repay_from"]) else exact(0)}
+    def owed(bal, opening=False):
+        read = bal.opening if opening else bal
+        return read("borrower", "{id}.debt") + (read("borrower", "{id}.capitalised_interest") if capitalise else 0)
 
+    def amounts(terms, t, bal=None):
+        if bal is None:
+            return {}
+        out = {}
+        if t >= int(terms["rate_from"]):
+            out["interest"] = owed(bal, opening=True) * exact(terms["rate"]) * _days(terms)
+        if t <= int(terms["available_until"]):
+            undrawn = exact(terms["commitment"]) - bal.opening("borrower", "{id}.debt")
+            out["commitment_fee"] = undrawn * exact(terms["commitment_fee_rate"]) * _days(terms)
+        return out
 
-def _loan(name, unpaid_interest):
-    borrower = (("cash", Nature.ASSET), ("{id}.debt", Nature.LIABILITY),
-                ("{id}.interest", Nature.EXPENSE), ("{id}.interest_payable", Nature.LIABILITY))
-    pik = Leg("borrower", "{id}.interest_payable", "{id}.debt", (-1, +1)) if unpaid_interest == "capitalise" else None
+    def claims(terms, t, bal):
+        debt = bal("borrower", "{id}.debt")
+        _, _, target = loan_schedule(terms, t)
+        due = {"draw": max(exact(0), exact(terms["commitment"]) - debt) if t <= int(terms["available_until"]) else exact(0),
+               "interest": bal("borrower", "{id}.interest_payable"),
+               "fee": bal("borrower", "{id}.fee_payable")}
+        excess = max(exact(0), owed(bal) - target) if t >= int(terms["repay_from"]) else exact(0)
+        if capitalise:
+            due["capitalised"] = min(bal("borrower", "{id}.capitalised_interest"), excess)
+            excess -= due["capitalised"]
+        due["principal"] = excess
+        return due
+
+    specs = [ClaimSpec("draw", "source", Leg("borrower", "cash", "{id}.debt", (+1, +1))),
+             ClaimSpec("interest", "pay", Leg("borrower", "{id}.interest_payable", "cash", (-1, -1)),
+                       shortfall=Leg("borrower", "{id}.interest_payable", "{id}.capitalised_interest", (-1, +1))
+                       if capitalise else None),
+             ClaimSpec("fee", "pay", Leg("borrower", "{id}.fee_payable", "cash", (-1, -1)))]
+    if capitalise:
+        specs.append(ClaimSpec("capitalised", "pay", Leg("borrower", "{id}.capitalised_interest", "cash", (-1, -1))))
+    specs.append(ClaimSpec("principal", "pay", Leg("borrower", "{id}.debt", "cash", (-1, -1))))
     return ContractType(
         name=name,
         terms=("commitment", "rate", "rate_from", "days_per_period", "day_count_basis", "available_until",
-               "repay_from", "repay_amount"),
+               "commitment_fee_rate", "repay_from", "repay_periods"),
         parties=("borrower",),
-        accounts={"borrower": borrower},
-        flows=(FlowSpec("interest", "accrue", (Leg("borrower", "{id}.interest", "{id}.interest_payable", (+1, +1)),)),),
-        amounts=_loan_amounts,
-        claim_specs=(
-            ClaimSpec("draw", "source", Leg("borrower", "cash", "{id}.debt", (+1, +1))),
-            ClaimSpec("interest", "pay", Leg("borrower", "{id}.interest_payable", "cash", (-1, -1)), shortfall=pik),
-            ClaimSpec("principal", "pay", Leg("borrower", "{id}.debt", "cash", (-1, -1))),
-        ),
-        claims=_loan_claims,
+        accounts={"borrower": tuple(borrower)},
+        flows=(FlowSpec("interest", "accrue", (Leg("borrower", "{id}.interest", "{id}.interest_payable", (+1, +1)),)),
+               FlowSpec("commitment_fee", "accrue", (Leg("borrower", "{id}.fees", "{id}.fee_payable", (+1, +1)),))),
+        amounts=amounts,
+        claim_specs=tuple(specs),
+        claims=claims,
     )
 
 
-TERM_LOAN = _loan("term_loan", unpaid_interest="arrears")
-SHAREHOLDER_LOAN = _loan("shareholder_loan", unpaid_interest="capitalise")
+TERM_LOAN = _loan("term_loan", capitalise=False)
+SHAREHOLDER_LOAN = _loan("shareholder_loan", capitalise=True)
+
+
+# Sales and costs on payment terms ----------------------------------------
+
+def _terms_target(amount, terms, t):
+    """Balance left unpaid at period end under ``payment_days`` terms (zero from ``end``).
+
+    Annualised flow x payment_days / days_per_year: the target-balance
+    method on a period grid that cannot see individual invoices.
+    """
+    if t >= int(terms["end"]):
+        return exact(0)
+    return amount * int(terms["periods_per_year"]) * exact(terms["payment_days"]) / exact(terms["days_per_year"])
+
+
+def _offtake(terms, t, bal=None):
+    sale = _at(terms["volume"], t) * _at(terms["price"], t) if t <= int(terms["end"]) else exact(0)
+    out = {"sale": sale}
+    if bal is not None:
+        out["collect"] = bal("seller", "{id}.receivable") + sale - _terms_target(sale, terms, t)
+    return out
+
 
 OFFTAKE = ContractType(
     name="offtake",
-    terms=("volume", "price"),
+    terms=("volume", "price", "payment_days", "days_per_year", "periods_per_year", "end"),
     parties=("seller",),
-    accounts={"seller": (("cash", Nature.ASSET), ("{id}.revenue", Nature.INCOME))},
-    flows=(FlowSpec("sale", "operate", (Leg("seller", "cash", "{id}.revenue", (+1, +1)),)),),
-    amounts=lambda terms, t, bal=None: {"sale": _at(terms["volume"], t) * _at(terms["price"], t)},
+    accounts={"seller": (("cash", Nature.ASSET), ("{id}.revenue", Nature.INCOME), ("{id}.receivable", Nature.ASSET))},
+    flows=(FlowSpec("sale", "operate", (Leg("seller", "{id}.receivable", "{id}.revenue", (+1, +1)),)),
+           FlowSpec("collect", "operate", (Leg("seller", "cash", "{id}.receivable", (+1, -1)),))),
+    amounts=_offtake,
 )
 
 
-def _fixed_cost(terms, t, bal=None):
-    if t < int(terms["start"]):
-        return {}
-    return {"cost": exact(terms["annual"]) / int(terms["periods_per_year"])}
+def _cost_base(terms, t):
+    if not int(terms["start"]) <= t <= int(terms["end"]):
+        return exact(0)
+    return exact(terms["annual"]) / int(terms["periods_per_year"]) + exact(terms["unit_rate"]) * _at(terms["volume"], t)
 
 
-FIXED_COST = ContractType(
-    name="fixed_cost",
-    terms=("annual", "periods_per_year", "start"),
+def _operating_cost(terms, t, bal=None):
+    cost = _cost_base(terms, t)
+    vat = exact(terms["vat_rate"]) * cost
+    out = {"cost": cost, "vat": vat, "vat_refund": _vat_refund(terms, t, lambda p: _cost_base(terms, p))}
+    if bal is not None:
+        out["payment"] = bal("payer", "{id}.payable") + cost + vat - _terms_target(cost + vat, terms, t)
+    return out
+
+
+OPERATING_COST = ContractType(
+    name="operating_cost",
+    terms=("annual", "unit_rate", "volume", "periods_per_year", "start", "end", "vat_rate", "vat_refund_lag",
+           "payment_days", "days_per_year"),
     parties=("payer",),
-    accounts={"payer": (("cash", Nature.ASSET), ("{id}.expense", Nature.EXPENSE))},
-    flows=(FlowSpec("cost", "operate", (Leg("payer", "{id}.expense", "cash", (+1, -1)),)),),
-    amounts=_fixed_cost,
+    accounts={"payer": (("cash", Nature.ASSET), ("{id}.expense", Nature.EXPENSE), ("{id}.payable", Nature.LIABILITY),
+                        ("vat_receivable", Nature.ASSET))},
+    flows=(FlowSpec("cost", "operate", (Leg("payer", "{id}.expense", "{id}.payable", (+1, +1)),)),
+           FlowSpec("vat", "operate", (Leg("payer", "vat_receivable", "{id}.payable", (+1, +1)),)),
+           FlowSpec("payment", "operate", (Leg("payer", "{id}.payable", "cash", (-1, -1)),)),
+           FlowSpec("vat_refund", "operate", (Leg("payer", "cash", "vat_receivable", (+1, -1)),))),
+    amounts=_operating_cost,
 )
+
+
+def _capex(terms, t, bal=None):
+    spend = (lambda p: _at(terms["schedule"], p) if p < len(terms["schedule"]) else exact(0))
+    return {"spend": spend(t), "vat": exact(terms["vat_rate"]) * spend(t), "vat_refund": _vat_refund(terms, t, spend)}
+
 
 CAPEX = ContractType(
     name="capex",
-    terms=("schedule",),
+    terms=("schedule", "vat_rate", "vat_refund_lag", "end"),
     parties=("owner",),
-    accounts={"owner": (("cash", Nature.ASSET), ("cwip", Nature.ASSET))},
-    flows=(FlowSpec("spend", "fund", (Leg("owner", "cwip", "cash", (+1, -1)),)),),
-    amounts=lambda terms, t, bal=None: {"spend": _at(terms["schedule"], t)} if t < len(terms["schedule"]) else {},
+    accounts={"owner": (("cash", Nature.ASSET), ("cwip", Nature.ASSET), ("vat_receivable", Nature.ASSET))},
+    flows=(FlowSpec("spend", "fund", (Leg("owner", "cwip", "cash", (+1, -1)),)),
+           FlowSpec("vat", "fund", (Leg("owner", "vat_receivable", "cash", (+1, -1)),)),
+           FlowSpec("vat_refund", "operate", (Leg("owner", "cash", "vat_receivable", (+1, -1)),))),
+    amounts=_capex,
 )
 
+
+# Reserves ---------------------------------------------------------------
 
 def _reserve_target(terms, t):
     loan = terms["covers"]
@@ -233,6 +336,27 @@ DEBT_RESERVE = ContractType(
     refs=("covers",),
 )
 
+
+def _lc_amounts(terms, t, bal=None):
+    target = _reserve_target(terms, t)
+    return {"fee": target * exact(terms["fee_rate"]) * _days(terms)} if target else {}
+
+
+RESERVE_LETTER_OF_CREDIT = ContractType(
+    name="reserve_letter_of_credit",
+    terms=("covers", "periods_forward", "from", "fee_rate", "days_per_period", "day_count_basis"),
+    parties=("holder",),
+    accounts={"holder": (("cash", Nature.ASSET), ("{id}.fee", Nature.EXPENSE), ("{id}.fee_payable", Nature.LIABILITY))},
+    flows=(FlowSpec("fee", "accrue", (Leg("holder", "{id}.fee", "{id}.fee_payable", (+1, +1)),)),),
+    amounts=_lc_amounts,
+    claim_specs=(ClaimSpec("fee", "pay", Leg("holder", "{id}.fee_payable", "cash", (-1, -1))),),
+    claims=lambda terms, t, bal: {"fee": bal("holder", "{id}.fee_payable")},
+    refs=("covers",),
+)
+
+
+# Equity -----------------------------------------------------------------
+
 SPONSOR_EQUITY = ContractType(
     name="sponsor_equity",
     terms=(),
@@ -246,4 +370,5 @@ SPONSOR_EQUITY = ContractType(
 )
 
 REGISTRY = {t.name: t for t in (EQUITY_FUNDING, ONE_OFF_PURCHASE, SHARED_SAVINGS, TERM_LOAN, SHAREHOLDER_LOAN,
-                                OFFTAKE, FIXED_COST, CAPEX, DEBT_RESERVE, SPONSOR_EQUITY)}
+                                OFFTAKE, OPERATING_COST, CAPEX, DEBT_RESERVE, RESERVE_LETTER_OF_CREDIT,
+                                SPONSOR_EQUITY)}

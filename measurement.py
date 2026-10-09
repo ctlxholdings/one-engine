@@ -2,9 +2,10 @@
 
 Built so far: the straight-line asset register used by Averta's SPV
 (capitalised construction cost, depreciated from the in-service date,
-disposed of at the end of the project). Impairment, provisions,
-effective-interest fees and remeasurement come with the cases that need
-them (step 7).
+disposed of at the end of the project), and a straight-line provision
+settled once (the 50MW feature case's decommissioning). Impairment,
+discounting of provisions, effective-interest fees and remeasurement come
+with the cases that need them.
 
 The first-charge convention is declared, never defaulted
 -------------------------------------------------------
@@ -102,3 +103,36 @@ class Register:
         for tr in self._tranches:
             tr.charged = tr.cost
         return out
+
+
+class Provision:
+    """A liability built up straight-line and settled once.
+
+    ``amount`` is charged in equal parts of ``amount / periods`` from
+    ``start``; in ``settle_at`` whatever has not been charged yet is
+    charged (the true-up) and the whole amount is paid. Charging stops
+    once the amount is reached, so the provision never exceeds it.
+    Undiscounted: no case so far states a discount rate for it.
+    """
+
+    def __init__(self, amount: Number, start: int, periods: int, settle_at: int):
+        self.amount = exact(amount)
+        if self.amount < 0 or periods < 1 or settle_at < start:
+            raise MeasurementError(f"provision needs amount >= 0, periods >= 1, settle_at >= start; "
+                                   f"got {self.amount}, {periods}, {start}..{settle_at}")
+        self.start, self.periods, self.settle_at = start, periods, settle_at
+        self.charged = Fraction(0)
+
+    def charge(self, period: int) -> Fraction:
+        """The charge for ``period`` (the true-up in ``settle_at``)."""
+        if period == self.settle_at:
+            x = self.amount - self.charged
+        elif self.start <= period < self.settle_at:
+            x = min(self.amount / self.periods, self.amount - self.charged)
+        else:
+            x = Fraction(0)
+        self.charged += x
+        return x
+
+    def payment(self, period: int) -> Fraction:
+        return self.amount if period == self.settle_at else Fraction(0)
