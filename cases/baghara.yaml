@@ -1,0 +1,29 @@
+# Baghara on one_engine (consolidation step 7d).
+#
+# The registry and the parameter dossier are Baghara's own files, copied
+# unchanged from ctlxholdings/baghara 01_model/engines at 59bcdcf
+# (consolidation/experiments/make_reference_baghara.py). What follows is only
+# what those files do not say.
+network:
+  registry: baghara/uof_process_registry.yaml
+  params: baghara/uof_promoter_v2.yaml
+  units: {WET: t, DM: t_DM}
+  # A UOF is one 100-ha farm unit: its processes are computed per unit and
+  # posted times the number of units (the old engine's scope rule).
+  per_unit_locations: [UOF]
+  # The registry header's boundary nodes.
+  boundaries: [X1_Supply, X1_Sales, X2_Atmosphere, X3_Disposal, Z1_Fertility]
+  # A crop's gross residue: the old engine hard-codes X1_Supply.
+  residue_source: X1_Supply
+  # Wet by-products fed to the herds as dry matter; the factor is the
+  # registry's own parameter (its notes say "WET->DM conversion").
+  conversions:
+    A1_B1_feed.hub_oilcake_feed: oilcake_dm_content
+    A1_B1_feed.hub_bran: bran_dm_content
+  # Livestock hand-offs whose physical outputs exceed their physical inputs.
+  # The registry's dry-matter partition sends all feed to manure, gas and the
+  # milk pathway, so live-weight gain and the milk itself have no source.
+  # Named here so the shortfall shows; it is not a model of growth.
+  gaps:
+    A2_beef: liveweight_gain_unsourced
+    B2_dairy: herd_output_unsourced

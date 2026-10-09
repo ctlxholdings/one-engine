@@ -1,0 +1,3191 @@
+# =============================================================================
+# UOF PARAMETERS v2.1 — FULLY SOURCED
+# =============================================================================
+# Source:   1 Projet CAP 3Moissons 02 06_2025.docx (June 2025)
+# Layer:    1 (Mass Balance — biological processes at UOF only)
+# Scope:    No processing, no hub. All industrial steps are hub concern.
+# Date:     2026-02-08
+# Status:   DRAFT — awaiting promoter validation
+# =============================================================================
+# DESIGN DECISIONS:
+#   - Land allocation: promoter's 60/15/10/5/5/5
+#   - No maize: follow promoter (sorghum only)
+#   - 4 agronomic seasons, monthly computation unit
+#   - 9 product categories replace chain letters (A-G abolished)
+#   - Livestock: output target → headcount on site → feed demand (pull logic)
+#   - Yield ramp: separate file (yield_ramp.yaml, Layer 2)
+#   - Water/energy/costs: deferred
+#   - Bilingual: fr: field on all names
+#   - MASS BALANCE: DM-only. No water, urine, or respiratory tracking.
+#     Crops: natural units (t grain, t fresh produce). Livestock: feed DM partition
+#     (IPCC: product + manure + metabolic = 1.0). Cattle live weight = inventory
+#     accounting (head × kg), separate from the DM mass balance.
+# =============================================================================
+# PARAMETER TAGGING CONVENTION:
+#
+#   value:        Design input or fixed constant (no uncertainty range)
+#   base:         Central estimate used in base case model
+#   low:          Conservative / downside value
+#   high:         Optimistic / upside value
+#   range:        [min, max] for constrained params (e.g. must sum to 1.0)
+#   source:       Plain text citation
+#   source_id:    Key to source catalog (baghara_master_parameters.yaml)
+#   source_url:   URL or DOI for external sources (self-contained traceability)
+#   source_date:  YYYY-MM when source data was obtained or published
+#   confidence:   high (institutional/validated) | medium (benchmark) | low (estimate)
+#   sensitivity:  high | medium | low | pending (Layer 3)
+#   validation:   validated | pending_field | pending_promoter | not_validated
+#   approved_by:  Who signed off (pending = not yet approved)
+#   benchmark:    Institutional reference range for cross-check
+#   dependencies: List of other params this value links to
+#   note:         Explanatory text
+#
+#   direction:   higher_is_better | lower_is_better (for scenario engine)
+#   scope:        farm_gate | full_chain (boundary for loss/cost parameters)
+#   excludes:     Plain text describing what is NOT included in this parameter
+#   derived_from: Formula string if this value is computed in A-002 registry
+#   status:       derived_in_registry (if engine computes this, value is reference only)
+##   Convention: value: → no uncertainty. base:/low:/high: → uncertain parameter.
+#   Convention: source_id links to baghara_master_parameters.yaml source catalog.
+# =============================================================================
+
+
+# =============================================================================
+# LAND ALLOCATION (per 100 ha unit)
+# =============================================================================
+
+land_allocation:
+  source: "Promoter — CAP 3Moissons June 2025"
+  source_id: "internal:3moissons"
+  confidence: high
+  validation: promoter_confirmed
+  note: "All zone sizes from promoter vision document. Sum = 100 ha."
+
+  rainfed_ha:                60    # fr: Culture pluviale
+  irrigated_contresaison_ha: 15    # fr: Culture irriguée de contre-saison
+  forage_ha:                 10    # fr: Zone fourragère
+  orchard_ha:                 5    # fr: Verger
+  agroforestry_ha:            5    # fr: Agroforesterie
+  infrastructure_ha:          5    # fr: Infrastructure
+  buffer_ha:                  0    # fr: Réserve (analyst placeholder, set to zero)
+  total_ha:                 100
+  productive_ha:             95
+  non_productive_ha:          5
+
+
+# =============================================================================
+# SEASONS (agronomic, Chad ~13°N)
+# =============================================================================
+
+seasons:
+  source: "Standard Sahel agronomic calendar, Chad 13°N latitude"
+  confidence: high
+  validation: validated
+
+  pluviale:
+    label: "Saison pluviale"
+    fr: "Saison pluviale"
+    months: [6, 7, 8, 9]
+    duration_months: 4
+
+  contresaison_1:
+    label: "Contre-saison fraîche"
+    fr: "Contre-saison fraîche"
+    months: [10, 11, 12]
+    duration_months: 3
+
+  contresaison_2:
+    label: "Contre-saison froide"
+    fr: "Contre-saison froide"
+    months: [1, 2, 3]
+    duration_months: 3
+
+  contresaison_3:
+    label: "Contre-saison chaude"
+    fr: "Contre-saison chaude"
+    months: [4, 5]
+    duration_months: 2
+
+
+# =============================================================================
+# SITE CLIMATE DATA — Chad ~13°N (shared by all crop water demand entries)
+# =============================================================================
+
+climate:
+  source: "FAO CLIMWAT / Penman-Monteith for semi-arid Sahel, 13°N latitude. A-013."
+  confidence: high
+  validation: pending_field
+  note: "Site-level climate data. ET0 and rainfall drive all crop water demand via ETc."
+
+  # Reference evapotranspiration — mm/day per month (FAO Penman-Monteith)
+  # Dry season high (Mar-May: hot, dry, windy), wet season lower (Jul-Sep: humid, cloudy)
+  et0_mm_day:
+    value: [5.0, 6.0, 7.0, 7.5, 7.0, 5.5, 4.5, 4.0, 4.5, 5.5, 5.5, 5.0]
+    source: "FAO CLIMWAT — semi-arid Sahel, 13°N. Annual ET0 ~2036 mm."
+    confidence: high
+    validation: pending_field
+    note: "Peak Apr (7.5 mm/d). Trough Aug (4.0 mm/d). Source: A-013 lines 29-31."
+
+  # Monthly rainfall — mm, long-term average (~580 mm/year, mainly Jun-Sep)
+  rainfall_mm:
+    value: [0, 0, 0, 0, 10, 65, 150, 210, 120, 30, 0, 0]
+    source: "Chad 13°N long-term average. ~580 mm/yr. A-013 line 34."
+    confidence: high
+    validation: pending_field
+    note: "Monomodal — virtually all rain Jun-Sep. Nov-Apr bone dry."
+
+  # Calendar days per month (non-leap year)
+  days_per_month:
+    value: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    source: "Calendar"
+    confidence: high
+
+
+# =============================================================================
+# PRODUCT ROUTING (UOF → destination)
+# =============================================================================
+
+routing:
+  source: "Design decision — analyst + promoter discussion 2026-02-08"
+  confidence: high
+  validation: pending_promoter
+
+  beef:        hub.abattoir              # fr: Viande bovine → Abattoir
+  dairy:       hub.dairy_plant           # fr: Produits laitiers → Laiterie
+  oilseeds:    hub.oil_press             # fr: Oléagineux → Huilerie
+  cereals:     hub.mill                  # fr: Céréales → Moulin
+  legumes:     hub.distribution          # fr: Légumineuses → Distribution (sans transformation)
+  vegetables:  hub.cold_chain            # fr: Maraîchage → Chaîne du froid
+  fruit:       hub.cold_chain            # fr: Fruits → Chaîne du froid
+  gum:         hub.grading              # fr: Gomme arabique → Tri et conditionnement
+  feed:        [uof.beef, uof.dairy]     # fr: Alimentation animale → Interne
+
+
+# =============================================================================
+#
+#   PRODUCT 1: BEEF  /  VIANDE BOVINE (Embouche)
+#
+# =============================================================================
+# Model: flow-through (cattle ARE the product)
+# Logic: output target → headcount on site → feed demand (pull)
+# Delivery: daily to hub.abattoir for continuous slaughterhouse operation
+#
+# NOTE — Medigue vs UOF distinction:
+#   Medigue feedlot model: 18,000 head/yr, entry 200 kg (weaners), exit 320 kg, 120 days.
+#   This UOF model: 30 head/yr, entry 300 kg (store cattle), exit 450 kg, 150 days.
+#   These are different operations at different scales with different animal profiles.
+#   Medigue = hub-scale commercial feedlot. UOF = cooperative farm fattening unit.
+#   An underwriter should not flag these as contradictory — they are complementary.
+
+beef:
+  product_category: beef
+  fr: Viande bovine (embouche)
+  delivery: daily
+
+  target_finished_per_year:
+    value: 30
+    source: "Promoter — 30 bovins d'embouche per farm"
+    source_id: "internal:3moissons"
+    confidence: high
+    validation: promoter_confirmed
+    note: "Annual throughput target. Drives herd size, feed demand, slaughter schedule."
+
+  cycle_days:
+    base: 120
+    low: 100
+    high: 150
+    direction: lower_is_better
+    sensitivity: high
+    source: "3Moissons internal model; Medigue model"
+    source_id: "internal:3moissons"
+    confidence: medium
+    validation: pending_field
+    note: "Medigue uses 120 days. Promoter template 180. Base revised to 120 (D-055). Shorter = faster capital rotation."
+
+  entry_weight_kg:
+    value: 300
+    source: "3Moissons internal model"
+    source_id: "internal:3moissons"
+    confidence: medium
+    validation: pending_field
+    note: "Medigue uses 200 kg (weaner calves). 300 = older store cattle. Affects economics significantly."
+
+  exit_weight_kg:
+    value: 402.0
+    derived_from: "entry_weight_kg + adg_kg * cycle_days"
+    status: derived_in_registry
+    source: "3Moissons internal model (original 450 kg at ADG 1.0, cycle 150)"
+    source_id: "internal:3moissons"
+    confidence: medium
+    validation: pending_field
+    note: "Derived in A-002 registry: 300 + 0.85 × 120 = 402 kg base case. D-055 revised cycle_days base to 120."
+
+  adg_kg:
+    base: 0.85
+    low: 0.7
+    high: 1.2
+    direction: higher_is_better
+    source: "Medigue model; FAO GLEAM; Baghara feasibility"
+    source_id: "internal:medigue"
+    source_date: "2025"
+    confidence: medium
+    sensitivity: high
+    validation: pending_field
+    approved_by: pending
+    benchmark: "Medigue uses 1.0 kg/d. FAO GLEAM tropical Zebu: 0.5-1.2 kg/d."
+    dependencies: [dmi_kg_per_head_per_day, cycle_days, exit_weight_kg]
+    note: "Average daily gain, Zebu breed. Consistent across all internal sources."
+
+  # Derived (engine computes):
+  # head_on_site ≈ 30 × 150/365 ≈ 12.3  (fr: Effectif présent)
+  # cycles_per_year ≈ 365/150 ≈ 2.4      (fr: Rotations par an)
+
+  mortality_pct:
+    base: 0.03
+    low: 0.02
+    high: 0.05
+    direction: lower_is_better
+    source: "Medigue model; CIRAD Memento de l'agronome"
+    source_id: "internal:medigue"
+    confidence: high
+    sensitivity: low
+    validation: validated
+    note: "Feedlot mortality. Low sensitivity — small % of herd."
+
+  mortality_avg_weight_kg:
+    value: 375
+    source: "Derived — midpoint of entry/exit"
+    confidence: high
+    validation: not_applicable
+    note: "Midpoint of entry (300) and exit (402). For mortality mass calculation."
+
+  fcr:
+    base: 11.765
+    low: 10.0
+    high: 14.0
+    direction: lower_is_better
+    source: "NASEM 2016; Zebu feedlot trials (CIRAD/Medigue)"
+    source_id: "tier2:nasem_2016"
+    source_url: "https://doi.org/10.17226/19014"
+    source_date: "2016"
+    confidence: medium
+    sensitivity: high
+    validation: validated
+    approved_by: pending
+    benchmark: "Intensive Zebu: 10-12 (NASEM/CIRAD). Extensive: 12-14. Base 11.765 = 10.0/0.85 (maintains same DMI as prior base case)."
+    note: "Feed Conversion Ratio (kg DM feed per kg live weight gain). Primary agronomic parameter — feed demand is derived: dmi = adg × fcr. dmi_kg_per_head_per_day is no longer a free parameter."
+
+  # Feed DM partition — two-bucket model driven by dry matter digestibility
+  # manure_dm = feed × (1 - dmd_pct)   [indigestible DM → feces]
+  # gas_losses_dm = feed × dmd_pct     [digestible DM → CO₂/CH₄/H₂O + body tissue]
+  # WET product (finished_cattle) is independent, driven by ADG in product_handoff.
+  dmd_pct:
+    base: 0.55
+    range: [0.50, 0.65]
+    direction: higher_is_worse
+    source: "IPCC 2019 Vol 4 Ch 10 Table 10.2; SSA low-quality forage default"
+    source_url: "https://www.ipcc-nggip.iges.or.jp/public/2019rf/vol4.html"
+    source_date: "2019"
+    confidence: medium
+    sensitivity: low
+    validation: validated
+    approved_by: pending
+    note: "Dry matter digestibility. 55% = standard IPCC default for SSA low-quality forage (rangeland/crop residues). manure fraction = 1 - dmd = 0.45 (unchanged from prior model)."
+
+  calf_source:
+    value: purchased
+    source: "Design decision"
+    confidence: high
+    validation: validated
+    note: "Calves purchased via X1_Supply. Future: dairy calves possible."
+
+
+# =============================================================================
+#
+#   PRODUCT 2: DAIRY  /  PRODUITS LAITIERS
+#
+# =============================================================================
+# Model: standing asset (cows are the "machine", not the product)
+# Logic: herd size → milk output + calf byproduct; herd drives feed demand
+# Delivery: daily to hub.dairy_plant
+
+dairy:
+  product_category: dairy
+  fr: Produits laitiers
+  delivery: daily
+
+  milking_cows:
+    value: 30
+    source: "Promoter — 30 vaches laitières per farm"
+    source_id: "internal:3moissons"
+    confidence: high
+    validation: promoter_confirmed
+    note: "Old uof_params had 15. Promoter doc specifies 30."
+
+  avg_cow_weight_kg:
+    value: 450
+    source: "Sahel Zebu reference — CIRAD Memento"
+    confidence: medium
+    validation: not_validated
+    note: "Asset weight, not in production mass balance."
+
+  milk_yield_L_per_day:
+    base: 8.0
+    low: 5.0
+    high: 12.0
+    direction: higher_is_better
+    source: "3Moissons internal model"
+    source_id: "internal:3moissons"
+    source_date: "2025-06"
+    confidence: medium
+    sensitivity: high
+    validation: pending_field
+    approved_by: pending
+    benchmark: "Local Zebu: 3-5 L/d. Crossbred (Zebu × Holstein): 8-15 L/d. CIRAD tropical ref."
+    dependencies: [dmi_kg_per_cow_per_day_lactating, lactation_days, feed_to_milk_pct]
+    note: "Conservative for tropical breed. Crossbred could reach 12+. Local Zebu often 3-5."
+
+  lactation_days:
+    base: 270
+    low: 240
+    high: 300
+    direction: higher_is_better
+    source: "Tropical dairy reference — CIRAD"
+    confidence: medium
+    sensitivity: medium
+    validation: pending_field
+    note: "Tropical breed lactation. Shorter than temperate (305 days)."
+
+  milk_density_kg_L:
+    value: 1.03
+    source: "Physical constant"
+    confidence: high
+    validation: validated
+    note: "Physical constant. L to kg conversion."
+
+  dmi_kg_per_cow_per_day_lactating:
+    base: 14.0
+    low: 12.0
+    high: 16.0
+    direction: lower_is_better
+    source: "NASEM 2016; 3.1% BW for lactating Zebu"
+    confidence: high
+    sensitivity: high
+    validation: validated
+    note: "3.1% BW for lactating Zebu × 450 kg = 14 kg/day."
+
+  dmi_kg_per_cow_per_day_dry:
+    base: 10.0
+    low: 8.0
+    high: 12.0
+    direction: lower_is_better
+    source: "NASEM 2016; ~2.2% BW for dry cow"
+    confidence: high
+    sensitivity: low
+    validation: validated
+    note: "2.2% BW for dry Zebu × 450 kg = 10 kg/day."
+
+  dry_period_days:
+    value: 95
+    derived_from: "365 - lactation_days"
+    status: derived_in_registry
+    source: "Derived — 365 - 270 lactation"
+    confidence: high
+    validation: not_applicable
+    note: "Now computed in A-002 registry. Value here is base-case reference only."
+
+  # Feed mass balance (must sum to 1.0)
+  feed_to_milk_pct:
+    base: 0.25
+    range: [0.20, 0.30]
+    direction: higher_is_better
+    source: "IPCC 2019 Vol 4 Ch 10"
+    source_url: "https://www.ipcc-nggip.iges.or.jp/public/2019rf/vol4.html"
+    source_date: "2019"
+    confidence: high
+    sensitivity: high
+    validation: validated
+    approved_by: pending
+    dependencies: [feed_to_manure_pct, feed_to_metabolic_pct]
+    note: "Feed converted to raw milk solids → hub.dairy_plant"
+
+  feed_to_manure_pct:
+    base: 0.40
+    range: [0.35, 0.45]
+    direction: lower_is_better
+    source: "IPCC 2019 Vol 4 Ch 10"
+    source_url: "https://www.ipcc-nggip.iges.or.jp/public/2019rf/vol4.html"
+    source_date: "2019"
+    confidence: high
+    sensitivity: low
+    validation: validated
+    approved_by: pending
+    dependencies: [feed_to_milk_pct, feed_to_metabolic_pct]
+    note: "Feed to manure → composting/Z1_Fertility."
+
+  feed_to_metabolic_pct:
+    base: 0.35
+    range: [0.25, 0.45]
+    direction: lower_is_better
+    source: "IPCC 2019 Vol 4 Ch 10"
+    source_url: "https://www.ipcc-nggip.iges.or.jp/public/2019rf/vol4.html"
+    source_date: "2019"
+    confidence: high
+    sensitivity: low
+    validation: validated
+    approved_by: pending
+    dependencies: [feed_to_milk_pct, feed_to_manure_pct]
+    note: "= 1 - milk - manure"
+
+  calving_rate:
+    base: 0.85
+    low: 0.70
+    high: 0.92
+    direction: higher_is_better
+    source: "Tropical dairy reference — CIRAD Memento"
+    confidence: medium
+    sensitivity: low
+    validation: pending_field
+    note: "Calves per cow per year. Affects byproduct (calves) not main product (milk)."
+
+  calf_survival_rate:
+    base: 0.90
+    low: 0.80
+    high: 0.95
+    direction: higher_is_better
+    source: "Tropical dairy reference — CIRAD Memento"
+    confidence: medium
+    sensitivity: low
+    validation: pending_field
+    note: "Calf survival to weaning. Tropical conditions."
+
+  calf_weaning_weight_kg:
+    base: 80
+    low: 60
+    high: 100
+    direction: higher_is_better
+    source: "Sahel Zebu reference"
+    confidence: medium
+    sensitivity: low
+    validation: pending_field
+    note: "Sahel Zebu calf at weaning (~6 months)."
+
+  male_calf_pct:
+    value: 0.50
+    source: "Biological constant"
+    confidence: high
+    validation: validated
+    note: "Males → uof.beef or sale. Females → replacement."
+
+  annual_cull_rate:
+    base: 0.20
+    low: 0.15
+    high: 0.25
+    direction: lower_is_better
+    source: "Tropical dairy management — CIRAD"
+    confidence: medium
+    sensitivity: low
+    validation: pending_field
+    note: "Annual replacement rate for dairy herd. Culled cows sold as beef."
+
+  cull_cow_weight_kg:
+    base: 400
+    low: 350
+    high: 450
+    direction: higher_is_better
+    source: "Sahel Zebu reference"
+    confidence: medium
+    sensitivity: low
+    validation: pending_field
+    note: "End-of-life cow weight. Lower than prime condition."
+
+  replacement_source:
+    value: retained
+    source: "Design decision"
+    confidence: high
+    validation: validated
+    note: "Heifers retained from own calves (auto-renouvellement)."
+
+
+# =============================================================================
+#
+#   PRODUCT 3: FEED  /  ALIMENTATION ANIMALE (interne)
+#
+# =============================================================================
+# Feed collects from multiple sources. Never leaves UOF.
+# Supplies uof.beef and uof.dairy.
+
+feed:
+  product_category: feed
+  fr: Alimentation animale
+
+  # --- Dedicated forage zone ---
+  forage_zone:
+    zone_ha:
+      value: 10
+      source: "Promoter — 10 ha forage zone"
+      source_id: "internal:3moissons"
+      confidence: high
+      validation: promoter_confirmed
+      note: "Dedicated irrigated forage zone. Linked to land_allocation.forage_ha."
+    fr: Zone fourragère
+    rotation_type: permanent
+    season: all_year
+
+    crops:
+      alfalfa:
+        fr: Luzerne
+        area_ha:
+          value: 10
+          source: "Design — full forage zone allocated to alfalfa"
+          confidence: medium
+          validation: pending_promoter
+          note: "Species TBD. Alfalfa as reference. If tropical grass, lower protein."
+        yield_t_dm_per_ha_per_year:
+          base: 12.0
+          low: 8.0
+          high: 16.0
+          direction: higher_is_better
+          source: "3Moissons internal model; irrigated Sahel reference"
+          source_id: "internal:3moissons"
+          source_date: "2025-06"
+          confidence: medium
+          sensitivity: high
+          validation: pending_field
+          approved_by: pending
+          benchmark: "Irrigated alfalfa global: 10-20 t DM/ha. Arid zone (Egypt, Sudan): 8-14 t DM/ha."
+          dependencies: [area_ha, cuts_per_year, loss_pct, "beef.dmi_kg_per_head_per_day", "dairy.dmi_kg_per_cow_per_day_lactating"]
+          note: "Irrigated alfalfa in arid zone. Range depends on variety and management."
+        cuts_per_year:
+          value: 6
+          source: "Irrigated alfalfa standard — 5-8 cuts/year"
+          confidence: medium
+          validation: pending_field
+          note: "Irrigated alfalfa allows year-round cutting. 5-8 cuts typical for arid zone."
+        harvest_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        dm_content_pct:
+          value: 0.88
+          source: "Forage reference — cured hay"
+          confidence: high
+          validation: validated
+          note: "Cured hay DM. Fresh-cut alfalfa would be ~0.25."
+        loss_pct:
+          base: 0.05
+          low: 0.03
+          high: 0.08
+          direction: lower_is_better
+          source: "Industry standard — hay handling loss"
+          confidence: medium
+          sensitivity: low
+          validation: not_validated
+          scope: farm_gate
+          excludes: "hub storage, processing, distribution losses"
+          note: "Handling and storage loss at farm level. Conservative for well-managed hay."
+        crude_protein_pct:
+          value: 0.18
+          source: "Alfalfa feed table — NRC"
+          confidence: high
+          validation: validated
+          note: "If tropical grass replaces alfalfa, expect 0.08-0.12 → more purchased concentrate."
+
+  # --- Crop residues ---
+  residues:
+    peanut_hay:
+      fr: Fane d'arachide
+      source_crop: oilseeds.peanut
+      ratio_to_main:
+        base: 1.0
+        low: 0.8
+        high: 1.2
+        direction: higher_is_better
+        source: "Agronomic standard — legume hay:grain ratio"
+        source_date: "2026-02"
+        confidence: medium
+        sensitivity: medium
+        validation: not_validated
+        approved_by: pending
+        benchmark: "CIRAD tropical legume residue:grain ratio: 0.8-1.5."
+        dependencies: ["oilseeds.peanut.yield_t_per_ha"]
+        note: "Peanut hay is a complete above-ground residue. 1:1 ratio typical for Sahel."
+      dm_content_pct:
+        value: 0.85
+        source: "Feed table reference"
+        confidence: high
+        validation: validated
+        note: "Air-dried hay. Standard feed table value."
+      feed_value: high
+
+    cowpea_straw:
+      fr: Paille de niébé
+      source_crop: legumes.cowpea
+      ratio_to_main:
+        base: 1.0
+        low: 0.8
+        high: 1.2
+        direction: higher_is_better
+        source: "Agronomic standard — legume straw:grain"
+        source_date: "2026-02"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        approved_by: pending
+        benchmark: "CIRAD tropical legume residue:grain ratio: 0.8-1.5."
+        dependencies: ["legumes.cowpea.yield_t_per_ha"]
+        note: "Cowpea straw ratio similar to peanut hay. Legume residue with feed value."
+      dm_content_pct:
+        value: 0.85
+        source: "Feed table reference"
+        confidence: high
+        validation: validated
+        note: "Air-dried straw. Standard feed table value."
+      feed_value: medium
+
+    sorghum_stover:
+      fr: Tiges de sorgho (pluvial)
+      source_crop: cereals.sorghum
+      ratio_to_main:
+        base: 1.2
+        low: 1.0
+        high: 1.5
+        direction: higher_is_better
+        source: "Agronomic standard — cereal stover:grain, tall Sahel varieties"
+        source_date: "2026-02"
+        confidence: medium
+        sensitivity: medium
+        validation: not_validated
+        approved_by: pending
+        benchmark: "IPCC/FAO cereal stover:grain: 1.0-2.0. Sahel sorghum tall varieties: 1.2-1.8."
+        dependencies: ["cereals.sorghum.yield_t_per_ha"]
+        note: "Sorghum stover ratio higher than maize (1.0). Sahel varieties are tall."
+      dm_content_pct:
+        value: 0.85
+        source: "Feed table reference"
+        confidence: high
+        validation: validated
+        note: "Field-dried stover. Standard feed table value for cereal residues."
+      feed_value: low
+
+    sorghum_stover_irrigated:
+      fr: Tiges de sorgho (irrigué)
+      source_crop: cereals.sorghum_grain_irrigated
+      ratio_to_main:
+        base: 1.2
+        low: 1.0
+        high: 1.5
+        direction: higher_is_better
+        source: "Same as rainfed stover ratio"
+        source_date: "2026-02"
+        confidence: medium
+        sensitivity: medium
+        validation: not_validated
+        approved_by: pending
+        benchmark: "Same as rainfed — IPCC/FAO cereal stover:grain: 1.0-2.0."
+        dependencies: ["cereals.sorghum_grain_irrigated.yield_t_per_ha"]
+        note: "Irrigated sorghum produces more biomass. 1.2× rainfed stover ratio."
+      dm_content_pct:
+        value: 0.85
+        source: "Feed table reference"
+        confidence: high
+        validation: validated
+        note: "Field-dried stover. Same as rainfed sorghum stover."
+      feed_value: low
+
+    sesame_straw:
+      fr: Paille de sésame
+      source_crop: oilseeds.sesame
+      ratio_to_main:
+        base: 0.8
+        low: 0.6
+        high: 1.0
+        direction: higher_is_better
+        source: "Analyst estimate — sesame is smaller plant than cereals"
+        source_date: "2026-02"
+        confidence: low
+        sensitivity: low
+        validation: not_validated
+        approved_by: pending
+        benchmark: "No institutional benchmark. Estimated from plant size relative to cereals."
+        dependencies: ["oilseeds.sesame.yield_t_per_ha"]
+        note: "Sesame is a small-statured plant. Lower stover ratio than cereals."
+      dm_content_pct:
+        value: 0.85
+        source: "Feed table reference"
+        confidence: high
+        validation: validated
+        note: "Air-dried straw. Limited feed value — used as roughage supplement."
+      feed_value: low
+
+    vegetable_residues:
+      fr: Résidus maraîchers
+      source_crop: vegetables.*
+      ratio_to_main:
+        base: 0.5
+        low: 0.3
+        high: 0.7
+        direction: higher_is_better
+        source: "Analyst estimate"
+        source_date: "2026-02"
+        confidence: low
+        sensitivity: low
+        validation: not_validated
+        approved_by: pending
+        benchmark: "No institutional benchmark. Vegetable residue ratios vary widely by crop."
+        dependencies: ["vegetables.rotations"]
+        note: "Fresh vegetable waste. Highly variable by crop mix. Conservative estimate."
+      dm_content_pct:
+        value: 0.15
+        source: "Analyst estimate — fresh vegetable waste is mostly water"
+        confidence: low
+        validation: not_validated
+        note: "Fresh vegetable residues are ~85% water. Very low DM content."
+      feed_value: none
+      destination: Z1_Fertility
+      note: "Composted, not fed to livestock."
+
+  # --- Hub byproducts (deferred) ---
+  hub_returns:
+    oilseed_cake:
+      fr: Tourteau d'arachide / sésame
+      source_hub: hub.oil_press
+      status: deferred
+      note: "Peanut cake ~60% of pressed mass. High protein feed."
+    cereal_bran:
+      fr: Son de sorgho
+      source_hub: hub.mill
+      status: deferred
+      note: "Sorghum bran ~16% of milled mass."
+
+  # --- Purchased feed ---
+  purchased_concentrate:
+    fr: Aliment concentré acheté
+    source_supply: X1_Supply
+    dm_content_pct:
+      value: 0.88
+      source: "Commercial feed standard"
+      confidence: high
+      validation: validated
+      note: "Commercial compound feed. Standard moisture content for stored feed."
+    note: "Gap filler. Price deferred to Layer 3."
+
+  # --- Allocation ---
+  residue_dm_availability:
+    base: 0.85
+    low: 0.70
+    high: 0.95
+    direction: higher_is_better
+    source: "Analyst estimate — fraction of residues actually collected"
+    source_date: "2026-02"
+    confidence: low
+    sensitivity: medium
+    validation: not_validated
+    approved_by: pending
+    benchmark: "IPCC default crop residue collection: 50-90% depending on management."
+    dependencies: ["feed.residues.*"]
+    note: "15% lost to field decomposition, trampling, other uses."
+
+  allocation_method:
+    value: proportional
+    source: "Design decision — standard proportional allocation"
+    confidence: high
+    validation: validated
+    note: "Feed pool split proportional to demand (beef vs dairy)."
+
+  # --- Feed balance (mature year, base case) ---
+  # Supply:
+  #   Forage zone:  10 ha × 12 t DM/ha               = 120.0 t DM
+  #   Peanut hay:   20 × 1.5 × 1.0 × 0.85 × 0.85    =  21.7 t DM
+  #   Cowpea straw: 10 × 0.8 × 1.0 × 0.85 × 0.85    =   5.8 t DM
+  #   Sorghum stover: 20 × 1.5 × 1.2 × 0.85 × 0.85  =  26.0 t DM
+  #   Sorghum stover irr: 10 × 3.0 × 1.2 × 0.85 × 0.85 = 26.0 t DM
+  #   Sesame straw: 10 × 0.6 × 0.8 × 0.85 × 0.85    =   3.5 t DM
+  #   TOTAL SUPPLY:                                   = 203 t DM
+  # Demand:
+  #   Beef:  12.3 head × 10 kg/d × 365                =  45 t DM
+  #   Dairy: 30 cows × (14×270 + 10×95) / 1000        = 142 t DM
+  #   TOTAL DEMAND:                                    = 187 t DM
+  # Balance: +16 t DM surplus (8.6%)
+
+
+# =============================================================================
+#
+#   PRODUCT 4: OILSEEDS  /  OLÉAGINEUX
+#
+# =============================================================================
+
+oilseeds:
+  product_category: oilseeds
+  fr: Oléagineux
+
+  crops:
+    peanut:
+      fr: Arachide
+      zone: rainfed
+      season: pluviale
+      harvest_months: [9, 10]
+      harvest_months_source: "Sahel agronomic calendar — rainfed groundnut matures Sep-Oct"
+      harvest_months_confidence: medium
+      harvests_per_year: 1
+
+      area_ha:
+        value: 20
+        source: "3Moissons model, restored to 60 ha base (was 15 on 50 ha)"
+        source_id: "internal:3moissons"
+        confidence: medium
+        validation: pending_promoter
+        note: "Promoter specifies 60 ha rainfed, not crop-level split."
+
+      yield_t_per_ha:
+        base: 1.5
+        low: 1.0
+        high: 2.0
+        direction: higher_is_better
+        source: "3Moissons internal model (aspirational target)"
+        source_id: "internal:3moissons"
+        source_url: "https://tropicallegumeshub.com/wp-content/uploads/2020/06/2014-Country-Strategies-and-Seed-Roadmaps-12-Niger.pdf"
+        source_date: "2025-06"
+        confidence: medium
+        sensitivity: high
+        validation: pending_field
+        approved_by: pending
+        benchmark: "ICRISAT Niger 2014: 0.47 t/ha rainfed national avg. Improved varieties: 0.8-1.2 t/ha."
+        dependencies: [area_ha, loss_pct, "feed.residues.peanut_hay"]
+        note: >
+          ICRISAT Niger gives 0.47 t/ha rainfed national average (tier 1).
+          Base assumes improved seed varieties + managed inputs + soil prep.
+          Low = improved but below-average rain. High = optimal year.
+
+      loss_pct:
+        base: 0.03
+        low: 0.02
+        high: 0.05
+        direction: lower_is_better
+        source: "Industry standard — Sahel grain/oilseed handling"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        note: "Peanut in-shell is durable. Low handling loss at farm gate."
+
+    sesame:
+      fr: Sésame
+      zone: rainfed
+      season: pluviale
+      harvest_months: [9, 10]
+      harvest_months_source: "Sahel agronomic calendar — sesame matures Sep-Oct"
+      harvest_months_confidence: medium
+      harvests_per_year: 1
+
+      area_ha:
+        value: 10
+        source: "3Moissons model (unchanged from 50 ha version)"
+        source_id: "internal:3moissons"
+        confidence: medium
+        validation: pending_promoter
+        note: "10 ha sesame on 60 ha rainfed zone."
+
+      yield_t_per_ha:
+        base: 0.6
+        low: 0.3
+        high: 0.9
+        direction: higher_is_better
+        source: "3Moissons internal model"
+        source_id: "internal:3moissons"
+        source_url: "https://agritrop.cirad.fr/608275/1/s40066-017-0143-3.pdf"
+        source_date: "2025-06"
+        confidence: medium
+        sensitivity: medium
+        validation: pending_field
+        approved_by: pending
+        benchmark: "CIRAD 2017: 0.30 t/ha avg. Range 0.05-1.50 t/ha across Sahel."
+        dependencies: [area_ha, loss_pct, "feed.residues.sesame_straw"]
+        note: >
+          CIRAD Sahel gives 0.30 t/ha average (range 0.05-1.50, tier 1).
+          Base = double the regional average. Justified if inputs and seed quality
+          are above smallholder norm. High value per kg offsets lower yield.
+
+      loss_pct:
+        base: 0.02
+        low: 0.01
+        high: 0.04
+        direction: lower_is_better
+        source: "Industry standard — sesame is dry, low-moisture seed"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        note: "Sesame seed is small and dry. Minimal post-harvest loss."
+
+
+# =============================================================================
+#
+#   PRODUCT 5: CEREALS  /  CÉRÉALES
+#
+# =============================================================================
+
+cereals:
+  product_category: cereals
+  fr: Céréales
+
+  crops:
+    sorghum:
+      fr: Sorgho (pluvial)
+      zone: rainfed
+      season: pluviale
+      harvest_months: [9, 10]
+      harvest_months_source: "Sahel agronomic calendar — rainfed sorghum"
+      harvest_months_confidence: medium
+      harvests_per_year: 1
+
+      area_ha:
+        value: 20
+        source: "3Moissons model, restored to 60 ha base (was 15 on 50 ha)"
+        source_id: "internal:3moissons"
+        confidence: medium
+        validation: pending_promoter
+        note: "20 ha sorghum on 60 ha rainfed zone."
+
+      yield_t_per_ha:
+        base: 1.5
+        low: 1.0
+        high: 2.0
+        direction: higher_is_better
+        source: "3Moissons internal model"
+        source_id: "internal:3moissons"
+        source_date: "2025-06"
+        confidence: medium
+        sensitivity: medium
+        validation: pending_field
+        approved_by: pending
+        benchmark: "FAO Chad 2020: ~1.0 t/ha rainfed sorghum national avg. Improved: 1.5-2.0."
+        dependencies: [area_ha, loss_pct, "feed.residues.sorghum_stover"]
+        note: "Rainfed sorghum in Sahel. FAO national avg ~1.0 t/ha. Base assumes managed inputs."
+
+      loss_pct:
+        base: 0.03
+        low: 0.02
+        high: 0.05
+        direction: lower_is_better
+        source: "Industry standard — Sahel grain handling"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        note: "Grain sorghum handling loss. Industry standard for Sahel small grains."
+
+    sorghum_grain_irrigated:
+      fr: Sorgho grain (irrigué)
+      zone: irrigated
+      season: contresaison_3
+      harvest_months: [5]
+      harvest_months_source: "CS3 ends May — single harvest at season end"
+      harvest_months_confidence: medium
+      harvests_per_year: 1
+
+      area_ha:
+        value: 10
+        source: "Analyst — 15 ha irrigated minus 5 ha okra in CS3"
+        confidence: low
+        validation: pending_promoter
+        note: "CS3 split: 10 ha sorghum + 5 ha okra. Allocation is analyst construction."
+
+      yield_t_per_ha:
+        base: 3.0
+        low: 2.0
+        high: 4.0
+        direction: higher_is_better
+        source: "Analyst estimate — irrigated sorghum, no prior file"
+        source_date: "2026-02"
+        confidence: low
+        sensitivity: medium
+        validation: pending_field
+        approved_by: pending
+        benchmark: "No institutional benchmark for irrigated sorghum in Chad. ICRISAT India: 3-5 t/ha irrigated."
+        dependencies: [area_ha, loss_pct, "feed.residues.sorghum_stover_irrigated"]
+        note: "No institutional source for irrigated sorghum yield in Chad. 3.0 = 2× rainfed. Needs field validation."
+
+      loss_pct:
+        base: 0.03
+        low: 0.02
+        high: 0.05
+        direction: lower_is_better
+        source: "Industry standard"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        note: "Same handling as rainfed sorghum."
+
+
+# =============================================================================
+#
+#   PRODUCT 6: LEGUMES  /  LÉGUMINEUSES
+#
+# =============================================================================
+
+legumes:
+  product_category: legumes
+  fr: Légumineuses
+
+  crops:
+    cowpea:
+      fr: Niébé
+      zone: rainfed
+      season: pluviale
+      harvest_months: [9, 10]
+      harvest_months_source: "Sahel agronomic calendar — cowpea matures with sorghum"
+      harvest_months_confidence: medium
+      harvests_per_year: 1
+
+      area_ha:
+        value: 10
+        source: "3Moissons model (unchanged — nitrogen fixation role)"
+        source_id: "internal:3moissons"
+        confidence: medium
+        validation: pending_promoter
+        note: "10 ha cowpea on 60 ha rainfed zone. Nitrogen fixation role."
+
+      yield_t_per_ha:
+        base: 0.8
+        low: 0.5
+        high: 1.0
+        direction: higher_is_better
+        source: "3Moissons internal model"
+        source_id: "internal:3moissons"
+        source_date: "2025-06"
+        confidence: medium
+        sensitivity: low
+        validation: pending_field
+        approved_by: pending
+        benchmark: "IITA West Africa: 0.3-0.5 t/ha traditional. Improved varieties: 0.8-1.5 t/ha."
+        dependencies: [area_ha, loss_pct, "feed.residues.cowpea_straw"]
+        note: "Dried grain. IITA improved variety range supports base case. Traditional farming much lower."
+
+      loss_pct:
+        base: 0.02
+        low: 0.01
+        high: 0.04
+        direction: lower_is_better
+        source: "Industry standard — dried beans, low loss"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        note: "Dried cowpea grain is durable. Very low post-harvest loss."
+
+      note: >
+        Nitrogen-fixing rotation crop. Sold as dried beans.
+        No hub processing — straight to distribution.
+        Straw → feed (moderate protein).
+
+
+# =============================================================================
+#
+#   PRODUCT 7: VEGETABLES  /  MARAÎCHAGE
+#
+# =============================================================================
+# 15 ha physical × 3 seasons = 45 ha-equivalent
+# Entire rotation plan is analyst construction based on Sahel market crops.
+
+vegetables:
+  product_category: vegetables
+  fr: Maraîchage
+
+  zone: irrigated
+  physical_ha:
+    value: 15
+    source: "Promoter — 15 ha irrigated zone"
+    source_id: "internal:3moissons"
+    confidence: high
+    validation: promoter_confirmed
+    note: "Total irrigated vegetable area. Rotation means effective cropped area is higher."
+  rotation_type: sequential
+  fallow_season: pluviale
+  cycles_per_year: 3
+
+  rotation_plan_source: "Analyst — crop selection and area splits within each season"
+  rotation_plan_confidence: low
+  rotation_plan_validation: pending_promoter
+  rotation_plan_note: >
+    Promoter says 15 ha irrigated, 3 seasons. Does not specify which crops or how
+    area is split. Entire rotation below is analyst's construction based on common
+    Sahel irrigated market crops.
+
+  rotations:
+
+    contresaison_1:
+      fr: Contre-saison fraîche (Oct–Déc)
+      crops:
+        onion:
+          fr: Oignon
+          harvest_months: [11, 12]
+          harvest_months_source: "Analyst — onion matures ~90 days after Oct planting"
+          harvest_months_confidence: medium
+
+          area_ha:
+            value: 10
+            source: "Analyst allocation"
+            confidence: low
+            validation: pending_promoter
+            note: "Onion allocation within CS1 rotation. Subject to promoter validation."
+
+          yield_t_per_ha:
+            base: 25.0
+            low: 15.0
+            high: 35.0
+            direction: higher_is_better
+            source: "Analyst estimate — irrigated Sahel onion"
+            source_date: "2026-02"
+            confidence: low
+            sensitivity: high
+            validation: pending_field
+            approved_by: pending
+            benchmark: "FAO West Africa irrigated onion: 20-40 t/ha. Niger smallholder: 15-25 t/ha."
+            dependencies: [area_ha, loss_pct]
+            note: "No prior file. Wide range reflects varietal and management variation."
+
+          loss_pct:
+            base: 0.10
+            low: 0.05
+            high: 0.15
+            direction: lower_is_better
+            scope: farm_gate
+            excludes: "hub storage, processing, distribution losses"
+            source: "Sahel post-harvest benchmark — bulb crops, farm-gate scope"
+            confidence: medium
+            sensitivity: medium
+            validation: not_validated
+            note: "Revised 2026-02-10. Original 0.05 was aspirational. Onion stores better than other veg."
+
+        eggplant:
+          fr: Aubergine
+          harvest_months: [11, 12]
+          harvest_months_source: "Analyst — continuous picking during CS1"
+          harvest_months_confidence: medium
+
+          area_ha:
+            value: 5
+            source: "Analyst allocation"
+            confidence: low
+            validation: pending_promoter
+            note: "Eggplant allocation within CS1. Complement to onion on remaining 5 ha."
+
+          yield_t_per_ha:
+            base: 20.0
+            low: 12.0
+            high: 28.0
+            direction: higher_is_better
+            source: "Analyst estimate — irrigated Sahel eggplant"
+            source_date: "2026-02"
+            confidence: low
+            sensitivity: low
+            validation: pending_field
+            approved_by: pending
+            benchmark: "FAO tropical eggplant: 15-30 t/ha irrigated."
+            dependencies: [area_ha, loss_pct]
+            note: "Tropical eggplant yield. No prior file source. Needs field validation."
+
+          loss_pct:
+            base: 0.20
+            low: 0.12
+            high: 0.28
+            direction: lower_is_better
+            scope: farm_gate
+            excludes: "hub storage, processing, distribution losses"
+            source: "Sahel post-harvest benchmark — soft fruit vegetables, farm-gate scope"
+            confidence: medium
+            sensitivity: medium
+            validation: not_validated
+            note: "Revised 2026-02-10. Original 0.08 understated. Eggplant bruises easily in Sahel heat."
+
+    contresaison_2:
+      fr: Contre-saison froide (Jan–Mar)
+      crops:
+        tomato:
+          fr: Tomate
+          harvest_months: [2, 3]
+          harvest_months_source: "Analyst — tomato picked during mid-late CS2"
+          harvest_months_confidence: medium
+
+          area_ha:
+            value: 10
+            source: "Analyst allocation"
+            confidence: low
+            validation: pending_promoter
+            note: "Tomato is lead CS2 crop. 10 ha of 15 ha irrigated zone."
+
+          yield_t_per_ha:
+            base: 30.0
+            low: 20.0
+            high: 40.0
+            direction: higher_is_better
+            source: "Analyst estimate — irrigated Sahel tomato"
+            source_date: "2026-02"
+            confidence: low
+            sensitivity: high
+            validation: pending_field
+            approved_by: pending
+            benchmark: "FAO West Africa irrigated tomato: 20-50 t/ha. Sahel open field: 15-35 t/ha."
+            dependencies: [area_ha, loss_pct]
+            note: "Tomato is high-volume but high-loss crop."
+
+          loss_pct:
+            base: 0.25
+            low: 0.15
+            high: 0.35
+            direction: lower_is_better
+            scope: farm_gate
+            excludes: "hub storage, processing, distribution losses"
+            source: "Sahel post-harvest benchmark — highly perishable, farm-gate scope"
+            confidence: medium
+            sensitivity: high
+            validation: not_validated
+            note: "Revised 2026-02-10. Original 0.10 unrealistic for Sahel tomato. FAO Africa avg 20-35%."
+
+        potato:
+          fr: Pomme de terre
+          harvest_months: [3]
+          harvest_months_source: "Analyst — potato single harvest end of CS2"
+          harvest_months_confidence: medium
+
+          area_ha:
+            value: 5
+            source: "Analyst allocation"
+            confidence: low
+            validation: pending_promoter
+            note: "Potato complement to tomato in CS2. 5 ha allocation."
+
+          yield_t_per_ha:
+            base: 15.0
+            low: 10.0
+            high: 20.0
+            direction: higher_is_better
+            source: "Analyst estimate — irrigated Sahel potato"
+            source_date: "2026-02"
+            confidence: low
+            sensitivity: low
+            validation: pending_field
+            approved_by: pending
+            benchmark: "FAO Sub-Saharan Africa potato: 8-20 t/ha irrigated."
+            dependencies: [area_ha, loss_pct]
+            note: "Tropical potato yield under irrigation. Conservative for Sahel conditions."
+
+          loss_pct:
+            base: 0.08
+            low: 0.04
+            high: 0.12
+            direction: lower_is_better
+            scope: farm_gate
+            excludes: "hub storage, processing, distribution losses"
+            source: "Sahel post-harvest benchmark — tuber crops, farm-gate scope"
+            confidence: medium
+            sensitivity: low
+            validation: not_validated
+            note: "Revised 2026-02-10. Original 0.05 slightly optimistic. Potato stores better than perishables."
+
+    contresaison_3:
+      fr: Contre-saison chaude (Avr–Mai)
+      crops:
+        okra:
+          fr: Gombo
+          harvest_months: [4, 5]
+          harvest_months_source: "Analyst — okra picked continuously during CS3"
+          harvest_months_confidence: medium
+
+          area_ha:
+            value: 5
+            source: "Analyst — 5 ha okra + 10 ha sorghum grain in CS3"
+            confidence: low
+            validation: pending_promoter
+            note: "CS3 is only 2 months. 5 ha okra + 10 ha sorghum splits the 15 ha."
+
+          yield_t_per_ha:
+            base: 10.0
+            low: 6.0
+            high: 14.0
+            direction: higher_is_better
+            source: "Analyst estimate — short season okra"
+            source_date: "2026-02"
+            confidence: low
+            sensitivity: low
+            validation: pending_field
+            approved_by: pending
+            benchmark: "FAO tropical okra: 8-15 t/ha full season. Adjusted down for 2-month CS3."
+            dependencies: [area_ha, loss_pct]
+            note: "CS3 is the hot dry season (2 months). Lower yield expected."
+
+          loss_pct:
+            base: 0.15
+            low: 0.08
+            high: 0.22
+            direction: lower_is_better
+            scope: farm_gate
+            excludes: "hub storage, processing, distribution losses"
+            source: "Sahel post-harvest benchmark — perishable pod vegetables, farm-gate scope"
+            confidence: medium
+            sensitivity: medium
+            validation: not_validated
+            note: "Revised 2026-02-10. Original 0.08 understated. Okra wilts rapidly in CS3 heat."
+
+
+# =============================================================================
+#
+#   PRODUCT 8: FRUIT  /  FRUITS
+#
+# =============================================================================
+
+fruit:
+  product_category: fruit
+  fr: Fruits
+
+  zone: orchard
+  zone_ha:
+    value: 5
+    source: "Promoter — 5 ha verger"
+    source_id: "internal:3moissons"
+    confidence: high
+    validation: promoter_confirmed
+    note: "Orchard zone. Mango + citrus perennial plantings."
+  rotation_type: permanent
+  season: all_year
+
+  crops:
+    mango:
+      fr: Mangue
+      harvest_months: [7, 8, 9]
+      harvest_months_source: "Standard tropical mango season — Sahel ~13°N"
+      harvest_months_confidence: medium
+
+      area_ha:
+        value: 3
+        source: "3Moissons model (carried from uof_params)"
+        source_id: "internal:3moissons"
+        confidence: medium
+        validation: pending_promoter
+        note: "3 ha mango in 5 ha orchard zone."
+
+      trees_per_ha:
+        value: 100
+        source: "3Moissons model — standard orchard density"
+        confidence: medium
+        validation: pending_field
+        note: "Standard tropical mango spacing 10×10m."
+
+      yield_kg_per_tree:
+        base: 100
+        low: 60
+        high: 150
+        direction: higher_is_better
+        source: "3Moissons model"
+        source_id: "internal:3moissons"
+        source_date: "2025-06"
+        confidence: medium
+        sensitivity: medium
+        validation: pending_field
+        approved_by: pending
+        benchmark: "FAO tropical mango: 50-200 kg/tree mature, variety-dependent."
+        dependencies: [trees_per_ha, first_harvest_year, years_to_mature]
+        note: "Mature tree yield. Variety-dependent."
+
+      yield_t_per_ha:
+        base: 10.0
+        low: 6.0
+        high: 15.0
+        direction: higher_is_better
+        source: "Derived — trees_per_ha × yield_per_tree"
+        confidence: medium
+        sensitivity: high
+        validation: pending_field
+        dependencies: [trees_per_ha, yield_kg_per_tree]
+        note: "Derived: 100 trees × 100 kg = 10 t/ha."
+
+      loss_pct:
+        base: 0.20
+        low: 0.12
+        high: 0.30
+        direction: lower_is_better
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        source: "Sahel post-harvest benchmark — highly perishable tropical fruit, farm-gate scope"
+        confidence: medium
+        sensitivity: high
+        validation: not_validated
+        note: "Revised 2026-02-10. Original 0.10 optimistic. Mango bruising + insect damage in Sahel."
+
+      first_harvest_year:
+        value: 3
+        source: "Tropical orchard reference"
+        confidence: medium
+        validation: pending_field
+        note: "Grafted mango — first fruit year 3."
+      years_to_mature:
+        value: 7
+        source: "Tropical orchard reference"
+        confidence: medium
+        validation: pending_field
+        note: "Full production from year 7."
+
+    citrus:
+      fr: Agrumes
+      harvest_months: [10, 11, 12, 1, 2, 3]
+      harvest_months_source: "Standard tropical citrus season — extended dry season"
+      harvest_months_confidence: medium
+
+      area_ha:
+        value: 2
+        source: "3Moissons model (carried from uof_params)"
+        source_id: "internal:3moissons"
+        confidence: medium
+        validation: pending_promoter
+        note: "2 ha citrus in 5 ha orchard zone."
+
+      trees_per_ha:
+        value: 200
+        source: "3Moissons model — citrus planted denser than mango"
+        confidence: medium
+        validation: pending_field
+        note: "Denser than mango — citrus spacing ~5×10m."
+
+      yield_kg_per_tree:
+        base: 50
+        low: 30
+        high: 75
+        direction: higher_is_better
+        source: "3Moissons model"
+        source_id: "internal:3moissons"
+        source_date: "2025-06"
+        confidence: medium
+        sensitivity: low
+        validation: pending_field
+        approved_by: pending
+        benchmark: "FAO tropical citrus: 30-80 kg/tree mature. Lower end for Sahel conditions."
+        dependencies: [trees_per_ha, first_harvest_year, years_to_mature]
+        note: "Young citrus tree yield. Reaches full production by year 8-10."
+
+      yield_t_per_ha:
+        base: 10.0
+        low: 6.0
+        high: 15.0
+        direction: higher_is_better
+        source: "Derived — trees_per_ha × yield_per_tree"
+        confidence: medium
+        sensitivity: medium
+        validation: pending_field
+        dependencies: [trees_per_ha, yield_kg_per_tree]
+        note: "Derived: 200 trees × 50 kg = 10 t/ha."
+
+      loss_pct:
+        base: 0.12
+        low: 0.06
+        high: 0.18
+        direction: lower_is_better
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        source: "Sahel post-harvest benchmark — citrus moderate perishability, farm-gate scope"
+        confidence: medium
+        sensitivity: medium
+        validation: not_validated
+        note: "Revised 2026-02-10. Original 0.08 slightly optimistic. Citrus more resilient than mango."
+
+      first_harvest_year:
+        value: 4
+        source: "Tropical orchard reference"
+        confidence: medium
+        validation: pending_field
+        note: "Grafted citrus — first fruit year 4."
+      years_to_mature:
+        value: 7
+        source: "Tropical orchard reference"
+        confidence: medium
+        validation: pending_field
+        note: "Full production from year 7."
+
+
+# =============================================================================
+#
+#   PRODUCT 9: GUM  /  GOMME ARABIQUE
+#
+# =============================================================================
+
+gum:
+  product_category: gum
+  fr: Gomme arabique
+
+  zone: agroforestry
+  zone_ha:
+    value: 5
+    source: "Promoter — 5 ha agroforesterie"
+    source_id: "internal:3moissons"
+    confidence: high
+    validation: promoter_confirmed
+    note: "Agroforestry zone. Acacia senegal for gum arabic production."
+  rotation_type: permanent
+  harvest_months: [11, 12, 1, 2, 3]
+  harvest_months_source: "Standard Acacia senegal tapping — dry season"
+  harvest_months_confidence: medium
+
+  crops:
+    gum_arabic:
+      fr: Gomme arabique (Acacia senegal)
+      area_ha:
+        value: 5
+        source: "Full agroforestry zone"
+        confidence: high
+        validation: promoter_confirmed
+        note: "Full agroforestry zone dedicated to Acacia senegal."
+
+      trees_per_ha:
+        value: 200
+        source: "3Moissons model — standard agroforestry density"
+        confidence: medium
+        validation: pending_field
+        note: "Standard Acacia senegal plantation spacing."
+
+      yield_kg_per_tree_young:
+        base: 0.3
+        low: 0.15
+        high: 0.6
+        direction: higher_is_better
+        source: "3Moissons model; Prasad 2020 gives avg 0.9 (range 0.19-2.86)"
+        source_id: "tier2:prasad_acacia"
+        source_url: "https://uknowledge.uky.edu/igc/23/2-9-1/7/"
+        source_date: "2020"
+        confidence: medium
+        sensitivity: medium
+        validation: pending_field
+        approved_by: pending
+        benchmark: "Prasad 2020: avg 0.9 kg/tree young (range 0.19-2.86). Base = conservative 0.3."
+        dependencies: [trees_per_ha, first_harvest_year]
+        note: "Base is conservative vs Prasad avg. Years 5-10."
+
+      yield_kg_per_tree_mature:
+        base: 1.5
+        low: 0.8
+        high: 2.5
+        direction: higher_is_better
+        source: "3Moissons model; Prasad 2020 gives avg 2.0 (range 0.38-6.75)"
+        source_id: "tier2:prasad_acacia"
+        source_url: "https://uknowledge.uky.edu/igc/23/2-9-1/7/"
+        source_date: "2020"
+        confidence: medium
+        sensitivity: medium
+        validation: pending_field
+        approved_by: pending
+        benchmark: "Prasad 2020: avg 2.0 kg/tree mature (range 0.38-6.75). Base = conservative 1.5."
+        dependencies: [trees_per_ha, years_to_mature]
+        note: "Base is below Prasad avg. Year 10+."
+
+      loss_pct:
+        base: 0.05
+        low: 0.03
+        high: 0.08
+        direction: lower_is_better
+        source: "Analyst estimate — gum stores well if dry"
+        confidence: medium
+        sensitivity: low
+        validation: not_validated
+        scope: farm_gate
+        excludes: "hub storage, processing, distribution losses"
+        note: "Gum arabic stores well when dry. Low handling loss."
+
+      first_harvest_year:
+        value: 5
+        source: "Acacia senegal reference — Prasad 2020"
+        source_id: "tier2:prasad_acacia"
+        confidence: high
+        validation: validated
+        note: "Acacia senegal — first tapping year 5."
+      years_to_mature:
+        value: 10
+        source: "Acacia senegal reference — Prasad 2020"
+        source_id: "tier2:prasad_acacia"
+        confidence: medium
+        validation: pending_field
+        note: "Full gum production from year 10."
+
+
+# =============================================================================
+# INFRASTRUCTURE (5 ha — non-productive)
+# =============================================================================
+
+infrastructure:
+  zone_ha:
+    value: 5
+    source: "Promoter — CAP 3Moissons"
+    confidence: high
+    validation: promoter_confirmed
+    note: "Non-productive area: roads, buildings, yards, fencing."
+  fr: Infrastructure
+  components:
+    - drying_floor                       # fr: Aire de séchage
+    - input_storage                      # fr: Magasin d'intrants
+    - worker_facilities                  # fr: Locaux du personnel
+    - communal_area                      # fr: Espace communautaire
+    - borehole_zone                      # fr: Zone de forage
+    - livestock_pens                     # fr: Enclos et étable
+    - perimeter_paths                    # fr: Chemins périphériques
+
+
+# =============================================================================
+# WORKFORCE SUPPLY (D-057)
+# =============================================================================
+# Labour demand is computed by L2 engine from resource_demand_registry.yaml
+# (7 entries: labour_cs_maraichere, labour_forage, labour_orchard,
+#  labour_rainfed, labour_agroforestry, labour_livestock, labour_infrastructure).
+# This section defines the SUPPLY side — who does the work.
+#
+# Monthly capacity = (farmer_owners + permanent_hires) × working_days_per_year / 12
+# Seasonal = max(0, demand_pd - capacity_pd) per month.
+
+workforce:
+  farmer_owners:
+    value: 20
+    confidence: high
+    validation: promoter_confirmed
+    note: "Associés CAP. Fixed by cooperative structure. Not adjustable."
+    source: "Promoter — CAP 3Moissons"
+  permanent_hires:
+    base: 20
+    low: 15
+    high: 25
+    direction: lower_is_better
+    sensitivity: medium
+    confidence: medium
+    validation: pending_promoter
+    note: "Ouvriers permanents. Promoter default 20 (D-038)."
+    source: "Promoter — CAP 3Moissons"
+  working_days_per_year:
+    base: 280
+    low: 260
+    high: 300
+    direction: higher_is_better
+    sensitivity: low
+    confidence: medium
+    validation: not_validated
+    note: "L2 calc notes say 280. Adjustable for sensitivity."
+    source: "D-038, L2 calculation notes"
+  seasonal_premium:
+    value: 1.3
+    confidence: low
+    validation: not_validated
+    note: "Cost multiplier for seasonal vs permanent labour. For L4 Economics use only."
+    source: "Analyst estimate"
+
+# =============================================================================
+# ANNUAL PRODUCTION SUMMARY (mature year, base case)
+# =============================================================================
+# Engine should derive these. Listed for cross-checking only.
+# All values below use base case parameters, gross production (no losses applied).
+
+annual_production_reference:
+  case: base
+  note: "Gross production. No loss_pct applied. Mature year (100% yield ramp)."
+
+  beef:
+    finished_cattle: 30                  # head/year
+    live_weight_t: 13.5                  # 30 × 450 kg
+    note: "Live weight out of farm. Carcass yield is hub concern."
+  dairy:
+    raw_milk_L: 64800                    # 30 × 8 × 270
+    calves_weaned: 23                    # 30 × 0.85 × 0.90
+    cull_cows: 6                         # 30 × 0.20
+  feed:
+    forage_t_dm: 120                     # 10 ha × 12 t DM
+    note: "Forage zone only. Residues are byproduct of other categories."
+  oilseeds:
+    peanut_t: 30.0                       # 20 × 1.5
+    sesame_t: 6.0                        # 10 × 0.6
+  cereals:
+    sorghum_rainfed_t: 30.0              # 20 × 1.5
+    sorghum_irrigated_t: 30.0            # 10 × 3.0
+  legumes:
+    cowpea_t: 8.0                        # 10 × 0.8
+  vegetables:
+    onion_t: 250.0                       # 10 × 25
+    eggplant_t: 100.0                    # 5 × 20
+    tomato_t: 300.0                      # 10 × 30
+    potato_t: 75.0                       # 5 × 15
+    okra_t: 50.0                         # 5 × 10
+  fruit:
+    mango_t: 30.0                        # 3 × 10
+    citrus_t: 20.0                       # 2 × 10
+  gum:
+    gum_arabic_kg: 1500                  # 5 × 200 × 1.5 mature
+
+
+# =============================================================================
+# WATER CONSTRAINT DOCUMENTATION
+# =============================================================================
+# Agronomic demand (L2 engine): ~2,087 m3/day peak
+# ECTI design per well: 500 m3/day
+# Gap: 4.2x single-well capacity
+# Resolution: multiple wells sized in Layer 4 (equipment sizing)
+#
+# water_constraint:
+#   per_well_capacity_m3_day: 500        # ECTI design spec
+#   agronomic_demand_m3_day: 2087        # L2 engine output, peak month
+#   wells_needed: 5                      # ceil(2087/500)
+#   gap_resolution: "Layer 4 equipment sizing — additional wells"
+#   note: "Binding constraint acknowledged. Does not invalidate L1/L2 volumes."
+# =============================================================================
+
+
+# =============================================================================
+
+# =============================================================================
+# WATER DEMAND PARAMETERS
+# =============================================================================
+# Sourced from L2 calculation notes (A-014). FAO CROPWAT methodology.
+# These are high-priority assumptions that underwriters may question.
+# All values have confidence levels and source documentation.
+# =============================================================================
+
+water_demand:
+  source: "FAO Irrigation & Drainage Paper 56 (Allen et al., 1998). ETc methodology."
+  confidence: high
+  validation: pending_field
+  note: >
+    Per-crop Kc coefficients drive ETc computation via climate data (ET0, rainfall).
+    annual_intensity_m3_ha removed — now a derived output of the ETc calculation.
+    D-070: replaced hardcoded intensities with traceable FAO 56 Kc arrays.
+
+  # --- CS CROPS: 6 crops in 3-season rotation on irrigated_contresaison_ha ---
+  # kc_by_month: 12-element array [Jan..Dec]. Active months have Kc > 0.
+  # Inactive months = 0 (fallow or not planted). Source: FAO 56 Table 12.
+
+  cs_tomato:
+    kc_by_month:
+      value: [0.60, 1.15, 0.80, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      source: "FAO 56 — tomato: Kc_ini=0.60, Kc_mid=1.15, Kc_end=0.80"
+      confidence: high
+      note: "CS2 (Jan-Mar). 10 ha drip. A-013 line 63-67."
+    irrigation_efficiency:
+      value: 0.85
+      source: "D-033. Drip irrigation."
+      confidence: high
+      validation: validated
+      note: "Drip — 85% field-level. FAO guidelines."
+
+  cs_potato:
+    kc_by_month:
+      value: [0.50, 1.15, 0.75, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      source: "FAO 56 — potato: Kc_ini=0.50, Kc_mid=1.15, Kc_end=0.75"
+      confidence: high
+      note: "CS2 (Jan-Mar). 5 ha drip. A-013 line 72-77."
+    irrigation_efficiency:
+      value: 0.85
+      source: "D-033. Drip irrigation."
+      confidence: high
+      validation: validated
+
+  cs_okra:
+    kc_by_month:
+      value: [0, 0, 0, 0.70, 0.95, 0, 0, 0, 0, 0, 0, 0]
+      source: "FAO 56 — okra (similar to pepper): Kc_ini~0.60, Kc_mid=1.00"
+      confidence: medium
+      note: "CS3 (Apr-May). 5 ha drip. No direct FAO 56 entry — proxy from pepper. A-013 line 80-86."
+    irrigation_efficiency:
+      value: 0.85
+      source: "D-033. Drip irrigation."
+      confidence: high
+      validation: validated
+
+  cs_sorghum_irrigated:
+    kc_by_month:
+      value: [0, 0, 0, 0.45, 0.85, 0, 0, 0, 0, 0, 0, 0]
+      source: "FAO 56 — sorghum: Kc_ini=0.35, Kc_mid=1.00 (short cycle)"
+      confidence: high
+      note: "CS3 (Apr-May). 10 ha SURFACE irrigation (basin). A-013 line 87-95."
+    irrigation_efficiency:
+      value: 0.70
+      source: "D-033 exception: surface/basin irrigation for cereals, not drip."
+      confidence: high
+      validation: validated
+      note: "Surface — 70% efficiency. Only non-drip CS crop."
+
+  cs_onion:
+    kc_by_month:
+      value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.70, 1.05, 0.75]
+      source: "FAO 56 — onion: Kc_ini=0.70, Kc_mid=1.05, Kc_end=0.75"
+      confidence: high
+      note: "CS1 (Oct-Dec). 10 ha drip. A-013 line 98-104."
+    irrigation_efficiency:
+      value: 0.85
+      source: "D-033. Drip irrigation."
+      confidence: high
+      validation: validated
+
+  cs_eggplant:
+    kc_by_month:
+      value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.60, 1.05, 0.90]
+      source: "FAO 56 — eggplant (similar to pepper): Kc_ini=0.60, Kc_mid=1.05, Kc_end=0.90"
+      confidence: medium
+      note: "CS1 (Oct-Dec). 5 ha drip. Proxy from pepper family. A-013 line 106-113."
+    irrigation_efficiency:
+      value: 0.85
+      source: "D-033. Drip irrigation."
+      confidence: high
+      validation: validated
+
+  # --- FORAGE: perennial alfalfa, 12-month Kc profile ---
+  forage:
+    kc_by_month:
+      value: [0.95, 0.95, 0.95, 0.95, 0.95, 0.60, 0.0, 0.0, 0.0, 0.40, 0.95, 0.95]
+      source: "FAO 56 — alfalfa: Kc=0.95-1.15 (avg 0.95 across 6 cut cycles)"
+      confidence: high
+      note: "Year-round irrigation Nov-May. Jun transitional. Jul-Sep rain sufficient (Kc=0). Oct supplemental. A-013 line 118-140."
+    irrigation_efficiency:
+      value: 0.75
+      source: "D-033. Manual-move sprinkler for forage zone."
+      confidence: high
+      validation: validated
+      note: "Sprinkler — 75% efficiency. D-033."
+
+  # --- ORCHARD: mango and citrus, separate Kc profiles ---
+  orchard_mango:
+    kc_by_month:
+      value: [0.75, 0.75, 0.80, 0.80, 0.75, 0.40, 0.0, 0.0, 0.0, 0.40, 0.70, 0.70]
+      source: "FAO 56 — fruit trees with ground cover: Kc=0.70-0.85"
+      confidence: high
+      note: "3 ha. Dry season full irrigation, wet season rain-fed (Kc=0). A-013 line 144-157."
+    irrigation_efficiency:
+      value: 0.90
+      source: "D-033. Drip/Netafim for orchard. 2007 study."
+      confidence: high
+      validation: validated
+      note: "Tree drip — 90% efficiency."
+
+  orchard_citrus:
+    kc_by_month:
+      value: [0.70, 0.70, 0.70, 0.70, 0.65, 0.35, 0.0, 0.0, 0.0, 0.35, 0.65, 0.65]
+      source: "FAO 56 — citrus: Kc=0.65-0.75"
+      confidence: high
+      note: "2 ha. Lower ETc than mango. A-013 line 160-173."
+    irrigation_efficiency:
+      value: 0.90
+      source: "D-033. Drip/Netafim for orchard."
+      confidence: high
+      validation: validated
+
+  # --- NON-ETc entries (unchanged) ---
+  livestock:
+    daily_L_per_head:
+      value: 150
+      source: "D-035. 2020 cattle integration feasibility study."
+      confidence: high
+      validation: validated
+      note: "150 L/cow/day (dairy). Includes drinking + wash."
+
+  domestic:
+    daily_L_per_person:
+      value: 50
+      source: "D-038. Standard farm worker water allowance."
+      confidence: medium
+      validation: not_validated
+      note: "50 L/person/day. Drinking + sanitation + cooking."
+
+  energy:
+    specific_energy_kwh_m3:
+      value: 1.01
+      source: "D-036. Pumping physics: 50m head, 65% pump efficiency."
+      confidence: high
+      validation: validated
+      note: "kWh per m³ pumped. Derived from head × density × g / (efficiency × 3.6e6)."
+
+
+# =============================================================================
+# LABOUR DEMAND PARAMETERS
+# =============================================================================
+# Sourced from L2 calculation notes (A-014). Bottom-up by zone × activity.
+# Labour intensity factors are analyst estimates with ±30% uncertainty.
+# Validation status indicates field testing status (D-059 seasonal profiles).
+# =============================================================================
+
+labour_demand:
+  source: "L2 calculation notes (A-014). Bottom-up by zone × activity."
+  confidence: medium
+  validation: not_validated
+  note: "Analyst estimates ±30%. D-059 seasonal profiles."
+
+  cs_maraichere:
+    intensity_pd_ha_yr:
+      value: 301
+      source: "A-014. 3 cycles × ~100 pd/ha. All manual."
+      confidence: medium
+      validation: not_validated
+      note: "Highest labour intensity. 3 irrigated CS cycles, manual operations."
+
+  forage:
+    intensity_pd_ha_yr:
+      value: 139
+      source: "A-014. Irrigation management + 6 cuts/yr."
+      confidence: medium
+      validation: not_validated
+      note: "Mostly irrigation management. Cutting/baling mechanized."
+
+  orchard:
+    intensity_pd_ha_yr:
+      value: 78
+      source: "A-014. Pruning, spraying, harvest, irrigation."
+      confidence: medium
+      validation: not_validated
+      note: "Seasonal — peak at mango harvest Jul-Aug."
+
+  rainfed:
+    intensity_pd_ha_yr:
+      value: 51
+      source: "A-014. D-045: reduced from 64 by cultivator."
+      confidence: medium
+      validation: not_validated
+      note: "D-045: inter-row cultivator saves 13 pd/ha. Was 64."
+
+  agroforestry:
+    intensity_pd_ha_yr:
+      value: 30
+      source: "A-014. Gum tapping + minimal maintenance."
+      confidence: low
+      validation: not_validated
+      note: "Seasonal — peak Nov-Dec during tapping."
+
+  livestock:
+    pd_per_head_per_day:
+      value: 0.106
+      source: "A-014. 5.3 pd/day ÷ 50 head."
+      confidence: medium
+      validation: not_validated
+      note: "Milking, feeding, herd management, manure, vet care."
+
+  infrastructure:
+    daily_pd:
+      value: 3.8
+      source: "A-014. Equipment maintenance, security, farm management."
+      confidence: medium
+      validation: not_validated
+      note: "Constant year-round. Wells, pumps, tanks, general farm."
+
+
+# DEFERRED
+# =============================================================================
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Equipment Operations (D-039/D-041/D-042)
+# Migrated from A-015 per D-062 schema enforcement.
+# =============================================================================
+
+equipment_operations:
+  source: "D-039/D-041/D-042. Haraz fleet specifications."
+  confidence: medium
+  validation: pending_field
+
+  large:
+    plowing:
+      diesel_L_h:
+        value: 18
+        source: "Tractor manufacturer specs — 150 HP + moldboard plow"
+        confidence: medium
+        validation: pending_field
+        note: "Sandy clay soil, 25 cm depth. Highest fuel consumer after combine."
+      productivity_ha_h:
+        value: 0.8
+        source: "Field observation — moldboard plow at 5 km/h, 1.2m width"
+        confidence: medium
+        validation: pending_field
+        note: "Conservative for heavy Sahel soil. Range 0.6-1.0 ha/h."
+    harrowing:
+      diesel_L_h:
+        value: 12
+        source: "Tractor manufacturer specs — 150 HP + disc harrow"
+        confidence: medium
+        validation: pending_field
+        note: "Lighter draft than plowing. 2-pass harrowing typical."
+      productivity_ha_h:
+        value: 1.5
+        source: "Field observation — disc harrow at 6 km/h, 2m width"
+        confidence: medium
+        validation: pending_field
+        note: "Higher than plowing — lighter implement, wider pass."
+    combine:
+      diesel_L_h:
+        value: 20
+        source: "Combine harvester fuel consumption — Sahel sorghum"
+        confidence: medium
+        validation: pending_field
+        note: "Standing crop creates resistance. 20 L/h is high-end for mid-size combine."
+      productivity_ha_h:
+        value: 1.2
+        source: "Combine throughput — sorghum at moderate density"
+        confidence: medium
+        validation: pending_field
+        note: "Sorghum slower than wheat due to tall stalks. 1.0-1.5 ha/h range."
+    baling:
+      cuts:
+        value: 6
+        source: "Aligned with feed.forage_zone.crops.alfalfa.cuts_per_year"
+        confidence: medium
+        validation: pending_field
+        note: "Bimonthly alfalfa cuts. Baling follows cutting within days."
+      diesel_L_h:
+        value: 12
+        source: "Tractor manufacturer specs — round baler"
+        confidence: medium
+        validation: pending_field
+        note: "Same draft class as harrowing. Moderate PTO load."
+      productivity_ha_h:
+        value: 1.5
+        source: "Round baler throughput — alfalfa windrow"
+        confidence: medium
+        validation: pending_field
+        note: "Depends on windrow density and bale size. 1.0-2.0 ha/h range."
+
+  small:
+    seeding:
+      diesel_L_h:
+        value: 10
+        source: "Small tractor (70 HP) + semoir 3m specs"
+        confidence: medium
+        validation: pending_field
+        note: "Moderate draft. 3m seeder on prepared seedbed."
+      productivity_ha_h:
+        value: 2.0
+        source: "Seeder throughput — 3m width at 6 km/h"
+        confidence: medium
+        validation: pending_field
+        note: "Clean seedbed assumed (post-harrowing). 1.5-2.5 ha/h range."
+    spraying_rainfed:
+      passes:
+        value: 2
+        source: "Standard crop protection protocol — Sahel cereals/oilseeds"
+        confidence: medium
+        validation: pending_field
+        note: "Pre-emergence + post-emergence. 2 passes standard."
+      productivity_ha_h:
+        value: 4.0
+        source: "Boom sprayer throughput — 12m boom at 8 km/h"
+        confidence: medium
+        validation: pending_field
+        note: "Fastest implement. Wide boom, light draft."
+      diesel_L_h:
+        value: 8
+        source: "Small tractor (70 HP) + boom sprayer"
+        confidence: medium
+        validation: pending_field
+        note: "Light draft operation. Pump adds minor load."
+    cultivator:
+      passes:
+        value: 2
+        source: "D-045. Inter-row weeding standard — 2 passes."
+        confidence: medium
+        validation: pending_field
+        note: "D-045. First pass early vegetative, second mid-season."
+      productivity_ha_h:
+        value: 1.5
+        source: "Cultivateur 3 rangs throughput"
+        confidence: medium
+        validation: pending_field
+        note: "0.75m row spacing × 3 rows. Slower than seeding due to precision."
+      diesel_L_h:
+        value: 8
+        source: "Small tractor (70 HP) + cultivator"
+        confidence: medium
+        validation: pending_field
+        note: "Same class as spraying. Moderate soil engagement."
+    cutting:
+      cuts:
+        value: 6
+        source: "Aligned with feed.forage_zone.crops.alfalfa.cuts_per_year"
+        confidence: medium
+        validation: pending_field
+        note: "Bimonthly forage cutting. Same schedule as baling/raking."
+      productivity_ha_h:
+        value: 2.0
+        source: "Faucheuse throughput — disc mower 2m width"
+        confidence: medium
+        validation: pending_field
+        note: "Disc mower at 8 km/h. 1.5-2.5 ha/h range."
+      diesel_L_h:
+        value: 10
+        source: "Small tractor (70 HP) + disc mower"
+        confidence: medium
+        validation: pending_field
+        note: "PTO-driven. Higher load than spraying."
+    raking:
+      cuts:
+        value: 6
+        source: "Aligned with feed.forage_zone.crops.alfalfa.cuts_per_year"
+        confidence: medium
+        validation: pending_field
+        note: "Raking follows cutting for windrow formation before baling."
+      productivity_ha_h:
+        value: 3.0
+        source: "Andaineur throughput — rotary rake 3m width"
+        confidence: medium
+        validation: pending_field
+        note: "Fastest forage operation. Light draft, wide working width."
+      diesel_L_h:
+        value: 8
+        source: "Small tractor (70 HP) + rotary rake"
+        confidence: medium
+        validation: pending_field
+        note: "Light draft. Same class as spraying."
+    bed_prep:
+      area_ha:
+        value: 10
+        source: "CS maraîchère effective planting area"
+        confidence: medium
+        validation: pending_promoter
+        note: "10 ha of 15 ha CS zone receives bed preparation. See fert/crop_prot CS area."
+      cycles:
+        value: 3
+        source: "3 CS rotations per year"
+        confidence: high
+        validation: validated
+        note: "CS1 Oct-Jan, CS2 Mar-Jun, CS3 Jul-Sep. Each cycle needs bed prep."
+      productivity_ha_h:
+        value: 0.5
+        source: "Rotavator throughput — 1.5m width at 3 km/h"
+        confidence: medium
+        validation: pending_field
+        note: "Slowest implement. Deep soil working for raised beds."
+      diesel_L_h:
+        value: 10
+        source: "Small tractor (70 HP) + rotavator"
+        confidence: medium
+        validation: pending_field
+        note: "Heavy PTO load. Same class as cutting/seeding."
+    spraying_orchard:
+      passes:
+        value: 2
+        source: "Orchard pest control protocol — mango/citrus"
+        confidence: medium
+        validation: pending_field
+        note: "Pre-flowering (May) + post-harvest (Nov)."
+      productivity_ha_h:
+        value: 2.0
+        source: "Boom sprayer in orchard — reduced speed for canopy coverage"
+        confidence: medium
+        validation: pending_field
+        note: "Slower than open-field spraying due to tree navigation."
+      diesel_L_h:
+        value: 6
+        source: "Small tractor (70 HP) at reduced throttle in orchard"
+        confidence: medium
+        validation: pending_field
+        note: "Lower speed = lower fuel. Pump load unchanged."
+    transport_rainfed:
+      hours_yr:
+        value: 40
+        source: "Analyst estimate — harvest transport 60 ha rainfed zone"
+        confidence: low
+        validation: not_validated
+        note: "Largest transport allocation. Harvest Sep-Nov + general transport."
+      diesel_L_h:
+        value: 8
+        source: "Small tractor (70 HP) + trailer, loaded"
+        confidence: medium
+        validation: pending_field
+        note: "Loaded trailer on farm tracks. 6-10 L/h range."
+    transport_cs:
+      hours_yr:
+        value: 30
+        source: "Analyst estimate — CS vegetable harvest transport"
+        confidence: low
+        validation: not_validated
+        note: "3 cycles × ~10 h per cycle. Perishable = frequent small loads."
+      diesel_L_h:
+        value: 6
+        source: "Small tractor (70 HP) + trailer, light loads"
+        confidence: medium
+        validation: pending_field
+        note: "Lighter loads than rainfed grain. Short distances."
+    transport_forage:
+      hours_yr:
+        value: 18
+        source: "Analyst estimate — 6 cuts × 3 h bale transport per cut"
+        confidence: low
+        validation: not_validated
+        note: "Forage zone adjacent to storage. Short haul."
+      diesel_L_h:
+        value: 8
+        source: "Small tractor (70 HP) + trailer, bale loads"
+        confidence: medium
+        validation: pending_field
+        note: "Bale weight ~300 kg. Multiple trips per cut."
+    transport_orchard:
+      hours_yr:
+        value: 10
+        source: "Analyst estimate — fruit harvest transport, 5 ha orchard"
+        confidence: low
+        validation: not_validated
+        note: "Smallest transport allocation. Seasonal (mango Jul-Aug peak)."
+      diesel_L_h:
+        value: 6
+        source: "Small tractor (70 HP) + trailer, light loads"
+        confidence: medium
+        validation: pending_field
+        note: "Same as CS transport. Light perishable loads."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Seed Demand
+# =============================================================================
+
+seed_demand:
+  source: "D-043. Agronomic extension references, Chad/Sahel."
+  confidence: medium
+  validation: pending_field
+
+  peanut:
+    rate_kg_ha:
+      value: 80
+      source: "ICRISAT/FAO Sahel groundnut seeding rate"
+      confidence: high
+      validation: validated
+      note: "Shelled seed. 60-100 kg/ha range. 80 is standard spacing."
+  sesame:
+    rate_kg_ha:
+      value: 4
+      source: "FAO Sahel sesame seeding rate"
+      confidence: high
+      validation: validated
+      note: "Tiny seed. 3-5 kg/ha. Broadcast or row-seeded."
+  sorghum_rainfed:
+    rate_kg_ha:
+      value: 8
+      source: "FAO Sahel sorghum seeding rate"
+      confidence: high
+      validation: validated
+      note: "Improved variety. 6-10 kg/ha. Higher than traditional (3-5)."
+  sorghum_irrigated:
+    rate_kg_ha:
+      value: 8
+      source: "FAO irrigated sorghum seeding rate"
+      confidence: high
+      validation: validated
+      note: "Same rate as rainfed. Better establishment expected."
+  cowpea:
+    rate_kg_ha:
+      value: 20
+      source: "IITA cowpea seeding rate — improved varieties"
+      confidence: high
+      validation: validated
+      note: "Large seed. 15-25 kg/ha. Row planting assumed."
+  onion:
+    rate_kg_ha:
+      value: 4
+      source: "Vegetable extension — onion transplant nursery"
+      confidence: medium
+      validation: pending_field
+      note: "Nursery seedbed rate. Transplanted to field at 6-8 weeks."
+    cycles:
+      value: 1
+      source: "CS1 single cycle for onion"
+      confidence: high
+      validation: validated
+      note: "One planting per CS1 rotation (Oct-Jan)."
+  eggplant:
+    rate_kg_ha:
+      value: 0.5
+      source: "Vegetable extension — eggplant nursery"
+      confidence: medium
+      validation: pending_field
+      note: "Very small seed. Nursery-raised, then transplanted."
+    cycles:
+      value: 1
+      source: "CS1 single cycle for eggplant"
+      confidence: high
+      validation: validated
+      note: "One planting per CS1 rotation."
+  tomato:
+    rate_kg_ha:
+      value: 0.3
+      source: "Vegetable extension — tomato nursery"
+      confidence: medium
+      validation: pending_field
+      note: "Smallest seed rate. Nursery transplant system."
+    cycles:
+      value: 1
+      source: "CS2 single cycle for tomato"
+      confidence: high
+      validation: validated
+      note: "One planting per CS2 rotation (Mar-Jun)."
+  potato:
+    rate_kg_ha:
+      value: 2000
+      source: "FAO potato seed tuber rate"
+      confidence: high
+      validation: validated
+      note: "Seed tubers, not true seed. 1500-2500 kg/ha. Heaviest seed input."
+  okra:
+    rate_kg_ha:
+      value: 8
+      source: "Vegetable extension — okra direct seeding"
+      confidence: medium
+      validation: pending_field
+      note: "Direct-seeded. 6-10 kg/ha. Short CS3 cycle."
+    cycles:
+      value: 1
+      source: "CS3 single cycle for okra"
+      confidence: high
+      validation: validated
+      note: "One planting per CS3 rotation (Jul-Sep)."
+  alfalfa:
+    rate_kg_ha:
+      value: 25
+      source: "Irrigated alfalfa establishment rate"
+      confidence: medium
+      validation: pending_field
+      note: "Year 1 establishment only. Perennial — no reseed needed. 20-30 kg/ha."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Fertiliser Demand
+# =============================================================================
+
+fertiliser_demand:
+  source: "D-043. Agronomic extension, adapted for Sahel sandy soils."
+  confidence: medium
+  validation: pending_field
+
+  npk:
+    cs:
+      area_ha:
+        value: 10
+        source: "CS vegetable area receiving NPK"
+        confidence: medium
+        validation: pending_promoter
+        note: "10 of 15 CS ha. Consistent with bed_prep and crop_prot CS area."
+      cycles:
+        value: 3
+        source: "3 CS rotations per year"
+        confidence: high
+        validation: validated
+        note: "Each CS cycle receives full NPK application."
+      rate_kg_ha:
+        value: 200
+        source: "Vegetable NPK rate — intensive irrigated production"
+        confidence: medium
+        validation: pending_field
+        note: "150-250 kg/ha for vegetables. Sahel sandy soils need more."
+    rainfed:
+      rate_kg_ha:
+        value: 100
+        source: "Rainfed cereal/oilseed NPK rate — Sahel"
+        confidence: medium
+        validation: pending_field
+        note: "80-120 kg/ha standard. Lower than CS due to rain leaching risk."
+    forage:
+      rate_kg_ha:
+        value: 100
+        source: "Irrigated alfalfa NPK maintenance rate"
+        confidence: medium
+        validation: pending_field
+        note: "Alfalfa fixes N — NPK mainly for P and K. 80-120 kg/ha."
+    orchard:
+      rate_kg_ha:
+        value: 150
+        source: "Fruit tree NPK rate — mango/citrus"
+        confidence: medium
+        validation: pending_field
+        note: "Annual ring application. 100-200 kg/ha depending on tree age."
+  urea:
+    cs:
+      area_ha:
+        value: 10
+        source: "CS vegetable area receiving urea top-dress"
+        confidence: medium
+        validation: pending_promoter
+        note: "Same area as NPK CS. Urea as supplemental N."
+      cycles:
+        value: 3
+        source: "3 CS rotations per year"
+        confidence: high
+        validation: validated
+        note: "Each cycle receives urea top-dressing at vegetative stage."
+      rate_kg_ha:
+        value: 100
+        source: "Vegetable urea top-dress rate"
+        confidence: medium
+        validation: pending_field
+        note: "Supplemental N. 80-150 kg/ha depending on crop."
+    rainfed:
+      rate_kg_ha:
+        value: 50
+        source: "Rainfed cereal urea rate — Sahel"
+        confidence: medium
+        validation: pending_field
+        note: "Single top-dress at tillering. Lower rate due to leaching."
+    orchard:
+      rate_kg_ha:
+        value: 50
+        source: "Fruit tree urea supplemental rate"
+        confidence: medium
+        validation: pending_field
+        note: "Post-flowering N boost. 30-80 kg/ha."
+  organic:
+    cs:
+      area_ha:
+        value: 10
+        source: "CS vegetable area receiving compost/manure"
+        confidence: medium
+        validation: pending_promoter
+        note: "Same area as NPK CS."
+      cycles:
+        value: 3
+        source: "3 CS rotations per year"
+        confidence: high
+        validation: validated
+        note: "Pre-planting application each cycle. Soil structure benefit."
+      rate_t_ha:
+        value: 5
+        source: "Vegetable compost/manure rate — intensive production"
+        confidence: medium
+        validation: pending_field
+        note: "3-8 t/ha range. Higher for sandy Sahel soils."
+    forage:
+      rate_t_ha:
+        value: 3
+        source: "Alfalfa organic amendment rate"
+        confidence: medium
+        validation: pending_field
+        note: "Lower than CS — alfalfa fixes N. Mainly for soil structure."
+    orchard:
+      rate_t_ha:
+        value: 5
+        source: "Fruit tree organic mulch/amendment rate"
+        confidence: medium
+        validation: pending_field
+        note: "Basin application around trees. Retains moisture."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Crop Protection Demand
+# =============================================================================
+
+crop_protection_demand:
+  source: "D-043. Extension service recommendations, adapted for Sahel."
+  confidence: medium
+  validation: pending_field
+
+  insecticide:
+    cs:
+      area_ha:
+        value: 10
+        source: "CS vegetable area receiving insecticide"
+        confidence: medium
+        validation: pending_promoter
+        note: "Same treatment area as fertiliser CS."
+      cycles:
+        value: 3
+        source: "3 CS rotations per year"
+        confidence: high
+        validation: validated
+        note: "Each cycle needs pest control."
+      rate_L_ha:
+        value: 2
+        source: "Vegetable insecticide rate — conventional"
+        confidence: medium
+        validation: pending_field
+        note: "1.5-3.0 L/ha. Concentrate diluted for spray."
+    rainfed:
+      rate_L_ha:
+        value: 1.5
+        source: "Rainfed crop insecticide rate — cereals/oilseeds"
+        confidence: medium
+        validation: pending_field
+        note: "Lower pressure than CS vegetables. 1.0-2.0 L/ha."
+    orchard:
+      passes:
+        value: 2
+        source: "Orchard pest control — pre-flowering + post-harvest"
+        confidence: medium
+        validation: pending_field
+        note: "Mango fruit fly + scale insects. May + Nov."
+      rate_L_ha:
+        value: 3
+        source: "Orchard insecticide rate — canopy coverage"
+        confidence: medium
+        validation: pending_field
+        note: "Higher rate for full canopy coverage. 2-4 L/ha."
+  fungicide:
+    cs:
+      area_ha:
+        value: 10
+        source: "CS vegetable area receiving fungicide"
+        confidence: medium
+        validation: pending_promoter
+        note: "Same treatment area as insecticide CS."
+      cycles:
+        value: 3
+        source: "3 CS rotations per year"
+        confidence: high
+        validation: validated
+        note: "Preventive applications each cycle."
+      rate_L_ha:
+        value: 1.5
+        source: "Vegetable fungicide rate — preventive"
+        confidence: medium
+        validation: pending_field
+        note: "1.0-2.0 L/ha. Tomato/eggplant most susceptible."
+    orchard:
+      rate_L_ha:
+        value: 2
+        source: "Orchard fungicide rate — anthracnose prevention"
+        confidence: medium
+        validation: pending_field
+        note: "Mango anthracnose primary target. 1.5-3.0 L/ha."
+  herbicide:
+    rainfed:
+      rate_L_ha:
+        value: 2
+        source: "Rainfed pre-emergence herbicide rate"
+        confidence: medium
+        validation: pending_field
+        note: "Pre-emergence application. Reduces manual weeding. 1.5-3.0 L/ha."
+    forage:
+      rate_L_ha:
+        value: 3
+        source: "Alfalfa establishment herbicide rate — Year 1 only"
+        confidence: medium
+        validation: pending_field
+        note: "Higher rate for clean establishment. Year 1 only — perennial crop."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Irrigation Parts
+# =============================================================================
+
+irrigation_parts:
+  source: "D-033. Irrigation system maintenance rates."
+  confidence: medium
+  validation: pending_field
+
+  drip_tape:
+    cs_ha:
+      value: 10
+      source: "CS drip-irrigated area"
+      confidence: medium
+      validation: pending_promoter
+      note: "10 of 15 CS ha on drip. Consistent with treatment areas."
+    annual_replacement_pct:
+      value: 0.05
+      source: "Drip tape replacement rate — thin-wall"
+      confidence: medium
+      validation: pending_field
+      note: "5% annual replacement. Thin-wall tape lifespan 2-3 seasons."
+  sand_filter:
+    media_kg:
+      value: 100
+      source: "Sand filter media replacement — per station"
+      confidence: medium
+      validation: pending_field
+      note: "100 kg silica sand per filter station. Annual replacement."
+    stations:
+      value: 2
+      source: "Number of filtration stations"
+      confidence: medium
+      validation: pending_field
+      note: "1 station per irrigation block. CS + orchard."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Energy Base Load
+# =============================================================================
+
+energy_base_load:
+  source: "D-036. UOF infrastructure energy estimate."
+  confidence: medium
+  validation: pending_field
+
+  cold_storage:
+    kw:
+      value: 2.0
+      source: "Small cold room compressor rating"
+      confidence: medium
+      validation: pending_field
+      note: "2 kW continuous for ~10 m³ cold room. Hub-scope placeholder."
+    hours_per_day:
+      value: 12
+      source: "Cold room duty cycle — tropical conditions"
+      confidence: medium
+      validation: pending_field
+      note: "12 h/day average. Higher in hot season, lower at night."
+  lighting:
+    kw:
+      value: 0.5
+      source: "UOF infrastructure lighting load"
+      confidence: low
+      validation: not_validated
+      note: "LED lighting for buildings, yards. Minimal load."
+    hours_per_day:
+      value: 4
+      source: "Evening/night lighting hours"
+      confidence: low
+      validation: not_validated
+      note: "~18:00-22:00 average."
+  tools_misc:
+    kwh_per_day:
+      value: 5
+      source: "Analyst estimate — small tools, phone charging, misc"
+      confidence: low
+      validation: not_validated
+      note: "Catch-all for minor electrical loads. Low confidence."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Livestock Supplies
+# =============================================================================
+
+livestock_supplies:
+  source: "D-043. Standard livestock management inputs."
+  confidence: medium
+  validation: pending_field
+
+  salt_licks:
+    rate_kg_head_yr:
+      value: 20
+      source: "Standard mineral salt provision — tropical cattle"
+      confidence: medium
+      validation: pending_field
+      note: "15-25 kg/head/yr. Mineral blocks or loose salt."
+  dairy_cleaning:
+    daily_L:
+      value: 2
+      source: "Dairy hygiene water — equipment wash"
+      confidence: medium
+      validation: pending_field
+      note: "Milking equipment + bulk tank cleaning. Minimal for hand milking."
+  young_stock:
+    value: 10
+    source: "Analyst estimate — young cattle inventory on site"
+    confidence: low
+    validation: pending_promoter
+    note: "Calves + weanlings present at any time. Pending dairy herd model (Q-xxx). Affects water, salt, labour."
+
+
+# =============================================================================
+# L2 ENGINEERING PARAMETERS — Storage Parameters
+# =============================================================================
+
+storage_parameters:
+  source: "D-044. Storage design parameters."
+  confidence: medium
+  validation: pending_field
+
+  dry:
+    sorghum_rainfed:
+      holding_months:
+        value: 6.0
+        source: "Sahel grain storage standard — sorghum"
+        confidence: medium
+        validation: pending_field
+        note: "6 months covers harvest-to-next-harvest cycle. Standard for staple grain."
+      loss_pct:
+        value: 0.03
+        source: "Improved grain storage loss — hermetic/treated"
+        confidence: medium
+        validation: pending_field
+        note: "3% assumes improved storage (hermetic bags or fumigation). Traditional: 10-20%."
+    sorghum_irrigated:
+      holding_months:
+        value: 6.0
+        source: "Same storage profile as rainfed sorghum"
+        confidence: medium
+        validation: pending_field
+        note: "Irrigated harvest earlier (CS3) but same storage duration assumption."
+      loss_pct:
+        value: 0.03
+        source: "Same as rainfed sorghum — improved storage"
+        confidence: medium
+        validation: pending_field
+        note: "Same crop, same storage conditions."
+    peanut:
+      holding_months:
+        value: 4.0
+        source: "Oilseed storage standard — groundnut"
+        confidence: medium
+        validation: pending_field
+        note: "4 months. Shorter than grain — aflatoxin risk requires faster turnover."
+      loss_pct:
+        value: 0.03
+        source: "Improved oilseed storage loss"
+        confidence: medium
+        validation: pending_field
+        note: "3% with proper drying (<8% moisture) and ventilation."
+    sesame:
+      holding_months:
+        value: 4.0
+        source: "Oilseed storage standard — sesame"
+        confidence: medium
+        validation: pending_field
+        note: "Same as peanut. High oil content requires controlled humidity."
+      loss_pct:
+        value: 0.02
+        source: "Sesame storage loss — naturally resistant"
+        confidence: medium
+        validation: pending_field
+        note: "2%. Sesame is small, dry, low-moisture — stores well."
+    cowpea:
+      holding_months:
+        value: 3.0
+        source: "Legume storage standard — cowpea"
+        confidence: medium
+        validation: pending_field
+        note: "3 months. Shorter — bruchid beetle pressure in tropics."
+      loss_pct:
+        value: 0.02
+        source: "Improved legume storage loss — hermetic"
+        confidence: medium
+        validation: pending_field
+        note: "2% with hermetic storage. Traditional: 20-40% (bruchids)."
+    gum_arabic:
+      holding_months:
+        value: 4.0
+        source: "Gum arabic aggregation period"
+        confidence: medium
+        validation: pending_field
+        note: "4 months to aggregate commercial volumes. Gum stores indefinitely when dry."
+      annual_production_t:
+        value: 1.5
+        source: "L1 output — gum arabic net production"
+        confidence: medium
+        validation: pending_field
+        note: "Derived from 5 ha × 0.3 t/ha base. Should reference L1 output."
+    alfalfa_bales:
+      holding_months:
+        value: 1.5
+        source: "Forage bale turnover rate"
+        confidence: medium
+        validation: pending_field
+        note: "1.5 months average holding. 6 cuts/yr = continuous turnover."
+      annual_production_t:
+        value: 120
+        source: "L1 output — alfalfa DM production"
+        confidence: medium
+        validation: pending_field
+        note: "Derived from 10 ha × 12 t/ha base. Should reference L1 output."
+  cold:
+    mango:
+      holding_days:
+        value: 2.5
+        source: "Cold chain transit time — mango to market"
+        confidence: medium
+        validation: pending_field
+        note: "2.5 days average hold. Mango shelf life 5-7 days refrigerated."
+      weekly_throughput_t:
+        value: 3
+        source: "Peak mango weekly throughput estimate"
+        confidence: low
+        validation: not_validated
+        note: "30 t annual / ~10 week season. Should reference L1 seasonal output."
+    vegetables:
+      holding_days:
+        value: 2.5
+        source: "Cold chain transit time — vegetables to market"
+        confidence: medium
+        validation: pending_field
+        note: "2.5 days average hold. Perishable vegetables need fast turnover."
+      weekly_throughput_t:
+        value: 5
+        source: "Peak vegetable weekly throughput estimate"
+        confidence: low
+        validation: not_validated
+        note: "Based on peak harvest month output. Should reference L1 seasonal output."
+    milk:
+      holding_days:
+        value: 1
+        source: "Raw milk cold chain — daily collection"
+        confidence: high
+        validation: validated
+        note: "1 day maximum. Daily collection required for quality."
+
+
+# =============================================================================
+# L2 DERIVED PARAMETERS — Well Pumping Totals
+# These are L2 outputs, not independent assumptions. Kept in A-015 as
+# engine-computed values. Listed here for traceability.
+# =============================================================================
+
+energy_well_pumping_reference:
+  note: "DEPRECATED (D-070): L2 two-pass now computes water totals dynamically
+    from ETc-based water entries. Values below are seed/fallback only —
+    overwritten at runtime by resource_demand.py pass 2. L3 ws_engine
+    further overrides with actual pump hydraulics (TDH, motor eff)."
+  total_water_annual_m3:
+    value: 442762
+    source: "L2 ETc water sum (D-070). Updated from 328000 (D-036 era)."
+    confidence: high
+    validation: validated
+    note: "Seed value — overwritten by L2 two-pass with computed sum of water entries."
+  total_water_peak_daily_m3:
+    value: 4702
+    source: "L2 ETc water peak (D-070). Updated from 2087 (D-036 era)."
+    confidence: high
+    validation: validated
+    note: "Seed value — overwritten by L2 two-pass with computed peak of water entries."
+
+
+
+# =============================================================================
+# HUB PROCESSING, STORAGE, TRANSPORT PARAMETERS
+# =============================================================================
+# Session 1 addition: farm-gate → market mass balance parameters.
+# All values are LOW CONFIDENCE starting estimates unless noted.
+# D-062: base/low/high/source/confidence/direction pattern.
+
+hub:
+  processing:
+    oil_press:
+      extraction_ratio:
+        base: 0.40
+        low: 0.35
+        high: 0.45
+        source: "analyst estimate — blended peanut+sesame cold-press"
+        confidence: low
+        direction: higher_is_better
+        note: "Peanut ~42-47%, sesame ~45-50% solvent. Cold-press lower. Blended conservative."
+      cake_ratio:
+        base: 0.55
+        low: 0.50
+        high: 0.60
+        source: "analyst estimate — press cake residual"
+        confidence: low
+        direction: neutral
+        note: "Complement of oil extraction. Higher cake = lower oil yield."
+      cake_to_feed:
+        value: 1
+        source: "design decision D-010"
+        confidence: high
+        note: "1 = oilcake to feed pool, 0 = oilcake to market. Default: internal feed use."
+      loss_ratio:
+        base: 0.05
+        low: 0.03
+        high: 0.08
+        source: "analyst estimate — processing waste"
+        confidence: low
+        direction: lower_is_better
+        note: "Husks, fines, spillage. Constraint: extraction + cake + loss = 1.0."
+      oilcake_dm_content:
+        base: 0.90
+        low: 0.87
+        high: 0.92
+        source: "FAO feed composition tables"
+        confidence: medium
+        note: "Oilcake ~90% dry matter. Session 1B: WET→DM conversion for feed reconciliation."
+
+    mill:
+      milling_rate:
+        base: 0.70
+        low: 0.65
+        high: 0.75
+        source: "analyst estimate — sorghum hammer mill"
+        confidence: low
+        direction: higher_is_better
+        note: "Whole grain to flour. Traditional 60-65%, improved mill 70-75%."
+      bran_ratio:
+        base: 0.25
+        low: 0.20
+        high: 0.30
+        source: "analyst estimate — sorghum bran fraction"
+        confidence: low
+        direction: neutral
+        note: "Bran + middlings. All goes to feed pool."
+      loss_ratio:
+        base: 0.05
+        low: 0.03
+        high: 0.07
+        source: "analyst estimate — milling losses"
+        confidence: low
+        direction: lower_is_better
+        note: "Dust, fines. Constraint: milling_rate + bran + loss = 1.0."
+      bran_dm_content:
+        base: 0.88
+        low: 0.85
+        high: 0.90
+        source: "FAO feed composition tables"
+        confidence: medium
+        note: "Sorghum bran ~88% dry matter. Session 1B: WET→DM conversion for feed reconciliation."
+
+    tomato_paste:
+      concentration_ratio:
+        base: 6.0
+        low: 5.0
+        high: 7.0
+        source: "analyst estimate — single concentration tomato paste"
+        confidence: low
+        direction: neutral
+        note: "6:1 fresh-to-paste ratio. Standard single concentration."
+      process_loss_pct:
+        base: 0.05
+        low: 0.03
+        high: 0.08
+        source: "analyst estimate — tomato paste processing losses"
+        confidence: low
+        direction: lower_is_better
+        note: "Skin, seeds, trimming waste."
+      tomato_processing_toggle:
+        value: 1
+        source: "design decision — Session 1B"
+        confidence: high
+        note: "1 = process into paste → dry transport. 0 = sell fresh → cold chain."
+
+    dried_mango:
+      drying_ratio:
+        base: 8.0
+        low: 7.0
+        high: 10.0
+        source: "analyst estimate — solar tunnel drying"
+        confidence: low
+        direction: neutral
+        note: "8:1 fresh-to-dried ratio. Mango ~85% water."
+      process_loss_pct:
+        base: 0.08
+        low: 0.05
+        high: 0.12
+        source: "analyst estimate — peeling, slicing, trimming"
+        confidence: low
+        direction: lower_is_better
+        note: "Peeling + slicing losses. Higher than industrial due to manual process."
+      mango_processing_toggle:
+        value: 1
+        source: "design decision — Session 1B"
+        confidence: high
+        note: "1 = solar-dry → dry transport. 0 = sell fresh → cold chain."
+
+    dairy_plant:
+      pasteurized_milk_ratio:
+        base: 0.60
+        low: 0.50
+        high: 0.65
+        source: "analyst estimate — small dairy plant"
+        confidence: low
+        direction: neutral
+        note: "60% of raw milk → pasteurized liquid milk."
+      yogurt_ratio:
+        base: 0.35
+        low: 0.30
+        high: 0.40
+        source: "analyst estimate — yogurt production"
+        confidence: low
+        direction: neutral
+        note: "35% of raw milk → yogurt (set/stirred)."
+      loss_ratio:
+        base: 0.05
+        low: 0.03
+        high: 0.08
+        source: "analyst estimate — dairy processing losses"
+        confidence: low
+        direction: lower_is_better
+        note: "CIP waste, spillage, quality rejects."
+
+    abattoir:
+      carcass_cuts_ratio:
+        base: 0.65
+        low: 0.60
+        high: 0.70
+        source: "analyst estimate — tropical beef dressing"
+        confidence: low
+        direction: higher_is_better
+        note: "Dressing percentage for Zebu/crossbred cattle."
+      offal_ratio:
+        base: 0.15
+        low: 0.12
+        high: 0.18
+        source: "analyst estimate — edible offal"
+        confidence: low
+        direction: neutral
+        note: "Liver, heart, tripe, tongue. Marketable."
+      hides_ratio:
+        base: 0.10
+        low: 0.08
+        high: 0.12
+        source: "analyst estimate — raw hides"
+        confidence: low
+        direction: neutral
+        note: "Wet-salted hides for tanning. BY-PRODUCT."
+      bone_meal_ratio:
+        base: 0.05
+        low: 0.03
+        high: 0.07
+        source: "analyst estimate — bone/inedible offal"
+        confidence: low
+        direction: neutral
+        note: "Bone meal, blood meal. Can be feed supplement or fertilizer."
+      loss_ratio:
+        base: 0.05
+        low: 0.03
+        high: 0.07
+        source: "analyst estimate — slaughter losses"
+        confidence: low
+        direction: lower_is_better
+        note: "Blood, condemned parts, wastewater solids."
+
+    gum_grading:
+      graded_ratio:
+        base: 0.95
+        low: 0.90
+        high: 0.97
+        source: "analyst estimate — gum arabic grading"
+        confidence: low
+        direction: higher_is_better
+        note: "Hand-sorting by grade (Hashab). Minimal loss."
+      loss_ratio:
+        base: 0.05
+        low: 0.03
+        high: 0.10
+        source: "analyst estimate — bark, dirt, rejects"
+        confidence: low
+        direction: lower_is_better
+
+    fresh_handling:
+      veg_sorted_ratio:
+        base: 0.97
+        low: 0.93
+        high: 0.98
+        source: "analyst estimate — fresh vegetable sorting"
+        confidence: low
+        direction: higher_is_better
+        note: "Sorting, washing, grading. Low losses for fresh market."
+      veg_loss_ratio:
+        base: 0.03
+        low: 0.02
+        high: 0.07
+        source: "analyst estimate — sorting rejects"
+        confidence: low
+        direction: lower_is_better
+
+      cowpea_sorted_ratio:
+        base: 0.98
+        low: 0.95
+        high: 0.99
+        source: "analyst estimate — dry cowpea grading"
+        confidence: low
+        direction: higher_is_better
+        note: "Dry legume. Minimal loss in sorting."
+      cowpea_loss_ratio:
+        base: 0.02
+        low: 0.01
+        high: 0.05
+        source: "analyst estimate — cowpea rejects"
+        confidence: low
+        direction: lower_is_better
+
+      fruit_sorted_ratio:
+        base: 0.97
+        low: 0.93
+        high: 0.98
+        source: "analyst estimate — fresh fruit sorting"
+        confidence: low
+        direction: higher_is_better
+        note: "Sorting, grading for mango + citrus."
+      fruit_loss_ratio:
+        base: 0.03
+        low: 0.02
+        high: 0.07
+        source: "analyst estimate — fruit rejects"
+        confidence: low
+        direction: lower_is_better
+
+  storage:
+    dry_shrinkage_pct:
+      base: 0.02
+      low: 0.01
+      high: 0.04
+      source: "analyst estimate — dry warehouse storage"
+      confidence: low
+      direction: lower_is_better
+      note: "Annual shrinkage. Includes rodents, moisture, insects. Improved warehouse."
+    cold_loss_pct:
+      base: 0.03
+      low: 0.01
+      high: 0.05
+      source: "analyst estimate — cold storage spoilage"
+      confidence: low
+      direction: lower_is_better
+      note: "Annual spoilage rate. Assumes functional cold chain."
+
+  transport:
+    distance_km:
+      value: 60
+      source: "promoter — Hub to N'Djamena"
+      confidence: medium
+      note: "Approximate road distance, Baghara area to N'Djamena market."
+    dry_loss_pct:
+      base: 0.01
+      low: 0.005
+      high: 0.02
+      source: "analyst estimate — truck transport losses"
+      confidence: low
+      direction: lower_is_better
+      note: "Spillage, damage en route. Standard truck."
+    cold_loss_pct:
+      base: 0.02
+      low: 0.01
+      high: 0.04
+      source: "analyst estimate — reefer transport losses"
+      confidence: low
+      direction: lower_is_better
+      note: "Temperature excursion, spoilage. Reefer truck."
+    truck_capacity_t:
+      value: 10
+      source: "analyst estimate — standard 10-tonne truck"
+      confidence: medium
+    reefer_capacity_t:
+      value: 5
+      source: "analyst estimate — smaller reefer unit"
+      confidence: medium
+      note: "Reefer trucks smaller due to refrigeration weight/cost."
+
+
+deferred:
+  yield_ramp:
+    layer: 2
+    file: yield_ramp.yaml
+    fr: "Courbe de montée en puissance"
+  water_balance:
+    layer: 1
+    status: "75 kW solar pump, 500 m³/day peak."
+    fr: "Bilan hydrique — 75 kW pompe solaire, 500 m³/jour pic"
+  energy_balance:
+    layer: 1
+    status: "75 kW PV, 20.5 kWh battery, 70 kVA genset."
+    fr: "Bilan énergétique — 75 kW PV, 20,5 kWh batterie, 70 kVA groupe"
+  production_costs:
+    layer: 3
+    status: "Benchmark for when service costs unavailable."
+    fr: "Coûts de production — référence si coûts de service indisponibles"
+  hub_processing:
+    layer: 1
+    location: hub
+    status: "Separate file. Abattoir, dairy plant, oil press, mill, grading."
+    fr: "Fichier séparé. Abattoir, laiterie, huilerie, moulin, tri."
+
+
+# =============================================================================
+# SOURCE_ID LINKAGE AUDIT
+# =============================================================================
+# This file references source_ids that link to baghara_master_parameters.yaml.
+#
+# CONFIRMED IN MASTER CATALOG:
+#   internal:3moissons   → Projet CAP 3Moissons June 2025 (promoter doc)
+#   internal:medigue     → Medigue feedlot model (hub-scale beef)
+#   tier2:prasad_acacia  → Prasad 2020, Acacia senegal gum yields
+#
+# NOT YET IN MASTER CATALOG (to be added):
+#   tier2:nasem_2016     → NASEM (2016). Nutrient Requirements of Beef Cattle.
+#                          8th Ed. DOI: 10.17226/19014
+#                          Used for: beef DMI, dairy DMI, feed mass balance
+#
+# BENCHMARK CROSS-REFERENCES (not source_id, but source_url benchmarks):
+#   tier1:icrisat_niger  → ICRISAT Niger 2014 (peanut benchmark 0.47 t/ha)
+#   tier1:cirad_sesame   → CIRAD 2017 (sesame benchmark 0.30 t/ha)
+#   IPCC 2019 Vol 4      → Feed mass balance coefficients (beef + dairy)
+#
+# NOTE: source_id points to where the BASE VALUE originates (usually 3Moissons).
+#       source_url and benchmark point to institutional cross-checks.
+#       An underwriter should verify source_url links independently.
+# =============================================================================

@@ -1,0 +1,1726 @@
+# =============================================================================
+# UOF PROCESS REGISTRY — Level 1 Generic Process Definitions (v2)
+# =============================================================================
+# Version: 2.0
+# Date: 2026-02-09
+# Purpose: Data-driven process definitions for the generic mass balance engine.
+#          Redesigned with centralized params, formula strings, product_handoff.
+#
+# CONVENTIONS (from MASS_BALANCE_GOVERNING_SCHEMA.yaml):
+#   - Output types: PRODUCT | CO-PRODUCT | BY-PRODUCT | WASTE | LOSS
+#   - Input sources: INTERNAL | EXTERNAL
+#   - Boundary nodes: X1_Supply, X1_Sales, X2_Atmosphere, X3_Disposal, Z1_Fertility
+#   - Validation: sum(output.ratio) == 1.0, sum(input.mass_fraction) == 1.0
+#   - Basis: DM for biological livestock, WET for crop harvest quantities
+#   - Logic: supply_driven (A-006: linear_transform) | demand_driven (A-006: pull_transform)
+#
+# STRUCTURE PER PROCESS:
+#   params:    — all YAML path references in one place
+#   derived:   — computed intermediates (ordered, may reference earlier derived)
+#   driver:    — formula string → gross input quantity
+#   seasonal_profile: — 12 monthly weights (Jan=idx 0, Dec=idx 11), must sum to 1.0
+#                       Source: promoter harvest_months + agronomic calendar.
+#                       All streams within a process follow the same profile.
+#                       Engine multiplies annual driver × weight[m] for monthly breakdown.
+#   inputs:    — what enters the process boundary
+#   outputs:   — mass balance splits (ratio formulas, must sum to 1.0)
+#   residue:   — optional sub-balance for crop residues
+#   product_handoff: — optional, for livestock where DM balance ≠ physical product
+#   head_count:      — optional, physical inventory (formula strings evaluated against namespace)
+#
+# FORMULA STRINGS:
+#   All formulas are Python arithmetic evaluated against a namespace of
+#   resolved param values + derived values. E.g., "1 - loss_pct" or
+#   "target_finished_per_year * cycle_days / 365"
+#
+# PARAMETER REFERENCES:
+#   Dotted paths resolved from uof_promoter_v2.yaml at runtime.
+#   val() extracts base-case values (checks 'base', then 'value', then raw number).
+# =============================================================================
+
+
+# =============================================================================
+# CHAIN C: OILSEEDS — UOF biological phase
+# =============================================================================
+
+C1_peanut:
+  name: Peanut Production
+  chain: C
+  process_id: C1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [9, 10]. Peanut is early-maturing rainfed.
+    # Sep 35% (early harvest begins), Oct 65% (main harvest).
+    # Source: Sahel agronomic calendar, Chad 13°N. Weights are analyst estimate.
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0.35, 0.65, 0, 0]
+    confidence: high
+    note: "Rainfed. Harvest Sep-Oct. Sep 35% / Oct 65% split is analyst estimate based on early-maturing variety."
+
+  params:
+    area_ha: oilseeds.crops.peanut.area_ha
+    yield_t_per_ha: oilseeds.crops.peanut.yield_t_per_ha
+    loss_pct: oilseeds.crops.peanut.loss_pct
+    residue_ratio: feed.residues.peanut_hay.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_peanut
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_grain
+      type: PRODUCT
+      destination_node: C2
+      ratio: "1 - loss_pct"
+
+    - name: grain_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: high
+    outputs:
+      - name: residue_collected
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+C1_sesame:
+  name: Sesame Production
+  chain: C
+  process_id: C1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [9, 10]. Sesame matures slightly later than peanut.
+    # Sep 30%, Oct 70%.
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0.30, 0.70, 0, 0]
+    confidence: high
+    note: "Rainfed. Harvest Oct-Nov. Oct 40% / Nov 60% — later maturing than peanut."
+
+  params:
+    area_ha: oilseeds.crops.sesame.area_ha
+    yield_t_per_ha: oilseeds.crops.sesame.yield_t_per_ha
+    loss_pct: oilseeds.crops.sesame.loss_pct
+    residue_ratio: feed.residues.sesame_straw.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_sesame
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_grain
+      type: PRODUCT
+      destination_node: C2
+      ratio: "1 - loss_pct"
+
+    - name: grain_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: low
+    outputs:
+      - name: residue_collected
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+# =============================================================================
+# CHAIN D: CEREALS — UOF biological phase
+# =============================================================================
+
+D1_sorghum_rainfed:
+  name: Sorghum Production (rainfed)
+  chain: D
+  process_id: D1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [9, 10]. Sorghum is latest rainfed crop in Sahel.
+    # Sep 25%, Oct 75%.
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0.25, 0.75, 0, 0]
+    confidence: high
+    note: "Rainfed. Harvest Oct-Nov. Oct 35% / Nov 65% — grain sorghum, standard Sahel calendar."
+
+  params:
+    area_ha: cereals.crops.sorghum.area_ha
+    yield_t_per_ha: cereals.crops.sorghum.yield_t_per_ha
+    loss_pct: cereals.crops.sorghum.loss_pct
+    residue_ratio: feed.residues.sorghum_stover.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_sorghum
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_grain
+      type: PRODUCT
+      destination_node: D2
+      ratio: "1 - loss_pct"
+
+    - name: grain_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: low
+    outputs:
+      - name: residue_collected
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+D1_sorghum_irrigated:
+  name: Sorghum Production (irrigated)
+  chain: D
+  process_id: D1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [5]. Single CS3 harvest in May.
+    weights: [0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0]
+    confidence: medium
+    note: "Irrigated CS3 (Apr-May). Single cycle. Apr 40% / May 60%. Timing is analyst estimate."
+
+  params:
+    area_ha: cereals.crops.sorghum_grain_irrigated.area_ha
+    yield_t_per_ha: cereals.crops.sorghum_grain_irrigated.yield_t_per_ha
+    loss_pct: cereals.crops.sorghum_grain_irrigated.loss_pct
+    residue_ratio: feed.residues.sorghum_stover_irrigated.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_sorghum_irrigated
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_grain
+      type: PRODUCT
+      destination_node: D2
+      ratio: "1 - loss_pct"
+
+    - name: grain_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: low
+    outputs:
+      - name: residue_collected
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+# =============================================================================
+# CHAIN F: LEGUMES — UOF biological phase
+# =============================================================================
+
+F1_cowpea:
+  name: Cowpea Production
+  chain: F
+  process_id: F1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [9, 10]. Cowpea is early-maturing legume.
+    # Sep 40%, Oct 60%.
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0.40, 0.60, 0, 0]
+    confidence: high
+    note: "Rainfed. Harvest Sep-Oct. Sep 40% / Oct 60% — short-cycle legume."
+
+  params:
+    area_ha: legumes.crops.cowpea.area_ha
+    yield_t_per_ha: legumes.crops.cowpea.yield_t_per_ha
+    loss_pct: legumes.crops.cowpea.loss_pct
+    residue_ratio: feed.residues.cowpea_straw.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_cowpea
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_grain
+      type: PRODUCT
+      destination_node: F2
+      ratio: "1 - loss_pct"
+
+    - name: grain_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: medium
+    outputs:
+      - name: residue_collected
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+# =============================================================================
+# CHAIN F: VEGETABLES — UOF biological phase
+# =============================================================================
+
+F1_onion:
+  name: Onion Production
+  chain: F
+  process_id: F1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [11, 12]. Onion harvested gradually during CS1.
+    # Nov 40%, Dec 60%.
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.40, 0.60]
+    confidence: medium
+    note: "CS1 (Oct-Jan). Harvest Jan-Feb. Jan 60% / Feb 40%. Storage onion, standard Chad."
+
+  params:
+    area_ha: vegetables.rotations.contresaison_1.crops.onion.area_ha
+    yield_t_per_ha: vegetables.rotations.contresaison_1.crops.onion.yield_t_per_ha
+    loss_pct: vegetables.rotations.contresaison_1.crops.onion.loss_pct
+    residue_ratio: feed.residues.vegetable_residues.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_onion
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: F2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: none
+    outputs:
+      - name: residue_to_compost
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+F1_eggplant:
+  name: Eggplant Production
+  chain: F
+  process_id: F1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [11, 12]. Eggplant continuous picking during CS1.
+    # Nov 50%, Dec 50%.
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.50, 0.50]
+    confidence: medium
+    note: "CS1. Harvest Dec-Jan. Spread harvest Dec 30% / Jan 50% / Feb 20%. Continuous picking."
+
+  params:
+    area_ha: vegetables.rotations.contresaison_1.crops.eggplant.area_ha
+    yield_t_per_ha: vegetables.rotations.contresaison_1.crops.eggplant.yield_t_per_ha
+    loss_pct: vegetables.rotations.contresaison_1.crops.eggplant.loss_pct
+    residue_ratio: feed.residues.vegetable_residues.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_eggplant
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: F2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: none
+    outputs:
+      - name: residue_to_compost
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+F1_tomato:
+  name: Tomato Production
+  chain: F
+  process_id: F1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [2, 3]. Tomato picked during mid-late CS2.
+    # Feb 40%, Mar 60%.
+    weights: [0, 0.40, 0.60, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    confidence: medium
+    note: "CS2 (Feb-May). Harvest Apr-May. Apr 50% / May 50%. Determinate variety."
+
+  params:
+    area_ha: vegetables.rotations.contresaison_2.crops.tomato.area_ha
+    yield_t_per_ha: vegetables.rotations.contresaison_2.crops.tomato.yield_t_per_ha
+    loss_pct: vegetables.rotations.contresaison_2.crops.tomato.loss_pct
+    residue_ratio: feed.residues.vegetable_residues.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_tomato
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: F2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: none
+    outputs:
+      - name: residue_to_compost
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+F1_potato:
+  name: Potato Production
+  chain: F
+  process_id: F1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [3]. Single harvest end of CS2.
+    weights: [0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    confidence: medium
+    note: "CS2. Harvest Mar-Apr. Mar 50% / Apr 50%. Single lift."
+
+  params:
+    area_ha: vegetables.rotations.contresaison_2.crops.potato.area_ha
+    yield_t_per_ha: vegetables.rotations.contresaison_2.crops.potato.yield_t_per_ha
+    loss_pct: vegetables.rotations.contresaison_2.crops.potato.loss_pct
+    residue_ratio: feed.residues.vegetable_residues.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_potato
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: F2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: none
+    outputs:
+      - name: residue_to_compost
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+F1_okra:
+  name: Okra Production
+  chain: F
+  process_id: F1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [4, 5]. Okra picked continuously during CS3.
+    # Apr 50%, May 50%.
+    weights: [0, 0, 0, 0.50, 0.50, 0, 0, 0, 0, 0, 0, 0]
+    confidence: medium
+    note: "CS3 (Apr-Jul). Harvest Jun-Jul. Jun 50% / Jul 50%. Continuous picking."
+
+  params:
+    area_ha: vegetables.rotations.contresaison_3.crops.okra.area_ha
+    yield_t_per_ha: vegetables.rotations.contresaison_3.crops.okra.yield_t_per_ha
+    loss_pct: vegetables.rotations.contresaison_3.crops.okra.loss_pct
+    residue_ratio: feed.residues.vegetable_residues.ratio_to_main
+    dm_availability: feed.residue_dm_availability
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_okra
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: F2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+  residue:
+    driver: "area_ha * yield_t_per_ha * residue_ratio"
+    feed_value: none
+    outputs:
+      - name: residue_to_compost
+        type: BY-PRODUCT
+        destination_node: Z1_Fertility
+        ratio: "dm_availability"
+
+      - name: residue_field
+        type: LOSS
+        destination_node: Z1_Fertility
+        ratio: "1 - dm_availability"
+
+
+# =============================================================================
+# CHAIN G: FRUIT — UOF biological phase (perennials)
+# =============================================================================
+
+G1_mango:
+  name: Mango Production
+  chain: G
+  process_id: G1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [7, 8, 9]. Tropical mango, peak mid-season Aug.
+    # Jul 20%, Aug 50%, Sep 30%.
+    weights: [0, 0, 0, 0, 0, 0, 0.20, 0.50, 0.30, 0, 0, 0]
+    confidence: high
+    note: "Mango harvest Jul-Aug (Chad 13°N). Jul 40% / Aug 60%. FAO tropical fruit calendar. D-032."
+
+  params:
+    area_ha: fruit.crops.mango.area_ha
+    yield_t_per_ha: fruit.crops.mango.yield_t_per_ha
+    loss_pct: fruit.crops.mango.loss_pct
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_mango
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: G2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+
+G1_citrus:
+  name: Citrus Production
+  chain: G
+  process_id: G1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [10, 11, 12, 1, 2, 3]. Extended dry season harvest.
+    # Peak mid-dry (Dec). Oct 10%, Nov 20%, Dec 25%, Jan 20%, Feb 15%, Mar 10%.
+    weights: [0.20, 0.15, 0.10, 0, 0, 0, 0, 0, 0, 0.10, 0.20, 0.25]
+    confidence: medium
+    note: "Citrus harvest Nov-Feb. Spread: Nov 20% / Dec 30% / Jan 30% / Feb 20%. Mixed varieties."
+
+  params:
+    area_ha: fruit.crops.citrus.area_ha
+    yield_t_per_ha: fruit.crops.citrus.yield_t_per_ha
+    loss_pct: fruit.crops.citrus.loss_pct
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_citrus
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: G2
+      ratio: "1 - loss_pct"
+
+    - name: harvest_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+
+# =============================================================================
+# CHAIN E: GUM ARABIC — UOF biological phase (perennials)
+# =============================================================================
+
+E1_gum_arabic:
+  name: Gum Arabic Collection
+  chain: E
+  process_id: E1
+  location: UOF
+  phase: BIOLOGICAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Promoter harvest_months: [11, 12, 1, 2, 3]. Dry season tapping.
+    # Peak Jan (maximum tree water stress). Nov 15%, Dec 25%, Jan 30%, Feb 20%, Mar 10%.
+    weights: [0.30, 0.20, 0.10, 0, 0, 0, 0, 0, 0, 0, 0.15, 0.25]
+    confidence: high
+    note: "Gum tapping Nov-Mar (dry season). Peak Dec-Jan. Standard Acacia senegal calendar, Sahel."
+
+  params:
+    area_ha: gum.crops.gum_arabic.area_ha
+    trees_per_ha: gum.crops.gum_arabic.trees_per_ha
+    yield_kg_per_tree_mature: gum.crops.gum_arabic.yield_kg_per_tree_mature
+    loss_pct: gum.crops.gum_arabic.loss_pct
+
+  derived:
+    yield_t_per_ha: "trees_per_ha * yield_kg_per_tree_mature / 1000"
+
+  driver: "area_ha * yield_t_per_ha"
+
+  inputs:
+    - name: harvested_gum
+      source_node: X1_Supply
+      source_type: EXTERNAL
+
+  outputs:
+    - name: net_product
+      type: PRODUCT
+      destination_node: E2
+      ratio: "1 - loss_pct"
+
+    - name: collection_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_pct"
+
+
+# =============================================================================
+# CHAIN A: FEEDLOT — UOF biological phase (partition template)
+# =============================================================================
+
+A2_beef:
+  name: Beef Fattening
+  chain: A
+  process_id: A2
+  location: UOF
+  phase: BIOLOGICAL
+  logic: demand_driven
+  template: partition
+  basis: DM
+
+  seasonal_profile:
+    # Continuous year-round operation. Flat 1/12 per month.
+    weights: [0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0837]
+    confidence: high
+    note: "Continuous throughput — cattle delivered year-round. Uniform monthly profile."
+
+  params:
+    target_finished_per_year: beef.target_finished_per_year
+    cycle_days: beef.cycle_days
+    fcr: beef.fcr
+    dmd_pct: beef.dmd_pct
+    mortality_pct: beef.mortality_pct
+    entry_weight_kg: beef.entry_weight_kg
+    adg_kg: beef.adg_kg
+
+  derived:
+    exit_weight_kg: "entry_weight_kg + adg_kg * cycle_days"
+    capacity_head: "target_finished_per_year * cycle_days / 365"
+    turnover: "365 / cycle_days"
+    dmi_kg_per_head_per_day: "adg_kg * fcr"
+    added_mass_kg: "exit_weight_kg - entry_weight_kg"
+    steady_state_head: "target_finished_per_year * cycle_days / 365"
+    total_input_t: "steady_state_head * dmi_kg_per_head_per_day * 365 / 1000"
+    finished_net_mortality: "target_finished_per_year * (1 - mortality_pct)"
+    live_weight_out_t: "finished_net_mortality * exit_weight_kg / 1000"
+    calves_purchased_t: "target_finished_per_year * entry_weight_kg / 1000"
+    added_mass_annual_t: "finished_net_mortality * added_mass_kg / 1000"
+
+  driver: "total_input_t"
+
+  inputs:
+    - name: feed_dm
+      source_node: A1
+      source_type: INTERNAL
+
+  outputs:
+    - name: manure_dm
+      type: BY-PRODUCT
+      destination_node: Z1_Fertility
+      ratio: "1 - dmd_pct"
+      note: "Indigestible fraction of feed DM → fecal output. manure_dm = feed × (1 - dmd_pct)."
+
+    - name: gas_losses_dm
+      type: LOSS
+      destination_node: X2_Atmosphere
+      ratio: "dmd_pct"
+      note: "Digestible DM oxidized to CO₂/CH₄/H₂O. Includes tiny body DM accrual (~2.4%). WET product (finished_cattle) tracked separately in product_handoff via ADG."
+
+  product_handoff:
+    basis: WET
+    note: "Physical product ≠ DM balance output. Calf enters at 300kg, exits at 402kg (= 300 + 0.85 adg × 120 days). retained_dm ≈ WET weight gain proxy (FCR basis), not DM body accrual."
+    inputs:
+      - name: calves_purchased
+        source_node: X1_Supply
+        source_type: EXTERNAL
+        mass: "calves_purchased_t"
+    outputs:
+      - name: finished_cattle
+        type: PRODUCT
+        destination_node: A3
+        mass: "live_weight_out_t"
+
+  head_count:
+    target_finished_per_year: "target_finished_per_year"
+    capacity_head: "capacity_head"
+    turnover: "turnover"
+    cycle_days: "cycle_days"
+    finished_net_mortality: "finished_net_mortality"
+    exit_weight_kg: "exit_weight_kg"
+    fcr: "fcr"
+    added_mass_kg: "added_mass_kg"
+    added_mass_annual_t: "added_mass_annual_t"
+    live_weight_out_t: "live_weight_out_t"
+    calves_purchased_head: "target_finished_per_year"
+    calves_purchased_t: "calves_purchased_t"
+
+
+# =============================================================================
+# CHAIN B: DAIRY — UOF biological phase (partition template)
+# =============================================================================
+
+B2_dairy:
+  name: Dairy Herd
+  chain: B
+  process_id: B2
+  location: UOF
+  phase: BIOLOGICAL
+  logic: demand_driven
+  template: partition
+  basis: DM
+
+  seasonal_profile:
+    # Continuous year-round operation. Flat 1/12 per month.
+    weights: [0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0837]
+    confidence: high
+    note: "Continuous milking — dairy cows produce year-round. Uniform monthly profile."
+
+  params:
+    milking_cows: dairy.milking_cows
+    dmi_kg_per_cow_per_day_lactating: dairy.dmi_kg_per_cow_per_day_lactating
+    dmi_kg_per_cow_per_day_dry: dairy.dmi_kg_per_cow_per_day_dry
+    lactation_days: dairy.lactation_days
+    feed_to_milk_pct: dairy.feed_to_milk_pct
+    feed_to_manure_pct: dairy.feed_to_manure_pct
+    feed_to_metabolic_pct: dairy.feed_to_metabolic_pct
+    milk_yield_L_per_day: dairy.milk_yield_L_per_day
+    milk_density_kg_L: dairy.milk_density_kg_L
+    calving_rate: dairy.calving_rate
+    calf_survival_rate: dairy.calf_survival_rate
+    calf_weaning_weight_kg: dairy.calf_weaning_weight_kg
+    annual_cull_rate: dairy.annual_cull_rate
+    cull_cow_weight_kg: dairy.cull_cow_weight_kg
+
+  derived:
+    dry_period_days: "365 - lactation_days"
+    total_input_t: "milking_cows * (dmi_kg_per_cow_per_day_lactating * lactation_days + dmi_kg_per_cow_per_day_dry * dry_period_days) / 1000"
+    raw_milk_t: "milking_cows * milk_yield_L_per_day * lactation_days * milk_density_kg_L / 1000"
+    raw_milk_L: "milking_cows * milk_yield_L_per_day * lactation_days"
+    calves_weaned: "milking_cows * calving_rate * calf_survival_rate"
+    calves_mass_t: "calves_weaned * calf_weaning_weight_kg / 1000"
+    cull_cows: "milking_cows * annual_cull_rate"
+    cull_mass_t: "cull_cows * cull_cow_weight_kg / 1000"
+
+  driver: "total_input_t"
+
+  inputs:
+    - name: feed_dm
+      source_node: B1
+      source_type: INTERNAL
+
+  outputs:
+    - name: milk_pathway_dm
+      type: PRODUCT
+      destination_node: B3
+      ratio: "feed_to_milk_pct"
+      note: "DM allocated to milk synthesis. Physical milk in product_handoff."
+
+    - name: manure_dm
+      type: BY-PRODUCT
+      destination_node: Z1_Fertility
+      ratio: "feed_to_manure_pct"
+
+    - name: metabolic_loss_dm
+      type: LOSS
+      destination_node: X2_Atmosphere
+      ratio: "feed_to_metabolic_pct"
+      note: "CO2 + CH4 respiration"
+
+  product_handoff:
+    basis: WET
+    note: "Physical products ≠ DM balance. Milk is 87% water. Calves and cull cows are co-products."
+    outputs:
+      - name: raw_milk
+        type: PRODUCT
+        destination_node: B3
+        mass: "raw_milk_t"
+      - name: calves_weaned
+        type: CO-PRODUCT
+        destination_node: X1_Sales
+        mass: "calves_mass_t"
+        note: "Routing TBD — could go to A2 feedlot or market"
+      - name: cull_cows
+        type: CO-PRODUCT
+        destination_node: X1_Sales
+        mass: "cull_mass_t"
+        note: "Routing TBD — could go to A3 slaughter or market"
+
+  head_count:
+    milking_cows: "milking_cows"
+    raw_milk_t: "raw_milk_t"
+    raw_milk_L: "raw_milk_L"
+    calves_weaned: "calves_weaned"
+    calves_mass_t: "calves_mass_t"
+    cull_cows: "cull_cows"
+    cull_mass_t: "cull_mass_t"
+
+
+# =============================================================================
+# FEED AGGREGATOR — reconciliation template (serves Chain A + B)
+# =============================================================================
+
+# =============================================================================
+# HUB PROCESSING — Phase INDUSTRIAL (location: HUB)
+# =============================================================================
+# Session 1 addition: hub processes that aggregate UOF outputs × uof_count,
+# then process at the centralized hub. Same engine, same templates.
+
+C2_oil_press:
+  name: Oilseed Processing (Oil Press)
+  chain: C
+  process_id: C2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # 1-month lag from C1 harvest (Sep-Oct → Oct-Nov processing)
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.35, 0.65, 0]
+    confidence: low
+    note: "1-month lag from oilseed harvest. Oct 35% / Nov 65%. Analyst estimate."
+
+  params:
+    extraction_ratio: hub.processing.oil_press.extraction_ratio
+    cake_ratio: hub.processing.oil_press.cake_ratio
+    cake_to_feed: hub.processing.oil_press.cake_to_feed
+    loss_ratio: hub.processing.oil_press.loss_ratio
+
+  driver: "C1_peanut.net_grain * uof_count + C1_sesame.net_grain * uof_count"
+
+  inputs:
+    - name: raw_oilseeds
+      source_node: C1
+      source_type: INTERNAL
+
+  outputs:
+    - name: crude_oil
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "extraction_ratio"
+      note: "Cold-pressed crude oil. Blended peanut + sesame."
+
+    - name: oilcake_feed
+      type: BY-PRODUCT
+      destination_node: A1_B1
+      ratio: "cake_ratio * cake_to_feed"
+      note: "Oilcake to feed pool when cake_to_feed=1."
+
+    - name: oilcake_market
+      type: BY-PRODUCT
+      destination_node: ST_dry
+      ratio: "cake_ratio * (1 - cake_to_feed)"
+      note: "Oilcake to market when cake_to_feed=0."
+
+    - name: processing_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+D2_mill:
+  name: Cereal Milling (Sorghum)
+  chain: D
+  process_id: D2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # 1-month lag from D1 harvest. Rainfed sorghum: Oct-Nov harvest → Nov-Dec milling.
+    # Irrigated sorghum: Jan-Feb harvest → Feb-Mar milling.
+    # Blended: assume Nov-Dec primary milling peak.
+    weights: [0, 0.10, 0.10, 0, 0, 0, 0, 0, 0, 0, 0.40, 0.40]
+    confidence: low
+    note: "Blended rainfed (Nov-Dec) + irrigated (Feb-Mar). Analyst estimate."
+
+  params:
+    milling_rate: hub.processing.mill.milling_rate
+    bran_ratio: hub.processing.mill.bran_ratio
+    loss_ratio: hub.processing.mill.loss_ratio
+
+  driver: "D1_sorghum_rainfed.net_grain * uof_count + D1_sorghum_irrigated.net_grain * uof_count"
+
+  inputs:
+    - name: raw_sorghum
+      source_node: D1
+      source_type: INTERNAL
+
+  outputs:
+    - name: flour
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "milling_rate"
+
+    - name: bran
+      type: BY-PRODUCT
+      destination_node: A1_B1
+      ratio: "bran_ratio"
+      note: "All bran to feed pool."
+
+    - name: milling_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+B3_dairy_plant:
+  name: Dairy Processing Plant
+  chain: B
+  process_id: B3
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Year-round, matching B2 dairy flat profile.
+    weights: [0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0837]
+    confidence: medium
+    note: "Year-round processing. Matches dairy cow lactation (flat, irrigated forage year-round)."
+
+  params:
+    pasteurized_milk_ratio: hub.processing.dairy_plant.pasteurized_milk_ratio
+    yogurt_ratio: hub.processing.dairy_plant.yogurt_ratio
+    loss_ratio: hub.processing.dairy_plant.loss_ratio
+
+  driver: "B2_dairy.product.raw_milk * uof_count"
+
+  inputs:
+    - name: raw_milk
+      source_node: B2
+      source_type: INTERNAL
+
+  outputs:
+    - name: pasteurized_milk
+      type: PRODUCT
+      destination_node: ST_cold
+      ratio: "pasteurized_milk_ratio"
+
+    - name: yogurt
+      type: CO-PRODUCT
+      destination_node: ST_cold
+      ratio: "yogurt_ratio"
+
+    - name: dairy_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+A3_abattoir:
+  name: Slaughter & Butchering (Abattoir)
+  chain: A
+  process_id: A3
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Follows A2 beef cycle — continuous slaughter from year-round fattening.
+    weights: [0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0833, 0.0837]
+    confidence: medium
+    note: "Year-round slaughter. Matches A2 beef fattening (continuous 120-day cycles)."
+
+  params:
+    carcass_cuts_ratio: hub.processing.abattoir.carcass_cuts_ratio
+    offal_ratio: hub.processing.abattoir.offal_ratio
+    hides_ratio: hub.processing.abattoir.hides_ratio
+    bone_meal_ratio: hub.processing.abattoir.bone_meal_ratio
+    loss_ratio: hub.processing.abattoir.loss_ratio
+
+  driver: "A2_beef.product.finished_cattle * uof_count"
+
+  inputs:
+    - name: finished_cattle
+      source_node: A2
+      source_type: INTERNAL
+
+  outputs:
+    - name: carcass_cuts
+      type: PRODUCT
+      destination_node: ST_cold
+      ratio: "carcass_cuts_ratio"
+
+    - name: offal
+      type: CO-PRODUCT
+      destination_node: ST_cold
+      ratio: "offal_ratio"
+
+    - name: hides
+      type: BY-PRODUCT
+      destination_node: ST_dry
+      ratio: "hides_ratio"
+
+    - name: bone_meal
+      type: BY-PRODUCT
+      destination_node: ST_dry
+      ratio: "bone_meal_ratio"
+
+    - name: slaughter_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+E2_gum_grading:
+  name: Gum Arabic Grading & Sorting
+  chain: E
+  process_id: E2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Gum arabic collection: Dec-May (dry season). Grading 1-month lag: Jan-Jun.
+    weights: [0.15, 0.20, 0.25, 0.20, 0.15, 0.05, 0, 0, 0, 0, 0, 0]
+    confidence: low
+    note: "Dry season collection Dec-May → grading Jan-Jun. Peak Feb-Mar. Analyst estimate."
+
+  params:
+    graded_ratio: hub.processing.gum_grading.graded_ratio
+    loss_ratio: hub.processing.gum_grading.loss_ratio
+
+  driver: "E1_gum_arabic.net_product * uof_count"
+
+  inputs:
+    - name: raw_gum
+      source_node: E1
+      source_type: INTERNAL
+
+  outputs:
+    - name: graded_gum
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "graded_ratio"
+
+    - name: grading_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+F2_cowpea_grading:
+  name: Cowpea Grading (Dry Legume)
+  chain: F
+  process_id: F2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Cowpea harvest Sep-Oct → grading Oct-Nov (1-month lag)
+    weights: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.35, 0.65, 0]
+    confidence: low
+    note: "1-month lag from cowpea harvest. Dry legume sorting."
+
+  params:
+    sorted_ratio: hub.processing.fresh_handling.cowpea_sorted_ratio
+    loss_ratio: hub.processing.fresh_handling.cowpea_loss_ratio
+
+  driver: "F1_cowpea.net_grain * uof_count"
+
+  inputs:
+    - name: raw_cowpea
+      source_node: F1
+      source_type: INTERNAL
+
+  outputs:
+    - name: graded_cowpea
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "sorted_ratio"
+
+    - name: sorting_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+# Session 1B: Split F2_veg_handling into cold (perishable) + dry (shelf-stable)
+# FIX 1: Onion, potato are shelf-stable → dry transport, not cold chain
+# FIX 2: Tomato toggled between fresh (cold) and paste (dry)
+
+F2_veg_cold:
+  name: Perishable Vegetable Sorting (Cold Chain)
+  chain: F
+  process_id: F2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Eggplant (Jan-Apr), tomato (Jan-Mar), okra (Aug-Oct). Perishable only.
+    weights: [0.15, 0.22, 0.22, 0.08, 0.02, 0.02, 0.02, 0.07, 0.10, 0.06, 0.02, 0.02]
+    confidence: low
+    note: "Perishable vegetables only. Excludes onion+potato (shelf-stable)."
+
+  params:
+    sorted_ratio: hub.processing.fresh_handling.veg_sorted_ratio
+    loss_ratio: hub.processing.fresh_handling.veg_loss_ratio
+    tomato_processing_toggle: hub.processing.tomato_paste.tomato_processing_toggle
+
+  driver: "F1_eggplant.net_product * uof_count + F1_tomato.net_product * uof_count * (1 - tomato_processing_toggle) + F1_okra.net_product * uof_count"
+
+  inputs:
+    - name: raw_perishable_veg
+      source_node: F1
+      source_type: INTERNAL
+
+  outputs:
+    - name: sorted_veg_cold
+      type: PRODUCT
+      destination_node: ST_cold
+      ratio: "sorted_ratio"
+
+    - name: sorting_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+F2_veg_dry:
+  name: Shelf-Stable Vegetable Sorting (Ambient)
+  chain: F
+  process_id: F2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Onion (Jan-Mar) dominant, potato (Jan-Mar). Shelf-stable root crops.
+    weights: [0.15, 0.25, 0.25, 0.10, 0.02, 0.02, 0.02, 0.02, 0.02, 0.05, 0.05, 0.05]
+    confidence: low
+    note: "Onion + potato only. Shelf-stable, ambient transport."
+
+  params:
+    sorted_ratio: hub.processing.fresh_handling.veg_sorted_ratio
+    loss_ratio: hub.processing.fresh_handling.veg_loss_ratio
+
+  driver: "F1_onion.net_product * uof_count + F1_potato.net_product * uof_count"
+
+  inputs:
+    - name: raw_shelf_stable_veg
+      source_node: F1
+      source_type: INTERNAL
+
+  outputs:
+    - name: sorted_veg_dry
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "sorted_ratio"
+
+    - name: sorting_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+# Session 1B FIX 2: Tomato paste processing (toggleable)
+C3_tomato_paste:
+  name: Tomato Paste Production
+  chain: F
+  process_id: C3
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Follows tomato harvest: Jan-Mar peak, 1-month lag for processing.
+    weights: [0.05, 0.20, 0.30, 0.25, 0.10, 0.02, 0.02, 0.02, 0.02, 0.00, 0.01, 0.01]
+    confidence: low
+    note: "Tomato paste production follows tomato harvest (Jan-Mar). Processing Feb-Apr peak."
+
+  params:
+    concentration_ratio: hub.processing.tomato_paste.concentration_ratio
+    process_loss_pct: hub.processing.tomato_paste.process_loss_pct
+    tomato_processing_toggle: hub.processing.tomato_paste.tomato_processing_toggle
+
+  driver: "F1_tomato.net_product * uof_count * tomato_processing_toggle"
+
+  inputs:
+    - name: fresh_tomato
+      source_node: F1
+      source_type: INTERNAL
+
+  outputs:
+    - name: tomato_paste
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "(1 - process_loss_pct) / concentration_ratio"
+      note: "Shelf-stable, ambient transport."
+
+    - name: tomato_pomace
+      type: BY-PRODUCT
+      destination_node: Z1_Fertility
+      ratio: "(1 - process_loss_pct) * (1 - 1 / concentration_ratio)"
+      note: "Compost/soil amendment."
+
+    - name: processing_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "process_loss_pct"
+
+
+# Session 1B FIX 2: Dried mango processing (toggleable)
+G2_dried_mango:
+  name: Solar-Dried Mango Production
+  chain: G
+  process_id: G2d
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Mango harvest Apr-Jun → drying May-Jul (1-month lag).
+    weights: [0, 0, 0, 0.10, 0.30, 0.35, 0.20, 0.05, 0, 0, 0, 0]
+    confidence: low
+    note: "Solar drying follows mango harvest (Apr-Jun). Drying May-Jul peak."
+
+  params:
+    drying_ratio: hub.processing.dried_mango.drying_ratio
+    process_loss_pct: hub.processing.dried_mango.process_loss_pct
+    mango_processing_toggle: hub.processing.dried_mango.mango_processing_toggle
+
+  driver: "G1_mango.net_product * uof_count * mango_processing_toggle"
+
+  inputs:
+    - name: fresh_mango
+      source_node: G1
+      source_type: INTERNAL
+
+  outputs:
+    - name: dried_mango
+      type: PRODUCT
+      destination_node: ST_dry
+      ratio: "(1 - process_loss_pct) / drying_ratio"
+
+    - name: mango_waste
+      type: WASTE
+      destination_node: X3_Disposal
+      ratio: "(1 - process_loss_pct) * (1 - 1 / drying_ratio)"
+
+    - name: drying_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "process_loss_pct"
+
+
+G2_fruit_handling:
+  name: Fresh Fruit Sorting & Packing
+  chain: G
+  process_id: G2
+  location: HUB
+  phase: INDUSTRIAL
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Mango: Apr-Jun (when toggle OFF). Citrus: Jan-Mar + Oct-Dec. Blended.
+    weights: [0.10, 0.10, 0.10, 0.15, 0.20, 0.15, 0.02, 0.02, 0.02, 0.05, 0.05, 0.04]
+    confidence: low
+    note: "Fresh fruit only. Mango excluded when mango_processing_toggle=1."
+
+  params:
+    sorted_ratio: hub.processing.fresh_handling.fruit_sorted_ratio
+    loss_ratio: hub.processing.fresh_handling.fruit_loss_ratio
+    mango_processing_toggle: hub.processing.dried_mango.mango_processing_toggle
+
+  driver: "G1_mango.net_product * uof_count * (1 - mango_processing_toggle) + G1_citrus.net_product * uof_count"
+
+  inputs:
+    - name: raw_fruit
+      source_node: G1
+      source_type: INTERNAL
+
+  outputs:
+    - name: sorted_fruit
+      type: PRODUCT
+      destination_node: ST_cold
+      ratio: "sorted_ratio"
+
+    - name: sorting_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "loss_ratio"
+
+
+# =============================================================================
+# STORAGE — Phase DISTRIBUTION (location: HUB)
+# =============================================================================
+
+ST_dry:
+  name: Dry Storage (Warehouse)
+  chain: [C, D, E, F, A]
+  process_id: ST1
+  location: HUB
+  phase: DISTRIBUTION
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Session 1B FIX 4: Weighted average of upstream profiles by annual tonnage.
+    # Peak Mar (0.22) — driven by veg_dry (onion+potato, Jan-Mar harvest) + flour + paste.
+    weights: [0.1154, 0.2131, 0.2224, 0.0980, 0.0268, 0.0195, 0.0183, 0.0172, 0.0169, 0.0565, 0.1160, 0.0799]
+    confidence: low
+    note: "Weighted from upstream: veg_dry(73%), flour(10%), oil(4%), paste(9%), others. Peak Mar."
+
+  params:
+    shrinkage_pct: hub.storage.dry_shrinkage_pct
+
+  # Session 1B: Added F2_veg_dry (onion+potato), C3_tomato_paste, G2_dried_mango to dry storage
+  driver: "C2_oil_press.crude_oil + C2_oil_press.oilcake_market + D2_mill.flour + F2_cowpea_grading.graded_cowpea + E2_gum_grading.graded_gum + A3_abattoir.hides + A3_abattoir.bone_meal + F2_veg_dry.sorted_veg_dry + C3_tomato_paste.tomato_paste + G2_dried_mango.dried_mango"
+
+  inputs:
+    - name: dry_products_in
+      source_node: HUB_PROCESSING
+      source_type: INTERNAL
+
+  outputs:
+    - name: dispatched
+      type: PRODUCT
+      destination_node: TR_dry
+      ratio: "1 - shrinkage_pct"
+
+    - name: shrinkage
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "shrinkage_pct"
+
+
+ST_cold:
+  name: Cold Storage (Cold Chain)
+  chain: [A, B, F, G]
+  process_id: ST2
+  location: HUB
+  phase: DISTRIBUTION
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Session 1B FIX 4: Weighted average of upstream cold chain profiles.
+    # Peak Feb (0.16) — driven by perishable veg (57%), dairy (30%), meat (5%), fruit (8%).
+    weights: [0.1226, 0.1625, 0.1625, 0.0869, 0.0568, 0.0527, 0.0421, 0.0705, 0.0876, 0.0673, 0.0445, 0.0440]
+    confidence: low
+    note: "Weighted from upstream: veg_cold(57%), dairy(30%), abattoir(5%), fruit(8%). Peak Feb."
+
+  params:
+    cold_loss_pct: hub.storage.cold_loss_pct
+
+  # Session 1B: Replaced F2_veg_handling with F2_veg_cold (perishable only)
+  driver: "B3_dairy_plant.pasteurized_milk + B3_dairy_plant.yogurt + A3_abattoir.carcass_cuts + A3_abattoir.offal + F2_veg_cold.sorted_veg_cold + G2_fruit_handling.sorted_fruit"
+
+  inputs:
+    - name: cold_products_in
+      source_node: HUB_PROCESSING
+      source_type: INTERNAL
+
+  outputs:
+    - name: dispatched
+      type: PRODUCT
+      destination_node: TR_cold
+      ratio: "1 - cold_loss_pct"
+
+    - name: spoilage
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "cold_loss_pct"
+
+
+# =============================================================================
+# TRANSPORT — Phase DISTRIBUTION (location: PROGRAMME)
+# =============================================================================
+
+TR_dry:
+  name: Dry Transport (Truck to Market)
+  chain: [C, D, E, F, A]
+  process_id: TR1
+  location: PROGRAMME
+  phase: DISTRIBUTION
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Session 1B FIX 4: Inherits from ST_dry (same-month dispatch).
+    weights: [0.1154, 0.2131, 0.2224, 0.0980, 0.0268, 0.0195, 0.0183, 0.0172, 0.0169, 0.0565, 0.1160, 0.0799]
+    confidence: low
+    note: "Inherits ST_dry profile. Peak Mar."
+
+  params:
+    transport_loss_dry: hub.transport.dry_loss_pct
+    distance_km: hub.transport.distance_km
+    truck_capacity_t: hub.transport.truck_capacity_t
+
+  driver: "ST_dry.dispatched"
+
+  inputs:
+    - name: dry_dispatched
+      source_node: ST_dry
+      source_type: INTERNAL
+
+  outputs:
+    - name: delivered
+      type: PRODUCT
+      destination_node: MKT
+      ratio: "1 - transport_loss_dry"
+
+    - name: transport_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "transport_loss_dry"
+
+
+TR_cold:
+  name: Cold Transport (Reefer to Market)
+  chain: [A, B, F, G]
+  process_id: TR2
+  location: PROGRAMME
+  phase: DISTRIBUTION
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Session 1B FIX 4: Inherits from ST_cold (same-month dispatch).
+    weights: [0.1226, 0.1625, 0.1625, 0.0869, 0.0568, 0.0527, 0.0421, 0.0705, 0.0876, 0.0673, 0.0445, 0.0440]
+    confidence: low
+    note: "Inherits ST_cold profile. Peak Feb."
+
+  params:
+    transport_loss_cold: hub.transport.cold_loss_pct
+    distance_km: hub.transport.distance_km
+    reefer_capacity_t: hub.transport.reefer_capacity_t
+
+  driver: "ST_cold.dispatched"
+
+  inputs:
+    - name: cold_dispatched
+      source_node: ST_cold
+      source_type: INTERNAL
+
+  outputs:
+    - name: delivered
+      type: PRODUCT
+      destination_node: MKT
+      ratio: "1 - transport_loss_cold"
+
+    - name: transport_loss
+      type: LOSS
+      destination_node: X3_Disposal
+      ratio: "transport_loss_cold"
+
+
+# =============================================================================
+# MARKET — Terminal node (location: MARKET)
+# =============================================================================
+
+MKT_products:
+  name: Market Delivery Point
+  chain: [A, B, C, D, E, F, G]
+  process_id: MKT
+  location: MARKET
+  phase: DISTRIBUTION
+  logic: supply_driven
+  template: production_split
+  basis: WET
+
+  seasonal_profile:
+    # Session 1B FIX 4: Weighted blend of TR_dry (66%) + TR_cold (34%).
+    # Peak Mar (0.20) — driven by dry transport (veg, flour, paste).
+    weights: [0.1179, 0.1957, 0.2018, 0.0942, 0.0371, 0.0309, 0.0265, 0.0356, 0.0413, 0.0602, 0.0914, 0.0674]
+    confidence: low
+    note: "Weighted from TR_dry(66%) + TR_cold(34%). Peak Mar. Revenue pricing in L5."
+
+  driver: "TR_dry.delivered + TR_cold.delivered"
+
+  inputs:
+    - name: all_delivered
+      source_node: TRANSPORT
+      source_type: INTERNAL
+
+  outputs:
+    - name: market_ready
+      type: PRODUCT
+      destination_node: X1_Sales
+      ratio: 1.0
+      note: "Terminal node. market_ready tonnes by product by month priced in L5."
+
+
+# =============================================================================
+# FEED RECONCILIATION — Updated to hub scope with byproducts
+# =============================================================================
+# Updated in Session 1: scaled to hub scope (× uof_count), hub byproducts added.
+# D-009: Feed reconciliation is hub-scope.
+
+A1_B1_feed:
+  name: Feed Reconciliation (Hub Scope)
+  chain: [A, B]
+  process_id: [A1, B1]
+  location: HUB
+  phase: BIOLOGICAL
+  logic: demand_driven
+  template: reconciliation
+  basis: DM
+
+  seasonal_profile:
+    # Forage supply: irrigated, 6 cuts/year, year-round but rainy season boosts growth.
+    # Jun-Sep (rainy): 10% each = 40%. Other months: 7.5% each = 60%.
+    weights: [0.075, 0.075, 0.075, 0.075, 0.075, 0.10, 0.10, 0.10, 0.10, 0.075, 0.075, 0.075]
+    confidence: high
+    note: "6 cuts/yr bimonthly (D-021). Hub scope: forage × uof_count + hub byproducts."
+
+  params:
+    forage_area_ha: feed.forage_zone.crops.alfalfa.area_ha
+    forage_yield_dm: feed.forage_zone.crops.alfalfa.yield_t_dm_per_ha_per_year
+    oilcake_dm_content: hub.processing.oil_press.oilcake_dm_content
+    bran_dm_content: hub.processing.mill.bran_dm_content
+
+  own_production:
+    - name: forage_zone
+      source_node: X1_Supply
+      source_type: EXTERNAL
+      formula: "forage_area_ha * forage_yield_dm * uof_count"
+
+    - name: hub_oilcake_feed
+      source_node: C2
+      source_type: INTERNAL
+      formula: "C2_oil_press.oilcake_feed * oilcake_dm_content"
+      note: "Session 1B: WET→DM conversion (×0.90). Already at hub scope."
+
+    - name: hub_bran
+      source_node: D2
+      source_type: INTERNAL
+      formula: "D2_mill.bran * bran_dm_content"
+      note: "Session 1B: WET→DM conversion (×0.88). Already at hub scope."
+
+  gap_handling:
+    method: purchase
+    source: X1_Supply
+    source_type: EXTERNAL
+    note: "A-013: deficit filled by purchased feed from X1_Supply. Cost flows to E1 OpEx (feed purchases)."
+
+  outputs:
+    - name: feed_to_beef
+      type: PRODUCT
+      destination_node: A2
+
+    - name: feed_to_dairy
+      type: PRODUCT
+      destination_node: B2
