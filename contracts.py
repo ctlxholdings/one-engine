@@ -56,7 +56,9 @@ Named legs, account names, references
 Accounts in a second unit
 -------------------------
 An account is ``(name, nature)``, in the contract's currency (the book's),
-or ``(name, nature, term)``, in the unit named by that term's value. A
+``(name, nature, term)``, in the unit named by that term's value, or
+``(name, nature, FixedUnit(u))``, in a unit the type states (a state
+variable such as an interest rate, golds loan case). A
 dollar loan in a euro book keeps its euro carrying amount in
 ``{id}.debt`` and its dollar principal in a dollar account beside it; the
 kernel's per-unit identity then holds for each currency separately
@@ -85,6 +87,21 @@ from one_engine.units import exact
 
 class ContractError(ValueError):
     """A contract is mis-specified: unknown or missing terms or parties."""
+
+
+@dataclass(frozen=True)
+class FixedUnit:
+    """An account unit the type states itself rather than reading it from a term.
+
+    A loan's interest rate, its next instalment or its interest base are
+    state the contract carries between events (ACTUS keeps them in its
+    state record). Kept in the kernel they get the same roll-forward and
+    audit trail as a balance, but each must sit in a unit of its own
+    (``FixedUnit("rate")``) so it never mixes with money in the per-unit
+    identity. Added for the golds loan case (step 7).
+    """
+
+    name: str
 
 
 # Weakest first: a flow takes the weakest state among the terms it reads.
@@ -158,7 +175,7 @@ class ContractType:
             raise ContractError(f"type '{self.name}': refs must be terms, got {self.refs}")
         for role, accts in self.accounts.items():
             for a in accts:
-                if len(a) == 3 and a[2] not in self.terms:
+                if len(a) == 3 and not isinstance(a[2], FixedUnit) and a[2] not in self.terms:
                     raise ContractError(f"type '{self.name}': account '{a[0]}' takes its unit from "
                                         f"unknown term '{a[2]}'")
         for fname, leg in legs:
@@ -280,7 +297,8 @@ class Contract:
         out: Dict[str, Tuple[Tuple[str, Nature, str], ...]] = {}
         for role, entity in self.parties.items():
             out[entity] = out.get(entity, ()) + tuple(
-                (self.acct(a[0]), a[1], self.terms[a[2]].value if len(a) == 3 else self.currency)
+                (self.acct(a[0]), a[1], self.currency if len(a) == 2
+                 else a[2].name if isinstance(a[2], FixedUnit) else self.terms[a[2]].value)
                 for a in self.type.accounts.get(role, ()))
         return out
 
