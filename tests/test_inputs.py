@@ -42,3 +42,9 @@ def test_a_key_written_twice_in_the_source_refuses():
     with pytest.raises(InputError, match="tax_rate"):
         load_yaml_strict("tax_rate: 0.25\ntax_rate: 0.30\n")
     assert load_yaml_strict("tax_rate: 0.25\n") == {"tax_rate": 0.25}
+
+
+def test_a_decimal_in_a_file_stays_the_decimal_it_names():
+    from decimal import Decimal
+    from one_engine.inputs import load_yaml_strict
+    assert load_yaml_strict("tariff: 0.108\n") == {"tariff": Decimal("0.108")}

@@ -47,6 +47,16 @@ MUTATIONS = [
     ("checks.py", "if by_acct.get(a) and abs(by_acct[a][-1].closing) > tol]", "if False]",
      "test_checks.py::test_wind_down_names_what_is_left_standing"),
 
+    ("measures.py", "    if len(roots) > 1:", "    if False:",
+     "test_measures.py::test_irr_refuses_when_two_rates_fit"),
+    ("cuts.py", "    if missing:", "    if False:",
+     "test_cuts.py::test_an_unclassified_counter_account_refuses"),
+    ("contracts.py", "        if unknown:\n            raise ContractError", "        if False:\n            raise ContractError",
+     "test_contracts.py::test_an_unknown_term_refuses"),
+    ("packs/contracts.py", "\"fee\": exact(terms[\"split\"]) * savings", "\"fee\": (exact(terms[\"split\"]) + exact(\"0.0001\")) * savings",
+     "test_case_eria.py::test_irr"),
+    ("cases/__init__.py", "    top.finish()", "    pass",
+     "test_case_eria.py::test_the_case_file_has_no_unread_key"),
 ]
 
 

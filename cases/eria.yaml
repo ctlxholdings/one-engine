@@ -1,0 +1,45 @@
+# ERIA hospital shared-savings EPC, Cambodia (plan step 6, first reproduction).
+#
+# Source: ERIA, ESCO models, Cambodia (2020), worked example; reproduced blind
+# in esco-product (engine/tests/fixtures/eria.yaml, engine/tests/test_m2.py).
+# The provider invests 850,000 at t0; savings of 3,080,573 kWh a year
+# (chiller 2,144,362 + LED 936,211) at a tariff of 0.108 are split 80/20
+# for 8 years. Published answers: income 266,161.51 a year, simple payback
+# 3.1935 years, IRR 26.554%. Periods are years: 0 is the investment year.
+#
+# Outside the oracle (recorded, not modelled): the provider's equipment
+# stays at cost (no depreciation until Measurement is built); the transfer
+# to the client after the term is at no cost and outside the horizon.
+case: eria-hospital-shared-savings
+periods: 9
+phases: [accrue, settle]
+currency: USD
+floors:
+  esco.cash: 0
+  hospital.cash: 0
+contracts:
+  funding:
+    type: equity_funding
+    parties: {issuer: esco}
+    terms: {amount: 850000, period: 0}
+  retrofit:
+    type: one_off_purchase
+    parties: {buyer: esco}
+    terms: {amount: 850000, period: 0}
+  savings:
+    type: shared_savings
+    parties: {provider: esco, client: hospital}
+    terms: {kwh: 3080573, tariff: 0.108, performance: 1, split: 0.8, start: 1, terms: 8}
+schemes:
+  cash_flow:
+    share_capital: financing
+    equipment: investing
+    shared_savings_revenue: operating
+    avoided_energy_cost: operating
+    shared_savings_fee: operating
+cuts:
+  provider_project_cash_flow: {entity: esco, account: cash, scheme: cash_flow, include: [operating, investing]}
+  client_cash_flow: {entity: hospital, account: cash, scheme: cash_flow, include: [operating, investing]}
+measures:
+  irr: {measure: irr, cut: provider_project_cash_flow}
+  payback: {measure: payback, cut: provider_project_cash_flow}

@@ -104,7 +104,7 @@ class Reader:
 
 
 def load_yaml_strict(text: str) -> Any:
-    """Parse YAML, refusing duplicate keys in any mapping."""
+    """Parse YAML, refusing duplicate keys in any mapping; decimals stay exact."""
     import yaml
 
     class _Strict(yaml.SafeLoader):
@@ -119,5 +119,13 @@ def load_yaml_strict(text: str) -> Any:
             seen.add(key)
         return loader.construct_mapping(node, deep=deep)
 
+    def _decimal(loader, node):
+        # A number typed in a file is a decimal: 0.108 means 108/1000, not the
+        # float nearest to it. Keeping it as Decimal lets units.exact() take
+        # it exactly.
+        from decimal import Decimal
+        return Decimal(loader.construct_scalar(node).replace("_", ""))
+
     _Strict.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct)
+    _Strict.add_constructor("tag:yaml.org,2002:float", _decimal)
     return yaml.load(text, Loader=_Strict)
