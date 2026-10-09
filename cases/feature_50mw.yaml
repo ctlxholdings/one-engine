@@ -54,7 +54,7 @@ contracts:
   om_fixed:
     type: operating_cost
     parties: {payer: spv}
-    terms: &opex {annual: 800000, unit_rate: 0, volume: 0, periods_per_year: 4, start: 4, end: 40,
+    terms: &opex {annual: 800000, unit_rate: 0, volume: 0, index: 1, periods_per_year: 4, start: 4, end: 40,
                   vat_rate: 0.1, vat_refund_lag: 4, payment_days: 15, days_per_year: 365}
   insurance:
     type: operating_cost
@@ -208,10 +208,10 @@ rulebooks:
       - {claim: shl.fee}
       - {claim: shl.capitalised}
       - {claim: shl.principal}
+      - {name: minimum_cash, keep: 500000, from: 4, until: 39}     # min_cash_balance
     residual: equity.distribute
     cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
     service: [senior.interest, senior.principal]
-    retain: {amount: 500000, from: 4, until: 39}     # min_cash_balance
     tests:
       - {name: dscr_default, op: ">=", level: 1.05, if_missing: pass, consequence: report}
       - {name: dscr_lockup, op: ">=", level: 1.20, if_missing: pass, consequence: block,

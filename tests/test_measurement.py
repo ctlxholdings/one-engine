@@ -47,3 +47,12 @@ def test_provision_accrues_then_trues_up_and_pays_once():
     assert charges[3] == 0 and charges[4] == 50_000 and charges[39] == 50_000
     assert charges[40] == 200_000 and sum(charges) == 2_000_000
     assert [p.payment(t) for t in (39, 40)] == [0, 2_000_000]
+
+
+def test_a_foreign_balance_is_remeasured_at_the_closing_rate():
+    from one_engine.measurement import remeasure
+    # a dollar debt of 100 carried at 91 EUR; the rate moves from 0.91 to 0.92
+    assert remeasure(100, "0.92", 91) == 1                           # a loss of 1 on the liability
+    assert remeasure(100, "0.90", 91) == -1
+    with pytest.raises(MeasurementError):
+        remeasure(100, 0, 91)

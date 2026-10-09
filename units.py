@@ -14,7 +14,10 @@ Two decisions live here:
      Nothing is rounded: the float an upstream calculation produced is the
      amount the kernel records.
    - A ``str`` or ``Decimal`` is read as the decimal it names, so "0.1"
-     typed by a person is one tenth, not the float nearest to it.
+     typed by a person is one tenth, not the float nearest to it. A
+     ``str`` written as a ratio, "2/15", is that ratio: a share with no
+     finite decimal (the nightmare's shareholder loan funds 2/15 of each
+     EPC payment) can still be typed exactly.
 
 2. **Which units may be combined.** A :class:`Quantity` carries its unit
    code. Arithmetic or comparison across different units raises
@@ -64,6 +67,11 @@ def exact(value: Number) -> Fraction:
         if not math.isfinite(value):
             raise TypeError(f"not a finite amount: {value!r}")
         return Fraction(value)            # exact: a float is m / 2**k
+    if isinstance(value, str) and "/" in value:
+        try:
+            return Fraction(value)
+        except (ValueError, ZeroDivisionError) as exc:
+            raise TypeError(f"not an amount: {value!r}") from exc
     if isinstance(value, (Decimal, str)):
         try:
             d = Decimal(value)

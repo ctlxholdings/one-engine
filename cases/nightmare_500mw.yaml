@@ -1,0 +1,379 @@
+# 500MW hybrid nightmare (plan step 7, third reproduction).
+#
+# Source: generic-framework generic_engine/tests/fixtures/500mw_nightmare.yaml
+# (121 quarters, COD Q8, EUR; 450M EPC; three revenue lines; seven escalated
+# cost lines; four lenders: a scheduled euro senior, a sculpted dollar
+# senior with a grace PIK, a mezzanine with a grace PIK and a 25% sweep, a
+# shareholder loan; DSRA, MMR, decommissioning; tax with a 10-year tax life
+# against a 20-year book life; withholding on interest and dividends; an
+# LP and a GP sharing distributions through a promote). Every number is
+# copied from the fixture; tests/test_case_nightmare.py re-reads it and
+# checks the copy.
+#
+# Declared choices (the fixture leaves them open, or the old engine reads
+# them in a way the case does not follow; LOG.md step 7):
+#   * day count 91.25/360 for every loan (the old engine's);
+#   * construction funding: senior_a 40% of the EPC spend, senior_b and the
+#     mezzanine their draw schedules, the SHL 2/15 (7.5M a quarter); every
+#     other cost, construction interest and fees included, is a use; the
+#     equity residual is called 11/14 from the LP and 3/14 from the GP (the
+#     fixture's funding shares). At COD the GP alone funds the DSRA's
+#     initial requirement (the fixture's reserve_funding_schedule names the
+#     GP; the amount is the requirement, not the fixture's fixed 11.95M);
+#   * construction interest and fees are expensed (as the old engine does);
+#   * arrangement fees: paid at financial close, amortised straight-line
+#     from the next quarter to maturity;
+#   * senior_b: sculpted per quarter to CFADS / 5.0 (the fixture's target,
+#     the old engine's formula), anything left due at maturity (Q55);
+#   * the DSRA covers both seniors; senior_b's expected service is its
+#     current quarter's (it has no schedule);
+#   * the MMR builds 15M to Q48, when a 15M major maintenance is spent and
+#     capitalised (the old engine releases the reserve and spends nothing);
+#   * decommissioning (25M) accrues over the 80-quarter book life from COD
+#     and is paid at Q120 from a reserve built over the last five years
+#     (Q100-Q119; the fixture names no reserve, and without one the Q120
+#     payment exceeds the cash on hand); deductible when accrued;
+#   * lock-up at DSCR 1.35 blocks the mezzanine sweep, the SHL and
+#     distributions; the default level 1.05 reports; llcr_lockup and
+#     plcr_threshold are not carried (see the 100MW case);
+#   * WHT: 10% on every interest payment (capitalised interest repaid
+#     included), 15% on distributions of profit (not on return of capital),
+#     remitted in the phase it is withheld;
+#   * deferred tax on the asset registers' difference and on losses carried
+#     forward, one net account;
+#   * unpaid SHL at Q120 is forgiven (a gain, exempt), as in the 50MW case.
+case: nightmare-500mw-spv
+periods: 121
+phases: [accrue, fund, operate, tax, pay, close]
+currency: EUR
+floors:
+  spv.cash: 0
+  spv.dsra: 0
+  spv.mmr: 0
+  spv.decom_reserve: 0
+contracts:
+  solar:
+    type: offtake
+    parties: {seller: spv}
+    terms: &sale {volume: &solar [0, 0, 0, 0, 0, 0, 0, 0, 160000, 179774.5768902856, 199499.37343260003, 199249.53027068195, 199000, 198750.7822287046, 198501.87656543704, 198253.28261932856, 198005, 197757.0283175611, 197509.36718260986, 197262.0162062319, 197014.975, 196768.2431759733, 196521.8203466968, 196275.70612520076, 196029.900125, 195784.40196009344, 195539.2112449633, 195294.32759457474, 195049.75062437498, 194805.47995029297, 194561.5151887385, 194317.85595660188, 194074.50187125313, 193831.4525505415, 193588.7076127948, 193346.26667681884, 193104.12936189683, 192862.2952877888, 192620.76407473083, 192379.53534343475, 192138.60871508738, 191897.98381134984, 191657.66025435718, 191417.63766671758, 191177.91567151193, 190938.4938922931, 190699.37195308539, 190460.549478384, 190222.02609315436, 189983.80142283163, 189745.87509331995, 189508.24673099208, 189270.9159626886, 189033.88241571747, 188797.14571785336, 188560.70549733713, 188324.56138287514, 188088.71300363887, 187853.1599892641, 187617.9019698504, 187382.93857596078, 187148.2694386207, 186913.89418931777, 186679.81246000118, 186446.02388308098, 186212.52809142758, 185979.32471837118, 185746.41339770117, 185513.79376366557, 185281.46545097043, 185049.42809477932, 184817.68133071266, 184586.22479484722, 184355.05812371557, 184124.18095430543, 183893.59292405908, 183663.29367087298, 183433.282833097, 183203.56004953387, 182974.1249594388, 182744.97720251864, 182516.11641893152, 182287.54224928623, 182059.25433464162, 181831.25231650603, 181603.53583683685, 181376.10453803977, 181148.9580629684, 180922.09605492352, 180695.51815765267, 180469.22401534958, 180243.21327265355, 180017.4855746489, 179792.04056686442, 179566.87789527283, 179341.99720629028, 179117.39814677564, 178893.0803640301, 178669.0435057965, 178445.28722025882, 178221.81115604177, 177998.61496220995, 177775.69828826748, 177553.06078415754, 177330.70210026155, 177108.62188739888, 176886.81979682617, 176665.29548023676, 176444.04858976023, 176223.07877796187, 176002.38569784202, 175781.96900283557, 175561.82834681144, 175341.9633840721, 175122.37376935282, 174903.05915782138, 174684.01920507738, 174465.25356715173, 174246.76190050604, 174028.54386203227, 173810.599109052], price: 55, payment_days: 30, days_per_year: 365, periods_per_year: 4, end: 120}
+  battery:
+    type: offtake
+    parties: {seller: spv}
+    terms: {<<: *sale, volume: &battery [0, 0, 0, 0, 0, 0, 0, 0, 40000, 45000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000], price: 80}
+  grid_services:
+    type: offtake
+    parties: {seller: spv}
+    terms: {<<: *sale, volume: &grid [0, 0, 0, 0, 0, 0, 0, 0, 20000, 22500, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000], price: 40}
+  om_fixed:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: &opex {annual: 6000000, unit_rate: 0, volume: 0, index: &index [1, 1.00625, 1.0125390625000001, 1.0188674316406252, 1.025235353088379, 1.0316430740451816, 1.038090843257964, 1.0445789110283263, 1.0511075292222534, 1.0576769512798925, 1.064287432225392, 1.0709392286768007, 1.0776325988560307, 1.084367802598881, 1.091145101365124, 1.0979647582486562, 1.1048270379877105, 1.1117322069751339, 1.1186805332687286, 1.1256722866016582, 1.1327077383929187, 1.1397871617578745, 1.1469108315188614, 1.1540790242158545, 1.1612920181172037, 1.1685500932304365, 1.1758535313131269, 1.183202615883834, 1.190597632233108, 1.198038867434565, 1.2055266103560311, 1.2130611516707563, 1.2206427838686986, 1.2282718012678782, 1.2359485000258026, 1.243673178150964, 1.2514461355144078, 1.2592676738613728, 1.2671380968230066, 1.2750577099281506, 1.2830268206152016, 1.2910457382440468, 1.2991147741080722, 1.3072342414462477, 1.3154044554552868, 1.3236257333018826, 1.3318983941350195, 1.3402227590983635, 1.3485991513427285, 1.3570278960386206, 1.3655093203888622, 1.3740437536412926, 1.3826315271015508, 1.3912729741459355, 1.3999684302343478, 1.4087182329233126, 1.4175227218790833, 1.4263822388908278, 1.4352971278838955, 1.44426773493317, 1.4532944082765025, 1.4623774983282307, 1.4715173576927822, 1.4807143411783623, 1.4899688058107272, 1.4992811108470443, 1.5086516177898384, 1.518080690401025, 1.5275686947160314, 1.5371159990580068, 1.5467229740521196, 1.5563899926399454, 1.566117430093945, 1.5759056640320324, 1.5857550744322326, 1.5956660436474341, 1.6056389564202307, 1.6156741998978572, 1.6257721636472189, 1.6359332396700141, 1.6461578224179518, 1.656446308808064, 1.6667990982381147, 1.677216592602103, 1.6876991963058663, 1.698247316282778, 1.7088613620095456, 1.7195417455221054, 1.7302888814316186, 1.7411031869405664, 1.751985081858945, 1.7629349886205636, 1.7739533322994423, 1.785040540626314, 1.7961970440052286, 1.8074232755302615, 1.818719671002326, 1.8300866689460906, 1.8415247106270038, 1.8530342400684228, 1.8646157040688505, 1.876269552219281, 1.8879962369206515, 1.8997962134014057, 1.9116699397351646, 1.9236178768585095, 1.9356404885888754, 1.947738241642556, 1.959911605652822, 1.9721610531881524, 1.9844870597705786, 1.996890103894145, 2.0093706670434837, 2.0219292337125054, 2.034566291423209, 2.047282330744604, 2.060077845311758, 2.072953331844957, 2.085909290168988, 2.098946223232544, 2.1120646371277476], periods_per_year: 4, start: 8, end: 120,
+                  vat_rate: 0, vat_refund_lag: 0, payment_days: 15, days_per_year: 365}
+  insurance:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 3000000}
+  land_lease:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 1500000}
+  grid_charges:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 2000000}
+  am_fee:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 1000000}
+  regulatory_levy:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 500000}
+  om_variable:
+    type: operating_cost
+    parties: {payer: spv}
+    terms: {<<: *opex, annual: 0, unit_rate: 2, volume: &all_mwh [0, 0, 0, 0, 0, 0, 0, 0, 220000, 247274.5768902856, 274499.37343260006, 274249.53027068195, 274000, 273750.7822287046, 273501.87656543707, 273253.2826193286, 273005, 272757.02831756114, 272509.36718260986, 272262.0162062319, 272014.975, 271768.2431759733, 271521.82034669677, 271275.7061252007, 271029.900125, 270784.4019600934, 270539.21124496334, 270294.3275945748, 270049.75062437495, 269805.47995029297, 269561.5151887385, 269317.8559566019, 269074.50187125313, 268831.4525505415, 268588.7076127948, 268346.26667681884, 268104.12936189683, 267862.2952877888, 267620.7640747308, 267379.5353434348, 267138.6087150874, 266897.98381134984, 266657.66025435715, 266417.6376667176, 266177.9156715119, 265938.4938922931, 265699.3719530854, 265460.54947838397, 265222.02609315433, 264983.8014228316, 264745.8750933199, 264508.2467309921, 264270.9159626886, 264033.88241571747, 263797.14571785333, 263560.70549733716, 263324.56138287514, 263088.7130036389, 262853.1599892641, 262617.9019698504, 262382.9385759608, 262148.26943862066, 261913.89418931777, 261679.81246000118, 261446.02388308098, 261212.52809142758, 260979.32471837118, 260746.41339770117, 260513.79376366557, 260281.46545097043, 260049.42809477932, 259817.68133071266, 259586.22479484722, 259355.05812371557, 259124.18095430543, 258893.59292405908, 258663.29367087298, 258433.282833097, 258203.56004953387, 257974.1249594388, 257744.97720251864, 257516.11641893152, 257287.54224928623, 257059.25433464162, 256831.25231650603, 256603.53583683685, 256376.10453803977, 256148.9580629684, 255922.09605492352, 255695.51815765267, 255469.22401534958, 255243.21327265355, 255017.4855746489, 254792.04056686442, 254566.87789527283, 254341.99720629028, 254117.39814677564, 253893.0803640301, 253669.0435057965, 253445.28722025882, 253221.81115604177, 252998.61496220995, 252775.69828826748, 252553.06078415754, 252330.70210026155, 252108.62188739888, 251886.81979682617, 251665.29548023676, 251444.04858976023, 251223.07877796187, 251002.38569784202, 250781.96900283557, 250561.82834681144, 250341.9633840721, 250122.37376935282, 249903.05915782138, 249684.01920507738, 249465.25356715173, 249246.76190050604, 249028.54386203227, 248810.599109052]}
+  epc:
+    type: capex
+    parties: {owner: spv}
+    terms: &capex {schedule: [56250000, 56250000, 56250000, 56250000, 56250000, 56250000, 56250000, 56250000], vat_rate: 0, vat_refund_lag: 0, end: 120}
+  development:
+    type: capex
+    parties: {owner: spv}
+    terms: {<<: *capex, schedule: [1250000, 1250000, 1250000, 1250000]}
+  fees:
+    type: capex
+    parties: {owner: spv}
+    terms: {<<: *capex, schedule: [2000000]}
+  senior_a:
+    type: term_loan
+    parties: {borrower: spv}
+    terms: {commitment: 180000000, rate: 0.055, rate_from: 8, days_per_period: 91.25, day_count_basis: 360,
+            available_until: 7, commitment_fee_rate: 0.005, repay_from: 8, repay_periods: 60}
+  senior_b:
+    type: foreign_loan
+    parties: {borrower: spv}
+    terms: {currency: USD, fx_rate: &fx [0.91, 0.9104166666666667, 0.9108333333333334, 0.91125, 0.9116666666666667, 0.9120833333333334, 0.9125, 0.9129166666666667, 0.9133333333333333, 0.9137500000000001, 0.9141666666666667, 0.9145833333333333, 0.915, 0.9154166666666667, 0.9158333333333334, 0.91625, 0.9166666666666667, 0.9170833333333334, 0.9175, 0.9179166666666667, 0.9183333333333333, 0.9187500000000001, 0.9191666666666667, 0.9195833333333333, 0.92, 0.9204166666666667, 0.9208333333333334, 0.92125, 0.9216666666666666, 0.9220833333333334, 0.9225, 0.9229166666666667, 0.9233333333333333, 0.92375, 0.9241666666666667, 0.9245833333333333, 0.925, 0.9254166666666667, 0.9258333333333333, 0.92625, 0.9266666666666666, 0.9270833333333334, 0.9275, 0.9279166666666667, 0.9283333333333333, 0.92875, 0.9291666666666667, 0.9295833333333333, 0.93, 0.9304166666666667, 0.9308333333333333, 0.93125, 0.9316666666666666, 0.9320833333333334, 0.9325, 0.9329166666666666, 0.9333333333333333, 0.93375, 0.9341666666666667, 0.9345833333333333, 0.935, 0.9354166666666667, 0.9358333333333333, 0.93625, 0.9366666666666666, 0.9370833333333334, 0.9375, 0.9379166666666666, 0.9383333333333334, 0.93875, 0.9391666666666667, 0.9395833333333333, 0.94, 0.9404166666666667, 0.9408333333333333, 0.94125, 0.9416666666666667, 0.9420833333333333, 0.9425, 0.9429166666666666, 0.9433333333333334, 0.94375, 0.9441666666666666, 0.9445833333333333, 0.945, 0.9454166666666667, 0.9458333333333333, 0.94625, 0.9466666666666667, 0.9470833333333333, 0.9475, 0.9479166666666666, 0.9483333333333334, 0.94875, 0.9491666666666666, 0.9495833333333333, 0.95, 0.9504166666666667, 0.9508333333333333, 0.9512499999999999, 0.9516666666666667, 0.9520833333333333, 0.9525, 0.9529166666666666, 0.9533333333333334, 0.95375, 0.9541666666666666, 0.9545833333333333, 0.955, 0.9554166666666666, 0.9558333333333333, 0.9562499999999999, 0.9566666666666667, 0.9570833333333333, 0.9575, 0.9579166666666666, 0.9583333333333333, 0.95875, 0.9591666666666666, 0.9595833333333333, 0.96], commitment: 90000000, draw_schedule: [11250000, 11250000, 11250000, 11250000, 11250000, 11250000, 11250000, 11250000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            available_until: 7, rate: &rate_b [0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055, 0.055], rate_from: 0, days_per_period: 91.25, day_count_basis: 360,
+            commitment_fee_rate: 0.0075, capitalise_from: 8, capitalise_until: 11, repay_from: 12, repay_periods: 44,
+            sculpt_dscr: 5.0, arrangement_fee: 900000, fee_at: 0}
+  mezzanine:
+    type: loan
+    parties: {borrower: spv}
+    terms: {commitment: 50000000, draw_schedule: [6250000, 6250000, 6250000, 6250000, 6250000, 6250000, 6250000, 6250000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], available_until: 7,
+            rate: 0.09, rate_from: 8, days_per_period: 91.25, day_count_basis: 360, commitment_fee_rate: 0,
+            capitalise_from: 8, capitalise_until: 15, repay_from: 68, repay_periods: 1, sculpt_dscr: null,
+            arrangement_fee: 500000, fee_at: 0}
+  shl:
+    type: shareholder_loan
+    parties: {borrower: spv}
+    terms: {commitment: 60000000, rate: 0.12, rate_from: 8, days_per_period: 91.25, day_count_basis: 360,
+            available_until: 7, commitment_fee_rate: 0, repay_from: 120, repay_periods: 1}
+  dsra:
+    type: debt_reserve
+    parties: {holder: spv}
+    terms: {covers: [senior_a, senior_b], periods_forward: 2, from: 8, prefund: []}
+  mmr:
+    type: maintenance_reserve
+    parties: {holder: spv}
+    terms: {amount: 15000000, from: 8, event: 48}
+  decom_reserve:
+    type: sinking_fund
+    parties: {holder: spv}
+    terms: {amount: 25000000, from: 100, until: 119}
+  lp:
+    type: sponsor_equity
+    parties: {issuer: spv}
+    terms: {}
+  gp:
+    type: sponsor_equity
+    parties: {issuer: spv}
+    terms: {}
+schemes:
+  cash_flow:
+    solar.receivable: operating
+    battery.receivable: operating
+    grid_services.receivable: operating
+    om_fixed.payable: operating
+    insurance.payable: operating
+    land_lease.payable: operating
+    grid_charges.payable: operating
+    am_fee.payable: operating
+    regulatory_levy.payable: operating
+    om_variable.payable: operating
+    decommissioning: operating
+    cwip: investing
+    tax_payable: tax
+    wht_payable: withholding
+    dsra: reserve
+    mmr: reserve
+    decom_reserve: reserve
+    senior_a.debt: senior
+    senior_a.interest_payable: senior
+    senior_a.fee_payable: senior
+    senior_b.debt: senior
+    senior_b.interest_payable: senior
+    senior_b.fee_payable: senior
+    senior_b.capitalised_interest: senior
+    senior_b.deferred_fees: senior
+    mezzanine.debt: mezzanine
+    mezzanine.interest_payable: mezzanine
+    mezzanine.fee_payable: mezzanine
+    mezzanine.capitalised_interest: mezzanine
+    mezzanine.deferred_fees: mezzanine
+    shl.debt: shareholder
+    shl.interest_payable: shareholder
+    shl.capitalised_interest: shareholder
+    lp.capital: lp
+    lp.distributions: lp
+    gp.capital: gp
+    gp.distributions: gp
+rulebooks:
+  construction:
+    kind: funding_plan
+    entity: spv
+    cash: cash
+    phase: fund
+    from: 0
+    until: 7
+    uses:
+      - {flow: epc.spend}
+      - {flow: development.spend}
+      - {flow: fees.spend}
+      - {claim: senior_a.fee}
+      - {claim: senior_b.fee}
+      - {claim: senior_b.interest}
+      - {claim: senior_b.arrangement_fee}
+      - {claim: mezzanine.arrangement_fee}
+    sources:
+      - {claim: senior_a.draw, share: 0.4, of: [epc.spend]}
+      - {claim: senior_b.draw, share: 1, of: [epc.spend]}       # capped by its draw schedule
+      - {claim: mezzanine.draw, share: 1, of: [epc.spend]}      # capped by its draw schedule
+      - {claim: shl.draw, share: "2/15", of: [epc.spend]}       # 7.5M a quarter
+    residual:
+      - {leg: lp.contribute, share: "11/14"}                    # funding_share 0.7857142857142857
+      - {leg: gp.contribute, share: "3/14"}                     # funding_share 0.21428571428571427
+  reserve_funding:
+    kind: funding_plan
+    entity: spv
+    cash: cash
+    phase: fund
+    from: 8
+    until: 8
+    uses: [{claim: dsra.top_up}]
+    sources: []
+    residual: gp.contribute
+  assets:
+    kind: asset_register
+    entity: spv
+    phase: accrue
+    from: cwip
+    to: fixed_assets
+    expense: depreciation
+    disposal: disposal_loss
+    in_service: [8, 48]
+    life_periods: 80
+    first_charge: in_service
+    dispose_at: 120
+    tax: {life_periods: 40, first_charge: in_service}
+  decommissioning:
+    kind: provision
+    entity: spv
+    cash: decom_reserve
+    phase: accrue
+    pay_phase: operate
+    expense: decommissioning_expense
+    liability: decommissioning
+    amount: 25000000
+    start: 8
+    periods: 80
+    settle_at: 120
+  tax:
+    kind: income_tax
+    entity: spv
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: 0.25
+    carry_forward_periods: null
+    timing: assets
+    deferred: {account: deferred_tax, expense: deferred_tax_expense}
+    scheme:
+      solar.revenue: taxable
+      battery.revenue: taxable
+      grid_services.revenue: taxable
+      om_fixed.expense: taxable
+      insurance.expense: taxable
+      land_lease.expense: taxable
+      grid_charges.expense: taxable
+      am_fee.expense: taxable
+      regulatory_levy.expense: taxable
+      om_variable.expense: taxable
+      decommissioning_expense: taxable
+      depreciation: timing
+      disposal_loss: timing
+      senior_a.interest: taxable
+      senior_a.fees: taxable
+      senior_b.interest: taxable
+      senior_b.fees: taxable
+      senior_b.fx_loss: taxable
+      mezzanine.interest: taxable
+      mezzanine.fees: taxable
+      shl.interest: taxable
+      shl.fees: taxable
+      shl_forgiven: exempt
+      tax_expense: non_deductible
+      deferred_tax_expense: non_deductible
+  promote:
+    kind: promote
+    lp: lp
+    gp: gp
+    accrue_phase: accrue
+    pref_rate: 0.08
+    periods_per_year: 4
+    pref_compounds: false
+    carry_rate: 0.2
+    catchup_pct: 1.0
+  waterfall:
+    kind: waterfall
+    entity: spv
+    phase: pay
+    cash: cash
+    sources: [dsra.release]
+    tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: senior_a.interest}
+      - {claim: senior_a.fee}
+      - {claim: senior_b.interest}
+      - {claim: senior_b.fee}
+      - {claim: senior_a.principal}
+      - {claim: senior_b.capitalised}
+      - {claim: senior_b.principal}
+      - {claim: dsra.top_up}
+      - {claim: mmr.contribute}
+      - {claim: decom_reserve.contribute}
+      - {claim: mezzanine.interest}
+      - {claim: mezzanine.fee}
+      - {claim: mezzanine.capitalised}
+      - {claim: mezzanine.principal}
+      - {claim: mezzanine.prepay, share_of_remaining: 0.25}     # sweep_pct
+      - {claim: shl.interest}
+      - {claim: shl.fee}
+      - {claim: shl.capitalised}
+      - {claim: shl.principal}
+      - {name: minimum_cash, keep: 2000000, from: 8, until: 119}     # min_cash_balance
+    residual: promote
+    cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+    service: [senior_a.interest, senior_a.principal, senior_b.interest, senior_b.capitalised, senior_b.principal]
+    tests:
+      - {name: dscr_default, op: ">=", level: 1.05, if_missing: pass, consequence: report}
+      - {name: dscr_lockup, op: ">=", level: 1.35, if_missing: pass, consequence: block,
+         blocks: [mezzanine.prepay, shl.interest, shl.fee, shl.capitalised, shl.principal, promote]}
+      - {name: dscr_distribution, op: ">=", level: 1.35, if_missing: pass, consequence: block,
+         blocks: [promote]}
+  shl_forgiveness:
+    kind: forgiveness
+    entity: spv
+    phase: close
+    at: 120
+    accounts: [shl.capitalised_interest, shl.debt]
+    gain: shl_forgiven
+  withholding:
+    kind: withholding
+    entity: spv
+    cash: cash
+    payable: wht_payable
+    phases: [fund, pay]
+    rates:
+      senior_a.interest: 0.1
+      senior_b.interest: 0.1
+      senior_b.capitalised: 0.1
+      mezzanine.interest: 0.1
+      mezzanine.capitalised: 0.1
+      shl.interest: 0.1
+      shl.capitalised: 0.1
+      lp.distribute: 0.15
+      gp.distribute: 0.15
+cuts:
+  lp_flows: {entity: spv, account: cash, scheme: cash_flow, include: [lp]}
+  gp_flows: {entity: spv, account: cash, scheme: cash_flow, include: [gp]}
+  equity_flows: {entity: spv, account: cash, scheme: cash_flow, include: [lp, gp]}
+  sponsor_flows: {entity: spv, account: cash, scheme: cash_flow, include: [lp, gp, shareholder]}
+  project_flows: {entity: spv, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+measures:
+  lp_irr: {measure: irr, cut: lp_flows, per_year: 4}
+  gp_irr: {measure: irr, cut: gp_flows, per_year: 4}
+  equity_irr: {measure: irr, cut: equity_flows, per_year: 4}
+  sponsor_irr: {measure: irr, cut: sponsor_flows, per_year: 4}
+  project_irr: {measure: irr, cut: project_flows, per_year: 4}
+wind_down:
+  spv: [cash, cwip, fixed_assets, solar.receivable, battery.receivable, grid_services.receivable,
+        om_fixed.payable, insurance.payable, land_lease.payable, grid_charges.payable, am_fee.payable,
+        regulatory_levy.payable, om_variable.payable, decommissioning, tax_payable, wht_payable, deferred_tax,
+        dsra, mmr, decom_reserve, lp.capital, gp.capital,
+        senior_a.debt, senior_a.interest_payable, senior_a.fee_payable,
+        senior_b.debt, senior_b.capitalised_interest, senior_b.interest_payable, senior_b.fee_payable,
+        senior_b.deferred_fees, senior_b.debt_fc, senior_b.capitalised_interest_fc,
+        mezzanine.debt, mezzanine.capitalised_interest, mezzanine.interest_payable, mezzanine.fee_payable,
+        mezzanine.deferred_fees,
+        shl.debt, shl.capitalised_interest, shl.interest_payable, shl.fee_payable]

@@ -3,9 +3,10 @@
 Built so far: the straight-line asset register used by Averta's SPV
 (capitalised construction cost, depreciated from the in-service date,
 disposed of at the end of the project), and a straight-line provision
-settled once (the 50MW feature case's decommissioning). Impairment,
-discounting of provisions, effective-interest fees and remeasurement come
-with the cases that need them.
+settled once (the 50MW feature case's decommissioning), and the
+remeasurement of a foreign-currency monetary balance at the closing rate
+(the nightmare case's dollar loan). Impairment, discounting of provisions
+and effective-interest fees come with the cases that need them.
 
 The first-charge convention is declared, never defaulted
 -------------------------------------------------------
@@ -136,3 +137,18 @@ class Provision:
 
     def payment(self, period: int) -> Fraction:
         return self.amount if period == self.settle_at else Fraction(0)
+
+
+def remeasure(foreign: Number, rate: Number, carrying: Number) -> Fraction:
+    """The adjustment that brings a foreign-currency monetary balance to the closing rate.
+
+    A monetary item (a loan, a payable) in a foreign currency is carried at
+    ``foreign x rate`` at each close, the difference going to profit or
+    loss (IAS 21.23 and 21.28). Returns ``foreign x rate - carrying``:
+    positive raises the carrying amount (a loss on a liability), negative
+    lowers it. ``rate`` is functional units per foreign unit.
+    """
+    rate = exact(rate)
+    if rate <= 0:
+        raise MeasurementError(f"an exchange rate must be positive, got {rate}")
+    return exact(foreign) * rate - exact(carrying)

@@ -1,8 +1,11 @@
 """Tax: what is owed to the state (module card 9).
 
 Built so far: a corporate income tax on a base read from the classified
-books, with a loss pool held as dated vintages. Deferred tax, withholding
-and VAT timing come with the cases that need them (step 7).
+books, with a loss pool held as dated vintages, and deferred tax on
+temporary differences and unused losses (the nightmare case: tax
+depreciation over 10 years against book depreciation over 20).
+Withholding is a property of payments and lives with them
+(:meth:`one_engine.entities.Group.withhold`).
 
 Completeness of the base
 ------------------------
@@ -13,6 +16,22 @@ account the scheme does not classify refuses the base. That is the failure
 behind generic-framework's gum-plant build, where COGS sat outside a
 hand-listed base and "cash went to -EUR 2.5M"
 (``docs/engine/COMPLETENESS_INVARIANT.md``).
+
+A fourth class, ``timing``, marks a line whose amount the tax authority
+measures differently (book depreciation, replaced by tax depreciation).
+It is left out of the base here, and the caller adds the tax measure of
+the same item; the scheme is still complete, because the line is
+classified rather than forgotten.
+
+Deferred tax
+------------
+:func:`deferred_tax` is the balance-sheet method (IAS 12): the rate times
+the temporary difference between the book carrying amount and the tax base
+of the assets, less the rate times the losses still available. Positive is
+a liability, negative an asset. Its movement each period is the deferred
+tax charge, so current plus deferred tax equals the rate times the
+accounting profit (less exempt and non-deductible lines) whenever no loss
+expires unused.
 
 Losses expire on the grid's own clock
 -------------------------------------
@@ -35,7 +54,7 @@ class TaxError(ValueError):
     """The taxable base cannot be built completely, or a policy is invalid."""
 
 
-_CLASSES = ("taxable", "exempt", "non_deductible")
+_CLASSES = ("taxable", "exempt", "non_deductible", "timing")
 
 
 def taxable_base(book: Book, period: int, scheme: Mapping[str, str]) -> Fraction:
@@ -106,3 +125,11 @@ class TaxPolicy:
             return Fraction(0)
         used = pool.use(period, base)
         return exact(self.rate) * (base - used)
+
+
+def deferred_tax(rate: Number, carrying: Number, tax_base: Number, losses: Number) -> Fraction:
+    """Net deferred tax balance: ``rate x (carrying - tax_base - losses)``; positive is a liability."""
+    for name, v in (("carrying", carrying), ("tax_base", tax_base), ("losses", losses)):
+        if exact(v) < 0:
+            raise TaxError(f"deferred tax: {name} must not be negative, got {exact(v)}")
+    return exact(rate) * (exact(carrying) - exact(tax_base) - exact(losses))

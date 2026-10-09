@@ -46,3 +46,16 @@ def test_policy_charge_uses_losses_first():
     pool = LossPool(None)
     assert pol.charge(0, F(-50), pool) == 0 and pool.available(1) == 50
     assert pol.charge(1, F(80), pool) == F(15, 100) * 30 and pool.available(2) == 0
+
+
+def test_timing_lines_stay_classified_and_out_of_the_base():
+    scheme = {"revenue": "taxable", "opex": "timing", "fine": "non_deductible"}
+    assert taxable_base(_book(), 0, scheme) == 100                     # the caller adds the tax measure
+
+
+def test_deferred_tax_is_the_rate_on_the_temporary_difference_less_losses():
+    from one_engine.tax import deferred_tax
+    assert deferred_tax(F(1, 4), carrying=80, tax_base=60, losses=0) == 5        # a liability
+    assert deferred_tax(F(1, 4), carrying=80, tax_base=60, losses=40) == -5      # net asset
+    with pytest.raises(TaxError):
+        deferred_tax(F(1, 4), carrying=-1, tax_base=0, losses=0)

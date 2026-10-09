@@ -49,9 +49,28 @@ Named legs, account names, references
   funding plan, a distribution as the residual of a waterfall.
 * An account name may contain ``{id}``, replaced by the contract id, so
   two loans in one book keep separate ``senior.debt`` and ``shl.debt``.
-* ``refs`` name terms whose value is another contract's id (a reserve
-  sized on a loan's debt service); the assembly resolves them to the
-  contract itself before the run.
+* ``refs`` name terms whose value is another contract's id, or a list of
+  ids (a reserve sized on two loans' debt service); the assembly resolves
+  them to the contracts themselves before the run.
+
+Accounts in a second unit
+-------------------------
+An account is ``(name, nature)``, in the contract's currency (the book's),
+or ``(name, nature, term)``, in the unit named by that term's value. A
+dollar loan in a euro book keeps its euro carrying amount in
+``{id}.debt`` and its dollar principal in a dollar account beside it; the
+kernel's per-unit identity then holds for each currency separately
+(nightmare case, step 7).
+
+Quantities a rulebook hands to a claim
+--------------------------------------
+Some claims depend on a figure only a rulebook computes: a loan sculpted to
+a target DSCR owes CFADS / target less interest. The rulebook passes such
+figures by name (``g.claims(t, given={"cfads": x})``) and the contract reads
+them with ``bal.given("cfads")``; asking for a figure that was not passed
+refuses, so a claim is never computed on a silent zero. ``bal.of(other)``
+reads another contract's balances in the same period (a reserve sizing
+itself on the loans it covers).
 """
 from __future__ import annotations
 
@@ -137,10 +156,15 @@ class ContractType:
         legs += list(self.legs.items())
         if not set(self.refs) <= set(self.terms):
             raise ContractError(f"type '{self.name}': refs must be terms, got {self.refs}")
+        for role, accts in self.accounts.items():
+            for a in accts:
+                if len(a) == 3 and a[2] not in self.terms:
+                    raise ContractError(f"type '{self.name}': account '{a[0]}' takes its unit from "
+                                        f"unknown term '{a[2]}'")
         for fname, leg in legs:
             if leg.party not in self.parties:
                 raise ContractError(f"type '{self.name}', '{fname}': unknown party '{leg.party}'")
-            declared = {a for a, _ in self.accounts.get(leg.party, ())}
+            declared = {a[0] for a in self.accounts.get(leg.party, ())}
             for acct in (leg.debit, leg.credit):
                 if acct not in declared:
                     raise ContractError(
@@ -153,16 +177,30 @@ class Balances:
     ``view(role, account)`` is the balance so far in the period;
     ``view.opening(role, account)`` the balance at its start (what interest
     accrues on). ``{id}`` in an account name is expanded.
+    ``view.given(name)`` is a figure a rulebook passed for this call (see
+    the module docstring); ``view.of(other)`` is the same view of another
+    contract.
     """
 
-    def __init__(self, contract: "Contract", books: Mapping[str, Any], period: int):
+    def __init__(self, contract: "Contract", books: Mapping[str, Any], period: int,
+                 given: Optional[Mapping[str, Any]] = None):
         self._c, self._books, self.period = contract, books, period
+        self._given = dict(given or {})
 
     def __call__(self, role: str, account: str) -> Fraction:
         return self._books[self._c.parties[role]].balance(self._c.acct(account), self.period)
 
     def opening(self, role: str, account: str) -> Fraction:
         return self._books[self._c.parties[role]].opening(self._c.acct(account), self.period)
+
+    def given(self, name: str) -> Fraction:
+        if name not in self._given:
+            raise ContractError(f"contract '{self._c.id}', period {self.period}: needs '{name}', "
+                                f"which the calling rulebook did not pass")
+        return exact(self._given[name])
+
+    def of(self, other: "Contract") -> "Balances":
+        return Balances(other, self._books, self.period, self._given)
 
 
 @dataclass(frozen=True)
@@ -237,20 +275,25 @@ class Contract:
         """An account name of this contract's type, with ``{id}`` expanded."""
         return name.replace("{id}", self.id)
 
-    def accounts(self) -> Dict[str, Tuple[Tuple[str, Nature], ...]]:
-        """Entity -> the accounts this contract needs in that entity's book."""
-        out: Dict[str, Tuple[Tuple[str, Nature], ...]] = {}
+    def accounts(self) -> Dict[str, Tuple[Tuple[str, Nature, str], ...]]:
+        """Entity -> the accounts (name, nature, unit) this contract needs in that entity's book."""
+        out: Dict[str, Tuple[Tuple[str, Nature, str], ...]] = {}
         for role, entity in self.parties.items():
-            out[entity] = out.get(entity, ()) + tuple((self.acct(a), n) for a, n in self.type.accounts.get(role, ()))
+            out[entity] = out.get(entity, ()) + tuple(
+                (self.acct(a[0]), a[1], self.terms[a[2]].value if len(a) == 3 else self.currency)
+                for a in self.type.accounts.get(role, ()))
         return out
 
     def resolve(self, contracts: Mapping[str, "Contract"]) -> None:
-        """Replace each reference term's contract id by the contract it names."""
+        """Replace each reference term's contract id (or list of ids) by the contract(s) it names."""
         for k in self.type.refs:
             v = self.terms[k]
-            if v.value not in contracts:
-                raise ContractError(f"contract '{self.id}': term '{k}' names unknown contract '{v.value}'")
-            self.terms[k] = Value(contracts[v.value], v.state, v.source)
+            ids = list(v.value) if isinstance(v.value, (list, tuple)) else [v.value]
+            for cid in ids:
+                if cid not in contracts:
+                    raise ContractError(f"contract '{self.id}': term '{k}' names unknown contract '{cid}'")
+            found = [contracts[cid] for cid in ids]
+            self.terms[k] = Value(found if isinstance(v.value, (list, tuple)) else found[0], v.state, v.source)
 
     def values(self) -> Dict[str, Any]:
         return {k: v.value for k, v in self.terms.items()}

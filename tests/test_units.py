@@ -43,3 +43,10 @@ def test_same_unit_adds_exactly():
 def test_comparison_across_units_refuses():
     with pytest.raises(UnitError):
         Quantity(1, "t") < Quantity(1, "head")
+
+
+def test_a_ratio_written_as_text_is_that_ratio():
+    # a share with no finite decimal (the nightmare's SHL funds 2/15 of each EPC payment)
+    assert exact("2/15") == Fraction(2, 15)
+    with pytest.raises(TypeError):
+        exact("2/0")

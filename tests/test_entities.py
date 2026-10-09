@@ -6,7 +6,7 @@ import pytest
 from one_engine.contracts import Contract
 from one_engine.entities import Group
 from one_engine.inputs import State, Value
-from one_engine.kernel import KernelError, Posting
+from one_engine.kernel import KernelError, Nature, Posting
 from one_engine.packs.contracts import SHAREHOLDER_LOAN, SPONSOR_EQUITY, TERM_LOAN
 
 
@@ -67,3 +67,43 @@ def test_an_event_id_used_twice_refuses():
     g.register("fund", twice)
     with pytest.raises(KernelError, match="used twice"):
         g.run()
+
+
+def _withheld(rate_leg):
+    g = Group(periods=2, phases=["fund", "accrue", "pay", "close"])
+    loan = _loan(TERM_LOAN)
+    eq = Contract("eq", SPONSOR_EQUITY, {"issuer": "spv"}, {}, "USD")
+    for c in (loan, eq):
+        g.add_contract(c)
+    g.declare("spv", "wht", Nature.LIABILITY, "USD")
+    g.withhold(rate_leg, F(1, 10), "wht")
+
+    def fund(g, t):
+        if t == 0:
+            g.settle(g.claims(t)["shl.draw"], 100, "fund")
+            g.post_leg(eq, "contribute", 50, t, "fund")
+
+    def pay(g, t):
+        if t == 1:
+            g.settle(g.claims(t)["shl.interest"], 10, "pay")
+            g.post_leg(eq, "distribute", 20, t, "pay")
+
+    g.register("fund", fund)
+    g.register("pay", pay)
+    g.run()
+    return g.book("spv")
+
+
+def test_withholding_splits_a_payment_between_the_payee_and_the_state():
+    b = _withheld("shl.interest")
+    assert b.balance("shl.interest_payable", 1) == 0                  # the claim is settled gross
+    assert b.balance("wht", 1) == 1                                    # 10% of 10 kept for the state
+    assert b.balance("cash", 1) == 150 - 9 - 20                        # the lender received 9
+    assert b.balance("wht", 1) == 1 and _withheld("eq.distribute").balance("wht", 1) == 2
+
+
+def test_withholding_only_applies_to_a_payment_out():
+    with pytest.raises(KernelError, match="payment out"):
+        _withheld("shl.draw")
+    with pytest.raises(KernelError, match="no claim or leg"):
+        _withheld("shl.coupon")

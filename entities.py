@@ -20,9 +20,21 @@ Due versus paid (card 6) is closed here: a handler asks for the claims due
 (:meth:`Group.claims`), allocates, and calls :meth:`Group.settle` with the
 amount paid. Settlements are recorded for reports.
 
-Built so far: books, contract flows, pairing, handlers, claims. Not yet:
-ownership, functional currencies, consolidation with eliminations (added
-when a case needs a multi-entity chain).
+Withholding (card 9, added for the nightmare case) is a property of the
+payment, not of the contract: a jurisdiction withholds a share of interest
+or dividends paid to some payees. :meth:`Group.withhold` registers a rate
+for one claim or leg; every payment under it is then posted in two parts,
+the net to cash and the withheld share to a tax payable, under two event
+ids. What the payer owes is unchanged (the claim is settled gross); what
+the payee receives is the net; the payable is remitted by a rulebook.
+
+Built so far: books, contract flows, pairing, handlers, claims,
+withholding. Each book has one functional currency; a contract in another
+currency keeps its foreign amounts in accounts of that unit beside the
+functional ones (:mod:`one_engine.contracts`, the nightmare's dollar
+loan). Holders of one entity's equity are equity contracts in its book
+(the nightmare's LP and GP). Not yet: holder books, consolidation with
+eliminations (added when a case needs a multi-entity chain).
 """
 from __future__ import annotations
 
@@ -75,6 +87,7 @@ class Group:
         self._legs: Dict[str, int] = {}
         self.settlements: List[Settlement] = []
         self.records: List[Dict[str, Any]] = []
+        self._withholding: Dict[str, Tuple[Fraction, str]] = {}
 
     # ── assembly ────────────────────────────────────────────────────────────
 
@@ -103,6 +116,24 @@ class Group:
             raise KernelError(f"handler registered for unknown phase '{phase}'")
         self._handlers[phase].append(handler)
 
+    def withhold(self, ref: str, rate: Number, account: str) -> None:
+        """Withhold ``rate`` of every payment under ``ref`` (``contract.claim`` or ``contract.leg``) into ``account``."""
+        if self._books:
+            raise KernelError("withholding must be registered before the group runs")
+        cid, _, name = ref.partition(".")
+        c = self.contract(cid)
+        legs = {**{s.name: s.leg for s in c.type.claim_specs}, **c.type.legs}
+        if name not in legs:
+            raise KernelError(f"withholding on '{ref}': '{cid}' has no claim or leg '{name}'")
+        if legs[name].effect[1] != -1:
+            raise KernelError(f"withholding on '{ref}': only a payment out of an account can be withheld")
+        rate = exact(rate)
+        if not 0 <= rate < 1:
+            raise KernelError(f"withholding on '{ref}': rate {rate} is outside [0, 1)")
+        if ref in self._withholding:
+            raise KernelError(f"withholding on '{ref}' is registered twice")
+        self._withholding[ref] = (rate, account)
+
     def _merge(self, entity, name, nature, unit, who):
         prev = self._declared[entity].get(name)
         if prev and prev != (nature, unit):
@@ -112,8 +143,8 @@ class Group:
     def _build_books(self) -> None:
         for c in self.contracts:
             for entity, accts in c.accounts().items():
-                for name, nature in accts:
-                    self._merge(entity, name, nature, c.currency, who=f"contract '{c.id}'")
+                for name, nature, unit in accts:
+                    self._merge(entity, name, nature, unit, who=f"contract '{c.id}'")
         for (entity, name) in self.floors:
             if name not in self._declared.get(entity, {}):
                 raise KernelError(f"floor set on {entity}.{name}, which nothing declares")
@@ -152,8 +183,8 @@ class Group:
             raise KernelError(f"event id '{event}' is used twice")
         self._legs[event] = legs
 
-    def view(self, c: Contract, t: int) -> Balances:
-        return Balances(c, self._books, t)
+    def view(self, c: Contract, t: int, given: Optional[Mapping[str, Any]] = None) -> Balances:
+        return Balances(c, self._books, t, given)
 
     def _post(self, c: Contract, leg: Leg, amount: Fraction, t: int, phase: str, event: str, state: State) -> None:
         debit, credit = c.acct(leg.debit), c.acct(leg.credit)
@@ -164,9 +195,13 @@ class Group:
 
     # ── services for handlers ───────────────────────────────────────────────
 
-    def claims(self, t: int) -> Dict[str, Claim]:
-        """Every claim due in period ``t``, keyed ``contract.claim``."""
-        return {cl.ref: cl for c in self.contracts for cl in c.claims(t, self.view(c, t))}
+    def claims(self, t: int, given: Optional[Mapping[str, Any]] = None) -> Dict[str, Claim]:
+        """Every claim due in period ``t``, keyed ``contract.claim``.
+
+        ``given`` passes figures a claim may need and only the caller can
+        compute (CFADS for a sculpted loan); see :mod:`one_engine.contracts`.
+        """
+        return {cl.ref: cl for c in self.contracts for cl in c.claims(t, self.view(c, t, given))}
 
     def settle(self, claim: Claim, paid: Number, phase: str) -> None:
         """Post the paid part of ``claim`` now; queue its shortfall leg, if any."""
@@ -176,8 +211,7 @@ class Group:
         c, t = claim.contract, claim.period
         if paid > 0:
             event = f"{c.id}:claim.{claim.spec.name}:{t}"     # a flow may share the claim's name
-            self._event(event, 1)
-            self._post(c, claim.spec.leg, paid, t, phase, event, claim.state)
+            self._pay(c, claim.ref, claim.spec.leg, paid, t, phase, event, claim.state)
         unpaid = claim.due - paid
         if unpaid > 0 and claim.spec.shortfall is not None:
             sp = claim.spec.shortfall_phase
@@ -193,8 +227,22 @@ class Group:
         if amount == 0:
             return
         event = f"{c.id}:leg.{leg_name}:{t}"
+        self._pay(c, f"{c.id}.{leg_name}", c.type.legs[leg_name], amount, t, phase, event, State.DERIVED)
+
+    def _pay(self, c: Contract, ref: str, leg: Leg, amount: Fraction, t: int, phase: str, event: str,
+             state: State) -> None:
+        """Post a payment leg, splitting off the withheld share when ``ref`` is withheld."""
+        rate, payable = self._withholding.get(ref, (Fraction(0), ""))
+        withheld = amount * rate
         self._event(event, 1)
-        self._post(c, c.type.legs[leg_name], amount, t, phase, event, State.DERIVED)
+        self._post(c, leg, amount - withheld, t, phase, event, state)
+        if withheld:
+            # the payee's share that the payer keeps for the state: same debit, the payable instead of cash
+            self._event(f"{event}:withheld", 1)
+            self._books[c.parties[leg.party]].post(Posting(
+                period=t, phase=phase, debit=c.acct(leg.debit), credit=payable, amount=withheld,
+                effect={c.acct(leg.debit): leg.effect[0], payable: +1},
+                source="tax:withholding", event=f"{event}:withheld", state=state))
 
     def post(self, entity: str, posting: Posting) -> None:
         """Post to an account a rulebook declared."""

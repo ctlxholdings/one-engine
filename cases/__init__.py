@@ -11,7 +11,8 @@ or ``{value, state, source}`` to carry another state, such as a stand-in.
 
 ``rulebooks`` (optional) installs pack rulebooks (:mod:`one_engine.packs.pf`)
 in file order; within a phase, handlers run in that order. A rulebook may
-return named checks, which join the integrity verdicts.
+return named checks, which join the integrity verdicts. Rulebooks share
+asset registers and distributors by rulebook name.
 """
 from __future__ import annotations
 
@@ -105,12 +106,15 @@ def run_case(case: Union[str, pathlib.Path, Mapping[str, Any]]) -> CaseResult:
     schemes = {n: Scheme(n, dict(m)) for n, m in top.take("schemes").items()}
     rule_check_fns = {}
     rulebooks = top.take_or_default("rulebooks", {}, reason="a case with contracts only").value
+    # what rulebooks share: asset registers (read by income tax) and distributors (a promote that
+    # takes a waterfall's residual), each under the rulebook's name
+    shared = {"currency": currency, "schemes": schemes, "registers": {}, "distributors": {}}
     for rname, raw in rulebooks.items():
         r = Reader(raw, source=f"{src}:rulebooks.{rname}")
         kind = r.take("kind")
         if kind not in RULEBOOKS:
             raise InputError(f"{src}: rulebook '{rname}' has unknown kind '{kind}'")
-        for cname, fn in (RULEBOOKS[kind](group, r, {"currency": currency, "schemes": schemes}) or {}).items():
+        for cname, fn in (RULEBOOKS[kind](group, r, {**shared, "name": rname}) or {}).items():
             rule_check_fns[f"{rname}.{cname}"] = fn
         r.finish()
     group.run()
