@@ -135,8 +135,9 @@ def _run_template(name: str, overrides: Mapping[str, Any]) -> "CaseResult":
     return run_case(data)
 
 
-GENERATORS = _merge(_solar.GENERATORS, {"cohorts": lambda r: _portfolio.cohorts(r, _run_template),
-                                         "instalments": _portfolio.instalments_generator})
+GENERATORS = _merge(_solar.GENERATORS, _pf.GENERATORS,
+                    {"cohorts": lambda r: _portfolio.cohorts(r, _run_template),
+                     "instalments": _portfolio.instalments_generator})
 
 
 @dataclass

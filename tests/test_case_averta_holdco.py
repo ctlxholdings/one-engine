@@ -39,9 +39,11 @@ Findings pinned here (and in the LOG):
    a quarter early: LP equity IRR 29.44% where the live S10 itself computes
    27.70%, LP combined 24.17% where the correct timing gives 22.65%, GP
    62.26% against 57.30%.
-4. The SPVs' distributions of the exit quarter reach no one: the HoldCo is
-   paid for the 20 hold quarters, and the value paid at the exit is the
-   forward NOI from the year after.
+4. The SPVs' distributions of the exit quarter (2.80M) go to the buyer,
+   not the HoldCo: the HoldCo is paid for the 20 hold quarters, and the
+   buyer's first quarter is the HoldCo's exit quarter, while the buyer pays
+   the price a quarter earlier, at its period 0 (first written as "reach
+   no one"; corrected in the buyer step).
 """
 import json
 import pathlib
@@ -299,12 +301,16 @@ def test_finding_the_report_returns_place_the_exit_a_quarter_early(result):
     assert abs(float((sum(got) + shl_out) / (sum(paid) + sum(shl_in))) - lp["moic"]) < 1e-12
 
 
-def test_finding_the_exit_quarter_s_spv_distributions_reach_no_one(result):
+def test_finding_the_exit_quarter_s_spv_distributions_go_to_the_buyer(result):
     spv = run_case(HERE / "averta_spv.yaml")
     flows = [-x for x in spv.cut("equity_flows").values]
-    lost = sum(n * flows[EXIT - c] for c, n in enumerate(CFG["deployment"]["schedule_quarterly"]) if n and EXIT - c >= 1)
+    exit_quarter = sum(n * flows[EXIT - c] for c, n in enumerate(CFG["deployment"]["schedule_quarterly"])
+                       if n and EXIT - c >= 1)
     assert result.generated["portfolio"]["distributions"][EXIT] == 0
-    assert round(float(lost) / 1e6, 2) == 2.80
+    assert round(float(exit_quarter) / 1e6, 2) == 2.80
+    # the buyer's first quarter is this one (test_case_averta_buyer.py, finding 6)
+    buyer = run_case(HERE / "averta_buyer.yaml").group.book("buyer")
+    assert buyer.balance("spv_distributions.revenue", 1) == exit_quarter
 
 
 def test_the_p90_holdco_matches_the_live_p90_run():

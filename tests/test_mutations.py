@@ -515,6 +515,10 @@ MUTATIONS = [
      "test_case_nightmare.py::test_a_promote_without_catch_up_pays_the_gp_its_carry_of_the_residual_only"),
     ("packs/pf.py", "        if active is not None and not active[0] <= t <= active[1]:", "        if False:",
      "test_case_averta_gp.py::test_the_quarterly_arrays_match_the_live_gp"),
+    ("packs/pf.py", '                own += pending["trapped"]\n', "                own += 0\n",
+     "test_case_averta_buyer.py::test_the_distributions_reconcile_with_the_live_buyer_period_by_period"),
+    ("packs/pf.py", '"debt": price * share,', '"debt": price,',
+     "test_case_averta_buyer.py::test_the_inputs_are_what_the_live_buyer_was_given"),
 ]
 
 

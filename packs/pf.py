@@ -133,6 +133,10 @@ Rulebooks
     (step 8) distributes current-period cash flow only, so a HoldCo
     overdraft (an unfloored cash account) is carried, not made good, until
     the first period after the window, when all the cash is offered.
+    Cash a test traps inside the window is the exception: it is offered
+    again, with the period's own flow, in the first period whose residual
+    is not blocked (the live S9's distribution suspense, released when the
+    lock-up clears; Averta's buyer, step 8).
     ``active`` (``from``, ``until``): the waterfall runs in those periods
     only; outside them nothing is paid and the cash is retained (Averta's
     live GP, step 8, sweeps its cash and settles its tax once, at the
@@ -167,6 +171,13 @@ Rulebooks
     ``return_capital`` leg, and the rest is distributed. Averta's SPV
     (engine_v2 S10, step 8) splits each distribution this way, so its
     contributed capital is back to nil before profit is paid out.
+
+Generators
+----------
+``acquisition``
+    An asset bought at a price (an earlier generator's output) in one
+    period, a share of it borrowed: the price as a one-period spend, the
+    debt and the equity (:func:`acquisition`; Averta's buyer, step 8).
 
 Loop rules
 ----------
@@ -678,6 +689,9 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             # CFADS is computed before claims are read, because a sculpted loan's claim needs it
             raise InputError(f"waterfall: '{n}' in cfads.less must be an account tier")
 
+    # cash a test trapped inside the flow_only window: carried in, but offered again when the test clears
+    pending = {"trapped": Fraction(0)}
+
     def handler(g: Group, t: int) -> None:
         if active is not None and not active[0] <= t <= active[1]:
             return                                  # outside its window the cash stays where it is
@@ -711,10 +725,15 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                     blocked.setdefault(b, test.name)
         floor = exact(g.floors.get((entity, cash), Fraction(0)))
         available = max(Fraction(0), book.balance(cash, t) - floor)
-        if flow_only is not None and flow_only[0] <= t <= flow_only[1]:
+        in_window = flow_only is not None and flow_only[0] <= t <= flow_only[1]
+        if in_window:
             # only the period's own net cash flow is offered: cash carried in, a surplus or an overdraft,
-            # is neither paid out nor made good (within the floor, when the cash has one)
+            # is neither paid out nor made good (within the floor, when the cash has one); cash trapped
+            # earlier in the window is the exception, offered again once the residual is not blocked
             own = book.balance(cash, t) - book.opening(cash, t)
+            if residual not in blocked:
+                own += pending["trapped"]
+                pending["trapped"] = Fraction(0)
             available = max(Fraction(0), min(own, available) if (entity, cash) in g.floors else own)
 
         def cap(name, share):
@@ -736,6 +755,8 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             pass                                    # retained: the cash stays where it is
         elif residual in blocked:
             g.record("trapped", t, amount=a.residual, by=blocked[residual])
+            if in_window:
+                pending["trapped"] += a.residual
         elif residual in ctx["distributors"]:
             ctx["distributors"][residual](g, t, a.residual, phase)
         else:
@@ -1046,3 +1067,29 @@ def _level_rule(r: Reader):
 
 LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule, "refinance": _refinance_rule,
               "annuity": _annuity_rule, "level": _level_rule}
+
+
+# ── generators ────────────────────────────────────────────────────────────
+
+def acquisition(r: Reader) -> Dict[str, Any]:
+    """An asset bought at ``price`` in period ``at``, a share of it borrowed (a generator).
+
+    Averta's buyer (step 8) pays the portfolio's value at its first period
+    and borrows ``debt_share`` of it (the live ``gearing``); the loan's
+    commitment, its schedule and the equity are sized on that price, which
+    is itself an earlier generator's output, so they follow it in a
+    sensitivity. Outputs: ``price``, ``spend`` (the price in period ``at``,
+    nil elsewhere, over ``periods``), ``debt`` and ``equity`` (the rest).
+    """
+    price, share = exact(r.take("price")), exact(r.take("debt_share"))
+    at, periods = int(r.take("at")), int(r.take("periods"))
+    if not 0 <= share <= 1:
+        raise InputError(f"acquisition: debt_share {share} is outside [0, 1]")
+    if not 0 <= at < periods:
+        raise InputError(f"acquisition: period {at} is outside the {periods} periods")
+    return {"price": price, "spend": [price if t == at else Fraction(0) for t in range(periods)],
+            "debt": price * share, "equity": price * (1 - share)}
+
+
+GENERATORS = {"acquisition": acquisition}
+
