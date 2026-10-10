@@ -455,6 +455,30 @@ MUTATIONS = [
     ("packs/pf.py", '        g.post_leg(c, "distribute", a.residual, t, phase)',
      '        g.post_leg(c, "return_capital", a.residual, t, phase)',
      "test_case_averta_spv.py::test_the_quarterly_balance_sheet"),
+    # asset generators in the case runner, and Averta's revenue engine L5 (step 8)
+    ("cases/__init__.py", 'return {"value": v, "state": State.DERIVED.value, "source": f"generator {g}.{o}"}',
+     'return {"value": v, "state": State.STATED.value, "source": f"generator {g}.{o}"}',
+     "test_case_averta_spv.py::test_generated_terms_enter_the_books_as_derived"),
+    ("cases/__init__.py", "                if g not in outputs or o not in outputs[g]:", "                if g not in outputs:",
+     "test_case_averta_spv.py::test_a_generator_refuses_what_it_cannot_read"),
+    ("packs/solar.py", "(1 - degradation) ** year", "(1 - degradation) ** (year + 1)",
+     "test_case_averta_spv.py::test_the_generator_reproduces_the_live_revenue_lines"),
+    ("packs/solar.py", "        replaced = departed[t - lag] if t >= cod + lag else Fraction(0)",
+     "        replaced = Fraction(0)",
+     "test_case_averta_spv.py::test_the_generator_reproduces_the_live_revenue_lines"),
+    ("packs/solar.py", "        quarterly = [x * exact(stated) / annual for x in quarterly]", "        quarterly = quarterly",
+     "test_case_averta_spv.py::test_the_p90_basis_reproduces_the_live_p90_spv"),
+    ("packs/solar.py", "    if weights != 1:", "    if False:",
+     "test_case_averta_spv.py::test_a_generator_refuses_what_it_cannot_read"),
+    # Averta's revenue engine L0-L4 (step 8): the synthetic profile, the tariff calendar, the prices
+    ("packs/solar.py", "(sunset - sunrise) / 5.0", "(sunset - sunrise) / 4.0",
+     "test_case_averta_spv.py::test_the_sumproduct_reproduces_each_zones_live_rates_and_yields"),
+    ("packs/solar.py", "d.weekday() >= 5 or d in holidays", "d.weekday() >= 5",
+     "test_case_averta_spv.py::test_the_sumproduct_reproduces_each_zones_live_rates_and_yields"),
+    ("packs/solar.py", "(peaje[p] + cargo[p]) * discount", "(peaje[p] + cargo[p])",
+     "test_case_averta_spv.py::test_the_sumproduct_reproduces_each_zones_live_rates_and_yields"),
+    ("packs/solar.py", "monthly[3 * q:3 * q + 3]", "monthly[3 * q:3 * q + 2]",
+     "test_case_averta_spv.py::test_the_sumproduct_reproduces_each_zones_live_rates_and_yields"),
 ]
 
 

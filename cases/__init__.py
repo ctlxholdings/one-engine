@@ -44,6 +44,15 @@ Added for the Macabacus LBO (step 7f):
 Added for the Macabacus long-form LBO (step 7g): the ``cash_on_cash``
 measure.
 
+Added for Averta's live model (step 8): ``generators`` (optional), the
+asset generators of the packs (``GENERATORS``), run once before anything
+else. Each takes its inputs from the case file and returns named outputs
+(series or numbers). Anywhere in the case, ``{generator: name, output: x}``
+stands for that output; in a contract's terms it enters as a DERIVED value.
+Generators run in file order, and one may read an earlier one's outputs. A
+reference to an undeclared generator or output refuses. The outputs are
+kept in :attr:`CaseResult.generated`.
+
 Added for ModelOff 2014 "Time is Money" (step 7p): the ``npv`` measure
 (``rate`` per period, the first flow undiscounted) and the ``xnpv`` measure
 (an annual ``rate`` and ``dates``, one per period). Either may take
@@ -66,7 +75,7 @@ from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.loops import Loop, LoopReport, close
 from one_engine.kernel import Nature
-from one_engine.packs import contracts as _contracts, corporate as _corporate, pf as _pf
+from one_engine.packs import contracts as _contracts, corporate as _corporate, pf as _pf, solar as _solar
 from one_engine.packs.pf import LOOP_RULES
 from one_engine.units import exact
 
@@ -87,6 +96,7 @@ def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:
 REGISTRY = _merge(_contracts.REGISTRY, _corporate.TYPES)
 RULEBOOKS = _merge(_pf.RULEBOOKS, _corporate.RULEBOOKS)
 LENSES = _merge(_corporate.LENSES)
+GENERATORS = _merge(_solar.GENERATORS)
 
 
 @dataclass
@@ -103,6 +113,7 @@ class CaseResult:
     loops: Dict[str, LoopReport] = field(default_factory=dict)
     lenses: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     balancing: Dict[str, tuple] = field(default_factory=dict)
+    generated: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     pending_measures: Dict[str, Callable[[], Any]] = field(default_factory=dict, repr=False)
 
     def cut(self, name: str) -> Series:
@@ -164,6 +175,54 @@ def _substitute(node: Any, values: Mapping[str, Mapping[str, Any]], path: tuple 
     return copy.deepcopy(node)
 
 
+def _generator_refs(node: Any, path: tuple = ()):
+    """Every ``{generator: ...}`` reference in the case, with its path."""
+    if isinstance(node, Mapping):
+        if "generator" in node and "kind" not in node:
+            yield path, node
+            return
+        for k, v in node.items():
+            yield from _generator_refs(v, path + (k,))
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            yield from _generator_refs(v, path + (i,))
+
+
+def _generate(raw: Mapping[str, Any], body: Mapping[str, Any], src: str):
+    """Run the generators in file order; return their outputs and the case with every reference replaced."""
+    outputs: Dict[str, Dict[str, Any]] = {}
+
+    def replace(node, path=()):
+        if isinstance(node, Mapping):
+            if "generator" in node and "kind" not in node:
+                where = f"{src}:{'.'.join(str(p) for p in path)}"
+                extra = sorted(set(node) - {"generator", "output"})
+                if extra:
+                    raise InputError(f"{where}: a generator reference takes generator and output, not {', '.join(extra)}")
+                g, o = node["generator"], node.get("output")
+                if g not in outputs or o not in outputs[g]:
+                    raise InputError(f"{where}: reads generator '{g}' output '{o}', which no earlier generator makes")
+                v = outputs[g][o]
+                # a contract term carries its state; anywhere else the value is read as it is
+                if len(path) == 4 and path[0] == "contracts" and path[2] == "terms":
+                    return {"value": v, "state": State.DERIVED.value, "source": f"generator {g}.{o}"}
+                return v
+            return {k: replace(v, path + (k,)) for k, v in node.items()}
+        if isinstance(node, list):
+            return [replace(v, path + (i,)) for i, v in enumerate(node)]
+        return node
+
+    for name, spec in raw.items():
+        spec = replace(spec, ("generators", name))
+        r = Reader(spec, source=f"{src}:generators.{name}")
+        kind = r.take("kind")
+        if kind not in GENERATORS:
+            raise InputError(f"{src}: generator '{name}' has unknown kind '{kind}'")
+        outputs[name] = GENERATORS[kind](r)
+        r.finish()
+    return outputs, replace(body)
+
+
 def _read_loops(raw: Mapping[str, Any], body: Mapping[str, Any], src: str) -> List[Loop]:
     loops = []
     for name, spec in raw.items():
@@ -200,15 +259,24 @@ def run_case(case: Union[str, pathlib.Path, Mapping[str, Any]]) -> CaseResult:
         data, src = load_yaml_strict(path.read_text()), path.name
     else:
         data, src = case, "<case>"
-    body = {k: v for k, v in data.items() if k != "loops"}
+    body = {k: v for k, v in data.items() if k not in ("loops", "generators")}
+    generated: Dict[str, Dict[str, Any]] = {}
+    if "generators" in data:
+        generated, body = _generate(data["generators"], body, src)
+    else:
+        refs = [".".join(str(p) for p in path) for path, _ in _generator_refs(body)]
+        if refs:
+            raise InputError(f"{src}: {', '.join(refs)} read a generator, and the case declares none")
     if "loops" not in data:
         refs = [".".join(str(p) for p in path) for path, _ in _loop_refs(body)]
         if refs:
             raise InputError(f"{src}: {', '.join(refs)} read a loop, and the case declares none")
-        return _measure(_run(body, src))
+        result = _run(body, src)
+        result.generated = generated
+        return _measure(result)
     loops = _read_loops(data["loops"], body, src)
     result, reports = close(loops, lambda values: _run(_substitute(body, values), src))
-    result.loops = reports
+    result.loops, result.generated = reports, generated
     return _measure(result)
 
 
