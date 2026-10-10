@@ -519,6 +519,13 @@ MUTATIONS = [
      "test_case_averta_buyer.py::test_the_distributions_reconcile_with_the_live_buyer_period_by_period"),
     ("packs/pf.py", '"debt": price * share,', '"debt": price,',
      "test_case_averta_buyer.py::test_the_inputs_are_what_the_live_buyer_was_given"),
+    # Averta fixed (step 8): deficit funding, and a holder paying in twice in one period
+    ("packs/pf.py", "            _post_residual(g, residual, gap, t, phase)", "            _post_residual(g, residual, gap / 2, t, phase)",
+     "test_case_averta_fixed.py::test_the_holdco_s_shortfalls_are_called_from_the_lp_and_the_gp"),
+    ("packs/pf.py", "    if (entity, cash) not in group.floors:", "    if False:",
+     "test_case_averta_fixed.py::test_deficit_funding_needs_a_floor_to_fund_up_to"),
+    ("entities.py", 'event = f"{c.id}:leg.{leg_name}:{t}:{phase}"', 'event = f"{c.id}:leg.{leg_name}:{t}"',
+     "test_case_averta_fixed.py::test_every_fixed_case_runs_clean_with_its_cash_floored"),
 ]
 
 

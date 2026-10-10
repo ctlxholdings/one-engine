@@ -249,7 +249,9 @@ class Group:
         amount = exact(amount)
         if amount == 0:
             return
-        event = f"{c.id}:leg.{leg_name}:{t}"
+        # the phase is part of the id: one holder may pay in twice in a period, a construction call in
+        # one phase and a shortfall it covers in another (Averta fixed, step 8)
+        event = f"{c.id}:leg.{leg_name}:{t}:{phase}"
         self._pay(c, f"{c.id}.{leg_name}", c.type.legs[leg_name], amount, t, phase, event, State.DERIVED)
 
     def _pay(self, c: Contract, ref: str, leg: Leg, amount: Fraction, t: int, phase: str, event: str,

@@ -26,6 +26,16 @@ Rulebooks
     engine called equity on a schedule instead and left 23.6M of idle cash
     on the 100MW benchmark (step 6 finding).
 
+``deficit_funding``
+    The holders' support for a cash shortfall: at the end of its phase,
+    in periods ``from`` (default 0) to ``until``, the named equity legs
+    (one, or several with shares, as a funding residual) pay in what
+    brings the cash back up to its floor, which the case must declare. Its
+    handler runs after the phase's flows and after the rulebooks declared
+    before it in the file, so it makes good what they leave. Averta fixed
+    (step 8): the live HoldCo and DevCo run overdrafts nothing funds; here
+    their shareholders cover them as they arise.
+
 ``pro_rata_funding``
     Construction funding as Bodmer's solar model states it (step 7e): a
     budget of total uses less the loan's commitment is the equity
@@ -312,6 +322,26 @@ def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
 
     group.register(phase, handler)
     return {"sources_equal_uses": lambda: sources_equal_uses(group, entity, cash, phase)}
+
+
+def deficit_funding(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    entity, cash, phase = r.take("entity"), r.take("cash"), r.take("phase")
+    start = int(r.take_or_default("from", 0, reason="from the first period").value)
+    until = int(r.take("until"))
+    residual = _residual_legs(r.take("residual"), "deficit_funding.residual")
+    if (entity, cash) not in group.floors:
+        raise InputError(f"deficit_funding: {entity}.{cash} has no floor to fund up to")
+    floor, name = exact(group.floors[(entity, cash)]), ctx["name"]
+
+    def handler(g: Group, t: int) -> None:
+        if not start <= t <= until:
+            return
+        gap = floor - g.book(entity).balance(cash, t)
+        if gap > 0:
+            _post_residual(g, residual, gap, t, phase)
+            g.record(name, t, called=gap)
+
+    group.register(phase, handler)
 
 
 def pro_rata_funding(group: Group, r: Reader, ctx: Mapping[str, Any]):
@@ -857,7 +887,7 @@ def capital_first(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     ctx["distributors"][ctx["name"]] = distribute
 
 
-RULEBOOKS = {"funding_plan": funding_plan, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
+RULEBOOKS = {"funding_plan": funding_plan, "deficit_funding": deficit_funding, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
              "income_tax": income_tax, "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
              "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments,
              "pay_as_due": pay_as_due, "capital_first": capital_first}

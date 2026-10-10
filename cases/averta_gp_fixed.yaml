@@ -1,0 +1,144 @@
+# Averta GP, with the live model's bugs fixed (plan step 8).
+#
+# Written by make_case_averta_fixed.py: averta_gp.yaml (the live GP,
+# reproduced) with these changes, in this order; nothing else differs.
+#
+# gp_on_the_fixed_holdco:
+#   Not a GP fix: the GP reads the fixed HoldCo, on its grid (the exit at quarter 20).
+# gp_coinvest_funded_by_topco:
+#   GP finding 2: the GP pays its co-invest into the HoldCo, and TopCo funds it as it is called.
+#
+#   The live GP never pays its 2% co-invest (772,476.77; its cash peaks at
+#   265,595.96). Here each HoldCo call on the GP is an investment the GP
+#   pays, funded by TopCo's equity in the same quarter (funding_plan); the
+#   investment is held at cost and derecognised when the HoldCo is sold.
+#   Its cost is not yet deducted for tax: the live GP taxes the return of
+#   the co-invest as income, which the next fix corrects.
+# gp_coinvest_cost_against_its_return:
+#   GP finding 1: the return of the co-invest is not income; only the gain over its cost is taxed.
+case: averta-gp
+periods: 21
+phases: [fund, operate, tax, pay]
+currency: EUR
+floors: {gp.cash: 0}
+generators:
+  holdco:
+    kind: cohorts
+    template: averta_holdco_fixed.yaml
+    schedule: [1]
+    periods: 21
+    align: 0
+    first: 0
+    series:
+      gp_flows: {cut: gp_flows, times: -1}
+  holdco_calls:
+    kind: cohorts
+    template: averta_holdco_fixed.yaml
+    schedule: [1]
+    periods: 21
+    until: 19
+    align: 0
+    first: 0
+    series:
+      calls: {cut: gp_flows}
+contracts:
+  mgmt_fee:
+    type: offtake
+    parties: {seller: gp}
+    terms:
+      volume: [0, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125,
+        0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125]
+      price: 38623838.4
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 4
+      end: 20
+  opex:
+    type: operating_cost
+    parties: {payer: gp}
+    terms:
+      annual: 0
+      unit_rate: 1
+      volume: [0, 75000, 75000, 75000, 75000, 100000, 100000, 100000, 100000, 125000, 125000, 125000, 125000, 125000,
+        125000, 125000, 125000, 125000, 125000, 125000, 125000]
+      index: 1
+      periods_per_year: 4
+      start: 1
+      end: 20
+      vat_rate: 0
+      vat_refund_lag: 0
+      payment_days: 0
+      days_per_year: 365
+  exit_income:
+    type: offtake
+    parties: {seller: gp}
+    terms:
+      volume: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      price: {generator: holdco, output: gp_flows}
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 4
+      end: 20
+  topco:
+    type: sponsor_equity
+    parties: {issuer: gp}
+    terms: {}
+  coinvest:
+    type: capex
+    parties: {owner: gp}
+    terms:
+      schedule: {generator: holdco_calls, output: calls}
+      vat_rate: 0
+      vat_refund_lag: 0
+      end: 20
+schemes:
+  cash_flow: {mgmt_fee.receivable: operating, exit_income.receivable: operating, opex.payable: operating, tax_payable: tax,
+    topco.capital: topco, topco.distributions: topco, cwip: investing}
+rulebooks:
+  tax:
+    kind: income_tax
+    entity: gp
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: 0.25
+    carry_forward_periods: null
+    scheme: {mgmt_fee.revenue: taxable, exit_income.revenue: taxable, opex.expense: taxable, tax_expense: non_deductible,
+      coinvest_depreciation: taxable, coinvest_cost: taxable}
+  distribution: {kind: capital_first, holder: topco}
+  waterfall:
+    kind: waterfall
+    entity: gp
+    phase: pay
+    cash: cash
+    active: {from: 20, until: 20}
+    tiers:
+    - {name: tax, account: tax_payable}
+    residual: distribution
+    cfads:
+      scheme: cash_flow
+      classes: [operating]
+      less: [tax]
+    service: []
+    tests: []
+  funding:
+    kind: funding_plan
+    entity: gp
+    cash: cash
+    phase: fund
+    until: 19
+    uses:
+    - {flow: coinvest.spend}
+    sources: []
+    residual: topco.contribute
+  coinvest_register: {kind: asset_register, entity: gp, phase: operate, from: cwip, to: coinvest, expense: coinvest_depreciation,
+    disposal: coinvest_cost, in_service: 20, life_periods: 1, first_charge: next_period, dispose_at: 20}
+cuts:
+  to_topco:
+    entity: gp
+    account: cash
+    scheme: cash_flow
+    include: [topco]
+measures: {}
+wind_down:
+  gp: [cash, tax_payable, mgmt_fee.receivable, exit_income.receivable, opex.payable, topco.capital, cwip, coinvest]

@@ -1,0 +1,161 @@
+# Averta buyer, with the live model's bugs fixed (plan step 8).
+#
+# Written by make_case_averta_fixed.py: averta_buyer.yaml (the live buyer,
+# reproduced) with these changes, in this order; nothing else differs.
+#
+# buyer_on_the_fixed_holdco:
+#   Not a buyer fix: the buyer reads the fixed HoldCo (the price, the HoldCo's value, is unchanged).
+# buyer_offers_all_its_cash:
+#   The live S9's current-flow-only rule is not carried: each quarter all the cash above the floor is offered.
+#
+#   In the reproduced buyer the only cash carried is what a lock-up traps,
+#   already re-offered when it clears, so this changes nothing; it removes
+#   a live artefact from the fixed case.
+# buyer_holds_the_spvs_to_the_end_of_their_life:
+#   Buyer finding (new): the live buyer's horizon stops at its debt's maturity, quarter 56.
+#
+#   The SPVs are 100-quarter assets: the last cohort's last quarter is the
+#   buyer's 94th. The live buyer neither receives their distributions after
+#   56 nor values them (no terminal value), so its IRR omits 9 to 38
+#   quarters of each cohort's life. Here the buyer holds them to the end.
+case: averta-buyer
+periods: 95
+phases: [fund, operate, accrue, pay]
+currency: EUR
+floors: {buyer.cash: 0, buyer.dsra: 0}
+generators:
+  holdco:
+    kind: cohorts
+    template: averta_holdco_fixed.yaml
+    schedule: [1]
+    periods: 21
+    align: 0
+    first: 0
+    series:
+      exit: {cut: exit}
+    generated: {value: valuation.value}
+  portfolio:
+    kind: cohorts
+    template: averta_spv.yaml
+    schedule: [30, 30, 60, 60, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 0, 0, 0, 0]
+    periods: 95
+    align: 20
+    first: 1
+    series:
+      distributions: {cut: equity_flows, times: -1}
+      revenue: {cut: revenue}
+      opex: {cut: opex}
+  acquisition:
+    kind: acquisition
+    price: {generator: holdco, output: value}
+    debt_share: 0.65
+    at: 0
+    periods: 95
+contracts:
+  spv_distributions:
+    type: offtake
+    parties: {seller: buyer}
+    terms:
+      volume: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      price: {generator: portfolio, output: distributions}
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 4
+      end: 94
+  admin:
+    type: operating_cost
+    parties: {payer: buyer}
+    terms: {annual: 100000, unit_rate: 0, volume: 0, index: 1, periods_per_year: 4, start: 1, end: 94, vat_rate: 0,
+      vat_refund_lag: 0, payment_days: 0, days_per_year: 365}
+  purchase:
+    type: capex
+    parties: {owner: buyer}
+    terms:
+      schedule: {generator: acquisition, output: spend}
+      vat_rate: 0
+      vat_refund_lag: 0
+      end: 94
+  senior:
+    type: term_loan
+    parties: {borrower: buyer}
+    terms:
+      commitment: {generator: acquisition, output: debt}
+      rate: 0.0425
+      rate_from: 1
+      days_per_period: 1
+      day_count_basis: 4
+      available_until: 0
+      commitment_fee_rate: 0
+      repay_from: 5
+      repay_periods: 52
+  dsra:
+    type: debt_reserve
+    parties: {holder: buyer}
+    terms:
+      covers: senior
+      periods_forward: 2
+      from: 1
+      prefund: [0]
+  equity:
+    type: sponsor_equity
+    parties: {issuer: buyer}
+    terms: {}
+schemes:
+  cash_flow: {spv_distributions.receivable: operating, admin.payable: operating, cwip: investing, dsra: reserve,
+    senior.debt: senior, senior.interest_payable: senior, senior.fee_payable: senior, equity.capital: equity, equity.distributions: equity}
+rulebooks:
+  funding:
+    kind: funding_plan
+    entity: buyer
+    cash: cash
+    phase: fund
+    until: 0
+    uses:
+    - {flow: purchase.spend}
+    sources:
+    - {claim: senior.draw, share: 1}
+    residual: equity.contribute
+  assets: {kind: asset_register, entity: buyer, phase: accrue, from: cwip, to: fixed_assets, expense: depreciation,
+    disposal: disposal_loss, in_service: 1, life_periods: 80, first_charge: in_service, dispose_at: 94}
+  distribution: {kind: capital_first, holder: equity}
+  waterfall:
+    kind: waterfall
+    entity: buyer
+    phase: pay
+    cash: cash
+    active: {from: 1, until: 94}
+    sources: [dsra.release]
+    tiers:
+    - {claim: senior.interest}
+    - {claim: senior.principal}
+    - {claim: dsra.top_up}
+    residual: distribution
+    cfads:
+      scheme: cash_flow
+      classes: [operating]
+      less: []
+    service: [senior.interest, senior.principal]
+    tests:
+    - name: dscr_lockup
+      op: '>='
+      level: 1.1
+      if_missing: pass
+      consequence: block
+      blocks: [distribution]
+cuts:
+  equity_flows:
+    entity: buyer
+    account: cash
+    scheme: cash_flow
+    include: [equity]
+  cfads:
+    entity: buyer
+    account: cash
+    scheme: cash_flow
+    include: [operating]
+measures:
+  equity_irr: {measure: irr, cut: equity_flows, per_year: 4}
+wind_down:
+  buyer: [cash, dsra, cwip, fixed_assets, senior.debt, senior.interest_payable, spv_distributions.receivable, admin.payable]

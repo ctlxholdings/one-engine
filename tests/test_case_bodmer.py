@@ -124,7 +124,7 @@ def _rows(res):
         "equity_up_front": lambda t: f(t, lambda r: r["paid"]["up_front"]),
         "debt_pro_rata": lambda t: f(t, lambda r: r["paid"]["senior.draw"]),
         "equity_pro_rata": lambda t: f(t, lambda r: r["residual"]),
-        "equity_funding": lambda t: ev("equity:leg.contribute", t),
+        "equity_funding": lambda t: ev("equity:leg.contribute", f"{t}:fund"),
         "ebt": lambda t: tax[t]["base"],
         "nol_closing": lambda t: tax[t]["losses"],
         "tax": lambda t: tax[t]["tax"],

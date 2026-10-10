@@ -35,10 +35,18 @@ Findings pinned here (and in the LOG):
    exit proceeds are booked as revenue with no cost of the SPVs sold but
    the first tranche's disposal loss, so the exit quarter's profit is
    124.65M.
-3. The report's LP and GP returns place the exit (period 21) in period 20,
-   a quarter early: LP equity IRR 29.44% where the live S10 itself computes
-   27.70%, LP combined 24.17% where the correct timing gives 22.65%, GP
-   62.26% against 57.30%.
+3. The live HoldCo is paid at period 21, a quarter after the sale: the
+   buyer pays at its period 0, the HoldCo's 20 (test_case_averta_buyer.py,
+   finding 6), the valuation's forward year starts after quarter 20, and
+   the DevCo's exit quarter is 20. It also charges a 21st quarter of
+   warehouse interest, SHL interest and admin. The report's returns move
+   the exit cash to period 20 but keep those costs: LP equity IRR 29.44%,
+   LP combined 24.17%, GP 62.26%, where the live S10 computes 27.70%,
+   22.65% and 57.30% on its own timing. With the sale in quarter 20 and no
+   21st quarter the LP's equity IRR is 30.32%
+   (test_case_averta_fixed.py). First written as "the report's returns
+   place the exit a quarter early", which took the HoldCo's period 21 as
+   right; corrected in the fixed run.
 4. The SPVs' distributions of the exit quarter (2.80M) go to the buyer,
    not the HoldCo: the HoldCo is paid for the 20 hold quarters, and the
    buyer's first quarter is the HoldCo's exit quarter, while the buyer pays
@@ -276,7 +284,7 @@ def test_finding_spvs_bought_after_the_first_quarter_stay_in_cwip(result):
     assert round(float(L["retained_earnings"]["movements"]["net_income"][EXIT]) / 1e6, 2) == 124.65
 
 
-def test_finding_the_report_returns_place_the_exit_a_quarter_early(result):
+def test_finding_the_holdco_is_paid_a_quarter_after_the_sale(result):
     lp = REPORT["p50"]["lp"]["scalars"]
     gp = REPORT["p50"]["gp"]["scalars"]
 
