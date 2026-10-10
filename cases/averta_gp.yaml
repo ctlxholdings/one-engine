@@ -1,0 +1,127 @@
+# Averta GP, as the live model computes it (plan step 8).
+#
+# Source: 01-averta 01_model/engine_v2 at commit cab622b,
+# engine_v2.runners.run_averta.build_gp, at P50; its results are the
+# report's ``gp`` section (cases/reference/averta_live/report_data.json).
+# The live GP is arithmetic, not an entity run; here it is a book. This file
+# is written by make_case_averta_gp.py.
+#
+# Grid: the HoldCo's, 22 quarters. Periods 1 to 20 are the hold, 21 the exit. EUR.
+#
+# How the live GP is assembled here:
+#   * management fees: 0.0125 a year on the HoldCo's committed capital
+#     (38623838.4: the non-warehouse share of the SPVs bought, the live
+#     total_equity), a quarter of it in each hold quarter;
+#   * opex: each year's amount (300000, 400000, 500000, 500000, 500000), a quarter of it per hold quarter;
+#   * at the exit, the GP's carry and the return of its co-invest, read
+#     from the HoldCo case (its GP cash flows at the exit; one copy of
+#     averta_holdco.yaml), booked as income as the live model books it;
+#   * tax at 0.25 with losses carried forward without limit. The live model
+#     taxes the total once; per period with the losses carried forward it
+#     is the same amount, because the cumulative profit is positive in every
+#     period;
+#   * nothing is paid out during the hold (the live GP's distributions are
+#     nil); at the exit the tax is paid and everything else goes to TopCo.
+#
+# Declared, as the live model has them (findings in the LOG):
+#   * the return of the GP's co-invest is taxed as income;
+#   * the GP's co-invest contributions to the HoldCo are not paid by this
+#     book: the live GP never funds them.
+case: averta-gp
+periods: 22
+phases: [operate, tax, pay]
+currency: EUR
+floors:
+  gp.cash: 0
+generators:
+  holdco:                            # the HoldCo case, one copy
+    kind: cohorts
+    template: averta_holdco.yaml
+    schedule: [1]
+    periods: 22
+    align: 0
+    first: 0
+    series:
+      gp_flows: {cut: gp_flows, times: -1}       # the HoldCo's cash cut: a distribution is negative
+contracts:
+  mgmt_fee:
+    type: offtake
+    parties: {seller: gp}
+    terms:
+      volume: [0, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0.003125, 0]
+      price: 38623838.4
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 4
+      end: 21
+  opex:
+    type: operating_cost
+    parties: {payer: gp}
+    terms:
+      annual: 0
+      unit_rate: 1
+      volume: [0, 75000, 75000, 75000, 75000, 100000, 100000, 100000, 100000, 125000, 125000, 125000, 125000, 125000, 125000, 125000, 125000, 125000, 125000, 125000, 125000, 0]
+      index: 1
+      periods_per_year: 4
+      start: 1
+      end: 20
+      vat_rate: 0
+      vat_refund_lag: 0
+      payment_days: 0
+      days_per_year: 365
+  exit_income:                       # carry + return of co-invest, at the exit
+    type: offtake
+    parties: {seller: gp}
+    terms:
+      volume: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      price: {generator: holdco, output: gp_flows}
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 4
+      end: 21
+  topco:
+    type: sponsor_equity
+    parties: {issuer: gp}
+    terms: {}
+schemes:
+  cash_flow:
+    mgmt_fee.receivable: operating
+    exit_income.receivable: operating
+    opex.payable: operating
+    tax_payable: tax
+    topco.capital: topco
+    topco.distributions: topco
+rulebooks:
+  tax:
+    kind: income_tax
+    entity: gp
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: 0.25
+    carry_forward_periods: null
+    scheme:
+      mgmt_fee.revenue: taxable
+      exit_income.revenue: taxable
+      opex.expense: taxable
+      tax_expense: non_deductible
+  distribution:
+    kind: capital_first
+    holder: topco
+  waterfall:
+    kind: waterfall
+    entity: gp
+    phase: pay
+    cash: cash
+    active: {from: 21, until: 21}
+    tiers:
+      - {name: tax, account: tax_payable}
+    residual: distribution
+    cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+    service: []
+    tests: []
+cuts:
+  to_topco: {entity: gp, account: cash, scheme: cash_flow, include: [topco]}
+measures: {}
+wind_down:
+  gp: [cash, tax_payable, mgmt_fee.receivable, exit_income.receivable, opex.payable, topco.capital]

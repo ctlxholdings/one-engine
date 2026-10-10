@@ -133,6 +133,10 @@ Rulebooks
     (step 8) distributes current-period cash flow only, so a HoldCo
     overdraft (an unfloored cash account) is carried, not made good, until
     the first period after the window, when all the cash is offered.
+    ``active`` (``from``, ``until``): the waterfall runs in those periods
+    only; outside them nothing is paid and the cash is retained (Averta's
+    live GP, step 8, sweeps its cash and settles its tax once, at the
+    exit).
 
 ``withholding``
     Registers withholding rates on payments (``senior.interest: 0.1``,
@@ -647,6 +651,12 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         fr = Reader(fo, source="waterfall.flow_only")
         flow_only = (int(fr.take("from")), int(fr.take("until")))
         fr.finish()
+    ac = r.take_or_default("active", None, reason="the waterfall runs every period").value
+    active = None
+    if ac is not None:
+        ar = Reader(ac, source="waterfall.active")
+        active = (int(ar.take("from")), int(ar.take("until")))
+        ar.finish()
     tests = []
     for i, raw in enumerate(r.take("tests")):
         tr = Reader(raw, source=f"waterfall.tests[{i}]")
@@ -669,6 +679,8 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             raise InputError(f"waterfall: '{n}' in cfads.less must be an account tier")
 
     def handler(g: Group, t: int) -> None:
+        if active is not None and not active[0] <= t <= active[1]:
+            return                                  # outside its window the cash stays where it is
         book = g.book(entity)
         due = {name: book.balance(ref, t) for name, kind, ref, _ in tiers_spec if kind == "account"}
         flows = cash_flow_cut(book, cash, scheme, classes).values[t - book.start_period]

@@ -513,6 +513,8 @@ MUTATIONS = [
      "test_case_averta_holdco.py::test_every_cash_movement_matches_the_live_holdco"),
     ("packs/pf.py", "            if not catchup:\n                return Fraction(0)", "            if False:\n                return Fraction(0)",
      "test_case_nightmare.py::test_a_promote_without_catch_up_pays_the_gp_its_carry_of_the_residual_only"),
+    ("packs/pf.py", "        if active is not None and not active[0] <= t <= active[1]:", "        if False:",
+     "test_case_averta_gp.py::test_the_quarterly_arrays_match_the_live_gp"),
 ]
 
 
