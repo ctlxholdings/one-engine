@@ -4,11 +4,12 @@ Each rule here is one the ACTUS corpus prices (tests/test_case_actus.py runs
 the whole corpus); these tests pin each rule on its own so a wrong one names
 itself.
 """
+from datetime import date as D
 from fractions import Fraction as F
 
 import pytest
 
-from one_engine.dates import CalendarError, Cycle, instant, schedule, shift, year_fraction
+from one_engine.dates import CalendarError, Cycle, instant, is_business_day, schedule, shift, year_fraction
 
 I = instant
 
@@ -40,6 +41,20 @@ def test_end_of_month_moves_a_month_end_anchor_only():
     assert iso(schedule(I("2013-04-30"), "P1ML1", I("2013-07-15"), "SD"))[:3] == ["2013-04-30", "2013-05-30", "2013-06-30"]
     assert iso(schedule(I("2013-04-15"), "P1ML1", I("2013-06-15"), "EOM"))[:2] == ["2013-04-15", "2013-05-15"]
     assert iso(schedule(I("2013-01-31"), "P1ML1", I("2013-04-15"), "SD"))[:3] == ["2013-01-31", "2013-02-28", "2013-03-31"]
+
+
+def test_a_holiday_list_on_the_weekday_calendar_moves_payments_off_holidays_too():
+    # ModelOff 2014 "Precise Debt": Good Friday and Easter Monday 2015 are holidays
+    easter = frozenset({D(2015, 4, 3), D(2015, 4, 6)})
+    assert is_business_day(I("2015-04-02"), "MF", easter) and not is_business_day(I("2015-04-03"), "MF", easter)
+    assert not is_business_day(I("2015-04-04"), "MF", easter) and is_business_day(I("2015-04-03"), "MF")
+    assert shift(I("2015-04-03"), "SCMF", "MF", easter)[0] == I("2015-04-07")      # Friday, weekend, Monday
+    assert shift(I("2015-04-03"), "SCMF", "MF")[0] == I("2015-04-03")              # no list: a weekday
+    # modified following falls back to the last business day of the month, skipping holidays too
+    assert shift(I("2016-10-30"), "SCMF", "MF", frozenset({D(2016, 10, 31)}))[0] == I("2016-10-28")
+    assert shift(I("2016-10-30"), "SCMF", "MF", frozenset({D(2016, 10, 31), D(2016, 10, 28)}))[0] == I("2016-10-27")
+    with pytest.raises(CalendarError, match="holiday"):
+        shift(I("2015-04-03"), "SCMF", "NC", easter)
 
 
 def test_calculate_shift_moves_the_payment_and_not_the_accrual():

@@ -24,7 +24,8 @@ What it holds, and only that
   every later month's last day; under ``SD`` (same day) the day is kept and
   clamped to the month's length.
 * :func:`shift` applies a business-day convention under a calendar (``NC``
-  no holidays, ``MF`` Saturdays and Sundays). The first two letters decide
+  no holidays, ``MF`` Saturdays and Sundays, plus any holidays listed as
+  data: :func:`is_business_day`). The first two letters decide
   which date the interest is computed on: ``SC`` (shift, then calculate)
   accrues to the shifted date, ``CS`` (calculate, then shift) to the
   unshifted one while only the payment moves.
@@ -42,7 +43,7 @@ import datetime as _dt
 import re
 from dataclasses import dataclass
 from fractions import Fraction
-from typing import List, Optional, Tuple
+from typing import FrozenSet, List, Optional, Tuple
 
 
 class CalendarError(ValueError):
@@ -155,30 +156,44 @@ def schedule(anchor: _dt.datetime, cycle: Optional[str], end: _dt.datetime,
 
 # ── business days ───────────────────────────────────────────────────────────
 
-def shift(d: _dt.datetime, convention: Optional[str], calendar: Optional[str]) -> Tuple[_dt.datetime, _dt.datetime]:
+def is_business_day(d: _dt.datetime, calendar: Optional[str], holidays: FrozenSet[_dt.date] = frozenset()) -> bool:
+    """Whether ``d`` is a working day: every day under ``NC``; Monday to Friday, less ``holidays``, under ``MF``."""
+    calendar = calendar or "NC"
+    if calendar not in CALENDARS:
+        raise CalendarError(f"calendar {calendar!r} is not built ({CALENDARS}); give its holidays as a list")
+    if calendar == "NC":
+        if holidays:
+            raise CalendarError("a holiday list needs the weekday calendar (MF); NC has no non-working days")
+        return True
+    day = d.date() if isinstance(d, _dt.datetime) else d
+    return day.weekday() < 5 and day not in holidays
+
+
+def shift(d: _dt.datetime, convention: Optional[str], calendar: Optional[str],
+          holidays: FrozenSet[_dt.date] = frozenset()) -> Tuple[_dt.datetime, _dt.datetime]:
     """``(payment instant, calculation instant)`` of a scheduled instant.
 
     Following (``F``) moves to the next working day, preceding (``P``) to
     the previous one; the modified forms reverse direction if the move
     would leave the month. ``SC`` computes on the shifted day, ``CS`` on
-    the scheduled one.
+    the scheduled one. ``holidays`` (dates) are non-working days of the
+    weekday calendar ``MF`` besides the weekend (ModelOff 2014 "Precise
+    Debt", step 7m, states eighteen).
     """
     convention = convention or "NOS"
-    calendar = calendar or "NC"
-    if calendar not in CALENDARS:
-        raise CalendarError(f"calendar {calendar!r} is not built ({CALENDARS}); a holiday list is data we do not hold")
     if convention not in BUSINESS_DAY:
         raise CalendarError(f"business-day convention {convention!r} is not built ({BUSINESS_DAY})")
-    if convention == "NOS" or calendar == "NC":
+    is_business_day(d, calendar, holidays)                  # validates the calendar and the list
+    if convention == "NOS" or (calendar or "NC") == "NC":
         return d, d
     forward = convention.endswith("F")
     step = _dt.timedelta(days=1 if forward else -1)
     out = d
-    while out.weekday() >= 5:
+    while not is_business_day(out, calendar, holidays):
         out += step
     if "M" in convention[2:] and out.month != d.month:
         out = d
-        while out.weekday() >= 5:
+        while not is_business_day(out, calendar, holidays):
             out -= step
     return out, (out if convention.startswith("SC") else d)
 

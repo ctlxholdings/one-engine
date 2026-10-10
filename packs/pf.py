@@ -171,6 +171,10 @@ applies to a finished run to get its outputs' next values:
     its payment in period ``at``, grossed up for arrangement fees charged
     as rates of the draw; outputs ``debt`` and a ``repayment`` straight-line
     by days (ModelOff 2015, step 7h; :func:`_refinance_rule`).
+``annuity``
+    The principal schedule of a loan repaid by a constant payment of
+    interest and principal, on its own days per period (ModelOff 2014,
+    step 7m; :func:`_annuity_rule`); outputs ``repayment``.
 """
 from __future__ import annotations
 
@@ -901,4 +905,46 @@ def _refinance_rule(r: Reader):
     return rule
 
 
-LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule, "refinance": _refinance_rule}
+def _annuity_rule(r: Reader):
+    """The principal schedule of a loan repaid by equal payments of interest and principal.
+
+    ModelOff 2014 "Precise Debt" (step 7m): a constant monthly payment,
+    goal-sought so the loan is repaid exactly by its last payment, with
+    interest on the actual days between business-day-adjusted payment
+    dates. With ``r_t`` the period's interest rate (``rate`` times the
+    loan's ``days_per_period`` over its basis), the payment is
+    ``commitment / sum_t prod_{s<=t} 1 / (1 + r_s)`` over the repayment
+    window: the closed form the goal seek converges to, exact. Each
+    period's principal is the payment less the interest on what is still
+    owed. The commitment is taken as fully drawn before ``repay_from``.
+
+    Outputs ``repayment`` (a series, for the loan's ``principal_schedule``);
+    the payment is in the books, as each period's interest plus principal.
+    The schedule depends on the terms only, so the loop closes on its
+    second run.
+    """
+    from one_engine.packs.contracts import _at, _days, _maturity
+    loan = r.take("loan")
+
+    def rule(result) -> Dict[str, Any]:
+        terms = result.group.contract(loan).values()
+        first, last = int(terms["repay_from"]), _maturity(terms)
+        rate = {t: (_at(terms["rate"], t) * _days(terms, t) if t >= int(terms["rate_from"]) else Fraction(0))
+                for t in range(first, last + 1)}
+        factor, total = Fraction(1), Fraction(0)
+        for t in range(first, last + 1):
+            factor /= 1 + rate[t]
+            total += factor
+        owed = exact(terms["commitment"])
+        payment = owed / total
+        repayment = [Fraction(0)] * result.group.periods
+        for t in range(first, last + 1):
+            repayment[t] = payment - owed * rate[t]
+            owed -= repayment[t]
+        return {"repayment": repayment}
+
+    return rule
+
+
+LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule, "refinance": _refinance_rule,
+              "annuity": _annuity_rule}

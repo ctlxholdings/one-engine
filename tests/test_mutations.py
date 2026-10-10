@@ -399,6 +399,18 @@ MUTATIONS = [
      "test_case_modeloff_hard_times.py::test_finding_the_opening_balances_are_settled_in_three_months_and_kept_apart"),
     ("packs/pf.py", "            if ref in claims and claims[ref].due:\n                g.settle", "            if False:\n                g.settle",
      "test_case_modeloff_hard_times.py::test_q4_interest_in_2014"),
+    # ModelOff 2014 Precise Debt (step 7m): holidays on the weekday calendar, the annuity loop rule
+    ("dates.py", "    return day.weekday() < 5 and day not in holidays", "    return day.weekday() < 5",
+     "test_case_modeloff_precise_debt.py::test_q1_how_many_of_loan_1s_regular_dates_are_not_business_days"),
+    ("dates.py", "        if holidays:\n            raise CalendarError", "        if False:\n            raise CalendarError",
+     "test_case_modeloff_precise_debt.py::test_a_holiday_list_without_the_weekday_calendar_refuses"),
+    ("dates.py", "        while not is_business_day(out, calendar, holidays):\n            out -= step",
+     "        while out.weekday() >= 5:\n            out -= step",
+     "test_dates.py::test_a_holiday_list_on_the_weekday_calendar_moves_payments_off_holidays_too"),
+    ("packs/pf.py", "            factor /= 1 + rate[t]", "            factor /= 1 + rate[first]",
+     "test_case_modeloff_precise_debt.py::test_q3_loan_1s_payment_ends_in_85_cents"),
+    ("packs/pf.py", "            repayment[t] = payment - owed * rate[t]", "            repayment[t] = payment",
+     "test_case_modeloff_precise_debt.py::test_q6_q7_q8_loan_2"),
 ]
 
 

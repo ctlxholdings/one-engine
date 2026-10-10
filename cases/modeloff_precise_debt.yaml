@@ -1,0 +1,105 @@
+# ModelOff 2014 "Precise Debt Modeling": two loans with business-day payment dates (plan step 7m).
+#
+# Source: ModelOff 2014 Round 1 (competition paper, not in this
+# repository); the holidays, the loans' terms and the eight answers as
+# transcribed in generic_engine/tests/test_benchmark_round1_precise_debt.py,
+# copied to cases/reference/modeloff_2014_precise_debt.json by
+# consolidation/experiments/make_reference_modeloff_precise_debt.py, and to
+# this file by make_case_modeloff_precise_debt.py.
+# tests/test_case_modeloff_precise_debt.py re-derives the payment dates.
+#
+# Grid: 73 months, January 2015 (period 0) to 2021-01. US$.
+#
+# What the case does, and how it is assembled here:
+#   * loan 1: 250,000 drawn on 19 January 2015 at 5.20%, 72 monthly
+#     payments; loan 2: 100,000 drawn on 30 June 2015 at 7.00%, 48;
+#   * a payment falls on the drawdown's day of the month (the month's last
+#     day if shorter), moved to the next business day unless that leaves
+#     the month, in which case to the last business day of the month: the
+#     modified following convention on a Monday-to-Friday calendar with
+#     the paper's 18 holidays (one_engine.dates.shift; the generator
+#     derives the dates and writes each period's actual days);
+#   * interest is the opening balance x rate x actual days / 365;
+#   * the payment is the same every month and repays the loan exactly with
+#     the last one: the annuity loop rule computes it and the principal
+#     schedule it implies;
+#   * the borrower's other cash is not in the case: draws and payments are
+#     settled when due (pay_as_due) and cash is not floored.
+case: modeloff-precise-debt
+periods: 73
+phases: [accrue, pay]
+currency: USD
+floors: {}
+loops:
+  loan_1_payment:
+    rule: {kind: annuity, loan: loan_1}
+    start: {repayment: 0}
+    tolerance: 0
+    max_iterations: 3
+  loan_2_payment:
+    rule: {kind: annuity, loan: loan_2}
+    start: {repayment: 0}
+    tolerance: 0
+    max_iterations: 3
+contracts:
+  loan_1:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 250000
+      draw_schedule: [250000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 0
+      rate: 0.052
+      rate_from: 0
+      days_per_period: [0, 31, 28, 32, 29, 31, 31, 30, 33, 28, 31, 32, 29, 31, 31, 29, 30, 32, 29, 31, 31, 30, 33, 28, 31, 32, 28, 30, 30, 31, 30, 33, 29, 30, 32, 29, 31, 31, 28, 31, 32, 29, 30, 32, 30, 33, 28, 30, 33, 29, 28, 35, 27, 30, 30, 31, 31, 32, 29, 30, 32, 30, 29, 32, 29, 31, 31, 30, 33, 29, 30, 32, 29]      # actual days to each payment date
+      day_count_basis: 365
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 1
+      repay_periods: 72
+      sculpt_dscr: null
+      principal_schedule: {loop: loan_1_payment, output: repayment}
+      arrangement_fee: 0
+      fee_at: 0
+  loan_2:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 100000
+      draw_schedule: [0, 0, 0, 0, 0, 100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 5
+      rate: 0.07
+      rate_from: 0
+      days_per_period: [0, 0, 0, 0, 0, 0, 30, 32, 30, 30, 31, 30, 30, 31, 30, 30, 31, 31, 29, 32, 31, 31, 30, 30, 31, 29, 30, 29, 32, 31, 31, 30, 30, 32, 30, 29, 32, 29, 29, 32, 30, 30, 31, 31, 29, 32, 31, 31, 30, 29, 29, 32, 30, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]      # actual days to each payment date
+      day_count_basis: 365
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 6
+      repay_periods: 48
+      sculpt_dscr: null
+      principal_schedule: {loop: loan_2_payment, output: repayment}
+      arrangement_fee: 0
+      fee_at: 5
+rulebooks:
+  settle:
+    kind: pay_as_due
+    phase: pay
+    claims: [loan_1.draw, loan_1.interest, loan_1.principal, loan_2.draw, loan_2.interest, loan_2.principal]
+schemes:
+  cash_flow:
+    loan_1.debt: loan_1
+    loan_1.interest_payable: loan_1
+    loan_1.fee_payable: loan_1
+    loan_1.capitalised_interest: loan_1
+    loan_1.deferred_fees: loan_1
+    loan_2.debt: loan_2
+    loan_2.interest_payable: loan_2
+    loan_2.fee_payable: loan_2
+    loan_2.capitalised_interest: loan_2
+    loan_2.deferred_fees: loan_2
+cuts:
+  loan_1: {entity: company, account: cash, scheme: cash_flow, include: [loan_1]}
+  loan_2: {entity: company, account: cash, scheme: cash_flow, include: [loan_2]}
+measures: {}                    # the answers are amounts and counts read from the books and the dates
