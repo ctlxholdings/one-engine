@@ -1,0 +1,211 @@
+# ModelOff 2012 Finals "Buying an Investment Property" (plan step 7j).
+#
+# Source: the ModelOff 2012 Finals case of that name (competition paper,
+# not in this repository); inputs and the five verified answers as
+# transcribed in generic_engine/tests/test_benchmark_round3_investment_property.py,
+# copied to cases/reference/modeloff_2012_investment_property.json by
+# consolidation/experiments/make_reference_modeloff_investment_property.py,
+# and to this file by make_case_modeloff_investment_property.py.
+# tests/test_case_modeloff_investment_property.py re-checks the copy.
+#
+# Grid: 11 years, period 0 the purchase, then years 1 to 10. US$.
+#
+# What the case does, and how it is assembled here:
+#   * the property (1,600,000) and furniture (10,000) are bought in
+#     period 0 (capex: they stay at cost in cwip; the case depreciates
+#     neither); the mortgage's 10,000 arrangement fee is paid then too;
+#     the mortgage is drawn for its maximum (900,000) and equity pays the
+#     rest (funding_plan);
+#   * rent of 83,200 in year 1, growing 2% in years 2 and 3 and 5% after
+#     (offtake); agency fees and maintenance are 9% and 5% of it
+#     (operating_cost: unit_rate x volume, the volume being the rent);
+#   * the mortgage: 5% on the opening balance, 25-year term, no scheduled
+#     repayment (principal_schedule of zeros: the case states only that
+#     all free cash repays it at each year end, which the waterfall's
+#     prepay tier does); its arrangement fee is amortised over the term
+#     and, as the transcription computes it, not deducted for income tax
+#     (it is part of the capital gains cost instead);
+#   * income tax at 35% on rent less agency fees, maintenance and
+#     interest, paid in the year (income_tax; the waterfall pays it first);
+#   * a sale at the end of each year k (one lens each, sale_k): the price
+#     is the purchase price doubling over 10 years; capital gains tax is
+#     20% of the price over the cost (property, furniture and arrangement
+#     fee, read from the books at the purchase); the owner gets the price
+#     less that tax less the mortgage outstanding (exit_returns with a
+#     stated value and gains_tax). irr_k is the owner's IRR for that sale.
+case: modeloff-investment-property
+periods: 11
+phases: [accrue, operate, fund, tax, pay]
+currency: USD
+floors:
+  company.cash: 0
+contracts:
+  property:
+    type: capex
+    parties: {owner: company}
+    terms: {schedule: [1600000], vat_rate: 0, vat_refund_lag: 0, end: 0}
+  furniture:
+    type: capex
+    parties: {owner: company}
+    terms: {schedule: [10000], vat_rate: 0, vat_refund_lag: 0, end: 0}
+  rent:
+    type: offtake
+    parties: {seller: company}
+    terms:
+      volume: 1
+      price: [0, 83200, 84864, 86561.28, 90889.344, 95433.8112, 100205.50176, 105215.776848, 110476.5656904, 116000.39397492, 121800.413673666]
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 1
+      end: 10
+  agency:
+    type: operating_cost
+    parties: {payer: company}
+    terms: &share_of_rent
+      annual: 0
+      unit_rate: 0.09
+      volume: [0, 83200, 84864, 86561.28, 90889.344, 95433.8112, 100205.50176, 105215.776848, 110476.5656904, 116000.39397492, 121800.413673666]      # the rent: the cost is a share of it
+      index: 1
+      periods_per_year: 1
+      start: 1
+      end: 10
+      vat_rate: 0
+      vat_refund_lag: 0
+      payment_days: 0
+      days_per_year: 365
+  maintenance:
+    type: operating_cost
+    parties: {payer: company}
+    terms: {<<: *share_of_rent, unit_rate: 0.05}
+  mortgage:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 900000
+      draw_schedule: 900000
+      available_until: 0
+      rate: 0.05
+      rate_from: 0
+      days_per_period: 1
+      day_count_basis: 1
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 1
+      repay_periods: 25
+      sculpt_dscr: null
+      principal_schedule: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]      # no scheduled repayment: the free cash repays it
+      arrangement_fee: 10000
+      fee_at: 0
+  equity:
+    type: sponsor_equity
+    parties: {issuer: company}
+    terms: {}
+schemes:
+  cash_flow: &cash_counterparts
+    rent.receivable: operating
+    agency.payable: operating
+    maintenance.payable: operating
+    vat_receivable: investing
+    cwip: investing
+    tax_payable: tax
+    mortgage.debt: financing
+    mortgage.interest_payable: financing
+    mortgage.fee_payable: financing
+    mortgage.capitalised_interest: financing
+    mortgage.deferred_fees: financing
+    equity.capital: equity
+    equity.distributions: equity
+  balance:                      # what the sale reads: the mortgage owed, and the cost of what was bought
+    cash: other
+    rent.receivable: other
+    agency.payable: other
+    maintenance.payable: other
+    vat_receivable: other
+    cwip: cost
+    tax_payable: other
+    mortgage.debt: debt
+    mortgage.interest_payable: debt
+    mortgage.fee_payable: other
+    mortgage.capitalised_interest: debt
+    mortgage.deferred_fees: cost
+    equity.capital: other
+    equity.distributions: other
+rulebooks:
+  funding:
+    kind: funding_plan
+    entity: company
+    cash: cash
+    phase: fund
+    until: 0
+    uses:
+      - {flow: property.spend}
+      - {flow: furniture.spend}
+      - {claim: mortgage.arrangement_fee}
+    sources:
+      - {claim: mortgage.draw, share: 1}
+    residual: equity.contribute
+  tax:
+    kind: income_tax
+    entity: company
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: 0.35
+    carry_forward_periods: null
+    scheme:
+      rent.revenue: taxable
+      agency.expense: taxable
+      maintenance.expense: taxable
+      mortgage.interest: taxable
+      mortgage.fees: non_deductible      # the arrangement fee: in the capital gains cost instead
+      tax_expense: non_deductible
+  waterfall:
+    kind: waterfall
+    entity: company
+    phase: pay
+    cash: cash
+    tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: mortgage.interest}
+      - {claim: mortgage.prepay}       # all free cash repays the mortgage
+    residual: equity.distribute
+    cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+    service: [mortgage.interest]
+    tests: []
+cuts:
+  owner: {entity: company, account: cash, scheme: cash_flow, include: [equity]}
+lenses:
+  sale_1: &sale
+    kind: exit_returns
+    entity: company
+    cash: cash
+    period: 1
+    value: [1600000, 1714837.54005806906274081012, 1837917.367995256010877803115, 1969831.06135186605519902891, 2111212.657236630814998403154, 2262741.699796952078082701958, 2425146.506416636931755615682, 2599207.668339953672351070026, 2785761.802547597245236064056, 2985705.572917783731140298451, 3200000]      # 1,600,000 x 2 ** (year / 10), to 28 digits
+    gains_tax: {rate: 0.2, cost: {scheme: balance, include: [cost]}}
+    net_debt: {scheme: balance, include: [debt]}
+    flows: cash_flow
+    claims_scheme: balance
+    holders:
+      owner: {classes: [equity], claim: []}
+    ownership: {paid: [owner], at: 0, layers: []}
+  sale_2: {<<: *sale, period: 2}
+  sale_3: {<<: *sale, period: 3}
+  sale_4: {<<: *sale, period: 4}
+  sale_5: {<<: *sale, period: 5}
+  sale_6: {<<: *sale, period: 6}
+  sale_7: {<<: *sale, period: 7}
+  sale_8: {<<: *sale, period: 8}
+  sale_9: {<<: *sale, period: 9}
+  sale_10: {<<: *sale, period: 10}
+measures:
+  irr_1: {measure: irr, cut: sale_1.owner}
+  irr_2: {measure: irr, cut: sale_2.owner}
+  irr_3: {measure: irr, cut: sale_3.owner}
+  irr_4: {measure: irr, cut: sale_4.owner}
+  irr_5: {measure: irr, cut: sale_5.owner}
+  irr_6: {measure: irr, cut: sale_6.owner}
+  irr_7: {measure: irr, cut: sale_7.owner}
+  irr_8: {measure: irr, cut: sale_8.owner}
+  irr_9: {measure: irr, cut: sale_9.owner}
+  irr_10: {measure: irr, cut: sale_10.owner}

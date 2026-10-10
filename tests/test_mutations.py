@@ -310,7 +310,7 @@ MUTATIONS = [
      "test_case_macabacus_long.py::test_the_subordinated_note_is_repaid_with_its_prepayment_premium"),
     ("packs/corporate.py", "company = [x if t <= paid_at or t >= interim_from else Fraction(0)", "company = [x if True else Fraction(0)",
      "test_case_macabacus_long.py::test_holder_stream_irr_and_cash_on_cash"),
-    ("packs/corporate.py", "    ev = multiple * ebitda.values[exit_t] / _at(fractions, exit_t)", "    ev = multiple * ebitda.values[exit_t]",
+    ("packs/corporate.py", "        ev = exact(multiple) * ebitda.values[exit_t] / _at(fractions, exit_t)", "        ev = exact(multiple) * ebitda.values[exit_t]",
      "test_case_macabacus_long.py::test_the_exit_values_at_every_period_annualise_the_stub"),
     # ModelOff 2015 More Money Please (step 7h): weighted register, CFADS share, the refinance loop rule
     ("measurement.py", "        if sum(given) != 1:", "        if False:",
@@ -357,6 +357,17 @@ MUTATIONS = [
     ("packs/pf.py", "                last[\"diff\"], last[\"rate\"] = carrying - tax_base - losses, policy.rate",
      "                last[\"diff\"], last[\"rate\"] = carrying - tax_base - losses, None",
      "test_case_modeloff_asset_schedule.py::test_q4_the_rate_change_remeasures_the_opening_2016_deferred_tax"),
+    # ModelOff 2012 Investment Property (step 7j): an exit at a stated price, with capital gains tax
+    ("packs/corporate.py", "        ev = _at(value, exit_t)", "        ev = _at(value, 0)",
+     "test_case_modeloff_investment_property.py::test_q4_the_proceeds_of_a_sale_after_two_years"),
+    ("packs/corporate.py", "max(Fraction(0), ev + cost.values[paid_at])", "max(Fraction(0), ev - cost.values[paid_at])",
+     "test_case_modeloff_investment_property.py::test_q4_the_proceeds_of_a_sale_after_two_years"),
+    ("packs/corporate.py", "max(Fraction(0), ev + cost.values[paid_at])", "(ev + cost.values[paid_at])",
+     "test_case_modeloff_investment_property.py::test_finding_every_sale_is_at_a_gain_and_a_sale_below_cost_pays_no_gains_tax"),
+    ("packs/corporate.py", "    equity = ev - gains_tax - net_debt.values[exit_t]", "    equity = ev - net_debt.values[exit_t]",
+     "test_case_modeloff_investment_property.py::test_q3_the_irr_of_a_sale_at_the_end_of_year_10"),
+    ("packs/corporate.py", "    if (multiple is None) == (value is None):", "    if False:",
+     "test_case_modeloff_investment_property.py::test_a_sale_valued_both_at_a_price_and_at_a_multiple_refuses"),
 ]
 
 

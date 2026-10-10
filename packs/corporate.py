@@ -71,7 +71,10 @@ Lens
     exit period's EBITDA less net debt (cuts of the books); each holder's
     stream is what the company paid it up to the exit, plus its claim then
     outstanding and its fully diluted share of the equity value
-    (:mod:`one_engine.holders`). Nothing is posted.
+    (:mod:`one_engine.holders`). Nothing is posted. The exit may instead
+    be valued at a stated price by period, less a capital gains tax on the
+    price over a cost read from the books (ModelOff 2012's investment
+    property, step 7j).
 """
 from __future__ import annotations
 
@@ -654,22 +657,40 @@ def exit_returns(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, A
     ``interim_from`` (the first period whose interim flows count; flows of
     the periods between the deal and it are left out of every stream).
 
+    The exit is valued at ``multiple`` times ``ebitda``, or, in their
+    place, at a stated sale price by period (``value``: ModelOff 2012's
+    investment property, step 7j). ``gains_tax`` (``{rate, cost}``, cost a
+    balance cut ``{scheme, include}`` read at ``ownership.at``) charges the
+    rate on the gain of the value over that cost; the tax reduces the
+    equity value. A loss pays no tax (no relief is modelled; no case so far
+    sells at a loss).
+
     Returns ``{"series": {holder: Series}, "values": {...}}``: the streams,
-    and the exit EBITDA, enterprise value, net debt, equity value and the
-    fully diluted ownership.
+    and the exit EBITDA (when a multiple values it), enterprise value, gains
+    tax, net debt, equity value and the fully diluted ownership.
     """
     book = group.book(r.take("entity"))
-    cash, exit_t, multiple = r.take("cash"), int(r.take("period")), exact(r.take("multiple"))
+    cash, exit_t = r.take("cash"), int(r.take("period"))
     schemes = ctx["schemes"]
+    multiple = r.take_or_default("multiple", None, reason="the exit is valued at a stated price").value
+    value = r.take_or_default("value", None, reason="the exit is valued at a multiple of EBITDA").value
+    if (multiple is None) == (value is None):
+        raise InputError("exit_returns: give multiple (with ebitda) or value, exactly one")
     fractions = r.take_or_default("fractions", 1, reason="every period is a whole year").value
 
-    def cut(key, fn):
-        cr = Reader(r.take(key), source=f"exit_returns.{key}")
+    def cut(raw, key, fn):
+        cr = Reader(raw, source=f"exit_returns.{key}")
         s = fn(book, schemes[cr.take("scheme")], cr.take("include"), name=key)
         cr.finish()
         return s
 
-    ebitda, net_debt = cut("ebitda", pnl_cut), cut("net_debt", balance_cut)
+    ebitda = cut(r.take("ebitda"), "ebitda", pnl_cut) if multiple is not None else None
+    net_debt = cut(r.take("net_debt"), "net_debt", balance_cut)
+    gains_raw = r.take_or_default("gains_tax", None, reason="no tax on the gain at the exit").value
+    if gains_raw is not None:
+        gr = Reader(gains_raw, source="exit_returns.gains_tax")
+        gains_rate, cost = exact(gr.take("rate")), cut(gr.take("cost"), "gains_tax.cost", balance_cut)
+        gr.finish()
     flows_scheme = schemes[r.take("flows")]
     bs = schemes[r.take("claims_scheme")]
     holders = {}
@@ -690,18 +711,26 @@ def exit_returns(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, A
     unknown = set(own) - set(holders)
     if unknown:
         raise InputError(f"exit_returns.ownership: {sorted(unknown)} own a share but are not holders")
-    ev = multiple * ebitda.values[exit_t] / _at(fractions, exit_t)
-    equity = ev - net_debt.values[exit_t]
+    if multiple is not None:
+        ev = exact(multiple) * ebitda.values[exit_t] / _at(fractions, exit_t)
+    else:
+        ev = _at(value, exit_t)
+    # a balance cut counts credit-natured accounts positive, so the cost of assets bought is its negative
+    gains_tax = gains_rate * max(Fraction(0), ev + cost.values[paid_at]) if gains_raw is not None else Fraction(0)
+    equity = ev - gains_tax - net_debt.values[exit_t]
+    valued_on = net_debt.states | (ebitda.states if ebitda is not None else frozenset())
     series = {}
     for h, (classes, claim, premium) in holders.items():
         owed = balance_cut(book, bs, claim).values[exit_t] if claim else Fraction(0)
         owed *= 1 + _at(premium, exit_t)
         company = [x if t <= paid_at or t >= interim_from else Fraction(0) for t, x in enumerate(flows[h].values)]
         series[h] = Series(h, holder_stream(company, exit_t, owed, own.get(h, Fraction(0)), equity),
-                           flows[h].states | (ebitda.states | net_debt.states if h in own else frozenset()))
-    return {"series": series,
-            "values": {"ebitda": ebitda.values[exit_t], "enterprise_value": ev, "net_debt": net_debt.values[exit_t],
-                       "equity_value": equity, "ownership": own}}
+                           flows[h].states | (valued_on if h in own else frozenset()))
+    values = {"enterprise_value": ev, "gains_tax": gains_tax, "net_debt": net_debt.values[exit_t],
+              "equity_value": equity, "ownership": own}
+    if ebitda is not None:
+        values["ebitda"] = ebitda.values[exit_t]
+    return {"series": series, "values": values}
 
 
 LENSES: Dict[str, Callable] = {"exit_returns": exit_returns}
