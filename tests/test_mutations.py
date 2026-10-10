@@ -449,6 +449,12 @@ MUTATIONS = [
     ("packs/contracts.py", '        out["collect"] = bal("seller", "{id}.receivable") + sale if t in on else exact(0)',
      '        out["collect"] = sale if t in on else exact(0)',
      "test_case_modeloff_collect_the_cash.py::test_q2_b_from_april_to_october"),
+    # Averta live reference SPV (step 8): one holder's capital returned before profit is distributed
+    ("packs/pf.py", '[Tier("return_capital", unreturned)]', '[Tier("return_capital", Fraction(0))]',
+     "test_case_averta_spv.py::test_the_quarterly_balance_sheet"),
+    ("packs/pf.py", '        g.post_leg(c, "distribute", a.residual, t, phase)',
+     '        g.post_leg(c, "return_capital", a.residual, t, phase)',
+     "test_case_averta_spv.py::test_the_quarterly_balance_sheet"),
 ]
 
 

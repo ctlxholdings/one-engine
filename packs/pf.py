@@ -150,6 +150,13 @@ Rulebooks
     are this rulebook's state, the unreturned capital is read from the
     books.
 
+``capital_first``
+    Divides the waterfall's residual for one holder (a ``sponsor_equity``
+    contract): its unreturned capital is returned first, through the
+    ``return_capital`` leg, and the rest is distributed. Averta's SPV
+    (engine_v2 S10, step 8) splits each distribution this way, so its
+    contributed capital is back to nil before profit is paid out.
+
 Loop rules
 ----------
 ``LOOP_RULES`` are the rules a declared loop (:mod:`one_engine.loops`)
@@ -779,10 +786,26 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     ctx["distributors"][ctx["name"]] = distribute
 
 
+# ── capital first (one holder's distributions) ────────────────────────────
+
+def capital_first(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    holder = r.take("holder")
+
+    def distribute(g: Group, t: int, amount: Fraction, phase: str) -> None:
+        # the unreturned capital is the capital account itself: each return of capital lowers it
+        c = g.contract(holder)
+        unreturned = g.book(c.parties["issuer"]).balance(c.acct("{id}.capital"), t)
+        a = allocate(amount, [Tier("return_capital", unreturned)], residual="distribute")
+        g.post_leg(c, "return_capital", a.paid["return_capital"], t, phase)
+        g.post_leg(c, "distribute", a.residual, t, phase)
+
+    ctx["distributors"][ctx["name"]] = distribute
+
+
 RULEBOOKS = {"funding_plan": funding_plan, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
              "income_tax": income_tax, "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
              "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments,
-             "pay_as_due": pay_as_due}
+             "pay_as_due": pay_as_due, "capital_first": capital_first}
 
 
 # ── loop rules ────────────────────────────────────────────────────────────
