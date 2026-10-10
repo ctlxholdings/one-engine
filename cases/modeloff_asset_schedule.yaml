@@ -1,0 +1,76 @@
+# ModelOff 2012 "Asset Schedule": book and tax depreciation and deferred tax (plan step 7i).
+#
+# Source: the ModelOff 2012 Round 1 case of that name (competition paper,
+# not in this repository); inputs and the five verified answers as
+# transcribed in generic_engine/tests/test_benchmark_round1_asset_schedule.py,
+# copied to cases/reference/modeloff_2012_asset_schedule.json by
+# consolidation/experiments/make_reference_modeloff_asset_schedule.py, and to
+# this file by make_case_modeloff_asset_schedule.py.
+# tests/test_case_modeloff_asset_schedule.py re-checks the copy.
+#
+# Grid: 18 calendar years, 2012 (period 0) to 2029. US$ millions.
+#
+# What the case does, and how it is assembled here:
+#   * capex, stated in real 2012 dollars, is inflated at 3% a year and
+#     spent on the first day of each year (capex: schedule = the nominal
+#     amounts); it goes into service the year it is spent;
+#   * the books depreciate each year's capex straight-line over 12 years,
+#     a full charge in the year bought; the tax authority at 40% of the
+#     declining balance, also from the year bought (asset_register, with a
+#     tax register at declining_rate 0.4). The case runs to 2029 and states
+#     no disposal: both registers are written off in 2029, the last period,
+#     which no answer reads;
+#   * deferred tax is the rate times the book NBV less the tax NBV, at 30%
+#     to 2015 and 28% from 2016 (income_tax: rate by year, deferred). The
+#     case states no income, so the depreciation alone makes tax losses; it
+#     asks about the deferred tax on the assets only, so no deferred tax
+#     asset is recognised on those losses (deferred.recognise_losses: false).
+#     The tax record's rate_change is the part of each year's deferred tax
+#     movement due to the change of rate;
+#   * the case states no funding: the capex is paid from cash, which is not
+#     floored and goes negative.
+case: modeloff-asset-schedule
+periods: 18
+phases: [fund, close, tax]
+currency: USD
+floors: {}
+contracts:
+  capex:
+    type: capex
+    parties: {owner: company}
+    terms: {schedule: [10, 65.92, 73.2021, 108.179973, 100.17028409, 45.2116888977, 40.597778081986, 28.28709890477201, 36.7363323602408669, 90.029349684217876227, 133.04772155506807012851, 123.1968144944756564513183, 55.604674587000978872465799, 49.93014625735318666958339182, 34.7895636716675585941891338887, 45.181055081422172835149105619803, 110.72474429781633873772575642756549, 163.6319155949033632041434113466500437], vat_rate: 0, vat_refund_lag: 0, end: 17}
+schemes:
+  cash_flow:
+    cwip: investing
+rulebooks:
+  assets:
+    kind: asset_register
+    entity: company
+    phase: close
+    from: cwip
+    to: fixed_assets
+    expense: depreciation
+    disposal: disposal_loss
+    in_service: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    dispose_at: 17
+    life_periods: 12
+    first_charge: in_service
+    tax: {life_periods: null, declining_rate: 0.4, first_charge: in_service}
+  tax:
+    kind: income_tax
+    entity: company
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: [0.3, 0.3, 0.3, 0.3, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28]
+    carry_forward_periods: null
+    timing: assets
+    deferred: {account: deferred_tax, expense: deferred_tax_expense, recognise_losses: false}
+    scheme:
+      depreciation: timing
+      disposal_loss: timing
+      tax_expense: non_deductible
+      deferred_tax_expense: non_deductible
+cuts:
+  capex: {entity: company, account: cash, scheme: cash_flow, include: [investing]}
+measures: {}                    # the answers are amounts read from the books and records

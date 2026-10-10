@@ -5,7 +5,8 @@ Built so far: the straight-line asset register used by Averta's SPV
 disposed of at the end of the project), and a straight-line provision
 settled once (the 50MW feature case's decommissioning), and the
 remeasurement of a foreign-currency monetary balance at the closing rate
-(the nightmare case's dollar loan). Impairment, discounting of provisions
+(the nightmare case's dollar loan), weighted straight-line and declining
+balance (ModelOff, steps 7h and 7i). Impairment, discounting of provisions
 and effective-interest fees come with the cases that need them.
 
 The first-charge convention is declared, never defaulted
@@ -31,6 +32,15 @@ and the last period with a weight takes the last of it. This is the
 "depreciate what is left over the days of operation left" pool the
 ModelOff case uses: since that rule is linear in the pool, the pool's
 charge equals the sum of its tranches' (tested).
+
+Declining balance (ModelOff 2012 "Asset Schedule", step 7i)
+-----------------------------------------------------------
+A policy may instead give a ``declining_rate``: each period from its first
+charge, a tranche is charged that share of its net book value (cost less
+what has been charged). Its NBV after ``k`` charges is therefore
+``cost x (1 - rate) ** k``; it never reaches zero on its own, so whatever
+is left goes at disposal. Tax authorities use it (the case's 40% tax
+depreciation); a rate of one charges the whole cost at once.
 """
 from __future__ import annotations
 
@@ -50,21 +60,29 @@ _FIRST_CHARGE = ("in_service", "next_period")
 
 @dataclass(frozen=True)
 class Policy:
-    """Straight-line depreciation: a life in periods, or weights by period; and the first-charge convention.
+    """Depreciation: a life in periods, weights by period, or a declining rate; and the first-charge convention.
 
-    Exactly one of ``life_periods`` (equal charges) and ``weights`` (a
-    series: each period's share of what is left; see the module docstring)
-    is given.
+    Exactly one of ``life_periods`` (equal charges), ``weights`` (a
+    series: each period's share of what is left) and ``declining_rate``
+    (a share of each tranche's net book value every period) is given; see
+    the module docstring.
     """
 
     life_periods: Optional[int]
     first_charge: str
     weights: Optional[Sequence[Number]] = None
+    declining_rate: Optional[Number] = None
 
     def __post_init__(self):
-        if (self.life_periods is None) == (self.weights is None):
-            raise MeasurementError("a policy takes a life in periods or weights by period, exactly one")
-        if self.weights is not None:
+        given = [x is not None for x in (self.life_periods, self.weights, self.declining_rate)]
+        if sum(given) != 1:
+            raise MeasurementError("a policy takes a life in periods, weights by period or a declining rate, exactly one")
+        if self.declining_rate is not None:
+            rate = exact(self.declining_rate)
+            if not 0 < rate <= 1:
+                raise MeasurementError(f"declining_rate must be above 0 and at most 1, got {rate}")
+            object.__setattr__(self, "declining_rate", rate)
+        elif self.weights is not None:
             w = tuple(exact(x) for x in self.weights)
             if any(x < 0 for x in w):
                 raise MeasurementError(f"weights must not be negative, got {list(self.weights)}")
@@ -116,7 +134,9 @@ class Register:
             first = tr.in_service + lag
             if period < first:
                 continue
-            if self.policy.weights is None:
+            if self.policy.declining_rate is not None:
+                step = (tr.cost - tr.charged) * self.policy.declining_rate
+            elif self.policy.weights is None:
                 step = tr.cost / self.policy.life_periods
             else:
                 w = self.policy.weights

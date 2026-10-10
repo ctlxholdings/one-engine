@@ -45,7 +45,9 @@ Rulebooks
     ``life_periods`` (stated null), each tranche is spread over the rest of
     the weights (``Policy.weights``: ModelOff's days of operation left,
     step 7h). Fixed assets on the opening balance sheet are a tranche from
-    the first in-service period.
+    the first in-service period. Either register may instead take a
+    ``declining_rate`` (``Policy.declining_rate``: ModelOff 2012's 40% tax
+    depreciation, step 7i); exactly one of the three is given.
 
 ``income_tax``
     The base comes from a scheme classifying every profit-and-loss account
@@ -65,6 +67,15 @@ Rulebooks
     part this rulebook does not track; it cannot be combined with a
     ``timing`` register. ``from`` (default 0) is the first period charged:
     a deal's own tax at the close is the acquisition's (step 7f).
+    ``rate`` is a number or one per period (a change of rate, ModelOff 2012
+    "Asset Schedule", step 7i): the deferred balance is measured at each
+    period's rate, and the tax record's ``rate_change`` is the part of its
+    movement due to the change (the new rate less the old, times last
+    period's difference), beside the ``carrying`` amount and ``tax_base``
+    it was measured on. ``deferred.recognise_losses: false`` measures the
+    deferred balance on the assets alone: no deferred tax asset on unused
+    losses, as IAS 12.34 requires when no taxable profit is expected
+    against them (the case states no income).
 
 ``provision``
     A liability charged straight-line and paid once
@@ -318,22 +329,30 @@ class AssetRegisters:
         self.tax_moves: Dict[int, Fraction] = {}       # period -> tax depreciation + tax disposal
 
 
+def _policy(r: Reader, where: str) -> Policy:
+    """A depreciation policy: ``life_periods`` (stated, null when another basis is given), or ``weights``
+    by period, or a ``declining_rate``; exactly one, and the first-charge convention."""
+    life = r.take("life_periods")
+    weights = r.take_or_default("weights", None, reason="no weights by period").value
+    declining = r.take_or_default("declining_rate", None, reason="not declining balance").value
+    if sum(x is not None for x in (life, weights, declining)) != 1:
+        raise InputError(f"{where}: give life_periods, weights or declining_rate (life_periods: null), exactly one")
+    return Policy(None if life is None else int(life), r.take("first_charge"), weights,
+                  None if declining is None else exact(declining))
+
+
 def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     entity, phase, unit = r.take("entity"), r.take("phase"), ctx["currency"]
     src, fa, dep, loss = r.take("from"), r.take("to"), r.take("expense"), r.take("disposal")
     raw_in = r.take("in_service")
     in_service = [int(x) for x in raw_in] if isinstance(raw_in, list) else [int(raw_in)]
     dispose_at = int(r.take("dispose_at"))
-    life = r.take("life_periods")
-    weights = r.take_or_default("weights", None, reason="each period takes an equal share of the life").value
-    if (life is None) == (weights is None):
-        raise InputError("asset_register: give life_periods or weights (life_periods: null), exactly one")
-    reg = Register(Policy(None if life is None else int(life), r.take("first_charge"), weights))
+    reg = Register(_policy(r, "asset_register"))
     tax_raw = r.take_or_default("tax", None, reason="the tax authority depreciates as the books do").value
     tax_reg = None
     if tax_raw is not None:
         tr = Reader(tax_raw, source="asset_register.tax")
-        tax_reg = Register(Policy(int(tr.take("life_periods")), tr.take("first_charge")))
+        tax_reg = Register(_policy(tr, "asset_register.tax"))
         tr.finish()
     regs = AssetRegisters(reg, tax_reg, dep, loss)
     ctx["registers"][ctx["name"]] = regs
@@ -378,11 +397,13 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     expense, payable = r.take("expense"), r.take("payable")
     start = int(r.take_or_default("from", 0, reason="tax is charged from the first period").value)
     cf = r.take("carry_forward_periods")
-    policy = TaxPolicy(exact(r.take("rate")), None if cf is None else int(cf))
+    cf = None if cf is None else int(cf)
+    rates = r.take("rate")                      # a rate, or one per period (a change of rate)
+    from one_engine.packs.contracts import _at
     scheme = dict(r.take("scheme"))
     group.declare(entity, expense, Nature.EXPENSE, unit)
     group.declare(entity, payable, Nature.LIABILITY, unit)
-    pool = LossPool(policy.carry_forward_periods)
+    pool = LossPool(cf)
     timing_name = r.take_or_default("timing", None, reason="no line is measured differently for tax").value
     deferred = r.take_or_default("deferred", None, reason="no deferred tax recognised").value
     timing_lines = sorted(k for k, v in scheme.items() if v == "timing")
@@ -393,6 +414,10 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         dr = Reader(deferred, source="income_tax.deferred")
         dt_acct, dt_expense = dr.take("account"), dr.take("expense")
         nil_base = list(dr.take_or_default("nil_tax_base", [], reason="no asset has a nil tax base").value)
+        recognise_losses = dr.take_or_default("recognise_losses", True,
+                                              reason="a deferred tax asset is recognised on unused losses").value
+        if recognise_losses not in (True, False):
+            raise InputError(f"income_tax: deferred.recognise_losses is true or false, got {recognise_losses!r}")
         dr.finish()
         if nil_base and timing_name is not None:
             raise InputError("income_tax: deferred.nil_tax_base measures movements and cannot be combined "
@@ -400,9 +425,14 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         group.declare(entity, dt_acct, Nature.LIABILITY, unit)
         group.declare(entity, dt_expense, Nature.EXPENSE, unit)
 
+    # the temporary difference (net of recognised losses) and the rate it was measured at, last period:
+    # a change of rate remeasures it, and the tax record shows that part of the deferred movement
+    last = {"diff": Fraction(0), "rate": None}
+
     def handler(g: Group, t: int) -> None:
         if t < start:
             return
+        policy = TaxPolicy(_at(rates, t), cf)
         base = taxable_base(g.book(entity), t, scheme)
         if timing_name is not None:
             regs = ctx["registers"][timing_name]
@@ -413,7 +443,7 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         tax = policy.charge(t, base, pool)
         if tax:
             g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"tax.charge:{t}"))
-        g.record("tax", t, base=base, tax=tax, losses=pool.available(t + 1))
+        rec = dict(base=base, tax=tax, losses=pool.available(t + 1))
         if deferred is not None:
             book = g.book(entity)
             if nil_base:
@@ -423,14 +453,20 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                 regs = ctx["registers"][timing_name] if timing_name else None
                 carrying = regs.book.nbv() if regs else Fraction(0)
                 tax_base = regs.tax.nbv() if regs else Fraction(0)
-                target = deferred_tax(policy.rate, carrying, tax_base, pool.available(t + 1))
+                losses = pool.available(t + 1) if recognise_losses else Fraction(0)
+                target = deferred_tax(policy.rate, carrying, tax_base, losses)
                 move = target - book.balance(dt_acct, t)
+                # last period's difference at this period's rate, less at last period's: the remeasurement
+                prev = policy.rate if last["rate"] is None else last["rate"]
+                rec.update(carrying=carrying, tax_base=tax_base, rate_change=(policy.rate - prev) * last["diff"])
+                last["diff"], last["rate"] = carrying - tax_base - losses, policy.rate
             if move > 0:
                 g.post(entity, Posting(t, phase, dt_expense, dt_acct, move, {dt_expense: 1, dt_acct: 1},
                                        "tax", f"tax.deferred:{t}"))
             elif move < 0:
                 g.post(entity, Posting(t, phase, dt_acct, dt_expense, -move, {dt_acct: -1, dt_expense: -1},
                                        "tax", f"tax.deferred:{t}"))
+        g.record("tax", t, **rec)
 
     group.register(phase, handler)
 

@@ -54,9 +54,9 @@ def test_a_weighted_register_charges_each_tranche_over_what_is_left_of_the_weigh
 
 
 def test_a_register_takes_a_life_or_weights_not_both():
-    with pytest.raises(MeasurementError, match="life in periods or weights"):
+    with pytest.raises(MeasurementError, match="weights by period or a declining rate, exactly one"):
         Policy(life_periods=4, first_charge="in_service", weights=[1, 1])
-    with pytest.raises(MeasurementError, match="life in periods or weights"):
+    with pytest.raises(MeasurementError, match="weights by period or a declining rate, exactly one"):
         Policy(life_periods=None, first_charge="in_service")
     with pytest.raises(MeasurementError, match="weights"):
         Policy(life_periods=None, first_charge="in_service", weights=[1, -1])
@@ -64,6 +64,31 @@ def test_a_register_takes_a_life_or_weights_not_both():
     r.add(period=2, cost=5)
     with pytest.raises(MeasurementError, match="no weight left"):
         r.charge(0), r.charge(1), r.charge(2)
+
+def test_a_declining_balance_register_charges_a_rate_of_what_is_left_of_each_tranche():
+    # ModelOff 2012 "Asset Schedule": tax depreciation at 40% of the declining balance from the year bought
+    r = Register(Policy(life_periods=None, first_charge="in_service", declining_rate="0.4"))
+    r.add(period=0, cost=100)
+    assert [r.charge(0), r.nbv()] == [40, 60]
+    r.add(period=1, cost=50)
+    assert r.charge(1) == F(60 * 4, 10) + 20 and r.nbv() == 36 + 30
+    assert r.charge(2) == F(144, 10) + 12 and r.nbv() == F(216, 10) + 18
+    # the balance never reaches zero; disposal writes off what is left
+    assert r.dispose() == F(216, 10) + 18 and r.nbv() == 0
+    later = Register(Policy(life_periods=None, first_charge="next_period", declining_rate="0.4"))
+    later.add(period=0, cost=100)
+    assert [later.charge(0), later.charge(1)] == [0, 40]
+
+
+def test_a_declining_rate_is_a_share_of_one_and_excludes_a_life_or_weights():
+    for bad in (0, "-0.1", "1.5"):
+        with pytest.raises(MeasurementError, match="declining_rate"):
+            Policy(life_periods=None, first_charge="in_service", declining_rate=bad)
+    with pytest.raises(MeasurementError, match="exactly one"):
+        Policy(life_periods=4, first_charge="in_service", declining_rate="0.4")
+    with pytest.raises(MeasurementError, match="exactly one"):
+        Policy(life_periods=None, first_charge="in_service", weights=[1], declining_rate="0.4")
+
 
 def test_charge_periods_must_advance():
     r = Register(Policy(life_periods=3, first_charge="in_service"))

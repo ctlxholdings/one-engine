@@ -275,7 +275,7 @@ MUTATIONS = [
      "test_case_macabacus.py::test_ownership_naming_a_non_holder_refuses"),
     ("packs/pf.py", "        if nil_base and timing_name is not None:", "        if False:",
      "test_case_macabacus.py::test_a_nil_tax_base_with_a_timing_register_refuses"),
-    ("packs/pf.py", "        if t < start:\n            return\n        base = taxable_base", "        base = taxable_base",
+    ("packs/pf.py", "        if t < start:\n            return\n        policy = TaxPolicy", "        policy = TaxPolicy",
      "test_case_macabacus.py::test_balance_sheet_row"),
     # Macabacus long-form LBO (step 7g): cash_on_cash, projections, stub fractions, OIDs, PIK preferred, exit options
     ("measures.py", "    if not stream or stream[0] >= 0:", "    if False:",
@@ -313,7 +313,7 @@ MUTATIONS = [
     ("packs/corporate.py", "    ev = multiple * ebitda.values[exit_t] / _at(fractions, exit_t)", "    ev = multiple * ebitda.values[exit_t]",
      "test_case_macabacus_long.py::test_the_exit_values_at_every_period_annualise_the_stub"),
     # ModelOff 2015 More Money Please (step 7h): weighted register, CFADS share, the refinance loop rule
-    ("measurement.py", "        if (self.life_periods is None) == (self.weights is None):", "        if False:",
+    ("measurement.py", "        if sum(given) != 1:", "        if False:",
      "test_measurement.py::test_a_register_takes_a_life_or_weights_not_both"),
     ("measurement.py", "            if any(x < 0 for x in w):", "            if False:",
      "test_measurement.py::test_a_register_takes_a_life_or_weights_not_both"),
@@ -321,7 +321,7 @@ MUTATIONS = [
      "test_measurement.py::test_a_register_takes_a_life_or_weights_not_both"),
     ("measurement.py", "                left = sum(w[first:], Fraction(0))", "                left = sum(w, Fraction(0))",
      "test_measurement.py::test_a_weighted_register_charges_each_tranche_over_what_is_left_of_the_weights"),
-    ("packs/pf.py", "    if (life is None) == (weights is None):", "    if False:",
+    ("packs/pf.py", "    if sum(x is not None for x in (life, weights, declining)) != 1:", "    if False:",
      "test_case_modeloff_mmp.py::test_an_asset_register_with_a_life_and_weights_refuses"),
     ("packs/pf.py", "        if t == in_service[0] and book.opening(fa, t):", "        if False:",
      "test_case_modeloff_mmp.py::test_the_inputs_reproduce_the_spreadsheets_own_figures"),
@@ -337,6 +337,26 @@ MUTATIONS = [
      "test_case_modeloff_mmp.py::test_q1_the_amount_drawn_repays_the_senior_net_of_the_fee"),
     ("packs/pf.py", "        return {\"debt\": debt, \"repayment\": [debt * days[t] / total if t in days", "        return {\"debt\": debt, \"repayment\": [debt / len(days) if t in days",
      "test_case_modeloff_mmp.py::test_q2_q3_q4_the_refinancing_schedules"),
+    # ModelOff 2012 Asset Schedule (step 7i): declining balance, the rate by period, unrecognised losses
+    ("measurement.py", "                step = (tr.cost - tr.charged) * self.policy.declining_rate",
+     "                step = tr.cost * self.policy.declining_rate",
+     "test_case_modeloff_asset_schedule.py::test_q3_the_tax_nbv_at_the_end_of_2019"),
+    ("measurement.py", "            if not 0 < rate <= 1:", "            if False:",
+     "test_measurement.py::test_a_declining_rate_is_a_share_of_one_and_excludes_a_life_or_weights"),
+    ("packs/pf.py", "    if sum(x is not None for x in (life, weights, declining)) != 1:", "    if False:",
+     "test_case_modeloff_asset_schedule.py::test_a_tax_register_with_a_life_and_a_declining_rate_refuses"),
+    ("packs/pf.py", "        policy = TaxPolicy(_at(rates, t), cf)", "        policy = TaxPolicy(_at(rates, 0), cf)",
+     "test_case_modeloff_asset_schedule.py::test_q5_the_deferred_tax_liability_at_the_end_of_2028"),
+    ("packs/pf.py", "                losses = pool.available(t + 1) if recognise_losses else Fraction(0)",
+     "                losses = pool.available(t + 1)",
+     "test_case_modeloff_asset_schedule.py::test_q5_the_deferred_tax_liability_at_the_end_of_2028"),
+    ("packs/pf.py", "        if recognise_losses not in (True, False):", "        if False:",
+     "test_case_modeloff_asset_schedule.py::test_recognise_losses_takes_true_or_false"),
+    ("packs/pf.py", "rate_change=(policy.rate - prev) * last[\"diff\"])", "rate_change=(policy.rate - prev) * (carrying - tax_base - losses))",
+     "test_case_modeloff_asset_schedule.py::test_q4_the_rate_change_remeasures_the_opening_2016_deferred_tax"),
+    ("packs/pf.py", "                last[\"diff\"], last[\"rate\"] = carrying - tax_base - losses, policy.rate",
+     "                last[\"diff\"], last[\"rate\"] = carrying - tax_base - losses, None",
+     "test_case_modeloff_asset_schedule.py::test_q4_the_rate_change_remeasures_the_opening_2016_deferred_tax"),
 ]
 
 

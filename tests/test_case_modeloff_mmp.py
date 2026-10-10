@@ -223,5 +223,5 @@ def test_fees_that_take_the_whole_draw_refuse():
 def test_an_asset_register_with_a_life_and_weights_refuses():
     def both(case):
         case["rulebooks"]["assets"]["life_periods"] = 24
-    with pytest.raises(InputError, match="give life_periods or weights"):
+    with pytest.raises(InputError, match="give life_periods, weights or declining_rate"):
         variant(both)
