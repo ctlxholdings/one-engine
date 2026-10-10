@@ -1,0 +1,158 @@
+# ModelOff 2013 "Acquisition Financing": a facility of four tranches, each repaid its own way (plan step 7n).
+#
+# Source: ModelOff 2013 Round 2 (competition paper, not in this
+# repository); the tranches' terms and the six answers as transcribed in
+# generic_engine/tests/test_benchmark_round2_acquisition_financing.py,
+# copied to cases/reference/modeloff_2013_acquisition_financing.json by
+# consolidation/experiments/make_reference_modeloff_acquisition_financing.py,
+# and to this file by make_case_modeloff_acquisition_financing.py.
+#
+# Grid: 37 quarters, the quarter ending 31 December 2013 (period 0) to
+# December 2022. US$. Interest is 30/360: the opening amount owed x rate x 90/360.
+#
+# What the case does, and how it is assembled here:
+#   * tranche 1: 14M drawn in period 0 at 8.25%, 28 equal payments of
+#     interest and principal: the annuity loop rule sets the principal;
+#   * tranche 2: 25M drawn in period 0, 20 quarters interest only at 9.00%,
+#     then 16 equal principal steps at 8.50%: a rate series and the loan's
+#     own equal steps;
+#   * tranche 3: 10M drawn at 30 June 2014 (period 2) and 4M at 31 March
+#     2015 (period 5), each earning interest from the next quarter at
+#     7.45%, repaid in one step at 30 June 2018 (period 18);
+#   * tranche 4: 22M drawn at 30 September 2014 (period 3), its interest
+#     capitalised for 8 quarters at 8.20% (the capitalisation window), then
+#     interest paid at 7.70% and 16 equal steps of what is owed then: the
+#     level loop rule sets them (the loan repays its capitalised interest
+#     first, within each step);
+#   * the borrower's other cash is not in the case: draws and payments are
+#     settled when due (pay_as_due) and cash is not floored.
+case: modeloff-acquisition-financing
+periods: 37
+phases: [accrue, pay]
+currency: USD
+floors: {}
+loops:
+  tranche_1_payment:
+    rule: {kind: annuity, loan: tranche_1}
+    start: {repayment: 0}
+    tolerance: 0
+    max_iterations: 3
+  tranche_4_steps:
+    rule: {kind: level, loan: tranche_4}
+    start: {repayment: 0}
+    tolerance: 0
+    max_iterations: 3
+contracts:
+  tranche_1:                      # equal payments of interest and principal
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 14000000
+      draw_schedule: [14000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 0
+      rate: 0.0825
+      rate_from: 0
+      days_per_period: 90                 # 30/360: a quarter is 90 days
+      day_count_basis: 360
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 1
+      repay_periods: 28
+      sculpt_dscr: null
+      principal_schedule: {loop: tranche_1_payment, output: repayment}
+      arrangement_fee: 0
+      fee_at: 0
+  tranche_2:                      # interest only, then equal steps of the commitment
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 25000000
+      draw_schedule: [25000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 0
+      rate: [0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085, 0.085]
+      rate_from: 0
+      days_per_period: 90                 # 30/360: a quarter is 90 days
+      day_count_basis: 360
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 21
+      repay_periods: 16
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 0
+  tranche_3:                      # two draws, interest only, a bullet (one step)
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 14000000
+      draw_schedule: [0, 0, 10000000, 0, 0, 4000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 5
+      rate: 0.0745
+      rate_from: 0
+      days_per_period: 90                 # 30/360: a quarter is 90 days
+      day_count_basis: 360
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 18
+      repay_periods: 1
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 2
+  tranche_4:                      # interest capitalised, then equal steps of what is owed
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 22000000
+      draw_schedule: [0, 0, 0, 22000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 3
+      rate: [0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.082, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077, 0.077]
+      rate_from: 0
+      days_per_period: 90                 # 30/360: a quarter is 90 days
+      day_count_basis: 360
+      commitment_fee_rate: 0
+      capitalise_from: 4
+      capitalise_until: 11
+      repay_from: 12
+      repay_periods: 16
+      sculpt_dscr: null
+      principal_schedule: {loop: tranche_4_steps, output: repayment}
+      arrangement_fee: 0
+      fee_at: 3
+rulebooks:
+  settle:
+    kind: pay_as_due
+    phase: pay
+    claims: [tranche_1.draw, tranche_1.interest, tranche_1.capitalised, tranche_1.principal, tranche_2.draw, tranche_2.interest, tranche_2.capitalised, tranche_2.principal, tranche_3.draw, tranche_3.interest, tranche_3.capitalised, tranche_3.principal, tranche_4.draw, tranche_4.interest, tranche_4.capitalised, tranche_4.principal]
+schemes:
+  cash_flow:
+    tranche_1.debt: tranche_1
+    tranche_1.interest_payable: tranche_1
+    tranche_1.fee_payable: tranche_1
+    tranche_1.capitalised_interest: tranche_1
+    tranche_1.deferred_fees: tranche_1
+    tranche_2.debt: tranche_2
+    tranche_2.interest_payable: tranche_2
+    tranche_2.fee_payable: tranche_2
+    tranche_2.capitalised_interest: tranche_2
+    tranche_2.deferred_fees: tranche_2
+    tranche_3.debt: tranche_3
+    tranche_3.interest_payable: tranche_3
+    tranche_3.fee_payable: tranche_3
+    tranche_3.capitalised_interest: tranche_3
+    tranche_3.deferred_fees: tranche_3
+    tranche_4.debt: tranche_4
+    tranche_4.interest_payable: tranche_4
+    tranche_4.fee_payable: tranche_4
+    tranche_4.capitalised_interest: tranche_4
+    tranche_4.deferred_fees: tranche_4
+cuts:
+  tranche_1: {entity: company, account: cash, scheme: cash_flow, include: [tranche_1]}
+  tranche_2: {entity: company, account: cash, scheme: cash_flow, include: [tranche_2]}
+  tranche_3: {entity: company, account: cash, scheme: cash_flow, include: [tranche_3]}
+  tranche_4: {entity: company, account: cash, scheme: cash_flow, include: [tranche_4]}
+measures: {}                    # the answers are amounts and dates read from the books

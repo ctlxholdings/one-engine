@@ -411,6 +411,15 @@ MUTATIONS = [
      "test_case_modeloff_precise_debt.py::test_q3_loan_1s_payment_ends_in_85_cents"),
     ("packs/pf.py", "            repayment[t] = payment - owed * rate[t]", "            repayment[t] = payment",
      "test_case_modeloff_precise_debt.py::test_q6_q7_q8_loan_2"),
+    # ModelOff 2013 Acquisition Financing (step 7n): the level loop rule, capitalised interest repaid first
+    ("packs/pf.py", '        owed = book.opening(f"{loan}.debt", first) + book.opening(f"{loan}.capitalised_interest", first)',
+     '        owed = book.opening(f"{loan}.debt", first)',
+     "test_case_modeloff_acquisition_financing.py::test_tranche_4_repays_16_equal_steps_of_its_capitalised_balance"),
+    ("packs/pf.py", "        return {\"repayment\": [step if first <= t <= last else Fraction(0) for t in range(g.periods)]}",
+     "        return {\"repayment\": [step if first < t <= last else Fraction(0) for t in range(g.periods)]}",
+     "test_case_modeloff_acquisition_financing.py::test_q4_the_share_of_tranche_4s_interest_that_is_capitalised"),
+    ("packs/contracts.py", '        due["capitalised"] = min(cap, excess)\n', '        due["capitalised"] = min(cap, excess) * 0\n',
+     "test_case_modeloff_acquisition_financing.py::test_finding_the_capitalised_interest_is_repaid_before_the_principal"),
 ]
 
 

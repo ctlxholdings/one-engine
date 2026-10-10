@@ -175,6 +175,11 @@ applies to a finished run to get its outputs' next values:
     The principal schedule of a loan repaid by a constant payment of
     interest and principal, on its own days per period (ModelOff 2014,
     step 7m; :func:`_annuity_rule`); outputs ``repayment``.
+``level``
+    The principal schedule of a loan repaid in equal steps of what it owes
+    (principal plus capitalised interest) when repayment starts, rather
+    than of its commitment (ModelOff 2013, step 7n; :func:`_level_rule`);
+    outputs ``repayment``.
 """
 from __future__ import annotations
 
@@ -946,5 +951,38 @@ def _annuity_rule(r: Reader):
     return rule
 
 
+def _level_rule(r: Reader):
+    """The principal schedule of a loan repaid in equal steps of what it owes when repayment starts.
+
+    ModelOff 2013 "Acquisition Financing" (step 7n), tranche 4: interest is
+    capitalised for two years, then the loan is repaid in 16 equal
+    principal payments of the capitalised balance (drawn amount plus the
+    capitalised interest). The loan's own equal steps are steps of its
+    commitment (the term-loan convention the other cases use), so they
+    would repay the capitalised interest first and the steps would not be
+    equal. Here the step is what is owed at the start of ``repay_from``
+    (principal plus capitalised interest, read from the run's books) over
+    ``repay_periods``. That amount depends on the draws and the
+    capitalisation window only, not on the schedule, so the loop closes on
+    its second run. The loan repays capitalised interest ahead of principal
+    (its ``capitalised`` claim); the total paid each period is the step.
+
+    Outputs ``repayment`` (a series, for the loan's ``principal_schedule``).
+    """
+    from one_engine.packs.contracts import _maturity
+    loan = r.take("loan")
+
+    def rule(result) -> Dict[str, Any]:
+        g = result.group
+        c = g.contract(loan)
+        terms, book = c.values(), g.book(c.parties["borrower"])
+        first, last = int(terms["repay_from"]), _maturity(terms)
+        owed = book.opening(f"{loan}.debt", first) + book.opening(f"{loan}.capitalised_interest", first)
+        step = owed / int(terms["repay_periods"])
+        return {"repayment": [step if first <= t <= last else Fraction(0) for t in range(g.periods)]}
+
+    return rule
+
+
 LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule, "refinance": _refinance_rule,
-              "annuity": _annuity_rule}
+              "annuity": _annuity_rule, "level": _level_rule}
