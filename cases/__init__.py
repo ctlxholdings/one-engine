@@ -40,6 +40,9 @@ Added for the Macabacus LBO (step 7f):
 * the ``moic`` measure.
 * The corporate pack's contract types and rulebooks are available beside
   the project-finance ones; a name defined twice refuses at import.
+
+Added for the Macabacus long-form LBO (step 7g): the ``cash_on_cash``
+measure.
 """
 from __future__ import annotations
 
@@ -61,7 +64,7 @@ from one_engine.packs import contracts as _contracts, corporate as _corporate, p
 from one_engine.packs.pf import LOOP_RULES
 from one_engine.units import exact
 
-MEASURES = {"irr": M.irr, "payback": M.payback, "moic": M.moic}
+MEASURES = {"irr": M.irr, "payback": M.payback, "moic": M.moic, "cash_on_cash": M.cash_on_cash}
 
 
 def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:

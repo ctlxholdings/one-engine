@@ -159,23 +159,23 @@ contracts:
   revolver_fee:
     type: financing_fee
     parties: {borrower: company}
-    terms: {facility: revolver, rate: 0.0175, periods: 5, paid_at: 0}
+    terms: {facility: revolver, rate: 0.0175, years: 5, year_fraction: 1, paid_at: 0}
   term_loan_a_fee:
     type: financing_fee
     parties: {borrower: company}
-    terms: {facility: term_loan_a, rate: 0.02, periods: 5, paid_at: 0}
+    terms: {facility: term_loan_a, rate: 0.02, years: 5, year_fraction: 1, paid_at: 0}
   senior_note_fee:
     type: financing_fee
     parties: {borrower: company}
-    terms: {facility: senior_note, rate: 0.0225, periods: 7, paid_at: 0}
+    terms: {facility: senior_note, rate: 0.0225, years: 7, year_fraction: 1, paid_at: 0}
   subordinated_note_fee:
     type: financing_fee
     parties: {borrower: company}
-    terms: {facility: subordinated_note, rate: 0.03, periods: 7, paid_at: 0}
+    terms: {facility: subordinated_note, rate: 0.03, years: 7, year_fraction: 1, paid_at: 0}
   preferred_a:
     type: preferred_stock
     parties: {issuer: company}
-    terms: {rate: 0.12, from: 1}
+    terms: {rate: 0.12, from: 1, year_fraction: 1, discount: 0, discount_years: 1, pik_share: 0}
   sponsor:
     type: sponsor_equity
     parties: {issuer: company}
@@ -217,6 +217,7 @@ schemes:
     legacy_debt: deal
     preferred_issue_costs: deal
     preferred_a.capital: deal
+    preferred_a.discount: deal
     sponsor.capital: deal
     management.capital: deal
     revolver_fee.deferred: deal
@@ -229,6 +230,7 @@ schemes:
     subordinated_note.debt: subordinated_note
     subordinated_note.interest_payable: subordinated_note
     preferred_a.capital: preferred_a
+    preferred_a.discount: preferred_a
     preferred_a.dividend_payable: preferred_a
     sales: company
     cogs: company
@@ -277,6 +279,7 @@ schemes:
     net_dtl: net_dtl
     other_lt_liabilities: other_lt_liabilities
     preferred_a.capital: preferred_a
+    preferred_a.discount: preferred_a
     common_par: common_par
     apic: apic
     sponsor.capital: apic
@@ -396,9 +399,9 @@ rulebooks:
       sga: {kind: expense, account: sga, first: 87.7, ratio_of: sales}
       sbc: {kind: share_compensation, account: sbc, against: apic, first: 8, ratio_of: sales}
       depreciation: {kind: depreciation, account: depreciation, against: accumulated_depreciation,
-                     first: 15.8, ratio_of: sales, plus: [{mark: deal.ppe_gross, periods: 7}]}
+                     first: 15.8, ratio_of: sales, plus: [{mark: deal.ppe_gross, years: 7}]}
       amortisation: {kind: depreciation, account: amortisation, against: intangibles,
-                     first: 14.9, ratio_of: sales, plus: [{mark: deal.intangibles, periods: 5}]}
+                     first: 14.9, ratio_of: sales, plus: [{mark: deal.intangibles, years: 5}]}
       capex: {kind: investment, account: ppe_gross, first: 21.8, ratio_of: sales}
       interest_income: {kind: income, account: interest_income, on_balance: cash, rate: [0, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]}
     working_capital:            # held at the close balance over the last four quarters of the driver

@@ -4,7 +4,10 @@ Built for the Macabacus short-form LBO, a three-statement buyout of a
 listed company: a purchase at a premium, purchase accounting, a stack of
 term loans, notes and preferred stock, ten years of operations driven by
 ratios to sales, a cash sweep, and returns to five holders at an exit
-valued at a multiple of EBITDA.
+valued at a multiple of EBITDA. Extended for the Macabacus long-form LBO
+(step 7g): a stub first period (year fractions), analyst projections
+followed then held, cost savings, original issue discounts, a paid-in-kind
+preferred, a prepayment penalty, and prepayment premiums at the exit.
 
 The company is one entity whose book opens on its balance sheet before
 the deal (:meth:`~one_engine.entities.Group.open`). Period 0 is the close;
@@ -15,13 +18,29 @@ Contract types
 ``financing_fee``
     A fee paid to arrange a facility (a rate of its commitment), paid when
     the deal closes (a claim the acquisition pays), capitalised, and
-    amortised straight-line over a stated number of periods. It runs on
-    its own schedule, independent of the facility: a loan repaid early
-    keeps amortising its fee (the workbook does this; see LOG).
+    amortised straight-line over a stated number of ``years``: each period
+    takes its ``year_fraction`` (a number or a series; a stub year is less
+    than one) of a year's charge, and the last takes what is left. It runs
+    on its own schedule, independent of the facility: a loan repaid early
+    keeps amortising its fee (both Macabacus workbooks do this; see LOG).
+    An original issue discount on a note is the same mechanism (the
+    discount is withheld from the proceeds, which is a cost paid at
+    close), named in the acquisition's ``discounts`` rather than its
+    ``financing_fees`` because it is deducted for tax as it is amortised,
+    not at close; its amortisation is classified as interest by the case.
 ``preferred_stock``
-    Issued for cash (a leg), a dividend at a rate on the opening face
-    value, accrued and claimed; a waterfall pays it. The dividend lowers
-    equity directly; it is not an expense, so it is below net income.
+    Issued for cash (a leg) at its face value, less an optional original
+    issue ``discount`` (a rate of the face, claimed at the issue period
+    ``from - 1`` and paid at close, carried as a debit on an equity
+    account and amortised into the dividend over ``discount_years``). The
+    dividend is a ``rate`` on the opening face value times the period's
+    ``year_fraction``, accrued and claimed; a waterfall pays it. A
+    ``pik_share`` of the dividend booked (coupon and discount amortisation,
+    as the long-form workbook computes it) is paid in kind: added to the
+    face value instead of paid. When that exceeds the coupon, the holder
+    pays the difference in cash (the long-form workbook's PIK years; see
+    LOG). The dividend lowers equity directly; it is not an expense, so it
+    is below net income.
 
 Rulebooks
 ---------
@@ -40,7 +59,10 @@ Rulebooks
     last twelve months; a cost is its first period's ratio to a driver
     line), plus schedules added after the first period (the depreciation
     of a fair-value mark), interest on an opening balance, and working
-    capital held at its opening ratio to a driver line.
+    capital held at its opening ratio to a driver line. Or each line
+    follows analyst projections and is then held at the last growth or
+    ratio they show, less cost savings; a period may be a fraction of a
+    year (a stub).
 
 Lens
 ----
@@ -86,11 +108,13 @@ def _fee_amount(terms) -> Fraction:
 
 
 def _financing_fee_amounts(terms, t, bal=None):
-    paid_at, n = int(terms["paid_at"]), int(terms["periods"])
-    if bal is None or not paid_at < t <= paid_at + n:
+    if bal is None or t <= int(terms["paid_at"]):
         return {}
-    # what is left over the periods left: straight-line, and exactly nothing left after the last
-    return {"amortise": bal.opening("borrower", "{id}.deferred") / (paid_at + n - t + 1)}
+    left = bal.opening("borrower", "{id}.deferred")
+    # straight-line by year fraction (a stub year takes its fraction of a year's charge), never more
+    # than is left: the last charge is the remainder, and nothing is charged after it
+    step = _fee_amount(terms) * _at(terms["year_fraction"], t) / exact(terms["years"])
+    return {"amortise": min(step, left)} if left > 0 else {}
 
 
 def _financing_fee_claims(terms, t, bal):
@@ -101,7 +125,7 @@ def _financing_fee_claims(terms, t, bal):
 
 FINANCING_FEE = ContractType(
     name="financing_fee",
-    terms=("facility", "rate", "periods", "paid_at"),
+    terms=("facility", "rate", "years", "year_fraction", "paid_at"),
     parties=("borrower",),
     accounts={"borrower": (("cash", Nature.ASSET), ("{id}.deferred", Nature.ASSET),
                            ("{id}.amortisation", Nature.EXPENSE))},
@@ -116,19 +140,47 @@ FINANCING_FEE = ContractType(
 def _preferred_amounts(terms, t, bal=None):
     if bal is None or t < int(terms["from"]):
         return {}
-    return {"dividend": _at(terms["rate"], t) * bal.opening("issuer", "{id}.capital")}
+    yf = _at(terms["year_fraction"], t)
+    coupon = _at(terms["rate"], t) * bal.opening("issuer", "{id}.capital") * yf
+    # the discount is a negative (debit) balance on an equity account; its amortisation is part of the
+    # dividend: what is left over the years left, times the period's fraction (straight-line by year
+    # fraction), the last period taking what is left
+    left = -bal.opening("issuer", "{id}.discount")
+    years_left = exact(terms["discount_years"]) - sum((_at(terms["year_fraction"], p)
+                                                       for p in range(int(terms["from"]), t)), Fraction(0))
+    amortise = (left if years_left <= yf else left * yf / years_left) if left > 0 else Fraction(0)
+    # the paid-in-kind share is of the whole dividend booked, discount amortisation included (as the
+    # long-form workbook computes it); whatever the coupon does not cover, the holder pays in cash
+    pik = _at(terms["pik_share"], t) * (coupon + amortise)
+    out = {"dividend": coupon, "amortise_discount": amortise, "pik": pik}
+    if pik > coupon:
+        out["holder_pays"] = pik - coupon
+    return out
+
+
+def _preferred_claims(terms, t, bal):
+    due = {"dividend": max(Fraction(0), bal("issuer", "{id}.dividend_payable"))}
+    capital, discount = bal("issuer", "{id}.capital"), -bal("issuer", "{id}.discount")
+    owed = exact(terms["discount"]) * capital - discount
+    if owed > 0 and t == int(terms["from"]) - 1:
+        due["discount"] = owed
+    return due
 
 
 PREFERRED_STOCK = ContractType(
     name="preferred_stock",
-    terms=("rate", "from"),
+    terms=("rate", "from", "year_fraction", "discount", "discount_years", "pik_share"),
     parties=("issuer",),
     accounts={"issuer": (("cash", Nature.ASSET), ("{id}.capital", Nature.EQUITY), ("{id}.dividends", Nature.EQUITY),
-                         ("{id}.dividend_payable", Nature.LIABILITY))},
-    flows=(FlowSpec("dividend", "accrue", (Leg("issuer", "{id}.dividends", "{id}.dividend_payable", (-1, +1)),)),),
+                         ("{id}.discount", Nature.EQUITY), ("{id}.dividend_payable", Nature.LIABILITY))},
+    flows=(FlowSpec("dividend", "accrue", (Leg("issuer", "{id}.dividends", "{id}.dividend_payable", (-1, +1)),)),
+           FlowSpec("amortise_discount", "accrue", (Leg("issuer", "{id}.dividends", "{id}.discount", (-1, +1)),)),
+           FlowSpec("pik", "accrue", (Leg("issuer", "{id}.dividend_payable", "{id}.capital", (-1, +1)),)),
+           FlowSpec("holder_pays", "accrue", (Leg("issuer", "cash", "{id}.dividend_payable", (+1, +1)),))),
     amounts=_preferred_amounts,
-    claim_specs=(ClaimSpec("dividend", "pay", Leg("issuer", "{id}.dividend_payable", "cash", (-1, -1))),),
-    claims=lambda terms, t, bal: {"dividend": bal("issuer", "{id}.dividend_payable")},
+    claim_specs=(ClaimSpec("dividend", "pay", Leg("issuer", "{id}.dividend_payable", "cash", (-1, -1))),
+                 ClaimSpec("discount", "pay", Leg("issuer", "{id}.discount", "cash", (-1, -1)))),
+    claims=_preferred_claims,
     legs={"issue": Leg("issuer", "cash", "{id}.capital", (+1, +1)),
           "redeem": Leg("issuer", "{id}.capital", "cash", (-1, -1))},
 )
@@ -153,19 +205,25 @@ def acquisition(group: Group, r: Reader, ctx: Mapping[str, Any]):
     the rest is a source), ``transaction_costs`` (``expense`` and ``items``:
     an amount or ``{rate}`` of the equity purchase price each),
     ``tax_benefit`` (the income account of the tax refund on costs and
-    fees), ``financing_fees`` (claims paid at close), ``sources`` (loan
-    draw claims, and legs with an ``amount`` and an optional
-    ``issue_cost: {rate, account}`` netted from the proceeds) and
-    ``residual`` (the leg that closes the gap: the sponsor's equity).
+    fees), ``financing_fees`` (claims paid at close), ``discounts``
+    (optional: original issue discounts, claims paid at close after the
+    sources are raised, not deducted then), ``prepayment_penalty``
+    (optional: ``{rate, expense}``, a rate of the debt refinanced, expensed
+    and deducted at close), ``sources`` (loan draw claims, and legs with an
+    ``amount`` and an optional ``issue_cost: {rate, account}`` netted from
+    the proceeds) and ``residual`` (the leg that closes the gap: the
+    sponsor's equity).
 
-    Tax at close follows the workbook: transaction costs, capitalised
-    financing fees and issue costs are all deducted when the deal closes,
+    Tax at close follows the workbooks: transaction costs, a prepayment
+    penalty, capitalised financing fees and issue costs are all deducted
+    when the deal closes,
     and the tax they save is refunded in cash then. The refund on costs
     is income; on the capitalised fees it is a deferred tax liability (the
     fees' tax base is nil once deducted; ``income_tax`` with
     ``nil_tax_base`` unwinds it as they are amortised); on issue costs it
     goes back to the equity account that bore them. All at ``tax_rate``,
-    the deal's rate.
+    the deal's rate. A discount is not deducted at close: its amortisation
+    is interest (or, on preferred stock, part of the dividend).
     """
     entity, cash, phase, at = r.take("entity"), r.take("cash"), r.take("phase"), int(r.take("at"))
     rate, unit = exact(r.take("tax_rate")), ctx["currency"]
@@ -196,6 +254,13 @@ def acquisition(group: Group, r: Reader, ctx: Mapping[str, Any]):
             raise InputError(f"acquisition.transaction_costs.items.{k}: an item is an amount or {{rate}}")
     tr.finish()
     tax_benefit, fees = r.take("tax_benefit"), list(r.take("financing_fees"))
+    discounts = list(r.take_or_default("discounts", [], reason="no note is issued at a discount").value)
+    pp = r.take_or_default("prepayment_penalty", None, reason="the debt refinanced carries no penalty").value
+    penalty = None
+    if pp is not None:
+        ppr = Reader(pp, source="acquisition.prepayment_penalty")
+        penalty = (exact(ppr.take("rate")), ppr.take("expense"))
+        ppr.finish()
     sources = []
     for i, raw in enumerate(r.take("sources")):
         sr = Reader(raw, source=f"acquisition.sources[{i}]")
@@ -215,6 +280,8 @@ def acquisition(group: Group, r: Reader, ctx: Mapping[str, Any]):
 
     group.declare(entity, clearing, Nature.ASSET, unit)
     group.declare(entity, cost_expense, Nature.EXPENSE, unit)
+    if penalty is not None:
+        group.declare(entity, penalty[1], Nature.EXPENSE, unit)
     group.declare(entity, tax_benefit, Nature.INCOME, unit)
     group.declare(entity, deferred_tax, Nature.LIABILITY, unit)
     for _, _, _, cost in sources:
@@ -276,6 +343,9 @@ def acquisition(group: Group, r: Reader, ctx: Mapping[str, Any]):
             x = book.balance(acct, t)
             refinanced += x
             post(acct, cash, x, (-1, -1), f"refinance.{acct}")
+        penalty_paid = penalty[0] * refinanced if penalty is not None else Fraction(0)
+        if penalty_paid:
+            post(penalty[1], cash, penalty_paid, (+1, -1), "prepayment_penalty")
         costs = sum(((v * equity_price if how == "rate" else v) for how, v in cost_items.values()), Fraction(0))
         post(cost_expense, cash, costs, (+1, -1), "transaction_costs")
         claims = g.claims(t)
@@ -300,13 +370,21 @@ def acquisition(group: Group, r: Reader, ctx: Mapping[str, Any]):
                     netted += fee
                     post(cost[1], cash, fee, (-1, -1), f"issue_cost.{cid}")
                     post(cash, cost[1], rate * fee, (+1, +1), f"issue_cost_tax.{cid}")
+        # discounts: withheld from the proceeds just raised (a claim on the issued amount)
+        discounted = Fraction(0)
+        later = g.claims(t)
+        for ref in discounts:
+            if ref in later:
+                discounted += later[ref].due
+                g.settle(later[ref], later[ref].due, phase)
         # the tax the deductions save, refunded now: on the costs it is income; on the capitalised fees it
         # is a deferred tax liability, since the asset's tax base is nil once its cost is deducted
-        post(cash, tax_benefit, rate * costs, (+1, +1), "tax_refund.costs")
+        post(cash, tax_benefit, rate * (costs + penalty_paid), (+1, +1), "tax_refund.costs")
         post(cash, deferred_tax, rate * capitalised, (+1, +1), "tax_refund.fees")
-        refund = rate * (costs + capitalised)
-        uses = {"equity_purchase_price": equity_price, "refinance": refinanced,
-                "financing_fees": capitalised + netted, "transaction_costs": costs}
+        refund = rate * (costs + penalty_paid + capitalised)
+        uses = {"equity_purchase_price": equity_price, "refinance": refinanced, "oid": discounted,
+                "prepayment_penalties": penalty_paid, "financing_fees": capitalised + netted,
+                "transaction_costs": costs}
         found = {"excess_cash": cash_before - min_cash, "option_proceeds": option_proceeds, **raised,
                  "tax_refund": refund + rate * netted}
         gap = sum(uses.values(), Fraction(0)) - sum(found.values(), Fraction(0))
@@ -354,7 +432,8 @@ def operating_plan(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     """Install the forecast lines and working capital; see the module docstring.
 
     Case keys: ``entity``, ``cash``, ``phase``, ``from``, ``until``,
-    ``lines`` and ``working_capital``.
+    ``fractions`` (optional: each period's fraction of a year, a series;
+    a stub period is less than one), ``lines`` and ``working_capital``.
 
     A line has a ``kind`` (``income``: cash in; ``expense``: cash out;
     ``share_compensation``: an expense credited to an equity account
@@ -367,21 +446,41 @@ def operating_plan(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
       last twelve months; ``growth_from`` may be the four quarters);
     * ``first`` and ``ratio_of``: the first period is ``first``; later ones
       are ``first / <line>.first`` times that line's amount, plus each
-      ``plus`` schedule (``{mark: <deal>.<account>, periods}``: the mark the
-      acquisition made, straight-line over ``periods`` from ``from``). The
-      first period is ``first`` as stated, whatever the schedules hold for
-      it: a stated first year replaces the formula, as a typed cell does;
+      ``plus`` schedule. The first period is ``first`` as stated, whatever
+      the schedules hold for it: a stated first year replaces the formula,
+      as a typed cell does;
+    * ``projected`` (a list, one amount per period from ``from``): a
+      projection followed and then held. Alone, the line is the first
+      projection, then grows each period at the growth the projections
+      show between annualised periods (the last growth is held after the
+      list ends), applied to the prior period annualised and scaled by
+      this period's fraction. With ``ratio_of`` (a projected line), the line
+      is its projection's ratio to the driver's projection (the last ratio
+      held) times the driver's amount, less ``less`` (``{amount,
+      phase_in}``: cost savings, ``amount`` times a phase-in series), plus
+      each ``plus`` schedule;
     * ``rate`` and ``on_balance``: the rate of the period (a series) times the
-      opening balance of an account (interest on cash).
+      opening balance of an account, times the period's fraction (interest
+      on cash).
+
+    A ``plus`` schedule (``{mark: <deal>.<account>, years}``) is the mark
+    the acquisition made, charged straight-line by year fraction from
+    ``from``: each period takes its fraction over ``years`` of the mark,
+    until the whole mark is charged.
 
     Working capital: each account (``side``: asset or liability) is held at
-    its balance before ``from`` over ``base`` (the driver's last twelve
-    months, a number or the four quarters), times the driver line
-    (``of``), from ``from``; the change moves cash.
+    its ratio, before ``from``, to the driver's annual rate: ``base`` (a
+    number or the quarters, summed) over ``base_fraction`` (the fraction
+    of a year ``base`` covers; optional, one). Each period it is that
+    ratio times the driver line (``of``) annualised; the change moves cash.
     """
     entity, cash, phase = r.take("entity"), r.take("cash"), r.take("phase")
     start, until = int(r.take("from")), int(r.take("until"))
     unit = ctx["currency"]
+    fractions = r.take_or_default("fractions", 1, reason="every period is a whole year").value
+
+    def frac(t: int) -> Fraction:
+        return _at(fractions, t)
     lines: Dict[str, Dict[str, Any]] = {}
     for name, raw in r.take("lines").items():
         lr = Reader(raw, source=f"operating_plan.lines.{name}")
@@ -394,23 +493,40 @@ def operating_plan(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         if "rate" in raw:
             line["rule"] = "rate"
             line["rate"], line["on"] = lr.take("rate"), lr.take("on_balance")
+        elif "projected" in raw:
+            line["projected"] = [exact(x) for x in lr.take("projected")]
+            if "ratio_of" in raw:
+                line["rule"], line["of"] = "projected_ratio", lr.take("ratio_of")
+            elif len(line["projected"]) < 2:
+                raise InputError(f"operating_plan.lines.{name}: a projected line needs two periods to show a growth")
+            else:
+                line["rule"] = "projected_growth"
         else:
             line["first"] = exact(lr.take("first"))
             if "growth_from" in raw:
                 line["rule"], line["growth"] = "growth", line["first"] / _total(lr.take("growth_from"))
             else:
                 line["rule"], line["of"] = "ratio", lr.take("ratio_of")
-                line["plus"] = []
-                for i, p in enumerate(lr.take_or_default("plus", [], reason="nothing added to the ratio").value):
-                    pr = Reader(p, source=f"operating_plan.lines.{name}.plus[{i}]")
-                    deal_name, _, acct = pr.take("mark").partition(".")
-                    line["plus"].append((deal_name, acct, int(pr.take("periods"))))
-                    pr.finish()
+        if line["rule"] in ("ratio", "projected_ratio"):
+            line["plus"] = []
+            for i, p in enumerate(lr.take_or_default("plus", [], reason="nothing added to the ratio").value):
+                pr = Reader(p, source=f"operating_plan.lines.{name}.plus[{i}]")
+                deal_name, _, acct = pr.take("mark").partition(".")
+                line["plus"].append((deal_name, acct, exact(pr.take("years"))))
+                pr.finish()
+        if line["rule"] == "projected_ratio":
+            less = lr.take_or_default("less", None, reason="no saving is taken off the line").value
+            if less is not None:
+                sr = Reader(less, source=f"operating_plan.lines.{name}.less")
+                line["less"] = (exact(sr.take("amount")), sr.take("phase_in"))
+                sr.finish()
         lr.finish()
         lines[name] = line
     for name, line in lines.items():
         if line["rule"] == "ratio" and (line["of"] not in lines or "first" not in lines[line["of"]]):
             raise InputError(f"operating_plan.lines.{name}: ratio_of names '{line['of']}', not a line with a first value")
+        if line["rule"] == "projected_ratio" and (line["of"] not in lines or "projected" not in lines[line["of"]]):
+            raise InputError(f"operating_plan.lines.{name}: ratio_of names '{line['of']}', not a projected line")
         for deal_name, acct, _ in line.get("plus", []):
             if deal_name not in ctx.get("deals", {}):
                 raise InputError(f"operating_plan.lines.{name}: no acquisition '{deal_name}' is declared before it")
@@ -427,12 +543,22 @@ def operating_plan(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         if side not in ("asset", "liability"):
             raise InputError(f"operating_plan.working_capital.{acct}: side must be asset or liability")
         of, base = wr.take("of"), _total(wr.take("base"))
+        base /= exact(wr.take_or_default("base_fraction", 1, reason="the base is a year's amount").value)
         wr.finish()
         if of not in lines:
             raise InputError(f"operating_plan.working_capital.{acct}: '{of}' is not a line")
         group.declare(entity, acct, Nature.ASSET if side == "asset" else Nature.LIABILITY, unit)
         wc.append((acct, side, of, base))
     amounts: Dict[int, Dict[str, Fraction]] = {}
+
+    def _plus(line: Dict[str, Any], t: int) -> Fraction:
+        """The marks a line charges in ``t``: each its year fraction over ``years``, until all is charged."""
+        out = Fraction(0)
+        for deal_name, acct, years in line["plus"]:
+            done = sum((min(frac(p) / years, 1) for p in range(start, t)), Fraction(0))
+            share = max(Fraction(0), min(frac(t) / years, 1 - done))
+            out += ctx["deals"][deal_name]["marks"][acct] * share
+        return out
 
     def amount(g: Group, name: str, t: int) -> Fraction:
         """A line's amount in ``t`` (memoised: a ratio line reads its driver's)."""
@@ -441,16 +567,28 @@ def operating_plan(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             return got[name]
         line = lines[name]
         if line["rule"] == "rate":
-            x = _at(line["rate"], t) * g.book(entity).opening(line["on"], t)
+            x = _at(line["rate"], t) * g.book(entity).opening(line["on"], t) * frac(t)
+        elif line["rule"] == "projected_growth":
+            proj, i = line["projected"], t - start
+            if i == 0:
+                x = proj[0]
+            else:
+                j = min(i, len(proj) - 1)            # the last growth the projections show is held
+                growth = (proj[j] / frac(start + j)) / (proj[j - 1] / frac(start + j - 1)) - 1
+                x = amount(g, name, t - 1) / frac(t - 1) * (1 + growth * frac(t))
+        elif line["rule"] == "projected_ratio":
+            proj, driver = line["projected"], lines[line["of"]]["projected"]
+            j = min(t - start, len(proj) - 1, len(driver) - 1)     # the last ratio is held
+            x = proj[j] / driver[j] * amount(g, line["of"], t)
+            if "less" in line:
+                x -= line["less"][0] * _at(line["less"][1], t)
+            x += _plus(line, t)
         elif t == start:
             x = line["first"]
         elif line["rule"] == "growth":
             x = amount(g, name, t - 1) * line["growth"]
         else:
-            x = line["first"] / lines[line["of"]]["first"] * amount(g, line["of"], t)
-            for deal_name, acct, n in line["plus"]:
-                if start <= t < start + n:
-                    x += ctx["deals"][deal_name]["marks"][acct] / n
+            x = line["first"] / lines[line["of"]]["first"] * amount(g, line["of"], t) + _plus(line, t)
         if x < 0:
             raise InputError(f"operating_plan: line '{name}' is negative ({float(x):,.4f}) in period {t}")
         got[name] = x
@@ -477,8 +615,8 @@ def operating_plan(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             else:                                   # depreciation: the asset is lowered
                 post(acct, line["against"], x, (+1, -1), name)
         for acct, side, of, base in wc:
-            ratio = book.balance(acct, start - 1) / base     # the balance before the forecast over the LTM driver
-            change = ratio * amount(g, of, t) - book.balance(acct, t)
+            ratio = book.balance(acct, start - 1) / base     # the balance before the forecast over the driver's year
+            change = ratio * amount(g, of, t) / frac(t) - book.balance(acct, t)
             if side == "asset":
                 if change > 0:
                     post(acct, cash, change, (+1, -1), f"wc.{acct}")
@@ -506,10 +644,15 @@ def exit_returns(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, A
     company's cash flows by holder), ``claims_scheme`` (the balance-sheet
     scheme in which a holder's claim is read), ``holders`` (holder ->
     ``{classes, claim}``: the classes of its cash flows in ``flows``, and
-    the ``claims_scheme`` classes of what it is owed at the exit, if any) and
-    ``ownership`` (``paid``: the holders who bought the common equity, pro
-    rata to what they paid at the deal period; ``at``: that period;
-    ``layers``: the dilution layers in order).
+    the ``claims_scheme`` classes of what it is owed at the exit, if any,
+    and optionally ``premium``: a series of prepayment premiums, a rate of
+    the claim paid on top of it at the exit), ``ownership`` (``paid``: the
+    holders who bought the common equity, pro rata to what they paid at the
+    deal period; ``at``: that period; ``layers``: the dilution layers in
+    order), and two options the long-form workbook needs: ``fractions``
+    (each period's fraction of a year: the exit EBITDA is annualised) and
+    ``interim_from`` (the first period whose interim flows count; flows of
+    the periods between the deal and it are left out of every stream).
 
     Returns ``{"series": {holder: Series}, "values": {...}}``: the streams,
     and the exit EBITDA, enterprise value, net debt, equity value and the
@@ -518,6 +661,7 @@ def exit_returns(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, A
     book = group.book(r.take("entity"))
     cash, exit_t, multiple = r.take("cash"), int(r.take("period")), exact(r.take("multiple"))
     schemes = ctx["schemes"]
+    fractions = r.take_or_default("fractions", 1, reason="every period is a whole year").value
 
     def cut(key, fn):
         cr = Reader(r.take(key), source=f"exit_returns.{key}")
@@ -531,12 +675,14 @@ def exit_returns(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, A
     holders = {}
     for h, raw in r.take("holders").items():
         hr = Reader(raw, source=f"exit_returns.holders.{h}")
-        holders[h] = (hr.take("classes"), hr.take("claim"))
+        holders[h] = (hr.take("classes"), hr.take("claim"),
+                      hr.take_or_default("premium", 0, reason="the claim is repaid at par").value)
         hr.finish()
     orr = Reader(r.take("ownership"), source="exit_returns.ownership")
     paid_by, paid_at, layers = orr.take("paid"), int(orr.take("at")), orr.take("layers")
     orr.finish()
-    flows = {h: cash_flow_cut(book, cash, flows_scheme, classes, name=h) for h, (classes, _) in holders.items()}
+    interim_from = int(r.take_or_default("interim_from", paid_at + 1, reason="every interim flow counts").value)
+    flows = {h: cash_flow_cut(book, cash, flows_scheme, classes, name=h) for h, (classes, _, _) in holders.items()}
     for h in paid_by:
         if h not in flows:
             raise InputError(f"exit_returns.ownership: '{h}' is not a holder")
@@ -544,12 +690,14 @@ def exit_returns(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, A
     unknown = set(own) - set(holders)
     if unknown:
         raise InputError(f"exit_returns.ownership: {sorted(unknown)} own a share but are not holders")
-    ev = multiple * ebitda.values[exit_t]
+    ev = multiple * ebitda.values[exit_t] / _at(fractions, exit_t)
     equity = ev - net_debt.values[exit_t]
     series = {}
-    for h, (classes, claim) in holders.items():
+    for h, (classes, claim, premium) in holders.items():
         owed = balance_cut(book, bs, claim).values[exit_t] if claim else Fraction(0)
-        series[h] = Series(h, holder_stream(flows[h].values, exit_t, owed, own.get(h, Fraction(0)), equity),
+        owed *= 1 + _at(premium, exit_t)
+        company = [x if t <= paid_at or t >= interim_from else Fraction(0) for t, x in enumerate(flows[h].values)]
+        series[h] = Series(h, holder_stream(company, exit_t, owed, own.get(h, Fraction(0)), equity),
                            flows[h].states | (ebitda.states | net_debt.states if h in own else frozenset()))
     return {"series": series,
             "values": {"ebitda": ebitda.values[exit_t], "enterprise_value": ev, "net_debt": net_debt.values[exit_t],

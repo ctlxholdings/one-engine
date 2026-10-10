@@ -24,7 +24,12 @@ quarters: :func:`xirr` (dated flows, actual/365, as Excel's XIRR) and
 compounding index rather than a constant rate).
 
 Added for the Macabacus LBO (step 7f): :func:`moic`, money out over money
-in (the workbook's "cash-on-cash").
+in (the short-form workbook's "cash-on-cash", where nothing is paid in
+after the investment).
+
+Added for the Macabacus long-form LBO (step 7g): :func:`cash_on_cash`, the
+long-form workbook's definition (every later flow, net, over the
+investment), which differs from :func:`moic` when a holder pays in again.
 """
 from __future__ import annotations
 
@@ -153,6 +158,20 @@ def moic(stream: Sequence[Number]) -> float:
     if paid == 0:
         raise MeasureError("the stream has no outflow, so nothing was invested")
     return sum(float(c) for c in stream if c > 0) / paid
+
+
+def cash_on_cash(stream: Sequence[Number]) -> float:
+    """Cash-on-cash multiple: every flow after the first, net, over the first (the investment).
+
+    Macabacus's definition (long-form LBO, step 7g). It equals :func:`moic`
+    when nothing is paid in after the first period; when the holder pays
+    in again later (a preferred holder funding a coupon shortfall), that
+    payment lowers the multiple here instead of adding to what was
+    invested. Refuses a stream that does not start with an outflow.
+    """
+    if not stream or stream[0] >= 0:
+        raise MeasureError("the stream does not start with an investment (a negative first flow)")
+    return -sum(float(c) for c in stream[1:]) / float(stream[0])
 
 
 def coverage(available: Number, service: Number):

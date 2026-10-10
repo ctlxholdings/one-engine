@@ -111,7 +111,7 @@ def test_the_case_file_copies_the_workbooks_inputs():
         want = [_d(inst["fixed"]) if inst["fixed"] else _d(lb) + _d(inst["spread"]) for lb in IN["libor"]]
         assert [_d(x) for x in rate[1:]] == want
         assert c[f"{name}_fee"]["terms"]["rate"] == inst["fee_rate"]
-        assert c[f"{name}_fee"]["terms"]["periods"] == inst["fee_years"]
+        assert c[f"{name}_fee"]["terms"]["years"] == inst["fee_years"]
     assert c["revolver"]["terms"]["commitment"] == IN["revolver_commitment"]
     assert c["revolver"]["terms"]["commitment_fee_rate"][1:] == IN["commitment_fee_rate"]
     assert c["term_loan_a"]["terms"]["repay_periods"] == 1 / IN["instruments"]["term_loan_a"]["amortisation"]
@@ -135,7 +135,7 @@ def test_the_case_file_copies_the_workbooks_inputs():
         assert ops[line]["first"] == y1[line]
     assert ops["sales"]["growth_from"] == IN["quarters"]["sales"]
     assert rb["operations"]["working_capital"]["prepaid"]["base"] == IN["quarters"]["cogs"]
-    assert [p["periods"] for p in ops["depreciation"]["plus"] + ops["amortisation"]["plus"]] == \
+    assert [p["years"] for p in ops["depreciation"]["plus"] + ops["amortisation"]["plus"]] == \
         [IN["fv"]["ppe_life"], IN["fv"]["intangibles_life"]]
     assert ops["interest_income"]["rate"][1:] == IN["cash_rate"]
     fed, state = _d(IN["federal_tax_rate"]), _d(IN["state_tax_rate"])

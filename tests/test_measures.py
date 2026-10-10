@@ -81,3 +81,19 @@ def test_moic_refuses_a_stream_with_nothing_invested():
     from one_engine.measures import moic
     with pytest.raises(MeasureError, match="nothing was invested"):
         moic([0, 5, 5])
+
+
+def test_cash_on_cash_nets_every_later_flow_against_the_investment():
+    from one_engine.measures import cash_on_cash, moic
+    # the Macabacus long-form preferred: the holder pays 0.125 in twice after investing 9.5
+    stream = [-9.5, 0, -0.125, -0.125, 18.34983574987361]
+    assert cash_on_cash(stream) == pytest.approx((18.34983574987361 - 0.25) / 9.5)
+    # moic counts the later payments as money paid in; cash-on-cash nets them from what comes back
+    assert moic(stream) == pytest.approx(18.34983574987361 / 9.75)
+
+
+def test_cash_on_cash_refuses_a_stream_that_does_not_start_with_an_investment():
+    from one_engine.measures import MeasureError, cash_on_cash
+    for stream in ([], [0, -5, 6], [5, -5]):
+        with pytest.raises(MeasureError, match="does not start with an investment"):
+            cash_on_cash(stream)
