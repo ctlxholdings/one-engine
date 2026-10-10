@@ -48,6 +48,19 @@ def test_policy_charge_uses_losses_first():
     assert pol.charge(1, F(80), pool) == F(15, 100) * 30 and pool.available(2) == 0
 
 
+def test_losses_carried_as_tax_keep_the_rate_of_the_period_they_arose_in():
+    # ModelOff 2015 "Tax": a loss of 100 at 20% is a pool of 20 of tax, used against tax at 10% later
+    pool = LossPool(None)
+    assert TaxPolicy(F(2, 10), None, losses_in="tax").charge(0, -100, pool) == 0 and pool.available(1) == 20
+    assert TaxPolicy(F(1, 10), None, losses_in="tax").charge(1, 300, pool) == 30 - 20 and pool.available(2) == 0
+    # carried as base, the same loss saves only 10 at the later rate
+    pool = LossPool(None)
+    TaxPolicy(F(2, 10), None).charge(0, -100, pool)
+    assert TaxPolicy(F(1, 10), None).charge(1, 300, pool) == 20
+    with pytest.raises(TaxError, match="losses_in"):
+        TaxPolicy(F(1, 10), None, losses_in="profit")
+
+
 def test_timing_lines_stay_classified_and_out_of_the_base():
     scheme = {"revenue": "taxable", "opex": "timing", "fine": "non_deductible"}
     assert taxable_base(_book(), 0, scheme) == 100                     # the caller adds the tax measure

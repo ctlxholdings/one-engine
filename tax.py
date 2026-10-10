@@ -33,6 +33,14 @@ tax charge, so current plus deferred tax equals the rate times the
 accounting profit (less exempt and non-deductible lines) whenever no loss
 expires unused.
 
+Losses carried as base or as tax
+--------------------------------
+Statutes carry a loss as an amount of the base: it saves tax at the rate
+of the year it is used in. ModelOff 2015 "Tax" carries it as tax instead
+(the rate of its own month times the loss), so it saves tax at the rate
+it arose at. :class:`TaxPolicy` declares which (``losses_in``); with a
+constant rate the two are the same.
+
 Losses expire on the grid's own clock
 -------------------------------------
 A carry-forward is stated in periods of the grid. A five-year limit on a
@@ -110,21 +118,38 @@ class LossPool:
         return used
 
 
+_LOSSES_IN = ("base", "tax")
+
+
 @dataclass(frozen=True)
 class TaxPolicy:
-    """A flat rate on the base after losses."""
+    """A flat rate on the base after losses.
+
+    ``losses_in`` says what the loss pool holds. ``"base"`` (the default,
+    and the usual statute): losses of the base, used against later base, so
+    a loss saves tax at the rate of the period it is used in. ``"tax"``
+    (ModelOff 2015 "Tax", step 7k): the period's rate times the loss, used
+    against later tax, so a loss saves tax at the rate of the period it
+    arose in. The two differ only when the rate changes.
+    """
 
     rate: Fraction
     carry_forward_periods: Optional[int]
+    losses_in: str = "base"
+
+    def __post_init__(self):
+        if self.losses_in not in _LOSSES_IN:
+            raise TaxError(f"losses_in must be one of {_LOSSES_IN}, got {self.losses_in!r}")
 
     def charge(self, period: int, base: Number, pool: LossPool) -> Fraction:
         """Tax for ``period``. A negative base adds a loss vintage; a positive one uses losses first."""
         base = exact(base)
-        if base <= 0:
-            pool.add(period, -base)
+        amount = exact(self.rate) * base if self.losses_in == "tax" else base
+        if amount <= 0:
+            pool.add(period, -amount)
             return Fraction(0)
-        used = pool.use(period, base)
-        return exact(self.rate) * (base - used)
+        used = pool.use(period, amount)
+        return amount - used if self.losses_in == "tax" else exact(self.rate) * (amount - used)
 
 
 def deferred_tax(rate: Number, carrying: Number, tax_base: Number, losses: Number) -> Fraction:

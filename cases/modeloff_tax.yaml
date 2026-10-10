@@ -1,0 +1,89 @@
+# ModelOff 2015 "Tax": monthly tax at changing rates, a loss pool, tax paid in instalments (plan step 7k).
+#
+# Source: ModelOff 2015 Round 1 Section 3 (data workbook MO15-Tax-Data and
+# its solution, not in this repository); the rate table, the 132 monthly
+# taxable profits and the ten verified answers (Q32-Q41) as transcribed in
+# generic_engine/tests/test_benchmark_round3_tax_loss_pools.py, copied to
+# cases/reference/modeloff_2015_tax.json by
+# consolidation/experiments/make_reference_modeloff_tax.py, and to this file
+# by make_case_modeloff_tax.py. tests/test_case_modeloff_tax.py re-checks
+# the copy and re-derives the rates.
+#
+# Grid: 132 months, January 2015 (period 0) to December 2025.
+#
+# What the case does, and how it is assembled here:
+#   * each month's taxable profit is stated; positive months are income
+#     (offtake: price = the profit), negative months an expense
+#     (operating_cost: unit_rate 1 x volume = the loss);
+#   * the tax rate changes 12 times, some mid-month: a month's rate is the
+#     average of the rates in force on its days (rate: one per month);
+#   * a month's tax charge is its profit times its rate. A negative charge
+#     goes to a loss pool held as tax, not as profit, so a loss saves tax
+#     at the rate of the month it arose in (income_tax: losses_in: tax).
+#     Losses do not expire (the test's variant: they do after two years);
+#   * each calendar year's tax is paid the next year, 60% in April, 25% in
+#     August and 15% in December (tax_instalments; the test's variant pays
+#     70% in March, 10% in August and 20% in November). 2025's tax falls
+#     due after the grid and stays payable.
+case: modeloff-tax
+periods: 132
+phases: [operate, tax, pay]
+currency: USD
+floors: {}
+contracts:
+  profit:
+    type: offtake
+    parties: {seller: company}
+    terms:
+      volume: 1
+      price: [0, 13188, 193586, 0, 46356, 0, 325747, 5353, 0, 0, 0, 0, 34644, 262831, 69176, 0, 0, 0, 0, 0, 0, 0, 0, 226074, 0, 404379, 0, 193417, 134773, 169040, 0, 0, 140497, 272340, 168555, 0, 84314, 153274, 0, 436564, 320152, 0, 32641, 0, 0, 0, 303763, 0, 0, 25327, 467433, 0, 45667, 398296, 0, 6069, 286213, 0, 275191, 0, 0, 0, 419596, 459154, 425992, 0, 485916, 241288, 112179, 0, 324256, 214824, 14100, 0, 357505, 502402, 0, 323481, 127919, 210224, 46174, 0, 434196, 0, 0, 0, 0, 107068, 0, 0, 0, 509094, 0, 536944, 129761, 0, 0, 0, 0, 412088, 0, 199936, 0, 0, 0, 408896, 207750, 270198, 0, 325805, 0, 506967, 197664, 208470, 0, 74110, 117712, 0, 0, 3893, 0, 239188, 75711, 549492, 427199, 0, 390140, 352477, 0, 345337, 171260, 139257]      # the months with a taxable profit
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 12
+      end: 131
+  losses:
+    type: operating_cost
+    parties: {payer: company}
+    terms:
+      annual: 0
+      unit_rate: 1
+      volume: [343170, 0, 0, 81150, 0, 531813, 0, 0, 208707, 440035, 385852, 138332, 0, 0, 0, 56997, 405021, 504815, 314800, 261955, 225251, 520716, 340174, 0, 52594, 0, 512011, 0, 0, 0, 317868, 255700, 0, 0, 0, 261080, 0, 0, 154637, 0, 0, 29137, 0, 486594, 320732, 530543, 0, 424670, 76226, 0, 0, 319633, 0, 0, 290288, 0, 0, 263402, 0, 356978, 12841, 234444, 0, 0, 0, 197535, 0, 0, 0, 396288, 0, 0, 0, 18225, 0, 0, 325885, 0, 0, 0, 0, 380838, 0, 91416, 144232, 4425, 391764, 0, 4761, 297993, 133954, 0, 353900, 0, 0, 165451, 354700, 9474, 341954, 0, 16561, 0, 91823, 123584, 311123, 0, 0, 0, 210495, 0, 23273, 0, 0, 0, 320791, 0, 0, 329056, 136919, 0, 316255, 0, 0, 0, 0, 127386, 0, 0, 276975, 0, 0, 0]      # the months with a taxable loss
+      index: 1
+      periods_per_year: 12
+      start: 0
+      end: 131
+      vat_rate: 0
+      vat_refund_lag: 0
+      payment_days: 0
+      days_per_year: 365
+rulebooks:
+  tax:
+    kind: income_tax
+    entity: company
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: [0.15, 0.15, 0.15, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, '119/775', 0.17, 0.17, 0.17, '259/1500', 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, '573/3100', 0.18, 0.18, '58/375', 0.14, 0.14, '31/175', 0.18, 0.18, 0.18, 0.18, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, '1/7', 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, 0.11, '357/3100', 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12]
+    carry_forward_periods: null
+    losses_in: tax
+    scheme:
+      profit.revenue: taxable
+      losses.expense: taxable
+      tax_expense: non_deductible
+  instalments:
+    kind: tax_instalments
+    entity: company
+    phase: pay
+    cash: cash
+    payable: tax_payable
+    periods_per_year: 12
+    instalments: [{period_of_year: 3, share: 0.6}, {period_of_year: 7, share: 0.25}, {period_of_year: 11, share: 0.15}]      # alt: [{period_of_year: 2, share: 0.7}, {period_of_year: 7, share: 0.1}, {period_of_year: 10, share: 0.2}]
+schemes:
+  cash_flow:
+    profit.receivable: operating
+    losses.payable: operating
+    vat_receivable: operating
+    tax_payable: tax
+cuts:
+  tax_paid: {entity: company, account: cash, scheme: cash_flow, include: [tax]}
+measures: {}                    # the answers are amounts read from the books and records

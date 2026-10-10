@@ -77,6 +77,19 @@ Rulebooks
     losses, as IAS 12.34 requires when no taxable profit is expected
     against them (the case states no income).
 
+    ``losses_in: tax`` carries losses as tax, at the rate of the period
+    they arose in (``TaxPolicy.losses_in``: ModelOff 2015 "Tax", step 7k);
+    the tax record's ``expired`` is what the period could use but the next
+    cannot.
+
+``tax_instalments``
+    Last year's tax, paid this year in instalments: each listed period of
+    the year (``period_of_year``, 0 being the first) pays its ``share`` of
+    everything charged to the payable in the previous year's periods. The
+    grid's years start at period 0, ``periods_per_year`` long. The shares
+    sum to one, so a year's liability is paid in full once its last
+    instalment falls inside the grid (ModelOff 2015 "Tax", step 7k).
+
 ``provision``
     A liability charged straight-line and paid once
     (:class:`~one_engine.measurement.Provision`): decommissioning.
@@ -399,6 +412,7 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     cf = r.take("carry_forward_periods")
     cf = None if cf is None else int(cf)
     rates = r.take("rate")                      # a rate, or one per period (a change of rate)
+    losses_in = r.take_or_default("losses_in", "base", reason="losses are carried as amounts of the base").value
     from one_engine.packs.contracts import _at
     scheme = dict(r.take("scheme"))
     group.declare(entity, expense, Nature.EXPENSE, unit)
@@ -419,6 +433,8 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         if recognise_losses not in (True, False):
             raise InputError(f"income_tax: deferred.recognise_losses is true or false, got {recognise_losses!r}")
         dr.finish()
+        if losses_in != "base":
+            raise InputError("income_tax: deferred tax on losses carried as tax (losses_in: tax) is not built")
         if nil_base and timing_name is not None:
             raise InputError("income_tax: deferred.nil_tax_base measures movements and cannot be combined "
                              "with a 'timing' register")
@@ -432,7 +448,7 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     def handler(g: Group, t: int) -> None:
         if t < start:
             return
-        policy = TaxPolicy(_at(rates, t), cf)
+        policy = TaxPolicy(_at(rates, t), cf, losses_in)
         base = taxable_base(g.book(entity), t, scheme)
         if timing_name is not None:
             regs = ctx["registers"][timing_name]
@@ -443,7 +459,8 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         tax = policy.charge(t, base, pool)
         if tax:
             g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"tax.charge:{t}"))
-        rec = dict(base=base, tax=tax, losses=pool.available(t + 1))
+        # what this period could still use but the next cannot: the vintages that expire at its end
+        rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
         if deferred is not None:
             book = g.book(entity)
             if nil_base:
@@ -467,6 +484,39 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                 g.post(entity, Posting(t, phase, dt_acct, dt_expense, -move, {dt_acct: -1, dt_expense: -1},
                                        "tax", f"tax.deferred:{t}"))
         g.record("tax", t, **rec)
+
+    group.register(phase, handler)
+
+
+# ── tax instalments ───────────────────────────────────────────────────────
+
+def tax_instalments(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    entity, phase, cash, payable = r.take("entity"), r.take("phase"), r.take("cash"), r.take("payable")
+    per_year = int(r.take("periods_per_year"))
+    plan = []
+    for i, raw in enumerate(r.take("instalments")):
+        ir = Reader(raw, source=f"tax_instalments.instalments[{i}]")
+        plan.append((int(ir.take("period_of_year")), exact(ir.take("share"))))
+        ir.finish()
+    if sum(x for _, x in plan) != 1 or any(x < 0 for _, x in plan) or \
+            any(not 0 <= k < per_year for k, _ in plan) or len({k for k, _ in plan}) != len(plan):
+        raise InputError(f"tax_instalments: shares must be non-negative and sum to 1, in distinct periods of the "
+                         f"year 0..{per_year - 1}; got {[(k, float(x)) for k, x in plan]}")
+    shares = dict(plan)
+
+    def handler(g: Group, t: int) -> None:
+        year, k = divmod(t, per_year)
+        if year == 0 or k not in shares:
+            return
+        book = g.book(entity)
+        # last year's liability: everything charged to the payable in its periods
+        charged = sum((p.amount for p in book.postings
+                       if p.credit == payable and (year - 1) * per_year <= p.period < year * per_year), Fraction(0))
+        amount = charged * shares[k]
+        if amount:
+            g.post(entity, Posting(t, phase, payable, cash, amount, {payable: -1, cash: -1}, "tax",
+                                   f"tax.instalment:{t}"))
+        g.record("tax_instalment", t, liability=charged, paid=amount)
 
     group.register(phase, handler)
 
@@ -699,7 +749,7 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
 
 RULEBOOKS = {"funding_plan": funding_plan, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
              "income_tax": income_tax, "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
-             "withholding": withholding, "promote": promote}
+             "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments}
 
 
 # ── loop rules ────────────────────────────────────────────────────────────
