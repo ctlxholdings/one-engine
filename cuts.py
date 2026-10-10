@@ -14,6 +14,16 @@ That is the failure class behind generic-framework's gum-plant build, where
 COGS sat outside a hand-listed tax base and "cash went to -EUR 2.5M".
 
 Views never write: cuts read :attr:`Book.postings` and return new objects.
+
+Cuts of the profit and loss and of balances (added for the Macabacus LBO,
+step 7f): :func:`pnl_cut` sums the period movements of the income and
+expense accounts in the classes asked for (EBITDA is sales, COGS and SG&A);
+:func:`balance_cut` sums closing balances (net debt is debt and preferred
+stock less cash). Both read with one sign: credit-natured accounts count
+positive, debit-natured negative, so profit and claims come out positive
+(income less expense; liabilities less assets). Completeness is by nature:
+every income and expense account must be classified for a P&L cut, every
+asset, liability and equity account for a balance cut.
 """
 from __future__ import annotations
 
@@ -22,7 +32,7 @@ from fractions import Fraction
 from typing import Dict, FrozenSet, Iterable, List, Mapping, Set
 
 from one_engine.inputs import State
-from one_engine.kernel import Book
+from one_engine.kernel import Book, Nature
 
 
 class CutError(ValueError):
@@ -87,3 +97,54 @@ def cash_flow_cut(book: Book, cash_account: str, scheme: Scheme, include: Iterab
     if unknown:
         raise CutError(f"scheme '{scheme.name}' has no class {', '.join(sorted(unknown))}")
     return Series(name or f"{book.entity}:{cash_account}:{'+'.join(sorted(include))}", values, frozenset(states))
+
+
+_PNL = (Nature.INCOME, Nature.EXPENSE)
+_BALANCE = (Nature.ASSET, Nature.LIABILITY, Nature.EQUITY)
+
+
+def _account_cut(book: Book, scheme: Scheme, include: Iterable[str], natures, closing: bool, name: str) -> Series:
+    """Sum, per period, the movement (or closing balance) of the accounts of ``natures`` classified in ``include``."""
+    include = set(include)
+    accounts = [a for a in book.accounts.values() if a.nature in natures]
+    unclassified = sorted(a.name for a in accounts if a.name not in scheme.classes)
+    if unclassified:
+        raise CutError(f"scheme '{scheme.name}' does not classify: {', '.join(unclassified)}")
+    no_class = include - scheme.class_names
+    if no_class:
+        raise CutError(f"scheme '{scheme.name}' has no class {', '.join(sorted(no_class))}")
+    first = book.start_period
+    values = [Fraction(0)] * (book.periods - first)
+    states: Set[State] = set()
+    picked = {a.name: (-1 if a.nature.debit_natured else 1) for a in accounts if scheme.classes[a.name] in include}
+    for row in book.table():
+        if row.account in picked:
+            values[row.period - first] += picked[row.account] * (row.closing if closing else row.movement)
+    for acct in picked:
+        for t in range(first, book.periods):
+            states |= book.states(acct, t)
+    return Series(name or f"{book.entity}:{'+'.join(sorted(include))}", values, frozenset(states))
+
+
+def pnl_cut(book: Book, scheme: Scheme, include: Iterable[str], name: str = "") -> Series:
+    """Income less expense of the classes in ``include``, period by period (EBITDA, net income).
+
+    Raises
+    ------
+    CutError
+        If an income or expense account is not in the scheme, or ``include``
+        names a class the scheme never uses.
+    """
+    return _account_cut(book, scheme, include, _PNL, closing=False, name=name)
+
+
+def balance_cut(book: Book, scheme: Scheme, include: Iterable[str], name: str = "") -> Series:
+    """Closing balances of the classes in ``include``: liabilities and equity less assets (net debt).
+
+    Raises
+    ------
+    CutError
+        If an asset, liability or equity account is not in the scheme, or
+        ``include`` names a class the scheme never uses.
+    """
+    return _account_cut(book, scheme, include, _BALANCE, closing=True, name=name)

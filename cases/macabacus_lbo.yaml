@@ -1,0 +1,506 @@
+# Macabacus short-form LBO: a listed company bought with debt, run for ten years (plan step 7f).
+#
+# Source: Macabacus, macabacus-lbo-short.xlsx (a free published model), cached
+# values as saved by Excel; financing case 6, "LBO C". Copied to
+# cases/reference/macabacus_lbo.json by consolidation/experiments/
+# make_reference_macabacus.py, and to this file by make_case_macabacus.py.
+# tests/test_case_macabacus.py re-checks every copied value against the reference.
+#
+# Grid: 11 periods. Period 0 is the close (2023-12-31); periods 1..10 are the
+# fiscal years 2024..2033. The workbook's unit is $ millions.
+#
+# What the workbook does, and how it is assembled here:
+#   * the books open on the company's balance sheet before the deal (column
+#     H). Retained earnings balance it: the copied floats are out by 4e-14;
+#   * the close (rulebook deal): the offer is the share price plus a 25%
+#     premium for the basic shares and the in-the-money options (whose
+#     strikes are paid in); the old book equity and goodwill go, PP&E is
+#     marked up 15 and intangibles by 25% of the excess price, with a
+#     deferred tax liability at 35% on the marks; goodwill is the rest of
+#     the price. The legacy debt is refinanced; transaction costs are
+#     expensed and the financing fees capitalised, and both are deducted
+#     for tax at the close (the refund is a source). Sources are three
+#     loans, preferred stock (its 3% fee netted, after tax, from paid-in
+#     capital), management equity and the cash above 100; the sponsor's
+#     equity is what closes the gap;
+#   * operations (rulebook operations): the first forecast year is typed in
+#     the workbook (sales 464.3 etc.); sales then grow at 464.3 over the last
+#     four quarters, and each other line keeps its first-year ratio to
+#     sales. Depreciation adds the PP&E mark over 7 years and amortisation
+#     the intangibles mark over 5, after the first year: the first year is
+#     typed without them, as in the workbook. Working capital is held at its
+#     ratio, at the close, to the last four quarters of sales (receivables)
+#     or COGS (the rest). Cash earns 1% on its opening balance;
+#   * financing: interest on opening balances at LIBOR plus a spread (the
+#     subordinated note at a fixed 10.25%); term loan A amortises 20% a year
+#     and the rest is swept from cash above 100; the notes are bullets
+#     (years 8 and 6); the undrawn revolver pays 0.5% on its 100 commitment.
+#     Each facility's fee is amortised over its own term from the close.
+#     The preferred stock pays 12% in cash. No common dividends: the cash
+#     left after the sweep is retained (waterfall residual null);
+#   * tax at 35.0003% (32.99% federal, 3% state net of federal; the deal
+#     uses a flat 35%) on EBITDA less depreciation, amortisation, stock
+#     compensation and net interest; the financing fees' amortisation is
+#     not deductible (their cost was deducted at the close, creating a
+#     deferred tax liability), so that liability falls by the rate times
+#     the amortisation (income_tax nil_tax_base);
+#   * the exit (lens exit): year 4 at 5x that year's EBITDA, less net debt
+#     (debt and preferred stock less cash). Holders' returns are XIRRs on
+#     the year-end dates.
+#
+# The revolver is never drawn: cash available for the sweep is positive
+# every year (tested), so its draw-on-deficit rule is not built.
+case: macabacus-lbo
+periods: 11
+phases: [deal, operate, accrue, tax, pay]
+currency: USDm
+floors:
+  company.cash: 0
+opening:
+  company:
+    cash: {nature: asset, value: 182.188343471647}
+    receivables: {nature: asset, value: 138.218412371134}
+    prepaid: {nature: asset, value: 8.64392138939671}
+    ppe_gross: {nature: asset, value: 190.98593064667293}
+    accumulated_depreciation: {nature: asset, value: -152.34400000000005}
+    goodwill: {nature: asset, value: 61.094}
+    intangibles: {nature: asset, value: 23.991}
+    other_lt_assets: {nature: asset, value: 14.29}
+    payables: {nature: liability, value: 21.719652650822667}
+    accrued: {nature: liability, value: 16.1672760511883}
+    other_current_liabilities: {nature: liability, value: 62.15991773308958}
+    legacy_debt: {nature: liability, value: 230}
+    net_dtl: {nature: liability, value: -8.828}
+    other_lt_liabilities: {nature: liability, value: 17.917}
+    common_par: {nature: equity, value: 12.609}
+    apic: {nature: equity, value: 28.159000000000002}
+    retained_earnings: {nature: equity, value: balancing}     # stated 87.16376144375
+contracts:
+  revolver:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 100
+      draw_schedule: 0
+      available_until: 10
+      rate: [0, 0.0703, 0.0746555, 0.07989725, 0.084104, 0.08823675000000001, 0.090815000000000004, 0.0923055, 0.0936235, 0.09472525, 0.0956]
+      rate_from: 1
+      days_per_period: 1
+      day_count_basis: 1
+      commitment_fee_rate: [0, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 10
+      repay_periods: 1
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 0
+  term_loan_a:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 50
+      draw_schedule: 50
+      available_until: 0
+      rate: [0, 0.0757, 0.0800555, 0.08529725, 0.089504, 0.09363675000000001, 0.096215000000000004, 0.0977055, 0.0990235, 0.10012525, 0.1010]
+      rate_from: 1
+      days_per_period: 1
+      day_count_basis: 1
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 1
+      repay_periods: 5
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 0
+  senior_note:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 100
+      draw_schedule: 100
+      available_until: 0
+      rate: [0, 0.0928, 0.0971555, 0.10239725, 0.106604, 0.11073675000000001, 0.113315000000000004, 0.1148055, 0.1161235, 0.11722525, 0.1181]
+      rate_from: 1
+      days_per_period: 1
+      day_count_basis: 1
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 8
+      repay_periods: 1
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 0
+  subordinated_note:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 50
+      draw_schedule: 50
+      available_until: 0
+      rate: [0, 0.1025, 0.1025, 0.1025, 0.1025, 0.1025, 0.1025, 0.1025, 0.1025, 0.1025, 0.1025]
+      rate_from: 1
+      days_per_period: 1
+      day_count_basis: 1
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 6
+      repay_periods: 1
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 0
+  revolver_fee:
+    type: financing_fee
+    parties: {borrower: company}
+    terms: {facility: revolver, rate: 0.0175, periods: 5, paid_at: 0}
+  term_loan_a_fee:
+    type: financing_fee
+    parties: {borrower: company}
+    terms: {facility: term_loan_a, rate: 0.02, periods: 5, paid_at: 0}
+  senior_note_fee:
+    type: financing_fee
+    parties: {borrower: company}
+    terms: {facility: senior_note, rate: 0.0225, periods: 7, paid_at: 0}
+  subordinated_note_fee:
+    type: financing_fee
+    parties: {borrower: company}
+    terms: {facility: subordinated_note, rate: 0.03, periods: 7, paid_at: 0}
+  preferred_a:
+    type: preferred_stock
+    parties: {issuer: company}
+    terms: {rate: 0.12, from: 1}
+  sponsor:
+    type: sponsor_equity
+    parties: {issuer: company}
+    terms: {}
+  management:
+    type: sponsor_equity
+    parties: {issuer: company}
+    terms: {}
+schemes:
+  cash_flow:
+    sales: operating
+    cogs: operating
+    sga: operating
+    interest_income: operating
+    receivables: operating
+    prepaid: operating
+    payables: operating
+    accrued: operating
+    other_current_liabilities: operating
+    tax_payable: tax
+    revolver.interest_payable: operating
+    revolver.fee_payable: operating
+    revolver.debt: financing
+    term_loan_a.interest_payable: operating
+    term_loan_a.fee_payable: operating
+    term_loan_a.debt: financing
+    senior_note.interest_payable: operating
+    senior_note.fee_payable: operating
+    senior_note.debt: financing
+    subordinated_note.interest_payable: operating
+    subordinated_note.fee_payable: operating
+    subordinated_note.debt: financing
+    preferred_a.dividend_payable: operating
+    ppe_gross: investing
+    deal.purchase: deal
+    transaction_costs: deal
+    deal_tax_benefit: deal
+    net_dtl: deal
+    legacy_debt: deal
+    preferred_issue_costs: deal
+    preferred_a.capital: deal
+    sponsor.capital: deal
+    management.capital: deal
+    revolver_fee.deferred: deal
+    term_loan_a_fee.deferred: deal
+    senior_note_fee.deferred: deal
+    subordinated_note_fee.deferred: deal
+  holders:                        # whose instruments each cash flow is
+    sponsor.capital: sponsor
+    management.capital: management
+    subordinated_note.debt: subordinated_note
+    subordinated_note.interest_payable: subordinated_note
+    preferred_a.capital: preferred_a
+    preferred_a.dividend_payable: preferred_a
+    sales: company
+    cogs: company
+    sga: company
+    interest_income: company
+    receivables: company
+    prepaid: company
+    payables: company
+    accrued: company
+    other_current_liabilities: company
+    tax_payable: company
+    ppe_gross: company
+    deal.purchase: company
+    transaction_costs: company
+    deal_tax_benefit: company
+    net_dtl: company
+    legacy_debt: company
+    preferred_issue_costs: company
+    subordinated_note.fee_payable: company
+    revolver.debt: company
+    revolver.interest_payable: company
+    revolver.fee_payable: company
+    term_loan_a.debt: company
+    term_loan_a.interest_payable: company
+    term_loan_a.fee_payable: company
+    senior_note.debt: company
+    senior_note.interest_payable: company
+    senior_note.fee_payable: company
+    revolver_fee.deferred: company
+    term_loan_a_fee.deferred: company
+    senior_note_fee.deferred: company
+    subordinated_note_fee.deferred: company
+  balance_sheet:                  # the workbook's balance sheet rows (215-268)
+    cash: cash
+    receivables: receivables
+    prepaid: prepaid
+    ppe_gross: ppe_gross
+    accumulated_depreciation: accumulated_depreciation
+    goodwill: goodwill
+    intangibles: intangibles
+    other_lt_assets: other_lt_assets
+    payables: payables
+    accrued: accrued
+    other_current_liabilities: other_current_liabilities
+    legacy_debt: legacy_debt
+    net_dtl: net_dtl
+    other_lt_liabilities: other_lt_liabilities
+    preferred_a.capital: preferred_a
+    common_par: common_par
+    apic: apic
+    sponsor.capital: apic
+    management.capital: apic
+    preferred_issue_costs: apic
+    retained_earnings: retained_earnings
+    preferred_a.dividends: retained_earnings
+    sponsor.distributions: retained_earnings
+    management.distributions: retained_earnings
+    preferred_a.dividend_payable: settled_in_period
+    tax_payable: settled_in_period
+    deal.purchase: settled_in_period
+    revolver.debt: revolver
+    revolver.capitalised_interest: revolver
+    revolver.interest_payable: settled_in_period
+    revolver.fee_payable: settled_in_period
+    revolver.deferred_fees: capitalised_financing_costs
+    term_loan_a.debt: term_loan_a
+    term_loan_a.capitalised_interest: term_loan_a
+    term_loan_a.interest_payable: settled_in_period
+    term_loan_a.fee_payable: settled_in_period
+    term_loan_a.deferred_fees: capitalised_financing_costs
+    senior_note.debt: senior_note
+    senior_note.capitalised_interest: senior_note
+    senior_note.interest_payable: settled_in_period
+    senior_note.fee_payable: settled_in_period
+    senior_note.deferred_fees: capitalised_financing_costs
+    subordinated_note.debt: subordinated_note
+    subordinated_note.capitalised_interest: subordinated_note
+    subordinated_note.interest_payable: settled_in_period
+    subordinated_note.fee_payable: settled_in_period
+    subordinated_note.deferred_fees: capitalised_financing_costs
+    revolver_fee.deferred: capitalised_financing_costs
+    term_loan_a_fee.deferred: capitalised_financing_costs
+    senior_note_fee.deferred: capitalised_financing_costs
+    subordinated_note_fee.deferred: capitalised_financing_costs
+  income_statement:               # the workbook's income statement rows (144-176)
+    sales: sales
+    cogs: cogs
+    sga: sga
+    depreciation: depreciation
+    amortisation: amortisation
+    sbc: sbc
+    interest_income: interest_income
+    revolver.interest: revolver_interest
+    revolver.fees: revolver_interest
+    term_loan_a.interest: term_loan_a_interest
+    term_loan_a.fees: term_loan_a_interest
+    senior_note.interest: senior_note_interest
+    senior_note.fees: senior_note_interest
+    subordinated_note.interest: subordinated_note_interest
+    subordinated_note.fees: subordinated_note_interest
+    revolver_fee.amortisation: financing_cost_amortisation
+    term_loan_a_fee.amortisation: financing_cost_amortisation
+    senior_note_fee.amortisation: financing_cost_amortisation
+    subordinated_note_fee.amortisation: financing_cost_amortisation
+    tax_expense: tax
+    deferred_tax_expense: tax
+    transaction_costs: deal
+    deal_tax_benefit: deal
+rulebooks:
+  deal:
+    kind: acquisition
+    entity: company
+    cash: cash
+    phase: deal
+    at: 0
+    tax_rate: 0.35
+    offer:
+      share_price: 12.81
+      premium: 0.25
+      basic_shares: 34.922
+      options:                  # exercised when the strike is at or below the offer price
+        - {number: 0.402, strike: 9.13}
+        - {number: 0.12, strike: 9.93}
+        - {number: 0.466, strike: 11.6}
+        - {number: 0.3, strike: 12.64}
+        - {number: 0.52, strike: 19.48}
+        - {number: 0.422, strike: 27.03}
+        - {number: 0.375, strike: 45.78}
+    book_equity: [common_par, apic, retained_earnings]
+    goodwill: goodwill
+    marks:
+      - {account: ppe_gross, amount: 15}
+      - {account: intangibles, share_of_excess: 0.25}
+    deferred_tax: net_dtl
+    refinance: [legacy_debt]
+    min_cash: 100
+    transaction_costs:
+      expense: transaction_costs
+      items:
+        advisory: {rate: 0.01}      # of the equity purchase price
+        sponsor: {rate: 0.0065}
+        legal: 3
+        accounting: 2.5
+        printing: 1
+        other: 2
+    tax_benefit: deal_tax_benefit
+    financing_fees: [revolver_fee.fee, term_loan_a_fee.fee, senior_note_fee.fee, subordinated_note_fee.fee]
+    sources:
+      - {claim: term_loan_a.draw}
+      - {claim: senior_note.draw}
+      - {claim: subordinated_note.draw}
+      - {leg: preferred_a.issue, amount: 10, issue_cost: {rate: 0.03, account: preferred_issue_costs}}
+      - {leg: management.contribute, amount: 10}
+    residual: sponsor.contribute
+  operations:
+    kind: operating_plan
+    entity: company
+    cash: cash
+    phase: operate
+    from: 1
+    until: 10
+    lines:
+      sales: {kind: income, account: sales, first: 464.3, growth_from: &ltm_sales [106.7, 108.405, 110.7, 112.2]}
+      cogs: {kind: expense, account: cogs, first: 237.9, ratio_of: sales}
+      sga: {kind: expense, account: sga, first: 87.7, ratio_of: sales}
+      sbc: {kind: share_compensation, account: sbc, against: apic, first: 8, ratio_of: sales}
+      depreciation: {kind: depreciation, account: depreciation, against: accumulated_depreciation,
+                     first: 15.8, ratio_of: sales, plus: [{mark: deal.ppe_gross, periods: 7}]}
+      amortisation: {kind: depreciation, account: amortisation, against: intangibles,
+                     first: 14.9, ratio_of: sales, plus: [{mark: deal.intangibles, periods: 5}]}
+      capex: {kind: investment, account: ppe_gross, first: 21.8, ratio_of: sales}
+      interest_income: {kind: income, account: interest_income, on_balance: cash, rate: [0, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]}
+    working_capital:            # held at the close balance over the last four quarters of the driver
+      receivables: {side: asset, of: sales, base: *ltm_sales}
+      prepaid: {side: asset, of: cogs, base: &ltm_cogs [54.7, 56.1, 56.8, 57.5]}
+      payables: {side: liability, of: cogs, base: *ltm_cogs}
+      accrued: {side: liability, of: cogs, base: *ltm_cogs}
+      other_current_liabilities: {side: liability, of: cogs, base: *ltm_cogs}
+  tax:
+    kind: income_tax
+    entity: company
+    phase: tax
+    from: 1                     # the close's tax is the deal's
+    expense: tax_expense
+    payable: tax_payable
+    # the forecast's blended rate (K706): 0.3299 federal x (1 - 0.03) + 0.03 state,
+    # not the 35% the deal uses (K24)
+    rate: 0.350003
+    carry_forward_periods: null
+    scheme:
+      sales: taxable
+      cogs: taxable
+      sga: taxable
+      depreciation: taxable
+      amortisation: taxable
+      sbc: taxable
+      interest_income: taxable
+      revolver.interest: taxable
+      revolver.fees: taxable
+      term_loan_a.interest: taxable
+      term_loan_a.fees: taxable
+      senior_note.interest: taxable
+      senior_note.fees: taxable
+      subordinated_note.interest: taxable
+      subordinated_note.fees: taxable
+      revolver_fee.amortisation: non_deductible       # deducted at the close
+      term_loan_a_fee.amortisation: non_deductible       # deducted at the close
+      senior_note_fee.amortisation: non_deductible       # deducted at the close
+      subordinated_note_fee.amortisation: non_deductible       # deducted at the close
+      transaction_costs: non_deductible      # deducted at the close, by the deal
+      deal_tax_benefit: non_deductible
+      tax_expense: non_deductible
+      deferred_tax_expense: non_deductible
+    deferred:
+      account: net_dtl
+      expense: deferred_tax_expense
+      nil_tax_base: [revolver_fee.deferred, term_loan_a_fee.deferred, senior_note_fee.deferred, subordinated_note_fee.deferred]
+  waterfall:
+    kind: waterfall
+    entity: company
+    phase: pay
+    cash: cash
+    tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: revolver.fee}
+      - {claim: revolver.interest}
+      - {claim: term_loan_a.interest}
+      - {claim: senior_note.interest}
+      - {claim: subordinated_note.interest}
+      - {claim: preferred_a.dividend}
+      - {claim: term_loan_a.principal}
+      - {claim: senior_note.principal}
+      - {claim: subordinated_note.principal}
+      - {name: minimum_cash, keep: 100, from: 1, until: 10}
+      - {claim: term_loan_a.prepay}      # the sweep: what is left above the minimum
+    residual: null                           # no common dividends: the rest is retained
+    cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+    service: [term_loan_a.interest, senior_note.interest, subordinated_note.interest, term_loan_a.principal,
+              senior_note.principal, subordinated_note.principal]
+    tests: []
+cuts:
+  operating: {entity: company, account: cash, scheme: cash_flow, include: [operating, tax]}
+  investing: {entity: company, account: cash, scheme: cash_flow, include: [investing]}
+  financing: {entity: company, account: cash, scheme: cash_flow, include: [financing]}
+lenses:
+  exit:
+    kind: exit_returns
+    entity: company
+    cash: cash
+    period: 4
+    multiple: 5
+    ebitda: {scheme: income_statement, include: [sales, cogs, sga]}
+    net_debt: {scheme: balance_sheet, include: [revolver, term_loan_a, senior_note, subordinated_note, preferred_a, cash]}
+    flows: holders
+    claims_scheme: balance_sheet
+    holders:
+      subordinated_note: {classes: [subordinated_note], claim: [subordinated_note]}
+      preferred_a: {classes: [preferred_a], claim: [preferred_a]}
+      sponsor: {classes: [sponsor], claim: []}
+      management: {classes: [management], claim: []}
+    ownership:
+      paid: [sponsor, management]
+      at: 0
+      layers:                   # kickers, then the management performance pool, which dilutes them too
+        - {subordinated_note: 0.02, preferred_a: 0.0025}
+        - {management: 0.005}
+measures:
+  subordinated_note_irr: {measure: xirr, cut: exit.subordinated_note, dates: ['2023-12-31', '2024-12-31', '2025-12-31', '2026-12-31', '2027-12-31', '2028-12-31', '2029-12-31', '2030-12-31', '2031-12-31', '2032-12-31', '2033-12-31']}
+  subordinated_note_moic: {measure: moic, cut: exit.subordinated_note}
+  preferred_a_irr: {measure: xirr, cut: exit.preferred_a, dates: ['2023-12-31', '2024-12-31', '2025-12-31', '2026-12-31', '2027-12-31', '2028-12-31', '2029-12-31', '2030-12-31', '2031-12-31', '2032-12-31', '2033-12-31']}
+  preferred_a_moic: {measure: moic, cut: exit.preferred_a}
+  sponsor_irr: {measure: xirr, cut: exit.sponsor, dates: ['2023-12-31', '2024-12-31', '2025-12-31', '2026-12-31', '2027-12-31', '2028-12-31', '2029-12-31', '2030-12-31', '2031-12-31', '2032-12-31', '2033-12-31']}
+  sponsor_moic: {measure: moic, cut: exit.sponsor}
+  management_irr: {measure: xirr, cut: exit.management, dates: ['2023-12-31', '2024-12-31', '2025-12-31', '2026-12-31', '2027-12-31', '2028-12-31', '2029-12-31', '2030-12-31', '2031-12-31', '2032-12-31', '2033-12-31']}
+  management_moic: {measure: moic, cut: exit.management}

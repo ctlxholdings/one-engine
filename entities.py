@@ -35,6 +35,13 @@ functional ones (:mod:`one_engine.contracts`, the nightmare's dollar
 loan). Holders of one entity's equity are equity contracts in its book
 (the nightmare's LP and GP). Not yet: holder books, consolidation with
 eliminations (added when a case needs a multi-entity chain).
+
+Opening balances (added for the Macabacus LBO, step 7f): a book may start
+from a stated balance sheet rather than from nothing. :meth:`Group.open`
+declares an account with its nature and its opening balance; the kernel
+then refuses an opening that does not balance or breaks a floor, exactly
+as it refuses a posting. A company bought as a going concern has a past;
+a project SPV starts at zero and needs none.
 """
 from __future__ import annotations
 
@@ -88,6 +95,7 @@ class Group:
         self.settlements: List[Settlement] = []
         self.records: List[Dict[str, Any]] = []
         self._withholding: Dict[str, Tuple[Fraction, str]] = {}
+        self._openings: Dict[str, Dict[str, Fraction]] = defaultdict(dict)
 
     # ── assembly ────────────────────────────────────────────────────────────
 
@@ -109,6 +117,20 @@ class Group:
         if self._books:
             raise KernelError("accounts must be declared before the group runs")
         self._merge(entity, name, nature, unit, who="a rulebook")
+
+    def open(self, entity: str, name: str, nature: Nature, unit: str, balance: Number) -> None:
+        """Declare an account with its natural balance at the start of the grid.
+
+        The nature must agree with every other declaration of the account
+        (a contract's or a rulebook's). The book checks, when it is built,
+        that the openings balance per unit and respect the floors.
+        """
+        if self._books:
+            raise KernelError("openings must be stated before the group runs")
+        if name in self._openings[entity]:
+            raise KernelError(f"{entity}.{name} has two opening balances")
+        self._merge(entity, name, nature, unit, who="the opening balance sheet")
+        self._openings[entity][name] = exact(balance)
 
     def register(self, phase: str, handler: Handler) -> None:
         """Run ``handler(group, period)`` in ``phase`` of every period, after that phase's flows."""
@@ -152,7 +174,8 @@ class Group:
             self._books[entity] = Book(
                 entity=entity, periods=self.periods, phases=self.phases,
                 accounts=[Account(n, nat, unit, floor=self.floors.get((entity, n)))
-                          for n, (nat, unit) in accts.items()])
+                          for n, (nat, unit) in accts.items()],
+                opening=self._openings.get(entity))
 
     # ── running ─────────────────────────────────────────────────────────────
 

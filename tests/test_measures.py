@@ -70,3 +70,14 @@ def test_discount_needs_one_factor_per_flow():
     assert discount([100, 100], [1, 0.5]) == 150
     with pytest.raises(MeasureError, match="discount factors"):
         discount([100, 100, 100], [1, 0.5])
+
+
+def test_moic_is_money_received_over_money_paid():
+    from one_engine.measures import moic
+    assert moic([-50, 5.125, 5.125, 5.125, 75.894]) == pytest.approx(91.269 / 50)
+
+
+def test_moic_refuses_a_stream_with_nothing_invested():
+    from one_engine.measures import moic
+    with pytest.raises(MeasureError, match="nothing was invested"):
+        moic([0, 5, 5])

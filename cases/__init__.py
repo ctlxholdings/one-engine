@@ -24,6 +24,22 @@ The case is built afresh from the file for every run of the loop.
 
 A measure ``xirr`` takes ``dates`` (one ISO date per period) and returns
 an annual rate.
+
+Added for the Macabacus LBO (step 7f):
+
+* ``opening`` (optional): per entity, the balance sheet the books open on,
+  each account with its ``nature`` and ``value``. One account per entity
+  may have ``value: balancing``: it takes the amount that makes the
+  opening balance (a balance sheet copied from a float workbook is out by
+  about 1e-14, which the exact kernel would refuse). The amount is kept
+  in :attr:`CaseResult.balancing`, so a test can bound it.
+* ``lenses`` (optional): views a pack computes from the finished books,
+  such as holders' returns at an exit (``LENSES``). Each returns named
+  series, which measures read as ``<lens>.<series>``, and values kept in
+  :attr:`CaseResult.lenses`. A lens never posts.
+* the ``moic`` measure.
+* The corporate pack's contract types and rulebooks are available beside
+  the project-finance ones; a name defined twice refuses at import.
 """
 from __future__ import annotations
 
@@ -40,11 +56,28 @@ from one_engine.cuts import Scheme, Series, cash_flow_cut
 from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.loops import Loop, LoopReport, close
-from one_engine.packs.contracts import REGISTRY
-from one_engine.packs.pf import LOOP_RULES, RULEBOOKS
+from one_engine.kernel import Nature
+from one_engine.packs import contracts as _contracts, corporate as _corporate, pf as _pf
+from one_engine.packs.pf import LOOP_RULES
 from one_engine.units import exact
 
-MEASURES = {"irr": M.irr, "payback": M.payback}
+MEASURES = {"irr": M.irr, "payback": M.payback, "moic": M.moic}
+
+
+def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:
+    """One registry from several packs; a name two packs define is a conflict, not an override."""
+    out: Dict[str, Any] = {}
+    for reg in registries:
+        twice = sorted(set(out) & set(reg))
+        if twice:
+            raise ImportError(f"pack names defined twice: {twice}")
+        out.update(reg)
+    return out
+
+
+REGISTRY = _merge(_contracts.REGISTRY, _corporate.TYPES)
+RULEBOOKS = _merge(_pf.RULEBOOKS, _corporate.RULEBOOKS)
+LENSES = _merge(_corporate.LENSES)
 
 
 @dataclass
@@ -59,6 +92,8 @@ class CaseResult:
     verdicts: Dict[str, list] = field(default_factory=dict)
     rule_checks: Dict[str, List] = field(default_factory=dict)
     loops: Dict[str, LoopReport] = field(default_factory=dict)
+    lenses: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    balancing: Dict[str, tuple] = field(default_factory=dict)
     pending_measures: Dict[str, Callable[[], Any]] = field(default_factory=dict, repr=False)
 
     def cut(self, name: str) -> Series:
@@ -185,6 +220,9 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
     fr.finish()
 
     group = Group(periods=int(top.take("periods")), phases=top.take("phases"), floors=floors)
+    balancing = {}
+    for entity, accts in top.take_or_default("opening", {}, reason="the books open empty").value.items():
+        balancing[entity] = _open(group, entity, accts, currency, f"{src}:opening.{entity}")
     for cid, raw in top.take("contracts").items():
         r = Reader(raw, source=f"{src}:contracts.{cid}")
         tname = r.take("type")
@@ -200,9 +238,10 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
     schemes = {n: Scheme(n, dict(m)) for n, m in top.take("schemes").items()}
     rule_check_fns = {}
     rulebooks = top.take_or_default("rulebooks", {}, reason="a case with contracts only").value
-    # what rulebooks share: asset registers (read by income tax) and distributors (a promote that
-    # takes a waterfall's residual), each under the rulebook's name
-    shared = {"currency": currency, "schemes": schemes, "registers": {}, "distributors": {}}
+    # what rulebooks share: asset registers (read by income tax), distributors (a promote that
+    # takes a waterfall's residual) and deals (an acquisition's marks, read by an operating plan),
+    # each under the rulebook's name
+    shared = {"currency": currency, "schemes": schemes, "registers": {}, "distributors": {}, "deals": {}}
     for rname, raw in rulebooks.items():
         r = Reader(raw, source=f"{src}:rulebooks.{rname}")
         kind = r.take("kind")
@@ -219,6 +258,17 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
         cuts[cname] = cash_flow_cut(group.book(r.take("entity")), r.take("account"),
                                     schemes[r.take("scheme")], r.take("include"), name=cname)
         r.finish()
+    lens_values: Dict[str, Dict[str, Any]] = {}
+    for lname, raw in top.take_or_default("lenses", {}, reason="no lens declared").value.items():
+        r = Reader(raw, source=f"{src}:lenses.{lname}")
+        kind = r.take("kind")
+        if kind not in LENSES:
+            raise InputError(f"{src}: lens '{lname}' has unknown kind '{kind}'")
+        out = LENSES[kind](group, r, {"currency": currency, "schemes": schemes})
+        r.finish()
+        for sname, series in out["series"].items():
+            cuts[f"{lname}.{sname}"] = series
+        lens_values[lname] = out["values"]
     # measures are read here and evaluated once the run is accepted: a loop's
     # first runs (a loan of zero) may have no return to measure
     pending: Dict[str, Callable[[], Any]] = {}
@@ -243,7 +293,30 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
     rule_checks = {n: fn() for n, fn in rule_check_fns.items()}
     out = CaseResult(name, group, cuts, {}, measure_cut, verdicts, rule_checks)
     out.pending_measures = pending
+    out.lenses, out.balancing = lens_values, {e: b for e, b in balancing.items() if b}
     return out
+
+
+def _open(group: Group, entity: str, accts: Mapping[str, Any], currency: str, where: str):
+    """State one entity's opening balance sheet; return the balancing account and amount, if one is named."""
+    stated, balancing = {}, None
+    for acct, raw in accts.items():
+        r = Reader(raw, source=f"{where}.{acct}")
+        nature, value = Nature(r.take("nature")), r.take("value")
+        r.finish()
+        if value == "balancing":
+            if balancing is not None:
+                raise InputError(f"{where}: only one account may balance the opening, not {balancing[0]} and {acct}")
+            balancing = (acct, nature)
+        else:
+            stated[acct] = (nature, exact(value))
+    if balancing is not None:
+        # debit-natured balances less credit-natured ones must be zero: the balancing account takes the rest
+        net = sum((v if n.debit_natured else -v for n, v in stated.values()), exact(0))
+        stated[balancing[0]] = (balancing[1], -net if balancing[1].debit_natured else net)
+    for acct, (nature, value) in stated.items():
+        group.open(entity, acct, nature, currency, value)
+    return (balancing[0], stated[balancing[0]][1]) if balancing else None
 
 
 def _measure(result: CaseResult) -> CaseResult:

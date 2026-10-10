@@ -107,3 +107,37 @@ def test_withholding_only_applies_to_a_payment_out():
         _withheld("shl.draw")
     with pytest.raises(KernelError, match="no claim or leg"):
         _withheld("shl.coupon")
+
+
+# ── opening balances (Macabacus LBO, step 7f) ─────────────────────────────
+
+def _opened(openings, floors=None):
+    g = Group(periods=1, phases=["run"], floors=floors)
+    for name, nature, value in openings:
+        g.open("co", name, nature, "USD", value)
+    g.run()
+    return g
+
+
+def test_a_group_opens_on_a_stated_balance_sheet():
+    g = _opened([("cash", Nature.ASSET, 100), ("debt", Nature.LIABILITY, 60), ("equity", Nature.EQUITY, 40)])
+    assert g.book("co").opening("cash", 0) == 100 and g.book("co").balance("equity", 0) == 40
+
+
+def test_an_opening_that_does_not_balance_refuses():
+    with pytest.raises(KernelError, match="does not balance"):
+        _opened([("cash", Nature.ASSET, 100), ("debt", Nature.LIABILITY, 60), ("equity", Nature.EQUITY, F(40) + F(1, 10**14))])
+
+
+def test_an_opening_whose_nature_disagrees_with_another_declaration_refuses():
+    g = Group(periods=1, phases=["run"])
+    g.declare("co", "cash", Nature.ASSET, "USD")
+    with pytest.raises(KernelError, match="declared as"):
+        g.open("co", "cash", Nature.LIABILITY, "USD", 0)
+
+
+def test_an_account_opened_twice_refuses():
+    g = Group(periods=1, phases=["run"])
+    g.open("co", "cash", Nature.ASSET, "USD", 0)
+    with pytest.raises(KernelError, match="two opening balances"):
+        g.open("co", "cash", Nature.ASSET, "USD", 0)

@@ -52,7 +52,15 @@ Rulebooks
     ``deferred``, the net deferred tax balance
     (:func:`~one_engine.tax.deferred_tax`, on the registers' NBVs and the
     losses carried forward) is kept in its account, its movement charged
-    to a deferred tax expense line.
+    to a deferred tax expense line. ``deferred.nil_tax_base`` (Macabacus
+    LBO, step 7f) lists assets whose cost was deducted for tax when paid
+    (capitalised financing fees): their carrying amount is a temporary
+    difference with a nil tax base, so the deferred balance moves by the
+    rate times their movement. That mode measures movements only, so a
+    deferred balance carried in from an opening balance sheet keeps the
+    part this rulebook does not track; it cannot be combined with a
+    ``timing`` register. ``from`` (default 0) is the first period charged:
+    a deal's own tax at the close is the acquisition's (step 7f).
 
 ``provision``
     A liability charged straight-line and paid once
@@ -82,7 +90,8 @@ Rulebooks
     sculpted loan reads it. A tier with ``share_of_remaining`` takes at
     most that share of what is still unallocated when its turn comes (a
     mezzanine cash sweep). The residual may name a distributor rulebook
-    (a promote) instead of a leg.
+    (a promote) instead of a leg, or be null: the company retains it, and
+    it stays in the account (Macabacus LBO, step 7f: no common dividends).
 
 ``withholding``
     Registers withholding rates on payments (``senior.interest: 0.1``,
@@ -346,6 +355,7 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
 def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     entity, phase, unit = r.take("entity"), r.take("phase"), ctx["currency"]
     expense, payable = r.take("expense"), r.take("payable")
+    start = int(r.take_or_default("from", 0, reason="tax is charged from the first period").value)
     cf = r.take("carry_forward_periods")
     policy = TaxPolicy(exact(r.take("rate")), None if cf is None else int(cf))
     scheme = dict(r.take("scheme"))
@@ -357,14 +367,21 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     timing_lines = sorted(k for k, v in scheme.items() if v == "timing")
     if (timing_name is None) != (not timing_lines):
         raise InputError("income_tax: lines classified 'timing' need a 'timing' register, and only then")
+    nil_base = []
     if deferred is not None:
         dr = Reader(deferred, source="income_tax.deferred")
         dt_acct, dt_expense = dr.take("account"), dr.take("expense")
+        nil_base = list(dr.take_or_default("nil_tax_base", [], reason="no asset has a nil tax base").value)
         dr.finish()
+        if nil_base and timing_name is not None:
+            raise InputError("income_tax: deferred.nil_tax_base measures movements and cannot be combined "
+                             "with a 'timing' register")
         group.declare(entity, dt_acct, Nature.LIABILITY, unit)
         group.declare(entity, dt_expense, Nature.EXPENSE, unit)
 
     def handler(g: Group, t: int) -> None:
+        if t < start:
+            return
         base = taxable_base(g.book(entity), t, scheme)
         if timing_name is not None:
             regs = ctx["registers"][timing_name]
@@ -377,11 +394,16 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"tax.charge:{t}"))
         g.record("tax", t, base=base, tax=tax, losses=pool.available(t + 1))
         if deferred is not None:
-            regs = ctx["registers"][timing_name] if timing_name else None
-            carrying = regs.book.nbv() if regs else Fraction(0)
-            tax_base = regs.tax.nbv() if regs else Fraction(0)
-            target = deferred_tax(policy.rate, carrying, tax_base, pool.available(t + 1))
-            move = target - g.book(entity).balance(dt_acct, t)
+            book = g.book(entity)
+            if nil_base:
+                # the carrying amount of an asset deducted when paid is all temporary difference
+                move = policy.rate * sum((book.balance(a, t) - book.opening(a, t) for a in nil_base), Fraction(0))
+            else:
+                regs = ctx["registers"][timing_name] if timing_name else None
+                carrying = regs.book.nbv() if regs else Fraction(0)
+                tax_base = regs.tax.nbv() if regs else Fraction(0)
+                target = deferred_tax(policy.rate, carrying, tax_base, pool.available(t + 1))
+                move = target - book.balance(dt_acct, t)
             if move > 0:
                 g.post(entity, Posting(t, phase, dt_expense, dt_acct, move, {dt_expense: 1, dt_acct: 1},
                                        "tax", f"tax.deferred:{t}"))
@@ -520,7 +542,7 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             return lambda paid: min(due[name], share * (available - sum(paid.values(), Fraction(0))))
 
         a = allocate(available, [Tier(n, cap(n, sh), blocked_by=blocked.get(n)) for n, _, _, sh in tiers_spec],
-                     residual=residual)
+                     residual=residual or "retained")
         for name, kind, ref, _ in tiers_spec:
             if kind == "claim":
                 if ref in claims:
@@ -528,7 +550,9 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             elif kind == "account" and a.paid[name]:
                 g.post(entity, Posting(t, phase, ref, cash, a.paid[name], {ref: -1, cash: -1}, "allocation",
                                        f"waterfall.{name}:{t}"))
-        if residual in blocked:
+        if residual is None:
+            pass                                    # retained: the cash stays where it is
+        elif residual in blocked:
             g.record("trapped", t, amount=a.residual, by=blocked[residual])
         elif residual in ctx["distributors"]:
             ctx["distributors"][residual](g, t, a.residual, phase)

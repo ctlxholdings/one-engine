@@ -22,6 +22,9 @@ Added for Bodmer's solar case (plan step 7e), whose grid mixes months and
 quarters: :func:`xirr` (dated flows, actual/365, as Excel's XIRR) and
 :func:`discount` (a stream times stated discount factors, for a PV at a
 compounding index rather than a constant rate).
+
+Added for the Macabacus LBO (step 7f): :func:`moic`, money out over money
+in (the workbook's "cash-on-cash").
 """
 from __future__ import annotations
 
@@ -138,6 +141,18 @@ def _root(f, lo: float, hi: float, grid: int) -> float:
     if len(roots) > 1:
         raise AmbiguousRate(roots)
     return roots[0]
+
+
+def moic(stream: Sequence[Number]) -> float:
+    """Multiple on invested capital: what the holder received over what it paid.
+
+    The sum of the positive flows over the sum of the negative ones, in
+    absolute value. Refuses a stream with no outflow (nothing was invested).
+    """
+    paid = -sum(float(c) for c in stream if c < 0)
+    if paid == 0:
+        raise MeasureError("the stream has no outflow, so nothing was invested")
+    return sum(float(c) for c in stream if c > 0) / paid
 
 
 def coverage(available: Number, service: Number):

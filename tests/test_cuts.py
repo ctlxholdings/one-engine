@@ -37,3 +37,46 @@ def test_an_unclassified_counter_account_refuses():
 def test_a_class_the_scheme_never_uses_refuses():
     with pytest.raises(CutError, match="operatng"):
         cash_flow_cut(book(), "cash", SCHEME, include={"operatng"})
+
+
+# ── P&L and balance cuts (Macabacus LBO, step 7f) ─────────────────────────
+
+from one_engine.cuts import balance_cut, pnl_cut  # noqa: E402
+
+
+def pl_book():
+    b = Book(entity="co", periods=2, phases=("run",),
+             accounts=[Account("cash", Nature.ASSET, "USD"), Account("debt", Nature.LIABILITY, "USD"),
+                       Account("equity", Nature.EQUITY, "USD"), Account("sales", Nature.INCOME, "USD"),
+                       Account("cogs", Nature.EXPENSE, "USD"), Account("interest", Nature.EXPENSE, "USD")],
+             opening={"cash": 50, "debt": 30, "equity": 20})
+    for t, (s, c, i) in enumerate([(100, 60, 3), (110, 66, 3)]):
+        b.post(Posting(t, "run", "cash", "sales", s, {"cash": 1, "sales": 1}, "t", f"s{t}"))
+        b.post(Posting(t, "run", "cogs", "cash", c, {"cogs": 1, "cash": -1}, "t", f"c{t}"))
+        b.post(Posting(t, "run", "interest", "cash", i, {"interest": 1, "cash": -1}, "t", f"i{t}"))
+        b.close_period(t)
+    return b
+
+
+PL = Scheme("pl", {"sales": "ebitda", "cogs": "ebitda", "interest": "financing"})
+BS = Scheme("bs", {"cash": "cash", "debt": "debt", "equity": "equity"})
+
+
+def test_a_pnl_cut_is_income_less_expense_by_period():
+    assert pnl_cut(pl_book(), PL, ["ebitda"]).values == [40, 44]
+    assert pnl_cut(pl_book(), PL, ["ebitda", "financing"]).values == [37, 41]
+
+
+def test_a_balance_cut_counts_claims_positive_and_assets_negative():
+    # net debt: debt less cash, from the opening state on
+    assert balance_cut(pl_book(), BS, ["debt", "cash"]).values == [30 - 87, 30 - 128]
+
+
+def test_a_pnl_line_left_out_of_the_scheme_refuses():
+    with pytest.raises(CutError, match="interest"):
+        pnl_cut(pl_book(), Scheme("pl", {"sales": "ebitda", "cogs": "ebitda"}), ["ebitda"])
+
+
+def test_a_balance_left_out_of_the_scheme_refuses():
+    with pytest.raises(CutError, match="equity"):
+        balance_cut(pl_book(), Scheme("bs", {"cash": "cash", "debt": "debt"}), ["debt"])
