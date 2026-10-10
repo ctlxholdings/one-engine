@@ -89,6 +89,13 @@ depreciated differently:
   contract's own account (``{id}``) rather than the shared ``cwip``, so
   that each class has its own asset register.
 
+Added for ModelOff 2017 "Collect the Cash" (step 7q), a daily cash forecast:
+
+* ``offtake_on_dates`` a sale (volume x price) collected in full, with
+  everything owed before it, on each listed collection period
+  (``collect_on``), and not otherwise: a customer who accrues every day
+  and pays on the third Thursday, or on the next weekday.
+
 Modelling note on ``shared_savings``: the client's savings are booked as an
 income line ("avoided energy cost"), i.e. a with-versus-without view of the
 client's utility bill. A lens that restates the client against its baseline
@@ -585,6 +592,28 @@ OFFTAKE = ContractType(
 )
 
 
+def _offtake_on_dates(terms, t, bal=None):
+    """A sale collected in full, with everything owed before it, on each of the listed collection periods."""
+    sale = _sale(terms, t)
+    out = {"sale": sale}
+    if bal is not None:
+        on = {int(x) for x in terms["collect_on"]}
+        out["collect"] = bal("seller", "{id}.receivable") + sale if t in on else exact(0)
+    return out
+
+
+# a sale that accrues day by day and is paid on stated days (the third Thursday of each month: ModelOff 2017
+# "Collect the Cash", step 7q); payment_days cannot say this, since its target is a share of each period's sale
+OFFTAKE_ON_DATES = ContractType(
+    name="offtake_on_dates",
+    terms=("volume", "price", "collect_on", "end"),
+    parties=("seller",),
+    accounts=OFFTAKE.accounts,
+    flows=OFFTAKE.flows,
+    amounts=_offtake_on_dates,
+)
+
+
 def _cost_base(terms, t):
     """Fixed annual cost per period plus rate x volume, both times the escalation ``index`` of ``t``."""
     if not int(terms["start"]) <= t <= int(terms["end"]):
@@ -831,4 +860,5 @@ SPONSOR_EQUITY = ContractType(
 REGISTRY = {t.name: t for t in (EQUITY_FUNDING, ONE_OFF_PURCHASE, SHARED_SAVINGS, TERM_LOAN, SHAREHOLDER_LOAN,
                                 LOAN, FOREIGN_LOAN, OFFTAKE, OPERATING_COST, CAPEX, DEBT_RESERVE,
                                 RESERVE_LETTER_OF_CREDIT, MAINTENANCE_RESERVE, SINKING_FUND, SPONSOR_EQUITY,
-                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF, DEPOSIT_ACCOUNT, CAPEX_CLASS)}
+                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF, DEPOSIT_ACCOUNT, CAPEX_CLASS,
+                                OFFTAKE_ON_DATES)}

@@ -89,3 +89,30 @@ def test_a_time_of_day_prices_as_the_next_midnight():
     assert I("2013-01-01T00:00") == I("2013-01-01")
     with pytest.raises(CalendarError):
         I("2013-01-01T12:00:00")
+
+
+# ── days named by their rank in a month (ModelOff 2017 "Collect the Cash", step 7q) ──
+
+import datetime as dt  # noqa: E402
+
+from one_engine.dates import nth_business_day, nth_weekday  # noqa: E402
+
+
+def test_the_third_thursday_and_a_fifth_weekday_a_month_lacks():
+    assert nth_weekday(2018, 1, 3, 3) == dt.datetime(2018, 1, 18)
+    assert nth_weekday(2018, 2, 3, 3) == dt.datetime(2018, 2, 15)          # February 2018 starts on a Thursday
+    assert nth_weekday(2018, 2, 3, 1) == dt.datetime(2018, 2, 1)
+    assert nth_weekday(2018, 3, 3, 5) == dt.datetime(2018, 3, 29)
+    with pytest.raises(CalendarError, match="has no weekday"):
+        nth_weekday(2018, 2, 3, 5)
+    with pytest.raises(CalendarError, match="do not name a day"):
+        nth_weekday(2018, 2, 7, 1)
+
+
+def test_the_nth_business_day_skips_weekends_and_holidays():
+    assert nth_business_day(2018, 9, 1, "MF") == dt.datetime(2018, 9, 3)    # 1 September 2018 is a Saturday
+    assert nth_business_day(2018, 9, 3, "MF") == dt.datetime(2018, 9, 5)
+    assert nth_business_day(2018, 9, 1, "MF", frozenset({dt.date(2018, 9, 3)})) == dt.datetime(2018, 9, 4)
+    assert nth_business_day(2018, 9, 1, "NC") == dt.datetime(2018, 9, 1)
+    with pytest.raises(CalendarError, match="fewer than 30"):
+        nth_business_day(2018, 9, 30, "MF")

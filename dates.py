@@ -31,6 +31,10 @@ What it holds, and only that
   unshifted one while only the payment moves.
 * :func:`year_fraction` for the four conventions the corpus uses (A365,
   A360, AA = actual/actual ISDA, 30E360). Exact fractions, like the kernel.
+* :func:`nth_weekday` and :func:`nth_business_day` name a day of a month
+  by its rank: the third Thursday, the first business day (ModelOff 2017
+  "Collect the Cash", step 7q, whose customers pay on such days; neither
+  is a cycle step from an anchor).
 
 Everything unbuilt refuses by name; a near-miss convention is never
 borrowed, because a wrong day count is a wrong interest bill that ties.
@@ -196,6 +200,36 @@ def shift(d: _dt.datetime, convention: Optional[str], calendar: Optional[str],
         while not is_business_day(out, calendar, holidays):
             out -= step
     return out, (out if convention.startswith("SC") else d)
+
+
+def nth_weekday(year: int, month: int, weekday: int, n: int) -> _dt.datetime:
+    """The ``n``-th ``weekday`` (0 Monday .. 6 Sunday) of a month, counting from one: the third Thursday.
+
+    A month has four or five of each weekday; asking for one it does not
+    have refuses rather than spilling into the next month.
+    """
+    if not 0 <= weekday <= 6 or n < 1:
+        raise CalendarError(f"weekday {weekday} (0..6) and rank {n} (from 1) do not name a day")
+    first = _dt.date(year, month, 1)
+    day = 1 + (weekday - first.weekday()) % 7 + 7 * (n - 1)
+    if day > _last_day(year, month):
+        raise CalendarError(f"{year}-{month:02d} has no weekday {weekday} number {n}")
+    return _dt.datetime(year, month, day)
+
+
+def nth_business_day(year: int, month: int, n: int, calendar: Optional[str],
+                     holidays: FrozenSet[_dt.date] = frozenset()) -> _dt.datetime:
+    """The ``n``-th working day of a month under ``calendar`` (see :func:`is_business_day`), counting from one."""
+    if n < 1:
+        raise CalendarError(f"rank {n} does not name a day: the first business day is 1")
+    count = 0
+    for day in range(1, _last_day(year, month) + 1):
+        d = _dt.datetime(year, month, day)
+        if is_business_day(d, calendar, holidays):
+            count += 1
+            if count == n:
+                return d
+    raise CalendarError(f"{year}-{month:02d} has fewer than {n} business days")
 
 
 # ── day counts ──────────────────────────────────────────────────────────────

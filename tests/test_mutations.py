@@ -438,6 +438,17 @@ MUTATIONS = [
      "test_case_modeloff_time_is_money.py::test_the_case_runs_clean_and_tax_is_paid_the_year_it_is_charged"),
     ("packs/contracts.py", 'CAPEX_CLASS = _capex_type("capex_class", "{id}")', 'CAPEX_CLASS = _capex_type("capex_class", "cwip")',
      "test_case_modeloff_time_is_money.py::test_q3_depreciation_in_year_6_in_euro"),
+    # ModelOff 2017 Collect the Cash (step 7q): days named by rank, a sale collected on stated days
+    ("dates.py", "    day = 1 + (weekday - first.weekday()) % 7 + 7 * (n - 1)", "    day = 1 + (weekday - first.weekday()) % 7 + 7 * n",
+     "test_dates.py::test_the_third_thursday_and_a_fifth_weekday_a_month_lacks"),
+    ("dates.py", "    if day > _last_day(year, month):\n        raise CalendarError(f\"{year}-{month:02d} has no weekday",
+     "    if False:\n        raise CalendarError(f\"{year}-{month:02d} has no weekday",
+     "test_dates.py::test_the_third_thursday_and_a_fifth_weekday_a_month_lacks"),
+    ("dates.py", "            if count == n:", "            if count == n + 1:",
+     "test_dates.py::test_the_nth_business_day_skips_weekends_and_holidays"),
+    ("packs/contracts.py", '        out["collect"] = bal("seller", "{id}.receivable") + sale if t in on else exact(0)',
+     '        out["collect"] = sale if t in on else exact(0)',
+     "test_case_modeloff_collect_the_cash.py::test_q2_b_from_april_to_october"),
 ]
 
 
