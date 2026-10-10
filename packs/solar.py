@@ -83,8 +83,41 @@ Generators
     tariff multipliers. The Averta configuration sets none of them; a case
     that names one refuses, since the reader reads no such key.
 
-All arithmetic is exact (:class:`fractions.Fraction`); the live engine's
-floats differ from it by rounding only.
+``rooftop_valuation`` (Averta's exit value, ``compute_year1_noi``,
+``compute_forward_noi`` and ``compute_model_ev`` in ``run_averta.py``)
+    The value a buyer pays for the portfolio: forward NOI capitalised at a
+    cap rate. Per project:
+
+    * year-1 revenue = kWp x the PVGIS calibration x (1 - the consumer
+      default rate) x the zones' weighted revenue per kWp, each zone's being
+      its annual yield x (the self-consumption ratio x its regulated plus
+      market rate + the surplus share x the pool price). The default rate
+      applies to the surplus too, as the live code applies it;
+    * year-1 costs: each line's stated annual amount;
+    * the forward year is the buyer's first, ``exit // periods_per_year +
+      1``; a cohort started at period ``c`` is ``age = forward year - c /
+      periods_per_year`` years old then (a fraction of a year for cohorts
+      started mid-year). Its revenue is year-1 revenue x ((1 - degradation)
+      x (1 + escalation)) ** age, each cost line its year-1 amount x (1 +
+      its escalation) ** age;
+    * forward NOI per project is the cohorts' NOI weighted by their counts;
+      the portfolio's is that x the copies in the schedule; the value is
+      the portfolio's NOI / the cap rate.
+
+    Outputs: ``year1_revenue``, ``year1_costs`` (by line), ``year1_noi``,
+    ``forward_noi`` (per project), ``portfolio_noi`` and ``value``.
+
+    Declared: this is a second revenue path, separate from
+    ``rooftop_revenue``. It applies the default rate (the SPV's prices
+    carry it too, at the parameters' 1%), but no occupancy, and it
+    escalates by fractional years where the SPV steps once a year; so year-1
+    revenue here (17,393.74) is not the SPV's first operating year
+    (16,773.42), and the P90 yield never reaches the value
+    (``tests/test_case_averta_spv.py``). A fractional power is irrational,
+    so each cohort's escalation factor is computed in floats.
+
+All other arithmetic is exact (:class:`fractions.Fraction`); the live
+engine's floats differ from it by rounding only.
 """
 from __future__ import annotations
 
@@ -242,4 +275,51 @@ def zone_sumproduct(r: Reader) -> Dict[str, Any]:
     return {"zones": zones, "period_shares": shares}
 
 
-GENERATORS = {"zone_sumproduct": zone_sumproduct, "rooftop_revenue": rooftop_revenue}
+def rooftop_valuation(r: Reader) -> Dict[str, Any]:
+    kwp, calibration = exact(r.take("kwp")), exact(r.take("calibration"))
+    ratio, default = exact(r.take("autoconsumo_ratio")), exact(r.take("default_rate"))
+    pool = exact(r.take("surplus_price"))
+    per_kwp = weights = Fraction(0)
+    for name, raw in dict(r.take("zones")).items():
+        z = Reader(raw, source=f"rooftop_valuation.zones.{name}")
+        w = exact(z.take("weight"))
+        annual = sum((exact(x) for x in z.take("quarterly_yield")), Fraction(0))
+        rate = exact(z.take("regulated_rate")) + exact(z.take("market_rate"))
+        z.finish()
+        per_kwp += w * annual * (ratio * rate + (1 - ratio) * pool)
+        weights += w
+    if weights != 1:
+        raise InputError(f"rooftop_valuation: the zones' weights sum to {weights}, not 1")
+    revenue = kwp * calibration * (1 - default) * per_kwp
+
+    costs, escalations = {}, {}
+    for name, raw in dict(r.take("costs")).items():
+        c = Reader(raw, source=f"rooftop_valuation.costs.{name}")
+        costs[name], escalations[name] = exact(c.take("annual")), float(exact(c.take("escalation")))
+        c.finish()
+    g = Reader(r.take("revenue_growth"), source="rooftop_valuation.revenue_growth")
+    degradation, escalation = float(exact(g.take("degradation"))), float(exact(g.take("escalation")))
+    g.finish()
+
+    schedule = [exact(x) for x in r.take("schedule")]
+    per_year, exit_period = int(r.take("periods_per_year")), int(r.take("exit"))
+    cap_rate = exact(r.take("cap_rate"))
+    count = sum(schedule, Fraction(0))
+    if count <= 0:
+        raise InputError("rooftop_valuation: the schedule starts no copies")
+    forward_year = exit_period // per_year + 1
+    weighted = Fraction(0)
+    for c, n in enumerate(schedule):
+        if not n:
+            continue
+        age = forward_year - c / per_year
+        noi = revenue * exact(((1 - degradation) ** age) * ((1 + escalation) ** age))
+        noi -= sum((costs[k] * exact((1 + escalations[k]) ** age) for k in costs), Fraction(0))
+        weighted += n * noi
+    forward = weighted / count
+    return {"year1_revenue": revenue, "year1_costs": costs, "year1_noi": revenue - sum(costs.values(), Fraction(0)),
+            "forward_noi": forward, "portfolio_noi": forward * count, "value": forward * count / cap_rate}
+
+
+GENERATORS = {"zone_sumproduct": zone_sumproduct, "rooftop_revenue": rooftop_revenue,
+              "rooftop_valuation": rooftop_valuation}

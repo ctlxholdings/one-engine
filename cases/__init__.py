@@ -53,6 +53,17 @@ Generators run in file order, and one may read an earlier one's outputs. A
 reference to an undeclared generator or output refuses. The outputs are
 kept in :attr:`CaseResult.generated`.
 
+Also added for Averta's live model (step 8, the portfolio):
+
+* the generator kind ``cohorts`` (:mod:`one_engine.portfolio`): it runs a
+  template case (a file in this directory, with optional overrides by
+  dotted path, ``set``) and returns the template's cuts summed over a
+  deployment schedule;
+* a cut may be ``kind: pnl``: income less expense of the classes it
+  includes, by period (:func:`one_engine.cuts.pnl_cut`), read from
+  ``entity`` under ``scheme``; without ``kind`` a cut is a cash cut, as
+  before.
+
 Added for ModelOff 2014 "Time is Money" (step 7p): the ``npv`` measure
 (``rate`` per period, the first flow undiscounted) and the ``xnpv`` measure
 (an annual ``rate`` and ``dates``, one per period). Either may take
@@ -70,7 +81,8 @@ from typing import Any, Callable, Dict, List, Mapping, Union
 from one_engine import measures as M
 from one_engine.checks import integrity
 from one_engine.contracts import Contract
-from one_engine.cuts import Scheme, Series, cash_flow_cut
+from one_engine import portfolio as _portfolio
+from one_engine.cuts import Scheme, Series, cash_flow_cut, pnl_cut
 from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.loops import Loop, LoopReport, close
@@ -96,7 +108,33 @@ def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:
 REGISTRY = _merge(_contracts.REGISTRY, _corporate.TYPES)
 RULEBOOKS = _merge(_pf.RULEBOOKS, _corporate.RULEBOOKS)
 LENSES = _merge(_corporate.LENSES)
-GENERATORS = _merge(_solar.GENERATORS)
+CASES = pathlib.Path(__file__).resolve().parent
+
+
+def _run_template(name: str, overrides: Mapping[str, Any]) -> "CaseResult":
+    """Run the case file ``name`` in this directory, with each ``a.b.c: value`` override set first.
+
+    An override may add a key, but only under a mapping the template has:
+    a misspelt path would otherwise run the template unchanged.
+    """
+    path = (CASES / str(name)).resolve()
+    if path.parent != CASES or not path.is_file():
+        raise InputError(f"template '{name}' is not a case file in {CASES}")
+    data = load_yaml_strict(path.read_text())
+    for dotted, value in overrides.items():
+        *parents, leaf = str(dotted).split(".")
+        node = data
+        for k in parents:
+            if not isinstance(node, Mapping) or k not in node:
+                raise InputError(f"template {name}: override '{dotted}' names '{k}', which the template does not have")
+            node = node[k]
+        if not isinstance(node, Mapping):
+            raise InputError(f"template {name}: override '{dotted}' does not end in a mapping")
+        node[leaf] = value
+    return run_case(data)
+
+
+GENERATORS = _merge(_solar.GENERATORS, {"cohorts": lambda r: _portfolio.cohorts(r, _run_template)})
 
 
 @dataclass
@@ -332,8 +370,14 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
     cuts: Dict[str, Series] = {}
     for cname, raw in top.take("cuts").items():
         r = Reader(raw, source=f"{src}:cuts.{cname}")
-        cuts[cname] = cash_flow_cut(group.book(r.take("entity")), r.take("account"),
-                                    schemes[r.take("scheme")], r.take("include"), name=cname)
+        kind = r.take_or_default("kind", "cash", reason="a cut of cash movements").value
+        if kind == "pnl":
+            cuts[cname] = pnl_cut(group.book(r.take("entity")), schemes[r.take("scheme")], r.take("include"), name=cname)
+        elif kind == "cash":
+            cuts[cname] = cash_flow_cut(group.book(r.take("entity")), r.take("account"),
+                                        schemes[r.take("scheme")], r.take("include"), name=cname)
+        else:
+            raise InputError(f"{src}: cut '{cname}' has unknown kind '{kind}' (cash or pnl)")
         r.finish()
     lens_values: Dict[str, Dict[str, Any]] = {}
     for lname, raw in top.take_or_default("lenses", {}, reason="no lens declared").value.items():

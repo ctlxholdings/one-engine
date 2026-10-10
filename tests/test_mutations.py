@@ -468,7 +468,7 @@ MUTATIONS = [
      "test_case_averta_spv.py::test_the_generator_reproduces_the_live_revenue_lines"),
     ("packs/solar.py", "        quarterly = [x * exact(stated) / annual for x in quarterly]", "        quarterly = quarterly",
      "test_case_averta_spv.py::test_the_p90_basis_reproduces_the_live_p90_spv"),
-    ("packs/solar.py", "    if weights != 1:", "    if False:",
+    ("packs/solar.py", "    if weights != 1:\n        raise InputError(f\"rooftop_revenue:", "    if False:\n        raise InputError(f\"rooftop_revenue:",
      "test_case_averta_spv.py::test_a_generator_refuses_what_it_cannot_read"),
     # Averta's revenue engine L0-L4 (step 8): the synthetic profile, the tariff calendar, the prices
     ("packs/solar.py", "(sunset - sunrise) / 5.0", "(sunset - sunrise) / 4.0",
@@ -479,6 +479,28 @@ MUTATIONS = [
      "test_case_averta_spv.py::test_the_sumproduct_reproduces_each_zones_live_rates_and_yields"),
     ("packs/solar.py", "monthly[3 * q:3 * q + 3]", "monthly[3 * q:3 * q + 2]",
      "test_case_averta_spv.py::test_the_sumproduct_reproduces_each_zones_live_rates_and_yields"),
+    # Portfolio and grain (step 8): the cohort shift and scale, the template runner, P&L cuts
+    ("portfolio.py", "            k = t - c + align", "            k = t - c",
+     "test_portfolio.py::test_copies_are_shifted_to_their_start_and_scaled_by_their_count"),
+    ("portfolio.py", "            if first <= k < len(template):", "            if 0 <= k < len(template):",
+     "test_portfolio.py::test_copies_are_shifted_to_their_start_and_scaled_by_their_count"),
+    ("portfolio.py", "                out[t] += int(n) * template[k]", "                out[t] += template[k]",
+     "test_portfolio.py::test_a_programme_cut_from_50_to_30_scales_every_value_by_three_fifths"),
+    ("portfolio.py", "        if n < 0 or n != int(n):", "        if n < 0:",
+     "test_portfolio.py::test_a_count_must_be_a_non_negative_whole_number"),
+    ("portfolio.py", "            values = list(itertools.accumulate(values))", "            values = values",
+     "test_case_averta_portfolio.py::test_the_portfolio_arrays_match_the_live_report"),
+    ("cases/__init__.py", "            if not isinstance(node, Mapping) or k not in node:", "            if False:",
+     "test_portfolio.py::test_an_override_must_name_a_path_the_template_has"),
+    ("cases/__init__.py", "    if path.parent != CASES or not path.is_file():", "    if not path.is_file():",
+     "test_portfolio.py::test_a_template_must_be_a_case_file_in_the_case_directory"),
+    ("cases/__init__.py", '        if kind == "pnl":', '        if kind == "profit":',
+     "test_case_averta_portfolio.py::test_a_pnl_cut_is_the_template_s_income_less_expense_by_period"),
+    # Averta's exit value (step 8)
+    ("packs/solar.py", "        age = forward_year - c / per_year", "        age = forward_year",
+     "test_case_averta_portfolio.py::test_the_exit_value_matches_the_live_report"),
+    ("packs/solar.py", "(ratio * rate + (1 - ratio) * pool)", "(ratio * rate)",
+     "test_case_averta_portfolio.py::test_the_exit_value_matches_the_live_report"),
 ]
 
 
