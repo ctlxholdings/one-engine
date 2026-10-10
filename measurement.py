@@ -19,12 +19,24 @@ value.
 
 The register keeps the net book value floor (card 10 "Owns"): a tranche is
 never depreciated below zero. Amounts are exact.
+
+Weighted straight-line (ModelOff 2015 "More Money Please", step 7h)
+-------------------------------------------------------------------
+Instead of a life in periods, a policy may give ``weights``, one per
+period (the days of operation in each year): a tranche is charged, each
+period from its first charge, its cost times that period's weight over the
+weights left from its first charge to the end of the series. Its cost is
+therefore spread over the rest of the series in proportion to the weights,
+and the last period with a weight takes the last of it. This is the
+"depreciate what is left over the days of operation left" pool the
+ModelOff case uses: since that rule is linear in the pool, the pool's
+charge equals the sum of its tranches' (tested).
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from fractions import Fraction
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from one_engine.units import Number, exact
 
@@ -38,13 +50,26 @@ _FIRST_CHARGE = ("in_service", "next_period")
 
 @dataclass(frozen=True)
 class Policy:
-    """Straight-line depreciation: life in periods and the first-charge convention."""
+    """Straight-line depreciation: a life in periods, or weights by period; and the first-charge convention.
 
-    life_periods: int
+    Exactly one of ``life_periods`` (equal charges) and ``weights`` (a
+    series: each period's share of what is left; see the module docstring)
+    is given.
+    """
+
+    life_periods: Optional[int]
     first_charge: str
+    weights: Optional[Sequence[Number]] = None
 
     def __post_init__(self):
-        if not isinstance(self.life_periods, int) or self.life_periods < 1:
+        if (self.life_periods is None) == (self.weights is None):
+            raise MeasurementError("a policy takes a life in periods or weights by period, exactly one")
+        if self.weights is not None:
+            w = tuple(exact(x) for x in self.weights)
+            if any(x < 0 for x in w):
+                raise MeasurementError(f"weights must not be negative, got {list(self.weights)}")
+            object.__setattr__(self, "weights", w)
+        elif not isinstance(self.life_periods, int) or self.life_periods < 1:
             raise MeasurementError(f"life_periods must be a positive integer, got {self.life_periods!r}")
         if self.first_charge not in _FIRST_CHARGE:
             raise MeasurementError(f"first_charge must be declared as one of {_FIRST_CHARGE}, got {self.first_charge!r}")
@@ -88,9 +113,20 @@ class Register:
         lag = 0 if self.policy.first_charge == "in_service" else 1
         total = Fraction(0)
         for tr in self._tranches:
-            if period < tr.in_service + lag:
+            first = tr.in_service + lag
+            if period < first:
                 continue
-            x = min(tr.cost / self.policy.life_periods, tr.cost - tr.charged)   # NBV floor
+            if self.policy.weights is None:
+                step = tr.cost / self.policy.life_periods
+            else:
+                w = self.policy.weights
+                left = sum(w[first:], Fraction(0))
+                if left == 0:
+                    if tr.cost:
+                        raise MeasurementError(f"a tranche of {tr.cost} from period {first} has no weight left to charge")
+                    continue
+                step = tr.cost * (w[period] if period < len(w) else 0) / left
+            x = min(step, tr.cost - tr.charged)                                  # NBV floor
             tr.charged += x
             total += x
         return total

@@ -30,6 +30,41 @@ def test_nbv_floor_and_disposal_at_end():
     assert r2.nbv() == 60 and r2.dispose() == 60 and r2.nbv() == 0
 
 
+
+def test_a_weighted_register_charges_each_tranche_over_what_is_left_of_the_weights():
+    # ModelOff 2015 "More Money Please": each year's cost is depreciated to the end of the project
+    # in proportion to the days of operation left; a half-year (181 of 365 days) takes half a share
+    days = [365, 366, 365, 181, 0]
+    r = Register(Policy(life_periods=None, first_charge="in_service", weights=days))
+    r.add(period=0, cost=F(1277))
+    r.add(period=2, cost=F(546))
+    charges = [r.charge(t) for t in range(5)]
+    assert charges[0] == F(1277) * 365 / 1277                      # 1,277 days of operation left
+    assert charges[2] == F(1277) * 365 / 1277 + F(546) * 365 / 546
+    assert charges[3] == F(1277) * 181 / 1277 + F(546) * 181 / 546
+    assert sum(charges) == 1277 + 546 and charges[4] == 0 and r.nbv() == 0
+    # a pool depreciated over the days left is the same: (opening + additions) x days / days left
+    pool, opening = [], F(1277)
+    for t, add in enumerate([0, 0, 546, 0, 0]):
+        left = sum(days[t:])
+        x = (opening + add) * days[t] / left if left else F(0)
+        pool.append(x)
+        opening += add - x
+    assert pool == charges
+
+
+def test_a_register_takes_a_life_or_weights_not_both():
+    with pytest.raises(MeasurementError, match="life in periods or weights"):
+        Policy(life_periods=4, first_charge="in_service", weights=[1, 1])
+    with pytest.raises(MeasurementError, match="life in periods or weights"):
+        Policy(life_periods=None, first_charge="in_service")
+    with pytest.raises(MeasurementError, match="weights"):
+        Policy(life_periods=None, first_charge="in_service", weights=[1, -1])
+    r = Register(Policy(life_periods=None, first_charge="in_service", weights=[1, 1, 0]))
+    r.add(period=2, cost=5)
+    with pytest.raises(MeasurementError, match="no weight left"):
+        r.charge(0), r.charge(1), r.charge(2)
+
 def test_charge_periods_must_advance():
     r = Register(Policy(life_periods=3, first_charge="in_service"))
     r.add(period=0, cost=9)

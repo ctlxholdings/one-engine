@@ -41,7 +41,11 @@ Rulebooks
     charge and the disposal at ``dispose_at`` come from
     :class:`~one_engine.measurement.Register`. ``first_charge`` is
     required. An optional ``tax`` register depreciates the same tranches
-    over the tax life.
+    over the tax life. With ``weights`` (one per period) in place of
+    ``life_periods`` (stated null), each tranche is spread over the rest of
+    the weights (``Policy.weights``: ModelOff's days of operation left,
+    step 7h). Fixed assets on the opening balance sheet are a tranche from
+    the first in-service period.
 
 ``income_tax``
     The base comes from a scheme classifying every profit-and-loss account
@@ -77,7 +81,9 @@ Rulebooks
     tiers: contract claims (``senior.interest``) or payable accounts
     (``tax_payable``). DSCR is CFADS over the debt service due, where
     CFADS is the period's cash flow in the named classes less the named
-    tiers (tax). A minimum balance is a ``keep`` tier, a stock kept back in
+    tiers (tax), times an optional ``share`` by period (a series: the part
+    of the period the debt is outstanding, ModelOff step 7h; one by
+    default). A minimum balance is a ``keep`` tier, a stock kept back in
     the stated periods at its place in the order (after debt service, so a
     minimum balance never makes a senior payment late), not a deduction
     from each period's flow. Each test
@@ -130,6 +136,11 @@ applies to a finished run to get its outputs' next values:
     The total of the uses a funding rulebook funded (its ``funding``
     records): a budget that includes the interest and fees of
     construction, which depend on the debt that the budget sizes.
+``refinance``
+    Sizes a refinancing loan at what repays an old loan's balance after
+    its payment in period ``at``, grossed up for arrangement fees charged
+    as rates of the draw; outputs ``debt`` and a ``repayment`` straight-line
+    by days (ModelOff 2015, step 7h; :func:`_refinance_rule`).
 """
 from __future__ import annotations
 
@@ -313,7 +324,11 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     raw_in = r.take("in_service")
     in_service = [int(x) for x in raw_in] if isinstance(raw_in, list) else [int(raw_in)]
     dispose_at = int(r.take("dispose_at"))
-    reg = Register(Policy(int(r.take("life_periods")), r.take("first_charge")))
+    life = r.take("life_periods")
+    weights = r.take_or_default("weights", None, reason="each period takes an equal share of the life").value
+    if (life is None) == (weights is None):
+        raise InputError("asset_register: give life_periods or weights (life_periods: null), exactly one")
+    reg = Register(Policy(None if life is None else int(life), r.take("first_charge"), weights))
     tax_raw = r.take_or_default("tax", None, reason="the tax authority depreciates as the books do").value
     tax_reg = None
     if tax_raw is not None:
@@ -332,6 +347,12 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
 
     def handler(g: Group, t: int) -> None:
         book = g.book(entity)
+        if t == in_service[0] and book.opening(fa, t):
+            # fixed assets carried in on an opening balance sheet are a tranche from the first in-service
+            # period: otherwise the register would never depreciate them
+            for x in (reg, tax_reg):
+                if x is not None:
+                    x.add(t, book.opening(fa, t))
         if t in in_service:
             cost = book.balance(src, t)
             post(g, t, fa, src, cost, "in_service")
@@ -485,6 +506,7 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     residual = r.take("residual")
     cr = Reader(r.take("cfads"), source="waterfall.cfads")
     scheme, classes, less = ctx["schemes"][cr.take("scheme")], cr.take("classes"), cr.take("less")
+    share = cr.take_or_default("share", 1, reason="the debt is outstanding for the whole of each period").value
     cr.finish()
     service = r.take("service")
     tests = []
@@ -513,6 +535,11 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         due = {name: book.balance(ref, t) for name, kind, ref, _ in tiers_spec if kind == "account"}
         flows = cash_flow_cut(book, cash, scheme, classes).values[t - book.start_period]
         cfads = flows - sum((due[n] for n in less), Fraction(0))
+        if share != 1:
+            # the part of the period's cash flow that falls while the debt is outstanding (a loan that
+            # matures mid-year is covered by the cash flow of its days only)
+            from one_engine.packs.contracts import _at
+            cfads *= _at(share, t)
         claims = g.claims(t, given={"cfads": cfads})
         for ref in sources:                         # reserve releases come in before anything is paid
             if ref in claims:
@@ -719,4 +746,52 @@ def _uses_total_rule(r: Reader):
     return rule
 
 
-LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule}
+def _refinance_rule(r: Reader):
+    """A new loan sized to repay what an old one still owes after its payment in period ``at``, net of fees.
+
+    ModelOff 2015 "More Money Please" (step 7h), part A: the refinancing
+    loan is drawn at ``at`` for exactly what repays the old loan's balance
+    left after that period's scheduled principal, plus the arrangement
+    fees, which are rates of the amount drawn (``financing_fee`` contracts
+    on the new loan): ``debt = owed / (1 - sum of the fee rates)``. The
+    fee makes the size circular, hence a loop; the size does not feed back
+    into ``owed``, so the loop closes on its second run. The new loan is
+    repaid straight-line by days over its repayment window: each period's
+    principal is the size times its ``days_per_period`` over the window's
+    total (the case's convention; a half-year at maturity repays half a
+    share).
+
+    Outputs ``debt`` (the size) and ``repayment`` (a series, for the new
+    loan's ``principal_schedule``).
+    """
+    from one_engine.packs.contracts import _at, _maturity
+    old, new, at = r.take("old"), r.take("new"), int(r.take("at"))
+    fees, record = list(r.take("fees")), r.take("record")
+
+    def rule(result) -> Dict[str, Any]:
+        g = result.group
+        old_c, new_terms = g.contract(old), g.contract(new).values()
+        rate = Fraction(0)
+        for f in fees:
+            terms = g.contract(f).values()
+            if terms["facility"].id != new:
+                raise SizingError(f"refinance: fee '{f}' is on '{terms['facility'].id}', not on the new loan '{new}'")
+            rate += exact(terms["rate"])
+        if not 0 <= rate < 1:
+            raise SizingError(f"refinance: the fees take {rate} of the amount drawn; the loan cannot be sized")
+        book = g.book(old_c.parties["borrower"])
+        paid = result.records(record)[at]["paid"].get(f"{old}.principal", Fraction(0))
+        owed = book.opening(f"{old}.debt", at) - paid
+        debt = owed / (1 - rate)
+        first, last = int(new_terms["repay_from"]), _maturity(new_terms)
+        days = {t: _at(new_terms["days_per_period"], t) for t in range(first, last + 1)}
+        total = sum(days.values(), Fraction(0))
+        if total == 0:
+            raise SizingError(f"refinance: '{new}' has no days in its repayment window")
+        return {"debt": debt, "repayment": [debt * days[t] / total if t in days else Fraction(0)
+                                            for t in range(g.periods)]}
+
+    return rule
+
+
+LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule, "refinance": _refinance_rule}

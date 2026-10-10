@@ -1,0 +1,191 @@
+# ModelOff 2015 "More Money Please": a project-finance refinancing, part A (plan step 7h).
+#
+# Source: the ModelOff 2015 case of that name (data workbook
+# MO15-More-Money-Please-Data.xlsx and answer key, not in this repository);
+# inputs and the ten verified answers as transcribed in
+# generic_engine/tests/test_benchmark_round2_more_money_please.py, copied
+# to cases/reference/modeloff_2015_more_money_please.json by
+# consolidation/experiments/make_reference_modeloff_mmp.py, and to this file
+# by make_case_modeloff_mmp.py. tests/test_case_modeloff_mmp.py re-checks the
+# copy and re-derives the calendar series.
+#
+# Grid: 25 calendar years, 2015 (period 0) to 2039. The project operates
+# to 30 June 2038. The books open on the balance sheet at 31 December 2014.
+#
+# What the case does, and how it is assembled here:
+#   * revenue 5,000,000 and operating costs 2,000,000 a year, real, indexed
+#     at 2% a year and apportioned by the days of operation in each year
+#     (offtake: volume = the share of the year operated, price = the
+#     nominal annual revenue; operating_cost: index = the inflation index
+#     times that share). Lifecycle costs (1,000,000 a year, 500,000 in
+#     2038, real) are indexed but not apportioned; they are capitalised;
+#   * fixed assets (the opening 10,000,000 and each year's lifecycle cost)
+#     are depreciated to the end of the project in proportion to the days
+#     of operation left (asset_register weights);
+#   * the senior debt (10,000,000, 7% on the opening balance, 500,000 a
+#     year) is refinanced on 31 December 2016, after that year's payment:
+#     the new loan is drawn for the 9,000,000 left plus its 2% arrangement
+#     fee (a rate of the draw, so the size is a loop: refinance), bears 6%
+#     actual/365 for the days outstanding, and is repaid straight-line by
+#     days to 30 June 2036. The fee is amortised by the same days;
+#   * all cash is paid out as dividends each year (the opening cash too).
+#     No tax. DSCR is CFADS (the project cash flow) for the days the debt
+#     is outstanding over its debt service.
+#
+# Part B (the test builds it from this file): the refinancing is instead
+# sculpted to a 1.80x DSCR in every year (loop rule sculpt); the proceeds
+# above the 9,000,000 refinanced are paid out in 2016.
+case: modeloff-more-money-please
+periods: 25
+phases: [accrue, operate, fund, pay, close]
+currency: USD
+floors:
+  company.cash: 0
+opening:
+  company:
+    fixed_assets: {nature: asset, value: 10000000}
+    cash: {nature: asset, value: 1000000}
+    senior.debt: {nature: liability, value: 10000000}
+    retained_earnings: {nature: equity, value: balancing}     # stated 1000000
+loops:
+  refi_size:
+    rule: {kind: refinance, old: senior, new: refi, at: 1, fees: [refi_fee], record: waterfall}
+    start: {debt: 0, repayment: 0}
+    tolerance: 0
+    max_iterations: 3
+contracts:
+  sales:
+    type: offtake
+    parties: {seller: company}
+    terms:
+      volume: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, '181/365', 0]      # the share of each year operated
+      price: [5000000, 5100000, 5202000, 5306040, 5412160.8, 5520404.016, 5630812.09632, 5743428.3382464, 5858296.905011328, 5975462.84311155456, 6094972.0999737856512, 6216871.541973261364224, 6341208.97281272659150848, 6468033.1522689811233386496, 6597393.815314360745805422592, 6729341.69162064796072153104384, 6863928.5254530609199359616647168, 7001207.095962122138334680898011136, 7141231.23788136458110137451597135872, 7284055.8626389918727234020062907858944, 7429736.979891771710177870046416601612288, 7578331.71948960714438142744734493364453376, 7729898.3538793992872690559962918323174244352, 7884496.320956987273014437116217668963772923904, 8042186.24737612701847472585854202234304838238208]
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 1
+      end: 24
+  opex:
+    type: operating_cost
+    parties: {payer: company}
+    terms:
+      annual: 2000000
+      unit_rate: 0
+      volume: 0
+      index: [1, 1.02, 1.0404, 1.061208, 1.08243216, 1.1040808032, 1.126162419264, 1.14868566764928, 1.1716593810022656, 1.195092568622310912, 1.21899441999475713024, 1.2433743083946522728448, 1.268241794562545318301696, 1.29360663045379622466772992, 1.3194787630628721491610845184, 1.345868338324129592144306208768, 1.37278570509061218398719233294336, 1.4002414191924244276669361796022272, 1.428246247576272916220274903194271744, 1.45681117252779837454468040125815717888, 1.4859473959783543420355740092833203224576, 1.515666343897921428876285489468986728906752, 1.54597967077587985745381119925836646348488704, '340245684169105218986418990620469589815831/435113906860351562500000000000000000000000', 0]      # inflation x the share of the year operated
+      periods_per_year: 1
+      start: 0
+      end: 24
+      vat_rate: 0
+      vat_refund_lag: 0
+      payment_days: 0
+      days_per_year: 365
+  lifecycle:
+    type: capex
+    parties: {owner: company}
+    terms: {schedule: [1000000, 1020000, 1040400, 1061208, 1082432.16, 1104080.8032, 1126162.419264, 1148685.66764928, 1171659.3810022656, 1195092.568622310912, 1218994.41999475713024, 1243374.3083946522728448, 1268241.794562545318301696, 1293606.63045379622466772992, 1319478.7630628721491610845184, 1345868.338324129592144306208768, 1372785.70509061218398719233294336, 1400241.4191924244276669361796022272, 1428246.247576272916220274903194271744, 1456811.17252779837454468040125815717888, 1485947.3959783543420355740092833203224576, 1515666.343897921428876285489468986728906752, 1545979.67077587985745381119925836646348488704, 788449.6320956987273014437116217668963772923904, 0], vat_rate: 0, vat_refund_lag: 0, end: 24}
+  senior:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 10000000
+      draw_schedule: 0
+      available_until: 0            # drawn before the grid; prepayable from 2016
+      rate: 0.07
+      rate_from: 0
+      days_per_period: 1
+      day_count_basis: 1
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 0
+      repay_periods: 20
+      sculpt_dscr: null
+      principal_schedule: null
+      arrangement_fee: 0
+      fee_at: 0
+  refi:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: {loop: refi_size, output: debt}
+      draw_schedule: [0, {loop: refi_size, output: debt}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      available_until: 1
+      rate: 0.06
+      rate_from: 2
+      days_per_period: [0, 0, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 182, 0, 0, 0]      # days outstanding in each year
+      day_count_basis: 365
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 2
+      repay_periods: 20
+      sculpt_dscr: null
+      principal_schedule: {loop: refi_size, output: repayment}
+      arrangement_fee: 0
+      fee_at: 1
+  refi_fee:                       # 2% of the draw, amortised in proportion to the days outstanding
+    type: financing_fee
+    parties: {borrower: company}
+    terms: {facility: refi, rate: 0.02, years: 7121, year_fraction: [0, 0, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 182, 0, 0, 0], paid_at: 1}
+  equity:
+    type: sponsor_equity
+    parties: {issuer: company}
+    terms: {}
+schemes:
+  cash_flow:
+    sales.receivable: operating
+    opex.payable: operating
+    vat_receivable: operating
+    cwip: investing
+    senior.debt: financing
+    senior.interest_payable: financing
+    senior.fee_payable: financing
+    senior.capitalised_interest: financing
+    senior.deferred_fees: financing
+    refi.debt: financing
+    refi.interest_payable: financing
+    refi.fee_payable: financing
+    refi.capitalised_interest: financing
+    refi.deferred_fees: financing
+    refi_fee.deferred: financing
+    equity.capital: equity
+    equity.distributions: equity
+rulebooks:
+  assets:
+    kind: asset_register
+    entity: company
+    phase: close
+    from: cwip
+    to: fixed_assets
+    expense: depreciation
+    disposal: disposal_loss
+    in_service: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+    dispose_at: 24
+    life_periods: null
+    weights: [365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 365, 365, 366, 365, 181, 0]      # days of operation in each year
+    first_charge: in_service
+  waterfall:
+    kind: waterfall
+    entity: company
+    phase: pay
+    cash: cash
+    sources: [refi.draw]
+    tiers:
+      - {claim: senior.interest}
+      - {claim: senior.principal}
+      - {claim: refi.interest}
+      - {claim: refi.principal}
+      - {claim: refi_fee.fee}
+      - {claim: senior.prepay}         # the refinancing: what the senior still owes after its 2016 payment
+    residual: equity.distribute          # every remaining dollar is paid out
+    cfads:
+      scheme: cash_flow
+      classes: [operating, investing]
+      less: []
+      share: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, '91/183', 0, 0, 0]      # the days the debt is outstanding over the days in the year
+    service: [senior.interest, senior.principal, refi.interest, refi.principal]
+    tests: []
+cuts:
+  project: {entity: company, account: cash, scheme: cash_flow, include: [operating, investing]}
+  dividends: {entity: company, account: cash, scheme: cash_flow, include: [equity]}
+measures: {}                    # the answers are amounts and a ratio, read from the books and records
