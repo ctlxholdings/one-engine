@@ -106,7 +106,7 @@ MUTATIONS = [
     ("packs/contracts.py", "    return min(t + int(terms[\"vat_refund_lag\"]), int(terms[\"end\"]))",
      "    return t + int(terms[\"vat_refund_lag\"])",
      "test_case_feature.py::test_integrity_wind_down_and_sources_equal_uses"),
-    ("packs/contracts.py", "    if t >= int(terms[\"end\"]):\n        return exact(0)\n    return amount", "    return amount",
+    ("packs/contracts.py", "    if t >= int(terms[\"end\"]):\n        return exact(0)\n    days = terms", "    days = terms",
      "test_case_feature.py::test_integrity_wind_down_and_sources_equal_uses"),
     # step 7, 500MW nightmare: second units, given figures, withholding, FX, deferred tax, sculpting,
     # sweep, promote, reserves over two loans
@@ -390,6 +390,15 @@ MUTATIONS = [
     ("packs/pf.py", "any(not 0 <= k < per_year for k, _ in plan) or len({k for k, _ in plan}) != len(plan)",
      "any(not 0 <= k < per_year for k, _ in plan)",
      "test_case_modeloff_tax.py::test_two_instalments_in_one_month_refuse"),
+    # ModelOff 2013 Hard Times (step 7l): payment profiles, run-offs of opening balances, pay as due
+    ("packs/contracts.py", "                unpaid += amount_at(t - k) * left", "                unpaid += amount * left",
+     "test_case_modeloff_hard_times.py::test_the_case_runs_clean_and_reproduces_the_papers_cash_every_month"),
+    ("packs/contracts.py", "    if any(x < 0 for x in out) or sum(out) != 1:", "    if False:",
+     "test_case_modeloff_hard_times.py::test_a_payment_profile_that_does_not_sum_to_one_refuses"),
+    ("packs/contracts.py", "bal.opening(\"holder\", \"{id}\") * shares[t] / left", "bal.opening(\"holder\", \"{id}\") * shares[t]",
+     "test_case_modeloff_hard_times.py::test_finding_the_opening_balances_are_settled_in_three_months_and_kept_apart"),
+    ("packs/pf.py", "            if ref in claims and claims[ref].due:\n                g.settle", "            if False:\n                g.settle",
+     "test_case_modeloff_hard_times.py::test_q4_interest_in_2014"),
 ]
 
 

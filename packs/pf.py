@@ -90,6 +90,12 @@ Rulebooks
     sum to one, so a year's liability is paid in full once its last
     instalment falls inside the grid (ModelOff 2015 "Tax", step 7k).
 
+``pay_as_due``
+    The listed claims paid in full when due, whatever the cash: for a case
+    that lets cash go negative to show a shortfall (ModelOff 2013 "Hard
+    Times", step 7l). The overdraft that implies is not modelled, so cash
+    is left unfloored; a waterfall would pay only from cash above the floor.
+
 ``provision``
     A liability charged straight-line and paid once
     (:class:`~one_engine.measurement.Provision`): decommissioning.
@@ -521,6 +527,20 @@ def tax_instalments(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     group.register(phase, handler)
 
 
+# ── pay as due ────────────────────────────────────────────────────────────
+
+def pay_as_due(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    phase, refs = r.take("phase"), list(r.take("claims"))
+
+    def handler(g: Group, t: int) -> None:
+        claims = g.claims(t)
+        for ref in refs:
+            if ref in claims and claims[ref].due:
+                g.settle(claims[ref], claims[ref].due, phase)
+
+    group.register(phase, handler)
+
+
 # ── provision ─────────────────────────────────────────────────────────────
 
 def provision(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
@@ -749,7 +769,8 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
 
 RULEBOOKS = {"funding_plan": funding_plan, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
              "income_tax": income_tax, "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
-             "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments}
+             "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments,
+             "pay_as_due": pay_as_due}
 
 
 # ── loop rules ────────────────────────────────────────────────────────────

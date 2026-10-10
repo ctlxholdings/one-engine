@@ -62,6 +62,15 @@ quarters:
   principal due each period (a sizing computes it). A negative amount is
   interest the schedule does not pay: it is capitalised.
 
+Added for ModelOff 2013 "Hard Times" (step 7l), a monthly cash forecast:
+
+* ``payment_days`` of ``offtake`` and ``operating_cost`` may be a profile:
+  the shares of a period's amount paid in it and in each period after,
+  summing to one (customers pay 60% a month later, 25% two, 15% three);
+* ``receivable_run_off`` / ``payable_run_off`` settle a balance carried in
+  on the opening balance sheet (the account is the contract's id) over a
+  stated profile.
+
 Modelling note on ``shared_savings``: the client's savings are booked as an
 income line ("avoided energy cost"), i.e. a with-versus-without view of the
 client's utility bill. A lens that restates the client against its baseline
@@ -499,22 +508,51 @@ def forward_service(loan, p, bal):
 
 # Sales and costs on payment terms ----------------------------------------
 
-def _terms_target(amount, terms, t):
+def _profile(shares, where):
+    """A payment profile: the shares of an amount paid in its period and each one after, summing to one."""
+    out = [exact(x) for x in shares]
+    if any(x < 0 for x in out) or sum(out) != 1:
+        raise ValueError(f"{where}: a payment profile's shares must be non-negative and sum to 1, "
+                         f"got {[float(x) for x in out]}")
+    return out
+
+
+def _terms_target(amount, terms, t, amount_at=None):
     """Balance left unpaid at period end under ``payment_days`` terms (zero from ``end``).
 
     Annualised flow x payment_days / days_per_year: the target-balance
     method on a period grid that cannot see individual invoices.
+
+    ``payment_days`` may instead be a profile (ModelOff 2013 "Hard Times",
+    step 7l): the shares of a period's amount paid in that period and in
+    each period after it, summing to one (``[0, 0.6, 0.25, 0.15]``: nothing
+    in the month, 60% the next month, ...). The target is then what is
+    still unpaid of each recent period's amount, ``amount_at(t - k)`` times
+    the share not yet paid ``k`` periods on.
     """
     if t >= int(terms["end"]):
         return exact(0)
-    return amount * int(terms["periods_per_year"]) * exact(terms["payment_days"]) / exact(terms["days_per_year"])
+    days = terms["payment_days"]
+    if isinstance(days, (list, tuple)):
+        left, unpaid = exact(1), exact(0)
+        for k, share in enumerate(_profile(days, "payment_days")):
+            left -= share
+            if t - k >= 0:
+                unpaid += amount_at(t - k) * left
+        return unpaid
+    return amount * int(terms["periods_per_year"]) * exact(days) / exact(terms["days_per_year"])
+
+
+def _sale(terms, t):
+    return _at(terms["volume"], t) * _at(terms["price"], t) if t <= int(terms["end"]) else exact(0)
 
 
 def _offtake(terms, t, bal=None):
-    sale = _at(terms["volume"], t) * _at(terms["price"], t) if t <= int(terms["end"]) else exact(0)
+    sale = _sale(terms, t)
     out = {"sale": sale}
     if bal is not None:
-        out["collect"] = bal("seller", "{id}.receivable") + sale - _terms_target(sale, terms, t)
+        out["collect"] = (bal("seller", "{id}.receivable") + sale
+                          - _terms_target(sale, terms, t, lambda p: _sale(terms, p)))
     return out
 
 
@@ -542,7 +580,8 @@ def _operating_cost(terms, t, bal=None):
     vat = exact(terms["vat_rate"]) * cost
     out = {"cost": cost, "vat": vat, "vat_refund": _vat_refund(terms, t, lambda p: _cost_base(terms, p))}
     if bal is not None:
-        out["payment"] = bal("payer", "{id}.payable") + cost + vat - _terms_target(cost + vat, terms, t)
+        gross = (lambda p: _cost_base(terms, p) * (1 + exact(terms["vat_rate"])))
+        out["payment"] = bal("payer", "{id}.payable") + cost + vat - _terms_target(cost + vat, terms, t, gross)
     return out
 
 
@@ -575,6 +614,41 @@ CAPEX = ContractType(
            FlowSpec("vat", "fund", (Leg("owner", "vat_receivable", "cash", (+1, -1)),)),
            FlowSpec("vat_refund", "operate", (Leg("owner", "cash", "vat_receivable", (+1, -1)),))),
     amounts=_capex,
+)
+
+
+# Balances carried in --------------------------------------------------
+
+def _run_off(terms, t, bal=None):
+    """This period's share of a balance carried in on the opening balance sheet.
+
+    What is left of the balance, over the shares of the profile not yet
+    reached, times this period's share: the balance is settled exactly on
+    the profile, and nothing else needs to know its opening amount.
+    """
+    shares = _profile(terms["profile"], "run_off.profile")
+    if bal is None or t >= len(shares):
+        return {}
+    left = 1 - sum(shares[:t], exact(0))
+    return {"settle": bal.opening("holder", "{id}") * shares[t] / left} if left else {}
+
+
+RECEIVABLE_RUN_OFF = ContractType(
+    name="receivable_run_off",
+    terms=("profile",),
+    parties=("holder",),
+    accounts={"holder": (("cash", Nature.ASSET), ("{id}", Nature.ASSET))},
+    flows=(FlowSpec("settle", "operate", (Leg("holder", "cash", "{id}", (+1, -1)),)),),
+    amounts=_run_off,
+)
+
+PAYABLE_RUN_OFF = ContractType(
+    name="payable_run_off",
+    terms=("profile",),
+    parties=("holder",),
+    accounts={"holder": (("cash", Nature.ASSET), ("{id}", Nature.LIABILITY))},
+    flows=(FlowSpec("settle", "operate", (Leg("holder", "{id}", "cash", (-1, -1)),)),),
+    amounts=_run_off,
 )
 
 
@@ -702,4 +776,5 @@ SPONSOR_EQUITY = ContractType(
 
 REGISTRY = {t.name: t for t in (EQUITY_FUNDING, ONE_OFF_PURCHASE, SHARED_SAVINGS, TERM_LOAN, SHAREHOLDER_LOAN,
                                 LOAN, FOREIGN_LOAN, OFFTAKE, OPERATING_COST, CAPEX, DEBT_RESERVE,
-                                RESERVE_LETTER_OF_CREDIT, MAINTENANCE_RESERVE, SINKING_FUND, SPONSOR_EQUITY)}
+                                RESERVE_LETTER_OF_CREDIT, MAINTENANCE_RESERVE, SINKING_FUND, SPONSOR_EQUITY,
+                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF)}

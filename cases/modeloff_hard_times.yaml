@@ -1,0 +1,141 @@
+# ModelOff 2013 "Hard Times": a 36-month cash forecast for a toy maker (plan step 7l).
+#
+# Source: ModelOff 2013 Round 2 (Slick Mick's Toys; assumptions workbook
+# MO13-Hard-Times-Assumptions.xlsx, not in this repository); the
+# assumptions and the nine answers as transcribed in
+# generic_engine/tests/test_benchmark_round3_hard_times.py, copied to
+# cases/reference/modeloff_2013_hard_times.json by
+# consolidation/experiments/make_reference_modeloff_hard_times.py, and to
+# this file by make_case_modeloff_hard_times.py.
+# tests/test_case_modeloff_hard_times.py re-checks the copy.
+#
+# Grid: 36 months, October 2013 (period 0) to September 2016. US$.
+#
+# What the case does, and how it is assembled here:
+#   * units sold: 175,000 in calendar 2013, growing 4%, 12% and 12%; a
+#     quarter takes 20/15/30/35% of its year and a month a third of its
+#     quarter. Price 29.99; direct cost 75% of it a unit (offtake;
+#     operating_cost: unit_rate x the units);
+#   * indirect costs: 1,200,000 in 2013, growing 4% a year, a twelfth a
+#     month (operating_cost: annual x index);
+#   * customers pay nothing in the month, 60% the next, 25% and 15% the
+#     two after; suppliers (direct and indirect costs) 85%, 10% and 5%
+#     (payment_days as profiles). The contracts run past the grid (end
+#     36), so nothing is collected early in its last month;
+#   * the opening receivables (600,000) and payables (350,000) are settled
+#     30/60/10% in the first three months (receivable_run_off,
+#     payable_run_off);
+#   * plant (500,000) depreciates 10,000 a month (asset_register: the
+#     stated charge over the stated cost is a 50-month life, which ends
+#     after the grid; no disposal falls in it);
+#   * the debt (2,000,000) pays 7% simple interest monthly on its opening
+#     balance and is amortised on the stated schedule; the rest falls due
+#     after the grid. Interest and amortisation are paid when due whatever
+#     the cash (pay_as_due): the forecast shows when cash runs out, so cash
+#     is not floored and goes negative.
+case: modeloff-hard-times
+periods: 36
+phases: [accrue, operate, close, pay]
+currency: USD
+floors: {}
+opening:
+  company:
+    cash: {nature: asset, value: 18000}
+    opening_receivables: {nature: asset, value: 600000}
+    cwip: {nature: asset, value: 0}
+    fixed_assets: {nature: asset, value: 500000}
+    opening_payables: {nature: liability, value: 350000}
+    debt.debt: {nature: liability, value: 2000000}
+    retained_earnings: {nature: equity, value: balancing}
+contracts:
+  sales:
+    type: offtake
+    parties: {seller: company}
+    terms:
+      volume: ['61250/3', '61250/3', '61250/3', '36400/3', '36400/3', '36400/3', 9100, 9100, 9100, 18200, 18200, 18200, '63700/3', '63700/3', '63700/3', '40768/3', '40768/3', '40768/3', 10192, 10192, 10192, 20384, 20384, 20384, '71344/3', '71344/3', '71344/3', '1141504/75', '1141504/75', '1141504/75', 11415.04, 11415.04, 11415.04, 22830.08, 22830.08, 22830.08]
+      price: 29.99
+      payment_days: [0, 0.6, 0.25, 0.15]      # shares paid 0, 1, 2, 3 months on
+      days_per_year: 365
+      periods_per_year: 12
+      end: 36
+  direct:
+    type: operating_cost
+    parties: {payer: company}
+    terms: &supplier
+      annual: 0
+      unit_rate: 22.4925
+      volume: ['61250/3', '61250/3', '61250/3', '36400/3', '36400/3', '36400/3', 9100, 9100, 9100, 18200, 18200, 18200, '63700/3', '63700/3', '63700/3', '40768/3', '40768/3', '40768/3', 10192, 10192, 10192, 20384, 20384, 20384, '71344/3', '71344/3', '71344/3', '1141504/75', '1141504/75', '1141504/75', 11415.04, 11415.04, 11415.04, 22830.08, 22830.08, 22830.08]
+      index: 1
+      periods_per_year: 12
+      start: 0
+      end: 36
+      vat_rate: 0
+      vat_refund_lag: 0
+      payment_days: [0, 0.85, 0.1, 0.05]
+      days_per_year: 365
+  indirect:
+    type: operating_cost
+    parties: {payer: company}
+    terms: {<<: *supplier, annual: 1200000, unit_rate: 0, volume: 0, index: [1, 1, 1, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.04, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.0816, 1.124864, 1.124864, 1.124864, 1.124864, 1.124864, 1.124864, 1.124864, 1.124864, 1.124864]}
+  opening_receivables:
+    type: receivable_run_off
+    parties: {holder: company}
+    terms: {profile: [0.3, 0.6, 0.1]}
+  opening_payables:
+    type: payable_run_off
+    parties: {holder: company}
+    terms: {profile: [0.3, 0.6, 0.1]}
+  debt:
+    type: loan
+    parties: {borrower: company}
+    terms:
+      commitment: 2000000
+      draw_schedule: 0
+      available_until: 0            # drawn before the grid
+      rate: 0.07
+      rate_from: 0
+      days_per_period: 1
+      day_count_basis: 12           # simple interest, a twelfth of the rate a month
+      commitment_fee_rate: 0
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 0
+      repay_periods: 37             # matures after the grid
+      sculpt_dscr: null
+      principal_schedule: [0, 0, 50000, 0, 50000, 0, 60000, 0, 60000, 0, 60000, 90000, 0, 60000, 150000, 0, 0, 60000, 0, 0, 150000, 0, 0, 60000, 0, 0, 150000, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      arrangement_fee: 0
+      fee_at: 0
+rulebooks:
+  plant:
+    kind: asset_register
+    entity: company
+    phase: close
+    from: cwip
+    to: fixed_assets
+    expense: depreciation
+    disposal: disposal_loss
+    in_service: [0]
+    dispose_at: 49
+    life_periods: 50
+    first_charge: in_service
+  debt_service:
+    kind: pay_as_due
+    phase: pay
+    claims: [debt.interest, debt.principal]
+schemes:
+  cash_flow:
+    sales.receivable: operating
+    direct.payable: operating
+    indirect.payable: operating
+    vat_receivable: operating
+    opening_receivables: operating
+    opening_payables: operating
+    debt.debt: financing
+    debt.interest_payable: financing
+    debt.fee_payable: financing
+    debt.capitalised_interest: financing
+    debt.deferred_fees: financing
+cuts:
+  operating: {entity: company, account: cash, scheme: cash_flow, include: [operating]}
+  financing: {entity: company, account: cash, scheme: cash_flow, include: [financing]}
+measures: {}                    # the answers are amounts read from the books
