@@ -128,6 +128,11 @@ Rulebooks
     mezzanine cash sweep). The residual may name a distributor rulebook
     (a promote) instead of a leg, or be null: the company retains it, and
     it stays in the account (Macabacus LBO, step 7f: no common dividends).
+    ``flow_only`` (``from``, ``until``): in those periods only the period's
+    own net cash flow is offered, never cash carried in. Averta's live S9
+    (step 8) distributes current-period cash flow only, so a HoldCo
+    overdraft (an unfloored cash account) is carried, not made good, until
+    the first period after the window, when all the cash is offered.
 
 ``withholding``
     Registers withholding rates on payments (``senior.interest: 0.1``,
@@ -144,7 +149,9 @@ Rulebooks
     preferred return (simple, on the LP's unreturned capital at the start
     of each period), then a full catch-up to the GP until it holds
     ``carry / (1 - carry)`` of the LP's preferred return, then the rest
-    split ``1 - carry`` / ``carry``. Returns of capital go through the
+    split ``1 - carry`` / ``carry``. ``catchup_pct`` is 1 (that full
+    catch-up) or 0 (none: Averta's HoldCo, step 8, whose GP takes its carry
+    from the residual split only). Returns of capital go through the
     ``return_capital`` leg (no dividend withholding), the rest through
     ``distribute``. Built on Allocation; the cumulative pref and catch-up
     are this rulebook's state, the unreturned capital is read from the
@@ -634,6 +641,12 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     share = cr.take_or_default("share", 1, reason="the debt is outstanding for the whole of each period").value
     cr.finish()
     service = r.take("service")
+    fo = r.take_or_default("flow_only", None, reason="all cash above the floor is offered").value
+    flow_only = None
+    if fo is not None:
+        fr = Reader(fo, source="waterfall.flow_only")
+        flow_only = (int(fr.take("from")), int(fr.take("until")))
+        fr.finish()
     tests = []
     for i, raw in enumerate(r.take("tests")):
         tr = Reader(raw, source=f"waterfall.tests[{i}]")
@@ -686,6 +699,11 @@ def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                     blocked.setdefault(b, test.name)
         floor = exact(g.floors.get((entity, cash), Fraction(0)))
         available = max(Fraction(0), book.balance(cash, t) - floor)
+        if flow_only is not None and flow_only[0] <= t <= flow_only[1]:
+            # only the period's own net cash flow is offered: cash carried in, a surplus or an overdraft,
+            # is neither paid out nor made good (within the floor, when the cash has one)
+            own = book.balance(cash, t) - book.opening(cash, t)
+            available = max(Fraction(0), min(own, available) if (entity, cash) in g.floors else own)
 
         def cap(name, share):
             if share is None:
@@ -745,8 +763,9 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     accrue_phase = r.take("accrue_phase")
     pref_rate, per_year = exact(r.take("pref_rate")), int(r.take("periods_per_year"))
     compounds, carry = bool(r.take("pref_compounds")), exact(r.take("carry_rate"))
-    if exact(r.take("catchup_pct")) != 1:
-        raise InputError("promote: only a full (100%) catch-up is built")
+    catchup = exact(r.take("catchup_pct"))
+    if catchup not in (0, 1):
+        raise InputError("promote: a full (100%) catch-up or none is built")
     if not 0 <= carry < 1:
         raise InputError(f"promote: carry_rate {carry} is outside [0, 1)")
     state = {"accrued": Fraction(0), "pref_paid": Fraction(0), "catchup": Fraction(0)}
@@ -766,7 +785,10 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         c_pref, c_cu = state["pref_paid"], state["catchup"]
 
         def catchup_cap(paid):
-            # the GP is caught up to carry / (1 - carry) of the LP's profit (pref paid so far)
+            # the GP is caught up to carry / (1 - carry) of the LP's profit (pref paid so far); with no
+            # catch-up the GP's carry comes from the residual split only
+            if not catchup:
+                return Fraction(0)
             return max(Fraction(0), carry * (c_pref + paid["pref"]) / (1 - carry) - c_cu)
 
         a = allocate(amount, [Tier("roc_lp", capital(g, lp, t)), Tier("roc_gp", capital(g, gp, t)),

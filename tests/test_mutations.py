@@ -501,6 +501,18 @@ MUTATIONS = [
      "test_case_averta_portfolio.py::test_the_exit_value_matches_the_live_report"),
     ("packs/solar.py", "(ratio * rate + (1 - ratio) * pool)", "(ratio * rate)",
      "test_case_averta_portfolio.py::test_the_exit_value_matches_the_live_report"),
+    # Averta's HoldCo (step 8): instalments, until, the flow-only waterfall, the promote with no catch-up
+    ("portfolio.py", "            q = max(0, c + int(off))", "            q = c + int(off)",
+     "test_portfolio.py::test_instalments_due_before_the_programme_are_paid_at_its_start_and_late_ones_dropped"),
+    ("portfolio.py", "    if len(offsets) != len(shares) or sum(shares, Fraction(0)) != 1 or any(x < 0 for x in shares):",
+     "    if len(offsets) != len(shares):",
+     "test_portfolio.py::test_instalment_shares_must_sum_to_one"),
+    ("portfolio.py", "        out[name] = [v if t <= until else Fraction(0)", "        out[name] = [v if True else Fraction(0)",
+     "test_portfolio.py::test_a_cohort_series_is_nil_after_until"),
+    ("packs/pf.py", "            own = book.balance(cash, t) - book.opening(cash, t)", "            own = book.balance(cash, t)",
+     "test_case_averta_holdco.py::test_every_cash_movement_matches_the_live_holdco"),
+    ("packs/pf.py", "            if not catchup:\n                return Fraction(0)", "            if False:\n                return Fraction(0)",
+     "test_case_nightmare.py::test_a_promote_without_catch_up_pays_the_gp_its_carry_of_the_residual_only"),
 ]
 
 

@@ -48,6 +48,7 @@ case file names from the template's cuts, and returns them aggregated::
       set: {generators.revenue.specific_yield: 1443.0}   # optional overrides
       schedule: [30, 30, 60, 60, 90, ...]                 # copies started per period
       periods: 20                                         # length of the result
+      until: 19                                           # optional: nil after this period
       align: 1
       first: 1
       series:
@@ -55,7 +56,9 @@ case file names from the template's cuts, and returns them aggregated::
         revenue: {cut: revenue, running: true}
       generated: {zones: sumproduct.zones}               # optional
 
-``times`` multiplies the cut (the template's cash cut of its equity is
+``until`` (optional) is the last period that takes a value; later ones are
+nil (Averta's HoldCo is paid its SPVs' distributions for the hold quarters,
+not for the exit quarter). ``times`` multiplies the cut (the template's cash cut of its equity is
 negative for a distribution); ``running`` reads its running total, which is
 what a profit-and-loss account's closing balance is when the books are
 never closed to retained earnings (the live model's portfolio revenue and
@@ -65,6 +68,25 @@ the portfolio on the template's zones without restating them. Outputs: each
 named series and passed-on output, ``online`` (the copies started so far,
 by period), ``deployed`` (the schedule over the result's periods) and
 ``count`` (all copies in the schedule).
+
+The ``instalments`` generator
+-----------------------------
+Each copy is paid for in instalments around its own start: a share of a
+per-copy ``amount`` at each ``offset`` (in periods; negative is before
+the start)::
+
+    capex:
+      kind: instalments
+      schedule: [30, 30, 60, ...]
+      amount: 87582.4
+      offsets: [-3, -1, 0, 2]
+      shares: [0.25, 0.4, 0.25, 0.1]
+      periods: 20
+
+As Averta's live bridge does it (``holdco_bridge.compute_deployment``): an
+instalment due before period 0 is paid at period 0 (the programme cannot
+pay before it starts), and one due at or after ``periods`` is dropped.
+Output ``series``; the shares must sum to one.
 """
 from __future__ import annotations
 
@@ -129,6 +151,7 @@ def cohorts(r: Reader, run: Callable[[str, Mapping[str, Any]], Any]) -> Dict[str
     overrides = dict(r.take_or_default("set", {}, reason="the template is run as written").value)
     schedule = [exact(x) for x in r.take("schedule")]
     periods = int(r.take("periods"))
+    until = int(r.take_or_default("until", periods - 1, reason="every period of the result takes a value").value)
     align = int(r.take("align"))
     first = int(r.take("first"))
     specs = dict(r.take("series"))
@@ -148,7 +171,8 @@ def cohorts(r: Reader, run: Callable[[str, Mapping[str, Any]], Any]) -> Dict[str
         values = [times * v for v in result.cuts[cut].values]
         if running:
             values = list(itertools.accumulate(values))
-        out[name] = deploy(values, schedule, periods, align, first)
+        out[name] = [v if t <= until else Fraction(0)
+                     for t, v in enumerate(deploy(values, schedule, periods, align, first))]
     for name, ref in passed.items():
         g, _, o = str(ref).partition(".")
         if g not in result.generated or o not in result.generated[g]:
@@ -162,3 +186,36 @@ def cohorts(r: Reader, run: Callable[[str, Mapping[str, Any]], Any]) -> Dict[str
     out["deployed"] = (list(schedule[:periods]) + [Fraction(0)] * periods)[:periods]
     out["count"] = sum(schedule, Fraction(0))
     return out
+
+
+def instalments(schedule: Sequence[int], amount: Fraction, offsets: Sequence[int], shares: Sequence[Fraction],
+                periods: int) -> List[Fraction]:
+    """What the copies cost by period, each paid in ``shares`` of ``amount`` at ``offsets`` from its start.
+
+    An instalment due before period 0 is paid at period 0; one due at or
+    after ``periods`` is dropped (the live bridge's rule, see the module
+    docstring).
+
+    Raises
+    ------
+    InputError
+        If a count is not a non-negative whole number, or the offsets and
+        shares differ in length, or the shares do not sum to one.
+    """
+    deploy([], schedule, 0)                                  # the counts' own check
+    if len(offsets) != len(shares) or sum(shares, Fraction(0)) != 1 or any(x < 0 for x in shares):
+        raise InputError("instalments: one non-negative share per offset, summing to 1")
+    out = [Fraction(0)] * periods
+    for c, n in enumerate(schedule):
+        for off, share in zip(offsets, shares):
+            q = max(0, c + int(off))
+            if n and q < periods:
+                out[q] += int(n) * share * amount
+    return out
+
+
+def instalments_generator(r: Reader) -> Dict[str, Any]:
+    """The ``instalments`` generator (see the module docstring)."""
+    return {"series": instalments([exact(x) for x in r.take("schedule")], exact(r.take("amount")),
+                                  [int(x) for x in r.take("offsets")], [exact(x) for x in r.take("shares")],
+                                  int(r.take("periods")))}

@@ -91,3 +91,22 @@ def test_the_generators_own_output_names_cannot_be_series():
 def test_a_passed_on_output_must_be_one_the_template_generates():
     with pytest.raises(InputError, match="does not generate"):
         gen(cohorts(generated={"zones": "sumproduct.no_such_output"}))
+
+
+def test_instalments_due_before_the_programme_are_paid_at_its_start_and_late_ones_dropped():
+    from one_engine.portfolio import instalments
+    # one copy starting at 0 and two at 2, paid a quarter before, at the start and two after
+    got = instalments([1, 0, 2], F(100), [-1, 0, 2], [F(1, 4), F(1, 2), F(1, 4)], 4)
+    assert got == [75, 50, 125, 0]          # the copy at 0 pays its early quarter at 0; 2 + 2 = 4 is dropped
+
+
+def test_instalment_shares_must_sum_to_one():
+    with pytest.raises(InputError, match="summing to 1"):
+        gen({"kind": "instalments", "schedule": [1], "amount": 100, "offsets": [0, 1], "shares": [0.5, 0.4],
+             "periods": 3})
+
+
+def test_a_cohort_series_is_nil_after_until():
+    full, cut = gen(cohorts()), gen(cohorts(until=3))
+    assert cut["distributions"][:4] == full["distributions"][:4]
+    assert cut["distributions"][4:] == [0, 0] and full["distributions"][4] != 0

@@ -58,7 +58,8 @@ Also added for Averta's live model (step 8, the portfolio):
 * the generator kind ``cohorts`` (:mod:`one_engine.portfolio`): it runs a
   template case (a file in this directory, with optional overrides by
   dotted path, ``set``) and returns the template's cuts summed over a
-  deployment schedule;
+  deployment schedule; and ``instalments``, what the copies cost when
+  each is paid in shares around its own start;
 * a cut may be ``kind: pnl``: income less expense of the classes it
   includes, by period (:func:`one_engine.cuts.pnl_cut`), read from
   ``entity`` under ``scheme``; without ``kind`` a cut is a cash cut, as
@@ -134,7 +135,8 @@ def _run_template(name: str, overrides: Mapping[str, Any]) -> "CaseResult":
     return run_case(data)
 
 
-GENERATORS = _merge(_solar.GENERATORS, {"cohorts": lambda r: _portfolio.cohorts(r, _run_template)})
+GENERATORS = _merge(_solar.GENERATORS, {"cohorts": lambda r: _portfolio.cohorts(r, _run_template),
+                                         "instalments": _portfolio.instalments_generator})
 
 
 @dataclass

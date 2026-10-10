@@ -221,6 +221,18 @@ def test_promote(r):
     assert lp_dist == pref + resid * F(4, 5)
 
 
+def test_a_promote_without_catch_up_pays_the_gp_its_carry_of_the_residual_only():
+    # Averta's HoldCo (step 8) states catchup_pct 0; with a preferred return, that changes the split
+    data = copy.deepcopy(CASE)
+    data["rulebooks"]["promote"]["catchup_pct"] = 0
+    pr = run_case(data).records("promote")
+    assert sum(x["pref"] for x in pr.values()) > 0
+    assert all(x["catchup"] == 0 for x in pr.values())
+    data["rulebooks"]["promote"]["catchup_pct"] = 0.5
+    with pytest.raises(InputError, match="catch-up or none"):
+        run_case(data)
+
+
 def test_timing_lines_without_a_tax_register_refuse():
     data = copy.deepcopy(CASE)
     del data["rulebooks"]["tax"]["timing"]
