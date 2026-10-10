@@ -420,6 +420,12 @@ MUTATIONS = [
      "test_case_modeloff_acquisition_financing.py::test_q4_the_share_of_tranche_4s_interest_that_is_capitalised"),
     ("packs/contracts.py", '        due["capitalised"] = min(cap, excess)\n', '        due["capitalised"] = min(cap, excess) * 0\n',
      "test_case_modeloff_acquisition_financing.py::test_finding_the_capitalised_interest_is_repaid_before_the_principal"),
+    # ModelOff 2016 Fund the Future (step 7o): the deposit account's return and its close
+    ("packs/contracts.py", '    return {"return": bal.opening("holder", "{id}") * _at(terms["rate"], t) * _days(terms, t)}',
+     '    return {"return": bal.opening("holder", "{id}") * _at(terms["rate"], t)}',
+     "test_case_modeloff_fund_the_future.py::test_q6_alices_balance_at_the_end_of_2024"),
+    ("packs/contracts.py", "    if t == close:\n        due[\"withdraw\"]", "    if t == close + 1:\n        due[\"withdraw\"]",
+     "test_case_modeloff_fund_the_future.py::test_the_case_runs_clean_and_every_account_closes_empty"),
 ]
 
 

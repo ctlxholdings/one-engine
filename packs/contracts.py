@@ -71,6 +71,17 @@ Added for ModelOff 2013 "Hard Times" (step 7l), a monthly cash forecast:
   on the opening balance sheet (the account is the contract's id) over a
   stated profile.
 
+Added for ModelOff 2016 "Fund the Future" (step 7o), four savings accounts:
+
+* ``deposit_account`` an account that earns a return on its opening
+  balance (``rate`` x ``days_per_period`` / ``day_count_basis``, each a
+  number or a series; the return is added to the balance, so it
+  compounds), takes the deposits of ``schedule`` as claims, and is
+  withdrawn in full at ``close_at`` (the deposit of that period included,
+  when its withdrawal is settled in a phase after the deposit). Nothing is
+  due after it closes. A days series of zeros but one period a year makes
+  an annual account on a quarterly grid.
+
 Modelling note on ``shared_savings``: the client's savings are booked as an
 income line ("avoided energy cost"), i.e. a with-versus-without view of the
 client's utility bill. A lens that restates the client against its baseline
@@ -746,6 +757,35 @@ SINKING_FUND = ContractType(
     claims=_sinking_claims,
 )
 
+def _deposit_amounts(terms, t, bal=None):
+    """The period's return: the opening balance x rate x days_per_period / day_count_basis."""
+    if bal is None:
+        return {}
+    return {"return": bal.opening("holder", "{id}") * _at(terms["rate"], t) * _days(terms, t)}
+
+
+def _deposit_claims(terms, t, bal):
+    close = int(terms["close_at"])
+    if t > close:
+        return {}
+    due = {"deposit": _at(terms["schedule"], t)}
+    if t == close:
+        due["withdraw"] = bal("holder", "{id}")
+    return due
+
+
+DEPOSIT_ACCOUNT = ContractType(
+    name="deposit_account",
+    terms=("schedule", "rate", "days_per_period", "day_count_basis", "close_at"),
+    parties=("holder",),
+    accounts={"holder": (("cash", Nature.ASSET), ("{id}", Nature.ASSET), ("{id}.return", Nature.INCOME))},
+    flows=(FlowSpec("return", "accrue", (Leg("holder", "{id}", "{id}.return", (+1, +1)),)),),
+    amounts=_deposit_amounts,
+    claim_specs=(ClaimSpec("deposit", "pay", Leg("holder", "{id}", "cash", (+1, -1))),
+                 ClaimSpec("withdraw", "source", Leg("holder", "cash", "{id}", (+1, -1)))),
+    claims=_deposit_claims,
+)
+
 MAINTENANCE_RESERVE = ContractType(
     name="maintenance_reserve",
     terms=("amount", "from", "event"),
@@ -777,4 +817,4 @@ SPONSOR_EQUITY = ContractType(
 REGISTRY = {t.name: t for t in (EQUITY_FUNDING, ONE_OFF_PURCHASE, SHARED_SAVINGS, TERM_LOAN, SHAREHOLDER_LOAN,
                                 LOAN, FOREIGN_LOAN, OFFTAKE, OPERATING_COST, CAPEX, DEBT_RESERVE,
                                 RESERVE_LETTER_OF_CREDIT, MAINTENANCE_RESERVE, SINKING_FUND, SPONSOR_EQUITY,
-                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF)}
+                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF, DEPOSIT_ACCOUNT)}
