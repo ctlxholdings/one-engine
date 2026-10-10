@@ -53,6 +53,15 @@ Added for the 500MW nightmare (step 7):
 * ``sinking_fund`` builds a target over a window; another rulebook pays
   out of it (decommissioning).
 
+Changed for Bodmer's 6MW solar (step 7e), whose grid is nine months then
+quarters:
+
+* ``days_per_period`` and ``commitment_fee_rate`` may be per-period series
+  (a month is 30/360, a quarter 90/360; the fee runs in construction only);
+* ``loan`` / ``foreign_loan`` gain ``principal_schedule``: null, or the
+  principal due each period (a sizing computes it). A negative amount is
+  interest the schedule does not pay: it is capitalised.
+
 Modelling note on ``shared_savings``: the client's savings are booked as an
 income line ("avoided energy cost"), i.e. a with-versus-without view of the
 client's utility bill. A lens that restates the client against its baseline
@@ -124,8 +133,9 @@ def _at(x, t):
     return exact(x)
 
 
-def _days(terms):
-    return exact(terms["days_per_period"]) / exact(terms["day_count_basis"])
+def _days(terms, t):
+    """The year fraction of period ``t``: days_per_period (a number or a series) over the basis."""
+    return _at(terms["days_per_period"], t) / exact(terms["day_count_basis"])
 
 
 def _refund_at(t, terms):
@@ -163,7 +173,7 @@ def loan_schedule(terms, t):
         step = exact(terms["commitment"]) / int(terms["repay_periods"])
         return max(exact(0), exact(terms["commitment"]) - step * (p - int(terms["repay_from"]) + 1))
     opening = target(t - 1) if t > 0 else exact(terms["commitment"])
-    interest = opening * _at(terms["rate"], t) * _days(terms) if t >= int(terms["rate_from"]) else exact(0)
+    interest = opening * _at(terms["rate"], t) * _days(terms, t) if t >= int(terms["rate_from"]) else exact(0)
     return opening - target(t), interest, target(t)
 
 
@@ -191,10 +201,10 @@ def _loan(name, capitalise):
             return {}
         out = {}
         if t >= int(terms["rate_from"]):
-            out["interest"] = owed(bal, opening=True) * _at(terms["rate"], t) * _days(terms)
+            out["interest"] = owed(bal, opening=True) * _at(terms["rate"], t) * _days(terms, t)
         if t <= int(terms["available_until"]):
             undrawn = exact(terms["commitment"]) - bal.opening("borrower", "{id}.debt")
-            out["commitment_fee"] = undrawn * exact(terms["commitment_fee_rate"]) * _days(terms)
+            out["commitment_fee"] = undrawn * _at(terms["commitment_fee_rate"], t) * _days(terms, t)
         return out
 
     def claims(terms, t, bal):
@@ -275,6 +285,13 @@ def _facility(name, foreign):
         otherwise principal due is ``CFADS / sculpt_dscr`` less the interest
         due, within what is owed, and whatever is left is due at maturity.
         CFADS is passed by the rulebook (``bal.given("cfads")``).
+    principal_schedule
+        null, or the principal due in each period from ``repay_from``
+        (a series; a sizing computes it), within what is owed, the rest at
+        maturity. A negative amount is interest the schedule leaves unpaid
+        (debt service below interest, as when a sculpted size meets a weak
+        quarter): that much of the period's interest is capitalised. One of
+        ``sculpt_dscr`` and ``principal_schedule`` must be null.
     arrangement_fee, fee_at
         Paid once at ``fee_at`` (a claim, funded like any use), carried as
         a deferred cost and amortised straight-line to ``{id}.fees`` from
@@ -340,18 +357,34 @@ def _facility(name, foreign):
     def interest_due(terms, t, owed_fc):
         if t < int(terms["rate_from"]):
             return exact(0)
-        return owed_fc * _at(terms["rate"], t) * _days(terms) * fx(terms, t)
+        return owed_fc * _at(terms["rate"], t) * _days(terms, t) * fx(terms, t)
+
+    def scheduled(terms, t):
+        """The principal the schedule sets for ``t`` (functional currency), or None (no schedule, not yet due)."""
+        if terms["principal_schedule"] is None or not int(terms["repay_from"]) <= t < _maturity(terms):
+            return None
+        return _at(terms["principal_schedule"], t) * fx(terms, t)
 
     def amounts(terms, t, bal=None):
         if bal is None:
             return {}
+        if terms["sculpt_dscr"] is not None and terms["principal_schedule"] is not None:
+            raise ValueError("a loan is sculpted or follows a principal schedule, not both")
         out = {}
         owed_open = sum((fc_opening(terms, bal, a) for a, _ in pairs), exact(0))
         interest = interest_due(terms, t, owed_open)
         out["pik" if _capitalised(terms, t) else "interest"] = interest
+        s = scheduled(terms, t)
+        if s is not None and s < 0 and not _capitalised(terms, t):
+            # debt service below interest: the part of the interest the schedule leaves unpaid is capitalised
+            if -s > interest:
+                raise ValueError(f"period {t}: a scheduled repayment of {s} is below minus the interest "
+                                 f"({interest}); the difference would be a new draw")
+            out["pik"], out["interest"] = -s, interest + s
         if t <= int(terms["available_until"]):
             undrawn = exact(terms["commitment"]) - fc_opening(terms, bal, "{id}.debt")
-            out["commitment_fee"] = undrawn * exact(terms["commitment_fee_rate"]) * _days(terms) * fx(terms, t)
+            out["commitment_fee"] = (undrawn * _at(terms["commitment_fee_rate"], t) * _days(terms, t)
+                                     * fx(terms, t))
         if int(terms["fee_at"]) < t <= _maturity(terms):
             out["amortise_fee"] = bal.opening("borrower", "{id}.deferred_fees") / (_maturity(terms) - t + 1)
         if foreign:
@@ -381,7 +414,9 @@ def _facility(name, foreign):
         cap = fc_now(terms, bal, "{id}.capitalised_interest", t) * rate
         excess = exact(0)
         if t >= int(terms["repay_from"]):
-            if terms["sculpt_dscr"] is None:
+            if t < _maturity(terms) and terms["principal_schedule"] is not None:
+                excess = min(debt + cap, max(exact(0), scheduled(terms, t)))
+            elif terms["sculpt_dscr"] is None and terms["principal_schedule"] is None:
                 _, _, target = loan_schedule(terms, t)
                 excess = max(exact(0), (debt + cap) / rate - target) * rate
             elif t >= _maturity(terms):
@@ -410,7 +445,7 @@ def _facility(name, foreign):
         terms=(("currency", "fx_rate") if foreign else ()) + (
             "commitment", "draw_schedule", "available_until", "rate", "rate_from", "days_per_period",
             "day_count_basis", "commitment_fee_rate", "capitalise_from", "capitalise_until", "repay_from", "repay_periods",
-            "sculpt_dscr", "arrangement_fee", "fee_at"),
+            "sculpt_dscr", "principal_schedule", "arrangement_fee", "fee_at"),
         parties=("borrower",),
         accounts={"borrower": tuple(borrower)},
         flows=tuple(flows),
@@ -447,10 +482,12 @@ def forward_service(loan, p, bal):
         return sum(loan_schedule(terms, p)[:2], exact(0))
     if p > _maturity(terms):
         return exact(0)
+    if terms["principal_schedule"] is not None:
+        raise NotImplementedError(f"a reserve on '{loan.id}', a loan on a principal schedule, is not built")
     lb = bal.of(loan)
     rate = _at(terms["fx_rate"], bal.period) if loan.type.name == "foreign_loan" else exact(1)
     owed = lb("borrower", "{id}.debt") + lb("borrower", "{id}.capitalised_interest")
-    interest = (owed * _at(terms["rate"], p) * _days(terms)
+    interest = (owed * _at(terms["rate"], p) * _days(terms, p)
                 if not _capitalised(terms, p) and p >= int(terms["rate_from"]) else exact(0))
     if p < int(terms["repay_from"]):
         return interest
@@ -584,7 +621,7 @@ DEBT_RESERVE = ContractType(
 
 def _lc_amounts(terms, t, bal=None):
     target = _reserve_target(terms, t, bal) if bal is not None else None
-    return {"fee": target * exact(terms["fee_rate"]) * _days(terms)} if target else {}
+    return {"fee": target * exact(terms["fee_rate"]) * _days(terms, t)} if target else {}
 
 
 RESERVE_LETTER_OF_CREDIT = ContractType(

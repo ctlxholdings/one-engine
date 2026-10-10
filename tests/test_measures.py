@@ -31,3 +31,42 @@ def test_simple_payback_interpolates_within_the_period():
 
 def test_payback_never_reached_is_reported_not_invented():
     assert payback([-100, 10, 10]) is None
+
+
+# ── dated flows and index discounting (Bodmer's solar case, step 7e) ──────
+
+import datetime as dt  # noqa: E402
+
+from one_engine.measures import discount, xirr  # noqa: E402
+
+
+def test_xirr_counts_actual_days_over_365():
+    d0 = dt.date(2015, 1, 1)
+    # 365 days later: one year exactly, so the rate is the simple 10%
+    assert xirr([-100, 110], [d0, dt.date(2016, 1, 1)]) == pytest.approx(0.10, abs=1e-12)
+    # 2016 is a leap year: 366 days is 366/365 of a year, a little under 10%
+    assert xirr([-100, 110], [dt.date(2016, 1, 1), dt.date(2017, 1, 1)]) == pytest.approx(
+        1.1 ** (365 / 366) - 1, abs=1e-12)
+
+
+def test_xirr_is_not_moved_by_zero_flows_before_the_first_payment():
+    dates = [dt.date(2015, 9, 30), dt.date(2016, 1, 31), dt.date(2017, 1, 31)]
+    assert xirr([0, -100, 110], dates) == pytest.approx(xirr([-100, 110], dates[1:]), abs=1e-12)
+
+
+def test_xirr_refuses_like_irr():
+    d = [dt.date(2015, 1, 1), dt.date(2016, 1, 1), dt.date(2017, 1, 1)]
+    with pytest.raises(MeasureError, match="never changes sign"):
+        xirr([100, 10, 10], d)
+    with pytest.raises(AmbiguousRate):
+        xirr([-100, 230, -132], d)
+    with pytest.raises(MeasureError, match="2 dates"):
+        xirr([-100, 50, 60], d[:2])
+    with pytest.raises(MeasureError, match="go back"):
+        xirr([-100, 50, 60], [d[0], d[2], d[1]])
+
+
+def test_discount_needs_one_factor_per_flow():
+    assert discount([100, 100], [1, 0.5]) == 150
+    with pytest.raises(MeasureError, match="discount factors"):
+        discount([100, 100, 100], [1, 0.5])

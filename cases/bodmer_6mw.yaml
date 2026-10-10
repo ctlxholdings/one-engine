@@ -1,0 +1,193 @@
+# Bodmer 6MW solar: the Financing Model rebuilt from the Operating Model's outputs (plan step 7e).
+#
+# Source: Edward Bodmer, Solar-Case-Study-Complete.xlsm (edbodmer.com, a free
+# published model), cached values as saved by Excel; copied to
+# cases/reference/bodmer_solar.json by consolidation/experiments/
+# make_reference_bodmer.py, and to this file by make_case_bodmer.py.
+# tests/test_case_bodmer.py re-checks every copied value against the reference.
+#
+# Grid: 109 periods. Four months of development (Sep-Dec 2015) and five of
+# construction (Jan-May 2016), then 100 quarters from June 2016 (COD).
+# The workbook names no currency; CU is a currency unit.
+#
+# What the Financing Model does, and how it is assembled here:
+#   * the Operating Model's EBITDA enters as one income line (operations);
+#     development and EPC costs are capex into CWIP;
+#   * the loan is sized by sculpting (loop debt_size): debt service in each
+#     of the 80 repayment quarters is CFADS / 1.45, and the debt is that
+#     service discounted at the loan's own rate, compounded quarter by
+#     quarter from COD. CFADS is EBITDA less a tax that ignores interest,
+#     so the size does not depend on the debt: two runs close the loop
+#     exactly. The principal schedule is the sizing's (service less
+#     interest on the sizing balance), capped by what is owed; where it is
+#     negative, that much interest is capitalised (debt service below
+#     interest, in six winter quarters);
+#   * the up-front fee is 1.5% of the sized debt, paid at the start of
+#     construction; the commitment fee is 0.7% a year on the undrawn
+#     commitment during construction; interest during construction is
+#     funded as a use;
+#   * funding: equity is the budget less the sized debt; 40% of it is paid
+#     in first, then each period's uses are split between debt and equity
+#     in the ratio of what is left of each (pro_rata_funding);
+#   * tax at 30% on EBITDA less tax depreciation (the 4,602,000 of
+#     development and EPC over 40 quarters from COD), losses carried
+#     forward without limit. Interest and fees are not deducted: the
+#     workbook's EBT (row 153) excludes them;
+#   * cash after tax and debt service is distributed every quarter. Equity
+#     and debt returns are XIRRs on the period end dates.
+#
+# The budget is the workbook's sources and uses total (G58). Its IDC and
+# fees are the "Fixed" column, values typed into I55:I57 (a paste of an
+# earlier run's computed figures, from a debt of about 3,525,191), not the
+# figures this run computes. They are reproduced as typed so that the
+# workbook's funding split is reproduced; tests/test_case_bodmer.py closes
+# that loop too and reports what changes.
+#
+# Not carried: the default-draw facility (row 173 is zero in every
+# period), the DSRA (assumed in Assumptions, no rows in the model), cash
+# sweep (0) and the maximum gearing of 80% (the sized debt is 72.9% of
+# capital, so the cap does not bind).
+case: bodmer-6mw-solar
+periods: 109
+phases: [accrue, fund, operate, tax, pay, close]
+currency: CU
+floors:
+  spv.cash: 0
+loops:
+  debt_size:
+    rule: {kind: sculpt, loan: senior, dscr: 1.45, cfads: waterfall}
+    start: {debt: 0, repayment: 0}
+    tolerance: 0
+    max_iterations: 3
+contracts:
+  operations:
+    type: offtake
+    parties: {seller: spv}
+    terms:
+      volume: [0, 0, 0, 0, 0, 0, 0, 0, 0, 99503.1506676265, 52009.913222859825, 30398.601847890644, 80578.14295701493, 98702.26221778453, 51444.6646729138, 29940.225200464032, 79869.46758782587, 97902.76562560018, 50879.626810988084, 31590.597410920618, 82966.47509887043, 101522.65247679333, 53138.25599594957, 32576.053437946994, 84865.49709208187, 103751.7623024041, 54507.36429777903, 32377.32412126802, 84629.79388383526, 103502.37502666502, 54291.797810474614, 36635.729271682314, 92436.32378471532, 112591.78553278054, 60043.78579024442, 44402.584164931, 106573.68240525824, 129032.7479364197, 70493.30185522042, 46326.886907018044, 110172.69208713573, 133237.09816880926, 73121.86146940204, 46179.60260305183, 110036.19369102863, 133104.17024735676, 72977.78894075779, 49232.57468979256, 115674.61174694466, 139677.29295513188, 77118.68388987778, 52979.0469870554, 122565.7835075046, 147705.42148298217, 82188.678986766, 58080.52576957036, 131903.08955718775, 158574.2913837062, 89073.36417227128, 62804.23869232736, 140560.63407530065, 168654.176604681, 95453.0300114764, 65744.50971300884, 146002.6030699077, 175000.54296850946, 99445.86179098905, 67006.98106604122, 148419.59989684005, 177834.72037799895, 101193.29641833418, 71940.21586116176, 157460.45343033172, 188360.7505279521, 107855.64152849109, 74850.98169519968, 162854.60245810822, 194652.65798302944, 111811.19016971644, 82083.75345331315, 176047.50066476566, 210000.69117086928, 121553.51012510111, 87913.5232561211, 186711.26466246118, 222412.31338509158, 129418.35587855263, 94375.72903330813, 198517.8496128363, 236151.33445472486, 138130.64606270476, 100406.4358762536, 209547.9448982165, 248989.0927247644, 146266.06713651924, 101535.25409609792, 211736.9985447326, 251561.18914568383, 147839.97269429854, 101754.30011588552, 212286.8133820776, 252230.22581112373, 148196.75169941192, 102089.95323641525, 213049.005205605, 253146.26939122085, 148710.46347627806, 103371.90916826807, 215520.37318555138]
+      price: 1
+      payment_days: 0
+      days_per_year: 365
+      periods_per_year: 4
+      end: 108
+  development:
+    type: capex
+    parties: {owner: spv}
+    terms: {schedule: [40500, 40500, 40500, 40500, 0, 0, 0, 0, 0], vat_rate: 0, vat_refund_lag: 0, end: 108}
+  epc:
+    type: capex
+    parties: {owner: spv}
+    terms: {schedule: [0, 0, 0, 0, 888000, 888000, 888000, 888000, 888000], vat_rate: 0, vat_refund_lag: 0, end: 108}
+  senior:
+    type: loan
+    parties: {borrower: spv}
+    terms:
+      commitment: {loop: debt_size, output: debt}
+      draw_schedule: {loop: debt_size, output: debt}
+      available_until: 8
+      # base rate 0.018 plus the credit spread of each five-year band
+      rate: [0.033, 0.033, 0.033, 0.033, 0.033, 0.033, 0.033, 0.033, 0.033, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.034, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0345, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.0347, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035, 0.035]
+      rate_from: 0
+      # a month is 30/360 of a year, a quarter 90/360 (the workbook's months / 12)
+      days_per_period: [30, 30, 30, 30, 30, 30, 30, 30, 30, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90]
+      day_count_basis: 360
+      commitment_fee_rate: [0, 0, 0, 0, 0.007, 0.007, 0.007, 0.007, 0.007]
+      capitalise_from: 1
+      capitalise_until: 0
+      repay_from: 9
+      repay_periods: 80
+      sculpt_dscr: null
+      principal_schedule: {loop: debt_size, output: repayment}
+      arrangement_fee: {loop: debt_size, output: debt, times: 0.015}
+      fee_at: 4
+  equity:
+    type: sponsor_equity
+    parties: {issuer: spv}
+    terms: {}
+schemes:
+  cash_flow:
+    operations.receivable: operating
+    cwip: investing
+    tax_payable: tax
+    senior.debt: senior
+    senior.interest_payable: senior
+    senior.fee_payable: senior
+    senior.deferred_fees: senior
+    senior.capitalised_interest: senior
+    equity.capital: equity
+    equity.distributions: equity
+rulebooks:
+  funding:
+    kind: pro_rata_funding
+    entity: spv
+    cash: cash
+    phase: fund
+    until: 8
+    uses:
+      - {flow: development.spend}
+      - {flow: epc.spend}
+      - {claim: senior.arrangement_fee}
+      - {claim: senior.interest}
+      - {claim: senior.fee}
+    loan: senior
+    equity: equity.contribute
+    equity_first: 0.4
+    budget:                     # the sources and uses table (G42:G57)
+      development: 162000
+      epc: 4440000
+      idc: 18218.734425531227                  # typed (I55), not computed
+      up_front_fee: 52877.86599605164          # typed (I56)
+      commitment_fee: 6417.227247351902       # typed (I57)
+  assets:
+    kind: asset_register
+    entity: spv
+    phase: accrue
+    from: cwip
+    to: fixed_assets
+    expense: depreciation
+    disposal: disposal_loss
+    in_service: 9
+    life_periods: 40
+    first_charge: in_service
+    dispose_at: 108
+  tax:
+    kind: income_tax
+    entity: spv
+    phase: tax
+    expense: tax_expense
+    payable: tax_payable
+    rate: 0.3
+    carry_forward_periods: null
+    scheme:
+      operations.revenue: taxable
+      depreciation: taxable
+      disposal_loss: taxable
+      senior.interest: non_deductible
+      senior.fees: non_deductible
+      tax_expense: non_deductible
+  waterfall:
+    kind: waterfall
+    entity: spv
+    phase: pay
+    cash: cash
+    tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: senior.interest}
+      - {claim: senior.capitalised}
+      - {claim: senior.principal}
+    residual: equity.distribute
+    cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+    service: [senior.interest, senior.capitalised, senior.principal]
+    tests:
+      - {name: dscr_target, op: ">=", level: 1.45, if_missing: pass, consequence: report}
+cuts:
+  equity_flows: {entity: spv, account: cash, scheme: cash_flow, include: [equity]}
+  debt_flows: {entity: spv, account: cash, scheme: cash_flow, include: [senior]}
+  project_flows: {entity: spv, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+measures:
+  equity_irr: {measure: xirr, cut: equity_flows, dates: &ends ['2015-09-30', '2015-10-31', '2015-11-30', '2015-12-31', '2016-01-31', '2016-02-29', '2016-03-31', '2016-04-30', '2016-05-31', '2016-08-31', '2016-11-30', '2017-02-28', '2017-05-31', '2017-08-31', '2017-11-30', '2018-02-28', '2018-05-31', '2018-08-31', '2018-11-30', '2019-02-28', '2019-05-31', '2019-08-31', '2019-11-30', '2020-02-29', '2020-05-31', '2020-08-31', '2020-11-30', '2021-02-28', '2021-05-31', '2021-08-31', '2021-11-30', '2022-02-28', '2022-05-31', '2022-08-31', '2022-11-30', '2023-02-28', '2023-05-31', '2023-08-31', '2023-11-30', '2024-02-29', '2024-05-31', '2024-08-31', '2024-11-30', '2025-02-28', '2025-05-31', '2025-08-31', '2025-11-30', '2026-02-28', '2026-05-31', '2026-08-31', '2026-11-30', '2027-02-28', '2027-05-31', '2027-08-31', '2027-11-30', '2028-02-29', '2028-05-31', '2028-08-31', '2028-11-30', '2029-02-28', '2029-05-31', '2029-08-31', '2029-11-30', '2030-02-28', '2030-05-31', '2030-08-31', '2030-11-30', '2031-02-28', '2031-05-31', '2031-08-31', '2031-11-30', '2032-02-29', '2032-05-31', '2032-08-31', '2032-11-30', '2033-02-28', '2033-05-31', '2033-08-31', '2033-11-30', '2034-02-28', '2034-05-31', '2034-08-31', '2034-11-30', '2035-02-28', '2035-05-31', '2035-08-31', '2035-11-30', '2036-02-29', '2036-05-31', '2036-08-31', '2036-11-30', '2037-02-28', '2037-05-31', '2037-08-31', '2037-11-30', '2038-02-28', '2038-05-31', '2038-08-31', '2038-11-30', '2039-02-28', '2039-05-31', '2039-08-31', '2039-11-30', '2040-02-29', '2040-05-31', '2040-08-31', '2040-11-30', '2041-02-28', '2041-05-31']}
+  debt_irr: {measure: xirr, cut: debt_flows, dates: *ends}
+  project_irr: {measure: xirr, cut: project_flows, dates: *ends}
+wind_down:
+  spv: [cash, cwip, fixed_assets, operations.receivable, tax_payable, senior.debt, senior.capitalised_interest,
+        senior.interest_payable, senior.fee_payable, senior.deferred_fees]

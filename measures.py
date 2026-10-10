@@ -16,9 +16,16 @@ Refusal over a confident wrong number
 
 Arithmetic is float: measures sit outside the exact kernel (step 3 decision).
 Rates are per period of the stream; annualising is the caller's explicit step.
+:func:`xirr` is the exception: its flows are dated, so its rate is annual.
+
+Added for Bodmer's solar case (plan step 7e), whose grid mixes months and
+quarters: :func:`xirr` (dated flows, actual/365, as Excel's XIRR) and
+:func:`discount` (a stream times stated discount factors, for a PV at a
+compounding index rather than a constant rate).
 """
 from __future__ import annotations
 
+import datetime as _dt
 from typing import List, Optional, Sequence
 
 from one_engine.units import Number
@@ -79,7 +86,43 @@ def irr(stream: Sequence[Number], lo: float = -0.99, hi: float = 10.0, grid: int
     cfs = [float(c) for c in stream]
     if _sign_changes(cfs) == 0:
         raise MeasureError("the stream never changes sign, so no rate of return exists")
-    f = lambda r: npv(cfs, r)
+    return _root(lambda r: npv(cfs, r), lo, hi, grid)
+
+
+def xirr(stream: Sequence[Number], dates: Sequence[_dt.date], lo: float = -0.99, hi: float = 10.0,
+         grid: int = 2000) -> float:
+    """Annual rate of return of dated flows, or a refusal (Excel's XIRR convention).
+
+    Each flow is discounted by ``(1 + r) ** (days / 365)``, days counted
+    from the first date given (actual/365). The base date does not move the
+    rate, so zero flows before the first payment change nothing. The same
+    refusals as :func:`irr`: no sign change, several rates, none in range.
+    """
+    if len(dates) != len(stream):
+        raise MeasureError(f"{len(stream)} flows but {len(dates)} dates")
+    if any(b < a for a, b in zip(dates, dates[1:])):
+        raise MeasureError("dates must not go back")
+    cfs = [float(c) for c in stream]
+    if _sign_changes(cfs) == 0:
+        raise MeasureError("the stream never changes sign, so no rate of return exists")
+    years = [(d - dates[0]).days / 365 for d in dates]
+    return _root(lambda r: sum(c / (1 + r) ** y for c, y in zip(cfs, years) if c), lo, hi, grid)
+
+
+def discount(stream: Sequence[Number], factors: Sequence[Number]) -> float:
+    """Present value of a stream at stated discount factors, one per period.
+
+    For a PV at a compounding index (the lender's rate index of a sculpted
+    loan): the factor is ``1 / index``. Lengths must agree: a factor the
+    caller forgot would otherwise discount at zero.
+    """
+    if len(factors) != len(stream):
+        raise MeasureError(f"{len(stream)} flows but {len(factors)} discount factors")
+    return sum(float(c) * float(f) for c, f in zip(stream, factors))
+
+
+def _root(f, lo: float, hi: float, grid: int) -> float:
+    """The one rate in ``[lo, hi]`` where ``f`` is zero, or a refusal (grid scan, then bisection)."""
     xs = [lo + (hi - lo) * i / grid for i in range(grid + 1)]
     roots = []
     prev_x, prev_f = xs[0], f(xs[0])

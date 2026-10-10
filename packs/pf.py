@@ -26,6 +26,15 @@ Rulebooks
     engine called equity on a schedule instead and left 23.6M of idle cash
     on the 100MW benchmark (step 6 finding).
 
+``pro_rata_funding``
+    Construction funding as Bodmer's solar model states it (step 7e): a
+    budget of total uses less the loan's commitment is the equity
+    commitment; a share of it (``equity_first``) is paid in before any
+    debt, then each period's remaining uses are split between the loan and
+    equity in the ratio of what is left of their commitments, so both are
+    exhausted together when the uses equal the budget. The loan's draw is
+    a claim (capped at what is undrawn); equity is the named leg.
+
 ``asset_register``
     At each in-service period (COD, a major maintenance), CWIP moves to
     fixed assets and becomes a tranche of the register; each period's
@@ -95,6 +104,23 @@ Rulebooks
     ``distribute``. Built on Allocation; the cumulative pref and catch-up
     are this rulebook's state, the unreturned capital is read from the
     books.
+
+Loop rules
+----------
+``LOOP_RULES`` are the rules a declared loop (:mod:`one_engine.loops`)
+applies to a finished run to get its outputs' next values:
+
+``sculpt``
+    Sizes a loan by sculpting: debt service in each repayment period is
+    the run's CFADS over the target DSCR, and the debt is that service
+    discounted at the loan's own rate, compounded period by period from
+    ``repay_from`` (:func:`sculpt`). Outputs ``debt`` and ``repayment``
+    (the principal schedule, by period). With CFADS that does not depend
+    on the debt (an unlevered tax), two runs close the loop exactly.
+``uses_total``
+    The total of the uses a funding rulebook funded (its ``funding``
+    records): a budget that includes the interest and fees of
+    construction, which depend on the debt that the budget sizes.
 """
 from __future__ import annotations
 
@@ -140,16 +166,34 @@ def _post_residual(g: Group, legs, amount, t: int, phase: str) -> None:
         g.post_leg(c, leg, amount * share, t, phase)
 
 
+def _read_uses(r: Reader, where: str):
+    """A funding rulebook's uses: (``claim`` or ``flow``, reference), in file order."""
+    uses = []
+    for i, raw in enumerate(r.take("uses")):
+        ur = Reader(raw, source=f"{where}.uses[{i}]")
+        kind = "claim" if "claim" in raw else "flow"
+        uses.append((kind, ur.take(kind)))
+        ur.finish()
+    return uses
+
+
+def _use_amounts(g: Group, t: int, uses, claims) -> Dict[str, Fraction]:
+    """Each use's amount in ``t``: the claim due, or the contract flow of that name."""
+    each = {}
+    for kind, ref in uses:
+        if kind == "claim":
+            each[ref] = claims[ref].due if ref in claims else Fraction(0)
+        else:
+            c, flow = _ref(g, ref)
+            each[ref] = sum((f.amount for f in c.flows(t, g.view(c, t)) if f.spec.name == flow), Fraction(0))
+    return each
+
+
 def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
     entity, cash = r.take("entity"), r.take("cash")
     phase, until = r.take("phase"), int(r.take("until"))
     start = int(r.take_or_default("from", 0, reason="funding from the first period").value)
-    uses = []
-    for i, raw in enumerate(r.take("uses")):
-        ur = Reader(raw, source=f"funding_plan.uses[{i}]")
-        kind = "claim" if "claim" in raw else "flow"
-        uses.append((kind, ur.take(kind)))
-        ur.finish()
+    uses = _read_uses(r, "funding_plan")
     sources = []
     for i, raw in enumerate(r.take("sources")):
         sr = Reader(raw, source=f"funding_plan.sources[{i}]")
@@ -162,13 +206,7 @@ def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
         if not start <= t <= until:
             return
         claims = g.claims(t)
-        each = {}
-        for kind, ref in uses:
-            if kind == "claim":
-                each[ref] = claims[ref].due if ref in claims else Fraction(0)
-            else:
-                c, flow = _ref(g, ref)
-                each[ref] = sum((f.amount for f in c.flows(t, g.view(c, t)) if f.spec.name == flow), Fraction(0))
+        each = _use_amounts(g, t, uses, claims)
         amount = sum(each.values(), Fraction(0))
         if amount == 0:
             return
@@ -183,6 +221,54 @@ def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
             if kind == "claim" and each[ref]:
                 g.settle(claims[ref], each[ref], phase)
         g.record("funding", t, uses=dict(each), paid=dict(a.paid), residual=a.residual)
+
+    group.register(phase, handler)
+    return {"sources_equal_uses": lambda: sources_equal_uses(group, entity, cash, phase)}
+
+
+def pro_rata_funding(group: Group, r: Reader, ctx: Mapping[str, Any]):
+    entity, cash = r.take("entity"), r.take("cash")
+    phase, until = r.take("phase"), int(r.take("until"))
+    start = int(r.take_or_default("from", 0, reason="funding from the first period").value)
+    uses = _read_uses(r, "pro_rata_funding")
+    loan, (equity_c, equity_leg) = r.take("loan"), r.take("equity").split(".", 1)
+    raw_budget = r.take("budget")
+    # the budget may be itemised (the sources and uses table of the source model) or one number
+    budget = (sum((exact(v) for v in raw_budget.values()), Fraction(0)) if isinstance(raw_budget, Mapping)
+              else exact(raw_budget))
+    first = exact(r.take("equity_first"))
+    if not 0 <= first <= 1:
+        raise InputError(f"pro_rata_funding: equity_first {first} is outside [0, 1]")
+    state = {"first_paid": Fraction(0)}       # equity paid in ahead of the debt so far
+
+    def handler(g: Group, t: int) -> None:
+        if not start <= t <= until:
+            return
+        claims = g.claims(t)
+        each = _use_amounts(g, t, uses, claims)
+        amount = sum(each.values(), Fraction(0))
+        if amount == 0:
+            return
+        debt_commitment = exact(g.contract(loan).values()["commitment"])
+        equity_commitment = budget - debt_commitment
+        if equity_commitment < 0:
+            raise InputError(f"pro_rata_funding: the loan's commitment {float(debt_commitment):,.2f} exceeds "
+                             f"the budget {float(budget):,.2f}")
+        up_front = first * equity_commitment
+        # what is left of both commitments once the up-front equity is in, in the debt's share
+        share = debt_commitment / (budget - up_front) if budget > up_front else Fraction(0)
+        a = allocate(amount, [Tier("up_front", up_front - state["first_paid"])], residual="pro_rata")
+        state["first_paid"] += a.paid["up_front"]
+        draw = claims.get(f"{loan}.draw")
+        debt = min(share * a.residual, draw.due if draw else Fraction(0))
+        if draw is not None:
+            g.settle(draw, debt, phase)
+        g.post_leg(g.contract(equity_c), equity_leg, amount - debt, t, phase)
+        for kind, ref in uses:                      # claims funded here are paid now, in full
+            if kind == "claim" and each[ref]:
+                g.settle(claims[ref], each[ref], phase)
+        g.record("funding", t, uses=dict(each), paid={"up_front": a.paid["up_front"], f"{loan}.draw": debt},
+                 residual=amount - debt - a.paid["up_front"], share=share)
 
     group.register(phase, handler)
     return {"sources_equal_uses": lambda: sources_equal_uses(group, entity, cash, phase)}
@@ -524,6 +610,89 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     ctx["distributors"][ctx["name"]] = distribute
 
 
-RULEBOOKS = {"funding_plan": funding_plan, "asset_register": asset_register, "income_tax": income_tax,
-             "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
+RULEBOOKS = {"funding_plan": funding_plan, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
+             "income_tax": income_tax, "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
              "withholding": withholding, "promote": promote}
+
+
+# ── loop rules ────────────────────────────────────────────────────────────
+
+class SizingError(ValueError):
+    """A sculpted size cannot be computed from the run given."""
+
+
+def sculpt(cfads: Mapping[int, Fraction], rate, dscr: Fraction, first: int, last: int, end: int):
+    """Sculpted debt size, principal schedule and discount index.
+
+    Parameters
+    ----------
+    cfads:
+        CFADS by period (at least ``first..last``).
+    rate:
+        ``rate(t)``: the loan's interest rate for period ``t`` (annual rate
+        x year fraction), the same function the loan accrues with.
+    dscr:
+        The target DSCR: debt service in each period is CFADS / dscr.
+    first, last:
+        The repayment periods (``repay_from`` to maturity).
+    end:
+        The last period of the horizon; the index runs to it (a PLCR
+        discounts CFADS after maturity too).
+
+    Returns
+    -------
+    ``(debt, repayment, index)``: the size, the principal of each period
+    ``first..last`` (debt service less interest on the sizing balance; it
+    is negative where CFADS / dscr is below the interest), and the index
+    ``prod (1 + rate)`` from ``first``, by which service is discounted.
+
+    The sizing balance after ``last`` is exactly zero (exact arithmetic);
+    a non-zero balance would mean the size and the schedule disagree, and
+    is refused.
+    """
+    index, acc = {}, Fraction(1)
+    for t in range(first, end + 1):
+        acc *= 1 + rate(t)
+        index[t] = acc
+    service = {}
+    for t in range(first, last + 1):
+        if cfads.get(t, Fraction(0)) < 0:
+            raise SizingError(f"CFADS is negative in period {t}; a sculpted size would lend against it")
+        service[t] = cfads.get(t, Fraction(0)) / dscr
+    debt = sum((service[t] / index[t] for t in service), Fraction(0))
+    balance, repayment = debt, {}
+    for t in range(first, last + 1):
+        repayment[t] = service[t] - balance * rate(t)
+        balance -= repayment[t]
+    if balance != 0:
+        raise SizingError(f"the sizing balance ends at {balance}, not zero")
+    return debt, repayment, index
+
+
+def _sculpt_rule(r: Reader):
+    from one_engine.packs.contracts import _at, _days
+    loan, dscr, record = r.take("loan"), exact(r.take("dscr")), r.take("cfads")
+
+    def rule(result) -> Dict[str, Any]:
+        terms = result.group.contract(loan).values()
+        first = int(terms["repay_from"])
+        last = first + int(terms["repay_periods"]) - 1
+        cfads = {t: rec["cfads"] for t, rec in result.records(record).items()}
+        debt, repayment, _ = sculpt(cfads, lambda t: _at(terms["rate"], t) * _days(terms, t), dscr, first, last,
+                                    result.group.periods - 1)
+        return {"debt": debt, "repayment": [repayment.get(t, Fraction(0)) for t in range(result.group.periods)]}
+
+    return rule
+
+
+def _uses_total_rule(r: Reader):
+    record = r.take("record")
+
+    def rule(result) -> Dict[str, Any]:
+        return {"total": sum((sum(rec["uses"].values(), Fraction(0)) for rec in result.records(record).values()),
+                             Fraction(0))}
+
+    return rule
+
+
+LOOP_RULES = {"sculpt": _sculpt_rule, "uses_total": _uses_total_rule}

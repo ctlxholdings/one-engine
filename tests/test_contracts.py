@@ -65,7 +65,8 @@ from one_engine.packs.contracts import FOREIGN_LOAN, LOAN  # noqa: E402
 def _facility(ctype, **over):
     terms = dict(commitment=100, draw_schedule=[100, 0, 0, 0], available_until=0, rate="0.1", rate_from=1,
                  days_per_period=360, day_count_basis=360, commitment_fee_rate=0, capitalise_from=0,
-                 capitalise_until=-1, repay_from=2, repay_periods=2, sculpt_dscr=None, arrangement_fee=0, fee_at=0)
+                 capitalise_until=-1, repay_from=2, repay_periods=2, sculpt_dscr=None, principal_schedule=None,
+                 arrangement_fee=0, fee_at=0)
     if ctype is FOREIGN_LOAN:
         terms.update(currency="USD", fx_rate=["0.9", "0.9", "1.0", "1.0"])
     terms.update(over)
@@ -105,3 +106,43 @@ def test_a_list_of_references_resolves_to_contracts():
         Contract("r", DEBT_RESERVE, {"holder": "spv"},
                  {"covers": stated(["b", "z"]), "periods_forward": stated(1), "from": stated(0),
                   "prefund": stated([])}, "EUR").resolve({"b": a})
+
+
+# ── added for Bodmer's solar case: a principal schedule, series terms ──
+
+def test_a_negative_scheduled_repayment_capitalises_that_much_interest():
+    g = Group(periods=4, phases=["fund", "accrue", "pay", "close"])
+    loan = _facility(LOAN, rate_from=0, repay_from=1, repay_periods=3, principal_schedule=[0, "-4", 50, 0])
+    g.add_contract(loan)
+    g.register("fund", lambda g, t: g.settle(g.claims(t)["b.draw"], 100, "fund") if t == 0 else None)
+    g.run()
+    b = g.book("spv")
+    # period 1: interest 10 on 100, of which 4 is capitalised and 6 stays due
+    assert b.balance("b.capitalised_interest", 1) == 4 and b.balance("b.interest_payable", 1) == 6
+
+
+def test_a_scheduled_repayment_below_minus_the_interest_refuses():
+    g = Group(periods=4, phases=["fund", "accrue", "pay", "close"])
+    loan = _facility(LOAN, rate_from=0, repay_from=1, repay_periods=3, principal_schedule=[0, -11, 0, 0])
+    g.add_contract(loan)
+    g.register("fund", lambda g, t: g.settle(g.claims(t)["b.draw"], 100, "fund") if t == 0 else None)
+    with pytest.raises(ValueError, match="new draw"):
+        g.run()
+
+
+def test_a_loan_cannot_be_both_sculpted_and_scheduled():
+    loan = _facility(LOAN, sculpt_dscr="1.5", principal_schedule=[0, 0, 50, 50])
+    g = Group(periods=4, phases=["fund", "accrue", "pay", "close"])
+    g.add_contract(loan)
+    with pytest.raises(ValueError, match="not both"):
+        g.run()
+
+
+def test_days_per_period_may_be_a_series():
+    g = Group(periods=3, phases=["fund", "accrue", "pay", "close"])
+    loan = _facility(LOAN, rate_from=0, days_per_period=[30, 90, 90], draw_schedule=[100, 0, 0])
+    g.add_contract(loan)
+    g.register("fund", lambda g, t: g.settle(g.claims(t)["b.draw"], 100, "fund") if t == 0 else None)
+    g.run()
+    # a quarter of 10% a year on 100
+    assert g.book("spv").balance("b.interest", 1) - g.book("spv").opening("b.interest", 1) == F(10) / 4
