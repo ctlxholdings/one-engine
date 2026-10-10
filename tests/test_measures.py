@@ -97,3 +97,18 @@ def test_cash_on_cash_refuses_a_stream_that_does_not_start_with_an_investment():
     for stream in ([], [0, -5, 6], [5, -5]):
         with pytest.raises(MeasureError, match="does not start with an investment"):
             cash_on_cash(stream)
+
+
+# ── dated NPV (ModelOff 2014 "Time is Money", step 7p) ─────────────────────
+
+from one_engine.measures import xnpv  # noqa: E402
+
+
+def test_xnpv_discounts_from_the_first_date_on_actual_days_over_365():
+    d = [dt.date(2015, 1, 1), dt.date(2016, 1, 1), dt.date(2017, 1, 1)]
+    # the first flow is on the valuation date; 2016 has 366 days
+    assert xnpv([-100, 110, 121], d, 0.1) == pytest.approx(-100 + 110 / 1.1 + 121 / 1.1 ** (731 / 365), abs=1e-12)
+    with pytest.raises(MeasureError, match="2 dates"):
+        xnpv([1, 2, 3], d[:2], 0.1)
+    with pytest.raises(MeasureError, match="go back"):
+        xnpv([1, 2, 3], [d[0], d[2], d[1]], 0.1)

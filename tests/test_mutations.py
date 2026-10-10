@@ -426,6 +426,18 @@ MUTATIONS = [
      "test_case_modeloff_fund_the_future.py::test_q6_alices_balance_at_the_end_of_2024"),
     ("packs/contracts.py", "    if t == close:\n        due[\"withdraw\"]", "    if t == close + 1:\n        due[\"withdraw\"]",
      "test_case_modeloff_fund_the_future.py::test_the_case_runs_clean_and_every_account_closes_empty"),
+    # ModelOff 2014 Time is Money (step 7p): xnpv, the npv/xnpv measures' window, two registers on one book
+    ("measures.py", "    return sum(float(c) / (1 + rate) ** ((d - dates[0]).days / 365) for c, d in zip(stream, dates))",
+     "    return sum(float(c) / (1 + rate) ** ((d - dates[0]).days / 365.25) for c, d in zip(stream, dates))",
+     "test_case_modeloff_time_is_money.py::test_finding_the_npv_and_the_xnpv_differ_by_the_leap_days_alone"),
+    ("cases/__init__.py", "                    return M.npv(values[:n], rate)", "                    return M.npv(values, rate)",
+     "test_case_modeloff_time_is_money.py::test_q6_the_npv_of_the_first_ten_years_in_euro"),
+    ("cases/__init__.py", "                if n is not None and n > len(values):", "                if False:",
+     "test_case_modeloff_time_is_money.py::test_an_npv_through_a_period_past_the_cut_refuses"),
+    ("packs/pf.py", '"measurement", f"{name}.{event}:{t}"))', '"measurement", f"assets.{event}:{t}"))',
+     "test_case_modeloff_time_is_money.py::test_the_case_runs_clean_and_tax_is_paid_the_year_it_is_charged"),
+    ("packs/contracts.py", 'CAPEX_CLASS = _capex_type("capex_class", "{id}")', 'CAPEX_CLASS = _capex_type("capex_class", "cwip")',
+     "test_case_modeloff_time_is_money.py::test_q3_depreciation_in_year_6_in_euro"),
 ]
 
 

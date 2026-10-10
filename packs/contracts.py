@@ -82,6 +82,13 @@ Added for ModelOff 2016 "Fund the Future" (step 7o), four savings accounts:
   due after it closes. A days series of zeros but one period a year makes
   an annual account on a quarterly grid.
 
+Added for ModelOff 2014 "Time is Money" (step 7p), two asset classes
+depreciated differently:
+
+* ``capex_class`` the ``capex`` contract with its spend held in the
+  contract's own account (``{id}``) rather than the shared ``cwip``, so
+  that each class has its own asset register.
+
 Modelling note on ``shared_savings``: the client's savings are booked as an
 income line ("avoided energy cost"), i.e. a with-versus-without view of the
 client's utility bill. A lens that restates the client against its baseline
@@ -616,16 +623,23 @@ def _capex(terms, t, bal=None):
     return {"spend": spend(t), "vat": exact(terms["vat_rate"]) * spend(t), "vat_refund": _vat_refund(terms, t, spend)}
 
 
-CAPEX = ContractType(
-    name="capex",
-    terms=("schedule", "vat_rate", "vat_refund_lag", "end"),
-    parties=("owner",),
-    accounts={"owner": (("cash", Nature.ASSET), ("cwip", Nature.ASSET), ("vat_receivable", Nature.ASSET))},
-    flows=(FlowSpec("spend", "fund", (Leg("owner", "cwip", "cash", (+1, -1)),)),
-           FlowSpec("vat", "fund", (Leg("owner", "vat_receivable", "cash", (+1, -1)),)),
-           FlowSpec("vat_refund", "operate", (Leg("owner", "cash", "vat_receivable", (+1, -1)),))),
-    amounts=_capex,
-)
+def _capex_type(name, cwip):
+    """A construction spend schedule into ``cwip`` (the shared account, or the contract's own)."""
+    return ContractType(
+        name=name,
+        terms=("schedule", "vat_rate", "vat_refund_lag", "end"),
+        parties=("owner",),
+        accounts={"owner": (("cash", Nature.ASSET), (cwip, Nature.ASSET), ("vat_receivable", Nature.ASSET))},
+        flows=(FlowSpec("spend", "fund", (Leg("owner", cwip, "cash", (+1, -1)),)),
+               FlowSpec("vat", "fund", (Leg("owner", "vat_receivable", "cash", (+1, -1)),)),
+               FlowSpec("vat_refund", "operate", (Leg("owner", "cash", "vat_receivable", (+1, -1)),))),
+        amounts=_capex,
+    )
+
+
+CAPEX = _capex_type("capex", "cwip")
+# an asset class's capex, held in its own account (``{id}``) so that each class can have its own register
+CAPEX_CLASS = _capex_type("capex_class", "{id}")
 
 
 # Balances carried in --------------------------------------------------
@@ -817,4 +831,4 @@ SPONSOR_EQUITY = ContractType(
 REGISTRY = {t.name: t for t in (EQUITY_FUNDING, ONE_OFF_PURCHASE, SHARED_SAVINGS, TERM_LOAN, SHAREHOLDER_LOAN,
                                 LOAN, FOREIGN_LOAN, OFFTAKE, OPERATING_COST, CAPEX, DEBT_RESERVE,
                                 RESERVE_LETTER_OF_CREDIT, MAINTENANCE_RESERVE, SINKING_FUND, SPONSOR_EQUITY,
-                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF, DEPOSIT_ACCOUNT)}
+                                RECEIVABLE_RUN_OFF, PAYABLE_RUN_OFF, DEPOSIT_ACCOUNT, CAPEX_CLASS)}

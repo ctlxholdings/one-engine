@@ -43,6 +43,12 @@ Added for the Macabacus LBO (step 7f):
 
 Added for the Macabacus long-form LBO (step 7g): the ``cash_on_cash``
 measure.
+
+Added for ModelOff 2014 "Time is Money" (step 7p): the ``npv`` measure
+(``rate`` per period, the first flow undiscounted) and the ``xnpv`` measure
+(an annual ``rate`` and ``dates``, one per period). Either may take
+``through``, the last period it values (the paper values the first ten
+years of a 23-year forecast); without it the whole stream is valued.
 """
 from __future__ import annotations
 
@@ -282,6 +288,20 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
         if kind == "xirr":
             dates = [_date(d) for d in r.take("dates")]
             pending[mname] = lambda c=cut, d=dates: M.xirr(cuts[c].values, d)
+        elif kind in ("npv", "xnpv"):
+            rate = float(exact(r.take("rate")))
+            dates = [_date(d) for d in r.take("dates")] if kind == "xnpv" else None
+            through = r.take_or_default("through", None, reason="the whole stream is valued").value
+            n = None if through is None else int(through) + 1
+
+            def value(c=cut, k=kind, rate=rate, d=dates, n=n):
+                values = cuts[c].values
+                if n is not None and n > len(values):
+                    raise InputError(f"{src}: measure through period {n - 1}, but the cut has {len(values)} periods")
+                if k == "npv":
+                    return M.npv(values[:n], rate)
+                return M.xnpv(values[:n], d[:n], rate)
+            pending[mname] = value
         elif kind == "irr":
             per_year = int(r.take_or_default("per_year", 1, reason="the stream's periods are years").value)
             pending[mname] = lambda c=cut, n=per_year: (1 + M.irr(cuts[c].values)) ** n - 1

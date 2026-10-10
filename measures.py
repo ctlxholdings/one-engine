@@ -30,6 +30,10 @@ after the investment).
 Added for the Macabacus long-form LBO (step 7g): :func:`cash_on_cash`, the
 long-form workbook's definition (every later flow, net, over the
 investment), which differs from :func:`moic` when a holder pays in again.
+
+Added for ModelOff 2014 "Time is Money" (step 7p): :func:`xnpv`, the NPV of
+dated flows at an annual rate (Excel's XNPV, actual/365 from the first
+date), beside :func:`npv`, whose flows are one period apart.
 """
 from __future__ import annotations
 
@@ -115,6 +119,21 @@ def xirr(stream: Sequence[Number], dates: Sequence[_dt.date], lo: float = -0.99,
         raise MeasureError("the stream never changes sign, so no rate of return exists")
     years = [(d - dates[0]).days / 365 for d in dates]
     return _root(lambda r: sum(c / (1 + r) ** y for c, y in zip(cfs, years) if c), lo, hi, grid)
+
+
+def xnpv(stream: Sequence[Number], dates: Sequence[_dt.date], rate: float) -> float:
+    """Net present value of dated flows at an annual ``rate`` (Excel's XNPV convention).
+
+    Each flow is discounted by ``(1 + rate) ** (days / 365)``, days counted
+    from the first date given (actual/365), which is the valuation date. A
+    leap year therefore discounts a year-end flow by 366/365 of a year,
+    which is what separates XNPV from :func:`npv` on annual flows.
+    """
+    if len(dates) != len(stream):
+        raise MeasureError(f"{len(stream)} flows but {len(dates)} dates")
+    if any(b < a for a, b in zip(dates, dates[1:])):
+        raise MeasureError("dates must not go back")
+    return sum(float(c) / (1 + rate) ** ((d - dates[0]).days / 365) for c, d in zip(stream, dates))
 
 
 def discount(stream: Sequence[Number], factors: Sequence[Number]) -> float:

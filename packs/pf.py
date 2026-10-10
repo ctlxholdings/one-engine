@@ -387,10 +387,13 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     for name, nature in ((fa, Nature.ASSET), (dep, Nature.EXPENSE), (loss, Nature.EXPENSE)):
         group.declare(entity, name, nature, unit)
 
+    name = ctx["name"]
+
     def post(g, t, debit, credit, amount, event):
-        # every posting here raises a debit-natured account and lowers another
+        # every posting here raises a debit-natured account and lowers another; the event id carries the
+        # rulebook's name, so two registers on one book (two asset classes, step 7p) do not collide
         if amount:
-            g.post(entity, Posting(t, phase, debit, credit, amount, {debit: 1, credit: -1}, "measurement", f"assets.{event}:{t}"))
+            g.post(entity, Posting(t, phase, debit, credit, amount, {debit: 1, credit: -1}, "measurement", f"{name}.{event}:{t}"))
 
     def handler(g: Group, t: int) -> None:
         book = g.book(entity)
