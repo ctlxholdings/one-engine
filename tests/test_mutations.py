@@ -526,6 +526,35 @@ MUTATIONS = [
      "test_case_averta_fixed.py::test_deficit_funding_needs_a_floor_to_fund_up_to"),
     ("entities.py", 'event = f"{c.id}:leg.{leg_name}:{t}:{phase}"', 'event = f"{c.id}:leg.{leg_name}:{t}"',
      "test_case_averta_fixed.py::test_every_fixed_case_runs_clean_with_its_cash_floored"),
+    # the chain (test_chain.py, guard 2): a cent lost in carrying cash to the next period, in the ledger, turns the top of each chain red
+    ('kernel.py', '        self._closing[(name, period)] = self.balance(name, period)', '        self._closing[(name, period)] = self.balance(name, period) + (Fraction(1, 100) if name == "cash" else 0)',
+     'test_case_averta_fixed.py::test_the_fixed_topco'),
+    ('kernel.py', '        self._closing[(name, period)] = self.balance(name, period)', '        self._closing[(name, period)] = self.balance(name, period) + (Fraction(1, 100) if name == "cash" else 0)',
+     'test_case_averta_topco.py::test_the_live_topco_is_the_gp_and_devco_cases_plus_the_ltip'),
+    ('kernel.py', '        self._closing[(name, period)] = self.balance(name, period)', '        self._closing[(name, period)] = self.balance(name, period) + (Fraction(1, 100) if name == "cash" else 0)',
+     'test_case_nightmare.py::test_promote'),
+    ('kernel.py', '        self._closing[(name, period)] = self.balance(name, period)', '        self._closing[(name, period)] = self.balance(name, period) + (Fraction(1, 100) if name == "cash" else 0)',
+     'test_case_eria.py::test_irr'),
+    # the chain (test_chain.py, guard 2): every posting one part in a million too large, on both sides, in the ledger, turns the top of each chain red
+    ('kernel.py', '            self._moves[(acct.name, p.period)] += natural * p.amount', '            self._moves[(acct.name, p.period)] += natural * p.amount * (1 + Fraction(1, 10**6))',
+     'test_case_averta_fixed.py::test_the_fixed_topco'),
+    ('kernel.py', '            self._moves[(acct.name, p.period)] += natural * p.amount', '            self._moves[(acct.name, p.period)] += natural * p.amount * (1 + Fraction(1, 10**6))',
+     'test_case_averta_topco.py::test_the_live_topco_is_the_gp_and_devco_cases_plus_the_ltip'),
+    ('kernel.py', '            self._moves[(acct.name, p.period)] += natural * p.amount', '            self._moves[(acct.name, p.period)] += natural * p.amount * (1 + Fraction(1, 10**6))',
+     'test_case_nightmare.py::test_promote'),
+    ('kernel.py', '            self._moves[(acct.name, p.period)] += natural * p.amount', '            self._moves[(acct.name, p.period)] += natural * p.amount * (1 + Fraction(1, 10**6))',
+     'test_chain.py::test_every_case_file_runs_end_to_end_into_the_ledger'),  # ERIA reads only the journal: the chain's reconciliation sees it
+    # the chain (test_chain.py, guards 1 and 3)
+    ("packs/pf.py", '            post(g, t, loss, fa, reg.dispose(), "disposal")', "            pass",
+     "test_chain.py::test_every_case_file_runs_end_to_end_into_the_ledger"),
+    ("tests/test_case_eria.py", '/ "cases" / "eria.yaml"', '/ "cases" / "eria_renamed.yaml"',
+     "test_chain.py::test_every_case_file_is_held_to_a_referee_by_a_test"),
+    ("packs/pf.py", "                    g.settle(claims[ref], a.paid[name], phase)",
+     "                    g.settle(claims[ref], a.paid[name] * 99 / 100, phase)",
+     "test_chain.py::test_every_waterfall_payment_it_records_is_in_the_ledger"),
+    ("packs/pf.py", 'g.record("funding", t, uses=dict(each), paid=dict(a.paid), residual=a.residual)',
+     'g.record("funding", t, uses=dict(each), paid=dict(a.paid), residual=a.residual + 1)',
+     "test_chain.py::test_every_funding_draw_and_call_it_records_is_in_the_ledger"),
 ]
 
 
