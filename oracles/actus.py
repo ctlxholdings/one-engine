@@ -52,6 +52,8 @@ FOLDER = "actus"
 FIELDS = (("payoff", "payoff"), ("notional", "notionalPrincipal"), ("rate", "nominalInterestRate"),
           ("accrued", "accruedInterest"))
 REL = 1e-8
+#: Answer keys that are not values to compare: the row's identity and its currency label.
+NOT_VALUES = {"eventDate", "eventType", "currency"}
 
 
 @lru_cache(maxsize=None)
@@ -135,10 +137,15 @@ class ActusFamily(Family):
             i = next((i for i, (a, b) in enumerate(zip(g_ev, w_ev)) if a != b), min(len(g_ev), len(w_ev)))
             show = lambda ev: f"{ev[i][0].date()} {ev[i][1]}" if i < len(ev) else "none"
             checks.append(Check("event", f"#{i + 1}", show(w_ev), show(g_ev), False))
+        known = {theirs for _, theirs in FIELDS}
         for g, w in zip(got, want):
             at = f"{w['eventDate'][:10]} {w['eventType']}"
             for ours, theirs in FIELDS:
-                checks.append(Check(theirs, at, str(w[theirs]), repr(float(g[ours])), _close(g[ours], w[theirs])))
+                if theirs in w:
+                    checks.append(Check(theirs, at, str(w[theirs]), repr(float(g[ours])), _close(g[ours], w[theirs])))
+            # a value the answer states and the engine does not report is a failed check, not a skip
+            for extra in sorted(set(w) - known - NOT_VALUES):
+                checks.append(Check(extra, at, str(w[extra]), "not reported", False))
         book = r.group.book("holder")
         bad = [t for t in range(len(r.plan.instants)) if any(v != 0 for v in book.imbalance(t).values())]
         checks.append(Check("ledger balanced", "every period", "0 unbalanced periods", f"{len(bad)}", not bad))
