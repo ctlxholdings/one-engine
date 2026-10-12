@@ -1,4 +1,4 @@
-"""ACTUS loan contracts: PAM, LAM, NAM and ANN on the ledger kernel (golds loan case, step 7).
+"""ACTUS contracts on the ledger kernel: the loans PAM, LAM, NAM and ANN, and the cash position CSH.
 
 What this pack is
 -----------------
@@ -62,6 +62,13 @@ Rules the corpus decided (each pinned in ``tests/test_case_actus.py``)
   price (``_borrower_gap``; nam04, lam21);
 * a stated reporting horizon (``to``) cuts the report, not the contract
   (ann08);
+* an analysis date (``AD``) reports the state at an instant and moves no
+  money: interest accrues up to it and stays accrued. An instant stamped
+  23:59:59 counts as the next midnight in a day count, so ad0's
+  2013-03-31T23:59:59 reports the whole March interest that its 2013-04-01
+  coupon then pays (ad0, one case: a mid-period AD would test more);
+* a cash position (``CSH``) is a held balance with no schedule: it exists at
+  its status date and reports only at its analysis dates (csh01..04).
 * with no maturity, a LAM matures at its ceil(NT / PRNXT)-th redemption and
   a NAM or ANN at the instalment that clears the notional after interest.
 
@@ -95,9 +102,9 @@ class ActusError(ValueError):
 
 #: Same-day order of event types, as the corpus publishes them (IED before PR
 #: before IP before IPCI before RR ...). ``init`` posts the starting state.
-PHASES = ("init", "PRD", "IED", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB", "TD", "MD")
+PHASES = ("init", "AD", "PRD", "IED", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB", "TD", "MD")
 
-TYPES = ("PAM", "LAM", "NAM", "ANN")
+TYPES = ("PAM", "LAM", "NAM", "ANN", "CSH")
 ROLES = {"RPA": 1, "RPL": -1}
 
 #: Terms read. Housekeeping terms (identifier, deal date) are read and have no effect on the stream.
@@ -280,10 +287,17 @@ def _derive_maturity(k: Terms) -> _dt.datetime:
     raise ActusError(f"{k.cid}: no maturityDate and no rule here to derive one for {k.kind}")
 
 
-def schedule(k: Terms) -> List[Event]:
-    """Every event of the contract's life from its status date, in time and phase order."""
+def schedule(k: Terms, analysis: Tuple[_dt.datetime, ...] = ()) -> List[Event]:
+    """Every event of the contract's life from its status date, in time and phase order.
+
+    ``analysis`` are the instants at which the state is to be reported
+    (``AD`` events); they are not contract terms, so they come with the run.
+    """
+    if k.kind == "CSH":
+        return [Event("AD", t, t) for t in sorted(analysis) if t >= k.sd]
     md = k.md or _derive_maturity(k)
     raw: List[Tuple[str, _dt.datetime]] = [("IED", k.ied), ("MD", md)]
+    raw += [("AD", t) for t in analysis]
 
     def walk(anchor, cycle, end, include_end=True):
         return cal.schedule(anchor, cycle, end, k.eomc, include_end)
@@ -374,7 +388,7 @@ _MONEY_FLOWS = [
     ("IP_scale", "IP", "cash", "result"),
     ("IPCI_capitalise", "IPCI", "notional", "accrued"),
 ] + [(f"{e}_accrue", e, "accrued", "interest")
-     for e in ("PRD", "TD", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB")]
+     for e in ("AD", "PRD", "TD", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB")]
 
 
 def _nature(role: int, account: str) -> Nature:
@@ -534,12 +548,15 @@ def _price(plan: Plan, ev: Event, sd: _dt.datetime, b, set_memo, bal) -> Dict[st
     k, out, E = plan.k, {}, ev.kind
     N, A, r = b("notional"), b("accrued"), b("rate")
     base = b("ipcb") if k.ipcb == "NTL" and k.kind != "PAM" else N
-    acc = cal.year_fraction(k.dcc, sd, ev.calc) * r * base
+    # a cash position bears no interest and states no day count
+    acc = Fraction(0) if k.kind == "CSH" else cal.year_fraction(k.dcc, sd, ev.calc) * r * base
 
     def accrue():
         _signed(out, f"{E}_accrue", acc)
 
-    if E == "IED":
+    if E == "AD":
+        accrue()                          # reported, not paid: the next payment settles it
+    elif E == "IED":
         _signed(out, "IED_notional", k.nt)
         _signed(out, "IED_premium", k.pdied)
         if k.ipac is not None:
@@ -713,18 +730,30 @@ def _market(data: Mapping[str, Any]) -> Market:
     return Market(out)
 
 
-def run(contract: Mapping[str, Any]) -> Run:
-    """Run one ACTUS test-corpus entry (``terms`` and ``dataObserved``) on the engine."""
+def run(contract: Mapping[str, Any], analysis: Tuple[str, ...] = ()) -> Run:
+    """Run one ACTUS test-corpus entry (``terms``, ``dataObserved``, ``eventsObserved``) on the engine.
+
+    Observed ``AD`` events and any ``analysis`` instants (ISO text) become
+    analysis-date events. Any other observed event (a credit event, an
+    exercise) is not built and refuses by name.
+    """
     k = parse_terms(contract["terms"])
-    out = _run(k, _market(contract.get("dataObserved")))
+    observed = contract.get("eventsObserved") or []
+    other = sorted({e.get("type") for e in observed} - {"AD"})
+    if other:
+        raise ActusError(f"{k.cid}: observed event type(s) {other} are not built")
+    ads = {cal.instant(e["time"]) for e in observed} | {cal.instant(t) for t in analysis}
+    out = _run(k, _market(contract.get("dataObserved")), tuple(sorted(ads)))
     if contract.get("to"):
         out.horizon = cal.instant(contract["to"])        # the corpus reports to a horizon (ann08: 2019-02-01)
     return out
 
 
-def _run(k: Terms, market: Market) -> Run:
-    events = schedule(k)
-    if k.ied < k.sd:
+def _run(k: Terms, market: Market, analysis: Tuple[_dt.datetime, ...] = ()) -> Run:
+    events = schedule(k, analysis)
+    if k.kind == "CSH":
+        start = Start("opening", k.sd, notional=k.nt)
+    elif k.ied < k.sd:
         start = Start("opening", k.sd, notional=k.nt, accrued=_opening_accrued(k), rate=k.ipnr,
                       prnxt=k.prnxt or Fraction(0), ipcb=k.ipcba if k.ipcba is not None else k.nt)
     else:

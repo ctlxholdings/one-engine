@@ -49,7 +49,7 @@ def first(cid, kind):
 def test_the_corpus_is_all_here():
     kinds = [c["terms"]["contractType"] for c in CORPUS.values()]
     assert len(CORPUS) == 109
-    assert {k: kinds.count(k) for k in actus.TYPES} == {"PAM": 25, "LAM": 31, "NAM": 22, "ANN": 31}
+    assert {k: kinds.count(k) for k in ("PAM", "LAM", "NAM", "ANN")} == {"PAM": 25, "LAM": 31, "NAM": 22, "ANN": 31}
 
 
 @pytest.mark.parametrize("cid", sorted(CORPUS))
