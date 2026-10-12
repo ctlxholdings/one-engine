@@ -1,0 +1,353 @@
+# Pilot gold "cashew_v25": the Bouaké cashew shelling unit under SYSCOHADA, with component depreciation,
+# the equipment renewal, payroll charges, the code's wider exemption and the seasonal stock
+# (cases/reference/golds_pilot/cashew_v25.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the plant (capex_initial) is bought in period 0 and produces from period 1; rcn_volume_kg of raw
+#     nut a year, kernel_yield of it kernel sold at kernel_price, the rest shell and loss, sold for
+#     nothing. The kilos are drivers (no ledger holds kilos);
+#   * the export duty at dus_kernel_rate of revenue; raw nut at rcn_price a kilo, paid on dpo_rcn_days;
+#     wages headcount x monthly_wage x 12; CNPS pension on the wage, CNPS family and work injury on the
+#     wage up to cnps_ceiling_monthly; FDFP at fdfp_rate of wages; the CCE at cce_rate of wages and the
+#     patente at patente_rate of revenue, both nil for the holiday_years from period 1; utilities_annual
+#     paid on dpo_other_days; everything else paid in cash;
+#   * kernel collected on dso_days; raw nut held at rcn_close_cover_months of the raw-nut cost and
+#     finished kernel at fg_cover_months of the production cost (raw nut, labour, utilities), both
+#     bought with cash on top of the expensed costs; the VAT credit on the vatable_share of utilities at
+#     vat_rate, outstanding vat_lag_months, held the same way; nothing unwinds at the end (end 60);
+#     inv_rcn_peak (the June peak, never on a year-end balance sheet) is the raw-nut cost times
+#     rcn_peak_cover_months / 12;
+#   * components: equip_share of capex_initial is equipment, depreciated at equip_dep_rate from period 1
+#     and renewed at its end of life (retired at nil book value as the renewal goes into service and
+#     is charged from that period); the rest is the building, at building_dep_rate. Each is its own
+#     asset register; ppe_gross, accum_dep and retirements are the registers' records.
+#     founder_dep_belief is the depreciation of the variant `founder` (both components on
+#     founder_asset_life: no renewal falls in the horizon);
+#   * profit tax at bic_rate on EBIT, nil for the holiday_years from period 1, paid within the year;
+#     bic_before_relief is EBIT times bic_rate and imf (the minimum tax, never binding) revenue times
+#     imf_rate, both read from the books; tax_relief is the first less the tax;
+#   * variants: `zone_b` (the holiday, the CCE and the patente on zoneB_ge_holiday_years) and `subsidy`
+#     (subsidy_rate a kilo of kernel received as a taxable operating subsidy, collected in the period;
+#     nil in the base);
+#   * days in a year: 52 x 7 + 1 (the gold's 30/365 and 7/365 day bases).
+#   * period_label, the calendar year of each period written as text ("2026"), is listed under `labels`.
+gold: cashew_v25
+labels:
+  period_label: the calendar year of each period, written as text ("2026"), a label, not a quantity
+entity: plant
+plant: kernel_price
+case:
+  case: pilot-cashew-v25
+  periods: 16
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 16
+      inputs: gold
+      values:
+        days_a_year: 52 * 7 + 1
+        producing: t >= 1
+        holiday: holiday_years
+        taxed: t >= holiday + 1
+        rcn_kg: rcn_volume_kg * producing
+        kernel_kg: rcn_kg * kernel_yield
+        shell_kg: rcn_kg - kernel_kg
+        revenue: kernel_kg * kernel_price
+        salaries: headcount * monthly_wage * 12 * producing
+        cnps: "headcount * 12 * (cnps_pension_rate * monthly_wage
+          + (cnps_family_rate + cnps_at_rate) * min(monthly_wage, cnps_ceiling_monthly)) * producing"
+        fdfp: salaries * fdfp_rate
+        cce: salaries * cce_rate * taxed
+        labour: salaries + cnps + fdfp + cce
+        utilities: utilities_annual * producing
+        patente: revenue * patente_rate * taxed
+        rcn_cost: rcn_kg * rcn_price
+        inv_rcn: rcn_cost * rcn_close_cover_months / 12
+        inv_fg: (rcn_cost + labour + utilities) * fg_cover_months / 12
+        vat_credit: utilities * vatable_share * vat_rate * vat_lag_months / 12
+        peak_cover: rcn_peak_cover_months / 12
+        subsidy_received: 0 * subsidy_rate
+        rate: bic_rate * taxed
+        equip_life: 1 / equip_dep_rate
+        building_life: 1 / building_dep_rate
+        renewal_at: 1 + equip_life
+        equipment: capex_initial * equip_share * (t == 0)
+        building: capex_initial * (1 - equip_share) * (t == 0)
+        renewal: capex_initial * equip_share * (t == renewal_at)
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    kernel:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: kernel_kg}, price: {generator: gold, output: kernel_price},
+              payment_days: {generator: gold, output: dso_days},
+              days_per_year: {generator: gold, output: days_a_year}, periods_per_year: 1, end: 60}
+    subsidy:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: kernel_kg}, price: {generator: gold, output: subsidy_received},
+              payment_days: 0, days_per_year: {generator: gold, output: days_a_year}, periods_per_year: 1, end: 60}
+    export_duty:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: dus_kernel_rate}, volume: {generator: gold, output: revenue},
+              index: 1, periods_per_year: 1, start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    rcn:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: rcn_price}, volume: {generator: gold, output: rcn_kg},
+              index: 1, periods_per_year: 1, start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: dpo_rcn_days}, days_per_year: {generator: gold, output: days_a_year}}
+    salaries:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: salaries}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    cnps:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: cnps}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    fdfp:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: fdfp}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    cce:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: cce}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    utilities:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: utilities}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: dpo_other_days}, days_per_year: {generator: gold, output: days_a_year}}
+    patente:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: patente}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    equipment:
+      type: capex_class
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: equipment}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+    renewal:
+      type: capex_class
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: renewal}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+    building:
+      type: capex_class
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: building}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: plant
+      cash: cash
+      phase: operate
+      accounts:
+        inv_rcn: {side: asset, target: {generator: gold, output: inv_rcn}}
+        inv_fg: {side: asset, target: {generator: gold, output: inv_fg}}
+        vat_credit: {side: asset, target: {generator: gold, output: vat_credit}}
+    equipment_register:
+      kind: asset_register
+      entity: plant
+      phase: close
+      from: equipment
+      to: fa_equipment
+      expense: dep_equipment
+      disposal: disposal_equipment
+      in_service: 0
+      dispose_at: {generator: gold, output: renewal_at}
+      dispose_when: start
+      life_periods: {generator: gold, output: equip_life}
+      first_charge: next_period
+    renewal_register:
+      kind: asset_register
+      entity: plant
+      phase: close
+      from: renewal
+      to: fa_renewal
+      expense: dep_renewal
+      disposal: disposal_renewal
+      in_service: {generator: gold, output: renewal_at}
+      dispose_at: 60
+      life_periods: {generator: gold, output: equip_life}
+      first_charge: in_service
+    building_register:
+      kind: asset_register
+      entity: plant
+      phase: close
+      from: building
+      to: fa_building
+      expense: dep_building
+      disposal: disposal_building
+      in_service: 0
+      dispose_at: 60
+      life_periods: {generator: gold, output: building_life}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: plant
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        kernel.revenue: taxable
+        subsidy.revenue: taxable
+        export_duty.expense: taxable
+        rcn.expense: taxable
+        salaries.expense: taxable
+        cnps.expense: taxable
+        fdfp.expense: taxable
+        cce.expense: taxable
+        utilities.expense: taxable
+        patente.expense: taxable
+        dep_equipment: taxable
+        dep_renewal: taxable
+        dep_building: taxable
+        disposal_equipment: taxable
+        disposal_renewal: taxable
+        disposal_building: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: plant
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      kernel.revenue: revenue
+      subsidy.revenue: subsidy
+      export_duty.expense: export_duty
+      rcn.expense: rcn
+      salaries.expense: salaries
+      cnps.expense: cnps
+      fdfp.expense: fdfp
+      cce.expense: cce
+      utilities.expense: utilities
+      patente.expense: patente
+      dep_equipment: dep_equipment
+      dep_renewal: dep_equipment
+      dep_building: dep_building
+      disposal_equipment: dep_equipment
+      disposal_renewal: dep_equipment
+      disposal_building: dep_building
+      tax_expense: tax
+    cash_flow:
+      kernel.receivable: operating
+      subsidy.receivable: operating
+      export_duty.payable: operating
+      rcn.payable: operating
+      salaries.payable: operating
+      cnps.payable: operating
+      fdfp.payable: operating
+      cce.payable: operating
+      utilities.payable: operating
+      patente.payable: operating
+      inv_rcn: operating
+      inv_fg: operating
+      vat_credit: operating
+      vat_receivable: operating
+      tax_payable: operating
+      equipment: investing
+      renewal: investing
+      building: investing
+  cuts:
+    revenue: {kind: pnl, entity: plant, scheme: pnl, include: [revenue]}
+    subsidy: {kind: pnl, entity: plant, scheme: pnl, include: [subsidy]}
+    export_duty: {kind: pnl, entity: plant, scheme: pnl, include: [export_duty]}
+    rcn: {kind: pnl, entity: plant, scheme: pnl, include: [rcn]}
+    salaries: {kind: pnl, entity: plant, scheme: pnl, include: [salaries]}
+    cnps: {kind: pnl, entity: plant, scheme: pnl, include: [cnps]}
+    fdfp: {kind: pnl, entity: plant, scheme: pnl, include: [fdfp]}
+    cce: {kind: pnl, entity: plant, scheme: pnl, include: [cce]}
+    labour: {kind: pnl, entity: plant, scheme: pnl, include: [salaries, cnps, fdfp, cce]}
+    utilities: {kind: pnl, entity: plant, scheme: pnl, include: [utilities]}
+    patente: {kind: pnl, entity: plant, scheme: pnl, include: [patente]}
+    ebitda: {kind: pnl, entity: plant, scheme: pnl,
+             include: [revenue, subsidy, export_duty, rcn, salaries, cnps, fdfp, cce, utilities, patente]}
+    dep_equipment: {kind: pnl, entity: plant, scheme: pnl, include: [dep_equipment]}
+    dep_building: {kind: pnl, entity: plant, scheme: pnl, include: [dep_building]}
+    depreciation: {kind: pnl, entity: plant, scheme: pnl, include: [dep_equipment, dep_building]}
+    ebit: {kind: pnl, entity: plant, scheme: pnl,
+           include: [revenue, subsidy, export_duty, rcn, salaries, cnps, fdfp, cce, utilities, patente,
+                     dep_equipment, dep_building]}
+    tax: {kind: pnl, entity: plant, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: plant, scheme: pnl,
+            include: [revenue, subsidy, export_duty, rcn, salaries, cnps, fdfp, cce, utilities, patente,
+                      dep_equipment, dep_building, tax]}
+    cfi: {entity: plant, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: plant, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+variants:
+  founder:
+    values:
+      equip_life: founder_asset_life
+      building_life: founder_asset_life
+  zone_b:
+    values:
+      holiday: zoneB_ge_holiday_years
+  subsidy:
+    values:
+      subsidy_received: subsidy_rate
+trace:
+  rcn_input: {driver: gold.rcn_kg}
+  kernel_output: {driver: gold.kernel_kg}
+  shell_and_loss: {driver: gold.shell_kg}
+  revenue: {cut: revenue}
+  export_duty: {cut: export_duty, sign: -1}
+  rcn_cost: {cut: rcn, sign: -1}
+  gross_salaries: {cut: salaries, sign: -1}
+  cnps_employer: {cut: cnps, sign: -1}
+  fdfp: {cut: fdfp, sign: -1}
+  cce: {cut: cce, sign: -1}
+  labour_cost_total: {cut: labour, sign: -1}
+  utilities_other: {cut: utilities, sign: -1}
+  patente: {cut: patente, sign: -1}
+  ebitda: {cut: ebitda}
+  capex: {cut: cfi, sign: -1}
+  retirements: {record: equipment_register.disposed_cost}
+  dep_equipment: {cut: dep_equipment, sign: -1}
+  dep_building: {cut: dep_building, sign: -1}
+  dep_total: {cut: depreciation, sign: -1}
+  founder_dep_belief: {cut: depreciation, sign: -1, variant: founder}
+  ppe_gross: {sum: [{record: equipment_register.cost}, {record: renewal_register.cost}, {record: building_register.cost}]}
+  accum_dep: {sum: [{record: equipment_register.accumulated}, {record: renewal_register.accumulated}, {record: building_register.accumulated}]}
+  ppe_net: {balance: fa_equipment + fa_renewal + fa_building}
+  ebit: {cut: ebit}
+  imf: {cut: revenue, times: gold.imf_rate}
+  bic_before_relief: {cut: ebit, times: gold.bic_rate}
+  tax: {cut: tax, sign: -1}
+  tax_relief: {sum: [{cut: ebit, times: gold.bic_rate}, {cut: tax}]}
+  nopat: {cut: nopat}
+  inv_rcn_close: {balance: inv_rcn}
+  inv_rcn_peak: {cut: rcn, sign: -1, times: gold.peak_cover}
+  inv_fg_close: {balance: inv_fg}
+  accounts_receivable: {balance: kernel.receivable + subsidy.receivable}
+  vat_receivable: {balance: vat_credit + vat_receivable}
+  accounts_payable: {balance: export_duty.payable + rcn.payable + salaries.payable + cnps.payable + fdfp.payable + cce.payable + utilities.payable + patente.payable}
+  nwc: {balance: inv_rcn + inv_fg + kernel.receivable + subsidy.receivable + vat_credit + vat_receivable - export_duty.payable - rcn.payable - salaries.payable - cnps.payable - fdfp.payable - cce.payable - utilities.payable - patente.payable}
+  delta_nwc: {change: inv_rcn + inv_fg + kernel.receivable + subsidy.receivable + vat_credit + vat_receivable - export_duty.payable - rcn.payable - salaries.payable - cnps.payable - fdfp.payable - cce.payable - utilities.payable - patente.payable}
+  fcff: {cut: fcff}
+  tax_zoneB_ge: {cut: tax, sign: -1, variant: zone_b}
+  fcff_zoneB_ge: {cut: fcff, variant: zone_b}
+  subsidy_processing: {cut: subsidy, variant: subsidy}
+  fcff_with_subsidy: {cut: fcff, variant: subsidy}

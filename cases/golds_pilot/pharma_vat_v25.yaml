@@ -1,0 +1,339 @@
+# Pilot gold "pharma_vat_v25": the Dakar pharmaceutical wholesaler (exempt medicines, so input VAT
+# is irrecoverable) under the gold contract v2.5, seven years over the cold chain's remaining life
+# (cases/reference/golds_pilot/pharma_vat_v25.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the gold gives its day counts but no day basis: the basis is the one its own stated opening
+#     working capital (nwc_opening_balance) implies, (revenue x dso + cogs x (dio - dpo)) / nwc,
+#     which is 365 to the gold's printed precision;
+#   * sales: revenue_annual to pharmacies_served pharmacies, no output VAT, collected on dso_days; medicines bought at revenue / (1 + markup_on_purchase), no VAT on
+#     them, paid on dpo_days; a stock of dio_days of cost of sales held against the purchases
+#     expense; receivable, payable and stock carried in at their steady level (no growth);
+#   * payroll (headcount x wage x 12) paid in the month; rent, fuel and maintenance, electricity
+#     are read as amounts paid VAT included (the gold's base reading): each service is booked at
+#     its HT part (/ (1 + vat_standard_rate)) and the VAT inside, which the exempt trader cannot
+#     deduct, is its own cost line paid with them;
+#   * CEL: CEL-VL on the leased depot at cel_vl_rate_leased of the HT rent, on the owned fit-out at
+#     cel_vl_rate_owned of cel_vl_owned_valeur_locative_pct of its cost, CEL-VA at the higher of
+#     cel_va_rate of value added and cel_va_floor_rate of the (flat) prior-year revenue; all paid
+#     in the year and deductible. The 1% cash stamp duty falls on the share of opex settled in
+#     cash (cash_settlement_share_opex: nil);
+#   * equipment is capitalised at its VAT-inclusive cost (IAS 16.16(a)); the cold chain and the
+#     vans carried in are depreciated over the years they have left; the vans' replacement
+#     (van_replacement_index) over a full life from the period it is bought, in its own account;
+#   * the VAT inside depreciation and inside the capex is read as the amount x VAT/(1 + VAT): every
+#     asset rests on the same VAT-inclusive base (the gold's own identity, D&A x 18/118);
+#   * IS at corporate_tax_rate on EBIT (no debt), paid in the year. The IMF (imf_rate of revenue,
+#     between imf_floor and imf_cap) is below the IS in every year: its uncapped amount is read
+#     from the books' revenue, the bounded one is the gold's memo row (a driver, as in the promoted
+#     golds), since income_tax has no minimum-tax floor;
+#   * no disposal proceeds (the old vans are fully written off): disposal_proceeds is an empty cut.
+gold: pharma_vat_v25
+entity: wholesaler
+plant: revenue_annual
+case:
+  case: gold-pharma-vat-v25
+  periods: 7
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 7
+      inputs: gold
+      values:
+        price_per_pharmacy: revenue_annual / pharmacies_served
+        cogs: revenue_annual / (1 + markup_on_purchase)
+        # the gold states no day basis: it is the one its own opening working capital implies (365)
+        days_per_year: (revenue_annual * dso_days + cogs * (dio_days - dpo_days)) / nwc_opening_balance
+        months_per_year: 12
+        stock: {each_period: cogs * dio_days / days_per_year}
+        stock_open: cogs * dio_days / days_per_year
+        receivable_open: revenue_annual * dso_days / days_per_year
+        payable_open: cogs * dpo_days / days_per_year
+        payroll_annual: headcount * wage_per_employee_month * months_per_year
+        rent_ttc: rent_month * months_per_year
+        vatable_ttc: (rent_month + fuel_maintenance_month + electricity_month) * months_per_year
+        rent_ht: rent_ttc / (1 + vat_standard_rate)
+        fuel_maintenance_ht: fuel_maintenance_month * months_per_year / (1 + vat_standard_rate)
+        electricity_ht: electricity_month * months_per_year / (1 + vat_standard_rate)
+        input_vat_annual: vatable_ttc - vatable_ttc / (1 + vat_standard_rate)
+        vat_share: vat_standard_rate / (1 + vat_standard_rate)
+        value_added: revenue_annual - cogs - vatable_ttc
+        cel_vl_leased: rent_ht * cel_vl_rate_leased
+        cel_vl_owned: warehouse_fitout_cost * cel_vl_owned_valeur_locative_pct * cel_vl_rate_owned
+        cel_va: max(value_added * cel_va_rate, revenue_annual * cel_va_floor_rate)
+        stamp_duty: (payroll_annual + vatable_ttc) * cash_settlement_share_opex * cash_stamp_duty_rate
+        imf: max(imf_floor, min(imf_cap, revenue_annual * imf_rate))
+        coldchain_carried: warehouse_fitout_cost * (warehouse_fitout_life_years - warehouse_fitout_age_years) / warehouse_fitout_life_years
+        coldchain_life_left: warehouse_fitout_life_years - warehouse_fitout_age_years
+        vans_carried: vans_cost * (vans_life_years - van_age_years) / vans_life_years
+        vans_life_left: vans_life_years - van_age_years
+        vans_spend: vans_cost * (t == van_replacement_index)
+  opening:
+    wholesaler:
+      coldchain: {nature: asset, value: {generator: gold, output: coldchain_carried}}
+      vans_installed: {nature: asset, value: {generator: gold, output: vans_carried}}
+      cwip: {nature: asset, value: 0}       # nothing is built for the cold chain in the horizon
+      inventory: {nature: asset, value: {generator: gold, output: stock_open}}
+      sales.receivable: {nature: asset, value: {generator: gold, output: receivable_open}}
+      medicines.payable: {nature: liability, value: {generator: gold, output: payable_open}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: wholesaler}
+      terms: {volume: {generator: gold, output: pharmacies_served}, price: {generator: gold, output: price_per_pharmacy},
+              payment_days: {generator: gold, output: dso_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: 7}                 # past the horizon: pharmacies still owe at its end (going concern)
+    medicines:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: cogs}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: dpo_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    payroll:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: payroll_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: rent_ht}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    fuel_maintenance:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: fuel_maintenance_ht}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    electricity:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: electricity_ht}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    input_vat:                        # the VAT inside those services, which the exempt trader cannot deduct
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: input_vat_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    cel_vl_leased:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: cel_vl_leased}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    cel_vl_owned:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: cel_vl_owned}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    cel_va:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: cel_va}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    stamp_duty:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: stamp_duty}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    vans:
+      type: capex_class
+      parties: {owner: wholesaler}
+      terms: {schedule: {generator: gold, output: vans_spend}, vat_rate: 0, vat_refund_lag: 0, end: 7}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: wholesaler
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: stock}, against: medicines.expense}
+    coldchain_carried:                # the fit-out carried in: the years it has left (to nil at the horizon)
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: cwip
+      to: coldchain
+      expense: dep_coldchain
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 7                   # after the horizon
+      life_periods: {generator: gold, output: coldchain_life_left}
+      first_charge: in_service
+    vans_carried:
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: vans
+      to: vans_installed
+      expense: dep_vans
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 7
+      life_periods: {generator: gold, output: vans_life_left}
+      first_charge: in_service
+    vans_new:                         # the replacement fleet: a full life from the period it is bought
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: vans
+      to: vans_replaced
+      expense: dep_vans
+      disposal: disposal_loss
+      in_service: {generator: gold, output: van_replacement_index}
+      dispose_at: 7
+      life_periods: {generator: gold, output: vans_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: wholesaler
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: corporate_tax_rate}
+      carry_forward_periods: null
+      scheme:
+        sales.revenue: taxable
+        medicines.expense: taxable
+        payroll.expense: taxable
+        rent.expense: taxable
+        fuel_maintenance.expense: taxable
+        electricity.expense: taxable
+        input_vat.expense: taxable
+        cel_vl_leased.expense: taxable
+        cel_vl_owned.expense: taxable
+        cel_va.expense: taxable
+        stamp_duty.expense: taxable
+        dep_coldchain: taxable
+        dep_vans: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: wholesaler
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      medicines.expense: cogs
+      payroll.expense: payroll
+      rent.expense: rent
+      fuel_maintenance.expense: services
+      electricity.expense: services
+      input_vat.expense: input_vat
+      cel_vl_leased.expense: cel_vl_leased
+      cel_vl_owned.expense: cel_vl_owned
+      cel_va.expense: cel_va
+      stamp_duty.expense: stamp_duty
+      dep_coldchain: dep_coldchain
+      dep_vans: dep_vans
+      disposal_loss: dep_vans
+      tax_expense: tax
+    cash_flow:
+      sales.receivable: operating
+      medicines.payable: operating
+      payroll.payable: operating
+      rent.payable: operating
+      fuel_maintenance.payable: operating
+      electricity.payable: operating
+      input_vat.payable: operating
+      cel_vl_leased.payable: operating
+      cel_vl_owned.payable: operating
+      cel_va.payable: operating
+      stamp_duty.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      vans: investing
+  cuts:
+    revenue: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cogs]}
+    gross_profit: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue, cogs]}
+    payroll: {kind: pnl, entity: wholesaler, scheme: pnl, include: [payroll]}
+    rent: {kind: pnl, entity: wholesaler, scheme: pnl, include: [rent]}
+    vatable_cash: {kind: pnl, entity: wholesaler, scheme: pnl, include: [rent, services, input_vat]}
+    vatable_ht: {kind: pnl, entity: wholesaler, scheme: pnl, include: [rent, services]}
+    input_vat: {kind: pnl, entity: wholesaler, scheme: pnl, include: [input_vat]}
+    opex: {kind: pnl, entity: wholesaler, scheme: pnl, include: [payroll, rent, services, input_vat]}
+    value_added: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue, cogs, rent, services, input_vat]}
+    cel_vl_leased: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cel_vl_leased]}
+    cel_vl_owned: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cel_vl_owned]}
+    cel_va: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cel_va]}
+    cel: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cel_vl_leased, cel_vl_owned, cel_va]}
+    stamp_duty: {kind: pnl, entity: wholesaler, scheme: pnl, include: [stamp_duty]}
+    ebitda: {kind: pnl, entity: wholesaler, scheme: pnl,
+             include: [revenue, cogs, payroll, rent, services, input_vat, cel_vl_leased, cel_vl_owned, cel_va, stamp_duty]}
+    dep_coldchain: {kind: pnl, entity: wholesaler, scheme: pnl, include: [dep_coldchain]}
+    dep_vans: {kind: pnl, entity: wholesaler, scheme: pnl, include: [dep_vans]}
+    depreciation: {kind: pnl, entity: wholesaler, scheme: pnl, include: [dep_coldchain, dep_vans]}
+    ebit: {kind: pnl, entity: wholesaler, scheme: pnl,
+           include: [revenue, cogs, payroll, rent, services, input_vat, cel_vl_leased, cel_vl_owned, cel_va, stamp_duty,
+                     dep_coldchain, dep_vans]}
+    tax: {kind: pnl, entity: wholesaler, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: wholesaler, scheme: pnl,
+            include: [revenue, cogs, payroll, rent, services, input_vat, cel_vl_leased, cel_vl_owned, cel_va, stamp_duty,
+                      dep_coldchain, dep_vans, tax]}
+    disposals: {entity: wholesaler, account: cash, scheme: cash_flow, include: []}   # nothing is sold
+    cfo: {entity: wholesaler, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: wholesaler, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: wholesaler, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  revenue: {cut: revenue}
+  cogs: {cut: cogs, sign: -1}
+  gross_profit: {cut: gross_profit}
+  payroll: {cut: payroll, sign: -1}
+  rent_ht: {cut: rent, sign: -1}
+  opex_vatable_cash: {cut: vatable_cash, sign: -1}
+  opex_vatable_ht: {cut: vatable_ht, sign: -1}
+  irrecoverable_vat_opex: {cut: input_vat, sign: -1}
+  opex: {cut: opex, sign: -1}
+  value_added: {cut: value_added}
+  cel_vl_leased: {cut: cel_vl_leased, sign: -1}
+  cel_vl_owned: {cut: cel_vl_owned, sign: -1}
+  cel_va_computed: {cut: value_added, times: gold.cel_va_rate}
+  cel_va: {cut: cel_va, sign: -1}
+  cel: {cut: cel, sign: -1}
+  stamp_duty: {cut: stamp_duty, sign: -1}
+  ebitda: {cut: ebitda}
+  dep_coldchain: {cut: dep_coldchain, sign: -1}
+  dep_vans: {cut: dep_vans, sign: -1}
+  d_and_a: {cut: depreciation, sign: -1}
+  irrecoverable_vat_in_d_and_a: {cut: depreciation, sign: -1, times: gold.vat_share}
+  vat_dead_cost_pl: {sum: [{cut: input_vat, sign: -1}, {cut: depreciation, sign: -1, times: gold.vat_share}]}
+  ebit: {cut: ebit}
+  tax_is: {cut: tax, sign: -1}
+  tax_imf_uncapped: {cut: revenue, times: gold.imf_rate}
+  tax_imf: {driver: gold.imf}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  receivables: {balance: sales.receivable}
+  inventory: {balance: inventory}
+  payables: {balance: medicines.payable + payroll.payable + rent.payable + fuel_maintenance.payable + electricity.payable + input_vat.payable + cel_vl_leased.payable + cel_vl_owned.payable + cel_va.payable + stamp_duty.payable}
+  nwc_opening: {opening: inventory + sales.receivable - medicines.payable - payroll.payable - rent.payable - fuel_maintenance.payable - electricity.payable - input_vat.payable - cel_vl_leased.payable - cel_vl_owned.payable - cel_va.payable - stamp_duty.payable}
+  nwc: {balance: inventory + sales.receivable - medicines.payable - payroll.payable - rent.payable - fuel_maintenance.payable - electricity.payable - input_vat.payable - cel_vl_leased.payable - cel_vl_owned.payable - cel_va.payable - stamp_duty.payable}
+  delta_nwc: {change: inventory + sales.receivable - medicines.payable - payroll.payable - rent.payable - fuel_maintenance.payable - electricity.payable - input_vat.payable - cel_vl_leased.payable - cel_vl_owned.payable - cel_va.payable - stamp_duty.payable}
+  capex: {cut: cfi, sign: -1}
+  disposal_proceeds: {cut: disposals}
+  net_capex: {sum: [{cut: cfi, sign: -1}, {cut: disposals, sign: -1}]}
+  irrecoverable_vat_in_capex: {cut: cfi, sign: -1, times: gold.vat_share}
+  nbv_coldchain: {balance: coldchain}
+  nbv_vans: {balance: vans_installed + vans_replaced}
+  net_ppe_opening: {opening: coldchain + vans_installed + vans_replaced}
+  net_ppe: {balance: coldchain + vans_installed + vans_replaced}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

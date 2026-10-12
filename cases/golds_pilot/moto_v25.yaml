@@ -1,0 +1,268 @@
+# Gold "moto_v25": one owner-operated moto-taxi (zémidjan) in Cotonou over the moto's four-year
+# life, contract v2.5 (cases/reference/golds_pilot/moto_v25.yaml). Built from the promoted "moto".
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * year_counter is the moto's year of age (t + 1), a driver: the maintenance escalation reads it;
+#   * days worked are calendar_working_days_per_year less days_lost_per_year; trips are the stated
+#     7 short / 7 medium / 6 long a day times those days (drivers);
+#   * fares: three offtakes, one per tier, at fare_short / fare_medium / fare_long, net of
+#     vat_rate_applicable (nil), in cash;
+#   * kilometres: each tier's trips times its distance, uplifted by empty_running_uplift; litres at
+#     fuel_consumption_l_per_100km (drivers); fuel an operating cost of fuel_price_per_litre a litre;
+#   * maintenance 12 x maintenance_cost_per_month_new x (1 + maintenance_escalation_per_year x
+#     (age - 1)); compliance the municipal taxi tax, the taxi card, the TVM and insurance a year;
+#     all paid in cash;
+#   * the moto (moto_cost) bought in t=0 and depreciated straight-line from that year over
+#     moto_life_years to salvage_value (an asset register, residual held back); retired at the end
+#     of the last year and sold for salvage_value (an offtake, its own line), so the gain is nil;
+#   * tax: the TPS, tps_registered x tps_rate on RECEIPTS (revenue is the only taxable line), plus
+#     its top-up to tps_minimum when the rate falls short (nil here: 101,725 against 10,000), plus
+#     the redevance ORTB, a fixed levy on the same assessment; all paid within the year;
+#   * working capital: the fuel standing in the tank, fuel_tank_litres x fuel_price_per_litre, a
+#     held balance bought for cash in t=0 and never released (the gold's choice);
+#   * owner_labour_cost and fcff_after_owner_labour are the gold's memo column: a variant of the
+#     case in which the founder is paid 12 x smig_monthly a year (owner_wage is nil in the base);
+#     the receipts tax does not move, so the memo FCFF is the base FCFF less that wage.
+gold: moto_v25
+entity: moto
+plant: fare_long
+case:
+  case: gold-moto-v25
+  periods: 4
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 4
+      inputs: gold
+      values:
+        age: t + 1
+        days_worked: {each_period: calendar_working_days_per_year - days_lost_per_year}
+        trips_short: trips_short_per_day * days_worked
+        trips_medium: trips_medium_per_day * days_worked
+        trips_long: trips_long_per_day * days_worked
+        trips_total: trips_short + trips_medium + trips_long
+        net_of_vat: 1 - vat_rate_applicable
+        price_short: fare_short * net_of_vat
+        price_medium: fare_medium * net_of_vat
+        price_long: fare_long * net_of_vat
+        km_loaded: trips_short * km_per_trip_short + trips_medium * km_per_trip_medium + trips_long * km_per_trip_long
+        km_total: km_loaded * (1 + empty_running_uplift)
+        km_cumulative: cumsum(km_total)
+        litres: km_total * fuel_consumption_l_per_100km / 100
+        maintenance: 12 * maintenance_cost_per_month_new * (1 + maintenance_escalation_per_year * (age - 1))
+        compliance: municipal_taxi_tax_per_year + taxi_card_registration_fee + tvm_two_wheel_tax + insurance_cost_per_year
+        tps_rate_charged: tps_registered * tps_rate
+        fares: trips_short * price_short + trips_medium * price_medium + trips_long * price_long
+        tps_floor_topup: tps_registered * max(0, tps_minimum - tps_rate * fares)
+        ortb: tps_registered * redevance_ortb
+        capex: moto_cost * (t == 0)
+        retired: t == moto_life_years - 1
+        tank: fuel_tank_litres * fuel_price_per_litre
+        owner_wage: 0
+  opening:
+    moto:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    fares_short:
+      type: offtake
+      parties: {seller: moto}
+      terms: {volume: {generator: gold, output: trips_short}, price: {generator: gold, output: price_short},
+              payment_days: 0, days_per_year: {generator: gold, output: calendar_working_days_per_year},
+              periods_per_year: 1, end: 3}
+    fares_medium:
+      type: offtake
+      parties: {seller: moto}
+      terms: {volume: {generator: gold, output: trips_medium}, price: {generator: gold, output: price_medium},
+              payment_days: 0, days_per_year: {generator: gold, output: calendar_working_days_per_year},
+              periods_per_year: 1, end: 3}
+    fares_long:
+      type: offtake
+      parties: {seller: moto}
+      terms: {volume: {generator: gold, output: trips_long}, price: {generator: gold, output: price_long},
+              payment_days: 0, days_per_year: {generator: gold, output: calendar_working_days_per_year},
+              periods_per_year: 1, end: 3}
+    salvage:
+      type: offtake
+      parties: {seller: moto}
+      terms: {volume: {generator: gold, output: retired}, price: {generator: gold, output: salvage_value},
+              payment_days: 0, days_per_year: {generator: gold, output: calendar_working_days_per_year},
+              periods_per_year: 1, end: 3}
+    fuel:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: 0, unit_rate: {generator: gold, output: fuel_price_per_litre},
+              volume: {generator: gold, output: litres}, index: 1, periods_per_year: 1, start: 0, end: 3,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: calendar_working_days_per_year}}
+    maintenance:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: maintenance}, index: 1,
+              periods_per_year: 1, start: 0, end: 3, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: calendar_working_days_per_year}}
+    compliance:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: {generator: gold, output: compliance}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 3, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: calendar_working_days_per_year}}
+    tps_floor:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: tps_floor_topup}, index: 1,
+              periods_per_year: 1, start: 0, end: 3, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: calendar_working_days_per_year}}
+    ortb:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: {generator: gold, output: ortb}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 3, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: calendar_working_days_per_year}}
+    owner:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: {generator: gold, output: owner_wage}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 3, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: calendar_working_days_per_year}}
+    purchase:
+      type: capex
+      parties: {owner: moto}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 3}
+  rulebooks:
+    tank:
+      kind: held_balance
+      entity: moto
+      cash: cash
+      phase: operate
+      accounts:
+        fuel_in_tank: {side: asset, target: {generator: gold, output: tank}}
+    assets:
+      kind: asset_register
+      entity: moto
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 3
+      residual: {generator: gold, output: salvage_value}
+      life_periods: {generator: gold, output: moto_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: moto
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tps_rate_charged}
+      carry_forward_periods: null
+      scheme:                                   # a levy on receipts: only fares enter the base
+        fares_short.revenue: taxable
+        fares_medium.revenue: taxable
+        fares_long.revenue: taxable
+        salvage.revenue: non_deductible
+        fuel.expense: non_deductible
+        maintenance.expense: non_deductible
+        compliance.expense: non_deductible
+        tps_floor.expense: non_deductible
+        ortb.expense: non_deductible
+        owner.expense: non_deductible
+        depreciation: non_deductible
+        disposal_loss: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: moto
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      fares_short.revenue: revenue
+      fares_medium.revenue: revenue
+      fares_long.revenue: revenue
+      salvage.revenue: disposal
+      fuel.expense: fuel
+      maintenance.expense: maintenance
+      compliance.expense: compliance
+      owner.expense: owner
+      depreciation: depreciation
+      disposal_loss: disposal
+      tax_expense: tps
+      tps_floor.expense: tps
+      ortb.expense: ortb
+    cash_flow:
+      fares_short.receivable: operating
+      fares_medium.receivable: operating
+      fares_long.receivable: operating
+      salvage.receivable: disposal
+      fuel.payable: operating
+      maintenance.payable: operating
+      compliance.payable: operating
+      tps_floor.payable: operating
+      ortb.payable: operating
+      owner.payable: operating
+      fuel_in_tank: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: capex
+  cuts:
+    revenue: {kind: pnl, entity: moto, scheme: pnl, include: [revenue]}
+    fuel: {kind: pnl, entity: moto, scheme: pnl, include: [fuel]}
+    maintenance: {kind: pnl, entity: moto, scheme: pnl, include: [maintenance]}
+    compliance: {kind: pnl, entity: moto, scheme: pnl, include: [compliance]}
+    opex: {kind: pnl, entity: moto, scheme: pnl, include: [fuel, maintenance, compliance]}
+    ebitda: {kind: pnl, entity: moto, scheme: pnl, include: [revenue, fuel, maintenance, compliance]}
+    depreciation: {kind: pnl, entity: moto, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: moto, scheme: pnl, include: [revenue, fuel, maintenance, compliance, depreciation, disposal]}
+    tps: {kind: pnl, entity: moto, scheme: pnl, include: [tps]}
+    tax: {kind: pnl, entity: moto, scheme: pnl, include: [tps, ortb]}
+    nopat: {kind: pnl, entity: moto, scheme: pnl,
+            include: [revenue, fuel, maintenance, compliance, depreciation, disposal, tps, ortb]}
+    owner: {kind: pnl, entity: moto, scheme: pnl, include: [owner]}
+    capex: {entity: moto, account: cash, scheme: cash_flow, include: [capex]}
+    proceeds: {entity: moto, account: cash, scheme: cash_flow, include: [disposal]}
+    cfo: {entity: moto, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: moto, account: cash, scheme: cash_flow, include: [capex, disposal]}
+    fcff: {entity: moto, account: cash, scheme: cash_flow, include: [operating, capex, disposal]}
+  measures: {}
+variants:
+  owner_paid: {values: {owner_wage: 12 * smig_monthly}}
+trace:
+  year_counter: {driver: gold.age}
+  days_worked: {driver: gold.days_worked}
+  trips_short: {driver: gold.trips_short}
+  trips_medium: {driver: gold.trips_medium}
+  trips_long: {driver: gold.trips_long}
+  trips_total: {driver: gold.trips_total}
+  revenue: {cut: revenue}
+  km_loaded: {driver: gold.km_loaded}
+  km_total: {driver: gold.km_total}
+  km_cumulative: {driver: gold.km_cumulative}
+  litres: {driver: gold.litres}
+  fuel_cost: {cut: fuel, sign: -1}
+  maintenance_cost: {cut: maintenance, sign: -1}
+  compliance_cost: {cut: compliance, sign: -1}
+  opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  accumulated_depreciation: {cumulative: depreciation, sign: -1}
+  capex: {cut: capex, sign: -1}
+  disposal_proceeds: {cut: proceeds}
+  book_value: {balance: fixed_assets}
+  ebit: {cut: ebit}
+  tps: {cut: tps, sign: -1}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  nwc: {balance: fuel_in_tank + fares_short.receivable + fares_medium.receivable + fares_long.receivable - fuel.payable - maintenance.payable - compliance.payable}
+  delta_nwc: {change: fuel_in_tank + fares_short.receivable + fares_medium.receivable + fares_long.receivable - fuel.payable - maintenance.payable - compliance.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  owner_labour_cost: {cut: owner, variant: owner_paid, sign: -1}
+  fcff_after_owner_labour: {cut: fcff, variant: owner_paid}

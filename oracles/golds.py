@@ -79,7 +79,9 @@ Every trace row is compared; a row the translation does not map is a failed
 check ("not reported"), never a skip. One exception, listed in the receipt:
 ``labels`` (row -> reason) names a calendar row (``fiscal_year: [2026,
 2027, ...]``) that is a label of the period, not a quantity of the business.
-Only a row of consecutive whole numbers qualifies.
+Only a row of consecutive whole numbers qualifies, or a row that is all text
+(a period named as printed: ``["Nov-2026", "Dec-2026"]``, ``["2026", "2027"]``):
+text is no quantity, so nothing in it could be compared.
 
 Checks, per oracle
 ------------------
@@ -87,7 +89,9 @@ Checks, per oracle
 * one check per trace row: every period within 0.5 of the gold (the
   library's own tolerance, ``spec/GRAPH.yaml`` ``oracle.tolerance``: the
   currency is in whole units); the first period that differs is named;
-* ``fcff``: the headline, the same way;
+* ``fcff``: the headline, the same way, read by the translation's ``fcff``
+  mapping; a gold whose trace names that row otherwise (``fcff_xof``) maps
+  both, and ``fcff`` is then no unknown row;
 * ``books``: the integrity checks of every book and each rulebook's checks.
 
 Planted error
@@ -161,6 +165,12 @@ def _numbers(node: Any, path: str = "") -> List[Tuple[str, Any]]:
             if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool):
                 out.append((f"{path} ({node!r})", n.value))
     return out
+
+
+def _consecutive(row: List[Any]) -> bool:
+    """Whether a row is a run of consecutive whole numbers (a calendar of years)."""
+    nums = all(isinstance(x, int) and not isinstance(x, bool) for x in row)
+    return nums and all(b - a == 1 for a, b in zip(row, row[1:]))
 
 
 def untraced(case: Mapping[str, Any]) -> List[str]:
@@ -266,8 +276,9 @@ class GoldFamily(Family):
         for row, reason in labels.items():
             want = rows.pop(row, None)
             # a label row (a calendar year) is no quantity of the business: it is listed, not compared,
-            # and only a run of consecutive whole numbers qualifies
-            if want is None or row in mapping or any(b - a != 1 for a, b in zip(want, want[1:])):
+            # and only a run of consecutive whole numbers, or a row of text (a period named as printed), qualifies
+            text = bool(want) and all(isinstance(x, str) for x in want)
+            if want is None or row in mapping or not (text or _consecutive(want)):
                 raise ValueError(f"{path.name}: label '{row}' is not a gold row of consecutive years, or is also mapped")
             record.setdefault("labels_not_compared", {})[row] = reason
         for row, want in rows.items():
@@ -278,7 +289,9 @@ class GoldFamily(Family):
             got = self._read(results, tr["entity"], spec, n, warm)
             label = f"driver {row}" if "driver" in spec else row
             checks.append(self._compare(label, want, got))
-        extra = sorted(set(mapping) - set(rows))
+        # the headline's mapping is no trace row when the gold's trace names that row otherwise
+        headline = {"fcff"} if gold.get("fcff") is not None else set()
+        extra = sorted(set(mapping) - set(rows) - headline)
         if extra:
             checks.append(Check("trace map", "rows", "only gold rows", f"unknown rows {extra}", False))
         fcff = mapping.get("fcff")

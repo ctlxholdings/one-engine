@@ -1,0 +1,335 @@
+# Pilot gold "cattle_embouche": a Kolokani cattle fattener (embouche bovine), four tours of four
+# months over 24 monthly periods (cases/reference/golds_pilot/cattle_embouche.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the calendar: a year opens with its idle months (idle_months_per_year less a sourcing gap
+#     between each of the tours_per_year tours: January to March), then tours of months_per_tour
+#     months separated by sourcing_gap_months (placed April and September, sold at the end of July
+#     and December); the month of the year is t % 12;
+#   * the lot (heads_per_lot, poor_doers_per_lot of them poor doers) loses deaths_observed_head /
+#     (mortality_observation_years x tours_per_year x months_per_tour) head each month on feed; the
+#     survivors are sold in the tour's last month, graded pro rata; heads, live weight (the dead
+#     carried at the weight reached before their month's gain; the gain spread gain_share_month1,
+#     then gain_share_loaded_month, of the lot's average gain), concentrate and roughage offered,
+#     refused and eaten, and the concentrate norm are driver rows: no ledger holds a head or a kg;
+#   * the animals, transport in, vet, feed and, in months on feed, the herdsman and pump are paid
+#     as incurred and capitalised into inventory (stated moves of the same amounts); the lot's whole
+#     cost (its tour cost) goes to cost of sales when it is sold; herdsman and pump in idle months
+#     stay in the P&L as unabsorbed overhead; the absorbed part is what was paid less that;
+#   * selling costs are broker_fee_per_head_xof plus market_tax_per_head_xof a head sold, and
+#     sale_transport_cost_per_tour_xof (nil) a tour; the mairie levy is paid each January;
+#   * the shed is carried in at its cost (shed_cost_xof) with its accumulated depreciation
+#     (accumulated_depreciation_opening_xof) in a contra account, and depreciated straight-line,
+#     shed_cost_xof over shed_useful_life_years x 12 months, a month; no capex;
+#   * the impot synthetique is impot_synthetique_rate of turnover (impot_synthetique_applies_flag),
+#     nothing deducted, charged with the sale and paid in full in month
+#     impot_synthetique_payment_month_index (March) of the next year; the horizon opens owing
+#     opening_tax_payable_xof, paid in the first March;
+#   * all trade is spot and cash: no receivable or payable, so working capital is the inventory
+#     less the tax payable.
+gold: cattle_embouche
+entity: fattener
+plant: finished_price_xof
+case:
+  case: gold-pilot-cattle-embouche
+  periods: 24
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 24
+      inputs: gold
+      values:
+        month: t % 12
+        cycle: months_per_tour + sourcing_gap_months
+        first_place: idle_months_per_year - sourcing_gap_months * (tours_per_year - 1)
+        since_first: month - first_place
+        feeding: (since_first >= 0) * (since_first < tours_per_year * cycle) * (since_first % cycle < months_per_tour)
+        j: feeding * (since_first % cycle)
+        placed: feeding * (j == 0)
+        selling: feeding * (j == months_per_tour - 1)
+        mort: deaths_observed_head / (mortality_observation_years * tours_per_year * months_per_tour)
+        head_placed: placed * heads_per_lot
+        head_died: feeding * mort
+        head_end: feeding * (heads_per_lot - mort * (j + 1))
+        head_sold: selling * head_end
+        head_on_feed: head_end - head_sold
+        grade_b: head_sold * poor_doers_per_lot / heads_per_lot
+        grade_a: head_sold - grade_b
+        avg_gain: >-
+          ((heads_per_lot - poor_doers_per_lot) * weight_gain_good_kg + poor_doers_per_lot * weight_gain_poor_kg)
+          / heads_per_lot
+        share: feeding * ((j == 0) * gain_share_month1 + (j > 0) * gain_share_loaded_month)
+        cum_through: gain_share_month1 + gain_share_loaded_month * j
+        w_before: entry_weight_kg + avg_gain * (cum_through - share)
+        w_after: entry_weight_kg + avg_gain * cum_through
+        lw_placed: head_placed * entry_weight_kg
+        lw_gain: share * head_end * avg_gain
+        lw_died: head_died * w_before
+        lw_pre_sale: head_end * w_after
+        lw_sold: head_sold * w_after
+        lw: lw_pre_sale - lw_sold
+        lw_avg: (lag(lw, 1) + lw_placed + lw_pre_sale) / 2
+        conc_offered: >-
+          feeding * ((j == 0) * (cake_sacks_month1 + bran_sacks_month1)
+          + (j > 0) * (cake_sacks_loaded_month + bran_sacks_loaded_month)) * feed_sack_weight_kg
+        conc_refused: conc_offered * concentrate_refusal_rate
+        conc_eaten: conc_offered - conc_refused
+        norm_max: concentrate_norm_high_kg_per_100kg_lw_day * lw_avg * days_per_month / 100
+        excess: conc_eaten - norm_max
+        rough_offered: feeding * roughage_kg_per_tour / months_per_tour
+        rough_refused: rough_offered * roughage_refusal_rate
+        rough_eaten: rough_offered - rough_refused
+        livestock: head_placed * thin_animal_price_xof
+        transport: placed * truck_cost_per_tour_xof
+        vet: head_placed * vet_cost_per_head_xof
+        feed: >-
+          feeding * ((j == 0) * (cake_sacks_month1 * cake_sack_price_xof + bran_sacks_month1 * bran_sack_price_xof)
+          + (j > 0) * (cake_sacks_loaded_month * cake_sack_price_xof + bran_sacks_loaded_month * bran_sack_price_xof)
+          + (straw_purchase_per_tour_xof + salt_and_licks_per_tour_xof) / months_per_tour)
+        herdsman_absorbed: feeding * herdsman_monthly_wage_xof
+        water_absorbed: feeding * water_diesel_monthly_xof
+        herdsman_annual: herdsman_monthly_wage_xof * herdsman_months_paid_per_year
+        water: {each_period: water_diesel_monthly_xof}
+        tour_cost: >-
+          heads_per_lot * (thin_animal_price_xof + vet_cost_per_head_xof) + truck_cost_per_tour_xof
+          + cake_sacks_per_tour * cake_sack_price_xof + bran_sacks_per_tour * bran_sack_price_xof
+          + straw_purchase_per_tour_xof + salt_and_licks_per_tour_xof
+          + months_per_tour * (herdsman_monthly_wage_xof + water_diesel_monthly_xof)
+        cost_of_sales: selling * tour_cost
+        selling_rate: broker_fee_per_head_xof + market_tax_per_head_xof
+        sale_transport: selling * sale_transport_cost_per_tour_xof
+        mairie: (month == 0) * mairie_annual_levy_xof
+        depreciation: {each_period: shed_cost_xof / (shed_useful_life_years * 12)}
+        tax_rate: impot_synthetique_rate * impot_synthetique_applies_flag
+        opening_tax_paid: opening_tax_payable_xof * (t == impot_synthetique_payment_month_index)
+  opening:
+    fattener:
+      cash: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: shed_cost_xof}}
+      accumulated_depreciation: {nature: liability, value: {generator: gold, output: accumulated_depreciation_opening_xof}}
+      tax_payable: {nature: liability, value: {generator: gold, output: opening_tax_payable_xof}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    finished:
+      type: offtake
+      parties: {seller: fattener}
+      terms: {volume: {generator: gold, output: grade_a}, price: {generator: gold, output: finished_price_xof},
+              payment_days: 0, days_per_year: 12, periods_per_year: 12, end: 23}
+    poor_doers:
+      type: offtake
+      parties: {seller: fattener}
+      terms: {volume: {generator: gold, output: grade_b}, price: {generator: gold, output: poor_doer_sale_price_xof},
+              payment_days: 0, days_per_year: 12, periods_per_year: 12, end: 23}
+    livestock:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: livestock}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    transport:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: transport}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    vet:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: vet}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    feed:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: feed}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    herdsman:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: {generator: gold, output: herdsman_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 12, start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    pump:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: water}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    mairie:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: mairie}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    market:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: {generator: gold, output: selling_rate}, volume: {generator: gold, output: head_sold},
+              index: 1, periods_per_year: 12, start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: 12}
+    sale_transport:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: sale_transport}, index: 1, periods_per_year: 12,
+              start: 0, end: 23, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks:
+    stock:
+      kind: transfer
+      entity: fattener
+      phase: close
+      declare: {inventory: asset, cogs: expense, depreciation: expense}
+      moves:
+        livestock: {debit: inventory, credit: livestock.expense, amount: {generator: gold, output: livestock}}
+        transport: {debit: inventory, credit: transport.expense, amount: {generator: gold, output: transport}}
+        vet: {debit: inventory, credit: vet.expense, amount: {generator: gold, output: vet}}
+        feed: {debit: inventory, credit: feed.expense, amount: {generator: gold, output: feed}}
+        herdsman: {debit: inventory, credit: herdsman.expense, amount: {generator: gold, output: herdsman_absorbed}}
+        pump: {debit: inventory, credit: pump.expense, amount: {generator: gold, output: water_absorbed}}
+        sold: {debit: cogs, credit: inventory, amount: {generator: gold, output: cost_of_sales}}
+        depreciation: {debit: depreciation, credit: accumulated_depreciation, amount: {generator: gold, output: depreciation}}
+        last_year_tax: {debit: tax_payable, credit: cash, amount: {generator: gold, output: opening_tax_paid}}
+    tax:
+      kind: income_tax
+      entity: fattener
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:                       # a tax on turnover: nothing is deducted
+        finished.revenue: taxable
+        poor_doers.revenue: taxable
+        livestock.expense: non_deductible
+        transport.expense: non_deductible
+        vet.expense: non_deductible
+        feed.expense: non_deductible
+        herdsman.expense: non_deductible
+        pump.expense: non_deductible
+        mairie.expense: non_deductible
+        market.expense: non_deductible
+        sale_transport.expense: non_deductible
+        cogs: non_deductible
+        depreciation: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: tax_instalments
+      entity: fattener
+      phase: settle
+      cash: cash
+      payable: tax_payable
+      periods_per_year: 12
+      instalments:
+        - {period_of_year: {generator: gold, output: impot_synthetique_payment_month_index}, share: 1}
+  schemes:
+    pnl:
+      finished.revenue: revenue
+      poor_doers.revenue: revenue
+      livestock.expense: inventoriable
+      transport.expense: inventoriable
+      vet.expense: inventoriable
+      feed.expense: inventoriable
+      herdsman.expense: overhead
+      pump.expense: overhead
+      cogs: cogs
+      mairie.expense: mairie
+      market.expense: selling
+      sale_transport.expense: sale_transport
+      depreciation: depreciation
+      tax_expense: tax
+    cash_flow:
+      finished.receivable: operating
+      poor_doers.receivable: operating
+      livestock.payable: livestock
+      transport.payable: transport
+      vet.payable: vet
+      feed.payable: feed
+      herdsman.payable: herdsman
+      pump.payable: pump
+      mairie.payable: operating
+      market.payable: operating
+      sale_transport.payable: operating
+      vat_receivable: operating
+      tax_payable: tax
+  cuts:
+    livestock: {entity: fattener, account: cash, scheme: cash_flow, include: [livestock]}
+    transport: {entity: fattener, account: cash, scheme: cash_flow, include: [transport]}
+    vet: {entity: fattener, account: cash, scheme: cash_flow, include: [vet]}
+    feed: {entity: fattener, account: cash, scheme: cash_flow, include: [feed]}
+    herdsman: {entity: fattener, account: cash, scheme: cash_flow, include: [herdsman]}
+    pump: {entity: fattener, account: cash, scheme: cash_flow, include: [pump]}
+    overhead_paid: {entity: fattener, account: cash, scheme: cash_flow, include: [herdsman, pump]}
+    tax_paid: {entity: fattener, account: cash, scheme: cash_flow, include: [tax]}
+    unabsorbed: {kind: pnl, entity: fattener, scheme: pnl, include: [overhead]}
+    mairie: {kind: pnl, entity: fattener, scheme: pnl, include: [mairie]}
+    sale_transport: {kind: pnl, entity: fattener, scheme: pnl, include: [sale_transport]}
+    selling: {kind: pnl, entity: fattener, scheme: pnl, include: [selling, sale_transport]}
+    cogs: {kind: pnl, entity: fattener, scheme: pnl, include: [cogs]}
+    revenue: {kind: pnl, entity: fattener, scheme: pnl, include: [revenue]}
+    gross_profit: {kind: pnl, entity: fattener, scheme: pnl, include: [revenue, cogs]}
+    ebitda: {kind: pnl, entity: fattener, scheme: pnl,
+             include: [revenue, inventoriable, overhead, cogs, mairie, selling, sale_transport]}
+    depreciation: {kind: pnl, entity: fattener, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: fattener, scheme: pnl,
+           include: [revenue, inventoriable, overhead, cogs, mairie, selling, sale_transport, depreciation]}
+    tax: {kind: pnl, entity: fattener, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: fattener, scheme: pnl,
+            include: [revenue, inventoriable, overhead, cogs, mairie, selling, sale_transport, depreciation, tax]}
+    cfo: {entity: fattener, account: cash, scheme: cash_flow,
+          include: [operating, livestock, transport, vet, feed, herdsman, pump, tax]}
+    cfi: {entity: fattener, account: cash, scheme: cash_flow, include: []}         # no capex
+    fcff: {entity: fattener, account: cash, scheme: cash_flow,
+           include: [operating, livestock, transport, vet, feed, herdsman, pump, tax]}
+  measures: {}
+trace:
+  head_placed: {driver: gold.head_placed}
+  head_died: {driver: gold.head_died}
+  head_sold: {driver: gold.head_sold}
+  head_sold_grade_a: {driver: gold.grade_a}
+  head_sold_grade_b: {driver: gold.grade_b}
+  head_on_feed: {driver: gold.head_on_feed}
+  liveweight_placed_kg: {driver: gold.lw_placed}
+  liveweight_gain_kg: {driver: gold.lw_gain}
+  liveweight_died_kg: {driver: gold.lw_died}
+  liveweight_sold_kg: {driver: gold.lw_sold}
+  liveweight_pre_sale_kg: {driver: gold.lw_pre_sale}
+  liveweight_avg_kg: {driver: gold.lw_avg}
+  liveweight_kg: {driver: gold.lw}
+  concentrate_offered_kg: {driver: gold.conc_offered}
+  concentrate_refused_kg: {driver: gold.conc_refused}
+  concentrate_eaten_kg: {driver: gold.conc_eaten}
+  concentrate_norm_max_kg: {driver: gold.norm_max}
+  concentrate_excess_over_norm_kg: {driver: gold.excess}
+  roughage_offered_kg: {driver: gold.rough_offered}
+  roughage_refused_kg: {driver: gold.rough_refused}
+  roughage_eaten_kg: {driver: gold.rough_eaten}
+  livestock_purchase_xof: {cut: livestock, sign: -1}
+  transport_in_xof: {cut: transport, sign: -1}
+  vet_cost_xof: {cut: vet, sign: -1}
+  feed_cost_xof: {cut: feed, sign: -1}
+  herdsman_cost_xof: {cut: herdsman, sign: -1}
+  water_diesel_cost_xof: {cut: pump, sign: -1}
+  absorbed_overhead_xof: {sum: [{cut: overhead_paid, sign: -1}, {cut: unabsorbed}]}
+  unabsorbed_overhead_xof: {cut: unabsorbed, sign: -1}
+  mairie_levy_xof: {cut: mairie, sign: -1}
+  sale_transport_cost_xof: {cut: sale_transport, sign: -1}
+  selling_cost_xof: {cut: selling, sign: -1}
+  inventory_additions_xof: {sum: [{change: inventory}, {cut: cogs, sign: -1}]}
+  cogs_xof: {cut: cogs, sign: -1}
+  inventory_xof: {balance: inventory}
+  revenue_xof: {cut: revenue}
+  gross_profit_xof: {cut: gross_profit}
+  ebitda_xof: {cut: ebitda}
+  depreciation_xof: {cut: depreciation, sign: -1}
+  accumulated_depreciation_opening_xof: {carried_in: accumulated_depreciation}
+  accumulated_depreciation_xof: {balance: accumulated_depreciation}
+  book_value_xof: {balance: fixed_assets - accumulated_depreciation}
+  ebit_xof: {cut: ebit}
+  tax_charge_xof: {cut: tax, sign: -1}
+  tax_paid_xof: {cut: tax_paid, sign: -1}
+  tax_payable_opening_xof: {carried_in: tax_payable}
+  tax_payable_xof: {balance: tax_payable}
+  nopat_xof: {cut: nopat}
+  nwc_xof: {balance: inventory - tax_payable}
+  delta_nwc_xof: {change: inventory - tax_payable}
+  capex_xof: {cut: cfi, sign: -1}
+  cfo_xof: {cut: cfo}
+  cfi_xof: {cut: cfi}
+  fcff_xof: {cut: fcff}
+  fcff: {cut: fcff}

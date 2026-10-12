@@ -1,0 +1,901 @@
+id: ci_abidjan_adjame_rice_wholesale_fcff_v1
+title: >-
+  Grossiste en riz importé, Adjamé (Abidjan) — unlevered FCFF (NOPAT build) over
+  the remaining life of the truck, with the Côte d'Ivoire turnover-based minimum
+  tax (IMF) modelled as a two-branch annual test
+currency: XOF
+grid:
+  periods: 5
+  freq: annual
+
+utterance:
+  fr: >-
+    Je fais le riz en gros à Abidjan, à Adjamé. J'achète le riz importé au port, en sacs
+    de cinquante kilos, et je revends aux détaillants du marché. Je tourne à peu près
+    quatre mille sacs par mois. Je l'achète à seize mille cinq cents le sac et je le
+    revends à dix-sept mille deux cents — c'est un métier où on gagne peu sur beaucoup,
+    la concurrence est féroce et le prix du riz, tout le monde le connaît. Le magasin me
+    coûte quatre cent mille francs par mois, j'ai trois manutentionnaires à quatre-vingt
+    mille chacun, et le transport du port jusqu'au magasin me revient à cent cinquante
+    francs le sac. J'ai un petit camion que j'ai payé douze millions il y a deux ans, il
+    me fait bien sept ans. Je suis déclaré, je suis au réel. Et voilà ce qui me pèse —
+    mon comptable me dit que même une année où je ne gagne presque rien, il y a un
+    minimum à payer, c'est calculé sur le chiffre d'affaires et pas sur le bénéfice, et
+    il y a un plancher en dessous duquel on ne descend jamais. Donc chaque année je paie
+    le plus élevé des deux, l'impôt normal sur mon bénéfice, ou ce minimum-là.
+  en: >-
+    I wholesale rice in Abidjan, in Adjamé. I buy imported rice at the port, in fifty-kilo
+    bags, and I resell to the market retailers. I turn about four thousand bags a month.
+    I buy it at sixteen thousand five hundred a bag and I resell it at seventeen thousand
+    two hundred — it is a trade where you earn little on a lot, competition is fierce and
+    everybody knows the price of rice. The store costs me four hundred thousand francs a
+    month, I have three handlers at eighty thousand each, and transport from the port to
+    the store costs me a hundred and fifty francs a bag. I have a small truck I paid
+    twelve million for two years ago, it gives me a good seven years. I am registered, I
+    am on the real (actual-profit) regime. And here is what weighs on me — my accountant
+    tells me that even in a year when I earn almost nothing there is a minimum to pay,
+    it is computed on turnover and not on profit, and there is a floor below which you
+    never go. So every year I pay the higher of the two, the normal tax on my profit, or
+    that minimum.
+
+inputs:
+
+  bags_per_month:
+    value: 4000
+    unit: bags/month
+    prov: STATED
+    source: "«Je tourne à peu près quatre mille sacs par mois.» — the founder's own throughput unit is the 50 kg bag."
+    date: "2026-07-25"
+
+  months_per_year:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: "Calendar convention; the utterance is denominated per month, the tax test is annual."
+    date: "2026-07-25"
+
+  bag_weight_kg:
+    value: 50
+    unit: kg/bag
+    prov: STATED
+    source: "«en sacs de cinquante kilos». Used only for the physical feasibility cross-checks."
+    date: "2026-07-25"
+
+  sale_price_per_bag:
+    value: 17200
+    unit: XOF/bag
+    prov: STATED
+    source: "«je le revends à dix-sept mille deux cents»."
+    date: "2026-07-25"
+
+  purchase_price_per_bag:
+    value: 16500
+    unit: XOF/bag
+    prov: STATED
+    source: "«Je l'achète à seize mille cinq cents le sac»."
+    date: "2026-07-25"
+
+  gross_margin_per_bag:
+    value: 700
+    unit: XOF/bag
+    prov: INFERRED
+    source: "sale_price_per_bag - purchase_price_per_bag = 17200 - 16500. No new information; arithmetic on two STATED prices."
+    date: "2026-07-25"
+
+  transport_per_bag:
+    value: 150
+    unit: XOF/bag
+    prov: STATED
+    source: "«le transport du port jusqu'au magasin me revient à cent cinquante francs le sac»."
+    date: "2026-07-25"
+
+  inbound_freight_capitalisation_policy:
+    value: capitalised_into_inventory_cost
+    unit: accounting policy
+    prov: DEFAULTED
+    source: "IAS 2.11 — costs of purchase comprise the purchase price plus transport, handling and other costs directly attributable to acquisition. Inbound port-to-store freight is therefore a cost of purchase, not a period cost."
+    date: "2026-07-25"
+
+  storage_cost_expensing_policy:
+    value: expensed_as_period_cost
+    unit: accounting policy
+    prov: DEFAULTED
+    source: "IAS 2.16(b) — storage costs are excluded from the cost of inventories unless necessary before a further production stage. Store rent and in-store handling wages are expensed."
+    date: "2026-07-25"
+
+  landed_cost_per_bag:
+    value: 16650
+    unit: XOF/bag
+    prov: INFERRED
+    source: "purchase_price_per_bag + transport_per_bag = 16500 + 150, under inbound_freight_capitalisation_policy."
+    date: "2026-07-25"
+
+  shrinkage_rate:
+    value: 0.009
+    unit: fraction of bags sold, lost in the port-to-store-to-retailer chain
+    prov: ASSUMED
+    source: "Prior — the founder describes zero handling loss, which is not a physically available claim for an open-market depot handling 2,400 t/yr across three physical handoffs (port, truck, store). RE-ADDED 2026-08-04 (physics audit F-249, audits/rice_mintax__physics__2026-08-03.md): the gold's own notes named this omission ('SHRINKAGE AND CREDIT LOSS OMITTED') without sizing it. The audit found the tax-branch flip point at ≈0.06% of COGS (≈30 bags/yr, one torn or spilled bag every twelve days) and FCFF≈0 near ≈1.7-1.8% — both well inside SEC-V26-22's 0.4-1.5% ordinary shrink/breakage/pilferage range for a comparable low-risk dry-goods distribution chain. Taken at that benchmark's MIDPOINT, not chosen to preserve or flip any particular answer. Covers handling damage only (torn bags, spillage, pilferage) — NOT retailer credit loss, which remains a separate, still-unsized risk (no bad-debt-rate benchmark was available). ELICIT — over a year, how many bags do you write off to tears, spillage or theft, and how much retailer credit do you never collect?"
+    date: "2026-08-04"
+
+  store_rent_per_month:
+    value: 400000
+    unit: XOF/month
+    prov: STATED
+    source: "«Le magasin me coûte quatre cent mille francs par mois»."
+    date: "2026-07-25"
+
+  handlers_count:
+    value: 3
+    unit: persons
+    prov: STATED
+    source: "«j'ai trois manutentionnaires»."
+    date: "2026-07-25"
+
+  wage_per_handler_per_month:
+    value: 80000
+    unit: XOF/person/month
+    prov: STATED
+    source: "«trois manutentionnaires à quatre-vingt mille chacun». CHECKED 2026-08-04 (F-254): the prior v25 physics audit of this gold family flagged this wage against the Ivorian SMIG floor; no SEC-V26 benchmark existed to re-verify it as of the 2026-08-03 audit. The SMIG (Décret n°2022-986, in force since January 2023, unrevised through mid-2026) is 75,000 XOF/month. 80,000 is 6.7% above that floor — compliant, not a violation. No change made."
+    date: "2026-07-25"
+
+  truck_cost:
+    value: 12000000
+    unit: XOF
+    prov: STATED
+    source: "«un petit camion que j'ai payé douze millions»."
+    date: "2026-07-25"
+
+  truck_age_years_at_t0:
+    value: 2
+    unit: years
+    prov: STATED
+    source: "«que j'ai payé douze millions il y a deux ans»."
+    date: "2026-07-25"
+
+  truck_useful_life_years:
+    value: 7
+    unit: years
+    prov: ASSUMED
+    source: "READING. The NUMBER seven is stated; its ANCHOR is not. «Il me fait bien sept ans» is present-tense, follows «que j'ai payé douze millions il y a deux ans», and «bien» reads forward, so 'seven MORE years' is at least as strong a reading as 'seven in total from purchase'. This gold takes total-life-from-purchase, which yields five remaining years and sets the horizon. RE-TAGGED 2026-07-26 (physical audit): was STATED, but the source field itself conceded a competing reading -- which is definitionally incompatible with a STATED tag, since STATED must quote the founder without interpretation. This is the most load-bearing input in the file: the competing reading gives a 9-year total life, lower annual depreciation, a 7-period horizon with no replacement inside it, and a materially larger lifetime FCFF. The check grid.periods == truck_useful_life_years - truck_age_years_at_t0 enforces internal consistency but cannot adjudicate the reading. ELICIT, ahead of every working-capital day-count in this file: sept ans depuis l'achat, ou sept ans encore a partir d'aujourd'hui?"
+    date: "2026-07-25"
+
+  truck_remaining_life_years:
+    value: 5
+    unit: years
+    prov: INFERRED
+    source: "truck_useful_life_years - truck_age_years_at_t0 = 7 - 2."
+    date: "2026-07-25"
+
+  truck_residual_value:
+    value: 0
+    unit: XOF
+    prov: DEFAULTED
+    source: "IAS 16.53 — residual value taken as nil where the asset is used to the end of its economic life; the founder gives no trade-in expectation."
+    date: "2026-07-25"
+
+  depreciation_method:
+    value: straight_line
+    unit: method
+    prov: DEFAULTED
+    source: "IAS 16.62 — straight line reflects a delivery truck consumed evenly over a stated number of years; no usage pattern stated."
+    date: "2026-07-25"
+
+  capex_replacement_period_index:
+    value: 4
+    unit: 0-based period index
+    prov: ASSUMED
+    source: "CONVENTION. The arithmetic grid.periods - 1 is entailed, but CHOOSING to date the replacement inside the horizon is not: it books a 12,000,000 outflow for an asset that renders no service before the model ends, and this gold's own passage concedes the point ('the new truck's depreciation begins after the horizon, which is why nbv_close[4] is the full 12,000,000 undepreciated'). RE-TAGGED 2026-07-26 (physical audit): was INFERRED, which launders a judgment call. Defensible as a convention; not a deduction. The trace.fcff_normalised row is the one to read for a sustainable run-rate, since it spreads the renewal over the life it buys."
+    date: "2026-07-25"
+
+  truck_replacement_cost:
+    value: 12000000
+    unit: XOF
+    prov: ASSUMED
+    source: "Prior — like-for-like replacement of the same small truck at the same nominal price. ELICIT — what would an equivalent truck cost you today, new or second-hand?"
+    date: "2026-07-25"
+
+  bic_rate:
+    value: 0.25
+    unit: fraction of taxable profit
+    prov: ASSUMED
+    source: "Prior — Côte d'Ivoire impôt sur les bénéfices industriels et commerciaux, standard rate 25% for a taxpayer au réel. The founder states the branch exists («l'impôt normal sur mon bénéfice») but not the rate. ELICIT — are you taxed as a personne morale (SARL) or as an entreprise individuelle?"
+    date: "2026-07-25"
+
+  imf_rate:
+    value: 0.005
+    unit: fraction of turnover (TTC)
+    prov: ASSUMED
+    source: "Prior — Côte d'Ivoire impôt minimum forfaitaire, 0.5% of chiffre d'affaires TTC. The founder states the BASE («c'est calculé sur le chiffre d'affaires et pas sur le bénéfice») but not the rate."
+    date: "2026-07-25"
+
+  imf_floor:
+    value: 3000000
+    unit: XOF/year
+    prov: ASSUMED
+    source: "Prior — statutory plancher of the IMF, 3,000,000 XOF. The founder states a floor exists («il y a un plancher en dessous duquel on ne descend jamais») but not its amount."
+    date: "2026-07-25"
+
+  imf_cap:
+    value: 35000000
+    unit: XOF/year
+    prov: ASSUMED
+    source: "Prior — statutory plafond of the IMF, 35,000,000 XOF. Not mentioned by the founder; modelled so the branch is explicit even though it does not bind at this turnover."
+    date: "2026-07-25"
+
+  tax_regime:
+    value: reel_normal
+    unit: regime
+    prov: STATED
+    source: "«Je suis déclaré, je suis au réel» — actual-profit regime, so accounting profit is the tax base and the IMF test applies."
+    date: "2026-07-25"
+
+  vat_status_rice:
+    value: exempt
+    unit: VAT status
+    prov: ASSUMED
+    source: "Prior — rice is a produit de première nécessité and is VAT-exempt in Côte d'Ivoire; the founder quotes single prices with no HT/TTC distinction. Consequence: turnover TTC = turnover HT, so the IMF base is the stated revenue. ELICIT — do you invoice TVA on rice?"
+    date: "2026-07-25"
+
+  tax_payment_timing:
+    value: paid_in_period_accrued
+    unit: convention
+    prov: DEFAULTED
+    source: "Standard FCFF convention — no income-tax payable balance modelled; cash tax equals accrued tax in the same annual period."
+    date: "2026-07-25"
+
+  days_inventory:
+    value: 15
+    unit: days of cost of sales
+    prov: ASSUMED
+    source: "Prior — a port-lifting wholesaler holds roughly half a month of cover between liftings. ELICIT — how many days of stock do you keep in the magasin, and how often do you lift from the port?"
+    date: "2026-07-25"
+
+  days_receivable:
+    value: 7
+    unit: days of revenue
+    prov: ASSUMED
+    source: "Prior — Adjamé market retailers pay cash or at very short credit; one week of exposure. ELICIT — do your détaillants pay cash on collection, or do you carry them?"
+    date: "2026-07-25"
+
+  days_payable:
+    value: 10
+    unit: days of rice purchases
+    prov: ASSUMED
+    source: "Prior — short supplier credit from the port importer. Applied to the rice invoice only, since the freight is his own truck running cost, not a supplier payable. ELICIT — do you pay the importer on lifting or on terms?"
+    date: "2026-07-25"
+
+  days_per_year_convention:
+    value: 360
+    unit: days/year
+    prov: DEFAULTED
+    source: "Commercial 360-day year for working-capital day counts."
+    date: "2026-07-25"
+
+  volume_growth:
+    value: 0
+    unit: fraction/year
+    prov: ASSUMED
+    source: "Prior — no growth stated; «la concurrence est féroce» and «à peu près quatre mille sacs» describe a stable, contested position. Flat volumes."
+    date: "2026-07-25"
+
+  price_growth:
+    value: 0
+    unit: fraction/year
+    prov: ASSUMED
+    source: "Prior — «le prix du riz, tout le monde le connaît» describes a transparent commodity spread; both legs held flat in nominal XOF so the spread is preserved."
+    date: "2026-07-25"
+
+  interest_bearing_debt:
+    value: 0
+    unit: XOF
+    prov: ASSUMED
+    source: "Prior — no borrowing mentioned. Matters here because the IMF makes the interest tax shield non-linear. ELICIT — do you finance liftings with bank or supplier credit?"
+    date: "2026-07-25"
+
+  truck_payload_bags:
+    value: 100
+    unit: bags/trip
+    prov: ASSUMED
+    source: "Prior — a «petit camion» of about 5 tonnes payload carries 100 bags of 50 kg. Used only for the physical feasibility cross-check, not for any monetary line. FLAGGED 2026-08-04 (F-251): this sits at the very TOP edge of SEC-V26-14's 3-5t range for this vehicle class and price point — a boundary choice, not an error. The «truck is not binding» feasibility verdict in §3 (~30% rotation headroom) holds at this top-of-range payload and would NOT hold at a more central 3.5-4t payload (70-80 bags/trip, near-zero slack). No monetary line depends on this input, but the feasibility CONCLUSION does. Not changed, since the founder gives no payload figure to adjudicate the choice and moving it would substitute one arbitrary point in the range for another — flagged instead."
+    date: "2026-07-25"
+
+  working_days_per_month:
+    value: 26
+    unit: days/month
+    prov: ASSUMED
+    source: "Prior — Abidjan market trade runs six days a week. Used only for the feasibility cross-check."
+    date: "2026-07-25"
+
+passage: |
+  0. WHAT THE BUSINESS PHYSICALLY IS, AND THE UNIT I WILL KEEP
+
+  This is a pure merchanting operation with one physical transformation: a 50 kg bag of
+  imported rice is lifted at the Port of Abidjan, trucked to a magasin in Adjamé, held
+  briefly, and handed to a market retailer. There is no manufacture, no conversion, no
+  work in progress. The natural quantity is the SAC (the 50 kg bag): the founder prices
+  in it, buys in it, sells in it, pays freight in it, and staffs against it. I therefore
+  build every line per bag first and convert to XOF only at the last step, and I keep a
+  bag roll-forward alongside the money roll-forward so the two can be checked against
+  each other.
+
+  1. GRID AND HORIZON
+
+  The operating rhythm is monthly, but the thing the founder is actually worried about —
+  «chaque année je paie le plus élevé des deux» — is an ANNUAL test. The higher-of test
+  cannot be evaluated monthly without inventing a monthly apportionment that does not
+  exist in law. So the grid is annual.
+
+  The horizon is set by the only durable asset in the business. The truck cost
+  12,000,000 XOF, was bought two years ago, and «il me fait bien sept ans» — seven years
+  of service in total. Remaining life = 7 - 2 = 5 years. Five annual periods therefore
+  carry the business from today to the exact point at which its single fixed asset is
+  consumed. t=0 is the next twelve months (the truck's third year); t=4 is the fifth and
+  last (the truck's seventh year). No terminal value is computed — the question asked is
+  the FCFF the business generates over a sensible horizon, not what it is worth.
+
+  2. VOLUME (per period, in bags)
+
+  STATED: 4,000 bags per month, read as the founder's SALES throughput to retailers
+  («...je revends aux détaillants... Je tourne à peu près quatre mille sacs par mois»).
+  Annualising with the calendar convention:
+    bags_sold[t] = 4,000 x 12 = 48,000 bags per year, for t = 0..4 (flat, ASSUMED no growth).
+
+  Purchases do NOT equal sales in physical terms: some bags are lost between the port
+  and the retailer's hand (torn, spilled, pilfered — §5A below sizes this), so the
+  founder must lift more than he sells to sustain that throughput:
+    bags_shrinkage[t]  = shrinkage_rate x bags_sold[t] = 0.9% x 48,000 = 432 bags/year.
+    bags_purchased[t]  = bags_sold[t] + bags_shrinkage[t] = 48,000 + 432 = 48,432 bags/year.
+    bags_stock_open[t] = bags_stock_close[t] = 2,000 bags (derived in §8 below).
+    Roll-forward, every period: 2,000 + 48,432 - 48,000 - 432 = 2,000. Closes exactly.
+
+  Physical mass moved: purchases of 48,432 x 50 kg = 2,421,600 kg ≈ 2,421.6 tonnes per
+  year lifted at the port; sales of 48,000 x 50 kg = 2,400 tonnes per year handed to
+  retailers. The 0.9% gap between the two is what the store buys but never gets to sell.
+
+  3. FEASIBILITY CROSS-CHECKS (does the physical story hold together?)
+
+  Truck. On the ASSUMED 5-tonne payload (100 bags per trip), the year requires
+    truck_trips[t] = 48,432 / 100 = 484.32 trips per year ≈ 40.4 per month
+  which on 26 working days is 1.55 port-to-Adjamé round trips per working day. A single
+  small truck can do that comfortably; two round trips a day would give roughly 30%
+  headroom. The fleet is not the binding constraint, and no second vehicle is implied.
+  This 100-bag payload sits at the very TOP edge of the plausible 3-5t range for a
+  «petit camion» at this price point — a boundary choice, not an error, but the
+  «not binding» verdict is a property of that choice: at a more central 3.5-4t payload
+  (70-80 bags/trip) the same annual volume needs 1.7-2.2 rotations per working day, at
+  or near the urban rotation ceiling, and the verdict would not hold. Flagged, not
+  changed — the founder gives no payload figure to adjudicate the choice.
+
+  Lifetime duty cycle (not asked for by any check, but computable, and worth stating
+  since nothing in the file does): over the truck's full seven-year stated life,
+  roughly 480-484 trips/yr x 25 km round trip x 7 years ≈ 84,000-84,700 km, and
+  roughly 480-484 x 5t x 7 years ≈ 16,800-17,000 tonnes moved. Both are modest for a
+  light commercial truck at this class — the duty cycle does not itself adjudicate
+  either reading of the «sept ans» ambiguity flagged elsewhere, it just fails to.
+  No mid-horizon rebuild-capex line (clutch, gearbox, injector pump, leaf springs)
+  exists across the roughly 3,360 load/unload cycles this implies; the ~30% rotation
+  headroom makes a routine-maintenance framing plausible (already folded into the 150
+  XOF/bag running cost), but a lumpy mid-horizon repair is not excluded by anything
+  stated here.
+
+  Freight rate. 150 XOF per bag x 100 bags = 15,000 XOF per round trip. A ~25 km round
+  trip in a 5-tonne truck burns on the order of 4 litres of diesel — a few thousand
+  francs. The stated rate is several times bare fuel, which is exactly what one expects
+  when the figure is an ALL-IN own-fleet cost: fuel, the driver, tyres and maintenance,
+  port gate and handling charges, and the faux frais of moving a loaded truck across
+  Abidjan. I therefore read the 150 XOF/bag as the cash running cost of his own truck
+  and NOT as a third-party haulage invoice — which is also why no supplier payable is
+  raised against it in §8, and why truck depreciation is a SEPARATE line and not a
+  double count.
+
+  Handlers. 200 tonnes in and 200 tonnes out per month is 400 tonnes of movement across
+  3 men x 26 days = 78 man-days, i.e. about 5.1 tonnes (roughly 103 bag-movements) per
+  man per day. Demanding but ordinary for market manutention. Three handlers is a
+  consistent, not a generous, establishment.
+
+  Store. 2,000 bags stacked ten high occupy ~200 stack footprints, on the order of
+  100 m² of floor plus circulation — a 150-200 m² depot. At Adjamé rents that is
+  consistent with 400,000 XOF a month. The stated rent and the derived stock cohere.
+
+  4. REVENUE (per period)
+
+    revenue[t] = sale_price_per_bag x bags_sold[t] = 17,200 x 48,000 = 825,600,000 XOF
+  for every t = 0..4.
+
+  Recognition (IFRS 15): control of the bags passes on collection by the retailer at the
+  magasin; there is one performance obligation, satisfied at a point in time. No
+  variable consideration, no returns right is described. Revenue = gross invoiced value:
+  the founder is a PRINCIPAL, not an agent — he takes title at the port, bears the
+  inventory price risk («le prix du riz, tout le monde le connaît» — the spread is thin
+  precisely because he is exposed to a transparent market), and sets his own resale
+  price. Gross presentation is therefore correct; net-of-cost (agency) presentation
+  would be wrong.
+
+  5. COST OF SALES AND THE LANDED-COST DECISION (per period)
+
+  This is the one genuine accounting judgment in the build. IAS 2.11 puts transport into
+  the COST OF PURCHASE. The port-to-store freight is directly attributable, per bag, and
+  is incurred to bring the rice to its present location. So it is capitalised into
+  inventory, not expensed as a period cost:
+    landed_cost_per_bag = 16,500 + 150 = 16,650 XOF/bag.
+
+  By contrast IAS 2.16(b) EXCLUDES storage costs from inventory unless a further
+  production stage requires them. The magasin rent is storage, and the handlers' work is
+  in-store handling of finished goods held for sale. Both are expensed as period costs.
+  Friction worth flagging: the handlers arguably also perform part of the acquisition
+  handling (unloading at the store). Splitting their wage between inventory and period
+  cost would be defensible; with a flat stock level it would change nothing in P&L and
+  only marginally the inventory carrying value, so I expense the whole and note it.
+
+    cogs[t] = landed_cost_per_bag x bags_sold[t] = 16,650 x 48,000 = 799,200,000 XOF.
+
+  Cost of sales is struck on bags SOLD, not bags bought (matching). Because opening and
+  closing stock are equal at 2,000 bags and unit cost is flat, the two coincide here —
+  but the model is built on the sold quantity so it would remain correct if they did not.
+
+    gross_profit[t] = 825,600,000 - 799,200,000 = 26,400,000 XOF.
+
+  Cross-check in the founder's own arithmetic: 700 XOF of raw spread per bag less 150 XOF
+  of freight = 550 XOF per bag delivered; 550 x 48,000 = 26,400,000. Identical.
+
+  5A. HANDLING SHRINKAGE — SIZED AND COSTED (2026-08-04, physics audit F-249)
+
+  The founder describes zero loss between port and retailer. That is not a physically
+  available claim for an open-market depot handling 2,400 t/yr across three physical
+  handoffs (port, truck, store). A 15-day hold retires the case for FUMIGATION (a
+  distinct risk, see notes) but does not retire ordinary handling damage — torn bags,
+  spillage, pilferage — which a fast turn does not make disappear. Benchmarked against
+  SEC-V26-22 (comparable low-risk dry-goods wholesale distribution: 0.4-1.5% ordinary
+  shrink/breakage/pilferage), taken at the range MIDPOINT:
+    shrinkage_rate     = 0.9% (ASSUMED, ELICIT-tagged; not chosen to preserve any
+                          particular tax-branch outcome — see below).
+    bags_shrinkage[t]  = 0.9% x 48,000 = 432 bags/year (one bag roughly every 20
+                          working days).
+  The lost bags were fully landed before they were lost — purchase price AND freight
+  were both already paid on them — so their cost is a total write-off at landed cost,
+  separate from cost of sales on the bags actually sold (which stays matched to
+  bags_sold, per the matching principle established above):
+    shrinkage_loss[t] = landed_cost_per_bag x bags_shrinkage[t] = 16,650 x 432
+                      = 7,192,800 XOF per year.
+  This is not a rounding refinement. The tax-branch crossover this file itself
+  computes (§9) sits at 493,714.286 XOF of EBIT headroom — 10.29 XOF/bag, 0.06% of
+  COGS. A 0.9% shrinkage rate is fifteen times that threshold. Costing it is the
+  single most-leveraged change this file makes to its own answer.
+
+  6. PERIOD OPERATING COSTS (per period)
+
+    opex_store_rent[t]      = 400,000 x 12                = 4,800,000 XOF
+    opex_handling_wages[t]  = 3 x 80,000 x 12             = 2,880,000 XOF
+    opex[t]                 = 4,800,000 + 2,880,000       = 7,680,000 XOF
+
+  These are the ONLY overheads the founder names. Nothing is added silently — see notes
+  for what a registered Adjamé wholesaler would normally also carry and why it is left
+  out rather than invented. Shrinkage (§5A) is NOT folded into opex: it is not an
+  overhead the founder names, it is a benchmark-sourced physical loss, kept on its own
+  trace row so it can be checked and challenged independently.
+
+    ebitda[t] = revenue - cogs - opex - shrinkage_loss
+              = 825,600,000 - 799,200,000 - 7,680,000 - 7,192,800
+              = 11,527,200 XOF per year.
+
+  Per bag: 11,527,200 / 48,000 = 240.15 XOF. Read against the 700 XOF raw spread:
+  freight eats 150, store and men eat 160, shrinkage eats 149.85, and 240.15 survives
+  before the truck and the taxman. «On gagne peu sur beaucoup» is even more exact once
+  the loss the founder didn't mention is put on the page — EBITDA is 1.40% of turnover,
+  not the 2.27% this file showed before the omission was sized.
+
+  7. THE TRUCK — DEPRECIATION AND THE ASSET ROLL-FORWARD (per period)
+
+  Cost 12,000,000; life 7 years; nil residual; straight line:
+    depreciation[t] = 12,000,000 / 7 = 1,714,285.714285714 XOF per year, every period.
+
+  Two years are already consumed, so the opening net book value at t=0 is
+    nbv_open[0] = 12,000,000 x (7 - 2) / 7 = 12,000,000 x 5/7 = 8,571,428.571428571 XOF.
+
+  Roll-forward (nbv_close = nbv_open + capex - depreciation):
+    t=0: 8,571,428.571428571 - 1,714,285.714285714 = 6,857,142.857142857
+    t=1: 6,857,142.857142857 - 1,714,285.714285714 = 5,142,857.142857143
+    t=2: 5,142,857.142857143 - 1,714,285.714285714 = 3,428,571.428571429
+    t=3: 3,428,571.428571429 - 1,714,285.714285714 = 1,714,285.714285714
+    t=4: 1,714,285.714285714 - 1,714,285.714285714 + 12,000,000 = 12,000,000
+  The five periods absorb exactly the 8,571,428.571428571 of remaining book value: the
+  horizon is, by construction, one full remaining asset life.
+
+  Capex. Nil in t=0..3 — the founder describes no expansion, no second truck, and the
+  physical check in §3 says he does not need one. At the close of t=4 the truck has
+  reached the end of the seven years he himself gave it, and a business whose entire
+  logistics is one truck must re-equip to keep trading. I therefore put a like-for-like
+  replacement of 12,000,000 XOF at t=4 (ASSUMED: same nominal price). Under the standard
+  end-of-period convention the new truck's depreciation begins after the horizon, which
+  is why nbv_close[4] is the full 12,000,000 undepreciated.
+
+    ebit[t] = ebitda - depreciation = 11,527,200 - 1,714,285.714285714
+            = 9,812,914.285714286 XOF, every period.
+
+  8. WORKING CAPITAL (per period)
+
+  None of the three cycles is stated; all three are ASSUMED priors with the elicitation
+  questions recorded in inputs. Day counts on a 360-day commercial year:
+
+    inventory[t]   = cogs x 15/360 = 799,200,000 x 15/360   = 33,300,000 XOF
+    receivables[t] = revenue x 7/360 = 825,600,000 x 7/360  = 16,053,333.333333333 XOF
+    payables[t]    = rice purchases x 10/360
+                   = (16,500 x 48,432) x 10/360 = 799,128,000 x 10/360 = 22,198,000 XOF
+
+  Two independent routes must agree on inventory, and they do: 15 days of cost of sales
+  is 33,300,000 XOF, and 33,300,000 / 16,650 = 2,000 BAGS — which is the physical stock
+  used in the bag roll-forward in §2 and the store-size check in §3. The money view and
+  the physical view lock together.
+
+  Payables are struck on the rice invoice only (16,500/bag), not the landed 16,650,
+  because under the reading established in §3 the 150 XOF/bag freight is his own truck's
+  running cost, settled continuously in fuel and wages, not owed to a carrier. They are
+  struck on bags_purchased (48,432, not 48,000) because the importer invoices him for
+  every bag lifted at the port, including the ones later lost to shrinkage.
+
+    nwc_close[t] = 33,300,000 + 16,053,333.333333333 - 22,198,000
+                 = 27,155,333.333333333 XOF, every period.
+
+  Crucially, this is a GOING CONCERN, not a start-up. The 27,155,333.333333333 XOF is
+  already invested in the business today; it is not a cash outflow of period t=0. So
+    nwc_open[0] = 27,155,333.333333333, and
+    delta_nwc[t] = nwc_close[t] - nwc_open[t] = 0 for every t = 0..4.
+  Charging the opening stock as a t=0 outflow would be the classic error here and would
+  wipe out nearly two years of free cash flow that the founder has in fact already spent.
+
+  Working capital is flat only because volumes and prices are flat. Its sensitivity is
+  worth materialising rather than asserting: one day of retailer credit is
+    receivable_day_value[t] = revenue / 360 = 825,600,000 / 360 = 2,293,333.333333333 XOF
+  — i.e. a single extra day of carrying the détaillants absorbs about a sixth of a full
+  year's free cash flow. In a business earning 700 XOF on a 17,200 XOF ticket, the credit
+  terms are as consequential as the margin.
+
+  9. TAX — THE TWO-BRANCH ANNUAL TEST (per period)
+
+  The founder describes the mechanism exactly, and it is the analytically interesting
+  part of this business. He is «au réel», so:
+
+  Branch A — normal profit tax (impôt BIC), levied on taxable profit:
+    tax_bic_normal[t] = 25% x ebit[t] = 0.25 x 9,812,914.285714286
+                      = 2,453,228.571428571 XOF.
+  (Because there is no debt, taxable profit equals EBIT and the unlevered tax equals the
+  actual tax — no adjustment is needed to move from actual to unlevered.)
+
+  Branch B — the minimum (impôt minimum forfaitaire), levied on TURNOVER, which
+  shrinkage does not touch (it is a physical loss AFTER the sale is made, not before —
+  turnover is struck on bags actually sold, unaffected by §5A):
+    imf_on_turnover[t] = 0.5% x 825,600,000 = 4,128,000 XOF
+    then the floor and cap the founder alludes to:
+    imf_due[t] = min( max(4,128,000 ; 3,000,000) ; 35,000,000 ) = 4,128,000 XOF.
+  The floor does not bind (turnover is far above the level at which 0.5% falls below
+  3,000,000) and the cap does not bind either. Since rice is taken to be VAT-exempt, the
+  turnover TTC that forms the IMF base equals the stated revenue — no gross-up.
+
+  The liability, as he says, is the higher of the two:
+    tax_due[t] = max(2,453,228.571428571 ; 4,128,000) = 4,128,000 XOF.
+
+  THE BRANCH FLIPS. Once handling shrinkage is costed at a benchmark-ordinary rate, the
+  MINIMUM wins — not the normal tax, and not narrowly. The EBIT at which the two
+  branches are indifferent is unchanged at
+    ebit_imf_indifference[t] = imf_due / 25% = 4,128,000 / 0.25 = 16,512,000 XOF
+  but actual EBIT is now only 9,812,914.285714286, a SHORTFALL of
+    imf_headroom[t] = 9,812,914.285714286 - 16,512,000 = -6,699,085.714285714 XOF.
+  EBIT would need to be 68% higher before the profit-based tax would ever bind again at
+  this cost structure. Before shrinkage was costed, this file showed the normal tax
+  winning by 10.29 XOF/bag — 0.06% of COGS, fifteen times smaller than the 0.9%
+  shrinkage rate used here (SEC-V26-22 benchmark, §5A). The founder's accountant was
+  right for a sharper reason than the base case implied: this business does not merely
+  risk the minimum tax in a bad year — on any physically ordinary handling-loss rate, it
+  already lives inside the minimum-tax regime in an ORDINARY year, and its tax bill is
+  frozen to turnover regardless of how profit moves.
+
+  10. NOPAT AND THE UNLEVERED BUILD (per period)
+
+    nopat[t] = ebit - tax_due = 9,812,914.285714286 - 4,128,000
+             = 5,684,914.285714286 XOF, every period.
+
+  Unlevered free cash flow, FCFF = NOPAT + D&A - delta_NWC - capex:
+
+    t=0: 5,684,914.285714286 + 1,714,285.714285714 - 0 - 0          =  7,399,200.000000000
+    t=1: 5,684,914.285714286 + 1,714,285.714285714 - 0 - 0          =  7,399,200.000000000
+    t=2: 5,684,914.285714286 + 1,714,285.714285714 - 0 - 0          =  7,399,200.000000000
+    t=3: 5,684,914.285714286 + 1,714,285.714285714 - 0 - 0          =  7,399,200.000000000
+    t=4: 5,684,914.285714286 + 1,714,285.714285714 - 0 - 12,000,000 = -4,600,800.000000000
+
+  Independent route to the same figure (a genuine check, not a restatement): with no
+  working-capital movement, FCFF = EBITDA - cash tax - capex.
+    t=0..3: 11,527,200 - 4,128,000 - 0 = 7,399,200. Agrees.
+    t=4:    11,527,200 - 4,128,000 - 12,000,000 = -4,600,800. Agrees.
+
+  Cumulative over the five years: 24,996,000 XOF — less than half the 60,342,857.142857143
+  this file showed before handling shrinkage was costed, and the renewal year is now cash
+  NEGATIVE, not merely thin.
+
+  11. THE SAME LADDER IN THE FOUNDER'S OWN UNIT (per bag, per period)
+
+    raw spread                        700.000000 XOF/bag
+    less port-to-store freight       -150.000000
+    = delivered margin                550.000000
+    less store rent (4.8m/48,000)    -100.000000
+    less handlers (2.88m/48,000)      -60.000000
+    less shrinkage (7.1928m/48,000)  -149.850000
+    = EBITDA                          240.150000
+    less depreciation                 -35.714285714
+    = EBIT                            204.435714286
+    less tax (the higher branch)      -86.000000000
+    = NOPAT                           118.435714286
+    add back depreciation             +35.714285714
+    = FCFF before renewal             154.150000000 XOF/bag
+    (and in the renewal year, 12,000,000/48,000 = 250 XOF/bag of capex leaves -95.85)
+
+  Of the 700 francs the founder makes on every bag, 154 reach him as asset-side free cash
+  in an ordinary year once handling loss is costed — down from the 301 this file showed
+  before shrinkage was sized — and in the year he re-equips the truck he is CASH NEGATIVE
+  by 96 XOF per bag, not merely thin. FCFF is 0.90% of turnover in an ordinary year (was
+  1.75%), and negative in the renewal year.
+
+  12. THE NORMALISED VIEW
+
+  No single year of this horizon is representative: four carry no capex at all and the
+  fifth carries a whole truck. The maintenance-capex normalisation spreads the renewal
+  over the life it buys:
+    fcff_normalised[t] = ebitda - tax_due - delta_nwc - (12,000,000 / 7)
+                       = 11,527,200 - 4,128,000 - 0 - 1,714,285.714285714
+                       = 5,684,914.285714286 XOF per year.
+  Which is exactly NOPAT — necessarily so, because with a flat business, straight-line
+  depreciation and a like-for-like nominal replacement price, accounting depreciation IS
+  the annualised maintenance capex. That coincidence is a property of these assumptions,
+  not a general truth, and it breaks the moment replacement cost drifts from historical
+  cost. It is the right number to quote as the sustainable annual cash generation of the
+  operation once handling shrinkage is costed at a benchmark-ordinary rate: roughly 5.68
+  million XOF a year on 825.6 million of turnover — well under half the 12.75 million
+  this file quoted before the omission was sized.
+
+trace:
+  bags_purchased:        [48432, 48432, 48432, 48432, 48432]
+  bags_sold:             [48000, 48000, 48000, 48000, 48000]
+  bags_shrinkage:        [432, 432, 432, 432, 432]
+  bags_stock_open:       [2000, 2000, 2000, 2000, 2000]
+  bags_stock_close:      [2000, 2000, 2000, 2000, 2000]
+  truck_trips:           [484.32, 484.32, 484.32, 484.32, 484.32]
+  revenue:               [825600000, 825600000, 825600000, 825600000, 825600000]
+  cogs:                  [799200000, 799200000, 799200000, 799200000, 799200000]
+  shrinkage_loss:        [7192800, 7192800, 7192800, 7192800, 7192800]
+  gross_profit:          [26400000, 26400000, 26400000, 26400000, 26400000]
+  opex_store_rent:       [4800000, 4800000, 4800000, 4800000, 4800000]
+  opex_handling_wages:   [2880000, 2880000, 2880000, 2880000, 2880000]
+  opex:                  [7680000, 7680000, 7680000, 7680000, 7680000]
+  ebitda:                [11527200, 11527200, 11527200, 11527200, 11527200]
+  ebitda_per_bag:        [240.15, 240.15, 240.15, 240.15, 240.15]
+  depreciation:          [1714285.714285714, 1714285.714285714, 1714285.714285714, 1714285.714285714, 1714285.714285714]
+  nbv_open:              [8571428.571428571, 6857142.857142857, 5142857.142857143, 3428571.428571429, 1714285.714285714]
+  nbv_close:             [6857142.857142857, 5142857.142857143, 3428571.428571429, 1714285.714285714, 12000000]
+  ebit:                  [9812914.285714286, 9812914.285714286, 9812914.285714286, 9812914.285714286, 9812914.285714286]
+  tax_bic_normal:        [2453228.571428571, 2453228.571428571, 2453228.571428571, 2453228.571428571, 2453228.571428571]
+  imf_on_turnover:       [4128000, 4128000, 4128000, 4128000, 4128000]
+  imf_due:               [4128000, 4128000, 4128000, 4128000, 4128000]
+  tax_due:               [4128000, 4128000, 4128000, 4128000, 4128000]
+  ebit_imf_indifference: [16512000, 16512000, 16512000, 16512000, 16512000]
+  imf_headroom:          [-6699085.714285714, -6699085.714285714, -6699085.714285714, -6699085.714285714, -6699085.714285714]
+  nopat:                 [5684914.285714286, 5684914.285714286, 5684914.285714286, 5684914.285714286, 5684914.285714286]
+  inventory:             [33300000, 33300000, 33300000, 33300000, 33300000]
+  receivables:           [16053333.333333333, 16053333.333333333, 16053333.333333333, 16053333.333333333, 16053333.333333333]
+  payables:              [22198000, 22198000, 22198000, 22198000, 22198000]
+  receivable_day_value:  [2293333.333333333, 2293333.333333333, 2293333.333333333, 2293333.333333333, 2293333.333333333]
+  nwc_open:              [27155333.333333333, 27155333.333333333, 27155333.333333333, 27155333.333333333, 27155333.333333333]
+  nwc_close:             [27155333.333333333, 27155333.333333333, 27155333.333333333, 27155333.333333333, 27155333.333333333]
+  delta_nwc:             [0, 0, 0, 0, 0]
+  capex:                 [0, 0, 0, 0, 12000000]
+  cfo:                   [7399200, 7399200, 7399200, 7399200, 7399200]
+  cfi:                   [0, 0, 0, 0, -12000000]
+  fcff:                  [7399200, 7399200, 7399200, 7399200, -4600800]
+  fcff_per_bag:          [154.15, 154.15, 154.15, 154.15, -95.85]
+  fcff_normalised:       [5684914.285714286, 5684914.285714286, 5684914.285714286, 5684914.285714286, 5684914.285714286]
+
+fcff: [7399200, 7399200, 7399200, 7399200, -4600800]
+
+checks:
+  # --- conservation -------------------------------------------------------
+  - trace.bags_stock_close[t] == trace.bags_stock_open[t] + trace.bags_purchased[t] - trace.bags_sold[t] - trace.bags_shrinkage[t]
+  - trace.bags_stock_open[t] == trace.bags_stock_close[t-1] for t >= 1
+  - trace.nbv_close[t] == trace.nbv_open[t] + trace.capex[t] - trace.depreciation[t]
+  - trace.nbv_open[t] == trace.nbv_close[t-1] for t >= 1
+  - trace.nwc_close[t] == trace.nwc_open[t] + trace.delta_nwc[t]
+  - trace.nwc_open[t] == trace.nwc_close[t-1] for t >= 1
+  - cumsum(trace.delta_nwc)[t] == trace.nwc_close[t] - trace.nwc_open[first]
+  - sum(trace.depreciation) == trace.nbv_open[first]
+  - trace.nwc_open[first] == trace.inventory[first] + trace.receivables[first] - trace.payables[first]
+
+  # --- definition ---------------------------------------------------------
+  - trace.gross_profit[t] == trace.revenue[t] - trace.cogs[t]
+  - trace.opex[t] == trace.opex_store_rent[t] + trace.opex_handling_wages[t]
+  - trace.ebitda[t] == trace.revenue[t] - trace.cogs[t] - trace.opex[t] - trace.shrinkage_loss[t]
+  - trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]
+  - trace.nopat[t] == trace.ebit[t] - trace.tax_due[t]
+  - trace.nwc_close[t] == trace.inventory[t] + trace.receivables[t] - trace.payables[t]
+  - trace.cfo[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t]
+  - trace.cfi[t] == 0 - trace.capex[t]
+  - trace.fcff[t] == trace.cfo[t] + trace.cfi[t]
+  - trace.fcff[t] == trace.ebitda[t] - trace.tax_due[t] - trace.delta_nwc[t] - trace.capex[t]
+  - trace.fcff_normalised[t] == trace.ebitda[t] - trace.tax_due[t] - trace.delta_nwc[t] - truck_replacement_cost / truck_useful_life_years
+
+  # --- tax two-branch mechanics (definition) ------------------------------
+  - trace.tax_bic_normal[t] == bic_rate * trace.ebit[t]
+  - trace.imf_on_turnover[t] == imf_rate * trace.revenue[t]
+  - trace.imf_due[t] >= imf_floor
+  - trace.imf_due[t] >= trace.imf_on_turnover[t]
+  - trace.imf_due[t] <= imf_cap
+  - (trace.imf_due[t] - imf_floor) * (trace.imf_due[t] - trace.imf_on_turnover[t]) == 0
+  - trace.tax_due[t] >= trace.tax_bic_normal[t]
+  - trace.tax_due[t] >= trace.imf_due[t]
+  - (trace.tax_due[t] - trace.tax_bic_normal[t]) * (trace.tax_due[t] - trace.imf_due[t]) == 0
+  - trace.ebit_imf_indifference[t] * bic_rate == trace.imf_due[t]
+  - trace.imf_headroom[t] == trace.ebit[t] - trace.ebit_imf_indifference[t]
+
+  # --- driver bridges -----------------------------------------------------
+  - trace.bags_sold[t] == bags_per_month * months_per_year
+  - trace.bags_shrinkage[t] == shrinkage_rate * trace.bags_sold[t]
+  - trace.bags_purchased[t] == trace.bags_sold[t] + trace.bags_shrinkage[t]
+  - trace.shrinkage_loss[t] == (purchase_price_per_bag + transport_per_bag) * trace.bags_shrinkage[t]
+  - trace.revenue[t] == sale_price_per_bag * trace.bags_sold[t]
+  - trace.cogs[t] == (purchase_price_per_bag + transport_per_bag) * trace.bags_sold[t]
+  - trace.gross_profit[t] == gross_margin_per_bag * trace.bags_sold[t] - transport_per_bag * trace.bags_sold[t]
+  - trace.opex_store_rent[t] == store_rent_per_month * months_per_year
+  - trace.opex_handling_wages[t] == handlers_count * wage_per_handler_per_month * months_per_year
+  - trace.ebitda_per_bag[t] * trace.bags_sold[t] == trace.ebitda[t]
+  - trace.depreciation[t] == truck_cost / truck_useful_life_years
+  - trace.nbv_open[first] == truck_cost * (truck_useful_life_years - truck_age_years_at_t0) / truck_useful_life_years
+  - trace.capex[t] == 0 for t < capex_replacement_period_index
+  - trace.capex[t] == truck_replacement_cost for t >= capex_replacement_period_index
+  - trace.inventory[t] == trace.cogs[t] * days_inventory / days_per_year_convention
+  - trace.inventory[t] == (purchase_price_per_bag + transport_per_bag) * trace.bags_stock_close[t]
+  - trace.receivables[t] == trace.revenue[t] * days_receivable / days_per_year_convention
+  - trace.payables[t] == purchase_price_per_bag * trace.bags_purchased[t] * days_payable / days_per_year_convention
+  - trace.receivable_day_value[t] * days_per_year_convention == trace.revenue[t]
+  - trace.truck_trips[t] * truck_payload_bags == trace.bags_purchased[t]
+  - trace.fcff_per_bag[t] * trace.bags_sold[t] == trace.fcff[t]
+  - grid.periods == truck_useful_life_years - truck_age_years_at_t0
+  - capex_replacement_period_index == grid.periods - 1
+
+  # --- non-negativity -----------------------------------------------------
+  - trace.bags_stock_close[t] >= 0
+  - trace.bags_shrinkage[t] >= 0
+  - trace.shrinkage_loss[t] >= 0
+  - trace.inventory[t] >= 0
+  - trace.receivables[t] >= 0
+  - trace.payables[t] >= 0
+  - trace.nbv_close[t] >= 0
+  - trace.depreciation[t] <= trace.nbv_open[t] + trace.capex[t]
+  - trace.tax_due[t] >= 0
+  - trace.revenue[t] >= 0
+
+notes:
+  - >-
+    HEADLINE FINDING, REVISED 2026-08-04 (physics audit F-249, F-253). The MINIMUM tax
+    (IMF) wins the higher-of test in every period once handling shrinkage is costed at a
+    benchmark-ordinary rate — the opposite of what this file showed when handling loss
+    was left at zero. The imf_headroom row, materialised in the trace so it can be
+    checked rather than asserted, is now NEGATIVE: EBIT falls 6,699,085.714285714 XOF
+    short of the indifference point, 68% below the level at which the normal tax would
+    ever bind again at this cost structure. Before shrinkage was costed, the file showed
+    the normal tax winning by only 493,714.286 XOF of EBIT — 10.29 XOF/bag, 0.06% of
+    COGS — and that margin is fifteen times smaller than the 0.9% shrinkage rate used
+    here (§5A, SEC-V26-22 benchmark). The founder's instinct that the minimum «pèse» is
+    not just correct, it undersells his position: on any physically ordinary handling-
+    loss rate he is not living in the minimum's shadow, he is living inside it, and his
+    tax bill is frozen to turnover regardless of how profit moves.
+  - >-
+    LEGAL FORM UNRESOLVED. The 25% BIC rate is ASSUMED for a taxpayer au réel. Whether he
+    is a personne morale or an entreprise individuelle affects both the rate that applies
+    and whether his own remuneration is deductible at all. This is the single input with
+    the largest unverified leverage on NOPAT, and it is a one-question fix.
+  - >-
+    OVERHEADS THE FOUNDER DID NOT MENTION. A declared Adjamé wholesaler would normally
+    also bear the contribution des patentes (itself partly turnover-based), electricity,
+    security, insurance on the truck and the stock, accountancy fees, and some form of
+    remuneration for the owner's own labour. None is stated, so none is invented — but
+    all of them push in the same direction: real FCFF is lower than modelled, and,
+    because they reduce profit without reducing turnover, they also erode the IMF
+    headroom and make the minimum-tax branch more likely to bind.
+  - >-
+    HANDLING SHRINKAGE NOW COSTED; RETAILER CREDIT LOSS STILL OMITTED (F-249, F-250,
+    F-253). This note previously named "shrinkage and credit loss" as omitted without
+    sizing either. The 2026-08-03 physics audit (F-249) showed the omission was not a
+    minor caveat: a physically ordinary handling-loss rate (bags torn, spilled or stolen
+    between the port and the retailer) is, on its own, enough to flip the tax branch and
+    more than halve FCFF. Handling damage is now an explicit trace line (shrinkage_loss,
+    §5A, shrinkage_rate = 0.9%, SEC-V26-22 benchmark) — it is no longer modelled at zero
+    ("zero loss, zero treatment" no longer holds for this risk; it still correctly holds
+    for FUMIGATION specifically, which the 15-day turn genuinely justifies leaving at
+    zero — the two are distinct risks and only one is excused by the short hold).
+    RETAILER CREDIT LOSS remains a separate, still-unquantified risk: no benchmark for an
+    appropriate bad-debt rate on short (7-day) retail-market credit was available, so
+    nothing is invented here. It would erode the now-negative IMF headroom further and
+    is a further downside not in this model.
+  - >-
+    VAT. Rice is assumed VAT-exempt, so turnover TTC equals turnover HT and the IMF base
+    is the stated revenue with no gross-up. If in fact he invoices VAT, the IMF base
+    would be larger than modelled and the minimum branch correspondingly closer to
+    binding. Flagged as an elicitation.
+  - >-
+    THE 150 XOF/BAG IS READ AS OWN-FLEET RUNNING COST, not a third-party haulage
+    invoice — the rate is far above bare fuel for the trip, and he owns a truck sized to
+    exactly this task. Two model consequences follow from that single reading: truck
+    depreciation is charged separately without double counting, and no supplier payable
+    is raised on the freight. If it turns out he pays an outside carrier, the truck's
+    role in the business is unexplained and both treatments would need revisiting.
+  - >-
+    "SEPT ANS" READING. Taken as total service life from purchase, giving five remaining
+    years and setting the horizon. If he meant seven MORE years, the horizon lengthens,
+    the annual depreciation charge falls, and the renewal capex moves out of the window —
+    all three effects push modelled FCFF up. Worth one confirming question.
+  - >-
+    WORKING-CAPITAL DAYS ARE THE WEAKEST INPUTS. Inventory, receivable and payable days
+    are all ASSUMED priors, with the elicitation questions recorded against each input.
+    Their leverage is materialised as receivable_day_value in the trace so it can be read
+    off directly rather than described. The steady-state model shows zero delta_NWC only
+    because volumes and prices are held flat; the LEVEL of working capital already tied
+    up is large relative to annual free cash flow, which matters for anyone assessing how
+    much of this business is financed by the balance sheet rather than by earnings.
+  - >-
+    GOING-CONCERN OPENING BALANCE. Opening NWC is set equal to steady-state NWC, so no
+    period is charged with building the stock and receivable book that already exist.
+    Treating t=0 as a cold start would be the standard error in a business like this and
+    would misstate first-period FCFF badly.
+  - >-
+    BOOK DEPRECIATION USED AS TAX DEPRECIATION. Ivorian tax amortisation rates for light
+    commercial vehicles need not equal the founder's own seven-year economic estimate.
+    Any divergence shifts tax between periods without changing the undiscounted total, and
+    would also change which periods sit closest to the minimum-tax threshold.
+  - >-
+    NO DEBT ASSUMED, so the unlevered tax equals the actual tax and FCFF equals total cash
+    available to all capital providers. This assumption is load-bearing beyond the usual:
+    under a turnover-based minimum, interest deductions stop generating any shield at all
+    once the minimum branch binds, so a levered version of this business cannot be valued
+    by simply applying a constant tax shield.
+  - >-
+    ANNUAL GRID NETS OUT SEASONALITY. Imported-rice trade in Abidjan is seasonal in both
+    liftings and retail offtake, and the founder's own «à peu près» signals month-to-month
+    variability. A monthly grid would show working capital swinging with the lifting cycle;
+    the annual grid is nonetheless the correct frequency for the question asked, because
+    the higher-of tax test is an annual determination and cannot be evaluated monthly.
+  - >-
+    HORIZON AND TERMINAL VALUE. Five years is the remaining life of the only durable asset,
+    which makes it a complete and self-contained operating cycle. No terminal value is
+    computed and none should be read into the sum of the FCFF row. The fcff_normalised
+    column is the trace row to use for any sustainable-run-rate reading, since it spreads
+    the renewal across the life it buys instead of loading it entirely into the last period.
+  - >-
+    FRICTION NOTED, NOT FORCED. In-store handling wages sit awkwardly between IAS 2 cost of
+    purchase and IAS 2.16(b) storage cost — part of the handlers' day is unloading acquired
+    goods, part is warehousing goods held for sale. The whole is expensed. With flat stock
+    this changes no profit line and only marginally the inventory carrying amount, but the
+    judgment is recorded rather than buried.
+  - >-
+    TRUCK PAYLOAD IS A TOP-OF-RANGE CHOICE (F-251). truck_payload_bags (100 bags, 5.0t)
+    sits at the very top edge of the plausible 3-5t range for a «petit camion» at this
+    price point. The "truck is not binding" feasibility verdict (~30% rotation headroom,
+    §3) holds at this choice and would not hold at a more central 3.5-4t payload
+    (near-zero slack). No monetary line depends on this input — it is feasibility-only —
+    but the feasibility CONCLUSION is payload-choice-dependent, which the input's own
+    ASSUMED tag does not by itself communicate. Not changed: the founder gives no payload
+    figure to adjudicate the choice, and moving the value would substitute one arbitrary
+    point in the range for another rather than correct an error.
+  - >-
+    LIFETIME DUTY CYCLE, NOW STATED (F-252). Not given anywhere in the original file
+    though computable: roughly 84,000-84,700 km and 16,800-17,000 t moved over the
+    truck's full seven-year stated life (§3) — modest for a light commercial truck at
+    this class, and it does not itself adjudicate the "sept ans" ambiguity either way.
+    No mid-horizon rebuild-capex line exists for major driveline wear components (clutch,
+    gearbox, injector pump, leaf springs) across the roughly 3,360 load/unload cycles
+    this implies. The ~30% rotation headroom makes a routine-maintenance framing
+    plausible (already folded into the 150 XOF/bag running cost), but a lumpy mid-horizon
+    repair is not excluded by anything stated here — not modelled, not ruled out.
+  - >-
+    HANDLER WAGE CHECKED AGAINST THE SMIG FLOOR (F-254). The prior v25 physics audit of
+    this gold family flagged the 80,000 XOF/month handler wage against the Ivorian
+    minimum wage; no SEC-V26 benchmark existed to re-verify it as of the 2026-08-03
+    audit. Checked here: the SMIG (Décret n°2022-986, in force since January 2023,
+    unrevised through mid-2026 per Sikafinance/Africarrières reporting) is 75,000
+    XOF/month. The STATED 80,000 XOF/month wage is 6.7% above that floor — compliant.
+    This finding does not hold as a defect; no change made to wage_per_handler_per_month.

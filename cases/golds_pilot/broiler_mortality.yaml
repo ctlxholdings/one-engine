@@ -1,0 +1,319 @@
+# Pilot gold "broiler_mortality": a smallholder broiler farm near Azaguié, six batches (bandes) of
+# one production year, one period a batch (cases/reference/golds_pilot/broiler_mortality.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the flock (chicks placed, deaths, birds kept at home, sold, runts, culls, the nil closing
+#     flock) and the feed balance in kg (purchased, spilled at feed_spill_rate, eaten by the dead at
+#     avg_intake_per_dead_bird_kg, eaten by the finished birds) are driver rows: no ledger holds
+#     a head or a kilogram; so are the festive and glut flags and the head price (a rate);
+#   * the festive batches are the last festive_batches_per_year of the year (the end-of-year fêtes:
+#     the sixth batch), the glut batches the first glut_batches_per_year (none);
+#   * revenue: normal-grade birds at the batch's head price, runts at runt_price, culls at
+#     cull_price_fraction of price_head_normal, all paid at the gate (no receivable);
+#   * costs per batch: chicks, the feed bill (three sack grades at their prices, times 1 plus
+#     feed_price_uplift), gas, litter, vet, and the monthly items (electricity, labour, commune levy,
+#     worker food) over months_per_batch months; the dealer's feed credit is repaid at the sale, so
+#     nothing is owed at a batch end and working capital is nil;
+#   * the shed is carried in at shed_opening_nbv and depreciated over the batches its life has left
+#     ((shed_useful_life_years - shed_age_years_at_t0) x batches_per_year); equipment capex
+#     (equipment_capex_per_batch, nil) is spent into its own account: the gold gives it no life, so
+#     nothing places it in service or depreciates it;
+#   * tax: the taxe d'État de l'entreprenant at tee_rate_applied of turnover (nothing deducted),
+#     paid in the batch. The as-practised rows are the variant `practised`, its rate the tax he
+#     actually pays (tax_actually_paid_to_dgi_annual, spread evenly over the batches) over each
+#     batch's turnover; tax_gap is the statutory tax less the practised one;
+#   * payroll_cnps_employer_if_declared is the labour cost times cnps_employer_rate_total (the
+#     charge he would carry if the boy were declared; not on the books, so read off the labour cut);
+#   * peak_cycle_cash_outlay is the cash out before the sale: chicks, the feed bill less the share
+#     on the dealer's credit (feed_credit_value of feed_cost_per_batch), gas, litter, vet, and the
+#     presale_share_of_cycle of the monthly items, each read off its cost cut.
+gold: broiler_mortality
+entity: farm
+plant: price_head_normal
+variants:
+  practised: {values: {rate: tax_actually_paid_to_dgi_annual / batches_per_year / revenue}}
+case:
+  case: gold-pilot-broiler-mortality
+  periods: 6
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 6
+      inputs: gold
+      values:
+        festive_flag: t >= batches_per_year - festive_batches_per_year
+        glut_flag: t < glut_batches_per_year
+        chicks_placed: {each_period: chicks_placed_per_batch}
+        birds_died: {each_period: mortality_per_batch}
+        birds_home: {each_period: birds_kept_home_per_batch}
+        birds_sold: chicks_placed - birds_died - birds_home
+        flock_closing: chicks_placed - birds_died - birds_home - birds_sold
+        birds_runt: {each_period: runts_per_batch}
+        birds_cull: {each_period: culls_per_batch}
+        birds_normal: birds_sold - birds_runt - birds_cull
+        feed_kg: {each_period: sacks_total * sack_weight_kg}
+        feed_spilled: feed_kg * feed_spill_rate
+        feed_dead: birds_died * avg_intake_per_dead_bird_kg
+        feed_finished: feed_kg - feed_spilled - feed_dead
+        price_head: >-
+          price_head_normal + festive_flag * (price_head_festive - price_head_normal)
+          + glut_flag * (price_head_glut - price_head_normal)
+        cull_price: price_head_normal * cull_price_fraction
+        revenue: price_head * birds_normal + runt_price * birds_runt + cull_price * birds_cull
+        rate: tee_rate_applied
+        feed_bill: >-
+          (sacks_starter * price_starter_sack + sacks_grower * price_grower_sack
+          + sacks_finisher * price_finisher_sack) * (1 + feed_price_uplift)
+        gas: gas_bottles_per_batch * gas_bottle_price
+        litter: litter_trips_per_batch * litter_trip_price
+        electricity: electricity_per_month * months_per_batch
+        labour: labour_monthly * months_per_batch
+        commune: commune_levy_monthly * months_per_batch
+        worker_food: worker_food_cost_per_month * months_per_batch
+        equipment: {each_period: equipment_capex_per_batch}
+        shed_life_left: (shed_useful_life_years - shed_age_years_at_t0) * batches_per_year
+        feed_credit_share: feed_credit_value / feed_cost_per_batch
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: shed_opening_nbv}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    normal:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: gold, output: birds_normal}, price: {generator: gold, output: price_head},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 5}
+    runts:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: gold, output: birds_runt}, price: {generator: gold, output: runt_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 5}
+    culls:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: gold, output: birds_cull}, price: {generator: gold, output: cull_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 5}
+    chicks:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: 0, unit_rate: {generator: gold, output: chick_price_xof}, volume: {generator: gold, output: chicks_placed},
+              index: 1, periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    feed:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: feed_bill}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    gas:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: gas}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    litter:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: litter}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    vet:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: vet_cost_per_batch}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    electricity:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: electricity}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    labour:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: labour}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    commune:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: commune}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    disinfectant:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: disinfectant_cost_per_batch}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    worker_food:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: gold, output: worker_food}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    equipment:
+      type: capex_class
+      parties: {owner: farm}
+      terms: {schedule: {generator: gold, output: equipment}, vat_rate: 0, vat_refund_lag: 0, end: 5}
+  rulebooks:
+    shed:
+      kind: asset_register
+      entity: farm
+      phase: close
+      from: cwip                                # nothing is placed in service: the shed is carried in
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: gold, output: shed_life_left}      # beyond the year
+      life_periods: {generator: gold, output: shed_life_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: farm
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:                       # a tax on turnover: nothing is deducted
+        normal.revenue: taxable
+        runts.revenue: taxable
+        culls.revenue: taxable
+        chicks.expense: non_deductible
+        feed.expense: non_deductible
+        gas.expense: non_deductible
+        litter.expense: non_deductible
+        vet.expense: non_deductible
+        electricity.expense: non_deductible
+        labour.expense: non_deductible
+        commune.expense: non_deductible
+        disinfectant.expense: non_deductible
+        worker_food.expense: non_deductible
+        depreciation: non_deductible
+        written_off: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: farm
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      normal.revenue: normal
+      runts.revenue: runts
+      culls.revenue: culls
+      chicks.expense: chicks
+      feed.expense: feed
+      gas.expense: gas
+      litter.expense: litter
+      vet.expense: vet
+      electricity.expense: electricity
+      labour.expense: labour
+      commune.expense: commune
+      disinfectant.expense: disinfectant
+      worker_food.expense: worker_food
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+    cash_flow:
+      normal.receivable: operating
+      runts.receivable: operating
+      culls.receivable: operating
+      chicks.payable: operating
+      feed.payable: operating
+      gas.payable: operating
+      litter.payable: operating
+      vet.payable: operating
+      electricity.payable: operating
+      labour.payable: operating
+      commune.payable: operating
+      disinfectant.payable: operating
+      worker_food.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      equipment: investing
+  cuts:
+    revenue_normal: {kind: pnl, entity: farm, scheme: pnl, include: [normal]}
+    revenue_runt: {kind: pnl, entity: farm, scheme: pnl, include: [runts]}
+    revenue_cull: {kind: pnl, entity: farm, scheme: pnl, include: [culls]}
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [normal, runts, culls]}
+    chicks: {kind: pnl, entity: farm, scheme: pnl, include: [chicks]}
+    feed: {kind: pnl, entity: farm, scheme: pnl, include: [feed]}
+    gas: {kind: pnl, entity: farm, scheme: pnl, include: [gas]}
+    litter: {kind: pnl, entity: farm, scheme: pnl, include: [litter]}
+    vet: {kind: pnl, entity: farm, scheme: pnl, include: [vet]}
+    electricity: {kind: pnl, entity: farm, scheme: pnl, include: [electricity]}
+    labour: {kind: pnl, entity: farm, scheme: pnl, include: [labour]}
+    commune: {kind: pnl, entity: farm, scheme: pnl, include: [commune]}
+    disinfectant: {kind: pnl, entity: farm, scheme: pnl, include: [disinfectant]}
+    worker_food: {kind: pnl, entity: farm, scheme: pnl, include: [worker_food]}
+    monthly_items: {kind: pnl, entity: farm, scheme: pnl, include: [electricity, labour, commune]}
+    batch_items: {kind: pnl, entity: farm, scheme: pnl, include: [chicks, feed, gas, litter, vet]}
+    opex: {kind: pnl, entity: farm, scheme: pnl,
+           include: [chicks, feed, gas, litter, vet, electricity, labour, commune, disinfectant, worker_food]}
+    ebitda: {kind: pnl, entity: farm, scheme: pnl,
+             include: [normal, runts, culls, chicks, feed, gas, litter, vet, electricity, labour, commune, disinfectant,
+                       worker_food]}
+    depreciation: {kind: pnl, entity: farm, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: farm, scheme: pnl,
+           include: [normal, runts, culls, chicks, feed, gas, litter, vet, electricity, labour, commune, disinfectant,
+                     worker_food, depreciation]}
+    tax: {kind: pnl, entity: farm, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: farm, scheme: pnl,
+            include: [normal, runts, culls, chicks, feed, gas, litter, vet, electricity, labour, commune, disinfectant,
+                      worker_food, depreciation, tax]}
+    cfo: {entity: farm, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: farm, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: farm, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  festive_flag: {driver: gold.festive_flag}
+  glut_flag: {driver: gold.glut_flag}
+  chicks_placed: {driver: gold.chicks_placed}
+  birds_died: {driver: gold.birds_died}
+  birds_home: {driver: gold.birds_home}
+  birds_sold: {driver: gold.birds_sold}
+  flock_closing: {driver: gold.flock_closing}
+  birds_runt: {driver: gold.birds_runt}
+  birds_cull: {driver: gold.birds_cull}
+  birds_normal: {driver: gold.birds_normal}
+  feed_kg_purchased: {driver: gold.feed_kg}
+  feed_kg_spilled: {driver: gold.feed_spilled}
+  feed_kg_eaten_by_dead: {driver: gold.feed_dead}
+  feed_kg_eaten_by_finished: {driver: gold.feed_finished}
+  price_head: {driver: gold.price_head}
+  revenue_normal: {cut: revenue_normal}
+  revenue_runt: {cut: revenue_runt}
+  revenue_cull: {cut: revenue_cull}
+  revenue: {cut: revenue}
+  cost_chicks: {cut: chicks, sign: -1}
+  cost_feed: {cut: feed, sign: -1}
+  cost_gas: {cut: gas, sign: -1}
+  cost_litter: {cut: litter, sign: -1}
+  cost_vet: {cut: vet, sign: -1}
+  cost_electricity: {cut: electricity, sign: -1}
+  cost_labour: {cut: labour, sign: -1}
+  cost_commune_levy: {cut: commune, sign: -1}
+  cost_disinfectant: {cut: disinfectant, sign: -1}
+  cost_worker_food: {cut: worker_food, sign: -1}
+  opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax_statutory: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  shed_book_value: {balance: fixed_assets}
+  capex: {cut: cfi, sign: -1}
+  nwc: {balance: normal.receivable + runts.receivable + culls.receivable - chicks.payable - feed.payable - gas.payable - litter.payable - vet.payable - electricity.payable - labour.payable - commune.payable - disinfectant.payable - worker_food.payable}
+  delta_nwc: {change: normal.receivable + runts.receivable + culls.receivable - chicks.payable - feed.payable - gas.payable - litter.payable - vet.payable - electricity.payable - labour.payable - commune.payable - disinfectant.payable - worker_food.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  tax_as_currently_paid: {variant: practised, cut: tax, sign: -1}
+  tax_gap: {sum: [{cut: tax, sign: -1}, {variant: practised, cut: tax}]}
+  fcff_as_currently_paid: {variant: practised, cut: fcff}
+  payroll_cnps_employer_if_declared: {cut: labour, sign: -1, times: gold.cnps_employer_rate_total}
+  peak_cycle_cash_outlay:
+    sum:
+      - {cut: batch_items, sign: -1}
+      - {cut: feed, times: gold.feed_credit_share}
+      - {cut: monthly_items, sign: -1, times: gold.presale_share_of_cycle}

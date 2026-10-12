@@ -1,0 +1,388 @@
+# Pilot gold "printer_cashbasis_v25": the Ouagadougou jobbing printer (a sole trader under the RSI)
+# under the gold contract v2.5, seven years to the offset press's end of life
+# (cases/reference/golds_pilot/printer_cashbasis_v25.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * billings: billings_good_year x revenue_realisation_factor (one billing of that amount: no
+#     volume unit), collected on ar_days of a days_per_year year, the receivable carried in at
+#     ar_opening; bad_debt_writeoff_annual is written off the receivable (nil);
+#   * paper and ink at materials_share_of_billings of billings, bought as used (a stock of
+#     inventory_days, nil, held against the expense), paid on supplier_days (carried in at
+#     ap_opening); wages (employees x wage x 12), CNSS and TPA on the declared payroll, rent,
+#     electricity, the patente (its proportional rate on the rent plus the fixed part) and the
+#     cost lines the gold carries at nil, all paid in the year;
+#   * the offset press and the digital press are carried in at cost less their age's share of
+#     their life and depreciated over the years they have left; the digital press is replaced at
+#     digital_replacement_period for digital_cost, charged over a full life from that period, in
+#     its own account; both reach nil at the horizon, nothing is disposed of;
+#   * IBICA: the top band's rate on the profit, less the lower bands' relief
+#     ((top - band rate) x band width, which is ibica_top_band_offset), posted as a tax credit
+#     (the promoted gold paygo_solar's schedule, valid above the second ceiling, which the gold's
+#     checks assert); paid in the year. income_tax has no progressive band schedule, so the band
+#     split is memo arithmetic no ledger holds: the band widths and the lower bands' tax are
+#     drivers, the top band's base is the tax record's base less the second ceiling, and its tax
+#     is the booked IBICA less the lower bands'. The MFP (the higher of mfp_rate of billings and
+#     mfp_floor_rsi) is a memo row below the IBICA (a driver, as in the promoted golds); the 5%
+#     withholding is an advance on the tax and moves no number: it is read as that rate of the
+#     booked billings;
+#   * variant `cash_basis`: the founder's literal basis, cash in less cash out with the presses
+#     deducted when paid. Those paid before the grid already were (carried at nil, never deducted
+#     inside it) and the replacement is charged in full when bought (a one-period life). With the
+#     receivable and payable level, collections less disbursements is that variant's profit; its
+#     tax base, IBICA and FCFF are the gold's cash-basis column, and its NOPAT is the statutory
+#     EBIT less that tax.
+gold: printer_cashbasis_v25
+entity: printer
+plant: billings_good_year
+variants:
+  cash_basis:
+    values:
+      offset_carried: 0 * offset_cost
+      digital_carried: 0 * digital_cost
+      digital_new_life: 1
+case:
+  case: gold-printer-cashbasis-v25
+  periods: 7
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 7
+      inputs: gold
+      values:
+        billings: billings_good_year * revenue_realisation_factor
+        materials: billings * materials_share_of_billings
+        stock: {each_period: materials * inventory_days / days_per_year}
+        wages_annual: employees * wage_per_employee_month * months_per_year
+        cnss_annual: wages_annual * cnss_employer_rate * payroll_declared_fraction
+        tpa_annual: wages_annual * tpa_rate * payroll_declared_fraction
+        rent_annual: rent_month * months_per_year
+        electricity_annual: electricity_month * months_per_year
+        patente_annual: rent_annual * patente_droit_proportionnel_rate + patente_droit_fixe
+        bad_debt: {each_period: bad_debt_writeoff_annual}
+        offset_carried: offset_cost * (offset_life_years - offset_age_years) / offset_life_years
+        offset_life_left: offset_life_years - offset_age_years
+        digital_carried: digital_cost * (digital_life_years - digital_age_years) / digital_life_years
+        digital_life_left: digital_life_years - digital_age_years
+        digital_new_life: digital_life_years
+        digital_spend: digital_cost * (t == digital_replacement_period)
+        band_relief: >-
+          (ibica_rate_band3 - ibica_rate_band1) * ibica_band1_ceiling
+          + (ibica_rate_band3 - ibica_rate_band2) * (ibica_band2_ceiling - ibica_band1_ceiling)
+        relief: {each_period: band_relief}
+        band1_width: ibica_band1_ceiling
+        band2_width: ibica_band2_ceiling - ibica_band1_ceiling
+        ibica_band1: band1_width * ibica_rate_band1
+        ibica_band2: band2_width * ibica_rate_band2
+        mfp: max(mfp_floor_rsi, billings * mfp_rate)
+  opening:
+    printer:
+      offset: {nature: asset, value: {generator: gold, output: offset_carried}}
+      digital_old: {nature: asset, value: {generator: gold, output: digital_carried}}
+      cwip: {nature: asset, value: 0}       # no offset press is bought in the horizon
+      inventory: {nature: asset, value: {generator: gold, output: inventory_opening}}
+      billings.receivable: {nature: asset, value: {generator: gold, output: ar_opening}}
+      materials.payable: {nature: liability, value: {generator: gold, output: ap_opening}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    billings:
+      type: offtake
+      parties: {seller: printer}
+      terms: {volume: 1, price: {generator: gold, output: billings},
+              payment_days: {generator: gold, output: ar_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: 7}                 # past the horizon: clients still owe at its end (going concern)
+    materials:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: materials}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: supplier_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    wages:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: wages_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    cnss:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: cnss_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    tpa:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: tpa_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    electricity:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: electricity_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    patente:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: patente_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    consumables:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: consumables_and_maintenance_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    other_overheads:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: other_overheads_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    subcontracting:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: subcontracting_cost_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    manager:
+      type: operating_cost
+      parties: {payer: printer}
+      terms: {annual: {generator: gold, output: manager_replacement_cost_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 7, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    digital:
+      type: capex_class
+      parties: {owner: printer}
+      terms: {schedule: {generator: gold, output: digital_spend}, vat_rate: 0, vat_refund_lag: 0, end: 7}
+  rulebooks:
+    bad_debts:                        # written off the receivable before the period's collection
+      kind: write_down
+      entity: printer
+      phase: fund
+      account: billings.receivable
+      expense: bad_debt
+      amount: {generator: gold, output: bad_debt}
+    stock:
+      kind: held_balance
+      entity: printer
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: stock}, against: materials.expense}
+    offset_press:                     # carried in: the years it has left (to nil at the horizon)
+      kind: asset_register
+      entity: printer
+      phase: close
+      from: cwip
+      to: offset
+      expense: dep_offset
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 7                   # after the horizon
+      life_periods: {generator: gold, output: offset_life_left}
+      first_charge: in_service
+    digital_carried:
+      kind: asset_register
+      entity: printer
+      phase: close
+      from: digital
+      to: digital_old
+      expense: dep_digital
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 7
+      life_periods: {generator: gold, output: digital_life_left}
+      first_charge: in_service
+    digital_replaced:                 # the replacement: a full life from the period it is bought
+      kind: asset_register
+      entity: printer
+      phase: close
+      from: digital
+      to: digital_new
+      expense: dep_digital
+      disposal: disposal_loss
+      in_service: {generator: gold, output: digital_replacement_period}
+      dispose_at: 7
+      life_periods: {generator: gold, output: digital_new_life}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: printer
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: ibica_rate_band3}
+      carry_forward_periods: null
+      scheme:
+        billings.revenue: taxable
+        materials.expense: taxable
+        wages.expense: taxable
+        cnss.expense: taxable
+        tpa.expense: taxable
+        rent.expense: taxable
+        electricity.expense: taxable
+        patente.expense: taxable
+        consumables.expense: taxable
+        other_overheads.expense: taxable
+        subcontracting.expense: taxable
+        manager.expense: taxable
+        bad_debt: taxable
+        dep_offset: taxable
+        dep_digital: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+        ibica_band_relief: non_deductible
+    bands:                            # the lower bands' relief on the top rate
+      kind: transfer
+      entity: printer
+      phase: tax
+      declare:
+        ibica_band_relief: income
+      moves:
+        relief: {debit: tax_payable, credit: ibica_band_relief, amount: {generator: gold, output: relief}}
+    pay_tax:
+      kind: settle
+      entity: printer
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      billings.revenue: revenue
+      materials.expense: materials
+      wages.expense: wages
+      cnss.expense: cnss
+      tpa.expense: tpa
+      rent.expense: rent
+      electricity.expense: electricity
+      patente.expense: patente
+      consumables.expense: consumables
+      other_overheads.expense: other_overheads
+      subcontracting.expense: subcontracting
+      manager.expense: manager
+      bad_debt: bad_debt
+      dep_offset: dep_offset
+      dep_digital: dep_digital
+      disposal_loss: dep_digital
+      tax_expense: tax
+      ibica_band_relief: tax
+    cash_flow:
+      billings.receivable: receipts
+      materials.payable: suppliers
+      wages.payable: other_paid
+      cnss.payable: other_paid
+      tpa.payable: other_paid
+      rent.payable: other_paid
+      electricity.payable: other_paid
+      patente.payable: other_paid
+      consumables.payable: other_paid
+      other_overheads.payable: other_paid
+      subcontracting.payable: other_paid
+      manager.payable: other_paid
+      vat_receivable: other_paid
+      tax_payable: tax
+      digital: investing
+  cuts:
+    revenue: {kind: pnl, entity: printer, scheme: pnl, include: [revenue]}
+    materials: {kind: pnl, entity: printer, scheme: pnl, include: [materials]}
+    wages: {kind: pnl, entity: printer, scheme: pnl, include: [wages]}
+    cnss: {kind: pnl, entity: printer, scheme: pnl, include: [cnss]}
+    tpa: {kind: pnl, entity: printer, scheme: pnl, include: [tpa]}
+    rent: {kind: pnl, entity: printer, scheme: pnl, include: [rent]}
+    electricity: {kind: pnl, entity: printer, scheme: pnl, include: [electricity]}
+    patente: {kind: pnl, entity: printer, scheme: pnl, include: [patente]}
+    consumables: {kind: pnl, entity: printer, scheme: pnl, include: [consumables]}
+    other_overheads: {kind: pnl, entity: printer, scheme: pnl, include: [other_overheads]}
+    subcontracting: {kind: pnl, entity: printer, scheme: pnl, include: [subcontracting]}
+    manager: {kind: pnl, entity: printer, scheme: pnl, include: [manager]}
+    bad_debt: {kind: pnl, entity: printer, scheme: pnl, include: [bad_debt]}
+    opex: {kind: pnl, entity: printer, scheme: pnl,
+           include: [materials, wages, cnss, tpa, rent, electricity, patente, consumables, other_overheads,
+                     subcontracting, manager, bad_debt]}
+    ebitda: {kind: pnl, entity: printer, scheme: pnl,
+             include: [revenue, materials, wages, cnss, tpa, rent, electricity, patente, consumables, other_overheads,
+                       subcontracting, manager, bad_debt]}
+    dep_offset: {kind: pnl, entity: printer, scheme: pnl, include: [dep_offset]}
+    dep_digital: {kind: pnl, entity: printer, scheme: pnl, include: [dep_digital]}
+    depreciation: {kind: pnl, entity: printer, scheme: pnl, include: [dep_offset, dep_digital]}
+    ebit: {kind: pnl, entity: printer, scheme: pnl,
+           include: [revenue, materials, wages, cnss, tpa, rent, electricity, patente, consumables, other_overheads,
+                     subcontracting, manager, bad_debt, dep_offset, dep_digital]}
+    tax: {kind: pnl, entity: printer, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: printer, scheme: pnl,
+            include: [revenue, materials, wages, cnss, tpa, rent, electricity, patente, consumables, other_overheads,
+                      subcontracting, manager, bad_debt, dep_offset, dep_digital, tax]}
+    receipts: {entity: printer, account: cash, scheme: cash_flow, include: [receipts]}
+    suppliers: {entity: printer, account: cash, scheme: cash_flow, include: [suppliers]}
+    disbursements: {entity: printer, account: cash, scheme: cash_flow, include: [suppliers, other_paid, investing]}
+    cfo: {entity: printer, account: cash, scheme: cash_flow, include: [receipts, suppliers, other_paid, tax]}
+    cfi: {entity: printer, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: printer, account: cash, scheme: cash_flow, include: [receipts, suppliers, other_paid, tax, investing]}
+  measures: {}
+trace:
+  billings: {cut: revenue}
+  collections: {cut: receipts}
+  materials_cost: {cut: materials, sign: -1}
+  materials_purchased: {sum: [{cut: suppliers, sign: -1}, {change: materials.payable}]}
+  materials_paid: {cut: suppliers, sign: -1}
+  wages: {cut: wages, sign: -1}
+  cnss_employer: {cut: cnss, sign: -1}
+  tpa: {cut: tpa, sign: -1}
+  rent: {cut: rent, sign: -1}
+  electricity: {cut: electricity, sign: -1}
+  patente: {cut: patente, sign: -1}
+  consumables_and_maintenance: {cut: consumables, sign: -1}
+  other_overheads: {cut: other_overheads, sign: -1}
+  subcontracting: {cut: subcontracting, sign: -1}
+  manager_replacement: {cut: manager, sign: -1}
+  bad_debt_writeoff: {cut: bad_debt, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation_offset: {cut: dep_offset, sign: -1}
+  depreciation_digital: {cut: dep_digital, sign: -1}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  accounts_receivable: {balance: billings.receivable}
+  inventory: {balance: inventory}
+  accounts_payable: {balance: materials.payable + wages.payable + cnss.payable + tpa.payable + rent.payable + electricity.payable + patente.payable + consumables.payable + other_overheads.payable + subcontracting.payable + manager.payable}
+  nwc: {balance: billings.receivable + inventory - materials.payable - wages.payable - cnss.payable - tpa.payable - rent.payable - electricity.payable - patente.payable - consumables.payable - other_overheads.payable - subcontracting.payable - manager.payable}
+  delta_ar: {change: billings.receivable}
+  delta_inventory: {change: inventory}
+  delta_ap: {change: materials.payable + wages.payable + cnss.payable + tpa.payable + rent.payable + electricity.payable + patente.payable + consumables.payable + other_overheads.payable + subcontracting.payable + manager.payable}
+  delta_nwc: {change: billings.receivable + inventory - materials.payable - wages.payable - cnss.payable - tpa.payable - rent.payable - electricity.payable - patente.payable - consumables.payable - other_overheads.payable - subcontracting.payable - manager.payable}
+  capex: {cut: cfi, sign: -1}
+  nbv_offset: {balance: offset}
+  nbv_digital: {balance: digital_old + digital_new}
+  nbv: {balance: offset + digital_old + digital_new}
+  taxable_income_statutory: {record: tax.base}
+  taxable_band1: {driver: gold.band1_width}
+  taxable_band2: {driver: gold.band2_width}
+  taxable_band3: {sum: [{record: tax.base}, {driver: gold.ibica_band2_ceiling, sign: -1}]}
+  ibica_band1: {driver: gold.ibica_band1}
+  ibica_band2: {driver: gold.ibica_band2}
+  ibica_band3: {sum: [{cut: tax, sign: -1}, {driver: gold.ibica_band1, sign: -1}, {driver: gold.ibica_band2, sign: -1}]}
+  ibica_statutory: {cut: tax, sign: -1}
+  mfp_computed: {cut: revenue, times: gold.mfp_rate}
+  mfp: {driver: gold.mfp}
+  tax_statutory: {cut: tax, sign: -1}
+  withholding_advance: {cut: revenue, times: gold.withholding_rate_prestations}
+  nopat: {cut: nopat}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  cash_disbursements: {cut: disbursements, sign: -1}
+  taxable_income_cashbasis: {record: tax.base, variant: cash_basis}
+  ibica_cashbasis: {cut: tax, sign: -1, variant: cash_basis}
+  tax_cashbasis: {cut: tax, sign: -1, variant: cash_basis}
+  nopat_cashbasis: {sum: [{cut: ebit}, {cut: tax, variant: cash_basis}]}
+  fcff_cashbasis: {cut: fcff, variant: cash_basis}

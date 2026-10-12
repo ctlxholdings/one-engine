@@ -1,0 +1,384 @@
+# Pilot gold "pharmacy_expiry": a Dakar officine held as a sole proprietorship, with expired,
+# pilfered and spoilt stock it cannot deduct, by month for two years
+# (cases/reference/golds_pilot/pharmacy_expiry.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * opening calendar: days_per_week_open x weeks_per_year days plus a duty Sunday every
+#     garde_rota_size weeks, by month; customers_per_day (the midpoint of the stated range) at
+#     basket_average. Trading days, customers, boxes on the shelf and boxes per reference are
+#     drivers (no ledger holds them);
+#   * credit_customer_share of sales on credit, collected dso_months_credit later (half a month
+#     to the bordereau plus the mean of the settlement range) on a days_per_month_convention
+#     month; bad_debt_rate of credit sales written off the receivable before each month's
+#     collection; the rest paid at the counter;
+#   * cost of sales at the box cost ratio (less parapharmacy_margin_uplift, nil); the shelf held at
+#     days_of_stock of the cost run-rate; expiry (the mid stock estimate over the mid accumulation
+#     months), shrinkage (the mean count gap a year) and the one cold-chain event over the years
+#     open are each written off the shelf on its own line; purchases replace what was sold and
+#     lost (expensed, the stock held taken back out of the expense), paid dpo_months later on the
+#     share not settled in cash (cash_payment_share, nil); receivable, stock and payable are
+#     carried in at their steady level;
+#   * rent and electricity bear VAT the exempt officine cannot recover (in their cost); payroll
+#     with employer charges; the owner's market pay; CEL (the leased-premises rate on the HT rent,
+#     the higher of the value-added rate and the turnover floor) by the month; all paid in the month;
+#   * the shelving is carried at its VAT-inclusive cost less asset_age_months of its life and
+#     depreciated over the months left; the fridges (end of life) are replaced at
+#     fridge_replacement_period and the till software at software_replacement_period, each at its
+#     VAT-inclusive cost over a full life from that month, in its own account;
+#   * IR (one part): the owner's pay and the stock losses are not deductible (no destruction
+#     record inside the horizon: pv_arrival_period is past it), so the tax base is EBIT plus both.
+#     income_tax has no progressive band schedule: the fourth band's rate on each month's base,
+#     less the lower bands' relief spread over the year's months, posted as a tax credit (the
+#     promoted gold paygo_solar's schedule, valid while each year's base is in the fourth band,
+#     which the gold's checks assert); accrued and paid in the month;
+#   * not reported: tax_cash_societe and fcff_societe, the same shop as a company. That column
+#     needs the owner's pay deductible (a variant cannot reclassify a tax line) and the IMF
+#     replacing the IS when higher (income_tax has no minimum tax); neither exists.
+gold: pharmacy_expiry
+entity: officine
+plant: basket_average
+case:
+  case: gold-pharmacy-expiry
+  periods: 24
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 24
+      inputs: gold
+      values:
+        days: (days_per_week_open * weeks_per_year + weeks_per_year / garde_rota_size) / months_per_year
+        footfall: (customers_per_day_low + customers_per_day_high) / 2
+        customers: footfall * days
+        box_cost_ratio: box_purchase_price / box_retail_price - parapharmacy_margin_uplift
+        revenue: customers * basket_average
+        cash_price: basket_average * (1 - credit_customer_share)
+        credit_price: basket_average * credit_customer_share
+        credit_sales: revenue * credit_customer_share
+        cogs: revenue * box_cost_ratio
+        days_per_year: days_per_month_convention * months_per_year
+        dso_months: mid_month_accrual_offset + (payer_settlement_months_low + payer_settlement_months_high) / 2
+        dso_days: dso_months * days_per_month_convention
+        expiry: (expired_stock_estimate_low + expired_stock_estimate_high) / 2
+          / ((expired_accumulation_years_low + expired_accumulation_years_high) / 2 * months_per_year)
+        shrinkage: (count_gap_recent + count_gap_prior) / 2 / months_per_year
+        coldchain: coldchain_event_loss / (years_open * months_per_year)
+        purchases: cogs + expiry + shrinkage + coldchain
+        dpo_days: dpo_months * (1 - cash_payment_share) * days_per_month_convention
+        stock_level: footfall * basket_average * box_cost_ratio * days_of_stock
+        stock: {each_period: stock_level}
+        expiry_each: {each_period: expiry}
+        shrinkage_each: {each_period: shrinkage}
+        coldchain_each: {each_period: coldchain}
+        bad_debts: {each_period: credit_sales * bad_debt_rate}
+        receivable_open: credit_sales * dso_months
+        payable_open: purchases * (1 - cash_payment_share) * dpo_months
+        vat_in_cost: 1 + vat_standard_rate * quoted_prices_are_vat_exclusive
+        rent_cost: rent_monthly * vat_in_cost
+        electricity_cost: electricity_monthly_ht * vat_in_cost
+        payroll_cost: (salary_counter_a + salary_counter_b + salary_counter_c + salary_guard + salary_cleaner)
+          * (1 + employer_social_charge_rate)
+        va_annual: (revenue - purchases - rent_cost - electricity_cost) * months_per_year
+        sales_annual: revenue * months_per_year
+        cel_annual: rent_monthly * months_per_year * cel_vl_rate_leased
+          + max(va_annual * cel_va_rate, sales_annual * cel_va_floor_rate)
+        shelving_cost: (fixtures_cost_at_opening - fridge_share_of_fixtures) * vat_in_cost
+        age_months: years_open * months_per_year
+        shelving_carried: shelving_cost * (shelving_useful_life_months - age_months) / shelving_useful_life_months
+        shelving_life_left: shelving_useful_life_months - age_months
+        fridge_spend: fridge_share_of_fixtures * vat_in_cost * (t == fridge_replacement_period)
+        software_spend: software_cost_at_opening * vat_in_cost * (t == software_replacement_period)
+        relief_annual: >-
+          (ir_rate_b4 - ir_rate_b1) * ir_band_1 + (ir_rate_b4 - ir_rate_b2) * (ir_band_2 - ir_band_1)
+          + (ir_rate_b4 - ir_rate_b3) * (ir_band_3 - ir_band_2)
+        relief: {each_period: relief_annual / months_per_year}
+        boxes: stock_level / (basket_average * box_cost_ratio / boxes_per_customer)
+        boxes_on_shelf: {each_period: boxes}
+        boxes_per_reference: {each_period: boxes / references_on_shelf}
+  opening:
+    officine:
+      shelving: {nature: asset, value: {generator: gold, output: shelving_carried}}
+      cwip: {nature: asset, value: 0}       # no shelving is bought in the horizon
+      inventory: {nature: asset, value: {generator: gold, output: stock_level}}
+      credit_sales.receivable: {nature: asset, value: {generator: gold, output: receivable_open}}
+      purchases.payable: {nature: liability, value: {generator: gold, output: payable_open}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    cash_sales:
+      type: offtake
+      parties: {seller: officine}
+      terms: {volume: {generator: gold, output: customers}, price: {generator: gold, output: cash_price},
+              payment_days: 0, days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 12, end: 24}
+    credit_sales:
+      type: offtake
+      parties: {seller: officine}
+      terms: {volume: {generator: gold, output: customers}, price: {generator: gold, output: credit_price},
+              payment_days: {generator: gold, output: dso_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 12,
+              end: 24}                # past the horizon: payers still owe at its end (going concern)
+    purchases:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: 0, unit_rate: {generator: gold, output: purchases}, volume: 1, index: 1, periods_per_year: 12,
+              start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: dpo_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: 0, unit_rate: {generator: gold, output: rent_cost}, volume: 1, index: 1, periods_per_year: 12,
+              start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    payroll:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: 0, unit_rate: {generator: gold, output: payroll_cost}, volume: 1, index: 1, periods_per_year: 12,
+              start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    electricity:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: 0, unit_rate: {generator: gold, output: electricity_cost}, volume: 1, index: 1, periods_per_year: 12,
+              start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    owner:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: 0, unit_rate: {generator: gold, output: owner_remuneration_monthly}, volume: 1, index: 1,
+              periods_per_year: 12, start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    cel:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: {generator: gold, output: cel_annual}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 12,
+              start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    other_opex:
+      type: operating_cost
+      parties: {payer: officine}
+      terms: {annual: 0, unit_rate: {generator: gold, output: other_opex_monthly}, volume: 1, index: 1,
+              periods_per_year: 12, start: 0, end: 24, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    fridges:
+      type: capex_class
+      parties: {owner: officine}
+      terms: {schedule: {generator: gold, output: fridge_spend}, vat_rate: 0, vat_refund_lag: 0, end: 24}
+    software:
+      type: capex_class
+      parties: {owner: officine}
+      terms: {schedule: {generator: gold, output: software_spend}, vat_rate: 0, vat_refund_lag: 0, end: 24}
+  rulebooks:
+    bad_debts:                        # written off the credit book before the month's collection
+      kind: write_down
+      entity: officine
+      phase: fund
+      account: credit_sales.receivable
+      expense: bad_debts
+      amount: {generator: gold, output: bad_debts}
+    stock_losses:                     # the shelf's losses, each on its own line, before the month's sales
+      kind: transfer                  # (write_down takes one loss an account: its event id is the account's)
+      entity: officine
+      phase: fund
+      declare:
+        expiry: expense
+        shrinkage: expense
+        coldchain_loss: expense
+      moves:
+        expiry: {debit: expiry, credit: inventory, amount: {generator: gold, output: expiry_each}}
+        shrinkage: {debit: shrinkage, credit: inventory, amount: {generator: gold, output: shrinkage_each}}
+        coldchain: {debit: coldchain_loss, credit: inventory, amount: {generator: gold, output: coldchain_each}}
+    stock:
+      kind: held_balance
+      entity: officine
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: stock}, against: purchases.expense}
+    shelving_carried:                 # carried in: the months of life it has left
+      kind: asset_register
+      entity: officine
+      phase: close
+      from: cwip
+      to: shelving
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 24                  # after the horizon
+      life_periods: {generator: gold, output: shelving_life_left}
+      first_charge: in_service
+    fridges_new:
+      kind: asset_register
+      entity: officine
+      phase: close
+      from: fridges
+      to: fridges_new
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: {generator: gold, output: fridge_replacement_period}
+      dispose_at: 24
+      life_periods: {generator: gold, output: fridge_useful_life_months}
+      first_charge: in_service
+    software_new:
+      kind: asset_register
+      entity: officine
+      phase: close
+      from: software
+      to: software_new
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: {generator: gold, output: software_replacement_period}
+      dispose_at: 24
+      life_periods: {generator: gold, output: software_useful_life_months}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: officine
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: ir_rate_b4}
+      carry_forward_periods: null
+      scheme:
+        cash_sales.revenue: taxable
+        credit_sales.revenue: taxable
+        purchases.expense: taxable
+        expiry: non_deductible        # no destruction record inside the horizon
+        shrinkage: non_deductible
+        coldchain_loss: non_deductible
+        bad_debts: taxable
+        rent.expense: taxable
+        payroll.expense: taxable
+        electricity.expense: taxable
+        owner.expense: non_deductible # the sole proprietor's pay is his profit
+        cel.expense: taxable
+        other_opex.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+        ir_band_relief: non_deductible
+    bands:                            # the lower bands' relief on the fourth band's rate
+      kind: transfer
+      entity: officine
+      phase: tax
+      declare:
+        ir_band_relief: income
+      moves:
+        relief: {debit: tax_payable, credit: ir_band_relief, amount: {generator: gold, output: relief}}
+    pay_tax:
+      kind: settle
+      entity: officine
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      cash_sales.revenue: cash_sales
+      credit_sales.revenue: credit_sales
+      purchases.expense: cogs
+      expiry: expiry
+      shrinkage: shrinkage
+      coldchain_loss: coldchain
+      bad_debts: bad_debts
+      rent.expense: rent
+      payroll.expense: payroll
+      electricity.expense: electricity
+      owner.expense: owner
+      cel.expense: cel
+      other_opex.expense: other_opex
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+      ir_band_relief: tax
+    cash_flow:
+      cash_sales.receivable: operating
+      credit_sales.receivable: operating
+      purchases.payable: suppliers
+      rent.payable: operating
+      payroll.payable: operating
+      electricity.payable: operating
+      owner.payable: operating
+      cel.payable: operating
+      other_opex.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      fridges: investing
+      software: investing
+  cuts:
+    revenue: {kind: pnl, entity: officine, scheme: pnl, include: [cash_sales, credit_sales]}
+    cash_sales: {kind: pnl, entity: officine, scheme: pnl, include: [cash_sales]}
+    credit_sales: {kind: pnl, entity: officine, scheme: pnl, include: [credit_sales]}
+    cogs: {kind: pnl, entity: officine, scheme: pnl, include: [cogs]}
+    gross_profit: {kind: pnl, entity: officine, scheme: pnl, include: [cash_sales, credit_sales, cogs]}
+    expiry: {kind: pnl, entity: officine, scheme: pnl, include: [expiry]}
+    shrinkage: {kind: pnl, entity: officine, scheme: pnl, include: [shrinkage]}
+    coldchain: {kind: pnl, entity: officine, scheme: pnl, include: [coldchain]}
+    stock_losses: {kind: pnl, entity: officine, scheme: pnl, include: [expiry, shrinkage, coldchain]}
+    bad_debts: {kind: pnl, entity: officine, scheme: pnl, include: [bad_debts]}
+    rent: {kind: pnl, entity: officine, scheme: pnl, include: [rent]}
+    payroll: {kind: pnl, entity: officine, scheme: pnl, include: [payroll]}
+    electricity: {kind: pnl, entity: officine, scheme: pnl, include: [electricity]}
+    owner: {kind: pnl, entity: officine, scheme: pnl, include: [owner]}
+    cel: {kind: pnl, entity: officine, scheme: pnl, include: [cel]}
+    other_opex: {kind: pnl, entity: officine, scheme: pnl, include: [other_opex]}
+    opex: {kind: pnl, entity: officine, scheme: pnl, include: [rent, payroll, electricity, owner, cel, other_opex]}
+    value_added: {kind: pnl, entity: officine, scheme: pnl,
+                  include: [cash_sales, credit_sales, cogs, expiry, shrinkage, coldchain, rent, electricity]}
+    ebitda: {kind: pnl, entity: officine, scheme: pnl,
+             include: [cash_sales, credit_sales, cogs, expiry, shrinkage, coldchain, bad_debts, rent, payroll,
+                       electricity, owner, cel, other_opex]}
+    depreciation: {kind: pnl, entity: officine, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: officine, scheme: pnl,
+           include: [cash_sales, credit_sales, cogs, expiry, shrinkage, coldchain, bad_debts, rent, payroll,
+                     electricity, owner, cel, other_opex, depreciation]}
+    tax: {kind: pnl, entity: officine, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: officine, scheme: pnl,
+            include: [cash_sales, credit_sales, cogs, expiry, shrinkage, coldchain, bad_debts, rent, payroll,
+                      electricity, owner, cel, other_opex, depreciation, tax]}
+    suppliers: {entity: officine, account: cash, scheme: cash_flow, include: [suppliers]}
+    cfo: {entity: officine, account: cash, scheme: cash_flow, include: [operating, suppliers]}
+    cfi: {entity: officine, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: officine, account: cash, scheme: cash_flow, include: [operating, suppliers, investing]}
+  measures: {}
+trace:
+  trading_days: {driver: gold.days}
+  customers: {driver: gold.customers}
+  revenue: {cut: revenue}
+  cash_sales: {cut: cash_sales}
+  credit_sales: {cut: credit_sales}
+  cogs_sold: {cut: cogs, sign: -1}
+  gross_profit: {cut: gross_profit}
+  expiry_writeoff: {cut: expiry, sign: -1}
+  shrinkage: {cut: shrinkage, sign: -1}
+  coldchain_loss: {cut: coldchain, sign: -1}
+  stock_losses_total: {cut: stock_losses, sign: -1}
+  purchases: {sum: [{cut: suppliers, sign: -1}, {change: purchases.payable}]}
+  inventory: {balance: inventory}
+  boxes_on_shelf: {driver: gold.boxes_on_shelf}
+  boxes_per_reference: {driver: gold.boxes_per_reference}
+  receivables: {balance: cash_sales.receivable + credit_sales.receivable}
+  payables: {balance: purchases.payable + rent.payable + payroll.payable + electricity.payable + owner.payable + cel.payable + other_opex.payable}
+  nwc: {balance: cash_sales.receivable + credit_sales.receivable + inventory - purchases.payable - rent.payable - payroll.payable - electricity.payable - owner.payable - cel.payable - other_opex.payable}
+  delta_nwc: {change: cash_sales.receivable + credit_sales.receivable + inventory - purchases.payable - rent.payable - payroll.payable - electricity.payable - owner.payable - cel.payable - other_opex.payable}
+  bad_debt_writeoff: {cut: bad_debts, sign: -1}
+  rent_cost: {cut: rent, sign: -1}
+  payroll_cost: {cut: payroll, sign: -1}
+  electricity_cost: {cut: electricity, sign: -1}
+  owner_remuneration: {cut: owner, sign: -1}
+  cel_cost: {cut: cel, sign: -1}
+  other_opex: {cut: other_opex, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  value_added: {cut: value_added}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  capex: {cut: cfi, sign: -1}
+  book_value: {balance: shelving + fridges_new + software_new}
+  ebit: {cut: ebit}
+  taxable_addback: {cut: stock_losses, sign: -1}
+  disallowed_cumulative: {cumulative: stock_losses, sign: -1}
+  taxable_profit: {record: tax.base}
+  cash_tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

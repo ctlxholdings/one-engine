@@ -1,0 +1,244 @@
+# Pilot gold "isp_levy": a Bamako neighbourhood ISP over the six years its installed network has
+# left, with a regulatory fee on turnover stacked under corporate tax
+# (cases/reference/golds_pilot/isp_levy.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * subscribers: subscribers_initial at the start, net_adds_per_year added each year, billed on
+#     the year's average base at monthly_fee_per_subscriber for months_per_year months;
+#     subscriber counts, bandwidth utilisation and headroom against the stated ceiling, and
+#     subscribers per technician are driver rows (no ledger holds a head count);
+#   * bandwidth (bandwidth_monthly, a flat forfait), technicians and the site are annualised
+#     monthly costs; connections cost connection_cost_per_new_subscriber per net add, expensed;
+#   * the regulatory fee is regulatory_fee_rate of the year's revenue, an operating charge above
+#     EBITDA, deductible for corporate tax;
+#   * the network is carried in at nbv_opening and depreciated over the remaining_life_years it
+#     has left (90M / 8 a year); it is retired at nil book value at the end of
+#     replacement_period_index and replaced the same day by replacement_capex, which enters at the
+#     year end and is charged nothing in that year;
+#   * the books carry the network at its book value, so the depreciation charged before the
+#     horizon (accum_dep_opening) is nowhere in them: gross_ppe, accum_dep, asset_retired_cost and
+#     accum_dep_retired add it to the registers' gross records as a driver (`pre_horizon_dep`
+#     while the old network is held, `pre_horizon_retired` when it is retired);
+#   * receivables are one month (dso_months) of the closing run-rate (closing subscribers x the
+#     fee), not of the year's billing, so revenue is collected in the year and a held balance,
+#     carried in at ar_opening, holds the receivable at that target; the bandwidth payable is
+#     dpo_bandwidth_months of the forfait, carried in at ap_opening (flat, so it never moves);
+#     everything else is paid as incurred; the forfait's contract runs on past the grid (end 6), so
+#     the last month's bill is still owed at the end of the last year, as the gold holds it;
+#   * corporate tax at corporate_tax_rate on EBIT (no financing), paid within the year.
+gold: isp_levy
+entity: isp
+plant: monthly_fee_per_subscriber
+case:
+  case: gold-pilot-isp-levy
+  periods: 6
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 6
+      inputs: gold
+      values:
+        subs_opening: subscribers_initial + net_adds_per_year * t
+        subs_added: {each_period: net_adds_per_year}
+        subs_closing: subs_opening + subs_added
+        subs_average: (subs_opening + subs_closing) / 2
+        subscriber_months: subs_average * months_per_year
+        utilization: subs_average / bandwidth_capacity_ceiling_subscribers
+        headroom: bandwidth_capacity_ceiling_subscribers - subs_average
+        per_technician: subs_average / technicians_headcount
+        bandwidth_annual: bandwidth_monthly * months_per_year
+        technicians_annual: technicians_headcount * technician_monthly_wage * months_per_year
+        site_annual: site_monthly_cost * months_per_year
+        fee_per_subscriber_month: regulatory_fee_rate * monthly_fee_per_subscriber
+        receivable: subs_closing * monthly_fee_per_subscriber * dso_months
+        replacement: replacement_capex * (t == replacement_period_index)
+        new_network_retired: replacement_period_index + asset_useful_life_years
+        pre_horizon_dep: accum_dep_opening * (t < replacement_period_index)
+        pre_horizon_retired: accum_dep_opening * (t == replacement_period_index)
+  opening:
+    isp:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: nbv_opening}}
+      receivables: {nature: asset, value: {generator: gold, output: ar_opening}}
+      bandwidth.payable: {nature: liability, value: {generator: gold, output: ap_opening}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    access:
+      type: offtake
+      parties: {seller: isp}
+      terms: {volume: {generator: gold, output: subscriber_months}, price: {generator: gold, output: monthly_fee_per_subscriber},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 5}
+    bandwidth:
+      type: operating_cost
+      parties: {payer: isp}
+      terms: {annual: {generator: gold, output: bandwidth_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 6, vat_rate: 0, vat_refund_lag: 0,   # runs on past the grid:
+              payment_days: {generator: gold, output: dpo_bandwidth_months},                # the last month is still owed
+              days_per_year: {generator: gold, output: months_per_year}}
+    technicians:
+      type: operating_cost
+      parties: {payer: isp}
+      terms: {annual: {generator: gold, output: technicians_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    site:
+      type: operating_cost
+      parties: {payer: isp}
+      terms: {annual: {generator: gold, output: site_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    connections:
+      type: operating_cost
+      parties: {payer: isp}
+      terms: {annual: 0, unit_rate: {generator: gold, output: connection_cost_per_new_subscriber},
+              volume: {generator: gold, output: subs_added}, index: 1, periods_per_year: 1, start: 0, end: 5,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    regulator:
+      type: operating_cost
+      parties: {payer: isp}
+      terms: {annual: 0, unit_rate: {generator: gold, output: fee_per_subscriber_month},
+              volume: {generator: gold, output: subscriber_months}, index: 1, periods_per_year: 1, start: 0, end: 5,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    replacement:
+      type: capex
+      parties: {owner: isp}
+      terms: {schedule: {generator: gold, output: replacement}, vat_rate: 0, vat_refund_lag: 0, end: 5}
+  rulebooks:
+    old_network:
+      kind: asset_register
+      entity: isp
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: retirement_loss
+      in_service: 0
+      dispose_at: {generator: gold, output: replacement_period_index}
+      life_periods: {generator: gold, output: remaining_life_years}
+      first_charge: in_service
+    new_network:
+      kind: asset_register
+      entity: isp
+      phase: close
+      from: cwip
+      to: new_network
+      expense: new_depreciation
+      disposal: new_retirement_loss
+      in_service: {generator: gold, output: replacement_period_index}
+      dispose_at: {generator: gold, output: new_network_retired}
+      life_periods: {generator: gold, output: asset_useful_life_years}
+      first_charge: next_period                 # enters at the year end: nothing charged in that year
+    wc:
+      kind: held_balance
+      entity: isp
+      cash: cash
+      phase: operate
+      accounts:
+        receivables: {side: asset, target: {generator: gold, output: receivable}}
+    tax:
+      kind: income_tax
+      entity: isp
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: corporate_tax_rate}
+      carry_forward_periods: null
+      scheme:
+        access.revenue: taxable
+        bandwidth.expense: taxable
+        technicians.expense: taxable
+        site.expense: taxable
+        connections.expense: taxable
+        regulator.expense: taxable
+        depreciation: taxable
+        retirement_loss: taxable
+        new_depreciation: taxable
+        new_retirement_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: isp
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      access.revenue: revenue
+      bandwidth.expense: bandwidth
+      technicians.expense: technicians
+      site.expense: site
+      connections.expense: connections
+      regulator.expense: levy
+      depreciation: depreciation
+      retirement_loss: depreciation
+      new_depreciation: depreciation
+      new_retirement_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      access.receivable: operating
+      receivables: operating
+      bandwidth.payable: operating
+      technicians.payable: operating
+      site.payable: operating
+      connections.payable: operating
+      regulator.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: isp, scheme: pnl, include: [revenue]}
+    bandwidth: {kind: pnl, entity: isp, scheme: pnl, include: [bandwidth]}
+    technicians: {kind: pnl, entity: isp, scheme: pnl, include: [technicians]}
+    site: {kind: pnl, entity: isp, scheme: pnl, include: [site]}
+    connections: {kind: pnl, entity: isp, scheme: pnl, include: [connections]}
+    cash_opex: {kind: pnl, entity: isp, scheme: pnl, include: [bandwidth, technicians, site, connections]}
+    levy: {kind: pnl, entity: isp, scheme: pnl, include: [levy]}
+    ebitda: {kind: pnl, entity: isp, scheme: pnl, include: [revenue, bandwidth, technicians, site, connections, levy]}
+    depreciation: {kind: pnl, entity: isp, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: isp, scheme: pnl,
+           include: [revenue, bandwidth, technicians, site, connections, levy, depreciation]}
+    tax: {kind: pnl, entity: isp, scheme: pnl, include: [tax]}
+    levies: {kind: pnl, entity: isp, scheme: pnl, include: [levy, tax]}
+    nopat: {kind: pnl, entity: isp, scheme: pnl,
+            include: [revenue, bandwidth, technicians, site, connections, levy, depreciation, tax]}
+    cfo: {entity: isp, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: isp, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: isp, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  subs_opening: {driver: gold.subs_opening}
+  subs_added: {driver: gold.subs_added}
+  subs_closing: {driver: gold.subs_closing}
+  subs_average: {driver: gold.subs_average}
+  subscriber_months: {driver: gold.subscriber_months}
+  bandwidth_utilization: {driver: gold.utilization}
+  bandwidth_headroom_subscribers: {driver: gold.headroom}
+  subscribers_per_technician: {driver: gold.per_technician}
+  revenue: {cut: revenue}
+  bandwidth_cost: {cut: bandwidth, sign: -1}
+  technician_cost: {cut: technicians, sign: -1}
+  site_cost: {cut: site, sign: -1}
+  connection_cost: {cut: connections, sign: -1}
+  cash_opex_total: {cut: cash_opex, sign: -1}
+  regulatory_fee: {cut: levy, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  corporate_tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  total_levies: {cut: levies, sign: -1}
+  accounts_receivable: {balance: receivables + access.receivable}
+  accounts_payable: {balance: bandwidth.payable + technicians.payable + site.payable + connections.payable + regulator.payable}
+  nwc: {balance: receivables + access.receivable - bandwidth.payable - technicians.payable - site.payable - connections.payable - regulator.payable}
+  delta_nwc: {change: receivables + access.receivable - bandwidth.payable - technicians.payable - site.payable - connections.payable - regulator.payable}
+  capex: {cut: cfi, sign: -1}
+  asset_retired_cost: {sum: [{record: old_network.disposed_cost}, {driver: gold.pre_horizon_retired}]}
+  accum_dep_retired: {sum: [{record: old_network.disposed_accumulated}, {driver: gold.pre_horizon_retired}]}
+  gross_ppe: {sum: [{record: old_network.cost}, {record: new_network.cost}, {driver: gold.pre_horizon_dep}]}
+  accum_dep: {sum: [{record: old_network.accumulated}, {record: new_network.accumulated}, {driver: gold.pre_horizon_dep}]}
+  nbv: {balance: fixed_assets + new_network}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

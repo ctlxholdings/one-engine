@@ -1,0 +1,269 @@
+# Pilot gold "cashew_taxholiday_v25": the Bouaké cashew shelling unit under gold contract v2.5, with
+# payroll charges, the patente and the investment code's own relief schedule beside the founder's
+# (cases/reference/golds_pilot/cashew_taxholiday_v25.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the plant (capex_total) is bought in period 0 and produces from production_start_index;
+#   * raw_nut_throughput_per_year of raw nut is shelled a year (throughput_ramp_first_year of it in the
+#     first production year): kernel_outturn of it is kernel, sold at kernel_price; the rest is shell,
+#     sold at shell_revenue_per_kg (0). The kilos are drivers (no ledger holds kilos);
+#   * raw nut at raw_nut_price a kilo, paid on payable_months; wages workers x monthly_wage x
+#     months_per_year; employer charges: CNPS family and work injury on the wage up to
+#     cnps_ceiling_monthly, CNPS pension and employer payroll tax on the whole wage;
+#     non_production_payroll_per_year, other_opex_per_year; export_logistics_cost_per_kg of kernel;
+#     all but raw nut paid in cash (the gold carries no other payable);
+#   * the patente: patente_turnover_rate of revenue capped at patente_turnover_cap, nil until the first
+#     taxed period (the exemption covers it), an operating cost;
+#   * kernel collected on receivable_months; raw_nut_stock_kg held at raw_nut_price at every year end
+#     from the first production year, bought with cash on top of the expensed raw nut (the gold's
+#     working-capital stock); the terms run past the horizon (end 60): nothing unwinds at the end;
+#   * straight-line depreciation over asset_life_years from the period after purchase, to nil;
+#   * base case (the founder's belief): profit tax at founder_post_holiday_rate on EBIT from
+#     production_start_index + exempt_periods_count - exemption_clock_slippage_periods, nil before;
+#     paid within the year. Variants: `entitlement` (statutory_cit_rate times one less the code's relief
+#     fraction: full for code_full_exemption_years, code_partial_relief_rate for code_partial_relief_years)
+#     and `no_relief` (statutory_cit_rate from the first period). As in the gold, the variants change
+#     only the profit tax: the patente keeps the base case's exemption.
+#   * imf_reference, the minimum tax the gold computes and never charges (it never binds), is read as
+#     revenue times imf_rate (the gold's own definition of the row).
+gold: cashew_taxholiday_v25
+entity: plant
+plant: kernel_price
+case:
+  case: pilot-cashew-taxholiday-v25
+  periods: 16
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 16
+      inputs: gold
+      values:
+        producing: t >= production_start_index
+        ramp: throughput_ramp_first_year if t == production_start_index else 1
+        raw_nuts: raw_nut_throughput_per_year * ramp * producing
+        kernel_kg: raw_nuts * kernel_outturn
+        shell_kg: raw_nuts - kernel_kg
+        revenue: kernel_kg * kernel_price + shell_kg * shell_revenue_per_kg
+        wages_annual: workers * monthly_wage * months_per_year
+        capped_wage: min(monthly_wage, cnps_ceiling_monthly)
+        charges_annual: "workers * months_per_year * ((cnps_family_rate + cnps_work_injury_rate) * capped_wage
+          + cnps_pension_employer_rate * monthly_wage) + employer_payroll_tax_rate * wages_annual"
+        first_taxed: production_start_index + exempt_periods_count - exemption_clock_slippage_periods
+        patente: min(patente_turnover_rate * revenue, patente_turnover_cap) * (t >= first_taxed)
+        inventory: raw_nut_stock_kg * raw_nut_price * producing
+        capex: capex_total * (t == 0)
+        relief: "1 if t < production_start_index + code_full_exemption_years else (code_partial_relief_rate
+          if t < production_start_index + code_full_exemption_years + code_partial_relief_years else 0)"
+        rate: founder_post_holiday_rate * (t >= first_taxed)
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    kernel:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: kernel_kg}, price: {generator: gold, output: kernel_price},
+              payment_days: {generator: gold, output: receivable_months},
+              days_per_year: {generator: gold, output: months_per_year}, periods_per_year: 1, end: 60}
+    shell:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: shell_kg}, price: {generator: gold, output: shell_revenue_per_kg},
+              payment_days: {generator: gold, output: receivable_months},
+              days_per_year: {generator: gold, output: months_per_year}, periods_per_year: 1, end: 60}
+    raw_nut:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: raw_nut_price},
+              volume: {generator: gold, output: raw_nuts}, index: 1, periods_per_year: 1, start: 0, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: payable_months},
+              days_per_year: {generator: gold, output: months_per_year}}
+    wages:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: gold, output: wages_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: {generator: gold, output: production_start_index}, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: months_per_year}}
+    charges:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: gold, output: charges_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: {generator: gold, output: production_start_index}, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: months_per_year}}
+    overheads:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: gold, output: non_production_payroll_per_year}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: {generator: gold, output: production_start_index}, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: months_per_year}}
+    other:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: gold, output: other_opex_per_year}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: {generator: gold, output: production_start_index}, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: months_per_year}}
+    logistics:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: export_logistics_cost_per_kg},
+              volume: {generator: gold, output: kernel_kg}, index: 1, periods_per_year: 1, start: 0, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: months_per_year}}
+    patente:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: patente}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: months_per_year}}
+    purchase:
+      type: capex
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 15}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: plant
+      cash: cash
+      phase: operate
+      accounts:
+        raw_nut_inventory: {side: asset, target: {generator: gold, output: inventory}}
+    assets:
+      kind: asset_register
+      entity: plant
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 15
+      life_periods: {generator: gold, output: asset_life_years}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: plant
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        kernel.revenue: taxable
+        shell.revenue: taxable
+        raw_nut.expense: taxable
+        wages.expense: taxable
+        charges.expense: taxable
+        overheads.expense: taxable
+        other.expense: taxable
+        logistics.expense: taxable
+        patente.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: plant
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      kernel.revenue: kernel
+      shell.revenue: shell
+      raw_nut.expense: raw_nut
+      wages.expense: wages
+      charges.expense: charges
+      overheads.expense: overheads
+      other.expense: other
+      logistics.expense: logistics
+      patente.expense: patente
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      kernel.receivable: operating
+      shell.receivable: operating
+      raw_nut.payable: operating
+      wages.payable: operating
+      charges.payable: operating
+      overheads.payable: operating
+      other.payable: operating
+      logistics.payable: operating
+      patente.payable: operating
+      raw_nut_inventory: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    kernel: {kind: pnl, entity: plant, scheme: pnl, include: [kernel]}
+    shell: {kind: pnl, entity: plant, scheme: pnl, include: [shell]}
+    revenue: {kind: pnl, entity: plant, scheme: pnl, include: [kernel, shell]}
+    raw_nut: {kind: pnl, entity: plant, scheme: pnl, include: [raw_nut]}
+    wages: {kind: pnl, entity: plant, scheme: pnl, include: [wages]}
+    charges: {kind: pnl, entity: plant, scheme: pnl, include: [charges]}
+    overheads: {kind: pnl, entity: plant, scheme: pnl, include: [overheads]}
+    other: {kind: pnl, entity: plant, scheme: pnl, include: [other]}
+    logistics: {kind: pnl, entity: plant, scheme: pnl, include: [logistics]}
+    patente: {kind: pnl, entity: plant, scheme: pnl, include: [patente]}
+    opex: {kind: pnl, entity: plant, scheme: pnl,
+           include: [raw_nut, wages, charges, overheads, other, logistics, patente]}
+    ebitda: {kind: pnl, entity: plant, scheme: pnl,
+             include: [kernel, shell, raw_nut, wages, charges, overheads, other, logistics, patente]}
+    depreciation: {kind: pnl, entity: plant, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: plant, scheme: pnl,
+           include: [kernel, shell, raw_nut, wages, charges, overheads, other, logistics, patente, depreciation]}
+    tax: {kind: pnl, entity: plant, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: plant, scheme: pnl,
+            include: [kernel, shell, raw_nut, wages, charges, overheads, other, logistics, patente, depreciation, tax]}
+    cfo: {entity: plant, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: plant, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: plant, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+variants:
+  entitlement:
+    values:
+      rate: statutory_cit_rate * (1 - relief)
+  no_relief:
+    values:
+      rate: statutory_cit_rate * (t >= production_start_index)
+trace:
+  raw_nuts_processed: {driver: gold.raw_nuts}
+  kernel_output: {driver: gold.kernel_kg}
+  shell_output: {driver: gold.shell_kg}
+  kernel_revenue: {cut: kernel}
+  shell_revenue: {cut: shell}
+  revenue: {cut: revenue}
+  raw_nut_cost: {cut: raw_nut, sign: -1}
+  gross_wages: {cut: wages, sign: -1}
+  payroll_charges: {cut: charges, sign: -1}
+  non_production_payroll: {cut: overheads, sign: -1}
+  other_opex: {cut: other, sign: -1}
+  export_logistics_cost: {cut: logistics, sign: -1}
+  patente: {cut: patente, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  capex: {cut: cfi, sign: -1}
+  book_value: {balance: fixed_assets}
+  ebit: {cut: ebit}
+  imf_reference: {cut: revenue, times: gold.imf_rate}
+  raw_nut_inventory: {balance: raw_nut_inventory}
+  receivables: {balance: kernel.receivable + shell.receivable}
+  payables: {balance: raw_nut.payable + wages.payable + charges.payable + overheads.payable + other.payable + logistics.payable + patente.payable}
+  nwc: {balance: raw_nut_inventory + kernel.receivable + shell.receivable - raw_nut.payable - wages.payable - charges.payable - overheads.payable - other.payable - logistics.payable - patente.payable}
+  delta_nwc: {change: raw_nut_inventory + kernel.receivable + shell.receivable - raw_nut.payable - wages.payable - charges.payable - overheads.payable - other.payable - logistics.payable - patente.payable}
+  profit_tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  code_relief_fraction: {driver: gold.relief}
+  profit_tax_entitlement: {cut: tax, sign: -1, variant: entitlement}
+  nopat_entitlement: {cut: nopat, variant: entitlement}
+  fcff_entitlement: {cut: fcff, variant: entitlement}
+  profit_tax_no_relief: {cut: tax, sign: -1, variant: no_relief}
+  nopat_no_relief: {cut: nopat, variant: no_relief}
+  fcff_no_relief: {cut: fcff, variant: no_relief}

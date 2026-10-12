@@ -1,0 +1,1074 @@
+contract: "v2.5"
+id: pharma_wholesale_dakar_vat_exempt_fcff
+title: "Grossiste-repartiteur pharmaceutique a Dakar — FCFF non leve sur la duree de vie residuelle de la chaine du froid, avec TVA d amont non recuperable"
+currency: XOF
+
+grid:
+  periods: 7
+  freq: annual
+  why: |
+    SEPT PERIODES ANNUELLES, commencant a la date d analyse (2026-07-27).
+
+    FREQUENCE. Le fondateur decrit son affaire dans deux rythmes seulement : un chiffre d affaires
+    annuel (600 000 000) et une base de couts strictement mensuelle et fixe (salaires, loyer,
+    carburant, electricite). Rien dans ses mots ne varie a l interieur d une annee : pas de saison,
+    pas de campagne, pas de cycle de reapprovisionnement, pas de pic. Une grille mensuelle
+    produirait 84 periodes en repliquant 84 fois le meme mois : elle n ajouterait aucune
+    information et donnerait une fausse impression de finesse. Une grille annuelle ne perd rien.
+
+    HORIZON. La chaine du froid EST cette affaire : un grossiste pharmaceutique sans temperature
+    dirigee n est pas un grossiste pharmaceutique. Il dit l avoir equipee il y a trois ans pour une
+    duree de vie de dix ans. Sept ans, c est exactement ce qui en reste. La periode 7 est donc la
+    derniere annee ou la question « que degage la base d actifs existante ? » a une reponse qui ne
+    depend pas d une decision non encore prise : refaire ou non le depot, a quel prix, a quelle
+    specification, et — c est tout l objet de sa plainte — en supportant quelle TVA non
+    recuperable. Aller a dix ans m obligerait a inventer ce reinvestissement. S arreter a trois ou
+    cinq ans couperait l horizon avant que le cycle des camionnettes (six ans) ne se boucle une
+    seule fois, or c est precisement au remplacement des camionnettes que la seconde moitie de son
+    probleme de TVA redevient du cash. Sept ans contient exactement un remplacement complet de
+    flotte et exactement zero remplacement invente de chaine du froid.
+
+    CE QUE CE CHOIX COUTE. Il n y a pas de valeur terminale et il ne doit pas y en avoir : au-dela
+    de la periode 7 la question change de nature. Un lecteur qui pense que les chambres froides
+    tiendront au-dela de dix ans, ou qui veut une valeur d entreprise, doit allonger la grille et
+    obtiendra une reponse differente et tout aussi legitime. Le choix est rendu mecanique et
+    refutable par le check
+    « warehouse_fitout_life_years - warehouse_fitout_age_years == grid.periods »
+    et par le check « trace.nbv_coldchain[last] == 0 ».
+
+utterance:
+  fr: |
+    Je suis grossiste en medicaments a Dakar. J approvisionne les pharmacies de la region — je livre
+    a peu pres quatre-vingts officines. Je fais dans les six cents millions de chiffre d affaires par
+    an et je travaille sur une marge de douze pour cent sur le prix d achat : ce que j achete cent,
+    je le revends cent douze. J ai un depot sous temperature controlee que j ai equipe pour
+    quarante-cinq millions il y a trois ans — les chambres froides et les groupes, ca dure dix ans.
+    J ai deux camionnettes refrigerees achetees ensemble dix-huit millions, elles font six ans. Huit
+    employes a cent dix mille par mois, le depot a un million deux cent mille par mois de loyer, le
+    carburant et l entretien des camionnettes deux cent mille par mois, et l electricite — avec le
+    froid qui tourne jour et nuit — sept cent mille par mois. Voila ma difficulte avec la TVA : les
+    medicaments essentiels sont exoneres, donc je ne facture aucune TVA aux pharmacies. Mais la TVA
+    que moi je paie sur le loyer du depot, sur l electricite, sur le carburant, sur l entretien —
+    celle-la je ne peux pas la recuperer, justement parce que mes ventes sont exonerees. Elle reste
+    chez moi, elle devient un cout sec. Et sur le materiel aussi : quand j ai achete les chambres
+    froides et les camionnettes, la TVA que j ai payee dessus, je ne l ai jamais recuperee non plus.
+  en: |
+    I am a pharmaceutical wholesaler in Dakar. I supply the pharmacies of the region — I deliver to
+    roughly eighty dispensaries. I do around six hundred million in turnover a year and I work on a
+    twelve percent margin on the purchase price: what I buy at a hundred, I resell at a hundred and
+    twelve. I have a temperature-controlled warehouse that I fitted out for forty-five million three
+    years ago — the cold rooms and the compressor units last ten years. I have two refrigerated vans
+    bought together for eighteen million, they last six years. Eight employees at a hundred and ten
+    thousand a month, the warehouse at one million two hundred thousand a month in rent, fuel and
+    maintenance of the vans two hundred thousand a month, and electricity — with the refrigeration
+    running day and night — seven hundred thousand a month. Here is my difficulty with VAT:
+    essential medicines are exempt, so I charge no VAT to the pharmacies. But the VAT that I myself
+    pay on the warehouse rent, on electricity, on fuel, on maintenance — that one I cannot reclaim,
+    precisely because my sales are exempt. It stays with me, it becomes a dead cost. And on the
+    equipment too: when I bought the cold rooms and the vans, the VAT I paid on them, I never
+    reclaimed that either.
+
+inputs:
+
+  # ---------- STATED ----------
+  revenue_annual:
+    value: 600000000
+    unit: XOF/year
+    prov: STATED
+    source: "« Je fais dans les six cents millions de chiffre d affaires par an »"
+    date: "2026-07-27"
+
+  markup_on_purchase:
+    value: 0.12
+    unit: ratio (mark-up on purchase cost)
+    prov: STATED
+    source: "« une marge de douze pour cent sur le prix d achat : ce que j achete cent, je le revends cent douze » — explicitement une marge sur COUT, non une marge sur ventes"
+    date: "2026-07-27"
+
+  pharmacies_served:
+    value: 80
+    unit: officines
+    prov: STATED
+    source: "« je livre a peu pres quatre-vingts officines »"
+    date: "2026-07-27"
+
+  warehouse_fitout_cost:
+    value: 45000000
+    unit: XOF
+    prov: STATED
+    source: "« un depot sous temperature controlee que j ai equipe pour quarante-cinq millions »"
+    date: "2026-07-27"
+
+  warehouse_fitout_age_years:
+    value: 3
+    unit: years
+    prov: STATED
+    source: "« que j ai equipe pour quarante-cinq millions il y a trois ans »"
+    date: "2026-07-27"
+
+  warehouse_fitout_life_years:
+    value: 10
+    unit: years
+    prov: STATED
+    source: "« les chambres froides et les groupes, ca dure dix ans »"
+    date: "2026-07-27"
+
+  vans_cost:
+    value: 18000000
+    unit: XOF (two vans together)
+    prov: STATED
+    source: "« deux camionnettes refrigerees achetees ensemble dix-huit millions »"
+    date: "2026-07-27"
+
+  vans_life_years:
+    value: 6
+    unit: years
+    prov: STATED
+    source: "« elles font six ans » — lu comme la duree de vie (traduction parallele : « they last six years »), coherent avec la structure de la phrase precedente sur les chambres froides ; l ambiguite du francais (« elles ont six ans ») est traitee par l input elicite van_age_years"
+    date: "2026-07-27"
+
+  headcount:
+    value: 8
+    unit: employees
+    prov: STATED
+    source: "« Huit employes »"
+    date: "2026-07-27"
+
+  wage_per_employee_month:
+    value: 110000
+    unit: XOF/employee/month
+    prov: STATED
+    source: "« Huit employes a cent dix mille par mois »"
+    date: "2026-07-27"
+
+  rent_month:
+    value: 1200000
+    unit: XOF/month
+    prov: STATED
+    source: "« le depot a un million deux cent mille par mois de loyer »"
+    date: "2026-07-27"
+
+  fuel_maintenance_month:
+    value: 200000
+    unit: XOF/month
+    prov: STATED
+    source: "« le carburant et l entretien des camionnettes deux cent mille par mois »"
+    date: "2026-07-27"
+
+  electricity_month:
+    value: 700000
+    unit: XOF/month
+    prov: STATED
+    source: "« l electricite — avec le froid qui tourne jour et nuit — sept cent mille par mois »"
+    date: "2026-07-27"
+
+  output_vat_charged:
+    value: 0
+    unit: XOF/year
+    prov: STATED
+    source: "« je ne facture aucune TVA aux pharmacies » — fait sur SON affaire : 100 % de ses ventes sortent hors champ de la taxation, donc prorata de deduction nul"
+    date: "2026-07-27"
+
+  input_vat_recovered:
+    value: 0
+    unit: XOF/year
+    prov: STATED
+    source: "« celle-la je ne peux pas la recuperer » et « la TVA que j ai payee dessus, je ne l ai jamais recuperee non plus » — couvre explicitement loyer, electricite, carburant, entretien ET materiel"
+    date: "2026-07-27"
+
+  # ---------- INFERRED ----------
+  cogs_annual:
+    value: 535714285.7142857
+    unit: XOF/year
+    prov: INFERRED
+    source: "De revenue_annual et markup_on_purchase : si ventes = achats x 1,12 alors achats = 600 000 000 / 1,12 = 535 714 285,7142857. Aucune information nouvelle n entre."
+    date: "2026-07-27"
+
+  gross_margin_on_sales:
+    value: 0.1071428571428571
+    unit: ratio
+    prov: INFERRED
+    source: "De markup_on_purchase : 12/112 = 0,1071428571428571. La marge sur prix d achat (12 %) et la marge sur ventes (10,714 %) sont deux nombres differents ; le fondateur enonce la premiere."
+    date: "2026-07-27"
+
+  revenue_per_pharmacy_year:
+    value: 7500000
+    unit: XOF/officine/year
+    prov: INFERRED
+    source: "De revenue_annual / pharmacies_served = 600 000 000 / 80. Sert de lentille de vraisemblance (625 000 XOF de commandes par officine et par mois), pas de driver."
+    date: "2026-07-27"
+
+  warehouse_remaining_life_years:
+    value: 7
+    unit: years
+    prov: INFERRED
+    source: "De warehouse_fitout_life_years - warehouse_fitout_age_years = 10 - 3. Fixe l horizon de la grille."
+    date: "2026-07-27"
+
+  coldchain_capitalised_cost:
+    value: 45000000
+    unit: XOF
+    prov: INFERRED
+    source: "De warehouse_fitout_cost et du choix de base TTC (stated_costs_vat_basis / capex_vat_basis) : la TVA non recuperable etant incluse dans le cout de l actif (IAS 16.16(a)), le montant cite est deja le cout capitalise."
+    date: "2026-07-27"
+
+  vans_capitalised_cost:
+    value: 18000000
+    unit: XOF
+    prov: INFERRED
+    source: "De vans_cost et du meme choix de base TTC."
+    date: "2026-07-27"
+
+  coldchain_opening_nbv:
+    value: 31500000
+    unit: XOF
+    prov: INFERRED
+    source: "45 000 000 - 3 x (45 000 000 / 10) = 45 000 000 - 13 500 000."
+    date: "2026-07-27"
+
+  vans_opening_nbv:
+    value: 9000000
+    unit: XOF
+    prov: INFERRED
+    source: "18 000 000 - 3 x (18 000 000 / 6) = 18 000 000 - 9 000 000, sur la valeur de base van_age_years = 3."
+    date: "2026-07-27"
+
+  ppe_opening_nbv:
+    value: 40500000
+    unit: XOF
+    prov: INFERRED
+    source: "coldchain_opening_nbv + vans_opening_nbv = 31 500 000 + 9 000 000."
+    date: "2026-07-27"
+
+  van_replacement_index:
+    value: 3
+    unit: 0-based period index
+    prov: INFERRED
+    source: "vans_life_years - van_age_years = 6 - 3 = 3 : les camionnettes existantes s eteignent a la fin de la periode d indice 2 et sont remplacees au debut de la periode d indice 3 (4e annee de la grille)."
+    date: "2026-07-27"
+
+  nwc_opening_balance:
+    value: 51956947.1624266
+    unit: XOF
+    prov: INFERRED
+    source: "De dso_days, dio_days, dpo_days et des flux : 73 972 602,7397260 + 66 046 966,7318982 - 88 062 622,3091976. L affaire tourne depuis trois ans, le BFR existe deja : le solde d ouverture n est pas nul."
+    date: "2026-07-27"
+
+  # ---------- SOURCED ----------
+  vat_standard_rate:
+    value: 0.18
+    unit: ratio
+    prov: SOURCED
+    source: "Taux de droit commun de la TVA au Senegal, applique au loyer, a l electricite, au carburant/entretien et au materiel. Le taux reduit de 10 % est reserve a l hebergement et a la restauration touristiques agrees et ne concerne aucune des lignes du fondateur."
+    authority: "Senegal, Code general des impots (loi n° 2012-31 du 31 decembre 2012 modifiee), Livre II — Taxes indirectes, regime de la TVA : taux de droit commun 18 %. Corrobore par PwC Worldwide Tax Summaries — Senegal, rubrique « Other taxes / Value-added tax », derniere revue 31 mars 2026, https://taxsummaries.pwc.com/senegal/corporate/other-taxes"
+    verified: "2026-07-27"
+
+  medicines_vat_exempt:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "Le fondateur dit « les medicaments essentiels sont exoneres ». La regle n est pas indexee sur une notion d essentialite : l exoneration porte sur une LISTE LIMITATIVE de medicaments, produits pharmaceutiques et materiels specialises pour l activite medicale. Deux objets distincts : ce qu il croit (fait sur son affaire) et ce que dit la regle (fait sur le monde). L ecart ne mord que s il distribue des lignes hors liste — voir taxable_sales_share."
+    authority: "Senegal, CGI, Livre II, article 361 (operations exonerees de TVA), l exoneration des livraisons de medicaments et materiels medicaux etant delimitee par la liste limitative de l annexe II au Livre II du CGI ; commentaires et communiques de la Direction generale des Impots et des Domaines (DGID), https://www.dgid.sn/"
+    verified: "2026-07-27"
+
+  exempt_output_gives_no_deduction_right:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "Verification de l intuition du fondateur (« elle reste chez moi, elle devient un cout sec ») : elle est juridiquement exacte. Une operation EXONEREE n ouvre aucun droit a deduction de la TVA d amont, a la difference d une operation taxee au TAUX ZERO (exportations) qui ouvre droit a deduction et a restitution du credit. Ses ventes etant integralement exonerees, son prorata de deduction est nul et la totalite de sa TVA d amont est un cout definitif."
+    authority: "Senegal, CGI, Livre II, regime des deductions — articles 381 a 383 (exclusions et limitations du droit a deduction, prorata) ; principe general selon lequel la TVA n est deductible que si elle greve des biens et services utilises pour la realisation d operations ouvrant droit a deduction."
+    verified: "2026-07-27"
+
+  irrecoverable_vat_is_part_of_asset_cost:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "Traitement comptable de la TVA non recuperable : elle n est pas une creance fiscale mais une composante du cout du bien ou du service acquis. Consequence directe : elle ne figure pas sur une ligne separee du compte de resultat, elle est A L INTERIEUR du loyer, de l electricite, du carburant, et A L INTERIEUR de la base amortissable des chambres froides et des camionnettes."
+    authority: "IAS 2.11 (« coût d achat ... droits de douane et autres taxes non recuperables ») et IAS 16.16(a) (« prix d achat ... droits de douane et taxes non remboursables »), IFRS Accounting Standards, IFRS Foundation."
+    verified: "2026-07-27"
+
+  corporate_tax_rate:
+    value: 0.30
+    unit: ratio
+    prov: SOURCED
+    source: "Taux de l impot sur les societes au Senegal, applique a l EBIT dans le build non leve."
+    authority: "Senegal, CGI (loi n° 2012-31 du 31 decembre 2012 modifiee), impot sur les societes — taux 30 %. PwC Worldwide Tax Summaries — Senegal, « Taxes on corporate income », derniere revue 31 mars 2026, https://taxsummaries.pwc.com/senegal/corporate/taxes-on-corporate-income ; flyer IS de la DGID, https://www.dgid.sn/"
+    verified: "2026-07-27"
+
+  imf_rate:
+    value: 0.005
+    unit: ratio of turnover excl. VAT
+    prov: SOURCED
+    source: "Impot minimum forfaitaire : plancher d imposition applicable lorsque l IS de droit commun lui est inferieur. Materialise dans la trace parce que c est la contrainte qui mord des que la marge se comprime — un lecteur doit pouvoir constater qu elle n a pas mordu."
+    authority: "Senegal, CGI, articles 38 et 39 — impot minimum forfaitaire assis sur le chiffre d affaires hors taxes au taux de 0,5 %, ni inferieur a 500 000 FCFA ni superieur a 5 000 000 FCFA."
+    verified: "2026-07-27"
+
+  imf_floor:
+    value: 500000
+    unit: XOF/year
+    prov: SOURCED
+    source: "Plancher legal de l IMF."
+    authority: "Senegal, CGI, articles 38 et 39."
+    verified: "2026-07-27"
+
+  imf_cap:
+    value: 5000000
+    unit: XOF/year
+    prov: SOURCED
+    source: "Plafond legal de l IMF."
+    authority: "Senegal, CGI, articles 38 et 39."
+    verified: "2026-07-27"
+
+  cel_vl_rate_leased:
+    value: 0.15
+    unit: ratio
+    prov: SOURCED
+    source: "Contribution economique locale — valeur locative, taux applicable aux locaux PRIS A BAIL. Le fondateur ne mentionne pas la CEL ; elle n est pas optionnelle : elle est due par toute personne exercant une activite commerciale soumise a un regime de benefice reel, ce qui est certainement son cas a 600 M de chiffre d affaires. Base retenue : le loyer tel qu il figure au bail, hors TVA."
+    authority: "Senegal, CGI, articles 320 et suivants — contribution economique locale instituee par la loi n° 2018-10 du 30 mars 2018 en remplacement de la patente ; CEL-VL 15 % pour les locaux loues ou occupes a titre gratuit. Depliant CEL-VL de la DGID, https://www.dgid.sn/wp-content/uploads/2022/03/DEPLIANT-CEL-RECTO-1-3.pdf ; PwC Worldwide Tax Summaries — Senegal, « Other taxes / Local economic contribution », revue 31 mars 2026."
+    verified: "2026-07-27"
+
+  cel_vl_rate_owned:
+    value: 0.20
+    unit: ratio
+    prov: SOURCED
+    source: "CEL-VL, taux applicable aux locaux, terrains, installations et agencements INSCRITS A L ACTIF. Applique ici a l equipement frigorifique du depot, qui est un agencement porte a son bilan."
+    authority: "Senegal, CGI, articles 320 et suivants (loi n° 2018-10 du 30 mars 2018) ; PwC WWTS — Senegal, « Other taxes » : « The applicable rates are 15% for leased premises and 20% for owned premises, lands, and installations »."
+    verified: "2026-07-27"
+
+  cel_vl_owned_valeur_locative_pct:
+    value: 0.07
+    unit: ratio of cost price
+    prov: SOURCED
+    source: "Determination conventionnelle de la valeur locative des biens inscrits a l actif : 7 % du prix de revient."
+    authority: "Senegal, CGI, article 291 (determination de la valeur locative) renvoye par les articles 320 et suivants ; PwC WWTS — Senegal : « The rental value corresponds to 7% of the cost price »."
+    verified: "2026-07-27"
+
+  cel_va_rate:
+    value: 0.01
+    unit: ratio of value added
+    prov: SOURCED
+    source: "CEL — valeur ajoutee, taux de 1 % sur la valeur ajoutee de l exercice precedent, plafonnee a 70 % du chiffre d affaires (plafond non mordant ici)."
+    authority: "Senegal, CGI, articles 320 et suivants (loi n° 2018-10 du 30 mars 2018) ; PwC WWTS — Senegal, « Other taxes »."
+    verified: "2026-07-27"
+
+  cel_va_floor_rate:
+    value: 0.0015
+    unit: ratio of prior-year turnover
+    prov: SOURCED
+    source: "Minimum de la CEL-VA : 0,15 % du chiffre d affaires de l annee precedente. Un minimum reduit a 0,075 % existe pour les contribuables des secteurs a faible marge ou a prix reglementes ; la distribution pharmaceutique remplit a priori les deux criteres, mais l eligibilite effective releve de l administration et je retiens le taux de droit commun, qui est le choix conservateur."
+    authority: "Senegal, CGI, articles 320 et suivants (loi n° 2018-10 du 30 mars 2018) ; PwC WWTS — Senegal : « the contribution must not be less than 0.15% of the prior year's turnover. For taxpayers operating in low-margin sectors or sectors with regulated prices, the minimum contribution threshold is reduced to 0.075% »."
+    verified: "2026-07-27"
+
+  cash_stamp_duty_rate:
+    value: 0.01
+    unit: ratio of cash payment
+    prov: SOURCED
+    source: "Droit de timbre de 1 % etendu a TOUS les paiements en especes, sans seuil ni plafond (auparavant limite aux montants superieurs a 100 000 FCFA). Le fondateur n en parle pas — la mesure est posterieure a la construction de son affaire. Deux expositions : ce que les officines lui versent, et ce que lui-meme decaisse en especes (loyer, salaires, carburant). Voir cash_settlement_share_opex."
+    authority: "Senegal, loi n° 2025-17 du 27 septembre 2025 modifiant certaines dispositions de la loi n° 2012-31 portant Code general des impots, publiee au Journal officiel du 2 octobre 2025, applicable depuis le 4 octobre 2025."
+    verified: "2026-07-27"
+
+  pharmaceutical_products_exempt_from_cash_stamp_duty:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "Neutralise le risque du cote des ventes : les reglements en especes des officines portant sur des produits pharmaceutiques ne supportent pas le droit de timbre de 1 %. Reserve honnete : au 2026-07-27 je trouve la confirmation publique de la DGID (23 fevrier 2026) et l annonce d un arrete d application « dans les prochains jours », mais pas la preuve de publication de cet arrete ; je n ai trouve aucune mesure contraire."
+    authority: "Direction generale des Impots et des Domaines du Senegal, position confirmee au Syndicat des Pharmaciens prives du Senegal et rendue publique le 23 fevrier 2026 (Agence de Presse Senegalaise, https://aps.sn/ ; SenePlus ; EnQuete+), a la suite de la loi n° 2025-17 du 27 septembre 2025."
+    verified: "2026-07-27"
+
+  benchmark_private_wholesale_markup_low:
+    value: 0.13
+    unit: ratio
+    prov: SOURCED
+    source: "Repere publie, PAS un driver du modele : les marges des grossistes prives au Senegal sont estimees a 13–30 % sur les produits de marque et 19–34 % sur les generiques, et les marges du secteur prive n y sont pas officiellement reglementees. La marge de 12 % annoncee par le fondateur se situe donc juste SOUS le bas de la fourchette observee. Je n ai pas corrige son chiffre : c est un fait sur son affaire, pas sur le monde."
+    authority: "OMS, WHO Guideline on Country Pharmaceutical Pricing Policies — Evidence summary 1 : Regulation of mark-ups in the pharmaceutical supply chain, NCBI Bookshelf NBK258615, https://www.ncbi.nlm.nih.gov/books/NBK258615/"
+    verified: "2026-07-27"
+
+  pharma_public_price_structure_regulated:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "Le prix public des medicaments au Senegal est calcule selon une structure administree : au prix grossiste hors taxe s ajoutent les frais de mise a CAF (10 %), le transit local (1,5 % de la valeur CAF), le timbre douanier, puis les marges des grossistes-repartiteurs et des pharmaciens d officine. Friction a signaler : dans cette structure les marges s appliquent au PGHT, alors que la marge de 12 % du fondateur s applique a son prix d achat. Bases differentes ; j ai garde la sienne, qu il definit sans ambiguite."
+    authority: "Senegal, arrete interministeriel n° 188/MSHP/DPM du 15 janvier 2003 fixant le mode de calcul du prix de vente au public des medicaments, produits et objets compris dans le monopole pharmaceutique (Journal officiel de la Republique du Senegal)."
+    verified: "2026-07-27"
+
+  employer_social_charge_rate_ceiling:
+    value: 0.171
+    unit: ratio of gross salary
+    prov: SOURCED
+    source: "Sert exclusivement a borner le haut de la fourchette de employer_social_charge_rate. Pour un salaire brut de 110 000 XOF/mois : IPRES regime general 8,4 % non plafonne a ce niveau (plafond 432 000) = 9 240 ; CSS prestations familiales 7 % sur assiette plafonnee a 63 000 = 4 410 ; accidents du travail sur assiette plafonnee a 63 000, classe de risque non identifiee pour la distribution pharmaceutique (fourchette 1–5 %, milieu de fourchette retenu pour borner) ; CFCE 3 % du brut = 3 300. Soit environ 17,1 % du brut."
+    authority: "Senegal : IPRES (retraite regime general, 8,4 % employeur, plafond mensuel 432 000 XOF), Caisse de Securite sociale (prestations familiales 7 % et accidents du travail 1–5 %, plafond mensuel 63 000 XOF), contribution forfaitaire a la charge de l employeur (CFCE) 3 % des salaires bruts. PwC Worldwide Tax Summaries — Senegal, « Other taxes / Social security contributions », derniere revue 31 mars 2026."
+    verified: "2026-07-27"
+
+  # ---------- ELICITED ----------
+  stated_costs_vat_basis:
+    value: "TTC"
+    unit: categorical
+    prov: ELICITED
+    source: "Base retenue : TTC, c est-a-dire que les montants mensuels cites sont ce qu il DECAISSE, TVA comprise. C est le choix omettant — il n ajoute rien au-dessus de ce qu il a dit — et c est le choix coherent, parce que deux des quatre lignes sont TTC par construction : le carburant est vendu a un prix a la pompe administre dont la TVA est l une des composantes statutaires, et une facture Senelec est presentee TTC au client. Aligner le loyer sur elles est le seul traitement homogene disponible sans lui poser la question."
+    date: "2026-07-27"
+    question: "Quand vous me dites un million deux cent mille de loyer et sept cent mille d electricite par mois, est-ce le montant total que vous sortez de votre caisse, TVA comprise — ou est-ce le montant hors taxes, auquel la TVA vient encore s ajouter sur la facture ?"
+    range:
+      low: "HT — la TVA s ajoute par-dessus les montants cites"
+      high: "TTC — la TVA est deja comprise dans les montants cites"
+    materiality: high
+
+  revenue_growth:
+    value: 0.0
+    unit: ratio per year
+    prov: ELICITED
+    source: "Base retenue : croissance nominale nulle. Aucune tendance n est enoncee ; introduire une croissance serait ajouter une trajectoire qu il n a pas decrite. C est aussi le choix qui rend le besoin en fonds de roulement constant, donc la variation de BFR nulle — c est pourquoi cette seule question commande la materialite des trois questions de BFR."
+    date: "2026-07-27"
+    question: "Vos six cents millions de cette annee, c est plus, moins ou pareil qu il y a deux ans — et livrez-vous aujourd hui plus d officines qu a l epoque ?"
+    range:
+      low: -0.05
+      high: 0.15
+    materiality: high
+
+  employer_social_charge_rate:
+    value: 0.0
+    unit: ratio of stated wage
+    prov: ELICITED
+    source: "Base retenue : zero, c est-a-dire que les 110 000 sont traites comme le COUT EMPLOYEUR COMPLET. Choix omettant : je n ajoute aucune charge qu il n a pas mentionnee. Les taux senegalais eux-memes sont un fait du monde et sont sources (employer_social_charge_rate_ceiling) ; ce qui manque est un fait sur SON affaire — la declaration effective de ses huit salaries et la nature du chiffre qu il cite."
+    date: "2026-07-27"
+    question: "Vos huit employes sont-ils declares a l IPRES et a la Caisse de Securite sociale — et les cent dix mille, c est ce qu ils touchent en main, ou c est ce que vous vous decaissez au total, charges comprises ?"
+    range:
+      low: 0.0
+      high: 0.171
+    materiality: high
+
+  taxable_sales_share:
+    value: 0.0
+    unit: ratio of turnover
+    prov: ELICITED
+    source: "Base retenue : zero, conformement a ce qu il dit lui-meme (« je ne facture aucune TVA aux pharmacies »). C est le point exact ou sa croyance et la regle divergent : l exoneration est adossee a une liste limitative, pas a une notion d essentialite. Toute part de ventes hors liste ouvrirait un prorata de deduction — et donc rendrait recuperable une fraction de la TVA qu il considere morte — tout en creant une exposition de conformite sur la TVA qu il aurait du facturer."
+    date: "2026-07-27"
+    question: "A cote des medicaments, livrez-vous aux officines de la parapharmacie, des cosmetiques, des laits infantiles, des dispositifs — des lignes qui ne sont pas sur la liste des produits exoneres ? Si oui, quelle part de vos six cents millions ?"
+    range:
+      low: 0.0
+      high: 0.15
+    materiality: medium
+
+  legal_form_tax_regime:
+    value: "societe soumise a l IS"
+    unit: categorical
+    prov: ELICITED
+    source: "Base retenue : societe a l IS au taux de 30 %, qui est la convention standard du build non leve (on impose l EBIT au taux marginal des societes, sans egard au financement). Il dit « je suis grossiste » et jamais « ma societe » : la forme juridique n est pas etablie."
+    date: "2026-07-27"
+    question: "L affaire est-elle immatriculee en societe — SARL ou SA — qui depose une liasse et paie l impot sur les societes, ou travaillez-vous en nom propre, a l impot sur le revenu ?"
+    range:
+      low: "entreprise individuelle — impot sur le revenu, bareme progressif"
+      high: "societe — impot sur les societes a 30 %"
+    materiality: medium
+
+  capex_vat_basis:
+    value: "TTC"
+    unit: categorical
+    prov: ELICITED
+    source: "Base retenue : TTC, par coherence avec stated_costs_vat_basis. « Que j ai equipe pour quarante-cinq millions » et « achetees ensemble dix-huit millions » se lisent naturellement comme des decaissements totaux. Choix omettant : la base amortissable reste exactement les montants qu il a cites."
+    date: "2026-07-27"
+    question: "Les quarante-cinq millions pour l equipement du depot et les dix-huit millions pour les deux camionnettes — c est le total que vous avez sorti, TVA comprise, ou c est le prix hors taxes de la facture ?"
+    range:
+      low: "HT — la TVA payee etait en plus des montants cites"
+      high: "TTC — les montants cites incluent la TVA payee et non recuperee"
+    materiality: medium
+
+  van_age_years:
+    value: 3
+    unit: years
+    prov: ELICITED
+    source: "Base retenue : trois ans, c est-a-dire achetees en meme temps que l equipement du depot. Il presente les deux dans la meme respiration comme la mise en place d une seule operation, et « achetees ensemble » qualifie les camionnettes l une par rapport a l autre, pas par rapport au depot : la date reste non dite. C est aussi le choix conservateur en tresorerie, puisqu il fait tomber le remplacement au plus tot. Note importante : la duree de vie (6 ans) etant inferieure a l horizon (7 ans), TOUTE reponse entre 0 et 5 ans laisse exactement un remplacement dans la fenetre — sa reponse deplace le calendrier des 18 000 000, pas leur presence. D ou une materialite moyenne et non haute."
+    date: "2026-07-27"
+    question: "En quelle annee avez-vous achete les deux camionnettes refrigerees — le meme jour que l equipement du depot, ou plus tard ?"
+    range:
+      low: 0
+      high: 5
+    materiality: medium
+
+  dso_days:
+    value: 45
+    unit: days of turnover
+    prov: ELICITED
+    source: "Valeur de travail. Aucun element sur les conditions de reglement. Materialite basse UNIQUEMENT parce que la croissance de base est nulle : a chiffre d affaires plat le BFR est constant, la variation de BFR est nulle et le NIVEAU des creances ne touche pas le FCFF. Cette question se rallume integralement des que revenue_growth cesse d etre nulle — et elle serait la premiere question d un preteur."
+    date: "2026-07-27"
+    question: "Les officines vous reglent en combien de jours en moyenne — a la livraison, a trente jours, a soixante — et y en a-t-il qui trainent ?"
+    range:
+      low: 15
+      high: 90
+    materiality: low
+
+  dio_days:
+    value: 45
+    unit: days of purchases
+    prov: ELICITED
+    source: "Valeur de travail. Meme raisonnement de materialite que dso_days. Un grossiste sous temperature dirigee a des contraintes de peremption qui bornent naturellement le stock par le haut."
+    date: "2026-07-27"
+    question: "Un carton de medicaments reste combien de temps dans votre depot entre la reception et la livraison — une semaine, un mois, deux mois ?"
+    range:
+      low: 20
+      high: 90
+    materiality: low
+
+  dpo_days:
+    value: 60
+    unit: days of purchases
+    prov: ELICITED
+    source: "Valeur de travail. Meme raisonnement de materialite. Le credit fournisseur est le poste ou un grossiste pharmaceutique se finance reellement."
+    date: "2026-07-27"
+    question: "Vos fournisseurs — laboratoires et importateurs — vous accordent combien de jours de credit, et y a-t-il des lignes que vous devez payer d avance ?"
+    range:
+      low: 0
+      high: 90
+    materiality: low
+
+  cash_settlement_share_opex:
+    value: 0.0
+    unit: ratio of cash operating disbursements
+    prov: ELICITED
+    source: "Base retenue : zero, choix omettant. Defendable pour une affaire formelle qui fait transiter 600 M par an et qui reglerait loyer, salaires et utilities par virement. Cote ventes la question est neutralisee par l exoneration des produits pharmaceutiques (source ci-dessus) ; cote decaissements elle reste ouverte."
+    date: "2026-07-27"
+    question: "Le loyer du depot, les salaires, le carburant — vous les payez en especes ou par virement et cheque ? Et les officines, elles vous reglent comment ?"
+    range:
+      low: 0.0
+      high: 1.0
+    materiality: low
+
+  van_disposal_proceeds:
+    value: 0
+    unit: XOF
+    prov: ELICITED
+    source: "Base retenue : zero, choix omettant. Les anciennes camionnettes etant integralement amorties, tout produit de cession serait une plus-value entierement taxable et non une recuperation de valeur nette comptable."
+    date: "2026-07-27"
+    question: "Quand vous remplacerez les camionnettes, vous les revendez ou vous les gardez pour les pieces ? Combien vaut ici une camionnette refrigeree de six ans ?"
+    range:
+      low: 0
+      high: 4000000
+    materiality: low
+
+  # ---------- DEFAULTED ----------
+  depreciation_method:
+    value: "straight-line, nil residual"
+    unit: convention
+    prov: DEFAULTED
+    source: "IAS 16.60-62 : mode d amortissement refletant le rythme de consommation des avantages economiques ; en l absence de tout element sur un rythme non lineaire, le mode lineaire est la convention. Valeur residuelle nulle par IAS 16.53 lorsqu elle n est pas determinable. Durees d utilite = celles enoncees par le fondateur (10 ans, 6 ans)."
+    date: "2026-07-27"
+
+  tax_depreciation_equals_book:
+    value: true
+    unit: convention
+    prov: DEFAULTED
+    source: "Amortissement fiscal aligne sur l amortissement comptable, lineaire sur la duree d utilite propre a chaque nature de bien. Aucun impot differe n est modelise : sans divergence enoncee, en introduire une reviendrait a inventer une base fiscale."
+    date: "2026-07-27"
+
+  constant_nominal_prices:
+    value: true
+    unit: convention
+    prov: DEFAULTED
+    source: "Convention de prix nominaux constants : aucun indice n est applique, ni au chiffre d affaires, ni aux couts, ni au cout de remplacement. C est pour cela que les camionnettes de remplacement coutent ce qu ont coute les originales. Cette convention doit etre lue avec revenue_growth = 0 : les deux disent la meme chose et doivent bouger ensemble."
+    date: "2026-07-27"
+
+  seamless_replacement:
+    value: true
+    unit: convention
+    prov: DEFAULTED
+    source: "Continuite d exploitation : l actif de remplacement est mis en service au premier jour de la periode ou l ancien s eteint, sans interruption de service. C est ce qui rend l amortissement des camionnettes plat a 3 000 000 par an quel que soit leur age."
+    date: "2026-07-27"
+
+  period_end_convention:
+    value: "end-of-period flows, capex at period start"
+    unit: convention
+    prov: DEFAULTED
+    source: "Convention de fin de periode pour les flux d exploitation et l impot ; l investissement de remplacement est porte au debut de la periode ou il est necessaire, et supporte une annee pleine d amortissement dans cette meme periode."
+    date: "2026-07-27"
+
+  unlevered_tax_convention:
+    value: "tax on EBIT at the marginal corporate rate"
+    unit: convention
+    prov: DEFAULTED
+    source: "Definition du FCFF non leve : NOPAT = EBIT x (1 - taux marginal), sans economie d impot liee a la dette, de sorte que le resultat soit un flux du cote ACTIF, independant de la structure de financement. La CEL et le droit de timbre sont, eux, des charges d exploitation deductibles et entrent donc AVANT l EBIT."
+    date: "2026-07-27"
+
+passage: |
+  0. QUEL GENRE D AFFAIRE, DANS SES PROPRES UNITES
+
+  C est un grossiste-repartiteur : il achete des presentations finies aupres d importateurs et de
+  laboratoires et les eclate vers 80 officines de la region de Dakar. Ses quantites naturelles sont
+  le nombre d officines servies (80), le chiffre d affaires annuel qu il encaisse aupres d elles
+  (600 000 000 XOF), et une marge exprimee sur le PRIX D ACHAT. « Ce que j achete cent, je le
+  revends cent douze » est sans ambiguite : 12 % est une marge sur cout, pas une marge sur ventes.
+  Ce sont deux nombres differents, et les confondre est l erreur la plus courante en modelisation de
+  negoce. Marge sur ventes = 12/112 = 10,7142857 %.
+
+  Deuxieme quantite naturelle : la chaine du froid. Il ne parle ni de palettes ni de lignes de
+  commande ; il parle d un depot sous temperature controlee equipe pour 45 000 000 et de deux
+  camionnettes refrigerees achetees ensemble 18 000 000. Pour un grossiste du froid, ce ne sont pas
+  deux immobilisations parmi d autres : ce SONT la capacite d exploitation, et leurs durees de vie
+  residuelles sont ce qui borne l horizon repondable.
+
+  FRICTION SIGNALEE : rien dans ses mots ne donne de volumes en boites, en cartons ou en lignes. Je
+  n invente pas une decomposition prix unitaire x volume. Le chiffre d affaires reste au niveau ou
+  il l enonce, et la marge sur cout fait le travail qu une construction en couts unitaires ferait
+  autrement. C est une perte de finesse assumee, pas une omission.
+
+  1. CHIFFRE D AFFAIRES ET COUT D ACHAT, PAR PERIODE
+
+  Le chiffre d affaires est plat a 600 000 000 sur chacune des sept annees (aucune croissance
+  n est enoncee — voir revenue_growth).
+
+  S il achete 100 et revend 112, alors ventes = achats x 1,12, donc
+  achats = 600 000 000 / 1,12 = 535 714 285,7142857 par an.
+  Marge brute = 600 000 000 - 535 714 285,7142857 = 64 285 714,2857143.
+  Par officine cela represente 7 500 000 de chiffre d affaires annuel, soit 625 000 par mois et par
+  pharmacie : c est le bon ordre de grandeur pour une officine et c est la lentille de vraisemblance
+  que j applique au couple (600 M, 80 officines).
+
+  Point crucial et souvent manque sur le sens de la TVA ici : les medicaments sont exoneres a TOUS
+  les stades de la chaine, donc ses ACHATS de medicaments ne portent pas de TVA non plus. Il le
+  confirme implicitement — sa liste de TVA morte comprend le loyer, l electricite, le carburant,
+  l entretien et le materiel, et jamais les medicaments eux-memes. Les 535 714 285,7142857 sont
+  donc un montant propre, sans TVA, et aucun retraitement ne s y applique. Cela compte : un
+  operateur ayant des achats taxes et des ventes exonerees serait ecrase par le differentiel ; ce
+  n est pas sa situation.
+
+  2. BASE DE COUTS D EXPLOITATION EN TRESORERIE, PAR PERIODE
+
+  Masse salariale : 8 x 110 000 x 12 = 10 560 000.
+    En base je traite 110 000 comme le COUT EMPLOYEUR COMPLET mensuel — c est le choix omettant, il
+    n ajoute rien qu il n ait dit. Les cotisations patronales senegalaises (IPRES, prestations
+    familiales, accidents du travail, CFCE) existent et sont sourcees ; savoir si ses salaries sont
+    declares et si 110 000 est du net en main ou du cout total est une question que lui seul peut
+    trancher, et c est l une de mes trois questions de haute materialite.
+  Loyer : 1 200 000 x 12 = 14 400 000.
+  Carburant et entretien des camionnettes : 200 000 x 12 = 2 400 000, soit 100 000 par camionnette
+    et par mois pour 40 officines chacune.
+  Electricite : 700 000 x 12 = 8 400 000. Il dit lui-meme pourquoi c est si lourd : « le froid qui
+    tourne jour et nuit ». La refrigeration est une charge continue 24 h sur 24 ; c est la seule
+    ligne ou la structure de couts d un grossiste du froid differe qualitativement de celle d un
+    grossiste de produits secs, et c est aussi celle qui porte le plus de TVA morte.
+
+  Trois de ces quatre lignes portent de la TVA (loyer, carburant/entretien, electricite) ; les
+  salaires n en portent pas, etant hors champ.
+  Couts en tresorerie porteurs de TVA = 14 400 000 + 2 400 000 + 8 400 000 = 25 200 000.
+  Total des couts d exploitation en tresorerie = 10 560 000 + 25 200 000 = 35 760 000.
+
+  3. LE PIEGE DE LA TVA, ENONCE EXACTEMENT
+
+  Le recit du fondateur est juste sur le fond, et je le verifie contre la regle plutot que de
+  l accepter.
+
+  (i) Ses ventes sont exonerees. Le CGI senegalais exonere les livraisons de medicaments et de
+  produits pharmaceutiques, l exoneration etant delimitee par une LISTE LIMITATIVE figurant a
+  l annexe II du Livre II. Il dit « je ne facture aucune TVA aux pharmacies » : c est un fait sur
+  SON affaire et je le prends tel quel — son prorata de deduction est nul. Il dit aussi « les
+  medicaments essentiels sont exoneres » : c est une affirmation sur LE MONDE, et elle n est pas
+  tout a fait la regle, car l exoneration n est pas indexee sur une notion d essentialite mais sur
+  une liste. Ce sont deux objets distincts et je les tiens separes. L ecart ne mord que s il
+  distribue des lignes hors liste — voir taxable_sales_share.
+
+  (ii) Exoneration n est pas taux zero. Sous le regime des deductions, une operation exoneree
+  n ouvre AUCUN droit a deduction de la TVA d amont, alors qu une exportation taxee a 0 % ouvre
+  droit a deduction et a restitution du credit. C est exactement pour cela que sa TVA d amont est
+  morte tandis que celle d un exportateur lui est remboursee. Son intuition — « elle reste chez moi,
+  elle devient un cout sec » — est juridiquement exacte.
+
+  (iii) Consequence comptable : la TVA non recuperable n est pas une creance fiscale, c est une
+  composante du cout du bien ou du service acquis (IAS 2.11, IAS 16.16(a) — taxes non
+  remboursables incluses dans le cout). Elle n a donc pas de ligne propre : elle est A L INTERIEUR
+  du loyer, A L INTERIEUR de l electricite, A L INTERIEUR du carburant, et A L INTERIEUR du montant
+  amortissable des chambres froides et des camionnettes.
+
+  En base, je lis les montants qu il cite comme les montants qu il DECAISSE, TVA comprise. Deux des
+  quatre le sont par construction — le carburant est vendu a un prix a la pompe administre dont la
+  TVA est l une des composantes statutaires, et une facture Senelec est presentee TTC au client.
+  Aligner le loyer sur elles est le traitement coherent, et c est le choix omettant : il n ajoute
+  rien au-dessus de ce qu il a dit. C est ma question de plus haute materialite.
+
+  Sur cette lecture, par an :
+    Couts porteurs de TVA, TTC ........ 25 200 000
+    dont service sous-jacent (HT) ..... 25 200 000 / 1,18 = 21 355 932,2033898
+    dont TVA definitivement perdue .... 25 200 000 - 21 355 932,2033898 = 3 844 067,7966102
+    (verification : 21 355 932,2033898 x 0,18 = 3 844 067,7966102)
+
+  Et sur le capital : les chambres froides a 45 000 000 et les camionnettes a 18 000 000 sont
+  capitalisees a ces montants, TVA incluse, et la TVA qu ils contiennent est passee en charge par
+  l amortissement :
+    chaine du froid : 45 000 000 x 18/118 / 10 = 6 864 406,7796610 / 10 = 686 440,6779661 par an
+    camionnettes ... : 18 000 000 x 18/118 / 6 = 2 745 762,7118644 / 6 = 457 627,1186441 par an
+    total ........... : 1 144 067,7966102 par an
+  L identite elegante — parce que tous les actifs reposent sur la meme base TTC — est que la TVA
+  morte transitant par l amortissement vaut exactement D&A x 18/118 :
+    7 500 000 x 18/118 = 1 144 067,7966102. C est un check du modele, pas une coincidence.
+
+  TVA morte totale frappant le compte de resultat chaque annee :
+    3 844 067,7966102 + 1 144 067,7966102 = 4 988 135,5932203.
+  C est le nombre dont sa plainte parle. Il est plus lourd que la totalite de son budget carburant
+  et entretien.
+
+  4. CONTRIBUTION ECONOMIQUE LOCALE, PAR PERIODE
+
+  Il n en parle pas et elle n est pas optionnelle. Depuis 2018 la patente est remplacee par la
+  contribution economique locale, due par toute personne exercant une activite commerciale sous un
+  regime de benefice reel — ce qu il est certainement a 600 M de chiffre d affaires.
+
+  CEL-VL sur le depot loue : la base est le loyer tel qu il figure au bail, pris hors TVA :
+    14 400 000 / 1,18 = 12 203 389,8305085, au taux de 15 % applicable aux locaux pris a bail
+    = 1 830 508,4745763.
+  CEL-VL sur ses propres installations : les chambres froides sont des « installations et
+  agencements » portes a son actif ; leur valeur locative est conventionnellement 7 % du prix de
+  revient, taxee a 20 % :
+    45 000 000 x 7 % x 20 % = 3 150 000 x 0,20 = 630 000.
+    Les camionnettes sont du materiel roulant et je les laisse hors de l assiette des locaux.
+  CEL-VA : valeur ajoutee = 600 000 000 - 535 714 285,7142857 - 25 200 000 = 39 085 714,2857143,
+    a 1 % = 390 857,1428571 ; mais le minimum legal est de 0,15 % du chiffre d affaires de
+    l annee precedente, soit 900 000, et ce plancher mord.
+    Il mord confortablement : meme sur la lecture la plus defavorable de l assiette de valeur
+    ajoutee — en y reintegrant loyer, electricite et carburant — 1 % de la valeur ajoutee reste
+    sous 900 000. L incertitude de definition sur ce qui se deduit de la VA ne change donc PAS la
+    reponse, ce qui est le genre de robustesse qu il faut constater plutot que supposer.
+    CEL-VA = 900 000.
+
+  CEL totale = 1 830 508,4745763 + 630 000 + 900 000 = 3 360 508,4745763 par an, deductible pour
+  l assiette de l IS.
+
+  5. DROIT DE TIMBRE SUR LES PAIEMENTS EN ESPECES
+
+  Depuis le 4 octobre 2025, un droit de timbre de 1 % frappe tous les paiements en especes au
+  Senegal, sans seuil ni plafond. Deux expositions en decoulent : ce que les officines lui versent,
+  et ce que lui-meme decaisse en especes (loyer, salaires, carburant). La premiere est neutralisee —
+  la DGID a confirme en fevrier 2026 que les produits pharmaceutiques en sont totalement exoneres.
+  La seconde reste ouverte et il n a pas dit comment il regle. Base : aucun reglement en especes,
+  donc 0 par an, la question restant attachee au chiffre.
+
+  6. DE L EBITDA A L EBIT, PAR PERIODE
+
+  EBITDA = 600 000 000 - 535 714 285,7142857 - 35 760 000 - 3 360 508,4745763 - 0
+         = 64 285 714,2857143 - 35 760 000 - 3 360 508,4745763
+         = 28 525 714,2857143 - 3 360 508,4745763
+         = 25 165 205,8111380, identique sur chacune des sept annees.
+
+  Amortissements. Lineaire sur les durees qu il enonce, valeur residuelle nulle, pas de
+  reevaluation.
+    Chaine du froid : 45 000 000 sur 10 ans = 4 500 000 par an. Trois annees sont consommees, donc
+      la valeur nette comptable d ouverture est 45 000 000 - 13 500 000 = 31 500 000, et elle tombe
+      exactement a zero a la fin de la periode 7. Ce n est pas une coincidence : c est ainsi que
+      j ai choisi l horizon, et le check trace.nbv_coldchain[last] == 0 le rend refutable.
+    Camionnettes : 18 000 000 sur 6 ans = 3 000 000 par an. Base : achetees en meme temps que
+      l equipement du depot, il y a trois ans, donc VNC d ouverture 9 000 000, extinction a la fin
+      de la periode 3. Remplacement au debut de la periode 4 au meme cout nominal ; la nouvelle
+      flotte s amortit 3 000 000 par an sur les periodes 4 a 7 et laisse 6 000 000 de VNC a
+      l horizon.
+    Le remplacement etant immediat, l amortissement des camionnettes vaut 3 000 000 a chaque
+      periode quel que soit leur age, et la dotation totale est plate a 7 500 000 sur les sept ans.
+      Detail de la VNC totale, periodes 1 a 7 :
+        chaine du froid : 27 000 000 ; 22 500 000 ; 18 000 000 ; 13 500 000 ; 9 000 000 ;
+                          4 500 000 ; 0
+        camionnettes ... : 6 000 000 ; 3 000 000 ; 0 ; 15 000 000 ; 12 000 000 ; 9 000 000 ;
+                          6 000 000
+        total .......... : 33 000 000 ; 25 500 000 ; 18 000 000 ; 28 500 000 ; 21 000 000 ;
+                          13 500 000 ; 6 000 000
+
+  EBIT = 25 165 205,8111380 - 7 500 000 = 17 665 205,8111380 a chaque periode.
+
+  7. IMPOT, PAR PERIODE
+
+  Build non leve : on impose l EBIT au taux marginal des societes, sans economie d impot liee a la
+  dette — c est ce qui rend le resultat un flux du cote actif.
+    IS a 30 % = 17 665 205,8111380 x 0,30 = 5 299 561,7433414.
+    Test du minimum : IMF = 0,5 % x 600 000 000 = 3 000 000, a l interieur de la bande legale
+      500 000 – 5 000 000. L IS le depasse a chaque periode, donc c est l IS qui est du. Le test est
+      neanmoins materialise dans la trace, parce qu il devient la contrainte mordante des que la
+      marge se comprime : un lecteur doit pouvoir CONSTATER qu il n a pas mordu plutot que me croire.
+    Impot retenu = 5 299 561,7433414.
+    NOPAT = 17 665 205,8111380 - 5 299 561,7433414 = 12 365 644,0677966.
+
+  8. BESOIN EN FONDS DE ROULEMENT, PAR PERIODE
+
+  Il n en a rien dit, et pour un grossiste c est la plus grosse chose qu il n ait pas dite. Sur les
+  valeurs de travail elicitees de 45 jours de creances, 45 jours de stock et 60 jours de dettes
+  fournisseurs :
+    creances clients ... 600 000 000 x 45/365 = 73 972 602,7397260
+    stocks ............. 535 714 285,7142857 x 45/365 = 66 046 966,7318982
+    dettes fournisseurs  535 714 285,7142857 x 60/365 = 88 062 622,3091976
+    BFR net ............ 73 972 602,7397260 + 66 046 966,7318982 - 88 062 622,3091976
+                       = 51 956 947,1624266
+  Le point important est structurel, pas numerique : a chiffre d affaires plat, le BFR est constant,
+  donc la VARIATION de BFR est nulle a chaque periode et le NIVEAU du BFR ne touche pas du tout le
+  FCFF. Seule sa variation compte. C est pour cela que je classe les trois questions de BFR en
+  materialite basse RELATIVEMENT a la question de croissance — et pour cela que la question de
+  croissance, qui les rallume, est classee haute.
+  Cela implique aussi que le solde d ouverture n est pas nul : l affaire tourne depuis trois ans et
+  porte deja ce stock de BFR. Le check de conservation est donc ecrit contre un solde d ouverture,
+  et non depuis zero — ecrire cumsum(delta_nwc) == nwc supposerait a tort une entreprise creee ce
+  matin.
+
+  9. INVESTISSEMENT, PAR PERIODE
+
+  Rien en periodes 1 a 3 ; 18 000 000 en periode 4 pour les deux camionnettes de remplacement ;
+  rien ensuite. Aucun remplacement de chaine du froid, par construction de l horizon. Aucun produit
+  de cession en base ; et comme les anciennes camionnettes sont integralement amorties, tout produit
+  eventuel serait une plus-value entierement taxable et non une recuperation de valeur nette
+  comptable.
+  A noter : ce remplacement porte 18 000 000 x 18/118 = 2 745 762,7118644 de TVA qu il ne
+  recuperera pas davantage — la seconde morsure exactement du probleme qu il decrit, et la raison
+  pour laquelle l horizon doit etre assez long pour en contenir une.
+
+  10. FCFF, PAR PERIODE
+
+  FCFF = NOPAT + D&A - variation de BFR - investissement net.
+    Periodes 1, 2, 3, 5, 6, 7 :
+      12 365 644,0677966 + 7 500 000 - 0 - 0 = 19 865 644,0677966
+    Periode 4 :
+      12 365 644,0677966 + 7 500 000 - 0 - 18 000 000 = 1 865 644,0677966
+    Total sur les sept annees : 6 x 19 865 644,0677966 + 1 865 644,0677966
+                              = 119 193 864,4067796 + 1 865 644,0677966
+                              = 121 059 508,4745762
+
+  Contre-verification par la route des flux :
+    CFO = NOPAT + D&A - variation de BFR = 19 865 644,0677966 a chaque periode ;
+    CFI = - investissement net = 0 partout sauf -18 000 000 en periode 4 ;
+    FCFF = CFO + CFI. Memes nombres.
+
+  11. LECTURE
+
+  Sur 600 000 000 de chiffre d affaires, l affaire degage environ 19,9 M de flux libre en annee
+  courante et environ 1,9 M l annee ou elle renouvelle sa flotte. La TVA morte de 4 988 135,5932203
+  par an — celle dont il parle — represente plus du quart de son EBIT et environ le quart de son
+  flux libre d annee courante. Ce n est pas un detail de presentation : c est, en ordre de grandeur,
+  la difference entre une affaire confortable et une affaire tendue, et elle est integralement le
+  produit du regime d exoneration, non de son exploitation.
+
+trace:
+  revenue:
+    [600000000, 600000000, 600000000, 600000000, 600000000, 600000000, 600000000]
+  cogs:
+    [535714285.7142857, 535714285.7142857, 535714285.7142857, 535714285.7142857,
+     535714285.7142857, 535714285.7142857, 535714285.7142857]
+  gross_profit:
+    [64285714.2857143, 64285714.2857143, 64285714.2857143, 64285714.2857143,
+     64285714.2857143, 64285714.2857143, 64285714.2857143]
+  payroll:
+    [10560000, 10560000, 10560000, 10560000, 10560000, 10560000, 10560000]
+  rent_ht:
+    [12203389.8305085, 12203389.8305085, 12203389.8305085, 12203389.8305085,
+     12203389.8305085, 12203389.8305085, 12203389.8305085]
+  opex_vatable_cash:
+    [25200000, 25200000, 25200000, 25200000, 25200000, 25200000, 25200000]
+  opex_vatable_ht:
+    [21355932.2033898, 21355932.2033898, 21355932.2033898, 21355932.2033898,
+     21355932.2033898, 21355932.2033898, 21355932.2033898]
+  irrecoverable_vat_opex:
+    [3844067.7966102, 3844067.7966102, 3844067.7966102, 3844067.7966102,
+     3844067.7966102, 3844067.7966102, 3844067.7966102]
+  opex:
+    [35760000, 35760000, 35760000, 35760000, 35760000, 35760000, 35760000]
+  value_added:
+    [39085714.2857143, 39085714.2857143, 39085714.2857143, 39085714.2857143,
+     39085714.2857143, 39085714.2857143, 39085714.2857143]
+  cel_vl_leased:
+    [1830508.4745763, 1830508.4745763, 1830508.4745763, 1830508.4745763,
+     1830508.4745763, 1830508.4745763, 1830508.4745763]
+  cel_vl_owned:
+    [630000, 630000, 630000, 630000, 630000, 630000, 630000]
+  cel_va_computed:
+    [390857.1428571, 390857.1428571, 390857.1428571, 390857.1428571,
+     390857.1428571, 390857.1428571, 390857.1428571]
+  cel_va:
+    [900000, 900000, 900000, 900000, 900000, 900000, 900000]
+  cel:
+    [3360508.4745763, 3360508.4745763, 3360508.4745763, 3360508.4745763,
+     3360508.4745763, 3360508.4745763, 3360508.4745763]
+  stamp_duty:
+    [0, 0, 0, 0, 0, 0, 0]
+  ebitda:
+    [25165205.8111380, 25165205.8111380, 25165205.8111380, 25165205.8111380,
+     25165205.8111380, 25165205.8111380, 25165205.8111380]
+  dep_coldchain:
+    [4500000, 4500000, 4500000, 4500000, 4500000, 4500000, 4500000]
+  dep_vans:
+    [3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  d_and_a:
+    [7500000, 7500000, 7500000, 7500000, 7500000, 7500000, 7500000]
+  irrecoverable_vat_in_d_and_a:
+    [1144067.7966102, 1144067.7966102, 1144067.7966102, 1144067.7966102,
+     1144067.7966102, 1144067.7966102, 1144067.7966102]
+  vat_dead_cost_pl:
+    [4988135.5932203, 4988135.5932203, 4988135.5932203, 4988135.5932203,
+     4988135.5932203, 4988135.5932203, 4988135.5932203]
+  ebit:
+    [17665205.8111380, 17665205.8111380, 17665205.8111380, 17665205.8111380,
+     17665205.8111380, 17665205.8111380, 17665205.8111380]
+  tax_is:
+    [5299561.7433414, 5299561.7433414, 5299561.7433414, 5299561.7433414,
+     5299561.7433414, 5299561.7433414, 5299561.7433414]
+  tax_imf_uncapped:
+    [3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  tax_imf:
+    [3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  tax:
+    [5299561.7433414, 5299561.7433414, 5299561.7433414, 5299561.7433414,
+     5299561.7433414, 5299561.7433414, 5299561.7433414]
+  nopat:
+    [12365644.0677966, 12365644.0677966, 12365644.0677966, 12365644.0677966,
+     12365644.0677966, 12365644.0677966, 12365644.0677966]
+  receivables:
+    [73972602.7397260, 73972602.7397260, 73972602.7397260, 73972602.7397260,
+     73972602.7397260, 73972602.7397260, 73972602.7397260]
+  inventory:
+    [66046966.7318982, 66046966.7318982, 66046966.7318982, 66046966.7318982,
+     66046966.7318982, 66046966.7318982, 66046966.7318982]
+  payables:
+    [88062622.3091976, 88062622.3091976, 88062622.3091976, 88062622.3091976,
+     88062622.3091976, 88062622.3091976, 88062622.3091976]
+  nwc_opening:
+    [51956947.1624266, 51956947.1624266, 51956947.1624266, 51956947.1624266,
+     51956947.1624266, 51956947.1624266, 51956947.1624266]
+  nwc:
+    [51956947.1624266, 51956947.1624266, 51956947.1624266, 51956947.1624266,
+     51956947.1624266, 51956947.1624266, 51956947.1624266]
+  delta_nwc:
+    [0, 0, 0, 0, 0, 0, 0]
+  capex:
+    [0, 0, 0, 18000000, 0, 0, 0]
+  disposal_proceeds:
+    [0, 0, 0, 0, 0, 0, 0]
+  net_capex:
+    [0, 0, 0, 18000000, 0, 0, 0]
+  irrecoverable_vat_in_capex:
+    [0, 0, 0, 2745762.7118644, 0, 0, 0]
+  nbv_coldchain:
+    [27000000, 22500000, 18000000, 13500000, 9000000, 4500000, 0]
+  nbv_vans:
+    [6000000, 3000000, 0, 15000000, 12000000, 9000000, 6000000]
+  net_ppe_opening:
+    [40500000, 33000000, 25500000, 18000000, 28500000, 21000000, 13500000]
+  net_ppe:
+    [33000000, 25500000, 18000000, 28500000, 21000000, 13500000, 6000000]
+  cfo:
+    [19865644.0677966, 19865644.0677966, 19865644.0677966, 19865644.0677966,
+     19865644.0677966, 19865644.0677966, 19865644.0677966]
+  cfi:
+    [0, 0, 0, -18000000, 0, 0, 0]
+  fcff:
+    [19865644.0677966, 19865644.0677966, 19865644.0677966, 1865644.0677966,
+     19865644.0677966, 19865644.0677966, 19865644.0677966]
+
+fcff:
+  [19865644.0677966, 19865644.0677966, 19865644.0677966, 1865644.0677966,
+   19865644.0677966, 19865644.0677966, 19865644.0677966]
+
+checks:
+  # --- grid / horizon (the choice made falsifiable) ---
+  - "warehouse_fitout_life_years - warehouse_fitout_age_years == grid.periods"
+  - "trace.nbv_coldchain[last] == 0"
+  - "revenue_per_pharmacy_year * pharmacies_served == revenue_annual"
+
+  # --- driver-bridge: revenue and cost of goods ---
+  - "trace.revenue[first] == revenue_annual"
+  - "trace.revenue[t] == trace.revenue[t-1] * (1 + revenue_growth) for t >= 1"
+  - "trace.cogs * (1 + markup_on_purchase) == trace.revenue"
+  - "trace.gross_profit == trace.revenue - trace.cogs"
+
+  # --- driver-bridge: operating cost base ---
+  - "trace.payroll == headcount * wage_per_employee_month * 12 * (1 + employer_social_charge_rate)"
+  - "trace.opex_vatable_cash == (rent_month + fuel_maintenance_month + electricity_month) * 12"
+  - "trace.rent_ht * (1 + vat_standard_rate) == rent_month * 12"
+  - "trace.opex_vatable_cash == trace.opex_vatable_ht + trace.irrecoverable_vat_opex"
+  - "trace.irrecoverable_vat_opex == trace.opex_vatable_ht * vat_standard_rate"
+  - "trace.opex == trace.payroll + trace.opex_vatable_cash"
+
+  # --- driver-bridge: local business tax (CEL) ---
+  - "trace.value_added == trace.revenue - trace.cogs - trace.opex_vatable_cash"
+  - "trace.cel_vl_leased == trace.rent_ht * cel_vl_rate_leased"
+  - "trace.cel_vl_owned == coldchain_capitalised_cost * cel_vl_owned_valeur_locative_pct * cel_vl_rate_owned"
+  - "trace.cel_va_computed == trace.value_added * cel_va_rate"
+  - "trace.cel_va >= trace.cel_va_computed"
+  - "trace.cel_va >= trace.revenue * cel_va_floor_rate"
+  - "trace.cel == trace.cel_vl_leased + trace.cel_vl_owned + trace.cel_va"
+
+  # --- driver-bridge: cash stamp duty ---
+  - "trace.stamp_duty == trace.opex * cash_settlement_share_opex * cash_stamp_duty_rate"
+
+  # --- definition: the ladder down to EBIT ---
+  - "trace.ebitda == trace.revenue - trace.cogs - trace.opex - trace.cel - trace.stamp_duty"
+  - "trace.dep_coldchain == coldchain_capitalised_cost / warehouse_fitout_life_years"
+  - "trace.dep_vans == vans_capitalised_cost / vans_life_years"
+  - "trace.d_and_a == trace.dep_coldchain + trace.dep_vans"
+  - "trace.ebit == trace.ebitda - trace.d_and_a"
+
+  # --- driver-bridge / definition: tax ---
+  - "trace.tax_is == trace.ebit * corporate_tax_rate"
+  - "trace.tax_imf_uncapped == trace.revenue * imf_rate"
+  - "trace.tax_imf >= imf_floor"
+  - "trace.tax_imf <= imf_cap"
+  - "trace.tax >= trace.tax_is"
+  - "trace.tax >= trace.tax_imf"
+  - "trace.nopat == trace.ebit - trace.tax"
+
+  # --- driver-bridge / conservation: working capital ---
+  - "trace.receivables == trace.revenue * dso_days / 365"
+  - "trace.inventory == trace.cogs * dio_days / 365"
+  - "trace.payables == trace.cogs * dpo_days / 365"
+  - "trace.nwc == trace.receivables + trace.inventory - trace.payables"
+  - "trace.nwc == trace.nwc_opening + trace.delta_nwc"
+  - "trace.nwc_opening[t] == trace.nwc[t-1] for t >= 1"
+  - "trace.nwc_opening[first] == nwc_opening_balance"
+  - "cumsum(trace.delta_nwc) == trace.nwc - nwc_opening_balance"
+
+  # --- conservation: fixed asset roll-forwards ---
+  - "ppe_opening_nbv == coldchain_opening_nbv + vans_opening_nbv"
+  - "trace.nbv_coldchain[first] == coldchain_opening_nbv - trace.dep_coldchain[first]"
+  - "trace.nbv_coldchain[t] == trace.nbv_coldchain[t-1] - trace.dep_coldchain[t] for t >= 1"
+  - "trace.nbv_vans[first] == vans_opening_nbv + trace.capex[first] - trace.dep_vans[first]"
+  - "trace.nbv_vans[t] == trace.nbv_vans[t-1] + trace.capex[t] - trace.dep_vans[t] for t >= 1"
+  - "trace.net_ppe == trace.nbv_coldchain + trace.nbv_vans"
+  - "trace.net_ppe == trace.net_ppe_opening + trace.capex - trace.d_and_a"
+  - "trace.net_ppe_opening[first] == ppe_opening_nbv"
+  - "trace.net_ppe_opening[t] == trace.net_ppe[t-1] for t >= 1"
+
+  # --- conservation / definition: capital expenditure ---
+  - "trace.capex[t] == 0 for t < van_replacement_index"
+  - "sum(trace.capex) == vans_capitalised_cost"
+  - "max(trace.capex) == vans_capitalised_cost"
+  - "trace.net_capex == trace.capex - trace.disposal_proceeds"
+  - "trace.irrecoverable_vat_in_capex == trace.capex * vat_standard_rate / (1 + vat_standard_rate)"
+
+  # --- definition: irrecoverable VAT decomposition ---
+  - "trace.irrecoverable_vat_in_d_and_a == trace.d_and_a * vat_standard_rate / (1 + vat_standard_rate)"
+  - "trace.vat_dead_cost_pl == trace.irrecoverable_vat_opex + trace.irrecoverable_vat_in_d_and_a"
+
+  # --- definition: the unlevered free cash flow build ---
+  - "trace.cfo == trace.nopat + trace.d_and_a - trace.delta_nwc"
+  - "trace.cfi + trace.net_capex == 0"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.d_and_a - trace.delta_nwc - trace.net_capex"
+
+  # --- non-negativity ---
+  - "trace.cogs[t] >= 0"
+  - "trace.inventory[t] >= 0"
+  - "trace.receivables[t] >= 0"
+  - "trace.payables[t] >= 0"
+  - "trace.nbv_coldchain[t] >= 0"
+  - "trace.nbv_vans[t] >= 0"
+  - "trace.net_ppe[t] >= 0"
+  - "trace.tax[t] >= 0"
+  - "trace.cel[t] >= 0"
+  - "trace.d_and_a[t] >= 0"
+
+notes:
+  - "CROYANCE CONTRE REGLE. Le fondateur dit « les medicaments essentiels sont exoneres ». La regle senegalaise n est pas indexee sur l essentialite : l exoneration de TVA porte sur une liste limitative de medicaments, produits pharmaceutiques et materiels specialises annexee au Livre II du CGI. Les deux objets sont conserves separement dans les inputs : ce qu il facture est un fait sur son affaire (STATED, output_vat_charged = 0) ; le perimetre de l exoneration est un fait sur le monde (SOURCED). L ecart ne devient operant que par taxable_sales_share."
+  - "SON INTUITION JURIDIQUE EST JUSTE. « Elle reste chez moi, elle devient un cout sec » est exactement la doctrine : exoneration n est pas taux zero. Un exportateur taxe a 0 % deduit et se fait restituer ; un operateur exonere ne deduit pas. Je l ai verifie plutot que de le croire, precisement parce que c est le genre d affirmation qui, fausse, ferait boucler l arithmetique autour d un faux."
+  - "OU VIT LA TVA MORTE. Elle n a pas de ligne propre : par IAS 2.11 et IAS 16.16(a) elle est incorporee au cout. Elle est donc dans le loyer, dans l electricite, dans le carburant, et dans la base amortissable du materiel. Je l ai neanmoins materialisee en lignes de trace distinctes (irrecoverable_vat_opex, irrecoverable_vat_in_d_and_a, irrecoverable_vat_in_capex, vat_dead_cost_pl) parce que c est l objet meme de sa question et qu un lecteur doit pouvoir la voir sans la recalculer. Ces lignes sont descriptives : elles ne modifient aucun agregat."
+  - "LE JUGEMENT PIVOT. Lire les montants cites comme TTC plutot que HT est le choix qui deplace le plus le resultat, et c est un choix, pas une deduction. Il est defendable parce que le carburant (prix a la pompe administre) et l electricite (facture Senelec) sont TTC par construction, et parce que c est le choix omettant. S il repond « HT », les couts d exploitation montent et le flux libre descend. Direction seulement — la question est attachee a l input, pas resolue par un scenario chiffre."
+  - "CEL INCLUSE, MALGRE SON SILENCE. Il ne mentionne aucune fiscalite locale ; l omettre aurait surestime le flux libre. La CEL est materialisee en trois lignes separees (locaux loues, installations propres, valeur ajoutee) pour qu un lecteur puisse contester chaque morceau independamment. Robustesse constatee : le plancher de la CEL-VA mord sur toutes les definitions plausibles de l assiette de valeur ajoutee, de sorte que l incertitude de definition ne change pas la reponse."
+  - "CEL — RELIEF POSSIBLE NON RETENU. Un minimum reduit de CEL-VA existe pour les secteurs a faible marge ou a prix reglementes. La distribution pharmaceutique senegalaise remplit a priori les deux criteres. J ai retenu le minimum de droit commun, qui est le choix conservateur ; si le regime reduit lui est applicable, la charge serait plus faible. Direction seulement."
+  - "CEL — JUGEMENT SUR L ASSIETTE. J ai inclus l equipement frigorifique dans l assiette CEL-VL des installations inscrites a l actif, et exclu les camionnettes comme materiel roulant. C est une lecture de la regle appliquee a son cas, pas une citation ; elle est isolee dans sa propre ligne de trace pour pouvoir etre contestee seule."
+  - "MESURE FISCALE RECENTE QU IL NE MENTIONNE PAS. Le droit de timbre de 1 % sur les paiements en especes (loi n° 2025-17 du 27 septembre 2025, applicable depuis le 4 octobre 2025) est posterieur a la mise en place de son affaire. Cote ventes il est neutralise par l exoneration des produits pharmaceutiques confirmee par la DGID en fevrier 2026 ; cote decaissements il reste ouvert et depend de la maniere dont il regle loyer, salaires et carburant. Reserve consignee dans l input : je n ai pas trouve, a la date de verification, la preuve de publication de l arrete d application annonce."
+  - "REPERE DE MARGE. Les marges de grossistes prives observees au Senegal sont publiees a 13–30 % (marques) et 19–34 % (generiques), et les marges du secteur prive n y sont pas officiellement reglementees. Sa marge de 12 % se situe donc sous le bas de la fourchette publiee. Je n ai pas corrige son chiffre : sa marge est un fait sur son affaire. Mais l ecart merite d etre porte a sa connaissance — soit il opere au plus bas du marche, soit le couple (600 M, 12 %) est approximatif."
+  - "FRICTION DE BASE DE MARGE. Le prix public des medicaments est calcule au Senegal selon une structure administree ou les marges s appliquent au prix grossiste hors taxe (PGHT). Sa marge de 12 % s applique, elle, a son prix d achat. Ce sont deux bases differentes ; je n ai pas force la sienne dans la structure reglementaire, parce qu il la definit sans ambiguite (« ce que j achete cent, je le revends cent douze »)."
+  - "FORME JURIDIQUE. Non etablie. J ai applique la convention standard du build non leve — impot sur l EBIT au taux marginal des societes. Sous un regime d entreprise individuelle a l impot sur le revenu, a ce niveau de benefice, le taux effectif serait plus eleve et non plus faible. Direction seulement."
+  - "AMORTISSEMENTS. Amortissement comptable pris egal a l amortissement fiscal, lineaire sur les durees qu il enonce, sans valeur residuelle et sans impot differe. Introduire une divergence de base fiscale reviendrait a inventer un regime qu il n a pas decrit."
+  - "PAS DE VALEUR TERMINALE, PAS DE FINANCEMENT, PAS D INFLATION. Prix nominaux constants sur toute la grille, ce qui est aussi pourquoi les camionnettes de remplacement coutent le cout nominal des originales. Cette convention et revenue_growth = 0 disent la meme chose et doivent bouger ensemble : un lecteur qui indexe le chiffre d affaires doit indexer les couts et le cout de remplacement."
+  - "AGE DES CAMIONNETTES — POURQUOI MOYEN ET NON HAUT. La duree de vie des camionnettes (6 ans) etant inferieure a l horizon (7 ans), toute reponse entre 0 et 5 ans laisse exactement un remplacement dans la fenetre. Sa reponse deplace le CALENDRIER des 18 000 000, pas leur presence, et laisse donc le total sur l horizon inchange. C est la raison du classement, et c est aussi ce que garantit le check sum(trace.capex) == vans_capitalised_cost."
+  - "AMBIGUITE DU FRANCAIS SUR « ELLES FONT SIX ANS ». La phrase peut se lire « elles durent six ans » ou « elles ont six ans ». J ai suivi la traduction parallele (duree de vie) et la symetrie avec « ca dure dix ans » pour les chambres froides, et j ai isole l autre lecture dans la question elicitee sur l age. Si la reponse est « elles ont six ans », elles sont deja en fin de vie et le remplacement bascule en periode 1."
+  - "AUCUN INPUT ASSUME. J ai cherche une quantite que ni le fondateur ne pourrait enoncer ni le monde ne permettrait de rechercher, et je n en ai pas trouve qui entre materiellement dans la derivation. Les deux qui s en approchent le plus ont ete classees en conventions nommees plutot qu en priors silencieux : le cout de remplacement a prix nominaux constants, et le remplacement immediat sans interruption de service. Une seule zone reste faible : la classe de risque accidents du travail (1–5 %) applicable a la distribution pharmaceutique, que je n ai pas pu sourcer ; elle ne sert qu a borner le haut d une fourchette elicitee et n entre dans aucun calcul du cas de base."
+  - "LES TROIS QUESTIONS, S IL N EN REPOND QUE TROIS. (1) Les montants mensuels sont-ils TTC ou HT ? (2) Le chiffre d affaires croit-il ? (3) Les 110 000 sont-ils votre cout ou le net en main du salarie ? Les trois deplacent le resultat davantage que toutes les autres reunies, et la deuxieme rallume a elle seule les trois questions de fonds de roulement classees basses."
+  - "DIFFERE. Creances douteuses et officines qui trainent — il ne dit rien d impayes. Frequence et structure des tournees de livraison — le carburant est donne en forfait mensuel, donc rien ne dependait de la reponse ici, mais une extension de perimetre en dependrait. Clause d indexation du bail du depot. ASSURANCE : elle n apparait dans aucune de ses lignes de couts, or un grossiste sous temperature dirigee assure normalement stock et rupture de chaine du froid — c est l omission la plus visible de sa liste et la premiere charge que je chercherais a confirmer. Redevances et droits d etablissement pharmaceutique au titre de la reglementation sectorielle. Aucun de ces postes n a ete chiffre par defaut : les omettre est visible, les inventer ne l aurait pas ete."

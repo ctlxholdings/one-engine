@@ -1,0 +1,327 @@
+# Pilot gold "pharma_vat": a Dakar pharmaceutical wholesaler selling VAT-exempt medicines, so the
+# input VAT on its services and equipment is irrecoverable; ten steady years
+# (cases/reference/golds_pilot/pharma_vat.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * sales: revenue_per_year to pharmacies_served pharmacies (an offtake of that many at the revenue
+#     per pharmacy), no output VAT, collected on receivable_days of a days_per_year year;
+#   * medicines bought at revenue / (1 + markup_on_cost), no VAT on them, paid on payable_days;
+#     a stock of inventory_days of cost of sales held against the purchases expense (cost of sales
+#     is what left the store); receivable, payable and stock carried in at their steady level;
+#   * payroll (employees x wage x 12) and the HT services rent, fuel and maintenance, electricity
+#     paid in cash; the input VAT on those services (vat_rate x (1 - input_vat_recovery_rate)) is
+#     its own cost line, paid with them and expensed; the recoverable part (nil) would sit in
+#     vat_receivable, which stays at nil;
+#   * equipment: HT spend and its irrecoverable VAT each paid from their own account, the VAT then
+#     capitalised into the asset (IAS 16.16(a)), so depreciation runs on the VAT-inclusive cost;
+#   * the cold chain and the vans carried in are depreciated over the years they have left
+#     (life - age); each replacement (coldchain_replacement_index, vans_replacement_index_1 and _2)
+#     is charged over a full life from the period it is bought, in its own account;
+#   * the VAT inside depreciation is read as depreciation x VAT/(1 + VAT): every vintage carries
+#     the same VAT share of its cost, so its charge does too;
+#   * tax at corporate_tax_rate on EBIT (no debt), all costs deductible, paid in the year;
+#   * output_vat is read from an empty cut: the sales are exempt, no output VAT account exists;
+#   * delivery_stops and stops_per_van_day are drivers: physical counts no ledger holds.
+gold: pharma_vat
+entity: wholesaler
+plant: revenue_per_year
+case:
+  case: gold-pharma-vat
+  periods: 10
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 10
+      inputs: gold
+      values:
+        price_per_pharmacy: revenue_per_year / pharmacies_served
+        cogs: revenue_per_year / (1 + markup_on_cost)
+        stock: {each_period: cogs * inventory_days / days_per_year}
+        stock_open: cogs * inventory_days / days_per_year
+        receivable_open: revenue_per_year * receivable_days / days_per_year
+        payable_open: cogs * payable_days / days_per_year
+        payroll_annual: employees * wage_per_employee_month * months_per_year
+        rent_annual: rent_month * months_per_year
+        fuel_maint_annual: fuel_maint_month * months_per_year
+        electricity_annual: electricity_month * months_per_year
+        dead_vat_rate: vat_rate * (1 - input_vat_recovery_rate)
+        input_vat_annual: (rent_annual + fuel_maint_annual + electricity_annual) * dead_vat_rate
+        vat_share_of_cost: dead_vat_rate / (1 + dead_vat_rate)
+        stops: pharmacies_served * deliveries_per_pharmacy_per_year
+        stops_per_van_day: stops / (vans_count * working_days_per_year)
+        coldchain_capitalised: coldchain_cost_ht * (1 + dead_vat_rate)
+        vans_capitalised: vans_cost_ht * (1 + dead_vat_rate)
+        coldchain_carried: coldchain_capitalised * (coldchain_life_years - coldchain_age_years) / coldchain_life_years
+        vans_carried: vans_capitalised * (vans_life_years - vans_age_years) / vans_life_years
+        coldchain_life_left: coldchain_life_years - coldchain_age_years
+        vans_life_left: vans_life_years - vans_age_years
+        coldchain_buy: t == coldchain_replacement_index
+        vans_buy: (t == vans_replacement_index_1) + (t == vans_replacement_index_2)
+        coldchain_ht_spend: coldchain_cost_ht * coldchain_buy
+        coldchain_vat_spend: coldchain_cost_ht * dead_vat_rate * coldchain_buy
+        vans_ht_spend: vans_cost_ht * vans_buy
+        vans_vat_spend: vans_cost_ht * dead_vat_rate * vans_buy
+  opening:
+    wholesaler:
+      coldchain_installed: {nature: asset, value: {generator: gold, output: coldchain_carried}}
+      vans_installed: {nature: asset, value: {generator: gold, output: vans_carried}}
+      inventory: {nature: asset, value: {generator: gold, output: stock_open}}
+      sales.receivable: {nature: asset, value: {generator: gold, output: receivable_open}}
+      medicines.payable: {nature: liability, value: {generator: gold, output: payable_open}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: wholesaler}
+      terms: {volume: {generator: gold, output: pharmacies_served}, price: {generator: gold, output: price_per_pharmacy},
+              payment_days: {generator: gold, output: receivable_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: 10}                # past the horizon: pharmacies still owe at its end (going concern)
+    medicines:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: cogs}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: payable_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    payroll:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: payroll_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    fuel_maint:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: fuel_maint_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    electricity:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: electricity_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    input_vat:                        # the services' VAT the exempt trader cannot recover: a cost of them
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: input_vat_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    coldchain:
+      type: capex_class
+      parties: {owner: wholesaler}
+      terms: {schedule: {generator: gold, output: coldchain_ht_spend}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+    coldchain_vat:
+      type: capex_class
+      parties: {owner: wholesaler}
+      terms: {schedule: {generator: gold, output: coldchain_vat_spend}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+    vans:
+      type: capex_class
+      parties: {owner: wholesaler}
+      terms: {schedule: {generator: gold, output: vans_ht_spend}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+    vans_vat:
+      type: capex_class
+      parties: {owner: wholesaler}
+      terms: {schedule: {generator: gold, output: vans_vat_spend}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: wholesaler
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: stock}, against: medicines.expense}
+    capitalise_vat:                   # the irrecoverable VAT on equipment joins its cost (IAS 16.16(a))
+      kind: transfer
+      entity: wholesaler
+      phase: operate
+      moves:
+        coldchain: {debit: coldchain, credit: coldchain_vat, amount: {generator: gold, output: coldchain_vat_spend}}
+        vans: {debit: vans, credit: vans_vat, amount: {generator: gold, output: vans_vat_spend}}
+    coldchain_carried:                # the fit-out carried in: the years it has left
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: coldchain
+      to: coldchain_installed
+      expense: dep_coldchain
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 10                  # after the horizon
+      life_periods: {generator: gold, output: coldchain_life_left}
+      first_charge: in_service
+    coldchain_new:                    # its replacement: a full life from the period it is bought
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: coldchain
+      to: coldchain_replaced
+      expense: dep_coldchain
+      disposal: disposal_loss
+      in_service: {generator: gold, output: coldchain_replacement_index}
+      dispose_at: 10
+      life_periods: {generator: gold, output: coldchain_life_years}
+      first_charge: in_service
+    vans_carried:
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: vans
+      to: vans_installed
+      expense: dep_vans
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 10
+      life_periods: {generator: gold, output: vans_life_left}
+      first_charge: in_service
+    vans_new:                         # two replacements, each a full life from its purchase
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: vans
+      to: vans_replaced
+      expense: dep_vans
+      disposal: disposal_loss
+      in_service: [{generator: gold, output: vans_replacement_index_1}, {generator: gold, output: vans_replacement_index_2}]
+      dispose_at: 10
+      life_periods: {generator: gold, output: vans_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: wholesaler
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: corporate_tax_rate}
+      carry_forward_periods: null
+      scheme:
+        sales.revenue: taxable
+        medicines.expense: taxable
+        payroll.expense: taxable
+        rent.expense: taxable
+        fuel_maint.expense: taxable
+        electricity.expense: taxable
+        input_vat.expense: taxable
+        dep_coldchain: taxable
+        dep_vans: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: wholesaler
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      medicines.expense: cogs
+      payroll.expense: payroll
+      rent.expense: rent
+      fuel_maint.expense: fuel_maint
+      electricity.expense: electricity
+      input_vat.expense: input_vat
+      dep_coldchain: dep_coldchain
+      dep_vans: dep_vans
+      disposal_loss: dep_coldchain
+      tax_expense: tax
+    cash_flow:
+      sales.receivable: operating
+      medicines.payable: operating
+      payroll.payable: operating
+      rent.payable: operating
+      fuel_maint.payable: operating
+      electricity.payable: operating
+      input_vat.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      coldchain: coldchain_ht
+      coldchain_vat: coldchain_vat
+      vans: vans_ht
+      vans_vat: vans_vat
+  cuts:
+    revenue: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cogs]}
+    gross_profit: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue, cogs]}
+    payroll: {kind: pnl, entity: wholesaler, scheme: pnl, include: [payroll]}
+    rent: {kind: pnl, entity: wholesaler, scheme: pnl, include: [rent]}
+    fuel_maint: {kind: pnl, entity: wholesaler, scheme: pnl, include: [fuel_maint]}
+    electricity: {kind: pnl, entity: wholesaler, scheme: pnl, include: [electricity]}
+    vatable_opex: {kind: pnl, entity: wholesaler, scheme: pnl, include: [rent, fuel_maint, electricity]}
+    input_vat: {kind: pnl, entity: wholesaler, scheme: pnl, include: [input_vat]}
+    output_vat: {kind: pnl, entity: wholesaler, scheme: pnl, include: []}     # exempt sales: no output VAT
+    opex: {kind: pnl, entity: wholesaler, scheme: pnl, include: [payroll, rent, fuel_maint, electricity, input_vat]}
+    ebitda: {kind: pnl, entity: wholesaler, scheme: pnl,
+             include: [revenue, cogs, payroll, rent, fuel_maint, electricity, input_vat]}
+    dep_coldchain: {kind: pnl, entity: wholesaler, scheme: pnl, include: [dep_coldchain]}
+    dep_vans: {kind: pnl, entity: wholesaler, scheme: pnl, include: [dep_vans]}
+    depreciation: {kind: pnl, entity: wholesaler, scheme: pnl, include: [dep_coldchain, dep_vans]}
+    ebit: {kind: pnl, entity: wholesaler, scheme: pnl,
+           include: [revenue, cogs, payroll, rent, fuel_maint, electricity, input_vat, dep_coldchain, dep_vans]}
+    tax: {kind: pnl, entity: wholesaler, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: wholesaler, scheme: pnl,
+            include: [revenue, cogs, payroll, rent, fuel_maint, electricity, input_vat, dep_coldchain, dep_vans, tax]}
+    capex_ht: {entity: wholesaler, account: cash, scheme: cash_flow, include: [coldchain_ht, vans_ht]}
+    capex_vat: {entity: wholesaler, account: cash, scheme: cash_flow, include: [coldchain_vat, vans_vat]}
+    capex_coldchain: {entity: wholesaler, account: cash, scheme: cash_flow, include: [coldchain_ht, coldchain_vat]}
+    capex_vans: {entity: wholesaler, account: cash, scheme: cash_flow, include: [vans_ht, vans_vat]}
+    cfo: {entity: wholesaler, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: wholesaler, account: cash, scheme: cash_flow, include: [coldchain_ht, coldchain_vat, vans_ht, vans_vat]}
+    fcff: {entity: wholesaler, account: cash, scheme: cash_flow,
+           include: [operating, coldchain_ht, coldchain_vat, vans_ht, vans_vat]}
+  measures: {}
+trace:
+  revenue: {cut: revenue}
+  cogs: {cut: cogs, sign: -1}
+  gross_profit: {cut: gross_profit}
+  revenue_per_pharmacy: {cut: revenue, per: gold.pharmacies_served}
+  purchases_per_pharmacy: {cut: cogs, sign: -1, per: gold.pharmacies_served}
+  gross_margin_per_pharmacy: {cut: gross_profit, per: gold.pharmacies_served}
+  delivery_stops: {driver: gold.stops}
+  stops_per_van_day: {driver: gold.stops_per_van_day}
+  payroll: {cut: payroll, sign: -1}
+  rent_ht: {cut: rent, sign: -1}
+  fuel_maint_ht: {cut: fuel_maint, sign: -1}
+  electricity_ht: {cut: electricity, sign: -1}
+  vatable_opex_ht: {cut: vatable_opex, sign: -1}
+  irrecoverable_vat_opex: {cut: input_vat, sign: -1}
+  vat_credit_recoverable: {balance: vat_receivable}
+  output_vat: {cut: output_vat}
+  opex_cash: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  dep_coldchain: {cut: dep_coldchain, sign: -1}
+  dep_vans: {cut: dep_vans, sign: -1}
+  dep_total: {cut: depreciation, sign: -1}
+  irrecoverable_vat_in_dep: {cut: depreciation, sign: -1, times: gold.vat_share_of_cost}
+  irrecoverable_vat_total_pl: {sum: [{cut: input_vat, sign: -1}, {cut: depreciation, sign: -1, times: gold.vat_share_of_cost}]}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  inventory: {balance: inventory}
+  receivables: {balance: sales.receivable}
+  payables: {balance: medicines.payable + payroll.payable + rent.payable + fuel_maint.payable + electricity.payable + input_vat.payable}
+  nwc: {balance: inventory + sales.receivable - medicines.payable - payroll.payable - rent.payable - fuel_maint.payable - electricity.payable - input_vat.payable}
+  nwc_prior: {opening: inventory + sales.receivable - medicines.payable - payroll.payable - rent.payable - fuel_maint.payable - electricity.payable - input_vat.payable}
+  delta_nwc: {change: inventory + sales.receivable - medicines.payable - payroll.payable - rent.payable - fuel_maint.payable - electricity.payable - input_vat.payable}
+  capex_ht: {cut: capex_ht, sign: -1}
+  irrecoverable_vat_in_capex: {cut: capex_vat, sign: -1}
+  capex_coldchain: {cut: capex_coldchain, sign: -1}
+  capex_vans: {cut: capex_vans, sign: -1}
+  capex: {cut: cfi, sign: -1}
+  nbv_coldchain_prior: {opening: coldchain_installed + coldchain_replaced}
+  nbv_coldchain: {balance: coldchain_installed + coldchain_replaced}
+  nbv_vans_prior: {opening: vans_installed + vans_replaced}
+  nbv_vans: {balance: vans_installed + vans_replaced}
+  net_ppe: {balance: coldchain_installed + coldchain_replaced + vans_installed + vans_replaced}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

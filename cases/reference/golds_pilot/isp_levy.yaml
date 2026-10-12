@@ -1,0 +1,699 @@
+id: bamako_neighbourhood_isp_unlevered_fcff
+title: "Quartier ISP, Bamako — unlevered FCFF (NOPAT build) over the remaining life of the installed network"
+currency: XOF
+grid:
+  periods: 6
+  freq: annual
+
+utterance:
+  fr: |
+    Je suis fournisseur d'accès internet à Bamako — un petit opérateur de quartier. J'ai monté le
+    réseau il y a deux ans : les antennes, la fibre jusqu'aux immeubles, les routeurs, ça m'a coûté
+    quatre-vingt-dix millions au total, et ce genre de matériel on le change au bout de huit ans.
+    J'ai aujourd'hui mille deux cents abonnés qui paient chacun quinze mille francs par mois, et
+    j'en gagne à peu près cent cinquante de plus chaque année. La bande passante que j'achète en
+    gros au grossiste national me coûte trois millions cinq cent mille par mois, quel que soit le
+    nombre d'abonnés — c'est un forfait de capacité. J'ai six techniciens à cent vingt mille par
+    mois, le local et le groupe électrogène me font huit cent mille par mois tout compris.
+    Maintenant, la particularité de mon métier : le régulateur des télécoms prélève chaque année une
+    redevance de régulation sur mon chiffre d'affaires — un pourcentage de tout ce que j'encaisse,
+    que je sois bénéficiaire ou pas. Ça, c'est une charge que je peux déduire. Et après l'avoir
+    payée, je paie encore l'impôt sur les sociétés sur le bénéfice qui reste. Donc j'ai deux
+    prélèvements empilés : un sur le chiffre d'affaires, un sur le bénéfice.
+  en: |
+    I am an internet service provider in Bamako — a small neighbourhood operator. I built the network
+    two years ago: the antennas, the fibre up to the buildings, the routers; it cost me ninety million
+    in total, and that kind of equipment gets replaced after eight years. Today I have one thousand
+    two hundred subscribers each paying fifteen thousand francs a month, and I gain roughly one
+    hundred and fifty more every year. The bandwidth I buy wholesale from the national wholesaler
+    costs me three million five hundred thousand a month, whatever the number of subscribers — it is
+    a capacity package. I have six technicians at one hundred and twenty thousand a month, and the
+    premises plus the generator come to eight hundred thousand a month all-in. Now, the peculiarity
+    of my trade: the telecoms regulator levies every year a regulatory fee on my turnover — a
+    percentage of everything I collect, whether I am profitable or not. That is a charge I can
+    deduct. And after paying it, I still pay corporate income tax on the profit that remains. So I
+    have two stacked levies: one on turnover, one on profit.
+
+inputs:
+
+  subscribers_initial:
+    value: 1200
+    unit: subscribers
+    prov: STATED
+    source: "« J'ai aujourd'hui mille deux cents abonnés »"
+    date: "2026-07-25"
+
+  monthly_fee_per_subscriber:
+    value: 15000
+    unit: XOF per subscriber per month
+    prov: STATED
+    source: "« qui paient chacun quinze mille francs par mois »"
+    date: "2026-07-25"
+
+  net_adds_per_year:
+    value: 150
+    unit: subscribers per year
+    prov: STATED
+    source: "« j'en gagne à peu près cent cinquante de plus chaque année » — read as a NET gain (he says what he gains, not what he connects)"
+    date: "2026-07-25"
+
+  months_per_year:
+    value: 12
+    unit: months per year
+    prov: DEFAULTED
+    source: "Calendar convention; the founder quotes every price and cost per month, the grid is annual"
+    date: "2026-07-25"
+
+  bandwidth_monthly:
+    value: 3500000
+    unit: XOF per month
+    prov: STATED
+    source: "« La bande passante ... me coûte trois millions cinq cent mille par mois, quel que soit le nombre d'abonnés — c'est un forfait de capacité »"
+    date: "2026-07-25"
+
+  technicians_headcount:
+    value: 6
+    unit: technicians
+    prov: STATED
+    source: "« J'ai six techniciens »"
+    date: "2026-07-25"
+
+  technician_monthly_wage:
+    value: 120000
+    unit: XOF per technician per month
+    prov: STATED
+    source: "« six techniciens à cent vingt mille par mois »"
+    date: "2026-07-25"
+
+  site_monthly_cost:
+    value: 800000
+    unit: XOF per month
+    prov: STATED
+    source: "« le local et le groupe électrogène me font huit cent mille par mois tout compris »"
+    date: "2026-07-25"
+
+  network_capex_initial:
+    value: 90000000
+    unit: XOF
+    prov: STATED
+    source: "« les antennes, la fibre jusqu'aux immeubles, les routeurs, ça m'a coûté quatre-vingt-dix millions au total »"
+    date: "2026-07-25"
+
+  asset_useful_life_years:
+    value: 8
+    unit: years
+    prov: STATED
+    source: "« ce genre de matériel on le change au bout de huit ans » — the founder's own replacement cycle is taken as the useful life"
+    date: "2026-07-25"
+
+  asset_age_years_at_t0:
+    value: 2
+    unit: years
+    prov: STATED
+    source: "« J'ai monté le réseau il y a deux ans »"
+    date: "2026-07-25"
+
+  remaining_life_years:
+    value: 6
+    unit: years
+    prov: INFERRED
+    source: "asset_useful_life_years (8) minus asset_age_years_at_t0 (2); no new information added. This sets grid.periods"
+    date: "2026-07-25"
+
+  replacement_period_index:
+    value: 5
+    unit: period index (0-based)
+    prov: ASSUMED
+    source: "CONVENTION. The arithmetic (remaining_life_years - 1) is entailed, but CHOOSING to place the replacement inside the horizon is not, and this gold's own notes call the same decision a 'JUDGMENT CALL'. RE-TAGGED 2026-07-26 (physical audit): was INFERRED, contradicting the notes layer on the largest discretionary item in the file. Note the asymmetry it creates and which is NOT resolved: the full replacement outlay is charged to the final period while the brand-new network it buys leaves the horizon carrying its whole value, with no terminal value recognised -- and trace.nbv[last] == replacement_capex is asserted as a CHECK, so the model formally certifies the stranded asset it then ignores. Read trace.cfo[last] for the operating flow without the reinvestment."
+    date: "2026-07-25"
+
+  depreciation_method:
+    value: straight_line
+    unit: n/a
+    prov: DEFAULTED
+    source: "IAS 16.62 — straight-line is the default systematic allocation where no other consumption pattern is evidenced; network electronics and fibre are consumed evenly by the passage of time"
+    date: "2026-07-25"
+
+  residual_value:
+    value: 0
+    unit: XOF
+    prov: ASSUMED
+    source: "Prior — end-of-life telecom electronics in a quartier network have no reliable resale market; the founder mentions no scrap or trade-in value. ELICIT: do you sell or trade in the old antennas and routers when you swap them?"
+    date: "2026-07-25"
+
+  gross_ppe_opening:
+    value: 90000000
+    unit: XOF
+    prov: INFERRED
+    source: "network_capex_initial; the network is still in service two years on, nothing stated has left the asset base"
+    date: "2026-07-25"
+
+  accum_dep_opening:
+    value: 22500000
+    unit: XOF
+    prov: ASSUMED
+    source: "2 years x (90000000 / 8) = 22500000. Chain: STATED cost, life and age, plus DEFAULTED straight-line and ASSUMED nil residual — the unstated priors make the result ASSUMED, not INFERRED"
+    date: "2026-07-25"
+
+  nbv_opening:
+    value: 67500000
+    unit: XOF
+    prov: ASSUMED
+    source: "gross_ppe_opening minus accum_dep_opening; inherits the ASSUMED tag from accum_dep_opening"
+    date: "2026-07-25"
+
+  replacement_capex:
+    value: 90000000
+    unit: XOF
+    prov: ASSUMED
+    source: "Like-for-like re-build at the same nominal outlay when the 8-year cycle closes. The founder states the swap happens (« on le change au bout de huit ans ») but never prices it. ELICIT: what would the same network cost you to rebuild today?"
+    date: "2026-07-25"
+
+  regulatory_fee_rate:
+    value: 0.01
+    unit: fraction of turnover
+    prov: ASSUMED
+    source: "The founder states the levy exists and its base (« une redevance de régulation sur mon chiffre d'affaires — un pourcentage de tout ce que j'encaisse ») but never the rate. Prior — WAEMU telecom regulators assess a redevance de régulation of the order of 1% of turnover excluding taxes. ELICIT: what percentage does your licence specify, and on what exact base?"
+    date: "2026-07-25"
+
+  corporate_tax_rate:
+    value: 0.30
+    unit: fraction of taxable profit
+    prov: ASSUMED
+    source: "The founder states « je paie encore l'impôt sur les sociétés sur le bénéfice qui reste » but not the rate. Prior — Mali's standard corporate income tax (impôt sur les sociétés) rate is 30%. ELICIT: what IS rate do you actually file at, and are you under any reduced or start-up regime?"
+    date: "2026-07-25"
+
+  connection_cost_per_new_subscriber:
+    value: 30000
+    unit: XOF per new subscriber
+    prov: ASSUMED
+    source: "Physical necessity not costed by the founder — each new subscriber needs a CPE router and a drop from the building riser, since the fibre already reaches « jusqu'aux immeubles ». Prior — a basic CPE plus in-building drop in Bamako. Expensed, not capitalised, under a low-value capitalisation threshold policy. ELICIT: what does it cost you to connect one new subscriber, and do you charge an installation fee?"
+    date: "2026-07-25"
+
+  churn_rate_per_year:
+    value: 0
+    unit: fraction of subscribers per year
+    prov: ASSUMED
+    source: "Prior — none stated; gross connections are set equal to the stated net adds. ELICIT: how many subscribers do you lose in a year, and how many do you connect gross?"
+    date: "2026-07-25"
+
+  dso_months:
+    value: 1
+    unit: months of billing outstanding
+    prov: ASSUMED
+    source: "Prior — monthly post-paid billing with roughly one month outstanding at any date. Not stated; the founder says « tout ce que j'encaisse » without specifying prepaid or postpaid. ELICIT: do subscribers pay in advance for the coming month, or in arrears for the month used?"
+    date: "2026-07-25"
+
+  dpo_bandwidth_months:
+    value: 1
+    unit: months of wholesale invoice outstanding
+    prov: ASSUMED
+    source: "Prior — the national wholesaler invoices monthly and is settled on roughly 30-day terms. ELICIT: on what terms do you settle the wholesaler?"
+    date: "2026-07-25"
+
+  ar_opening:
+    value: 18000000
+    unit: XOF
+    prov: ASSUMED
+    source: "dso_months (1) x subscribers_initial (1200) x monthly_fee_per_subscriber (15000); inherits the ASSUMED tag from dso_months"
+    date: "2026-07-25"
+
+  ap_opening:
+    value: 3500000
+    unit: XOF
+    prov: ASSUMED
+    source: "dpo_bandwidth_months (1) x bandwidth_monthly (3500000); inherits the ASSUMED tag from dpo_bandwidth_months"
+    date: "2026-07-25"
+
+  nwc_opening:
+    value: 14500000
+    unit: XOF
+    prov: ASSUMED
+    source: "ar_opening (18000000) minus ap_opening (3500000); inherits the ASSUMED tags of its two components"
+    date: "2026-07-25"
+
+  tariff_escalation_rate:
+    value: 0
+    unit: fraction per year
+    prov: ASSUMED
+    source: "Prior — the founder quotes a flat 15000 per month with no mention of indexation; the model is built in nominal terms with a frozen tariff. ELICIT: have you raised the monthly price since launch, and do you plan to?"
+    date: "2026-07-25"
+
+  opex_escalation_rate:
+    value: 0
+    unit: fraction per year
+    prov: ASSUMED
+    source: "Prior — wages, premises, generator and the wholesale forfait are quoted as current monthly amounts with no indexation stated; held flat in nominal terms. ELICIT: how have your wage bill and fuel costs moved over the last two years?"
+    date: "2026-07-25"
+
+  bandwidth_capacity_ceiling_subscribers:
+    value: 560
+    unit: subscribers
+    prov: ASSUMED
+    source: "REPAIRED 2026-08-04 (F-226, physics audit isp_levy__physics__2026-08-03.md). Was tagged ASSUMED_UNBOUNDED with value null -- not one of the six channels spec/GENERATION_PROMPT.md defines (STATED/INFERRED/SOURCED/ELICITED/ASSUMED/DEFAULTED), and a null value breaks rule (c) of that same contract: 'Give the input a working value so the arithmetic runs, and keep the question attached to it.' The null also made the input structurally unable to enter any check -- the E7 dead-lever failure mode, invisible to the machine gate only because the invented tag routed around it instead of ELICITED. Working value derived transparently from SEC-V26-25 (spec/FACT_BASE.md, in-date 2026-07-27): 3,500,000 XOF/month / 655.957 XOF-per-EUR =~ 5,337 EUR/month =~ USD 5,800/month. At SEC-V26-25's USD 50-200/Mbps/month wholesale-IP band that buys roughly 29-116 Mbps, central ~56 Mbps. At SEC-V26-25's 50-150 kbps/subscriber busy-hour demand band, a 56 Mbps pipe supports 56,000/150 =~ 373 to 56,000/50 =~ 1,120 subscribers; taking the demand band's own midpoint (100 kbps/sub) gives the working central estimate of 560 subscribers used here. Crossing both bands end to end spans roughly 193 to 2,320 subscribers -- genuinely wide, which is exactly why this stays ASSUMED (a world prior bounded by a benchmark) rather than SOURCED (a looked-up fact) or a false-precision ELICITED point value. The founder still holds the real answer. QUESTION: how many Mbit/s does your forfait give you, and at how many subscribers do you have to buy the next tier?"
+    date: "2026-08-04"
+
+  tariff_vat_status:
+    value: unknown
+    unit: n/a
+    prov: ASSUMED_VAT_EXCLUSIVE
+    source: "The founder frames his tax burden as exactly two stacked levies and never mentions TVA. QUESTION: is the 15000 francs the subscriber pays the amount you keep, or is TVA embedded in it and remitted onward?"
+    date: "2026-07-25"
+
+  subscriber_growth_within_existing_footprint:
+    value: true
+    unit: n/a
+    prov: ASSUMED
+    source: "ADDED 2026-08-04 (F-227, physics audit isp_levy__physics__2026-08-03.md). The model prices only a CPE router and in-building drop for each of the 900 net-add subscribers (connection_cost_per_new_subscriber), which is the correct and complete cost ONLY if every new subscriber is in-fill within a building the network already reaches (« la fibre jusqu'aux immeubles » is stated for the CURRENT footprint, not for wherever growth happens to land). Growing the base 75% is not guaranteed to stay inside that footprint -- new streets or sectors would need new antenna/backhaul capacity, entangled with the same physical resource bandwidth_capacity_ceiling_subscribers already flags as tight (F-226). No FACT_BASE benchmark exists for Bamako quartier household penetration to independently derive a growth-capex figure, so this is recorded as a named, flagged structural assumption -- categorical, changes what the model would need to add if false, not a number any check can bind -- rather than an invented capex line. QUESTION: are the 900 new households you expect to connect inside buildings/streets your network already serves, or does reaching some of them require new antenna sectors or backhaul outside the current footprint?"
+    date: "2026-08-04"
+
+passage: |
+  ================================================================================
+  A. WHAT KIND OF BUSINESS THIS IS, IN ITS OWN NATURAL QUANTITIES
+  ================================================================================
+
+  This is a fixed-capacity reseller, not a manufacturer. The natural unit of production is the
+  SUBSCRIBER-MONTH: one connected household served for one month, sold at a flat 15 000 XOF. There
+  is no bill of materials, no batch, no yield loss. The physical plant — antennas, fibre to the
+  buildings, routers — is a single indivisible block bought once and consumed by the passage of
+  time, and the principal input (wholesale bandwidth) is bought as a lump: « c'est un forfait de
+  capacité », three and a half million a month « quel que soit le nombre d'abonnés ».
+
+  That single fact governs the whole economics. The marginal cost of one more subscriber-month is,
+  on the founder's own description, zero at the network level. Every incremental subscriber-month
+  drops 15 000 XOF of revenue against no incremental bandwidth, no incremental technician and no
+  incremental premises cost — only the regulator takes his slice of it, and then the tax authority
+  takes a slice of what is left. The operating leverage is therefore extreme, and the whole
+  derivation below is really the arithmetic of a growing numerator over a frozen denominator.
+
+  The only genuinely per-subscriber cost I can see in the physics of the operation is the one the
+  founder does not cost: connecting a new household. The fibre already reaches the buildings
+  (« la fibre jusqu'aux immeubles »), so a new subscriber inside an already-lit building needs a CPE
+  router and a drop from the riser. He adds 150 households a year and cannot do that for nothing. I
+  carry this as a flagged ASSUMED cost of 30 000 XOF per new connection, expensed in the year of
+  connection under a low-value capitalisation threshold. I flag it loudly rather than omit it,
+  because a model in which 900 new households are connected at literally zero cost is not a model of
+  this business.
+
+  ================================================================================
+  B. HORIZON AND GRID
+  ================================================================================
+
+  The founder gives me the two dates I need. The network was built two years ago
+  (« J'ai monté le réseau il y a deux ans ») and this class of equipment is replaced after eight
+  (« on le change au bout de huit ans »). Remaining life = 8 − 2 = 6 years. That is the natural
+  horizon: it is exactly the period over which the installed asset earns, and it terminates at the
+  moment the founder himself identifies as the re-investment point.
+
+  Grid: 6 annual periods, t = 0 (the next twelve months, the network's third year) through t = 5
+  (the network's eighth year). All flows are annual; the founder's monthly figures are annualised at
+  12 months per year.
+
+  The 90 000 000 XOF already spent two years ago is SUNK. It is not an FCFF outflow inside this
+  horizon. What it leaves behind is a depreciation shield and a net book value, both of which run
+  out precisely at t = 5.
+
+  ================================================================================
+  C. THE SUBSCRIBER ENGINE
+  ================================================================================
+
+  Opening base 1 200; net adds 150 a year, flat. I roll the base forward and, because the adds
+  accrue continuously through the year rather than all on 1 January, I bill on the AVERAGE base
+  (mid-period convention, the standard treatment for an evenly-spread subscription cohort). The
+  half-add is exactly 75 subscribers, so no rounding is introduced.
+
+    t=0:  opening 1 200  + 150 = closing 1 350  → average (1 200 + 1 350)/2 = 1 275
+    t=1:  opening 1 350  + 150 = closing 1 500  → average (1 350 + 1 500)/2 = 1 425
+    t=2:  opening 1 500  + 150 = closing 1 650  → average (1 500 + 1 650)/2 = 1 575
+    t=3:  opening 1 650  + 150 = closing 1 800  → average (1 650 + 1 800)/2 = 1 725
+    t=4:  opening 1 800  + 150 = closing 1 950  → average (1 800 + 1 950)/2 = 1 875
+    t=5:  opening 1 950  + 150 = closing 2 100  → average (1 950 + 2 100)/2 = 2 025
+
+  Production in the business's own unit — subscriber-months = average base x 12:
+
+    t=0: 1 275 x 12 = 15 300      t=3: 1 725 x 12 = 20 700
+    t=1: 1 425 x 12 = 17 100      t=4: 1 875 x 12 = 22 500
+    t=2: 1 575 x 12 = 18 900      t=5: 2 025 x 12 = 24 300
+
+  Over the six years the base grows 75%, from 1 200 to 2 100. Conservation: the 900 subscribers added
+  (6 x 150) are exactly the difference between the closing 2 100 and the opening 1 200.
+
+  ================================================================================
+  D. REVENUE (IFRS 15 — SERVICE RENDERED OVER TIME)
+  ================================================================================
+
+  Internet access is a service transferred over time; revenue is recognised as each month of access is
+  delivered. Revenue = subscriber-months x 15 000.
+
+    t=0: 15 300 x 15 000 = 229 500 000
+    t=1: 17 100 x 15 000 = 256 500 000
+    t=2: 18 900 x 15 000 = 283 500 000
+    t=3: 20 700 x 15 000 = 310 500 000
+    t=4: 22 500 x 15 000 = 337 500 000
+    t=5: 24 300 x 15 000 = 364 500 000
+
+  ================================================================================
+  E. THE COST ENGINE
+  ================================================================================
+
+  Three of the four cost lines are stated outright and are, on the founder's own testimony,
+  independent of volume. I annualise each:
+
+    Wholesale bandwidth   3 500 000 x 12 = 42 000 000 per year, every year
+    Technicians           6 x 120 000 x 12 = 720 000 x 12 = 8 640 000 per year, every year
+    Premises + generator  800 000 x 12 = 9 600 000 per year, every year   ("tout compris")
+    Connections [ASSUMED] 150 x 30 000 = 4 500 000 per year, every year
+
+    Total cash operating cost = 42 000 000 + 8 640 000 + 9 600 000 + 4 500 000 = 64 740 000 per year.
+
+  Because net adds are constant at 150 a year, even the connection line is constant, so the entire
+  cash cost base is a flat 64 740 000 across all six periods while revenue rises by 27 000 000 a year.
+
+  The unit economics that follow are the whole story of this business. The bandwidth forfait spread
+  over subscriber-months costs 42 000 000 / 15 300 ≈ 2 745 XOF per subscriber-month in the first
+  period, and only 42 000 000 / 24 300 ≈ 1 728 by the last — a 37% dilution bought purely by filling
+  the same pipe. Against a 15 000 XOF price, the incremental subscriber-month carries no incremental
+  network cost at all; only the 1% regulatory slice and, at one remove, corporate tax.
+
+  ================================================================================
+  F. THE TWO STACKED LEVIES — THE PECULIARITY OF THE TRADE
+  ================================================================================
+
+  The founder is precise about the structure and I model it exactly as he describes it:
+  « deux prélèvements empilés : un sur le chiffre d'affaires, un sur le bénéfice », with the first
+  deductible against the second (« c'est une charge que je peux déduire. Et après l'avoir payée, je
+  paie encore l'impôt sur les sociétés sur le bénéfice qui reste »).
+
+  LEVY 1 — regulatory fee, on turnover, payable « que je sois bénéficiaire ou pas ». It is an
+  operating charge, not a tax on income, so under IAS 12 it sits ABOVE the tax line, inside EBITDA.
+  Rate ASSUMED at 1% (see inputs). CORRECTED 2026-07-26 (physical audit): this previously called the
+  fee rate "the single largest unverified number in the model". That ranking is false. Independently
+  verified, the 1% is CORRECT -- the Malian regulator's redevance de regulation is assessed at 1% of
+  operator turnover -- and its leverage on the answer is small relative to at least three other
+  unverified items in this file: whether the 15,000 retail price is quoted inclusive of VAT, whether
+  the replacement outlay belongs inside the horizon at all, and the corporate tax rate. Flagging
+  should track materiality; here it was close to inversely proportional to it.
+
+    t=0: 1% x 229 500 000 = 2 295 000      t=3: 1% x 310 500 000 = 3 105 000
+    t=1: 1% x 256 500 000 = 2 565 000      t=4: 1% x 337 500 000 = 3 375 000
+    t=2: 1% x 283 500 000 = 2 835 000      t=5: 1% x 364 500 000 = 3 645 000
+
+  EBITDA = revenue − cash operating cost − regulatory fee:
+
+    t=0: 229 500 000 − 64 740 000 − 2 295 000 = 162 465 000
+    t=1: 256 500 000 − 64 740 000 − 2 565 000 = 189 195 000
+    t=2: 283 500 000 − 64 740 000 − 2 835 000 = 215 925 000
+    t=3: 310 500 000 − 64 740 000 − 3 105 000 = 242 655 000
+    t=4: 337 500 000 − 64 740 000 − 3 375 000 = 269 385 000
+    t=5: 364 500 000 − 64 740 000 − 3 645 000 = 296 115 000
+
+  LEVY 2 — corporate income tax on the profit that remains. In an unlevered build the tax base is
+  EBIT (no interest by construction), so:
+
+    EBIT = EBITDA − depreciation (11 250 000, derived in section G):
+
+    t=0: 162 465 000 − 11 250 000 = 151 215 000
+    t=1: 189 195 000 − 11 250 000 = 177 945 000
+    t=2: 215 925 000 − 11 250 000 = 204 675 000
+    t=3: 242 655 000 − 11 250 000 = 231 405 000
+    t=4: 269 385 000 − 11 250 000 = 258 135 000
+    t=5: 296 115 000 − 11 250 000 = 284 865 000
+
+    Corporate tax at 30% of EBIT:
+
+    t=0: 0.30 x 151 215 000 = 45 364 500
+    t=1: 0.30 x 177 945 000 = 53 383 500
+    t=2: 0.30 x 204 675 000 = 61 402 500
+    t=3: 0.30 x 231 405 000 = 69 421 500
+    t=4: 0.30 x 258 135 000 = 77 440 500
+    t=5: 0.30 x 284 865 000 = 85 459 500
+
+    NOPAT = EBIT − tax = 0.70 x EBIT:
+
+    t=0: 105 850 500      t=3: 161 983 500
+    t=1: 124 561 500      t=4: 180 694 500
+    t=2: 143 272 500      t=5: 199 405 500
+
+  The stacking is visible in the total-levy line (regulatory fee + corporate tax): 47 659 500 at
+  t=0 rising to 89 104 500 at t=5. Note the mechanism the founder half-describes: because the
+  regulatory fee is deductible, one franc of fee costs him only 0.70 of a franc net of the tax
+  shield. And because the fee sits on turnover rather than profit, it is the one charge that would
+  still bite in a bad year — the model never tests that case, since EBIT is positive throughout, but
+  the structural asymmetry is real and is what makes his description ("whether I am profitable or
+  not") worth preserving.
+
+  ================================================================================
+  G. DEPRECIATION AND THE PPE ROLL-FORWARD
+  ================================================================================
+
+  Cost 90 000 000, useful life 8 years, nil residual, straight-line:
+    annual depreciation = 90 000 000 / 8 = 11 250 000.
+
+  Two years are already consumed, so entering t=0:
+    gross cost 90 000 000; accumulated depreciation 2 x 11 250 000 = 22 500 000; NBV 67 500 000.
+
+  Roll-forward (gross, accumulated, net):
+
+    t=0: accum 22 500 000 + 11 250 000 = 33 750 000  → NBV 90 000 000 − 33 750 000 = 56 250 000
+    t=1: accum 33 750 000 + 11 250 000 = 45 000 000  → NBV 45 000 000
+    t=2: accum 45 000 000 + 11 250 000 = 56 250 000  → NBV 33 750 000
+    t=3: accum 56 250 000 + 11 250 000 = 67 500 000  → NBV 22 500 000
+    t=4: accum 67 500 000 + 11 250 000 = 78 750 000  → NBV 11 250 000
+    t=5: accum 78 750 000 + 11 250 000 = 90 000 000 before the swap → NBV 0 before the swap
+
+  At the end of t=5 the equipment reaches eight years and is replaced. I derecognise the old block —
+  gross 90 000 000 out, accumulated depreciation 90 000 000 out, NBV nil, therefore no disposal gain
+  or loss and no tax effect — and recognise the replacement at 90 000 000. Because it enters at the
+  very end of the period it carries no depreciation charge in t=5.
+
+    t=5 gross:      90 000 000 + 90 000 000 (addition) − 90 000 000 (retirement) = 90 000 000
+    t=5 accum dep:  78 750 000 + 11 250 000 (charge)   − 90 000 000 (retired)    = 0
+    t=5 NBV:        90 000 000 − 0 = 90 000 000
+
+  Conservation: total depreciation charged across the horizon is 6 x 11 250 000 = 67 500 000, which
+  is exactly the opening NBV. The asset is fully consumed by the horizon, by construction.
+
+  ================================================================================
+  H. WORKING CAPITAL
+  ================================================================================
+
+  Two items, both ASSUMED as to timing since the founder states none.
+
+  RECEIVABLES. Monthly post-paid billing with roughly one month outstanding. I hold the balance at
+  one month of the CLOSING run-rate (closing subscribers x 15 000), which is the correct measure of
+  the last month billed and not yet collected:
+
+    opening (before t=0): 1 200 x 15 000 = 18 000 000
+    t=0: 1 350 x 15 000 = 20 250 000      t=3: 1 800 x 15 000 = 27 000 000
+    t=1: 1 500 x 15 000 = 22 500 000      t=4: 1 950 x 15 000 = 29 250 000
+    t=2: 1 650 x 15 000 = 24 750 000      t=5: 2 100 x 15 000 = 31 500 000
+
+  PAYABLES. One month of the wholesale bandwidth forfait, settled on ~30-day terms: 3 500 000, and
+  because the forfait is flat this balance never moves. Technicians and the premises are paid as
+  incurred; the regulatory fee and corporate tax are modelled as settled within the year assessed, so
+  neither carries a payable.
+
+    NWC = receivables − payables:
+    opening: 18 000 000 − 3 500 000 = 14 500 000
+    t=0: 20 250 000 − 3 500 000 = 16 750 000     t=3: 27 000 000 − 3 500 000 = 23 500 000
+    t=1: 22 500 000 − 3 500 000 = 19 000 000     t=4: 29 250 000 − 3 500 000 = 25 750 000
+    t=2: 24 750 000 − 3 500 000 = 21 250 000     t=5: 31 500 000 − 3 500 000 = 28 000 000
+
+    ΔNWC: 16 750 000 − 14 500 000 = 2 250 000 at t=0, and +2 250 000 in every subsequent period —
+    exactly 150 new subscribers x 15 000 of one month's billing. Growth absorbs 2 250 000 a year of
+    cash, a trivial 1% of revenue. This is a working-capital-light business: the customer pays
+    monthly and the only real supplier bills monthly.
+
+  ================================================================================
+  I. THE UNLEVERED BUILD, PERIOD BY PERIOD
+  ================================================================================
+
+    FCFF = NOPAT + D&A − ΔNWC − capex
+
+  Capex is zero in t=0..t=4 (the network is already built and paid for) and 90 000 000 at t=5 when
+  the eight-year cycle closes.
+
+    t=0:  105 850 500 + 11 250 000 − 2 250 000 − 0          = 114 850 500
+    t=1:  124 561 500 + 11 250 000 − 2 250 000 − 0          = 133 561 500
+    t=2:  143 272 500 + 11 250 000 − 2 250 000 − 0          = 152 272 500
+    t=3:  161 983 500 + 11 250 000 − 2 250 000 − 0          = 170 983 500
+    t=4:  180 694 500 + 11 250 000 − 2 250 000 − 0          = 189 694 500
+    t=5:  199 405 500 + 11 250 000 − 2 250 000 − 90 000 000 = 118 405 500
+
+  Cumulative unlevered cash generated over the six remaining years of the installed network:
+  879 768 000 XOF.
+
+  Read as an operating cash flow statement, the same numbers split as CFO (NOPAT + D&A − ΔNWC) and
+  CFI (−capex). CFO rises monotonically from 114 850 500 to 208 405 500 — a 3.6% compound rise in
+  subscribers translating into a 12.6% compound rise in operating cash flow, which is the fixed-cost
+  leverage of a capacity forfait doing its work. The entire dip in the headline FCFF at t=5 is the
+  replacement outlay: the operating engine does not weaken, it re-invests.
+
+  ================================================================================
+  J. FRICTIONS I AM NOT FORCING INTO THE TEMPLATE
+  ================================================================================
+
+  1. The fee base. The founder says the regulator takes « un pourcentage de tout ce que j'encaisse » —
+     of what he COLLECTS — while also calling the base « mon chiffre d'affaires ». With a 30-day
+     receivable and a growing book these are not the same number: collections lag accrued turnover.
+     I model the fee on accrued turnover, which is what regulatory practice actually assesses, and I
+     record the friction rather than paper over it. A strictly collections-based fee would be
+     marginally smaller than the one modelled.
+
+  2. The forfait's ceiling. « Quel que soit le nombre d'abonnés » is true of a capacity package only
+     up to the capacity. Growing the base 75% on an unchanged pipe is the model's most fragile
+     physical assumption. REPAIRED 2026-08-04 (F-226): it is no longer taken at face value with an
+     unbounded input -- bandwidth_capacity_ceiling_subscribers now carries a working value derived
+     from SEC-V26-25, and trace.bandwidth_utilization makes the ratio to the average subscriber base
+     a checked quantity (2.28x at t=0, 3.62x at t=5 on the central estimate). What is still missing is
+     the COST of exceeding the ceiling, which no source in this file prices -- see notes.
+
+  3. The replacement outlay at t=5. The founder says the swap happens; the benefit of the new network
+     accrues almost entirely outside this horizon. I keep it inside because it is a real asset-side
+     cash flow occurring within the modelled window, and I materialise the same period's operating
+     flow separately (trace.cfo) so the two effects can be read apart. See notes for a related,
+     unresolved question (F-228): whether the blanket 8-year figure hides an earlier component-level
+     replacement cycle for the outdoor share of the same capex bundle.
+
+  4. Growth footprint. The only cost tied to the 900 net-add subscribers is the CPE/drop connection
+     fee, which assumes every new subscriber is in-fill within a building already reached
+     (subscriber_growth_within_existing_footprint, ADDED 2026-08-04, F-227). If growth in fact extends
+     into new streets or sectors, new antenna/backhaul capacity would be needed; no benchmark exists to
+     size this, so it is disclosed rather than costed.
+
+trace:
+
+  subs_opening:            [1200, 1350, 1500, 1650, 1800, 1950]
+  subs_added:              [150, 150, 150, 150, 150, 150]
+  subs_closing:            [1350, 1500, 1650, 1800, 1950, 2100]
+  subs_average:            [1275, 1425, 1575, 1725, 1875, 2025]
+  subscriber_months:       [15300, 17100, 18900, 20700, 22500, 24300]
+  bandwidth_utilization:   [2.2768, 2.5446, 2.8125, 3.0804, 3.3482, 3.6161]
+  bandwidth_headroom_subscribers: [-715, -865, -1015, -1165, -1315, -1465]
+  subscribers_per_technician: [212.5, 237.5, 262.5, 287.5, 312.5, 337.5]
+
+  revenue:                 [229500000, 256500000, 283500000, 310500000, 337500000, 364500000]
+
+  bandwidth_cost:          [42000000, 42000000, 42000000, 42000000, 42000000, 42000000]
+  technician_cost:         [8640000, 8640000, 8640000, 8640000, 8640000, 8640000]
+  site_cost:               [9600000, 9600000, 9600000, 9600000, 9600000, 9600000]
+  connection_cost:         [4500000, 4500000, 4500000, 4500000, 4500000, 4500000]
+  cash_opex_total:         [64740000, 64740000, 64740000, 64740000, 64740000, 64740000]
+
+  regulatory_fee:          [2295000, 2565000, 2835000, 3105000, 3375000, 3645000]
+  ebitda:                  [162465000, 189195000, 215925000, 242655000, 269385000, 296115000]
+  depreciation:            [11250000, 11250000, 11250000, 11250000, 11250000, 11250000]
+  ebit:                    [151215000, 177945000, 204675000, 231405000, 258135000, 284865000]
+  corporate_tax:           [45364500, 53383500, 61402500, 69421500, 77440500, 85459500]
+  nopat:                   [105850500, 124561500, 143272500, 161983500, 180694500, 199405500]
+  total_levies:            [47659500, 55948500, 64237500, 72526500, 80815500, 89104500]
+
+  accounts_receivable:     [20250000, 22500000, 24750000, 27000000, 29250000, 31500000]
+  accounts_payable:        [3500000, 3500000, 3500000, 3500000, 3500000, 3500000]
+  nwc:                     [16750000, 19000000, 21250000, 23500000, 25750000, 28000000]
+  delta_nwc:               [2250000, 2250000, 2250000, 2250000, 2250000, 2250000]
+
+  capex:                   [0, 0, 0, 0, 0, 90000000]
+  asset_retired_cost:      [0, 0, 0, 0, 0, 90000000]
+  accum_dep_retired:       [0, 0, 0, 0, 0, 90000000]
+  gross_ppe:               [90000000, 90000000, 90000000, 90000000, 90000000, 90000000]
+  accum_dep:               [33750000, 45000000, 56250000, 67500000, 78750000, 0]
+  nbv:                     [56250000, 45000000, 33750000, 22500000, 11250000, 90000000]
+
+  cfo:                     [114850500, 133561500, 152272500, 170983500, 189694500, 208405500]
+  cfi:                     [0, 0, 0, 0, 0, -90000000]
+  fcff:                    [114850500, 133561500, 152272500, 170983500, 189694500, 118405500]
+
+fcff: [114850500, 133561500, 152272500, 170983500, 189694500, 118405500]
+
+checks:
+  - "grid.periods == asset_useful_life_years - asset_age_years_at_t0"
+  - "trace.subs_opening[first] == subscribers_initial"
+  - "trace.subs_opening[t] == trace.subs_closing[t-1] for t >= 1"
+  - "trace.subs_added[t] == net_adds_per_year"
+  - "trace.subs_closing[t] == trace.subs_opening[t] + trace.subs_added[t]"
+  - "sum(trace.subs_added) == trace.subs_closing[last] - subscribers_initial"
+  - "trace.subs_average[t] == (trace.subs_opening[t] + trace.subs_closing[t]) / 2"
+  - "trace.subs_opening[t] >= 0"
+  - "trace.subscriber_months[t] == trace.subs_average[t] * months_per_year"
+  - "trace.bandwidth_utilization[t] == trace.subs_average[t] / bandwidth_capacity_ceiling_subscribers"
+  - "trace.bandwidth_headroom_subscribers[t] == bandwidth_capacity_ceiling_subscribers - trace.subs_average[t]"
+  - "trace.subscribers_per_technician[t] == trace.subs_average[t] / technicians_headcount"
+  - "trace.revenue[t] == trace.subscriber_months[t] * monthly_fee_per_subscriber"
+  - "trace.bandwidth_cost[t] == bandwidth_monthly * months_per_year"
+  - "trace.technician_cost[t] == technicians_headcount * technician_monthly_wage * months_per_year"
+  - "trace.site_cost[t] == site_monthly_cost * months_per_year"
+  - "trace.connection_cost[t] == connection_cost_per_new_subscriber * trace.subs_added[t]"
+  - "trace.cash_opex_total[t] == trace.bandwidth_cost[t] + trace.technician_cost[t] + trace.site_cost[t] + trace.connection_cost[t]"
+  - "trace.regulatory_fee[t] == regulatory_fee_rate * trace.revenue[t]"
+  - "trace.ebitda[t] == trace.revenue[t] - trace.cash_opex_total[t] - trace.regulatory_fee[t]"
+  - "trace.depreciation[t] == network_capex_initial / asset_useful_life_years"
+  - "sum(trace.depreciation) == network_capex_initial - accum_dep_opening"
+  - "trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]"
+  - "trace.corporate_tax[t] == corporate_tax_rate * trace.ebit[t]"
+  - "trace.corporate_tax[t] == corporate_tax_rate * (trace.revenue[t] - trace.cash_opex_total[t] - trace.regulatory_fee[t] - trace.depreciation[t])"
+  - "trace.nopat[t] == trace.ebit[t] - trace.corporate_tax[t]"
+  - "trace.total_levies[t] == trace.regulatory_fee[t] + trace.corporate_tax[t]"
+  - "trace.accounts_receivable[t] == trace.subs_closing[t] * monthly_fee_per_subscriber * dso_months"
+  - "trace.accounts_receivable[t] >= 0"
+  - "trace.accounts_payable[t] == bandwidth_monthly * dpo_bandwidth_months"
+  - "trace.nwc[t] == trace.accounts_receivable[t] - trace.accounts_payable[t]"
+  - "trace.delta_nwc[first] == trace.nwc[first] - nwc_opening"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1] for t >= 1"
+  - "sum(trace.delta_nwc) == trace.nwc[last] - nwc_opening"
+  - "trace.capex[t] == 0 for t < replacement_period_index"
+  - "trace.capex[t] == replacement_capex for t >= replacement_period_index"
+  - "trace.asset_retired_cost[t] == 0 for t < replacement_period_index"
+  - "trace.asset_retired_cost[t] == network_capex_initial for t >= replacement_period_index"
+  - "trace.accum_dep_retired[t] == trace.asset_retired_cost[t] - residual_value"
+  - "trace.gross_ppe[first] == gross_ppe_opening + trace.capex[first] - trace.asset_retired_cost[first]"
+  - "trace.gross_ppe[t] == trace.gross_ppe[t-1] + trace.capex[t] - trace.asset_retired_cost[t] for t >= 1"
+  - "trace.accum_dep[first] == accum_dep_opening + trace.depreciation[first] - trace.accum_dep_retired[first]"
+  - "trace.accum_dep[t] == trace.accum_dep[t-1] + trace.depreciation[t] - trace.accum_dep_retired[t] for t >= 1"
+  - "trace.accum_dep[t] >= 0"
+  - "trace.nbv[t] == trace.gross_ppe[t] - trace.accum_dep[t]"
+  - "trace.nbv[t] >= 0"
+  - "trace.nbv[last] == replacement_capex"
+  - "trace.cfo[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t]"
+  - "trace.cfi[t] == 0 - trace.capex[t]"
+  - "trace.fcff[t] == trace.cfo[t] + trace.cfi[t]"
+  - "trace.fcff[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t]"
+
+notes:
+  - "HORIZON. Six annual periods, set by the remaining life of the installed network (8-year replacement cycle stated by the founder, less the 2 years already elapsed). This is the window over which the existing asset earns, and it terminates at the re-investment point the founder himself names. The original 90 000 000 outlay is sunk and correctly absent from FCFF inside the horizon."
+
+  - "REPLACEMENT CAPEX AT t=5 — JUDGMENT CALL. The founder states the swap happens (« on le change au bout de huit ans »), so I place a like-for-like 90 000 000 outlay at the end of the final period. The friction is that the replacement's benefit falls almost entirely outside the horizon. To keep both readings visible without asserting an unverified figure, the operating flow of that period is materialised separately as trace.cfo[last]; the headline trace.fcff[last] is that figure net of the replacement. Anyone who prefers to stop at the re-investment point should read trace.cfo, which is checked."
+
+  - "ASSET LIFE, 8 YEARS BLANKET vs COMPONENT REALITY — REVIEWED, NOT CHANGED (F-228, physics audit isp_levy__physics__2026-08-03.md). asset_useful_life_years (8) is STATED, in the founder's own words about his own observed replacement practice (« ce genre de matériel on le change au bout de huit ans »), and it sets grid.periods entirely. SEC-V26-26 (spec/FACT_BASE.md, in-date 2026-07-27) gives outdoor Sahel radio plant life as 3-5 years and PoE injectors/PSUs as 2-4 years, well short of 8 — but that benchmark is for the OUTDOOR-RADIO share alone, and the 90 000 000 capex is an undecomposed bundle of antennas (outdoor, squarely inside the benchmark), fibre (likely long-lived, outside it) and routers (mixed indoor/outdoor). The founder never gave a cost split across those three, and inventing one to move a sub-cycle replacement inside the horizon would be a fabricated allocation, not a repair. I therefore RETAIN the STATED 8-year figure and the horizon it sets — his own replacement-cash-flow behaviour is the strongest evidence available of what he actually does, composition unknown — and record the risk instead: if the outdoor share needs replacement on a 3-5 year cycle, a real interim capex/PoE event plausibly lands inside this six-year horizon at least once before the single terminal 90 000 000 this file carries at t=5, which would front-load FCFF-down relative to the current all-at-t=5 profile. ELICIT: what does the 8-year figure actually cover — a full antenna/fibre/router refresh, or do you already do component-level swaps (PoE injectors, radios) informally in between that this file's flat opex lines do not capture?"
+
+  - "LARGEST UNVERIFIED INPUT. The regulatory fee RATE. The founder describes the levy, its base and its deductibility with precision but never states the percentage. Everything downstream of trace.regulatory_fee moves with it. This is the first question to put to him, together with the exact statutory base (turnover gross, or net of interconnection and taxes)."
+
+  - "MATERIALITY RANKING — CORRECTED 2026-08-04 (F-226, physics audit isp_levy__physics__2026-08-03.md). This file's own top-tier list of most-material unverified items (regulatory fee rate above; VAT status and replacement-horizon placement below) omitted bandwidth_capacity_ceiling_subscribers, even though the audit's independent derivation makes it plausibly ALREADY BINDING at today's 1,200 subscribers (trace.bandwidth_utilization[0] = 2.28x the central working ceiling) and unbounded in downside, since no upgrade-tier cost exists anywhere in the file to apply if the pipe steps. It belongs alongside the regulatory fee rate at the top of this ranking, not off it — this correction is recorded rather than silently fixed, per this file's own house convention (see the regulatory-fee-rate correction in section F of the passage)."
+
+  - "TAX BASE IN AN UNLEVERED BUILD. Corporate tax is computed on EBIT, not on the founder's actual taxable profit, because FCFF is by construction indifferent to financing. If the network was debt-financed his filed tax bill is lower than the figure in trace.corporate_tax; the difference is the interest tax shield and belongs to the equity-side, not the asset-side, build. He mentions no borrowing."
+
+  - "MINIMUM TAX. Mali applies a minimum corporate tax assessed on turnover, which binds when a company is loss-making or barely profitable. EBIT is comfortably positive in every modelled period, so the minimum regime does not bind here and is not modelled. It would need to be reinstated in any downside case."
+
+  - "VAT / TVA — DEFERRED. The founder frames his fiscal burden as exactly two stacked levies and never mentions TVA. I have therefore treated the 15 000 XOF as revenue accruing to the operator. If TVA is in fact embedded in the retail price, revenue and every line below it would be lower; input TVA on the wholesale bandwidth would partly offset at the margin. This is an ELICITED input, not a modelling choice I am comfortable making silently."
+
+  - "CAPACITY CEILING — QUANTIFIED, STILL UNCOSTED (F-226, repaired 2026-08-04). « Quel que soit le nombre d'abonnés » is taken as stated, so bandwidth cost is flat across a 75% increase in the subscriber base. bandwidth_capacity_ceiling_subscribers now carries a working value (560 subscribers, derived from SEC-V26-25 and shown in the input's own source) instead of an unbounded null, and trace.bandwidth_utilization / trace.bandwidth_headroom_subscribers make the relationship to trace.subs_average a checked, load-bearing quantity every period: utilization 2.28x at t=0 rising to 3.62x at t=5, headroom -715 at t=0 widening to -1465 at t=5 (already negative at t=0, on the central estimate). What remains genuinely undone, because no source in this file prices it: the COST of exceeding the ceiling. If an upgrade tier is triggered, EBITDA and FCFF are lower from that period on, by an amount this file cannot bound without inventing a tariff the founder was never asked for. Still the model's most fragile physical assumption; now it is a visible, load-bearing input rather than a silent one."
+
+  - "GROWTH CAPEX / FOOTPRINT — DEFERRED (F-227, physics audit isp_levy__physics__2026-08-03.md). The only cost tied to the 900 net-add subscribers is the CPE/drop connection fee, which is complete only if every new subscriber is in-fill within a building the network already reaches. subscriber_growth_within_existing_footprint records that assumption explicitly (it was previously implicit and unflagged). If growth in fact extends into new streets or sectors, new antenna/backhaul capacity would be needed — the same physical resource bandwidth_capacity_ceiling_subscribers already shows may be tight — and both EBITDA and FCFF would be lower than modelled. No FACT_BASE benchmark exists for Bamako quartier household penetration to size this, so it is disclosed rather than costed."
+
+  - "TECHNICIAN HEADCOUNT — DEFERRED, NOW TRACED (F-230, repaired 2026-08-04). Held at the stated 6 while the base grows from 1 200 to 2 100 (opening-to-final-closing span: 200 to 350 subscribers per technician). trace.subscribers_per_technician now carries this ratio on the same average (billing) base as revenue, checked every period: 212.5 at t=0 widening to 337.5 at t=5. The ratio is now visible and load-bearing (the input feeds a checked trace row); whether it should also feed a hiring rule and additional wage cost is not modelled, because no hiring rule was stated and no staffing-ratio benchmark exists in FACT_BASE to bound one. If service levels force hiring, cash opex rises and FCFF falls."
+
+  - "CONNECTION COST — SUPPLIED, NOT STATED. 30 000 XOF per new subscriber, expensed rather than capitalised on a low-value threshold policy. This is the one cost line I have added to the founder's enumeration, on the physical ground that 900 new households cannot be connected for nothing given the fibre stops at the buildings. It is flagged ASSUMED throughout. Omitting it would overstate FCFF; capitalising it instead would shift its timing but not its economics materially."
+
+  - "CHURN. The founder states a NET gain of 150. Gross connections must be at least that. Connection cost is applied to net adds only, which understates it if churn is non-zero, and the revenue base is unaffected either way since net adds are what he stated."
+
+  - "RECEIVABLES CONVENTION. A 30-day post-paid receivable is a supplied prior. If the operation is in fact prepaid — common for small quartier ISPs — receivables collapse and deferred revenue appears instead, turning working capital from a use of cash into a source. The direction of the error is therefore known even though its size is not, and this is a question worth asking before the model is used for anything."
+
+  - "FEE BASE FRICTION. The founder says the regulator takes a percentage of « tout ce que j'encaisse » (what he collects) while calling the base his « chiffre d'affaires ». Under a 30-day receivable on a growing book these differ: collections lag accrued turnover. The model assesses the fee on accrued turnover, consistent with how such levies are declared; a strictly collections-based assessment would be marginally smaller. Recorded rather than resolved."
+
+  - "NOMINAL TERMS, NO ESCALATION. Tariff, wages, premises, generator and the wholesale forfait are all frozen at the stated levels. In an environment with positive inflation this flatters real margins on the cost side and erodes them on the price side; the two do not cancel, since the cost base is 100% exposed and the tariff is 100% frozen. Direction only — no escalation case is modelled."
+
+  - "SITE COST vs GENSET FUEL REALITY — REVIEWED, NOT CHANGED (F-229, physics audit isp_levy__physics__2026-08-03.md). site_monthly_cost (800 000 XOF/month, « le local et le groupe électrogène me font huit cent mille par mois tout compris ») is STATED directly by the founder as an all-in figure. SEC-V26-27 (spec/FACT_BASE.md, in-date 2026-07-27) gives 5-10 kVA genset fuel burn under 12h/day of West African load-shedding as 540-1 080 L/month, which at plausible regional diesel prices (~700-850 XOF/L) is roughly 380 000-920 000 XOF/month in FUEL ALONE — a band the stated 800 000 sits at the low end of or inside, before rent or maintenance. I do NOT silently raise the stated figure: the founder gave it directly and in the same breath as the network capex he priced accurately elsewhere, and the benchmark's 12h/day assumes SEVERE load-shedding, which is not established for his specific site — he reports no outage complaints. Retained as STATED. Flagged instead: if his actual load-shedding runs anywhere near the severe end of the documented range, this line plausibly understates true cost, leaving little or nothing for rent and maintenance once fuel is covered. ELICIT: how many hours per day does the site lose grid power, and does the 800 000 XOF include fuel, or is fuel billed and reimbursed separately?"
+
+  - "ASSET DISPOSAL. Nil residual value assumed, so the retirement at t=5 produces neither disposal proceeds nor a book gain or loss and has no tax consequence. If the old antennas have scrap or resale value, FCFF at t=5 would be higher."
+
+  - "NOT MODELLED, NOT MENTIONED. Licence renewal or spectrum fees, universal-service contributions, bad debt and disconnection losses, and any subscriber installation fee charged to the customer. Also FIELD-TECHNICIAN TRANSPORT (F-231, physics audit isp_levy__physics__2026-08-03.md): six technicians visiting subscriber premises for installs and fault calls need transport, most plausibly a motorcycle, and neither site_monthly_cost (explicitly scoped by the founder to « le local et le groupe électrogène » — premises and generator only) nor connection_cost_per_new_subscriber (CPE plus in-building drop, a one-time cost at connection, not a recurring visit cost) covers it. I do not add a costed line for it: unlike connection_cost_per_new_subscriber, which prices a single well-defined physical item (one CPE, one drop), transport cost depends on visit frequency and distance per technician, neither stated by the founder nor available from any FACT_BASE benchmark for ISP field-service routing in a Bamako quartier — SEC-V26-17/18 bound motorcycle life and fuel economy but not trip volume, so a cost line here would be an invented usage pattern dressed as a sourced number. Direction: FCFF is overstated by this omission, materiality low relative to the 9 600 000/year site line (per the audit's own assessment). None of these appear in the founder's account; each would need to be elicited before this model is relied on."

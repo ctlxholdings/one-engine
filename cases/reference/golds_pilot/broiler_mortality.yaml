@@ -1,0 +1,1711 @@
+contract: "v2.6"
+id: broiler_mortality
+title: "Azaguié broiler grow-out — unlevered FCFF over one production year, on a batch grid"
+currency: XOF
+
+grid:
+  periods: 6
+  freq: "one bande (batch) = 59 days: 45 days grow-out + 14 days vide sanitaire"
+  why: >-
+    The period is the BATCH, not the month or the quarter, because the batch is the unit the founder
+    actually operates in — "Je travaille par bandes" — and every physical quantity he states is per
+    batch: 500 chicks, ~30 sacks of feed, 3 litter trips, 1.5 gas bottles, ~40 deaths, ~454 head sold.
+    A monthly grid would have to cut every one of those in half at an arbitrary boundary and would
+    invent an inventory of half-grown birds that the batch grid never has to guess at. The period
+    length is 59 days because he states both halves of the cycle himself — "Je les garde quarante-cinq
+    jours" and "laisser le bâtiment vide deux semaines" — and 45 + 14 = 59.
+
+    The HORIZON is six batches = one production year (354 days of a 365-day year), for four reasons,
+    each of which a reader can attack.
+    (1) Six is his own normal — "Ça fait six bandes dans l'année quand tout va bien" — and it is the
+        largest whole number of 59-day cycles that fits in a year (6 x 59 = 354 <= 365; 7 x 59 = 413,
+        which is physically impossible, so seven batches is not a scenario, it is an error). Both of
+        those are asserted in `checks`.
+    (2) One year is the smallest horizon that contains the whole seasonal price cycle. He prices the
+        end-of-year fêtes separately (3,000-3,200 versus 2,500). A horizon of three or four batches
+        would either include that batch or exclude it, and would misstate revenue by roughly a fifth
+        either way. Six batches contain it exactly once.
+    (3) One year is the tax year, and the régime that governs him is decided on ANNUAL turnover. On a
+        one-year horizon the band test is answerable exactly once, on a number the model actually
+        produces (`sum(trace.revenue)`), rather than smeared across a part-year or extrapolated.
+    (4) Past one year I would be forecasting, not modelling. The two costs that dominate this
+        operation are both stated to be rising with no stated trajectory — chicks "six cents le
+        poussin ; l'année dernière c'était cinq cent cinquante, ça monte tout le temps" and feed
+        "depuis le début de l'année ça a encore monté". A second year would either be an identical
+        copy of the first, which adds no information while looking like more evidence, or a trended
+        one, which adds information I cannot source. I would rather stop where the utterance stops.
+
+    What this horizon deliberately does NOT capture: the shed has roughly twelve years of life left,
+    so no replacement capex falls inside the window and capex is zero throughout. That is a real
+    property of the answer, not an omission — it is stated in `notes`, the closing book value is
+    carried in `trace.shed_book_value`, and `checks` asserts that the horizon fits inside the
+    remaining life rather than assuming it.
+utterance:
+  fr: |
+    Je fais du poulet de chair à Azaguié, sur la route de Bouaké. Le terrain c'est celui de mon père,
+    je ne paie pas de loyer. J'ai monté le poulailler il y a trois ans, douze mètres sur cinq,
+    parpaings, grillage et tôle : un million huit cent mille.
+
+    Je travaille par bandes. J'achète cinq cents poussins d'un jour au couvoir, six cents francs le
+    poussin ; l'année dernière c'était cinq cent cinquante, ça monte tout le temps. Je les garde
+    quarante-cinq jours, des fois cinquante quand ils ne prennent pas bien, et après il faut tout
+    désinfecter et laisser le bâtiment vide deux semaines. Ça fait six bandes dans l'année quand tout
+    va bien ; l'année dernière je n'en ai fait que cinq. J'ai essayé sept cents une fois, sous les
+    lampes c'était trop serré ; je suis revenu à cinq cents.
+
+    Ce qui coûte, c'est l'aliment. Sur une bande je passe une trentaine de sacs de cinquante kilos :
+    quatre ou cinq de démarrage, huit de croissance, et le reste en finition, seize, dix-sept, parce
+    qu'à la fin ils mangent comme des ogres. Le démarrage c'est dix-neuf mille le sac, la croissance
+    dix-sept mille cinq, la finition seize mille cinq, et depuis le début de l'année ça a encore monté
+    — le vendeur dit qu'ils ont mis une taxe dessus. Lui il me fait crédit sur cinq ou six sacs et je
+    le paie à la vente. Il répète qu'avec deux kilos et demi d'aliment tu fais un kilo de poulet ; moi
+    je n'ai jamais vérifié. Il y a du gâchis aussi, ils grattent dans les mangeoires et ça tombe par
+    terre. Quand tu enlèves les poussins et l'aliment, il ne reste plus grand-chose : le gaz pour
+    chauffer les poussins les deux premières semaines, une bouteille et demie à quatre mille cinq ; les
+    copeaux de la litière, deux mille le voyage, trois voyages par bande ; le Newcastle, le Gumboro et
+    les vitamines, mettons quinze mille ; le courant pour la pompe, huit mille par mois.
+
+    La mortalité, c'est le début qui est mauvais. Les premiers jours tu entres le matin et tu en
+    ramasses trois, quatre, des fois cinq sous la lampe. Passé les deux premières semaines ça se calme,
+    après c'est un ou deux par semaine jusqu'à la fin. En tout j'en perds une quarantaine par bande,
+    des fois soixante quand ça va mal. Le calcul est vite fait : j'achète cinq cents poussins, j'en
+    enterre une quarantaine, il m'en reste quatre cent cinquante et quelques à vendre. J'en garde cinq
+    ou six pour la maison.
+
+    Je vends vivant, à la tête, au poulailler. Les revendeuses viennent avec leurs cages, elles
+    soupèsent, elles ne pèsent pas. Deux mille cinq la tête normalement, deux mille trois quand il y a
+    beaucoup de poulet dehors, et aux fêtes de fin d'année trois mille, trois mille deux. À
+    quarante-cinq jours ils font un kilo deux, un kilo trois, les meilleurs un kilo et demi mais c'est
+    rare. Il y en a toujours une vingtaine qui restent petits, ceux-là je les laisse à mille cinq,
+    mille huit. Et si j'en vois un qui commence à traîner, je le donne à moitié prix avant qu'il crève.
+
+    J'ai un jeune du village qui dort là-bas et qui donne à manger le matin, cinquante mille par mois
+    et il mange sur place. Ce n'est pas déclaré, c'est comme ça partout ici. L'année dernière j'ai pris
+    cinq cent mille dans une microfinance sur six mois pour payer une bande, ça m'a coûté soixante-dix
+    mille.
+
+    Pour les impôts, honnêtement je ne sais pas. On m'a toujours dit que l'élevage ce n'est pas comme
+    le commerce, qu'il y a un forfait pour les agriculteurs et que la patente ne nous concerne pas. Je
+    n'ai jamais rien payé aux impôts ; il y a juste un gars de la mairie qui passe avec son carnet, je
+    lui donne mille cinq cents par mois sans savoir ce que c'est. Personne ne m'a jamais demandé de
+    facture. Mon beau-frère qui vend des pièces détachées paie une patente chaque année et il dit que
+    je devrais me mettre en règle ; je ne sais pas qui a raison. Ce qui me gâte les affaires, c'est
+    plutôt les cuisses congelées qui viennent de dehors.
+  en: |
+    I raise broiler chickens at Azaguié, on the Bouaké road. The land is my father's, I pay no rent. I
+    put up the shed three years ago, twelve metres by five, breeze blocks, wire mesh and sheet metal:
+    one million eight hundred thousand.
+
+    I work in batches. I buy five hundred day-old chicks at the hatchery, six hundred francs a chick;
+    last year it was five hundred and fifty, it goes up all the time. I keep them forty-five days,
+    sometimes fifty when they aren't coming on well, and afterwards everything has to be disinfected
+    and the building left empty for two weeks. That gives me six batches in the year when all goes
+    well; last year I only managed five. I tried seven hundred once, under the lamps it was too tight;
+    I went back to five hundred.
+
+    What costs is the feed. On one batch I go through about thirty fifty-kilo sacks: four or five of
+    starter, eight of grower, and the rest in finisher, sixteen, seventeen, because at the end they eat
+    like ogres. Starter is nineteen thousand a sack, grower seventeen thousand five, finisher sixteen
+    thousand five, and since the beginning of the year it has gone up again — the dealer says they've
+    put a tax on it. He gives me credit on five or six sacks and I pay him at the sale. He keeps saying
+    that with two and a half kilos of feed you make a kilo of chicken; me, I've never checked. There's
+    waste too, they scratch in the feeders and it falls on the ground. Once you take out the chicks and
+    the feed, there isn't much left: the gas for warming the chicks the first two weeks, a bottle and a
+    half at four thousand five; the wood shavings for the litter, two thousand a trip, three trips a
+    batch; the Newcastle, the Gumboro and the vitamins, say fifteen thousand; electricity for the pump,
+    eight thousand a month.
+
+    The dying, it's the beginning that's bad. The first days you come in in the morning and you pick up
+    three, four, sometimes five under the lamp. After the first two weeks it settles down, then it's
+    one or two a week until the end. All told I lose about forty a batch, sometimes sixty when it goes
+    badly. The count is quickly done: I buy five hundred chicks, I bury about forty, that leaves me
+    four hundred and fifty odd to sell. I keep five or six for the house.
+
+    I sell live, by the head, at the shed. The resellers come with their cages, they heft them, they
+    don't weigh them. Two thousand five a head normally, two thousand three when there's a lot of
+    chicken about, and at the end-of-year holidays three thousand, three thousand two. At forty-five
+    days they make a kilo two, a kilo three, the best ones a kilo and a half but that's rare. There are
+    always about twenty that stay small, those I let go at fifteen hundred, eighteen hundred. And if I
+    see one starting to drag, I give it at half price before it dies.
+
+    I have a young man from the village who sleeps out there and feeds them in the morning, fifty
+    thousand a month and he eats on site. It isn't declared, that's how it is everywhere here. Last
+    year I took five hundred thousand from a microfinance over six months to pay for a batch, it cost
+    me seventy thousand.
+
+    On taxes, honestly I don't know. I've always been told that livestock isn't like trade, that
+    there's a flat-rate arrangement for farmers and that the patente doesn't concern us. I've never
+    paid anything to the tax office; there's just a fellow from the town hall who comes round with his
+    book, I give him one thousand five hundred a month without knowing what it is. Nobody has ever
+    asked me for an invoice. My brother-in-law who sells spare parts pays a patente every year and he
+    says I should get myself in order; I don't know which of us is right. What spoils business for me
+    is more the frozen quarters that come in from outside.
+inputs:
+
+  # ---------- the shed and the site ----------
+  shed_length_m:
+    value: 12
+    unit: m
+    prov: STATED
+    source: "\"douze mètres sur cinq\" / \"twelve metres by five\""
+    date: "2026-07-29"
+  shed_width_m:
+    value: 5
+    unit: m
+    prov: STATED
+    source: "\"douze mètres sur cinq\""
+    date: "2026-07-29"
+  shed_area_m2:
+    value: 60
+    unit: m2
+    prov: INFERRED
+    derivation: "shed_length_m * shed_width_m"
+    source: "shed_length_m, shed_width_m"
+    date: "2026-07-29"
+  shed_cost_xof:
+    value: 1800000
+    unit: XOF
+    prov: STATED
+    source: "\"parpaings, grillage et tôle : un million huit cent mille\" — the all-in build cost of the shed"
+    date: "2026-07-29"
+  shed_age_years_at_t0:
+    value: 3
+    unit: years
+    prov: STATED
+    source: "\"J'ai monté le poulailler il y a trois ans\""
+    date: "2026-07-29"
+  shed_useful_life_years:
+    value: 15
+    unit: years
+    prov: ELICITED
+    source: >-
+      He states the build cost and the build date but not how long he expects it to stand. 15 years is
+      the working value: masonry walls outlast that comfortably, sheet-metal roofing in a humid
+      Ivorian climate typically does not, and 15 is the conventional blended life for a
+      breeze-block-and-tôle agricultural building. It is the middle of the plausible span rather than
+      the conservative end, because under the régime that actually governs him (a turnover tax) the
+      depreciation charge produces NO tax shield and is added straight back in the FCFF build — so
+      this input moves EBIT and book value but does not move FCFF by one franc. That is why it is
+      ranked low despite being a large number.
+    question: "Le poulailler, la tôle et les parpaings — dans combien d'années tu penses devoir refaire la toiture ou reconstruire ?"
+    range: {low: 10, high: 20}
+    materiality: low
+    date: "2026-07-29"
+  shed_opening_nbv:
+    value: 1440000
+    unit: XOF
+    prov: INFERRED
+    derivation: "shed_cost_xof * (1 - shed_age_years_at_t0 / shed_useful_life_years)"
+    source: "shed_cost_xof, shed_age_years_at_t0, shed_useful_life_years — straight-line, three years elapsed"
+    date: "2026-07-29"
+  rent_per_batch_xof:
+    value: 0
+    unit: XOF per batch
+    prov: STATED
+    source: "\"Le terrain c'est celui de mon père, je ne paie pas de loyer\" — an explicit zero, not a silence"
+    date: "2026-07-29"
+
+  # ---------- the cycle ----------
+  grow_days:
+    value: 45
+    unit: days
+    prov: STATED
+    source: "\"Je les garde quarante-cinq jours\""
+    date: "2026-07-29"
+  grow_days_slow:
+    value: 50
+    unit: days
+    prov: STATED
+    source: "\"des fois cinquante quand ils ne prennent pas bien\" — the slow-batch variant, carried for the availability finding, not used in the base cycle"
+    date: "2026-07-29"
+  void_days:
+    value: 14
+    unit: days
+    prov: STATED
+    source: "\"il faut tout désinfecter et laisser le bâtiment vide deux semaines\""
+    date: "2026-07-29"
+  cycle_days:
+    value: 59
+    unit: days
+    prov: INFERRED
+    derivation: "grow_days + void_days"
+    source: "grow_days, void_days"
+    date: "2026-07-29"
+  days_per_year:
+    value: 365
+    unit: days
+    prov: DEFAULTED
+    source: "Calendar year, non-leap. Convention."
+    date: "2026-07-29"
+  days_per_week:
+    value: 7
+    unit: days
+    prov: DEFAULTED
+    source: "Calendar convention."
+    date: "2026-07-29"
+  batches_per_year:
+    value: 6
+    unit: batches per year
+    prov: STATED
+    source: "\"Ça fait six bandes dans l'année quand tout va bien\""
+    date: "2026-07-29"
+  batches_per_year_physical_max:
+    value: 6.186440677966102
+    unit: batches per year
+    prov: INFERRED
+    derivation: "days_per_year / cycle_days"
+    source: "days_per_year, cycle_days — the ceiling the 59-day cycle imposes; his six fits, a seventh cannot"
+    date: "2026-07-29"
+  batches_last_year_actual:
+    value: 5
+    unit: batches per year
+    prov: STATED
+    source: "\"l'année dernière je n'en ai fait que cinq\" — his realised count, i.e. 83% availability against his own normal. Carried as the availability finding; the base case runs on 6, which is what he calls normal."
+    date: "2026-07-29"
+  months_per_batch:
+    value: 2
+    unit: months per batch
+    prov: INFERRED
+    derivation: "12 / batches_per_year"
+    source: >-
+      batches_per_year. The monthly costs (the boy, the pump, the mairie levy) are paid twelve times a
+      year whatever the shed is doing, so the full twelve months must be allocated across the six
+      batches — two months each — and not 59/30.44 = 1.94 months, which would leave the eleven idle
+      days of the year unfunded. Charging these only over the 45 grow-days would understate them by
+      about a quarter.
+    date: "2026-07-29"
+  presale_share_of_cycle:
+    value: 0.7627118644067796
+    unit: fraction
+    prov: INFERRED
+    derivation: "grow_days / cycle_days"
+    source: "grow_days, cycle_days — the fraction of the cycle that precedes the sale, used only for the intra-cycle cash peak"
+    date: "2026-07-29"
+
+  # ---------- the flock: placement, mortality, closure ----------
+  chicks_placed_per_batch:
+    value: 500
+    unit: chicks per batch
+    prov: STATED
+    source: "\"J'achète cinq cents poussins d'un jour au couvoir\""
+    date: "2026-07-29"
+  attempted_flock_size:
+    value: 700
+    unit: chicks per batch
+    prov: STATED
+    source: "\"J'ai essayé sept cents une fois, sous les lampes c'était trop serré ; je suis revenu à cinq cents\" — his own failed density experiment, used as a world-test on the stocking benchmark"
+    date: "2026-07-29"
+  chick_price_xof:
+    value: 600
+    unit: XOF per chick
+    prov: STATED
+    source: "\"six cents francs le poussin\""
+    date: "2026-07-29"
+  chick_price_prior_year_xof:
+    value: 550
+    unit: XOF per chick
+    prov: STATED
+    source: "\"l'année dernière c'était cinq cent cinquante, ça monte tout le temps\""
+    date: "2026-07-29"
+  chick_price_inflation_observed:
+    value: 0.09090909090909091
+    unit: fraction per year
+    prov: INFERRED
+    derivation: "chick_price_xof / chick_price_prior_year_xof - 1"
+    source: "chick_price_xof, chick_price_prior_year_xof — the one price trend he actually quantifies. Recorded, not projected: see grid.why for why the horizon stops before extrapolation starts."
+    date: "2026-07-29"
+  brooding_days:
+    value: 14
+    unit: days
+    prov: STATED
+    source: "\"le gaz pour chauffer les poussins les deux premières semaines\" and \"Passé les deux premières semaines ça se calme\""
+    date: "2026-07-29"
+  brooding_deaths_per_day_low:
+    value: 3
+    unit: deaths per day
+    prov: STATED
+    source: "\"tu en ramasses trois, quatre, des fois cinq sous la lampe\""
+    date: "2026-07-29"
+  brooding_deaths_per_day_high:
+    value: 5
+    unit: deaths per day
+    prov: STATED
+    source: "\"trois, quatre, des fois cinq\""
+    date: "2026-07-29"
+  brooding_deaths_per_day_mid:
+    value: 4
+    unit: deaths per day
+    prov: INFERRED
+    derivation: "(brooding_deaths_per_day_low + brooding_deaths_per_day_high) / 2"
+    source: "brooding_deaths_per_day_low, brooding_deaths_per_day_high — and it is also the value he names first in the run, 'quatre'"
+    date: "2026-07-29"
+  post_brooding_deaths_per_week_low:
+    value: 1
+    unit: deaths per week
+    prov: STATED
+    source: "\"après c'est un ou deux par semaine jusqu'à la fin\""
+    date: "2026-07-29"
+  post_brooding_deaths_per_week_high:
+    value: 2
+    unit: deaths per week
+    prov: STATED
+    source: "\"un ou deux par semaine\""
+    date: "2026-07-29"
+  post_brooding_deaths_per_week_mid:
+    value: 1.5
+    unit: deaths per week
+    prov: INFERRED
+    derivation: "(post_brooding_deaths_per_week_low + post_brooding_deaths_per_week_high) / 2"
+    source: "post_brooding_deaths_per_week_low, post_brooding_deaths_per_week_high"
+    date: "2026-07-29"
+  mortality_implied_by_daily_account:
+    value: 62.642857142857146
+    unit: deaths per batch
+    prov: INFERRED
+    derivation: "brooding_deaths_per_day_mid * brooding_days + post_brooding_deaths_per_week_mid * (grow_days - brooding_days) / days_per_week"
+    source: >-
+      brooding_deaths_per_day_mid, brooding_days, post_brooding_deaths_per_week_mid, grow_days,
+      days_per_week. THIS IS THE CENTRAL FINDING OF THE CASE. Rebuilding the founder's mortality from
+      the shape he describes day by day gives ~63 deaths a batch, not the ~40 he then reports as his
+      headline. His two accounts of the same thing differ by more than half. His day-by-day account
+      lands almost exactly on the number he calls a BAD batch ("des fois soixante quand ça va mal"),
+      which is what you would expect if the vivid morning picture is what he remembers and the round
+      "quarantaine" is what he tells people. Materialised as its own input, with its own arithmetic,
+      so a checker sees the gap rather than reading about it.
+    date: "2026-07-29"
+  mortality_headline_per_batch:
+    value: 40
+    unit: deaths per batch
+    prov: STATED
+    source: "\"En tout j'en perds une quarantaine par bande\" and \"j'en enterre une quarantaine\""
+    date: "2026-07-29"
+  mortality_bad_batch:
+    value: 60
+    unit: deaths per batch
+    prov: STATED
+    source: "\"des fois soixante quand ça va mal\""
+    date: "2026-07-29"
+  mortality_per_batch:
+    value: 40
+    unit: deaths per batch
+    prov: ELICITED
+    source: >-
+      The base case runs on his headline 40, because that is the figure he asserts AND it is the one
+      that closes his own count out loud — 500 placed, "une quarantaine" buried, "quatre cent cinquante
+      et quelques" left to sell, five or six kept for the house: 500 - 40 - 6 = 454, which is exactly
+      "450-odd". So 40 is internally coherent with everything else he says EXCEPT his own day-by-day
+      description, which implies ~63 (see mortality_implied_by_daily_account). Only he can settle it,
+      because only he has counted the pit. This is the single highest-value question in the interview:
+      it moves 23 birds a batch, and every bird is a head price.
+    question: "Sur ta dernière bande, tu as compté combien de poulets morts en tout, du premier jour jusqu'à la vente — pas à peu près, le chiffre que tu as ramassé ?"
+    range: {low: 40, high: 63}
+    materiality: high
+    date: "2026-07-29"
+  birds_kept_home_per_batch:
+    value: 6
+    unit: birds per batch
+    prov: STATED
+    source: "\"J'en garde cinq ou six pour la maison\" — taken at the upper end (6), the conservative reading for revenue since a bird kept is a bird not sold. These are owner's drawings in kind, not a sale: no revenue is recognised for them, but they eat feed and that feed stays in cost."
+    date: "2026-07-29"
+  birds_finished_per_batch:
+    value: 460
+    unit: birds per batch
+    prov: INFERRED
+    derivation: "chicks_placed_per_batch - mortality_per_batch"
+    source: "chicks_placed_per_batch, mortality_per_batch — the birds alive at day 45, before the six kept back"
+    date: "2026-07-29"
+  birds_sold_per_batch:
+    value: 454
+    unit: birds per batch
+    prov: INFERRED
+    derivation: "chicks_placed_per_batch - mortality_per_batch - birds_kept_home_per_batch"
+    source: "chicks_placed_per_batch, mortality_per_batch, birds_kept_home_per_batch — reproduces his own \"quatre cent cinquante et quelques\""
+    date: "2026-07-29"
+  runts_per_batch:
+    value: 20
+    unit: birds per batch
+    prov: STATED
+    source: "\"Il y en a toujours une vingtaine qui restent petits\""
+    date: "2026-07-29"
+  culls_per_batch:
+    value: 0
+    unit: birds per batch
+    prov: ELICITED
+    source: >-
+      "si j'en vois un qui commence à traîner, je le donne à moitié prix avant qu'il crève" — he
+      describes the practice and gives no count. Base case is ZERO, the omitting choice, chosen for two
+      reasons: he supplies no number at all, and the birds he salvages plausibly overlap the twenty
+      runts he has already priced down, so a positive figure risks double-counting a discount he has
+      already given me. Zero is therefore the UPPER bound on revenue, and any answer above zero moves
+      revenue DOWN, at 1,250 XOF a head foregone.
+    question: "Sur une bande, tu en donnes combien à moitié prix parce qu'ils commencent à traîner — et est-ce que ce sont les mêmes que la vingtaine qui restent petits, ou en plus ?"
+    range: {low: 0, high: 20}
+    materiality: medium
+    date: "2026-07-29"
+  birds_normal_grade_per_batch:
+    value: 434
+    unit: birds per batch
+    prov: INFERRED
+    derivation: "birds_sold_per_batch - runts_per_batch - culls_per_batch"
+    source: "birds_sold_per_batch, runts_per_batch, culls_per_batch — the full-price cohort"
+    date: "2026-07-29"
+  live_weight_low_kg:
+    value: 1.2
+    unit: kg per bird
+    prov: STATED
+    source: "\"À quarante-cinq jours ils font un kilo deux, un kilo trois\""
+    date: "2026-07-29"
+  live_weight_high_kg:
+    value: 1.3
+    unit: kg per bird
+    prov: STATED
+    source: "\"un kilo deux, un kilo trois\""
+    date: "2026-07-29"
+  live_weight_best_kg:
+    value: 1.5
+    unit: kg per bird
+    prov: STATED
+    source: "\"les meilleurs un kilo et demi mais c'est rare\" — explicitly rare, so not used in the flock mean"
+    date: "2026-07-29"
+  live_weight_kg:
+    value: 1.25
+    unit: kg per bird
+    prov: INFERRED
+    derivation: "(live_weight_low_kg + live_weight_high_kg) / 2"
+    source: >-
+      live_weight_low_kg, live_weight_high_kg. Note that live weight drives NO revenue here — he sells
+      "à la tête", by the head, and the resellers "soupèsent, elles ne pèsent pas". Weight enters this
+      model only as the denominator of the feed-conversion test, which is precisely where the founder
+      has no defence against a supplier's claim.
+    date: "2026-07-29"
+  live_weight_total_kg_per_batch:
+    value: 575
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "birds_finished_per_batch * live_weight_kg"
+    source: "birds_finished_per_batch, live_weight_kg — includes the six kept for the house, which ate the same feed"
+    date: "2026-07-29"
+  # ---------- feed: quantities, prices, and the transformation balance ----------
+  sack_weight_kg:
+    value: 50
+    unit: kg per sack
+    prov: STATED
+    source: "\"une trentaine de sacs de cinquante kilos\""
+    date: "2026-07-29"
+  sacks_starter:
+    value: 5
+    unit: sacks per batch
+    prov: STATED
+    source: "\"quatre ou cinq de démarrage\" — taken at 5. See sacks_total: 5/8/17 is the only combination inside his three ranges that sums to the \"trentaine\" he states, and it is the dearer reading, so it is also the conservative one on cost."
+    date: "2026-07-29"
+  sacks_grower:
+    value: 8
+    unit: sacks per batch
+    prov: STATED
+    source: "\"huit de croissance\" — a single figure, no range"
+    date: "2026-07-29"
+  sacks_finisher:
+    value: 17
+    unit: sacks per batch
+    prov: STATED
+    source: "\"le reste en finition, seize, dix-sept\" — taken at 17, for the same reason as sacks_starter"
+    date: "2026-07-29"
+  sacks_total:
+    value: 30
+    unit: sacks per batch
+    prov: INFERRED
+    derivation: "sacks_starter + sacks_grower + sacks_finisher"
+    source: "sacks_starter, sacks_grower, sacks_finisher — reproduces his \"une trentaine de sacs\" exactly. The low reading (4+8+16) gives 28, which he would not have called a trentaine; the split is therefore determined, not chosen."
+    date: "2026-07-29"
+  feed_kg_per_batch:
+    value: 1500
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "sacks_total * sack_weight_kg"
+    source: "sacks_total, sack_weight_kg"
+    date: "2026-07-29"
+  price_starter_sack:
+    value: 19000
+    unit: XOF per sack
+    prov: STATED
+    source: "\"Le démarrage c'est dix-neuf mille le sac\""
+    date: "2026-07-29"
+  price_grower_sack:
+    value: 17500
+    unit: XOF per sack
+    prov: STATED
+    source: "\"la croissance dix-sept mille cinq\""
+    date: "2026-07-29"
+  price_finisher_sack:
+    value: 16500
+    unit: XOF per sack
+    prov: STATED
+    source: "\"la finition seize mille cinq\""
+    date: "2026-07-29"
+  feed_vat_rate_2026:
+    value: 0.09
+    unit: fraction
+    prov: SOURCED
+    source: >-
+      fact_id CI-BA-08. The founder reports "depuis le début de l'année ça a encore monté — le vendeur
+      dit qu'ils ont mis une taxe dessus". The dealer is RIGHT and the tax is identifiable: animal feed
+      ("aliments pour bétail et animaux de basse-cour"), previously fully VAT-exempt, moved to the
+      reduced 9% rate with effect 17 January 2026. This is a fact about the world that corroborates a
+      second-hand claim inside the utterance. He is not registered for VAT and, under the entreprenant
+      régime, VAT is substituted rather than reclaimable — so the 9% is a dead cost to him, not a
+      recoverable input tax. Annex caveat carried forward: CI-BA-08 is flagged as resting on secondary
+      sources (teamfrance-export.fr; Deloitte Avocats CI) and not verified against the 2026 annexe
+      fiscale primary text, so it is used to BOUND the question below rather than to set a value.
+    authority: "Côte d'Ivoire, annexe fiscale à la loi de finances 2026, reduced 9% rate on aliments pour bétail et animaux de basse-cour, effective 17 January 2026 (secondary reporting: teamfrance-export.fr; Deloitte Avocats CI)"
+    verified: "2026-07-29"
+  feed_price_uplift:
+    value: 0
+    unit: fraction
+    prov: ELICITED
+    source: >-
+      The utterance is genuinely undetermined here and it matters more than anything else on the cost
+      side. He quotes 19,000 / 17,500 / 16,500 and then says "et depuis le début de l'année ça a
+      encore monté" — so the quoted prices are either what he pays NOW (uplift already inside them,
+      = 0) or what he was paying BEFORE the January step (uplift still to come). Base case is 0, the
+      omitting choice, because a quoted price is normally the current one and adding an increase he
+      did not quantify would be inventing cost. The upper end of the range is the 9% VAT step from
+      feed_vat_rate_2026, which is the identified cause of the rise. Feed is 54% of cash cost, so this
+      one answer moves FCFF harder than any other price question in the interview.
+    question: "Les dix-neuf mille, dix-sept mille cinq et seize mille cinq que tu m'as donnés — c'est ce que tu as payé à ta dernière livraison, ou c'était le prix avant l'augmentation du début de l'année ?"
+    range: {low: 0, high: 0.09}
+    materiality: high
+    date: "2026-07-29"
+  feed_cost_per_batch:
+    value: 515500
+    unit: XOF per batch
+    prov: INFERRED
+    derivation: "(sacks_starter * price_starter_sack + sacks_grower * price_grower_sack + sacks_finisher * price_finisher_sack) * (1 + feed_price_uplift)"
+    source: "sacks_*, price_*_sack, feed_price_uplift"
+    date: "2026-07-29"
+  feed_credit_sacks:
+    value: 5
+    unit: sacks
+    prov: STATED
+    source: "\"Lui il me fait crédit sur cinq ou six sacs et je le paie à la vente\" — taken at 5, the lower end, which is the conservative reading of how much of the cycle the dealer finances. Priced at the finisher rate because the credit is drawn late in the cycle and settled on the sale day."
+    date: "2026-07-29"
+  feed_credit_value:
+    value: 82500
+    unit: XOF
+    prov: INFERRED
+    derivation: "feed_credit_sacks * price_finisher_sack * (1 + feed_price_uplift)"
+    source: "feed_credit_sacks, price_finisher_sack, feed_price_uplift"
+    date: "2026-07-29"
+  feed_spill_rate:
+    value: 0.06
+    unit: fraction of feed purchased
+    prov: ELICITED
+    source: >-
+      "Il y a du gâchis aussi, ils grattent dans les mangeoires et ça tombe par terre" — he confirms
+      the loss and gives no size. He CAN answer a proxy question (what he sweeps up at clean-out), so
+      it is elicited rather than assumed. Working value 0.06, the middle of the 5-10% band commonly
+      cited for pan and tube feeders that are being managed, against a published ceiling of 20% for
+      badly set-up systems (feed_spill_rate_benchmark_max). Ranked LOW deliberately and the reason is
+      worth stating plainly: because the sack count is a stated quantity rather than one I derived
+      from a target weight, spillage does NOT change what he spends — it changes what the feed buys.
+      It moves the whole feed balance and the implied biological conversion, and therefore the
+      diagnosis, but it does not move FCFF.
+    question: "Quand tu nettoies le bâtiment à la fin d'une bande, tu ramasses combien d'aliment par terre — une bassine, un demi-sac, un sac plein ?"
+    range: {low: 0.03, high: 0.15}
+    materiality: low
+    date: "2026-07-29"
+  feed_spill_rate_benchmark_max:
+    value: 0.20
+    unit: fraction of feed purchased
+    prov: SOURCED
+    source: "Published poultry-extension guidance on feeder management: poorly designed or unmanaged feeding systems lose up to 20% of feed offered; the loss is reduced by feeder height adjustment, anti-swing fixing and a waste lip. Used to bound feed_spill_rate, not to set it."
+    authority: "Canadian Poultry Magazine, \"Costs And Impacts Of Feed Wastage\" and \"Minimizing Feed Wastage\" — https://www.canadianpoultrymag.com/costs-and-impacts-of-feed-wastage/"
+    verified: "2026-07-29"
+  avg_intake_per_dead_bird_kg:
+    value: 0.25
+    unit: kg per dead bird
+    prov: ASSUMED
+    source: >-
+      The feed a bird ate before it died. Tagged ASSUMED and not ELICITED because no question to this
+      founder could recover it — he buries the birds, he does not weigh what they ate. The prior: on
+      his own account the deaths are concentrated in the brooding fortnight, when a chick's cumulative
+      intake is a fraction of a kilo, with a thin tail dying later having eaten more; against a
+      whole-cycle intake of 1,500/460 = 3.26 kg per finished bird, a weighted average of 0.25 kg per
+      dead bird is a central figure. It carries 10 kg of a 1,500 kg balance, i.e. 0.7%, so the balance
+      is insensitive to it — but rule (a) requires the term to exist and be named rather than be
+      swallowed into a yield ratio.
+    date: "2026-07-29"
+  feed_spilled_kg:
+    value: 90
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "feed_kg_per_batch * feed_spill_rate"
+    source: "feed_kg_per_batch, feed_spill_rate"
+    date: "2026-07-29"
+  feed_eaten_kg:
+    value: 1410
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "feed_kg_per_batch - feed_spilled_kg"
+    source: "feed_kg_per_batch, feed_spilled_kg"
+    date: "2026-07-29"
+  feed_eaten_by_dead_birds_kg:
+    value: 10
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "mortality_per_batch * avg_intake_per_dead_bird_kg"
+    source: "mortality_per_batch, avg_intake_per_dead_bird_kg"
+    date: "2026-07-29"
+  feed_eaten_by_finished_birds_kg:
+    value: 1400
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "feed_eaten_kg - feed_eaten_by_dead_birds_kg"
+    source: "feed_eaten_kg, feed_eaten_by_dead_birds_kg"
+    date: "2026-07-29"
+  feed_to_home_birds_kg:
+    value: 18.26086956521739
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "feed_eaten_by_finished_birds_kg * birds_kept_home_per_batch / birds_finished_per_batch"
+    source: "feed_eaten_by_finished_birds_kg, birds_kept_home_per_batch, birds_finished_per_batch — the feed embedded in the owner's drawings, which earns no revenue"
+    date: "2026-07-29"
+  feed_to_sold_birds_kg:
+    value: 1381.7391304347825
+    unit: kg per batch
+    prov: INFERRED
+    derivation: "feed_eaten_by_finished_birds_kg * birds_sold_per_batch / birds_finished_per_batch"
+    source: "feed_eaten_by_finished_birds_kg, birds_sold_per_batch, birds_finished_per_batch"
+    date: "2026-07-29"
+  dealer_claimed_fcr:
+    value: 2.5
+    unit: kg feed per kg live weight
+    prov: STATED
+    source: >-
+      "Il répète qu'avec deux kilos et demi d'aliment tu fais un kilo de poulet ; moi je n'ai jamais
+      vérifié." This is a BELIEF held by an interested party — the man who sells him the feed — and
+      the founder says outright he has never tested it. It is recorded as a claim, never used as a
+      driver. Nothing in this model is computed from it; it is only compared against what his own
+      quantities imply.
+    date: "2026-07-29"
+  implied_gross_fcr:
+    value: 2.608695652173913
+    unit: kg feed purchased per kg live weight finished
+    prov: INFERRED
+    derivation: "feed_kg_per_batch / live_weight_total_kg_per_batch"
+    source: >-
+      feed_kg_per_batch, live_weight_total_kg_per_batch. WHAT THE RATIO IS NET OF — the requirement
+      rule (a) puts on any handed-down ratio. This one is net of NOTHING: it is every kilo he buys,
+      divided by the live weight of every bird that reached day 45. It already absorbs the spillage on
+      the floor, the feed eaten by the forty that died, and everything the surviving birds turned into
+      manure, moisture and body heat rather than meat. At 2.609 it sits about 4% ABOVE the dealer's
+      2.5, i.e. the dealer's number flatters his own product, which is the direction one would predict.
+    date: "2026-07-29"
+  biological_fcr:
+    value: 2.4347826086956523
+    unit: kg feed eaten per kg live weight finished
+    prov: INFERRED
+    derivation: "feed_eaten_by_finished_birds_kg / live_weight_total_kg_per_batch"
+    source: >-
+      feed_eaten_by_finished_birds_kg, live_weight_total_kg_per_batch. The same operation measured on
+      feed that actually entered a surviving bird. The gap between this and implied_gross_fcr is
+      exactly the spillage plus the dead-birds' feed, which is the whole point of decomposing the
+      ratio: the dealer's single number cannot tell him whether his feed is poor or his feeders are.
+    date: "2026-07-29"
+  # ---------- selling prices ----------
+  price_head_normal:
+    value: 2500
+    unit: XOF per head
+    prov: STATED
+    source: "\"Deux mille cinq la tête normalement\""
+    date: "2026-07-29"
+  price_head_glut:
+    value: 2300
+    unit: XOF per head
+    prov: STATED
+    source: "\"deux mille trois quand il y a beaucoup de poulet dehors\""
+    date: "2026-07-29"
+  price_head_festive_low:
+    value: 3000
+    unit: XOF per head
+    prov: STATED
+    source: "\"aux fêtes de fin d'année trois mille, trois mille deux\""
+    date: "2026-07-29"
+  price_head_festive_high:
+    value: 3200
+    unit: XOF per head
+    prov: STATED
+    source: "\"trois mille, trois mille deux\""
+    date: "2026-07-29"
+  price_head_festive:
+    value: 3100
+    unit: XOF per head
+    prov: INFERRED
+    derivation: "(price_head_festive_low + price_head_festive_high) / 2"
+    source: "price_head_festive_low, price_head_festive_high"
+    date: "2026-07-29"
+  runt_price_low:
+    value: 1500
+    unit: XOF per head
+    prov: STATED
+    source: "\"ceux-là je les laisse à mille cinq, mille huit\""
+    date: "2026-07-29"
+  runt_price_high:
+    value: 1800
+    unit: XOF per head
+    prov: STATED
+    source: "\"mille cinq, mille huit\""
+    date: "2026-07-29"
+  runt_price:
+    value: 1650
+    unit: XOF per head
+    prov: INFERRED
+    derivation: "(runt_price_low + runt_price_high) / 2"
+    source: "runt_price_low, runt_price_high. Held flat across the festive batch too: he quotes the runt price without seasonal variation, and small birds are the ones a festive buyer least wants."
+    date: "2026-07-29"
+  cull_price_fraction:
+    value: 0.5
+    unit: fraction of the normal head price
+    prov: STATED
+    source: "\"je le donne à moitié prix avant qu'il crève\""
+    date: "2026-07-29"
+  festive_batches_per_year:
+    value: 1
+    unit: batches per year
+    prov: ELICITED
+    source: >-
+      He states that the end-of-year price exists but not how many of his six batches catch it. One is
+      the working value and the calendar supports it: on a 59-day cycle the sale dates fall roughly
+      mid-February, mid-April, mid-June, mid-August, mid-October and early December, so exactly one
+      lands in or near the fêtes window, and a producer who knows the price will time it there. Two
+      would require deliberately splitting a batch across the window. Wired into `checks` through
+      trace.festive_flag.
+    question: "Sur tes six bandes de l'année, combien tu arrives vraiment à vendre au prix des fêtes — une seule, ou tu t'arranges pour en placer deux ?"
+    range: {low: 1, high: 2}
+    materiality: medium
+    date: "2026-07-29"
+  glut_batches_per_year:
+    value: 0
+    unit: batches per year
+    prov: ELICITED
+    source: >-
+      "deux mille trois quand il y a beaucoup de poulet dehors" — the glut price is real and he gives
+      no frequency. Base case is ZERO, the omitting choice, which makes the revenue line the UPPER
+      bound: any answer above zero moves revenue down by 200 XOF on ~434 head, i.e. it works in the
+      same direction as a higher mortality answer and compounds with it. Ranked high for that reason —
+      it is the second question I would ask after the mortality count. Wired through trace.glut_flag.
+    question: "Dans une année normale, sur tes six bandes, il y en a combien où tu es obligé de descendre à deux mille trois parce qu'il y a beaucoup de poulet dehors ?"
+    range: {low: 0, high: 3}
+    materiality: high
+    date: "2026-07-29"
+
+  # ---------- the other cash costs ----------
+  gas_bottles_per_batch:
+    value: 1.5
+    unit: bottles per batch
+    prov: STATED
+    source: "\"une bouteille et demie à quatre mille cinq\""
+    date: "2026-07-29"
+  gas_bottle_price:
+    value: 4500
+    unit: XOF per bottle
+    prov: STATED
+    source: "\"à quatre mille cinq\""
+    date: "2026-07-29"
+  litter_trips_per_batch:
+    value: 3
+    unit: trips per batch
+    prov: STATED
+    source: "\"trois voyages par bande\""
+    date: "2026-07-29"
+  litter_trip_price:
+    value: 2000
+    unit: XOF per trip
+    prov: STATED
+    source: "\"les copeaux de la litière, deux mille le voyage\""
+    date: "2026-07-29"
+  vet_cost_per_batch:
+    value: 15000
+    unit: XOF per batch
+    prov: STATED
+    source: "\"le Newcastle, le Gumboro et les vitamines, mettons quinze mille\" — note the \"mettons\" (let's say): his own hedge, an estimate rather than a recalled invoice, but it is his figure and small enough not to warrant displacing a sharper question"
+    date: "2026-07-29"
+  electricity_per_month:
+    value: 8000
+    unit: XOF per month
+    prov: STATED
+    source: "\"le courant pour la pompe, huit mille par mois\""
+    date: "2026-07-29"
+  labour_monthly:
+    value: 50000
+    unit: XOF per month
+    prov: STATED
+    source: "\"un jeune du village qui dort là-bas et qui donne à manger le matin, cinquante mille par mois\" — cash wage only"
+    date: "2026-07-29"
+  worker_food_cost_per_month:
+    value: 0
+    unit: XOF per month
+    prov: ELICITED
+    source: >-
+      "et il mange sur place" — the boy is fed as part of his package and the cost of feeding him is
+      never priced. Base case ZERO, the omitting choice, which makes labour cost the LOWER bound. There
+      is a plausible link he can settle in the same answer: some of the five or six birds kept "pour la
+      maison" may be what feeds the boy, in which case part of this cost is already sitting in the
+      drawings rather than being a separate outlay.
+    question: "Le jeune qui mange sur place, ça te coûte combien par mois en nourriture — et est-ce que les poulets que tu gardes pour la maison, c'est lui qui les mange en partie ?"
+    range: {low: 0, high: 30000}
+    materiality: medium
+    date: "2026-07-29"
+  disinfectant_cost_per_batch:
+    value: 0
+    unit: XOF per batch
+    prov: ELICITED
+    source: >-
+      "il faut tout désinfecter" — he states the operation and never prices it. Base case ZERO, the
+      omitting choice, so opex is a lower bound here too. Almost certainly a small number (a drum of
+      disinfectant and lime for 60 m2), which is why it is ranked low, but a silent zero would be a
+      guess and this is a question instead.
+    question: "Le désinfectant et la chaux entre deux bandes, ça te fait combien à chaque fois ?"
+    range: {low: 0, high: 15000}
+    materiality: low
+    date: "2026-07-29"
+  equipment_capex_per_batch:
+    value: 0
+    unit: XOF per batch
+    prov: ELICITED
+    source: >-
+      He runs on equipment he never prices: "les mangeoires", the brooder lamps implied by "sous les
+      lampes", the drinkers, and the pump implied by "le courant pour la pompe". The shed is the only
+      asset he costs. Base case ZERO, the omitting choice, so capex in this model is zero throughout
+      and FCFF is an UPPER bound to that extent. This is a structural gap as much as a numerical one —
+      feeders, drinkers and lamps in this service life are replaced every few years, so unlike the shed
+      their replacement WOULD fall inside a one-year horizon at some point in the cycle of renewals.
+    question: "Les mangeoires, les abreuvoirs, les lampes et la pompe — tu as payé combien pour tout ça, et tu remplaces tous les combien ?"
+    range: {low: 0, high: 50000}
+    materiality: medium
+    date: "2026-07-29"
+  commune_levy_monthly:
+    value: 1500
+    unit: XOF per month
+    prov: STATED
+    source: "\"il y a juste un gars de la mairie qui passe avec son carnet, je lui donne mille cinq cents par mois sans savoir ce que c'est\" — a real cash outflow of unknown legal character; treated as a non-income local levy and charged in opex"
+    date: "2026-07-29"
+
+  # ---------- capacity benchmarks (rule c) ----------
+  min_area_per_bird_m2:
+    value: 0.1
+    unit: m2 per bird
+    prov: SOURCED
+    source: >-
+      The floor-space benchmark for broilers grown to about six weeks in CONVENTIONAL OPEN-SIDED,
+      NATURALLY VENTILATED housing in a humid tropical climate — which is exactly what "parpaings,
+      grillage et tôle" describes, with no fans anywhere in the utterance. Used to test both his
+      current flock and the 700-bird flock he abandoned.
+    authority: "Rastogi, Lallo et al., \"The effect of stocking density on the performance and economic implications for broilers grown to 42 days in open sided house in Trinidad\" — 0.1 m2/bird demonstrated as workable in open-sided naturally ventilated tropical housing; https://www.researchgate.net/publication/233730776"
+    verified: "2026-07-29"
+  max_live_weight_kg_per_m2:
+    value: 30
+    unit: kg per m2
+    prov: SOURCED
+    source: "The live-weight loading ceiling quoted for naturally ventilated open-sided poultry housing assisted by stir fans. His shed has no fans, so 30 kg/m2 is a generous ceiling for it and a check that passes against it is a weak pass, not a strong one — stated as such."
+    authority: "US Poultry Industry Manual — Broilers: housing and facilities, The Poultry Site; https://www.thepoultrysite.com/articles/broiler-housing"
+    verified: "2026-07-29"
+  stocking_area_per_bird_m2:
+    value: 0.12
+    unit: m2 per bird
+    prov: INFERRED
+    derivation: "shed_area_m2 / chicks_placed_per_batch"
+    source: "shed_area_m2, chicks_placed_per_batch — 500 birds in 60 m2"
+    date: "2026-07-29"
+  stocking_area_per_bird_at_attempted_flock_m2:
+    value: 0.08571428571428572
+    unit: m2 per bird
+    prov: INFERRED
+    derivation: "shed_area_m2 / attempted_flock_size"
+    source: >-
+      shed_area_m2, attempted_flock_size. The 700-bird batch he tried and abandoned works out at 0.0857
+      m2 a bird, BELOW the 0.1 benchmark; his 500-bird batch at 0.12 sits above it. His own experiment
+      and the published density therefore agree, independently, on where the shed's limit is — which is
+      the strongest single piece of physical corroboration in this utterance and the reason the claimed
+      output can be said to fit the plant rather than merely asserted to.
+    date: "2026-07-29"
+  live_weight_loading_kg_per_m2:
+    value: 9.583333333333334
+    unit: kg per m2
+    prov: INFERRED
+    derivation: "live_weight_total_kg_per_batch / shed_area_m2"
+    source: "live_weight_total_kg_per_batch, shed_area_m2 — peak loading, at day 45, immediately before the sale"
+    date: "2026-07-29"
+
+  # ---------- financing (recorded, then excluded from unlevered FCFF) ----------
+  loan_principal:
+    value: 500000
+    unit: XOF
+    prov: STATED
+    source: "\"j'ai pris cinq cent mille dans une microfinance sur six mois pour payer une bande\""
+    date: "2026-07-29"
+  loan_cost:
+    value: 70000
+    unit: XOF
+    prov: STATED
+    source: "\"ça m'a coûté soixante-dix mille\""
+    date: "2026-07-29"
+  loan_months:
+    value: 6
+    unit: months
+    prov: STATED
+    source: "\"sur six mois\""
+    date: "2026-07-29"
+  loan_cost_rate_over_term:
+    value: 0.14
+    unit: fraction of principal over the term
+    prov: INFERRED
+    derivation: "loan_cost / loan_principal"
+    source: "loan_cost, loan_principal — 14% over six months. Recorded because it prices his liquidity, NOT charged anywhere: this is an unlevered build, so all financing cost is excluded by definition (DEFAULTED convention: FCFF is the cash available to all capital providers, before any of them are paid)."
+    date: "2026-07-29"
+  # ---------- tax: what he believes, and what the law says ----------
+  founder_belief_forfait_agricole_exists:
+    value: 0
+    unit: boolean (1 = the belief is correct)
+    prov: SOURCED
+    source: >-
+      HIS BELIEF, verbatim: "On m'a toujours dit que l'élevage ce n'est pas comme le commerce, qu'il y
+      a un forfait pour les agriculteurs et que la patente ne nous concerne pas." He is HALF right, and
+      the two halves have to be separated because they are different objects. On the forfait he is
+      WRONG: bénéfices agricoles is not a separate régime in Côte d'Ivoire, it is merged with BIC in a
+      single chapter under the same four régime bands and the same rate, aviculture sits inside it, and
+      there is no micro-BA forfaitaire abattement — the French analogue does not carry over. So this
+      records the world-fact (0 = no such forfait), while the belief itself is preserved in `utterance`
+      and in `notes`. On the patente he is RIGHT: see patente_applicable_to_this_taxpayer.
+    authority: "fact_id CI-BA-01. DGI, Impôts et taxes en Côte d'Ivoire §1.1; DGI, Le système fiscal ivoirien §b — CGI Livre I, Titre I, Chapitre I, \"Impôts sur les bénéfices industriels et commerciaux et les bénéfices agricoles\", arts. 1-84"
+    verified: "2026-07-29"
+  patente_applicable_to_this_taxpayer:
+    value: 0
+    unit: boolean (1 = the patente is due)
+    prov: SOURCED
+    source: >-
+      Zero, on two independent grounds, and he was right for a reason he could not have named. FIRST,
+      under ORDINARY law there is a PERMANENT patente exemption for "les agriculteurs et les éleveurs
+      qui ne vendent que les récoltes et produits d'élevage provenant de leurs exploitations et qui
+      réalisent un chiffre d'affaires annuel inférieur à celui fixé pour relever du régime réel
+      normal". He meets both limbs: he sells only birds he raised himself — he buys day-old chicks as
+      an input, not finished chickens for resale — and his turnover is ~7.0m against an RNI threshold
+      of 500m. SECOND, at his turnover the entreprenant tax substitutes for the patente anyway, so the
+      exemption is subsumed. His brother-in-law who "paie une patente chaque année" sells spare parts:
+      that is négoce, he resells goods he did not produce, and the exemption does not reach him. They
+      are BOTH right about their own businesses, which is why the argument between them has no answer.
+    authority: "fact_id CI-BA-02. DGI, Le système fiscal ivoirien §C-1-c, under \"Exonérations permanentes\"; home article CGI art. 280 (item added by annexe fiscale 2020, art. 2). Substitution limb: fact_id CI-TAX-06, CGI art. 73"
+    verified: "2026-07-29"
+  tce_band_high:
+    value: 5000000
+    unit: XOF per year, turnover TTC
+    prov: SOURCED
+    source: "Upper limit of the taxe communale de l'entreprenant band. Tested and NOT met: his turnover is above it, so the TCE is not his régime."
+    authority: "fact_id CI-BA-03. DGI, Le système fiscal ivoirien; annexe fiscale loi n°2020-972 art. 33, ref. ord. n°61-123 art. 2"
+    verified: "2026-07-29"
+  tee_band_low:
+    value: 5000001
+    unit: XOF per year, turnover TTC
+    prov: SOURCED
+    source: "Lower bound of the taxe d'État de l'entreprenant band. His annual turnover clears it, which is what puts him in this régime; asserted on the model's own revenue in `checks`, not assumed."
+    authority: "fact_ids CI-TAX-05, CI-V25-05. Côte d'Ivoire CGI art. 73 (régime de l'entreprenant), introduced by annexe fiscale à la loi n°2020-972 du 23 décembre 2020"
+    verified: "2026-07-29"
+  tee_band_high:
+    value: 50000000
+    unit: XOF per year, turnover TTC
+    prov: SOURCED
+    source: "Upper bound of the TEE band; above it the taxpayer moves to the microentreprise régime. His turnover is an order of magnitude below it."
+    authority: "fact_ids CI-TAX-05, CI-V25-06, CI-V25-42. Côte d'Ivoire CGI art. 73"
+    verified: "2026-07-29"
+  tee_rate_commerce_negoce:
+    value: 0.04
+    unit: fraction of annual turnover TTC
+    prov: SOURCED
+    source: "The 4% branch of the TEE, reserved for commerce and négoce. NOT the applicable branch here — see tee_rate_applied. Recorded because it is the rate his brother-in-law's trade would attract, and because taking the wrong branch is the easiest way to be 20% wrong on the tax line."
+    authority: "fact_ids CI-TAX-06, CI-V25-07, CI-V25-44. Côte d'Ivoire CGI art. 77"
+    verified: "2026-07-29"
+  tee_rate_applied:
+    value: 0.05
+    unit: fraction of annual turnover TTC
+    prov: SOURCED
+    source: >-
+      The 5% branch — "autres activités" / prestations, i.e. everything that is not commerce or
+      négoce. This is a characterisation call and it is the one to attack if you disagree with the tax
+      line: he does not buy chickens and resell them, he buys day-old chicks and feed and PRODUCES
+      chickens, so the activity is production/élevage and not négoce. Same reasoning as the patente
+      exemption above, which is drafted around exactly this distinction ("qui ne vendent que les
+      produits d'élevage provenant de leurs exploitations"), so the two provisions are read
+      consistently. The TEE is libératoire and expressly substitutes for the profits tax, the patente
+      and VAT, so this single rate is the whole of his tax on the asset side.
+    authority: "fact_ids CI-TAX-06, CI-V25-08, CI-V25-43; substitution wording \"se substitue à la patente, à l'impôt sur les bénéfices et à la TVA\" — Côte d'Ivoire CGI arts. 72 et suivants, art. 77"
+    verified: "2026-07-29"
+  bic_rate:
+    value: 0.25
+    unit: fraction of taxable profit
+    prov: SOURCED
+    source: "The ordinary profits-tax rate, identical for personnes physiques and morales. NOT applied: at this turnover the TEE substitutes for it. Recorded so that the substitution is a visible decision rather than an omission, and because it is the rate he would face if he grew past the TEE band."
+    authority: "fact_ids CI-TAX-01, CI-V25-45, CI-V25-47. Côte d'Ivoire CGI art. 64; DGI, Le système fiscal ivoirien; PwC Worldwide Tax Summaries, Ivory Coast — Corporate — Taxes on corporate income"
+    verified: "2026-07-29"
+  imf_rate_applicable_to_this_taxpayer:
+    value: 0
+    unit: fraction of turnover
+    prov: SOURCED
+    source: >-
+      The impôt minimum forfaitaire is 0.5% of turnover TTC with a 3,000,000 floor and a 35,000,000
+      cap — a floor which, on a turnover of ~7.0m, would swamp everything this business earns. It does
+      NOT apply: the IMF reaches taxpayers under the régime réel normal and the régime simplifié only,
+      and he is under neither. This is the single most dangerous negative in the file, because the
+      floor is larger than his annual FCFF and a model that applied it would produce a business that
+      cannot exist.
+    authority: "fact_ids CI-TAX-02, CI-TAX-03, CI-V25-17, CI-V25-18. DGI — IMF applies to RNI and RSI only; max(BIC, IMF) with floor/cap nested inside the IMF computation, substitution en lieu et place"
+    verified: "2026-07-29"
+  investment_code_relief_rate:
+    value: 0
+    unit: fraction of profits tax relieved
+    prov: SOURCED
+    source: >-
+      No Investment-Code relief, on three independent grounds, any one of which is fatal. (1) LOCATION
+      — he is at Azaguié, in Agnéby-Tiassa; "sur la route de Bouaké" is a road, not an address, and
+      Zone B is defined by chefs-lieux de région plus Bonoua and Grand-Bassam. Reading "Bouaké" out of
+      that phrase and taking Zone B would be the classic error here. (2) SIZE — the agrément regime
+      requires 50,000,000 of investment excluding working capital for an SME; his shed cost 1,800,000,
+      some 3.6% of the threshold, leaving at best the régime de déclaration, whose advantages are
+      confined to the exploitation phase. (3) ACTIVITY — the dedicated agricultural incentive
+      apparatus does not reach livestock at all: CGI arts. 12bis/12ter and art. 165 require 100 ha or
+      agro-industrial status and enumerate named plantation crops only, in which poultry appears
+      nowhere. So the ten-year Zone B category-1 holiday is not in play and neither is any agricultural
+      profit reduction.
+    authority: "fact_ids CI-BA-06, CI-INV-01, CI-INV-05, CI-V25-28. Ordonnance n°2018-646 du 1er août 2018, arts. 5, 8, 10, 13; CGI arts. 12bis, 12ter, 165"
+    verified: "2026-07-29"
+  processing_agrement_applicable:
+    value: 0
+    unit: boolean
+    prov: SOURCED
+    source: "The third pathway — a five-year patente/foncier exemption for agricultural TRANSFORMATION enterprises under a Directeur général des Impôts agrément — targets processing raw product into finished goods. He sells live birds at the shed gate: \"Je vends vivant, à la tête, au poulailler.\" There is no slaughter, no chilling, no processing anywhere in the utterance, so this does not reach him."
+    authority: "fact_id CI-BA-07. CGI arts. 151(23), 280(37), 398(14); annexe fiscale à la loi n°2019-1080, art. 2"
+    verified: "2026-07-29"
+  airsi_applicable_on_feed_purchases:
+    value: 0
+    unit: boolean
+    prov: SOURCED
+    source: "The 5% informal-sector advance withholding (AIRSI) is not applied on sales to éleveurs individuels, so it does not sit inside the feed price he pays. Recorded as a negative because it bears directly on the largest cost line and its absence would otherwise be invisible. Annex caveat carried: the in-document citation basis for this row is vague rather than a clean CGI article."
+    authority: "fact_id CI-BA-05. DGI, Impôts et taxes en Côte d'Ivoire, ch. II item 1"
+    verified: "2026-07-29"
+  smig_monthly:
+    value: 75000
+    unit: XOF per month
+    prov: SOURCED
+    source: >-
+      The guaranteed interprofessional minimum wage. He pays 50,000 plus food. Recorded as a
+      world-fact against a belief-fact ("Ce n'est pas déclaré, c'est comme ça partout ici"), NOT used
+      to restate the wage: the base case charges what he actually pays, because that is the cash the
+      business actually gives up. Whether the agricultural minimum (SMAG) rather than the SMIG governs
+      a poultry farmhand, and whether board counts towards it, are questions I have not resolved and
+      do not assert — so this figure bounds the exposure rather than measuring it.
+    authority: "fact_ids CI-TAX-09, CI-V25-09. Décret n°2022-986 du 21 décembre 2022, in force from 1 January 2023"
+    verified: "2026-07-29"
+  cnps_pension_employer_rate:
+    value: 0.077
+    unit: fraction of gross salary
+    prov: SOURCED
+    source: "Employer pension contribution. Not in the base case — the employment is undeclared — but materialised as a separate trace row so the exposure is a number, not an adjective."
+    authority: "fact_ids CI-TAX-08, CI-V25-10, CI-V25-32. CLEISS, Les cotisations en Côte d'Ivoire, rates in force 1 January 2025; https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    verified: "2026-07-29"
+  cnps_family_employer_rate:
+    value: 0.05
+    unit: fraction of capped base
+    prov: SOURCED
+    source: "Prestations familiales, employer only, on a base capped at 70,000/month. His 50,000 wage is below the cap, so the cap does not bite and the rate applies to the full wage."
+    authority: "fact_ids CI-V25-11, CI-V25-30. CLEISS, Les cotisations en Côte d'Ivoire, 1 January 2025"
+    verified: "2026-07-29"
+  cnps_maternity_employer_rate:
+    value: 0.0075
+    unit: fraction of capped base
+    prov: SOURCED
+    source: "Maternité, employer only, same 70,000 cap, likewise not binding at a 50,000 wage."
+    authority: "fact_id CI-V25-12. CLEISS, Les cotisations en Côte d'Ivoire, 1 January 2025"
+    verified: "2026-07-29"
+  cnps_at_mp_employer_rate:
+    value: 0.02
+    unit: fraction of capped base
+    prov: SOURCED
+    source: "Accidents du travail et maladies professionnelles, employer only, banded 2%-5% by sector risk class. Taken at the bottom of the band, 2%, which is the conservative choice for an exposure figure I am presenting against him."
+    authority: "fact_ids CI-V25-13, CI-V25-33, CI-V25-34. CLEISS, Les cotisations en Côte d'Ivoire, 1 January 2025"
+    verified: "2026-07-29"
+  cnps_capped_base_monthly:
+    value: 70000
+    unit: XOF per month
+    prov: SOURCED
+    source: "Monthly ceiling for prestations familiales, maternité and AT/MP. Recorded to show the cap was tested rather than ignored: at a 50,000 wage it does not bind."
+    authority: "fact_ids CI-V25-14, CI-V25-31. CLEISS, Les cotisations en Côte d'Ivoire"
+    verified: "2026-07-29"
+  cnps_employer_rate_total:
+    value: 0.1545
+    unit: fraction of gross salary
+    prov: INFERRED
+    derivation: "cnps_pension_employer_rate + cnps_family_employer_rate + cnps_maternity_employer_rate + cnps_at_mp_employer_rate"
+    source: >-
+      cnps_pension_employer_rate, cnps_family_employer_rate, cnps_maternity_employer_rate,
+      cnps_at_mp_employer_rate. CNPS employer contributions only. It deliberately EXCLUDES the further
+      employer levies (ITS withholding, TAP, TFPC) because the fact base is internally inconsistent
+      about them — one row gives TAP 0.4% + TFPC 1.2%, another gives a single 2.8% payroll tax for
+      local employees under a field labelled 0.044 — and I will not tie arithmetic around a rate I
+      cannot reconcile. The exposure recorded here is therefore a floor, and it is stated as one.
+    date: "2026-07-29"
+  tax_actually_paid_to_dgi_annual:
+    value: 0
+    unit: XOF per year
+    prov: STATED
+    source: "\"Je n'ai jamais rien payé aux impôts\" — his practice. The 1,500/month to the mairie is a separate object, sits in opex as commune_levy, and is not a payment to the DGI. Used only in the fcff_as_currently_paid column."
+    date: "2026-07-29"
+  commune_levy_annual:
+    value: 18000
+    unit: XOF per year
+    prov: INFERRED
+    derivation: "commune_levy_monthly * 12"
+    source: "commune_levy_monthly — what he actually hands over in a year, against a statutory TEE that is roughly twenty times larger"
+    date: "2026-07-29"
+passage: |
+  STEP 0 — WHAT THE PERIOD IS.
+  He works in bandes. A bande occupies the shed for 45 days of grow-out and then 14 days empty for
+  disinfection, so one cycle is 59 days. Six of those fit in a year (6 x 59 = 354 days, inside 365);
+  seven do not (7 x 59 = 413). Six is also what he calls a normal year. So the grid is six periods of
+  one batch each, and the horizon is one production year. Every period is identical in physical terms
+  — same 500 chicks, same 30 sacks, same 40 deaths — and differs only in the selling price, because
+  one batch of the six comes off at the end-of-year fêtes.
+
+  STEP 1 — THE FLOCK, AND WHERE THE BIRDS GO.
+  He places 500 day-old chicks. Of those, the base case buries 40 and keeps 6 for the house, leaving
+  454 to sell. That reproduces his own spoken count — "j'achète cinq cents poussins, j'en enterre une
+  quarantaine, il m'en reste quatre cent cinquante et quelques" — and it closes: 500 = 40 + 6 + 454,
+  with nothing left in the shed at the end of the period, because the period boundary sits in the
+  middle of the empty fortnight. That last point is worth being explicit about rather than assuming:
+  the closing live-bird stock is zero in every period BY CONSTRUCTION, not by luck, and there is
+  therefore no carry-over flock to lose weight, get sick or be stolen between periods.
+
+  But his 40 is contradicted by his own description of the dying, and this is the finding of the case.
+  He describes the shape day by day: "les premiers jours tu entres le matin et tu en ramasses trois,
+  quatre, des fois cinq sous la lampe", then "passé les deux premières semaines ça se calme, après
+  c'est un ou deux par semaine jusqu'à la fin". Rebuild it. Four a day (the middle of three-four-five,
+  and the number he says first) for the fourteen brooding days is 4 x 14 = 56 birds. Then one and a
+  half a week for the remaining 45 - 14 = 31 days is 1.5 x 31 / 7 = 6.642857142857143 birds. Total
+  62.642857142857146. His headline is 40. The two accounts of the same flock differ by 57%, and the
+  day-by-day figure lands almost exactly on the number he reserves for a BAD batch, "des fois soixante
+  quand ça va mal". Twenty-three birds a batch, six batches a year, is 138 head — at 2,500 a head,
+  roughly 345,000 XOF of revenue a year that is either there or is not, on a business whose whole
+  unlevered cash generation is of that order. The model runs on his 40 because that is what he asserts
+  and it is what closes with his "450-odd"; the question stays attached at the top of the ranking.
+
+  Of the 454 sold, he says about twenty "restent petits" and go at 1,500-1,800, mid 1,650. He also
+  sells the odd bird that "commence à traîner" at half price, and gives no count for those, so the
+  base case carries zero of them and the question is asked instead. That leaves 454 - 20 - 0 = 434 at
+  the full head price.
+
+  STEP 2 — DOES THE FLOCK FIT THE BUILDING?
+  The shed is 12 x 5 = 60 m2. Five hundred birds is 0.12 m2 a bird. The published density for broilers
+  grown to about six weeks in open-sided, naturally ventilated tropical housing — which is what
+  parpaings, grillage and tôle describes, with no fan mentioned anywhere — is 0.1 m2 a bird. So 500
+  fits, with about 17% of headroom. Now run his own failed experiment through the same test: 700 birds
+  in 60 m2 is 0.0857 m2 a bird, which breaches the benchmark. He found that out the hard way — "j'ai
+  essayé sept cents une fois, sous les lampes c'était trop serré ; je suis revenu à cinq cents" — and
+  the benchmark and the founder agree, independently, on where the building's limit is. The live-weight
+  loading at day 45 is 460 birds x 1.25 kg / 60 m2 = 9.58 kg/m2, comfortably under the 30 kg/m2 quoted
+  for naturally ventilated houses, though that ceiling assumes stir fans he does not have, so passing
+  it is a weak pass and I record it as one.
+
+  On availability: he managed five batches last year, not six — "l'année dernière je n'en ai fait que
+  cinq" — and he tells us why in the same breath, "des fois cinquante jours quand ils ne prennent pas
+  bien". A 50-day grow-out makes a 64-day cycle and 5.7 batches a year. So six is the good year, not
+  the average year, and the base case is running the plant at the top of what he says it does. That is
+  a choice, it is visible, and it is not hidden inside a number.
+
+  STEP 3 — THE FEED, AND WHAT THE DEALER'S RATIO IS NET OF.
+  He goes through "une trentaine de sacs de cinquante kilos: quatre ou cinq de démarrage, huit de
+  croissance, et le reste en finition, seize, dix-sept". Only one combination inside those three ranges
+  sums to a round thirty: 5 + 8 + 17. So the split is determined by his own words rather than chosen,
+  and it is also the dearer reading. Thirty sacks at 50 kg is 1,500 kg a batch. At 19,000, 17,500 and
+  16,500 the feed bill is 5 x 19,000 + 8 x 17,500 + 17 x 16,500 = 95,000 + 140,000 + 280,500 =
+  515,500 XOF a batch, which is 54% of everything he spends.
+
+  Now the transformation. A yield ratio is not a balance, so take the 1,500 kg apart. Some falls on
+  the floor — "ils grattent dans les mangeoires et ça tombe par terre" — and at a working 6%, the
+  middle of the band usually quoted for managed pan and trough feeders, that is 90 kg. Some was eaten
+  by birds that then died: 40 birds at a weighted 0.25 kg each, concentrated in the brooding fortnight
+  when a chick eats very little, is 10 kg. What is left, 1,500 - 90 - 10 = 1,400 kg, went into the 460
+  birds that finished, of which the six kept for the house took 1,400 x 6/460 = 18.26 kg and the 454
+  sold took 1,400 x 454/460 = 1,381.74 kg. Those four terms sum back to 1,500 exactly, which is what
+  rule (a) asks for and what a bare conversion ratio would have concealed.
+
+  With the balance open, test the dealer's claim. He says "avec deux kilos et demi d'aliment tu fais
+  un kilo de poulet", and the founder says "moi je n'ai jamais vérifié". At 1.25 kg a bird — the middle
+  of the "un kilo deux, un kilo trois" he quotes — the 460 finished birds carry 575 kg of live weight.
+  Feed purchased over live weight finished is 1,500 / 575 = 2.6087. So the operation's true purchased-
+  feed ratio is about 4% WORSE than the feed salesman's number, and the salesman's 2.5 is net of
+  nothing at all: it silently absorbs the spillage, the feed eaten by the dead, and everything the live
+  birds turned into manure and body heat. Measured on feed that actually entered a surviving bird, the
+  conversion is 1,400 / 575 = 2.4348. The distance between 2.4348 and 2.6087 is precisely the spillage
+  and the mortality feed — which is the useful decomposition, because it tells him whether to change
+  his feed or his feeders, and the dealer's single number cannot.
+
+  STEP 4 — THE REST OF THE COST, PER BATCH.
+  Chicks: 500 x 600 = 300,000. Feed: 515,500. Gas for brooding: 1.5 bottles x 4,500 = 6,750. Litter:
+  3 trips x 2,000 = 6,000. Newcastle, Gumboro and vitamins: 15,000 (his own "mettons", an estimate).
+  Then the monthly items. There are twelve months in his year and six batches, so each batch must
+  carry two months of them — not the 1.94 months the 59-day cycle would suggest, because the boy is
+  paid and the pump is powered through the eleven idle days of the calendar too, and charging these
+  over the 45 grow-days alone would understate them by about a quarter. Electricity 8,000 x 2 =
+  16,000. The boy 50,000 x 2 = 100,000. The man from the mairie 1,500 x 2 = 3,000. Rent is an explicit
+  zero: "le terrain c'est celui de mon père, je ne paie pas de loyer". Disinfectant, the boy's food and
+  any equipment replacement are all things he does but never prices, so they carry zero and carry a
+  question each. Total cash opex 962,250 XOF a batch, of which chicks and feed alone are 815,500, or
+  85%. He is right that "quand tu enlèves les poussins et l'aliment, il ne reste plus grand-chose".
+
+  Depreciation: the shed cost 1,800,000 three years ago. Over an assumed 15-year life that is 120,000
+  a year, 20,000 a batch, and the opening book value is 1,800,000 x (1 - 3/15) = 1,440,000, running
+  down to 1,320,000 by the end of the horizon. No capex falls in the year, because the only asset he
+  priced has twelve years left and the equipment he did not price carries zero.
+
+  STEP 5 — REVENUE.
+  A normal batch: 434 head at 2,500 = 1,085,000, plus 20 runts at 1,650 = 33,000, total 1,118,000. The
+  festive batch: 434 at 3,100 = 1,345,400, plus the same 33,000 of runts, total 1,378,400 — the runt
+  price held flat, because he quotes it without seasonal variation and a small bird is what a festive
+  buyer least wants. Five normal batches and one festive gives an annual turnover of 5 x 1,118,000 +
+  1,378,400 = 6,968,400 XOF. The six birds kept for the house produce no revenue: they are owner's
+  drawings in kind, they never meet a buyer, and the feed they ate stays in cost, which is the honest
+  asymmetry rather than an error.
+
+  STEP 6 — TAX. THE PART HE GETS HALF RIGHT.
+  He says: "l'élevage ce n'est pas comme le commerce, il y a un forfait pour les agriculteurs, la
+  patente ne nous concerne pas." Two claims. On the patente he is RIGHT, and for a better reason than
+  he knows: there is a PERMANENT exemption for farmers and livestock raisers who sell only produce
+  from their own holding and whose turnover is under the réel normal threshold. He clears both limbs —
+  he buys chicks and feed as inputs and sells birds he raised, and 7.0m is a long way under 500m. His
+  brother-in-law sells spare parts he did not make, which is négoce, and the exemption does not reach
+  him. They are both correct about their own businesses, which is exactly why neither can convince the
+  other. On the forfait he is WRONG: bénéfices agricoles is not a separate régime in Côte d'Ivoire, it
+  is merged with BIC in one chapter under the same bands and the same rate, aviculture sits inside it,
+  and there is no micro-BA abattement.
+
+  So run the band test on the number the model produced. Annual turnover 6,968,400 is above the
+  5,000,000 ceiling of the taxe communale de l'entreprenant and inside the 5,000,001-50,000,000 band of
+  the taxe d'État de l'entreprenant. The TEE is libératoire — it substitutes for the patente, the
+  profits tax and VAT — and it is charged at 4% for commerce and négoce and 5% for everything else. He
+  produces rather than resells, so 5%. That gives 0.05 x 6,968,400 = 348,420 XOF a year, allocating
+  per batch exactly in proportion to that batch's revenue, which a turnover tax does naturally: 55,900
+  on a normal batch and 68,920 on the festive one.
+
+  Three negatives matter as much as that positive. The impôt minimum forfaitaire does NOT apply: it
+  reaches the réel normal and réel simplifié régimes only, and its 3,000,000 floor is larger than
+  everything this business generates in a year, so a model that applied it would produce an operation
+  that cannot exist. The Investment Code does NOT apply, on three independent grounds — Azaguié is not
+  a Zone B chef-lieu and "sur la route de Bouaké" is a road rather than an address; his 1,800,000 shed
+  is 3.6% of the 50,000,000 SME agrément threshold; and the agricultural incentive articles require 100
+  hectares or agro-industrial status and enumerate plantation crops in which poultry appears nowhere.
+  And the processing agrément does not apply either, because he sells live at the gate and there is no
+  transformation anywhere in the utterance.
+
+  Against 348,420 of statutory tax he actually pays nothing to the DGI, plus 18,000 a year to a man
+  from the mairie whose receipt-book he cannot identify. The base case runs on the LAW, because a
+  reference solution that capitalises an under-declaration is not a valuation of the business; the
+  as-practised number is carried as its own trace column so both objects exist and the gap is
+  arithmetic rather than commentary.
+
+  STEP 7 — WORKING CAPITAL, WHICH IS ZERO AT EVERY BOUNDARY AND ENORMOUS IN BETWEEN.
+  Take each stock in turn rather than assuming any of them. Receivables: zero, and not by convention —
+  "je vends vivant, à la tête, au poulailler ; les revendeuses viennent avec leurs cages", a spot sale
+  paid on collection. Live birds: zero at every boundary, because the boundary sits inside the empty
+  fortnight. Feed: zero, because he buys by phase within the batch and there are no birds to feed
+  during the void, so nothing is held for rodents or mould to work on. Payables: the dealer gives him
+  credit on five or six sacks, "et je le paie à la vente" — so the payable is created during the cycle
+  and extinguished on day 45, fourteen days before the period ends. Every stock is therefore zero at
+  every period end, net working capital is zero throughout, and the change in it is zero throughout.
+
+  That is arithmetically true and operationally misleading, so the intra-cycle number is materialised
+  rather than described. Before a single franc comes in he has paid for chicks (300,000), the feed he
+  is not given credit on (515,500 - 82,500 = 433,000), gas, litter and vaccines (27,750), and the
+  45/59 share of the monthly items that falls before the sale (119,000 x 0.7627 = 90,762.71). That is
+  851,512.71 XOF of cash out per cycle before any comes back. He borrowed 500,000 from a microfinance
+  for exactly this and it cost him 70,000 over six months, or 14% of principal. The loan covers 59% of
+  the peak. The financing cost is excluded from this unlevered build by definition, but the loan is the
+  best available world-check that the peak figure is the right order of magnitude, and it is asserted
+  as one.
+
+  STEP 8 — THE LADDER.
+  Normal batch: revenue 1,118,000 less opex 962,250 gives EBITDA 155,750; less depreciation 20,000
+  gives EBIT 135,750; less TEE 55,900 gives NOPAT 79,850; add back depreciation 20,000, less change in
+  working capital 0, less capex 0, gives FCFF 99,850.
+  Festive batch: revenue 1,378,400 less 962,250 gives EBITDA 416,150; EBIT 396,150; less TEE 68,920
+  gives NOPAT 327,230; FCFF 347,230.
+  Annual FCFF is 5 x 99,850 + 347,230 = 846,480 XOF on turnover of 6,968,400, a 12.1% asset-side cash
+  margin. The one festive batch supplies 41% of the year's free cash flow from 20% of the volume.
+
+  STEP 9 — THE CUMULATIVE TEST AGAINST THE WORLD.
+  Over the six periods: 3,000 chicks placed, 240 buried, 36 eaten at home, 2,724 sold; 180 sacks or
+  9,000 kg of feed; 18 loads of shavings; 9 gas bottles. Now the lifetime test. At six batches a year
+  over a 15-year shed life the building will see 90 batches; three years are gone, so about 72 remain
+  and this horizon uses six of them — the horizon fits inside the asset comfortably, which is asserted
+  rather than assumed. Spread over 90 batches the shed costs 20,000 a batch, or 44 XOF per bird sold,
+  1.8% of a 2,500 head price: cheap, and consistent with a structure a smallholder built himself, and
+  a useful reminder that the depreciation line is not where this business lives. Over the same life he
+  will buy 135 tonnes of feed at today's prices — some 46m XOF, twenty-six times what the building
+  cost. This is a feed business with a shed attached, and the ranking of the questions follows that.
+trace:
+  # --- period flags (t=0..5 are batches 1..6; the festive batch is the sixth) ---
+  festive_flag:                 [0, 0, 0, 0, 0, 1]
+  glut_flag:                    [0, 0, 0, 0, 0, 0]
+
+  # --- flock roll-forward: every bird placed is accounted for, and the shed is empty at each boundary ---
+  chicks_placed:                [500, 500, 500, 500, 500, 500]
+  birds_died:                   [40, 40, 40, 40, 40, 40]
+  birds_home:                   [6, 6, 6, 6, 6, 6]
+  birds_sold:                   [454, 454, 454, 454, 454, 454]
+  flock_closing:                [0, 0, 0, 0, 0, 0]
+  birds_runt:                   [20, 20, 20, 20, 20, 20]
+  birds_cull:                   [0, 0, 0, 0, 0, 0]
+  birds_normal:                 [434, 434, 434, 434, 434, 434]
+
+  # --- feed transformation balance (kg): purchased = spilled + eaten by dead + eaten by finished ---
+  feed_kg_purchased:            [1500, 1500, 1500, 1500, 1500, 1500]
+  feed_kg_spilled:              [90, 90, 90, 90, 90, 90]
+  feed_kg_eaten_by_dead:        [10, 10, 10, 10, 10, 10]
+  feed_kg_eaten_by_finished:    [1400, 1400, 1400, 1400, 1400, 1400]
+
+  # --- revenue ---
+  price_head:                   [2500, 2500, 2500, 2500, 2500, 3100]
+  revenue_normal:               [1085000, 1085000, 1085000, 1085000, 1085000, 1345400]
+  revenue_runt:                 [33000, 33000, 33000, 33000, 33000, 33000]
+  revenue_cull:                 [0, 0, 0, 0, 0, 0]
+  revenue:                      [1118000, 1118000, 1118000, 1118000, 1118000, 1378400]
+
+  # --- cash operating cost ---
+  cost_chicks:                  [300000, 300000, 300000, 300000, 300000, 300000]
+  cost_feed:                    [515500, 515500, 515500, 515500, 515500, 515500]
+  cost_gas:                     [6750, 6750, 6750, 6750, 6750, 6750]
+  cost_litter:                  [6000, 6000, 6000, 6000, 6000, 6000]
+  cost_vet:                     [15000, 15000, 15000, 15000, 15000, 15000]
+  cost_electricity:             [16000, 16000, 16000, 16000, 16000, 16000]
+  cost_labour:                  [100000, 100000, 100000, 100000, 100000, 100000]
+  cost_commune_levy:            [3000, 3000, 3000, 3000, 3000, 3000]
+  cost_disinfectant:            [0, 0, 0, 0, 0, 0]
+  cost_worker_food:             [0, 0, 0, 0, 0, 0]
+  opex:                         [962250, 962250, 962250, 962250, 962250, 962250]
+
+  # --- the ladder ---
+  ebitda:                       [155750, 155750, 155750, 155750, 155750, 416150]
+  depreciation:                 [20000, 20000, 20000, 20000, 20000, 20000]
+  ebit:                         [135750, 135750, 135750, 135750, 135750, 396150]
+  tax_statutory:                [55900, 55900, 55900, 55900, 55900, 68920]
+  nopat:                        [79850, 79850, 79850, 79850, 79850, 327230]
+
+  # --- asset base ---
+  shed_book_value:              [1420000, 1400000, 1380000, 1360000, 1340000, 1320000]
+  capex:                        [0, 0, 0, 0, 0, 0]
+
+  # --- working capital: zero at every boundary, and the reason is structural, not lucky ---
+  nwc:                          [0, 0, 0, 0, 0, 0]
+  delta_nwc:                    [0, 0, 0, 0, 0, 0]
+
+  # --- cash flow ---
+  cfo:                          [99850, 99850, 99850, 99850, 99850, 347230]
+  cfi:                          [0, 0, 0, 0, 0, 0]
+  fcff:                         [99850, 99850, 99850, 99850, 99850, 347230]
+
+  # --- parallel columns: the same operation measured as he currently runs it, and the exposures ---
+  tax_as_currently_paid:        [0, 0, 0, 0, 0, 0]
+  tax_gap:                      [55900, 55900, 55900, 55900, 55900, 68920]
+  fcff_as_currently_paid:       [155750, 155750, 155750, 155750, 155750, 416150]
+  payroll_cnps_employer_if_declared: [15450, 15450, 15450, 15450, 15450, 15450]
+
+  # --- the intra-cycle cash trough the period grid cannot show ---
+  peak_cycle_cash_outlay:       [851512.7118644068, 851512.7118644068, 851512.7118644068, 851512.7118644068, 851512.7118644068, 851512.7118644068]
+
+fcff: [99850, 99850, 99850, 99850, 99850, 347230]
+checks:
+  # ---- conservation: the flock ----
+  - "trace.chicks_placed == trace.birds_died + trace.birds_home + trace.birds_sold + trace.flock_closing"
+  - "trace.flock_closing[t] == trace.flock_closing[t-1] + trace.chicks_placed[t] - trace.birds_died[t] - trace.birds_home[t] - trace.birds_sold[t]"
+  - "max(trace.flock_closing) == 0"
+  - "trace.birds_sold == trace.birds_normal + trace.birds_runt + trace.birds_cull"
+
+  # ---- conservation: the feed transformation (rule a) ----
+  - "trace.feed_kg_purchased == trace.feed_kg_spilled + trace.feed_kg_eaten_by_dead + trace.feed_kg_eaten_by_finished"
+  - "trace.feed_kg_purchased == sacks_total * sack_weight_kg"
+  - "trace.feed_kg_spilled == trace.feed_kg_purchased * feed_spill_rate"
+  - "trace.feed_kg_eaten_by_dead == trace.birds_died * avg_intake_per_dead_bird_kg"
+  - "feed_to_home_birds_kg + feed_to_sold_birds_kg == feed_eaten_by_finished_birds_kg"
+  - "implied_gross_fcr * live_weight_total_kg_per_batch == feed_kg_per_batch"
+  - "biological_fcr * live_weight_total_kg_per_batch == feed_eaten_by_finished_birds_kg"
+  - "implied_gross_fcr >= biological_fcr"
+
+  # ---- conservation: working capital and the asset base (rule b) ----
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "trace.nwc[t] == 0"
+  - "trace.shed_book_value == shed_opening_nbv - cumsum(trace.depreciation)"
+  - "shed_opening_nbv == shed_cost_xof * (1 - shed_age_years_at_t0 / shed_useful_life_years)"
+
+  # ---- conservation: revenue and cost aggregates ----
+  - "trace.revenue == trace.revenue_normal + trace.revenue_runt + trace.revenue_cull"
+  - "trace.opex == trace.cost_chicks + trace.cost_feed + trace.cost_gas + trace.cost_litter + trace.cost_vet + trace.cost_electricity + trace.cost_labour + trace.cost_commune_levy + trace.cost_disinfectant + trace.cost_worker_food"
+
+  # ---- definition: the ladder ----
+  - "trace.ebitda == trace.revenue - trace.opex"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.nopat == trace.ebit - trace.tax_statutory"
+  - "trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.tax_gap == trace.tax_statutory - trace.tax_as_currently_paid"
+  - "trace.fcff_as_currently_paid == trace.fcff + trace.tax_gap"
+
+  # ---- driver-bridge: volumes ----
+  - "trace.chicks_placed == chicks_placed_per_batch"
+  - "trace.birds_died == mortality_per_batch"
+  - "trace.birds_home == birds_kept_home_per_batch"
+  - "trace.birds_runt == runts_per_batch"
+  - "trace.birds_cull == culls_per_batch"
+  - "birds_sold_per_batch == chicks_placed_per_batch - mortality_per_batch - birds_kept_home_per_batch"
+  - "birds_finished_per_batch == chicks_placed_per_batch - mortality_per_batch"
+
+  # ---- driver-bridge: prices and revenue ----
+  - "trace.price_head == price_head_normal + trace.festive_flag * (price_head_festive - price_head_normal) + trace.glut_flag * (price_head_glut - price_head_normal)"
+  - "sum(trace.festive_flag) == festive_batches_per_year"
+  - "sum(trace.glut_flag) == glut_batches_per_year"
+  - "trace.revenue_normal == trace.price_head * trace.birds_normal"
+  - "trace.revenue_runt == runt_price * trace.birds_runt"
+  - "trace.revenue_cull == price_head_normal * cull_price_fraction * trace.birds_cull"
+
+  # ---- driver-bridge: costs ----
+  - "trace.cost_chicks == chick_price_xof * trace.chicks_placed"
+  - "trace.cost_feed == (sacks_starter * price_starter_sack + sacks_grower * price_grower_sack + sacks_finisher * price_finisher_sack) * (1 + feed_price_uplift)"
+  - "trace.cost_gas == gas_bottles_per_batch * gas_bottle_price"
+  - "trace.cost_litter == litter_trips_per_batch * litter_trip_price"
+  - "trace.cost_vet == vet_cost_per_batch"
+  - "trace.cost_electricity == electricity_per_month * months_per_batch"
+  - "trace.cost_labour == labour_monthly * months_per_batch"
+  - "trace.cost_commune_levy == commune_levy_monthly * months_per_batch"
+  - "trace.cost_disinfectant == disinfectant_cost_per_batch"
+  - "trace.cost_worker_food == worker_food_cost_per_month * months_per_batch"
+  - "trace.capex == equipment_capex_per_batch"
+  - "trace.depreciation == shed_cost_xof / shed_useful_life_years / batches_per_year"
+  - "months_per_batch == 12 / batches_per_year"
+
+  # ---- driver-bridge: tax, and the belief-versus-law gap ----
+  - "trace.tax_statutory == tee_rate_applied * trace.revenue"
+  - "sum(trace.tax_statutory) == tee_rate_applied * sum(trace.revenue)"
+  - "trace.tax_as_currently_paid == tax_actually_paid_to_dgi_annual"
+  - "sum(trace.tax_gap) > commune_levy_annual"
+  - "trace.payroll_cnps_employer_if_declared == trace.cost_labour * cnps_employer_rate_total"
+  - "cnps_employer_rate_total == cnps_pension_employer_rate + cnps_family_employer_rate + cnps_maternity_employer_rate + cnps_at_mp_employer_rate"
+  - "labour_monthly < smig_monthly"
+  - "labour_monthly < cnps_capped_base_monthly"
+
+  # ---- régime band test, run on the model's own turnover, not asserted ----
+  - "sum(trace.revenue) > tce_band_high"
+  - "sum(trace.revenue) >= tee_band_low"
+  - "sum(trace.revenue) <= tee_band_high"
+  - "tee_rate_applied > tee_rate_commerce_negoce"
+  - "imf_rate_applicable_to_this_taxpayer == 0"
+  - "investment_code_relief_rate == 0"
+  - "patente_applicable_to_this_taxpayer == 0"
+
+  # ---- physical closure: rates fit the plant (rule c) ----
+  - "cycle_days == grow_days + void_days"
+  - "batches_per_year * cycle_days <= days_per_year"
+  - "(batches_per_year + 1) * cycle_days > days_per_year"
+  - "batches_per_year <= batches_per_year_physical_max"
+  - "batches_last_year_actual < batches_per_year"
+  - "shed_area_m2 == shed_length_m * shed_width_m"
+  - "stocking_area_per_bird_m2 == shed_area_m2 / chicks_placed_per_batch"
+  - "stocking_area_per_bird_m2 >= min_area_per_bird_m2"
+  - "stocking_area_per_bird_at_attempted_flock_m2 < min_area_per_bird_m2"
+  - "live_weight_loading_kg_per_m2 <= max_live_weight_kg_per_m2"
+
+  # ---- physical closure: cumulative quantities against the world (rule d) ----
+  - "sum(trace.chicks_placed) == chicks_placed_per_batch * grid.periods"
+  - "sum(trace.feed_kg_purchased) == feed_kg_per_batch * grid.periods"
+  - "grid.periods == batches_per_year"
+  - "shed_useful_life_years * batches_per_year - shed_age_years_at_t0 * batches_per_year >= grid.periods"
+  - "trace.peak_cycle_cash_outlay == trace.cost_chicks + trace.cost_feed - feed_credit_value + trace.cost_gas + trace.cost_litter + trace.cost_vet + (trace.cost_electricity + trace.cost_labour + trace.cost_commune_levy) * presale_share_of_cycle"
+  - "trace.peak_cycle_cash_outlay[t] >= loan_principal"
+  - "presale_share_of_cycle == grow_days / cycle_days"
+
+  # ---- the mortality finding, asserted rather than narrated ----
+  - "mortality_implied_by_daily_account == brooding_deaths_per_day_mid * brooding_days + post_brooding_deaths_per_week_mid * (grow_days - brooding_days) / days_per_week"
+  - "mortality_implied_by_daily_account > mortality_per_batch"
+  - "mortality_implied_by_daily_account > mortality_headline_per_batch"
+  - "mortality_per_batch < mortality_bad_batch"
+
+  # ---- non-negativity ----
+  - "trace.birds_sold[t] >= 0"
+  - "trace.birds_normal[t] >= 0"
+  - "trace.flock_closing[t] >= 0"
+  - "trace.shed_book_value[t] >= 0"
+  - "trace.feed_kg_eaten_by_finished[t] >= 0"
+  - "trace.opex[t] >= 0"
+  - "trace.tax_statutory[t] >= 0"
+  - "trace.capex[t] >= 0"
+notes:
+
+  findings:
+    - >-
+      THE MORTALITY DOES NOT RECONCILE WITH ITSELF, AND THAT IS THE CASE. The founder gives two
+      accounts of the same flock. The headline — "une quarantaine" — closes perfectly with everything
+      else he says out loud, including the "quatre cent cinquante et quelques" left to sell. The
+      day-by-day account — three to five a morning under the lamp for the first fortnight, then one or
+      two a week — rebuilds to a figure that sits almost exactly on what he calls a BAD batch. Both are
+      materialised as inputs with their own arithmetic (mortality_headline_per_batch,
+      mortality_implied_by_daily_account) and the gap is asserted in `checks`, so a reader does not
+      have to take my word for it. Direction: the day-by-day reading reduces birds sold, revenue and
+      FCFF. I did not average the two, because averaging an assertion with a reconstruction produces a
+      number neither the founder nor the arithmetic supports.
+    - >-
+      THE FEED DEALER'S CONVERSION RATIO FLATTERS HIS OWN PRODUCT. "Avec deux kilos et demi d'aliment
+      tu fais un kilo de poulet" is a claim by the man selling the feed, and the founder says outright
+      he has never checked it. The founder's own quantities imply a purchased-feed ratio above the
+      dealer's figure, and the ratio is net of nothing: it silently swallows the spillage, the feed
+      eaten by birds that died, and everything the live birds turned into manure, moisture and heat.
+      Decomposing it (implied_gross_fcr versus biological_fcr) is what lets him tell a feed problem
+      from a feeder problem, which the dealer's single number structurally cannot.
+    - >-
+      HE IS RIGHT ABOUT THE PATENTE AND WRONG ABOUT THE FORFAIT, AND SO IS HIS BROTHER-IN-LAW. The
+      permanent patente exemption for éleveurs selling only their own produce genuinely reaches him; it
+      does not reach a man who resells spare parts he did not make. But there is no forfait agricole in
+      Côte d'Ivoire — bénéfices agricoles is merged with BIC under the same bands and the same rate,
+      and aviculture sits inside it. The argument between the two of them has no winner because they
+      are describing two different businesses.
+    - >-
+      THE REGIME THAT ACTUALLY GOVERNS HIM IS THE TAXE D'ÉTAT DE L'ENTREPRENANT, AND HE IS PAYING
+      ALMOST NONE OF IT. The band test is run in `checks` on the model's own turnover rather than
+      asserted. The statutory charge and the as-practised charge are carried as separate trace columns
+      (tax_statutory, tax_as_currently_paid) with the difference materialised as tax_gap, so the two
+      objects — what the rule says, and what he does — never merge into one number. The base case runs
+      on the law.
+    - >-
+      THREE RELIEFS THAT LOOK AVAILABLE AND ARE NOT, EACH OF WHICH WOULD HAVE PRODUCED A CONFIDENTLY
+      WRONG ANSWER. (i) The Investment Code Zone B category-1 holiday: "sur la route de Bouaké" is a
+      road, not an address, Azaguié is not a Zone B chef-lieu, and even if it were, a 1,800,000 shed is
+      a small fraction of the SME agrément threshold, and the agricultural incentive articles enumerate
+      plantation crops in which poultry appears nowhere. (ii) The processing agrément: he sells live at
+      the gate, there is no transformation. (iii) A micro-BA abattement by analogy with French practice:
+      it does not exist here. All three are recorded as SOURCED zeros rather than as silences.
+    - >-
+      THE IMPÔT MINIMUM FORFAITAIRE IS THE MOST DANGEROUS ITEM IN THE FILE AND IT DOES NOT APPLY. Its
+      floor is larger than everything this operation generates in a year. It reaches the réel normal and
+      réel simplifié régimes only, and he is under neither. A model that applied it would tie perfectly
+      around a business that cannot exist — which is exactly the failure mode a sourced negative is for.
+    - >-
+      SIX BATCHES IS THE GOOD YEAR, NOT THE AVERAGE YEAR. He managed five last year and explains why in
+      the same breath: fifty-day grow-outs when the birds are not coming on. The base case runs the
+      plant at his own stated best, which is a choice made visible rather than absorbed —
+      batches_last_year_actual is carried as an input and asserted against batches_per_year in `checks`.
+      Direction: fewer batches reduce annual revenue and annual FCFF roughly proportionally, and would
+      also change which batch catches the festive price.
+    - >-
+      THE PERIOD GRID SHOWS ZERO WORKING CAPITAL AND THAT IS TRUE BUT MISLEADING. Every stock is zero
+      at every boundary by construction, because the boundary sits inside the empty fortnight and the
+      dealer is paid on the sale day. The real financing need is intra-cycle and large; it is
+      materialised as trace.peak_cycle_cash_outlay rather than described, and it is checked against the
+      microfinance loan he actually took, which does not cover it. Anyone reading ΔNWC = 0 as "this
+      business needs no funding" would be reading the grid, not the operation.
+    - >-
+      UNDER A TURNOVER TAX, DEPRECIATION HAS NO TAX SHIELD. It is deducted to reach EBIT and added
+      straight back to reach FCFF, and the tax line never sees it. So the shed's useful life — a large,
+      uncertain, superficially important assumption — moves EBIT and book value and moves free cash flow
+      not at all. That is why it is ranked LOW among the questions despite being the biggest single
+      number in the asset base, and it is worth saying because the instinct is to rank it high.
+    - >-
+      THIS IS A FEED BUSINESS WITH A SHED ATTACHED. Chicks and feed are the overwhelming majority of
+      cash cost; the building is a small per-bird charge. The consequence for the interview is that the
+      two highest-ranked questions (the mortality count and whether the quoted feed prices are pre- or
+      post-increase) are both about the flock and the feed, not about the asset.
+    - >-
+      THE THREAT HE NAMES IS NOT IN THE MODEL. "Ce qui me gâte les affaires, c'est plutôt les cuisses
+      congelées qui viennent de dehors." Imported frozen chicken parts compete on price with his live
+      birds and are the mechanism behind the glut price he quotes. The model carries the glut price and
+      asks how often it bites (glut_batches_per_year); it does not model the import trend, because
+      nothing in the utterance or the fact base gives a trajectory for it.
+
+  simplifications_and_judgment_calls:
+    - >-
+      GRID. Period = one bande = 59 days; horizon = six batches = one production year. Fully argued in
+      grid.why, including what it deliberately excludes.
+    - >-
+      THE SACK SPLIT IS DETERMINED, NOT CHOSEN. Of the combinations his three ranges permit, only
+      5 + 8 + 17 sums to the round "trentaine" he states. It is also the dearer reading.
+    - >-
+      MONTHLY COSTS ARE ALLOCATED AT TWELVE MONTHS ACROSS SIX BATCHES, i.e. two months a batch, not
+      the 1.94 months the 59-day cycle would give. The boy is paid and the pump is powered through the
+      eleven idle days of the calendar as well; the alternative would leave those days unfunded.
+    - >-
+      BIRDS KEPT FOR THE HOUSE EARN NO REVENUE BUT CARRY THEIR FEED. They are owner's drawings in kind
+      and never meet a buyer. The asymmetry is deliberate and is visible in the feed balance
+      (feed_to_home_birds_kg). Taken at six rather than five, the conservative end of his range.
+    - >-
+      MIDPOINTS WHERE HE GIVES A RANGE, WITH THE ARITHMETIC EXPOSED. Festive price, runt price, live
+      weight, brooding deaths per day and post-brooding deaths per week are each declared as the two
+      stated endpoints plus an INFERRED midpoint with a derivation, so nothing is a bare choice.
+    - >-
+      THE RUNT PRICE IS HELD FLAT ACROSS THE FESTIVE BATCH. He quotes it without seasonal variation,
+      and a small bird is what a festive buyer least wants. Direction if wrong: festive revenue is
+      understated slightly.
+    - >-
+      THE COMMUNE LEVY IS TREATED AS A NON-INCOME LOCAL LEVY IN OPEX, not as a profits tax. He cannot
+      identify it and neither can I from the fact base; what is certain is that it is cash out and that
+      it is not a payment to the DGI.
+    - >-
+      TEE AT THE 5% "OTHER ACTIVITIES" BRANCH RATHER THAN 4% COMMERCE. He produces rather than resells.
+      This is a characterisation call, it is the one to attack if the tax line looks wrong, and it is
+      read consistently with the patente exemption, which turns on the same distinction.
+    - >-
+      "NOPAT = EBIT − TEE" IS AN ABUSE OF LANGUAGE AND IS FLAGGED AS ONE. The TEE is levied on turnover,
+      not on profit. The FCFF build is unaffected — the charge is a real cash tax and belongs above free
+      cash flow — but the effective rate on profit is not 5%, and no deduction in this model generates a
+      tax shield. The sector's natural description has been kept and the friction named rather than
+      forced into a profits-tax shape.
+    - >-
+      THE UNDECLARED WAGE IS CHARGED AT WHAT HE ACTUALLY PAYS. The base case books the cash wage,
+      because that is the cash the business gives up. The statutory CNPS employer charge is materialised
+      as its own trace column rather than argued in prose, and it is a FLOOR: the further employer
+      levies (ITS withholding, TAP, TFPC) are excluded because the fact base is internally inconsistent
+      on their rates and I will not tie arithmetic around a rate I cannot reconcile. Whether the SMIG or
+      an agricultural minimum governs a poultry farmhand, and whether board counts towards it, I have
+      not resolved and do not assert.
+    - >-
+      FREE LAND IS AN EXPLICIT ZERO, NOT AN OMISSION, and it is an economic subsidy from his father.
+      Direction: a tenant operator on the same shed would earn less asset-side cash than this model
+      shows, by whatever the ground rent would be.
+    - >-
+      FINANCING IS EXCLUDED BY DEFINITION. The microfinance loan and its cost are recorded as inputs
+      because they price his liquidity and provide the world-check on the intra-cycle cash trough, but
+      no interest is charged anywhere in an unlevered build.
+    - >-
+      THE 700-BIRD FAILURE IS READ AS A WHOLE-SHED DENSITY BREACH. The alternative reading is that
+      "sous les lampes c'était trop serré" refers to the brooder ring rather than the floor as a whole,
+      in which case the binding constraint is brooding capacity — lamps and gas — and not floor area.
+      Both readings point the same way at 700 birds, and the sourced whole-shed benchmark settles it
+      without needing brooder-ring dimensions he never gave. If his real constraint is the lamps, then
+      the shed has spare floor area, which is a growth question rather than a valuation one.
+
+  deferred:
+    - >-
+      THE PRICE PATH. Chicks are rising ("ça monte tout le temps", quantified once, recorded as
+      chick_price_inflation_observed and NOT projected) and feed has stepped up. The horizon stops at
+      one year precisely so that no projection is needed. Extending it requires a trajectory neither
+      the founder nor the fact base supplies.
+    - >-
+      SEASONALITY BEYOND THE FESTIVE BATCH. Broiler prices and mortality both move with the rainy
+      season in southern Côte d'Ivoire, and heat stress in an open-sided tôle shed is not uniform
+      across the year. The utterance gives no month-by-month pattern, so the six batches are treated as
+      physically identical and differ only in price. Direction unknown, magnitude unknown.
+    - >-
+      THE EQUIPMENT HE NEVER PRICED. Feeders, drinkers, brooder lamps and the pump are used throughout
+      the utterance and costed nowhere. Capex is zero in this model as a consequence, and FCFF is an
+      upper bound to that extent. This is a structural gap: on a normal renewal cycle such equipment
+      would fall due inside a one-year horizon at some point, so zero capex is a statement about the
+      information available, not about the business.
+    - >-
+      THE FIVE ELICITED QUESTIONS RANKED HIGH OR MEDIUM, in the order I would actually ask them, since
+      a founder will answer three and not ten: (1) the true mortality count on the last batch;
+      (2) whether the quoted feed prices are pre- or post-January increase; (3) how many batches a year
+      hit the glut price; (4) the count of half-price salvage birds and whether they overlap the runts;
+      (5) what the equipment cost and how often it is replaced. Each is wired to at least one check, so
+      a different answer produces a different number rather than a different footnote.

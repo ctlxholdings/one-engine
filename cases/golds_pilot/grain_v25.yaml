@@ -1,0 +1,164 @@
+# Gold "grain_v25": the Bamako sorghum trader's storage arbitrage, one campaign by month from the
+# November harvest, contract v2.5 (cases/reference/golds_pilot/grain_v25.yaml). Built from the
+# promoted "grain" translation.
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * bags_purchased_total bought in purchase_period_index at purchase_price_per_bag plus
+#     transport_cost_per_bag plus other_cost_per_bag_xof (the landed cost, IAS 2.11), paid
+#     purchase_payment_lag_months later (0: on delivery);
+#   * the purchase is expensed when bought and the stock held is taken back out of that expense
+#     (a held balance at landed cost x bags in store), so cost of sales is what left the store;
+#   * bags sold from first_sale_period_index to last_sale_period_index: bags_sold_first_selling_month
+#     in the first month, the rest of bags_sold_total evenly over the remaining months (66/67/67),
+#     at selling_price_per_bag, collected sales_payment_lag_months later (0: cash);
+#   * bags_lost_in_storage (nil) carries no timing in the gold; the translation counts it out of
+#     the store in the last selling month, when the store is emptied (it would then fall in cost
+#     of sales; the gold has no loss line);
+#   * rent: warehouse_rent_per_month for rent_months_per_year months; the storage treatment
+#     (campaign_treatment_cost_xof, nil) is charged when the bags go into store; both paid in cash;
+#   * no owned asset (owned_equipment_capex_xof is nil and has no timing or life in the gold), so
+#     depreciation, capex and cfi read empty cuts;
+#   * tax: the impôt synthétique, impot_synthetique_rate on TURNOVER (revenue is the only taxable
+#     line), charged with the month's sales and disbursed in the month (the gold's stated departure
+#     from the 31 March settlement).
+#   * payment lags count in months (days_per_year 12 with 12 periods a year): exact for the gold's
+#     nil lags and for one month; a longer lag on the one November purchase would need a payment
+#     profile instead.
+gold: grain_v25
+entity: trader
+plant: selling_price_per_bag
+case:
+  case: gold-grain-v25
+  periods: 12
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 12
+      inputs: gold
+      values:
+        landed: purchase_price_per_bag + transport_cost_per_bag + other_cost_per_bag_xof
+        purchased: bags_purchased_total * (t == purchase_period_index)
+        later_month: (bags_sold_total - bags_sold_first_selling_month) / (selling_window_months - 1)
+        sold: >-
+          bags_sold_first_selling_month * (t == first_sale_period_index)
+          + later_month * (t > first_sale_period_index) * (t <= last_sale_period_index)
+        lost: bags_lost_in_storage * (t == last_sale_period_index)
+        in_store: cumsum(purchased) - cumsum(sold) - cumsum(lost)
+        inventory: landed * in_store
+        rent_annual: warehouse_rent_per_month * rent_months_per_year
+        treatment: campaign_treatment_cost_xof * (t == purchase_period_index)
+  opening:
+    trader:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: trader}
+      terms: {volume: {generator: gold, output: sold}, price: {generator: gold, output: selling_price_per_bag},
+              payment_days: {generator: gold, output: sales_payment_lag_months}, days_per_year: 12,
+              periods_per_year: 12, end: 11}
+    sorghum:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: 0, unit_rate: {generator: gold, output: landed}, volume: {generator: gold, output: purchased},
+              index: 1, periods_per_year: 12, start: 0, end: 11, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: purchase_payment_lag_months}, days_per_year: 12}
+    store:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: {generator: gold, output: rent_months_per_year}, start: 0, end: 11, vat_rate: 0,
+              vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    treatment:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: treatment}, index: 1,
+              periods_per_year: 12, start: 0, end: 11, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: 12}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: trader
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: inventory}, against: sorghum.expense}
+    tax:
+      kind: income_tax
+      entity: trader
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: impot_synthetique_rate}
+      carry_forward_periods: null
+      scheme:                                   # a levy on turnover: only sales enter the base
+        sales.revenue: taxable
+        sorghum.expense: non_deductible
+        store.expense: non_deductible
+        treatment.expense: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: trader
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      sorghum.expense: cogs
+      store.expense: rent
+      treatment.expense: treatment
+      tax_expense: tax
+    cash_flow:
+      sales.receivable: operating
+      sorghum.payable: operating
+      store.payable: operating
+      treatment.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+  cuts:
+    revenue: {kind: pnl, entity: trader, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: trader, scheme: pnl, include: [cogs]}
+    gross_profit: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, cogs]}
+    rent: {kind: pnl, entity: trader, scheme: pnl, include: [rent]}
+    treatment: {kind: pnl, entity: trader, scheme: pnl, include: [treatment]}
+    opex: {kind: pnl, entity: trader, scheme: pnl, include: [rent, treatment]}
+    ebitda: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, cogs, rent, treatment]}
+    da: {kind: pnl, entity: trader, scheme: pnl, include: []}                     # no owned asset
+    ebit: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, cogs, rent, treatment]}
+    tax: {kind: pnl, entity: trader, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, cogs, rent, treatment, tax]}
+    cfo: {entity: trader, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: trader, account: cash, scheme: cash_flow, include: []}           # no owned asset
+    fcff: {entity: trader, account: cash, scheme: cash_flow, include: [operating]}
+  measures: {}
+trace:
+  bags_purchased: {driver: gold.purchased}
+  bags_sold: {driver: gold.sold}
+  bags_lost: {driver: gold.lost}
+  inventory_bags: {driver: gold.in_store}
+  inventory_value: {balance: inventory}
+  revenue: {cut: revenue}
+  cogs: {cut: cogs, sign: -1}
+  gross_profit: {cut: gross_profit}
+  rent: {cut: rent, sign: -1}
+  storage_treatment_cost: {cut: treatment, sign: -1}
+  opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: da, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  accounts_receivable: {balance: sales.receivable}
+  accounts_payable: {balance: sorghum.payable + store.payable + treatment.payable}
+  nwc: {balance: inventory + sales.receivable - sorghum.payable - store.payable - treatment.payable}
+  delta_nwc: {change: inventory + sales.receivable - sorghum.payable - store.payable - treatment.payable}
+  capex: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

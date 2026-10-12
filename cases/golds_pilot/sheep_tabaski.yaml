@@ -1,0 +1,428 @@
+# Pilot gold "sheep_tabaski": a Dakar backyard ram fattener, two Tabaski campaigns and the baptism
+# trade between them, 18 monthly periods from December 2025 (cases/reference/golds_pilot/sheep_tabaski.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * three groups of animals, each carried at its own cost per head (specific identification):
+#     cohort 1 (heads_bought_c1 for purchase_cost_c1, bought at the January louma,
+#     cohort2_purchase_index less 12), fed the finishing ration the fattening_months up to
+#     tabaski1_index and sold there but for unsold_heads_c1, which is carried on maintenance
+#     ration until cohort2_purchase_index and finished with cohort 2; the baptism animals
+#     (baptism_heads_per_year, one at a time, bought from credit_settle_c1_index at
+#     ram_price_standard, finished baptism_hold_months and sold); cohort 2 (heads_bought_c2 for
+#     purchase_cost_c2 at cohort2_purchase_index, finished to tabaski2_index and sold);
+#   * mortality: none before credit_settle_c1_index (cycle 1 observed, mortality_c1_actual), then a
+#     monthly hazard (finishing or maintenance rate) on the head alive at the start of the month;
+#     heads, ration kg and the haulm store in kg (bought haulm_lot_kg each December, losing
+#     haulm_storage_loss_monthly of its opening stock a month) are driver rows: no ledger holds a
+#     head or a kilogram;
+#   * every head present (opening plus bought) carries its ration (concentrate at the cash price
+#     concentrate_price_cash_per_kg, haulm at haulm_lot_cost / haulm_lot_kg) and an equal share of
+#     the helper's wage up to normal_capacity_head (the rest is expensed); purchases carry salt and
+#     deworming (and the carried ram one more dose with cohort 2); the costs are paid and capitalised
+#     into the livestock (stated moves of the same amounts); the haulm is capitalised into its store
+#     and moved into the livestock as fed, its storage loss expensed;
+#   * a head that dies or is sold leaves the livestock at its group's cost per head (the running
+#     total of what each head of the group was charged); deaths are expensed (mortality write-off);
+#   * campaign concentrate (the fattening months before each Tabaski) is taken on credit at the cash
+#     price and settled in full at credit_settle_c1_index and at tabaski2_index; the credit price's
+#     excess (concentrate_price_credit_per_kg over the cash price) is interest, financing, outside
+#     FCFF but inside cash_out_total;
+#   * sales are cash: cohort and carried heads at tabaski_price_avg and carryover_sale_price,
+#     baptism heads at baptism_sale_price; transport_share_per_trip at each Tabaski, expensed;
+#   * the pen is carried in at pen_shelter_cost less pen_age_months_at_t0 of its life and
+#     depreciated over the months left of pen_useful_life_years; no capex;
+#   * tax at income_tax_rate (nil) on EBIT; the contingent CGU (cgu_rate_if_bic of revenue) and
+#     social charges (employer_social_charge_rate of the wage) are read off the revenue and wage
+#     cuts, never posted; the owner's labour (owner_labour_opportunity_cost_month, nil) is a charge
+#     outside FCFF, inside fcff_after_owner_labour.
+gold: sheep_tabaski
+entity: fattener
+plant: tabaski_price_avg
+case:
+  case: gold-pilot-sheep-tabaski
+  periods: 18
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 18
+      inputs: gold
+      values:
+        c1_buy: cohort2_purchase_index - 12
+        hf: mortality_rate_monthly_finishing
+        hm: mortality_rate_monthly_maintenance
+        hazard_on: t >= credit_settle_c1_index
+        camp1: (t > tabaski1_index - fattening_months) * (t <= tabaski1_index)
+        camp2: (t > tabaski2_index - fattening_months) * (t <= tabaski2_index)
+        campaign: camp1 + camp2
+        # group 1: cohort 1, then the ram carried to the second feast
+        maint1: (t >= credit_settle_c1_index) * (t <= cohort2_purchase_index)
+        fin1: campaign
+        bought1: heads_bought_c1 * (t == c1_buy)
+        maint_months1: cumsum(maint1)
+        fin_haz1: fin1 * hazard_on
+        fin_months1: cumsum(fin_haz1)
+        base1: >-
+          heads_bought_c1 * (t >= c1_buy) - (heads_bought_c1 - unsold_heads_c1) * (t >= tabaski1_index)
+        close1: base1 * (1 - hm) ** maint_months1 * (1 - hf) ** fin_months1 * (t < tabaski2_index)
+        open1: lag(close1, 1)
+        died1: open1 * hazard_on * (maint1 * hm + fin1 * hf)
+        sold1: open1 + bought1 - died1 - close1
+        # group 2: the baptism animals, one at a time
+        b_since: t - credit_settle_c1_index
+        b_cycle: baptism_hold_months + 1
+        b_in: (b_since >= 0) * (b_since < baptism_heads_per_year * b_cycle)
+        b_k: b_in * (b_since % b_cycle)
+        bought2: b_in * (b_k == 0)
+        close2: b_in * (b_k < baptism_hold_months) * (1 - hf) ** b_k
+        open2: lag(close2, 1)
+        fed2: open2 * (b_k >= 1)
+        died2: fed2 * hf
+        sold2: open2 + bought2 - died2 - close2
+        # group 3: cohort 2
+        bought3: heads_bought_c2 * (t == cohort2_purchase_index)
+        close3: >-
+          heads_bought_c2 * (t >= cohort2_purchase_index) * (t < tabaski2_index)
+          * (1 - hf) ** max(0, t - cohort2_purchase_index)
+        open3: lag(close3, 1)
+        died3: open3 * camp2 * hf
+        sold3: open3 + bought3 - died3 - close3
+        # the flock
+        head_open: open1 + open2 + open3
+        head_bought: bought1 + bought2 + bought3
+        head_died: died1 + died2 + died3
+        head_sold: sold1 + sold2 + sold3
+        head_close: close1 + close2 + close3
+        fed_finishing: open1 * fin1 + fed2 + open3 * camp2
+        fed_maintenance: open1 * maint1
+        sold_cohort: sold1 * (t == tabaski1_index) + sold3
+        sold_carryover: sold1 * (t == tabaski2_index)
+        # rations
+        concentrate: >-
+          fed_finishing * concentrate_kg_per_head_month
+          + fed_maintenance * concentrate_kg_per_head_month_maintenance
+        concentrate_credit: concentrate * campaign
+        concentrate_cash: concentrate - concentrate_credit
+        haulm_price: haulm_lot_cost / haulm_lot_kg
+        haulm_bought: haulm_lot_kg * ((t == c1_buy - 1) + (t == cohort2_purchase_index - 1))
+        haulm_fed: (fed_finishing + fed_maintenance) * roughage_kg_per_head_month
+        keep: 1 - haulm_storage_loss_monthly
+        haulm_scaled: (haulm_bought - haulm_fed) / keep ** t
+        haulm_cum: cumsum(haulm_scaled)
+        haulm_stock: keep ** t * haulm_cum
+        haulm_open: lag(haulm_stock, 1)
+        haulm_loss: haulm_open * haulm_storage_loss_monthly
+        # money
+        pen_heads: head_open + head_bought
+        labour_per_head: helper_wage_month / max(normal_capacity_head, pen_heads)
+        labour_absorbed: pen_heads * labour_per_head
+        labour_annual: helper_wage_month * labour_months_paid_per_year
+        feed_finishing: concentrate_kg_per_head_month * concentrate_price_cash_per_kg + roughage_kg_per_head_month * haulm_price
+        feed_maintenance: >-
+          concentrate_kg_per_head_month_maintenance * concentrate_price_cash_per_kg
+          + roughage_kg_per_head_month * haulm_price
+        carried_dose: (t == cohort2_purchase_index) * unsold_heads_c1 * salt_deworming_per_head
+        ram_purchases: >-
+          purchase_cost_c1 * (t == c1_buy) + purchase_cost_c2 * (t == cohort2_purchase_index)
+          + bought2 * ram_price_standard
+        salt: head_bought * salt_deworming_per_head + carried_dose
+        concentrate_cash_cost: concentrate_cash * concentrate_price_cash_per_kg
+        credit_added: concentrate_credit * concentrate_price_cash_per_kg
+        haulm_purchase: haulm_bought * haulm_price
+        haulm_fed_value: haulm_fed * haulm_price
+        haulm_loss_value: haulm_loss * haulm_price
+        bran: millet_bran_cost_cohort * ((t == c1_buy - 1) + (t == cohort2_purchase_index - 1))
+        credit_cum: cumsum(credit_added)
+        credit_settled: >-
+          ((t == credit_settle_c1_index) + (t == tabaski2_index))
+          * (credit_cum - lag(credit_cum, max(0, t - credit_settle_c1_index)) * (t > credit_settle_c1_index))
+        interest: >-
+          credit_settled * (concentrate_price_credit_per_kg - concentrate_price_cash_per_kg)
+          / concentrate_price_cash_per_kg
+        transport: transport_share_per_trip * ((t == tabaski1_index) + (t == tabaski2_index))
+        owner: {each_period: owner_labour_opportunity_cost_month}
+        # cost per head of each group: the running total of what each head was charged
+        add1: >-
+          bought1 / heads_bought_c1 * (purchase_cost_c1 / heads_bought_c1 + salt_deworming_per_head)
+          + ((open1 + bought1) > 0) * (labour_per_head + fin1 * feed_finishing + maint1 * feed_maintenance)
+          + (carried_dose / open1 if open1 > 0 else 0)
+        cpp1: cumsum(add1)
+        add2: bought2 * (ram_price_standard + salt_deworming_per_head + labour_per_head) + (fed2 > 0) * (feed_finishing + labour_per_head)
+        add2_cum: cumsum(add2)
+        cpp2: b_in * (add2_cum - lag(add2_cum, b_k + 1))
+        add3: >-
+          bought3 / heads_bought_c2 * (purchase_cost_c2 / heads_bought_c2 + salt_deworming_per_head)
+          + ((open3 + bought3) > 0) * (labour_per_head + camp2 * feed_finishing)
+        cpp3: cumsum(add3)
+        cogs: sold1 * cpp1 + sold2 * cpp2 + sold3 * cpp3
+        writeoff: died1 * cpp1 + died2 * cpp2 + died3 * cpp3
+        pen_book_value: pen_shelter_cost * (1 - pen_age_months_at_t0 / (pen_useful_life_years * 12))
+        pen_life_left: pen_useful_life_years * 12 - pen_age_months_at_t0
+  opening:
+    fattener:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: pen_book_value}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    cohort_sales:
+      type: offtake
+      parties: {seller: fattener}
+      terms: {volume: {generator: gold, output: sold_cohort}, price: {generator: gold, output: tabaski_price_avg},
+              payment_days: 0, days_per_year: 12, periods_per_year: 12, end: 17}
+    baptism_sales:
+      type: offtake
+      parties: {seller: fattener}
+      terms: {volume: {generator: gold, output: sold2}, price: {generator: gold, output: baptism_sale_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 12, end: 17}
+    carryover_sales:
+      type: offtake
+      parties: {seller: fattener}
+      terms: {volume: {generator: gold, output: sold_carryover}, price: {generator: gold, output: carryover_sale_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 12, end: 17}
+    rams:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: ram_purchases}, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    salt:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: salt}, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    helper:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: {generator: gold, output: labour_annual}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    concentrate_cash:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: concentrate_cash_cost}, index: 1,
+              periods_per_year: 12, start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    haulm:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: haulm_purchase}, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    bran:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: bran}, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    transport:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: transport}, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    owner:
+      type: operating_cost
+      parties: {payer: fattener}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: owner}, index: 1, periods_per_year: 12,
+              start: 0, end: 17, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks:
+    stock:
+      kind: transfer
+      entity: fattener
+      phase: close
+      declare: {livestock: asset, haulm_store: asset, feed_payable: liability, cogs: expense, mortality: expense,
+                haulm_loss: expense, interest: expense}
+      moves:
+        rams: {debit: livestock, credit: rams.expense, amount: {generator: gold, output: ram_purchases}}
+        salt: {debit: livestock, credit: salt.expense, amount: {generator: gold, output: salt}}
+        labour: {debit: livestock, credit: helper.expense, amount: {generator: gold, output: labour_absorbed}}
+        concentrate_cash: {debit: livestock, credit: concentrate_cash.expense, amount: {generator: gold, output: concentrate_cash_cost}}
+        bran: {debit: livestock, credit: bran.expense, amount: {generator: gold, output: bran}}
+        concentrate_credit: {debit: livestock, credit: feed_payable, amount: {generator: gold, output: credit_added}}
+        haulm_in: {debit: haulm_store, credit: haulm.expense, amount: {generator: gold, output: haulm_purchase}}
+        haulm_fed: {debit: livestock, credit: haulm_store, amount: {generator: gold, output: haulm_fed_value}}
+        haulm_lost: {debit: haulm_loss, credit: haulm_store, amount: {generator: gold, output: haulm_loss_value}}
+        sold: {debit: cogs, credit: livestock, amount: {generator: gold, output: cogs}}
+        died: {debit: mortality, credit: livestock, amount: {generator: gold, output: writeoff}}
+        credit_settled: {debit: feed_payable, credit: cash, amount: {generator: gold, output: credit_settled}}
+        interest: {debit: interest, credit: cash, amount: {generator: gold, output: interest}}
+    pen:
+      kind: asset_register
+      entity: fattener
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: gold, output: pen_life_left}       # beyond the horizon
+      life_periods: {generator: gold, output: pen_life_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: fattener
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: income_tax_rate}
+      carry_forward_periods: null
+      loss_relief: refund
+      scheme:                       # on EBIT: unlevered, and the owner's time is no charge
+        cohort_sales.revenue: taxable
+        baptism_sales.revenue: taxable
+        carryover_sales.revenue: taxable
+        rams.expense: taxable
+        salt.expense: taxable
+        helper.expense: taxable
+        concentrate_cash.expense: taxable
+        haulm.expense: taxable
+        bran.expense: taxable
+        transport.expense: taxable
+        cogs: taxable
+        mortality: taxable
+        haulm_loss: taxable
+        depreciation: taxable
+        written_off: taxable
+        interest: non_deductible
+        owner.expense: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: fattener
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      cohort_sales.revenue: cohort
+      baptism_sales.revenue: baptism
+      carryover_sales.revenue: carryover
+      rams.expense: capitalised
+      salt.expense: capitalised
+      concentrate_cash.expense: capitalised
+      haulm.expense: capitalised
+      bran.expense: capitalised
+      helper.expense: labour
+      transport.expense: transport
+      cogs: cogs
+      mortality: mortality
+      haulm_loss: haulm_loss
+      depreciation: depreciation
+      written_off: depreciation
+      interest: interest
+      owner.expense: owner
+      tax_expense: tax
+    cash_flow:
+      cohort_sales.receivable: sales
+      baptism_sales.receivable: sales
+      carryover_sales.receivable: sales
+      rams.payable: rams
+      salt.payable: salt
+      helper.payable: helper
+      concentrate_cash.payable: concentrate_cash
+      haulm.payable: haulm
+      bran.payable: bran
+      transport.payable: transport
+      feed_payable: feed_credit
+      interest: financing
+      owner.payable: owner
+      vat_receivable: operating
+      tax_payable: tax
+  cuts:
+    rams: {entity: fattener, account: cash, scheme: cash_flow, include: [rams]}
+    salt: {entity: fattener, account: cash, scheme: cash_flow, include: [salt]}
+    helper_paid: {entity: fattener, account: cash, scheme: cash_flow, include: [helper]}
+    concentrate_cash: {entity: fattener, account: cash, scheme: cash_flow, include: [concentrate_cash]}
+    haulm_paid: {entity: fattener, account: cash, scheme: cash_flow, include: [haulm]}
+    bran: {entity: fattener, account: cash, scheme: cash_flow, include: [bran]}
+    feed_settled: {entity: fattener, account: cash, scheme: cash_flow, include: [feed_credit]}
+    interest_paid: {entity: fattener, account: cash, scheme: cash_flow, include: [financing]}
+    cash_in: {entity: fattener, account: cash, scheme: cash_flow, include: [sales]}
+    cash_out_operating: {entity: fattener, account: cash, scheme: cash_flow,
+                         include: [rams, salt, helper, concentrate_cash, haulm, bran, transport, feed_credit]}
+    cash_out_total: {entity: fattener, account: cash, scheme: cash_flow,
+                     include: [rams, salt, helper, concentrate_cash, haulm, bran, transport, feed_credit, financing]}
+    labour_expensed: {kind: pnl, entity: fattener, scheme: pnl, include: [labour]}
+    transport: {kind: pnl, entity: fattener, scheme: pnl, include: [transport]}
+    cogs: {kind: pnl, entity: fattener, scheme: pnl, include: [cogs]}
+    mortality: {kind: pnl, entity: fattener, scheme: pnl, include: [mortality]}
+    haulm_loss: {kind: pnl, entity: fattener, scheme: pnl, include: [haulm_loss]}
+    revenue_cohort: {kind: pnl, entity: fattener, scheme: pnl, include: [cohort]}
+    revenue_baptism: {kind: pnl, entity: fattener, scheme: pnl, include: [baptism]}
+    revenue_carryover: {kind: pnl, entity: fattener, scheme: pnl, include: [carryover]}
+    revenue: {kind: pnl, entity: fattener, scheme: pnl, include: [cohort, baptism, carryover]}
+    ebitda: {kind: pnl, entity: fattener, scheme: pnl,
+             include: [cohort, baptism, carryover, capitalised, labour, transport, cogs, mortality, haulm_loss]}
+    depreciation: {kind: pnl, entity: fattener, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: fattener, scheme: pnl,
+           include: [cohort, baptism, carryover, capitalised, labour, transport, cogs, mortality, haulm_loss, depreciation]}
+    tax: {kind: pnl, entity: fattener, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: fattener, scheme: pnl,
+            include: [cohort, baptism, carryover, capitalised, labour, transport, cogs, mortality, haulm_loss, depreciation,
+                      tax]}
+    owner: {kind: pnl, entity: fattener, scheme: pnl, include: [owner]}
+    cfi: {entity: fattener, account: cash, scheme: cash_flow, include: []}         # no capex
+    fcff: {entity: fattener, account: cash, scheme: cash_flow,
+           include: [sales, rams, salt, helper, concentrate_cash, haulm, bran, transport, feed_credit, operating, tax]}
+    fcff_after_owner: {entity: fattener, account: cash, scheme: cash_flow,
+                       include: [sales, rams, salt, helper, concentrate_cash, haulm, bran, transport, feed_credit, operating,
+                                 tax, owner]}
+  measures: {}
+trace:
+  head_open: {driver: gold.head_open}
+  head_bought: {driver: gold.head_bought}
+  head_died: {driver: gold.head_died}
+  head_sold: {driver: gold.head_sold}
+  head_close: {driver: gold.head_close}
+  head_fed_finishing: {driver: gold.fed_finishing}
+  head_fed_maintenance: {driver: gold.fed_maintenance}
+  head_fed_baptism: {driver: gold.fed2}
+  head_sold_cohort: {driver: gold.sold_cohort}
+  head_sold_baptism: {driver: gold.sold2}
+  head_sold_carryover: {driver: gold.sold_carryover}
+  concentrate_kg: {driver: gold.concentrate}
+  concentrate_credit_kg: {driver: gold.concentrate_credit}
+  concentrate_cash_kg: {driver: gold.concentrate_cash}
+  concentrate_cash_cost: {cut: concentrate_cash, sign: -1}
+  haulm_stock_open_kg: {driver: gold.haulm_open}
+  haulm_bought_kg: {driver: gold.haulm_bought}
+  haulm_fed_kg: {driver: gold.haulm_fed}
+  haulm_loss_kg: {driver: gold.haulm_loss}
+  haulm_stock_kg: {driver: gold.haulm_stock}
+  haulm_purchase_value: {cut: haulm_paid, sign: -1}
+  haulm_inventory_value: {balance: haulm_store}
+  haulm_loss_value: {cut: haulm_loss, sign: -1}
+  bran_cost: {cut: bran, sign: -1}
+  ram_purchases: {cut: rams, sign: -1}
+  salt_deworming: {cut: salt, sign: -1}
+  labour_absorbed: {sum: [{cut: helper_paid, sign: -1}, {cut: labour_expensed}]}
+  labour_expensed: {cut: labour_expensed, sign: -1}
+  inventory_additions: {sum: [{change: livestock}, {cut: cogs, sign: -1}, {cut: mortality, sign: -1}]}
+  cogs: {cut: cogs, sign: -1}
+  mortality_writeoff: {cut: mortality, sign: -1}
+  livestock_inventory: {balance: livestock}
+  feed_credit_added: {sum: [{change: feed_payable}, {cut: feed_settled, sign: -1}]}
+  feed_credit_settled: {cut: feed_settled, sign: -1}
+  feed_payable: {balance: feed_payable}
+  implicit_interest: {cut: interest_paid, sign: -1}
+  transport: {cut: transport, sign: -1}
+  revenue_cohort: {cut: revenue_cohort}
+  revenue_baptism: {cut: revenue_baptism}
+  revenue_carryover: {cut: revenue_carryover}
+  revenue: {cut: revenue}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  book_value_open: {opening: fixed_assets}
+  book_value: {balance: fixed_assets}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  nwc: {balance: livestock + haulm_store - feed_payable}
+  delta_nwc: {change: livestock + haulm_store - feed_payable}
+  capex: {cut: cfi, sign: -1}
+  fcff: {cut: fcff}
+  cumulative_fcff: {cumulative: fcff}
+  cash_in: {cut: cash_in}
+  cash_out_operating: {cut: cash_out_operating, sign: -1}
+  cash_out_total: {cut: cash_out_total, sign: -1}
+  owner_opportunity_cost: {cut: owner, sign: -1}
+  fcff_after_owner_labour: {cut: fcff_after_owner}
+  contingent_social_charges: {cut: helper_paid, sign: -1, times: gold.employer_social_charge_rate}
+  contingent_cgu: {cut: revenue, times: gold.cgu_rate_if_bic}

@@ -1,0 +1,279 @@
+# Pilot gold "rice_mintax_v25": the Adjamé rice wholesaler, five years to the end of its truck's
+# life, with the patente and the TSE, paying the higher of the profit tax and the turnover minimum
+# (cases/reference/golds_pilot/rice_mintax_v25.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * bags_per_month x months_per_year bags bought a year, shrinkage_rate (nil) of them lost, the
+#     rest sold at sale_price_per_bag, collected on receivable_days (nil) of a days_per_year
+#     year. Bags are physical drivers;
+#   * the rice is bought at purchase_price_per_bag on the bags bought, paid on payable_days (nil),
+#     and expensed when bought (the gold's cost of goods is the purchases); the stock held
+#     (inventory_days of purchases) is carried in and taken back out of that expense, so with a
+#     level stock nothing moves;
+#   * transport_cost_per_bag on the bags bought, the store and the handlers a month (x
+#     months_per_year), owner_remuneration_per_month (nil), the patente (the turnover duty at
+#     patente_ca_rate, held between patente_ca_floor and patente_ca_cap, plus patente_vl_rate of
+#     the store cost) and the TSE (tse_rate of turnover), all paid in the period;
+#   * the working-capital position is already in place, carried in at the levels its terms hold;
+#   * the truck is carried in at cost less truck_accumulated_depreciation_opening and
+#     depreciated straight-line over truck_remaining_life_years to nil; no capex is stated (cfi
+#     has no line);
+#   * tax at bic_rate on profit, or the IMF (imf_rate x turnover, between imf_floor and imf_cap;
+#     rice is VAT-exempt, so turnover TTC is turnover) when higher. income_tax has no minimum-tax
+#     floor, so the top-up max(0, IMF - profit tax) is posted to tax by a transfer, the profit tax
+#     recomputed in formulas from the same inputs (it binds every period); tax paid within the
+#     year. imf_raw and imf_liability are memo amounts no ledger holds: read as drivers;
+#   * volume_growth_per_year is nil, vat_rate_on_rice nil, and there is no debt.
+gold: rice_mintax_v25
+entity: wholesaler
+plant: sale_price_per_bag
+case:
+  case: gold-pilot-rice-mintax-v25
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        annual_bags: bags_per_month * months_per_year
+        bought: {each_period: annual_bags}
+        lost: shrinkage_rate * bought
+        sold: bought - lost
+        store_annual: store_cost_per_month * months_per_year
+        handlers_annual: handler_count * handler_wage_per_month * months_per_year
+        owner_annual: owner_remuneration_per_month * months_per_year
+        revenue_f: sale_price_per_bag * sold
+        cogs_f: purchase_price_per_bag * bought
+        patente_ca: min(max(patente_ca_rate * revenue_f, patente_ca_floor), patente_ca_cap)
+        patente_vl: patente_vl_rate * store_annual
+        tse: tse_rate * revenue_f
+        nbv_carried: truck_cost - truck_accumulated_depreciation_opening
+        # the working-capital position carried in (scalars: the steady year)
+        cogs_level: purchase_price_per_bag * annual_bags
+        revenue_level: sale_price_per_bag * annual_bags * (1 - shrinkage_rate)
+        inventory: inventory_days * cogs_level / days_per_year
+        receivable_carried: receivable_days * revenue_level / days_per_year
+        payable_carried: payable_days * cogs_level / days_per_year
+        # the profit tax the books charge, recomputed for the IMF top-up
+        ebit_f: >-
+          revenue_f - cogs_f - transport_cost_per_bag * bought - store_annual - handlers_annual - owner_annual
+          - patente_ca - patente_vl - tse - nbv_carried / truck_remaining_life_years
+        imf_raw: imf_rate * revenue_f
+        imf: min(max(imf_raw, imf_floor), imf_cap)
+        imf_topup: max(0, imf - bic_rate * max(0, ebit_f))
+  opening:
+    wholesaler:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: nbv_carried}}
+      inventory: {nature: asset, value: {generator: gold, output: inventory}}
+      rice.receivable: {nature: asset, value: {generator: gold, output: receivable_carried}}
+      purchases.payable: {nature: liability, value: {generator: gold, output: payable_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                     # end: 5 is past the horizon (a going concern)
+    rice:
+      type: offtake
+      parties: {seller: wholesaler}
+      terms: {volume: {generator: gold, output: sold}, price: {generator: gold, output: sale_price_per_bag},
+              payment_days: {generator: gold, output: receivable_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1, end: 5}
+    purchases:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: 0, unit_rate: {generator: gold, output: purchase_price_per_bag},
+              volume: {generator: gold, output: bought}, index: 1, periods_per_year: 1, start: 0, end: 5,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: payable_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    transport:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: 0, unit_rate: {generator: gold, output: transport_cost_per_bag},
+              volume: {generator: gold, output: bought}, index: 1, periods_per_year: 1, start: 0, end: 5,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: days_per_year}}
+    store:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: store_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    handlers:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: handlers_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    owner:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: owner_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    patente_ca:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: patente_ca}, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    patente_vl:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: {generator: gold, output: patente_vl}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    tse:
+      type: operating_cost
+      parties: {payer: wholesaler}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: tse}, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: wholesaler
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: inventory}, against: purchases.expense}
+    truck:
+      kind: asset_register
+      entity: wholesaler
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 4
+      life_periods: {generator: gold, output: truck_remaining_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: wholesaler
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: bic_rate}
+      carry_forward_periods: null
+      scheme:
+        rice.revenue: taxable
+        purchases.expense: taxable
+        transport.expense: taxable
+        store.expense: taxable
+        handlers.expense: taxable
+        owner.expense: taxable
+        patente_ca.expense: taxable
+        patente_vl.expense: taxable
+        tse.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+        imf_topup: non_deductible
+    minimum_tax:
+      kind: transfer
+      entity: wholesaler
+      phase: tax
+      declare:
+        imf_topup: expense
+      moves:
+        topup: {debit: imf_topup, credit: tax_payable, amount: {generator: gold, output: imf_topup}}
+    pay_tax:
+      kind: settle
+      entity: wholesaler
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      rice.revenue: revenue
+      purchases.expense: cogs
+      transport.expense: transport
+      store.expense: store
+      handlers.expense: handlers
+      owner.expense: owner
+      patente_ca.expense: patente_ca
+      patente_vl.expense: patente_vl
+      tse.expense: tse
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+      imf_topup: tax
+    cash_flow:
+      rice.receivable: operating
+      purchases.payable: operating
+      transport.payable: operating
+      store.payable: operating
+      handlers.payable: operating
+      owner.payable: operating
+      patente_ca.payable: operating
+      patente_vl.payable: operating
+      tse.payable: operating
+      inventory: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: wholesaler, scheme: pnl, include: [cogs]}
+    gross_margin: {kind: pnl, entity: wholesaler, scheme: pnl, include: [revenue, cogs]}
+    transport: {kind: pnl, entity: wholesaler, scheme: pnl, include: [transport]}
+    store: {kind: pnl, entity: wholesaler, scheme: pnl, include: [store]}
+    handlers: {kind: pnl, entity: wholesaler, scheme: pnl, include: [handlers]}
+    owner: {kind: pnl, entity: wholesaler, scheme: pnl, include: [owner]}
+    patente_ca: {kind: pnl, entity: wholesaler, scheme: pnl, include: [patente_ca]}
+    patente_vl: {kind: pnl, entity: wholesaler, scheme: pnl, include: [patente_vl]}
+    patente: {kind: pnl, entity: wholesaler, scheme: pnl, include: [patente_ca, patente_vl]}
+    tse: {kind: pnl, entity: wholesaler, scheme: pnl, include: [tse]}
+    opex: {kind: pnl, entity: wholesaler, scheme: pnl,
+           include: [transport, store, handlers, owner, patente_ca, patente_vl, tse]}
+    ebitda: {kind: pnl, entity: wholesaler, scheme: pnl,
+             include: [revenue, cogs, transport, store, handlers, owner, patente_ca, patente_vl, tse]}
+    depreciation: {kind: pnl, entity: wholesaler, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: wholesaler, scheme: pnl,
+           include: [revenue, cogs, transport, store, handlers, owner, patente_ca, patente_vl, tse, depreciation]}
+    tax: {kind: pnl, entity: wholesaler, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: wholesaler, scheme: pnl,
+            include: [revenue, cogs, transport, store, handlers, owner, patente_ca, patente_vl, tse, depreciation,
+                      tax]}
+    cfo: {entity: wholesaler, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: wholesaler, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: wholesaler, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  bags_bought: {driver: gold.bought}
+  bags_lost: {driver: gold.lost}
+  bags_sold: {driver: gold.sold}
+  revenue: {cut: revenue}
+  cogs: {cut: cogs, sign: -1}
+  gross_margin: {cut: gross_margin}
+  transport_cost: {cut: transport, sign: -1}
+  store_cost: {cut: store, sign: -1}
+  handler_cost: {cut: handlers, sign: -1}
+  owner_remuneration: {cut: owner, sign: -1}
+  patente_ca: {cut: patente_ca, sign: -1}
+  patente_vl: {cut: patente_vl, sign: -1}
+  patente_total: {cut: patente, sign: -1}
+  tse: {cut: tse, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  truck_nbv: {balance: fixed_assets}
+  ebit: {cut: ebit}
+  bic_liability: {record: tax.tax}
+  imf_raw: {driver: gold.imf_raw}
+  imf_liability: {driver: gold.imf}
+  tax_due: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  inventory: {balance: inventory}
+  receivables: {balance: rice.receivable}
+  payables: {balance: purchases.payable + transport.payable + store.payable + handlers.payable + owner.payable + patente_ca.payable + patente_vl.payable + tse.payable}
+  nwc: {balance: inventory + rice.receivable - purchases.payable - transport.payable - store.payable - handlers.payable - owner.payable - patente_ca.payable - patente_vl.payable - tse.payable}
+  nwc_prior: {opening: inventory + rice.receivable - purchases.payable - transport.payable - store.payable - handlers.payable - owner.payable - patente_ca.payable - patente_vl.payable - tse.payable}
+  delta_nwc: {change: inventory + rice.receivable - purchases.payable - transport.payable - store.payable - handlers.payable - owner.payable - patente_ca.payable - patente_vl.payable - tse.payable}
+  capex: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

@@ -1,0 +1,181 @@
+# Pilot gold "cashew_taxholiday": a Bouaké raw-cashew shelling unit, one build year and fifteen
+# production years, with a five-year profit-tax holiday (cases/reference/golds_pilot/cashew_taxholiday.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the plant (plant_capex) is bought in period 0 and produces from first_production_period_index;
+#     nothing is earned or spent on operations before;
+#   * rcn_throughput_kg_per_year (x capacity_ramp) of raw nut is shelled a year: kernel_yield_ratio of
+#     it leaves as kernel, sold at kernel_export_price; shell_ratio leaves as shell, sold for nothing
+#     (shell_price 0: no revenue line). The kilos are drivers (no ledger holds kilos);
+#   * raw nut at rcn_purchase_price a kilo, paid on rcn_payable_months; workers_count x monthly_wage x
+#     months_per_year of wages, paid on labour_payable_months; other_opex_annual paid on payable_months;
+#   * kernel collected on receivable_months; the inventory is held at inventory_months of the year's
+#     cash operating cost, bought with cash on top of the expensed costs (the gold's working-capital
+#     stock: the P&L carries the full cost, the stock is a cash outflow in delta_nwc);
+#   * the terms run past the horizon (end 60): nothing unwinds at the end (terminal_nwc_release 0);
+#   * the plant is depreciated straight-line over asset_life_years from the period after purchase, to
+#     residual_value; nothing is left to dispose of at the end (replacement_capex 0: none is bought);
+#   * profit tax at tax_rate on EBIT, nil for tax_holiday_years from the first production year (the
+#     agrément), paid within the year. No loss arises (the build year's EBIT is nil).
+gold: cashew_taxholiday
+entity: plant
+plant: kernel_export_price
+case:
+  case: pilot-cashew-taxholiday
+  periods: 16
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 16
+      inputs: gold
+      values:
+        producing: t >= first_production_period_index
+        rcn_kg: rcn_throughput_kg_per_year * capacity_ramp * producing
+        kernel_kg: rcn_kg * kernel_yield_ratio
+        shell_kg: rcn_kg * shell_ratio
+        wages_annual: workers_count * monthly_wage * months_per_year
+        cash_opex: (rcn_kg * rcn_purchase_price + wages_annual + other_opex_annual) * producing
+        inventory: cash_opex * inventory_months / months_per_year
+        capex: plant_capex * (t == 0)
+        rate: tax_rate * (t >= first_production_period_index + tax_holiday_years)
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    kernel:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: kernel_kg}, price: {generator: gold, output: kernel_export_price},
+              payment_days: {generator: gold, output: receivable_months},
+              days_per_year: {generator: gold, output: months_per_year}, periods_per_year: 1, end: 60}
+    rcn:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: rcn_purchase_price},
+              volume: {generator: gold, output: rcn_kg}, index: 1, periods_per_year: 1, start: 0, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: rcn_payable_months},
+              days_per_year: {generator: gold, output: months_per_year}}
+    labour:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: gold, output: wages_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: {generator: gold, output: first_production_period_index}, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: labour_payable_months},
+              days_per_year: {generator: gold, output: months_per_year}}
+    other:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: gold, output: other_opex_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: {generator: gold, output: first_production_period_index}, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: payable_months},
+              days_per_year: {generator: gold, output: months_per_year}}
+    purchase:
+      type: capex
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 15}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: plant
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: inventory}}
+    assets:
+      kind: asset_register
+      entity: plant
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 15
+      residual: {generator: gold, output: residual_value}
+      life_periods: {generator: gold, output: asset_life_years}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: plant
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        kernel.revenue: taxable
+        rcn.expense: taxable
+        labour.expense: taxable
+        other.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: plant
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      kernel.revenue: revenue
+      rcn.expense: rcn
+      labour.expense: labour
+      other.expense: other
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      kernel.receivable: operating
+      rcn.payable: operating
+      labour.payable: operating
+      other.payable: operating
+      inventory: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: plant, scheme: pnl, include: [revenue]}
+    rcn: {kind: pnl, entity: plant, scheme: pnl, include: [rcn]}
+    labour: {kind: pnl, entity: plant, scheme: pnl, include: [labour]}
+    other: {kind: pnl, entity: plant, scheme: pnl, include: [other]}
+    cash_opex: {kind: pnl, entity: plant, scheme: pnl, include: [rcn, labour, other]}
+    ebitda: {kind: pnl, entity: plant, scheme: pnl, include: [revenue, rcn, labour, other]}
+    depreciation: {kind: pnl, entity: plant, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: plant, scheme: pnl, include: [revenue, rcn, labour, other, depreciation]}
+    tax: {kind: pnl, entity: plant, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: plant, scheme: pnl, include: [revenue, rcn, labour, other, depreciation, tax]}
+    cfo: {entity: plant, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: plant, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: plant, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  rcn_processed_kg: {driver: gold.rcn_kg}
+  kernel_kg: {driver: gold.kernel_kg}
+  shell_kg: {driver: gold.shell_kg}
+  revenue: {cut: revenue}
+  rcn_cost: {cut: rcn, sign: -1}
+  labour_cost: {cut: labour, sign: -1}
+  other_opex: {cut: other, sign: -1}
+  cash_opex: {cut: cash_opex, sign: -1}
+  ebitda: {cut: ebitda}
+  capex: {cut: cfi, sign: -1}
+  gross_ppe: {sum: [{balance: fixed_assets}, {cumulative: depreciation, sign: -1}]}
+  depreciation: {cut: depreciation, sign: -1}
+  accum_dep: {cumulative: depreciation, sign: -1}
+  net_ppe: {balance: fixed_assets}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  accounts_receivable: {balance: kernel.receivable}
+  inventory: {balance: inventory}
+  accounts_payable: {balance: rcn.payable + labour.payable + other.payable}
+  nwc: {balance: kernel.receivable + inventory - rcn.payable - labour.payable - other.payable}
+  delta_nwc: {change: kernel.receivable + inventory - rcn.payable - labour.payable - other.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

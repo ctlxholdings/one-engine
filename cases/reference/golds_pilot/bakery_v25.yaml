@@ -1,0 +1,845 @@
+contract: "v2.5"
+id: "bakery_xof_ci_12m_unlevered_fcff"
+title: "Artisanal bakery, XOF (Côte d'Ivoire base case) — unlevered FCFF over 12 monthly periods, built as an explicit upper bound with every unstated quantity carried at zero and its question attached"
+currency: "XOF"
+
+grid:
+  periods: 12
+  freq: "monthly"
+  why: |
+    Twelve periods, monthly, covering one civil year (1 January to 31 December, 365 operating days).
+
+    FREQUENCY. The founder's production cycle is daily — « Je fais cinq cents pains par jour »,
+    « Je travaille tous les jours » — but every cost he names is quoted per month: « cent mille par
+    mois », « huit cent mille par mois ». Monthly is therefore the coarsest period that preserves the
+    daily production count exactly (a calendar month is a whole number of operating days for a
+    seven-day-a-week baker) and the finest that does not force me to invent a daily split of rent and
+    wages that the founder never gave. It also makes visible something an annual grid hides: because
+    output is uniform per DAY while rent and wages are uniform per MONTH, month length drives the
+    result. A 28-day February earns three fewer days of gross margin against exactly the same monthly
+    fixed cost as a 31-day January. That swing is real cash, not a presentational artefact, and a
+    lender or buyer looking at the worst month rather than the average month sees a different business.
+
+    HORIZON. Twelve months, for three reasons.
+    (i) The tax that governs this business is assessed on ANNUAL turnover, and the regime itself is
+        selected by an annual band (tee_band_low to tee_band_high, in XOF TTC). A horizon shorter than
+        twelve months cannot test which regime applies, and the regime is the single largest statutory
+        fact in this model. Twelve months is therefore the MINIMUM horizon at which the tax line is
+        even well defined.
+    (ii) Nothing in the utterance supports any path beyond one year. There is no growth statement, no
+        price trajectory, no lease term, no asset age, no seasonality, no financing. A second year
+        would be forecast, not derivation, and the brief is to reason only from the founder's words
+        plus standard professional knowledge.
+    (iii) Both ends of this P&L are set OUTSIDE the business and revised without notice. The retail
+        bread price in Côte d'Ivoire is administered by ministerial decision (see
+        homologated_baguette_price_xof), and flour is an imported commodity whose 50 kg sack has moved
+        by a multiple within two decades (see flour_sack_price_xof). Extending the grid means
+        forecasting an administered price and a wheat commodity price. The founder's words license
+        neither.
+
+    WHY NOT LONGER. The one respectable argument for a ten-year grid is the life of a bakery oven.
+    But the founder names no asset at all, and whether he even owns an oven is an OPEN question in
+    this model (equipment_opening_nbv, ranked high). If that question comes back « le four est à
+    moi », the correct horizon becomes the oven's remaining life and this grid must be rebuilt from
+    the start — which is precisely why that question is ranked where it is. A second reason not to
+    extend: annual turnover lands below tee_band_high but not far below it, so any growth in a second
+    year would change the tax REGIME, not merely the tax. An analyst cannot extrapolate across a
+    regime boundary blind.
+
+    WHY NOT SHORTER OR FINER. A daily grid would require splitting rent and wages across days, which
+    is an invention; a weekly grid would straddle month boundaries and misstate the fixed-cost
+    accrual; an annual grid would erase the February effect and could not show the working-capital
+    roll-forward. Monthly is the only frequency the utterance actually supports.
+
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Je fais cinq cents pains par jour, vendus à deux cent
+    cinquante francs pièce. La farine me coûte cent cinquante francs par pain. Je paie
+    deux boulangers à cent mille par mois. Le loyer du local est à huit cent mille par
+    mois. Je travaille tous les jours.
+  en: |
+    I run a bakery. I make five hundred loaves a day, sold at two hundred fifty francs
+    each. Flour costs me one hundred fifty francs per loaf. I pay two bakers a hundred
+    thousand a month each. The shop rent is eight hundred thousand a month. I work every
+    day.
+
+inputs:
+
+  loaves_baked_per_day:
+    value: 500
+    unit: "loaves/day"
+    prov: "STATED"
+    source: "« Je fais cinq cents pains par jour » — this is the quantity BAKED, which is what flour is consumed against."
+    date: "2026-07-27"
+
+  price_per_loaf:
+    value: 250
+    unit: "XOF/loaf"
+    prov: "STATED"
+    source: "« vendus à deux cent cinquante francs pièce »"
+    date: "2026-07-27"
+
+  flour_cost_per_loaf:
+    value: 150
+    unit: "XOF/loaf"
+    prov: "STATED"
+    source: "« La farine me coûte cent cinquante francs par pain » — literally FLOUR only. The founder did not say ingredients, and I have not read it as ingredients; yeast, salt, improver, water and packaging are carried separately at minor_inputs_monthly."
+    date: "2026-07-27"
+
+  bakers_headcount:
+    value: 2
+    unit: "persons"
+    prov: "STATED"
+    source: "« Je paie deux boulangers »"
+    date: "2026-07-27"
+
+  baker_wage_monthly:
+    value: 100000
+    unit: "XOF/person/month"
+    prov: "STATED"
+    source: "« deux boulangers à cent mille par mois » — read as per baker, not as a shared pot; the parallel English the founder supplied disambiguates it as « a hundred thousand a month each »."
+    date: "2026-07-27"
+
+  rent_monthly:
+    value: 800000
+    unit: "XOF/month"
+    prov: "STATED"
+    source: "« Le loyer du local est à huit cent mille par mois »"
+    date: "2026-07-27"
+
+  operating_days_per_week:
+    value: 7
+    unit: "days/week"
+    prov: "STATED"
+    source: "« Je travaille tous les jours » — every calendar day is an operating day, so no rest-day or holiday deduction is applied to production."
+    date: "2026-07-27"
+
+  days_per_year:
+    value: 365
+    unit: "days/year"
+    prov: "DEFAULTED"
+    source: "Convention: the accounting and tax period is the calendar year, and a non-leap civil year is taken. Named rule — calendar-year accounting period. A leap year would add exactly one 500-loaf day to period t=1."
+    date: "2026-07-27"
+
+  gross_margin_per_loaf:
+    value: 100
+    unit: "XOF/loaf"
+    prov: "INFERRED"
+    source: "price_per_loaf − flour_cost_per_loaf = 250 − 150. No new information enters; it is a subtraction of two stated figures. Note this is a FLOUR margin, not a contribution margin, because it carries no fuel, no minor ingredients and no packaging."
+    date: "2026-07-27"
+
+  flour_sack_weight_kg:
+    value: 50
+    unit: "kg/sack"
+    prov: "SOURCED"
+    authority: "Standard commercial unit for wheat flour in the WAEMU market; Ivorian bakery-sector price reporting quotes flour exclusively in « sacs de 50 kg » — choco.ci, « Consommation / Prix du pain en Côte d'Ivoire », http://choco.ci/news/single/9-consommation-prix-du-pain-en-cote-divoire-comment-des-boulangers-rusent-pour-se-faire-beaucoup-dargent"
+    source: "Used only to convert a money-per-loaf figure into a physical grams-per-loaf figure for a plausibility check. It does not enter revenue, cost, tax or FCFF."
+    verified: "2026-07-27"
+
+  flour_sack_price_xof:
+    value: 30000
+    unit: "XOF/sack of 50 kg"
+    prov: "SOURCED"
+    authority: "choco.ci, « Consommation / Prix du pain en Côte d'Ivoire: comment des boulangers rusent pour se faire beaucoup d'argent » — the 50 kg sack moved from 11 500 XOF in the 2000s to 22 000 XOF in 2022 and approaches 30 000 XOF after the Russia–Ukraine shock. http://choco.ci/news/single/9-consommation-prix-du-pain-en-cote-divoire-comment-des-boulangers-rusent-pour-se-faire-beaucoup-dargent"
+    source: "Press benchmark rather than a statistical-office series — this is the weakest-authority sourced input in the document and I am flagging it as such. It is used ONLY for the physical cross-check on flour_cost_per_loaf; nothing in the FCFF path depends on it."
+    verified: "2026-07-27"
+
+  flour_price_per_gram:
+    value: 0.6
+    unit: "XOF/g"
+    prov: "INFERRED"
+    source: "flour_sack_price_xof / (flour_sack_weight_kg * 1000) = 30000 / 50000. Deduction from two recorded inputs; no unrecorded prior."
+    date: "2026-07-27"
+
+  flour_grams_per_loaf:
+    value: 250
+    unit: "g/loaf"
+    prov: "INFERRED"
+    source: "flour_cost_per_loaf / flour_price_per_gram = 150 / 0.6. Deduction from recorded inputs; the point of computing it is that it is physically testable — see the cross-check in passage."
+    date: "2026-07-27"
+
+  flour_sacks_per_day:
+    value: 2.5
+    unit: "sacks of 50 kg/day"
+    prov: "INFERRED"
+    source: "loaves_baked_per_day * flour_grams_per_loaf / (flour_sack_weight_kg * 1000) = 500 * 250 / 50000. This is the business's own natural purchasing unit — the founder buys sacks, not grams."
+    date: "2026-07-27"
+
+  homologated_baguette_price_xof:
+    value: 150
+    unit: "XOF/baguette"
+    prov: "SOURCED"
+    authority: "Government of Côte d'Ivoire, Conseil des ministres decision announced 30 March 2022: two homologated bread standards fixed — 174 g at 150 FCFA and 232 g at 200 FCFA. Portail officiel du Gouvernement, https://www.gouv.ci/actualite/prix-de-la-baguette-de-pain-desormais-deux-poids-fixes-dont-174-g-pour-150-fcfa-et-232g-pour-200-fcfa-2460"
+    source: "Recorded because the founder's stated price is not one of the homologated points, which is a real regulatory and product-identification fact about this business."
+    verified: "2026-07-27"
+
+  homologated_baguette_weight_g:
+    value: 174
+    unit: "g (baked weight)"
+    prov: "SOURCED"
+    authority: "Same decision as homologated_baguette_price_xof — Conseil des ministres, Côte d'Ivoire, 30 March 2022, baguette standard fixed at 174 g for 150 FCFA. https://www.gouv.ci/actualite/prix-de-la-baguette-de-pain-desormais-deux-poids-fixes-dont-174-g-pour-150-fcfa-et-232g-pour-200-fcfa-2460"
+    source: "Used for the deduction in passage that the founder's product cannot be the homologated standard baguette."
+    verified: "2026-07-27"
+
+  tee_band_low:
+    value: 5000001
+    unit: "XOF/year, turnover TTC"
+    prov: "SOURCED"
+    authority: "Côte d'Ivoire, Code général des impôts, articles 72 et suivants (régime de l'entreprenant), introduced by the annexe fiscale to loi de finances n°2020-972 du 23 décembre 2020. Below 5 000 000 XOF the taxpayer falls under the taxe communale de l'entreprenant instead. Sources: https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/ and https://blog.ivoire-juriste.com/2025/12/tout-savoir-sur-le-regime-de-lentreprenant-en-cote-divoire-taxe-communale-et-taxe-detat.html"
+    source: "Lower bound of the taxe d'État de l'entreprenant band; asserted against this model's own annual turnover in checks."
+    verified: "2026-07-27"
+
+  tee_band_high:
+    value: 50000000
+    unit: "XOF/year, turnover TTC"
+    prov: "SOURCED"
+    authority: "Côte d'Ivoire, CGI articles 72 et suivants (régime de l'entreprenant): the taxe d'État de l'entreprenant applies to annual turnover TTC between 5 000 001 and 50 000 000 XOF; above that the taxpayer moves to the régime des microentreprises. Confirmed by three independent secondary sources: https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/ , https://blog.ivoire-juriste.com/2025/12/tout-savoir-sur-le-regime-de-lentreprenant-en-cote-divoire-taxe-communale-et-taxe-detat.html , https://www.gedbered.com/blog/regimes-fiscaux-2026-impot-entreprise.html"
+    source: "Upper bound of the band. This model's annual turnover sits below it, which is what selects the regime; the test is written as an executable check rather than asserted in prose."
+    verified: "2026-07-27"
+
+  tee_rate_commerce_negoce:
+    value: 0.04
+    unit: "fraction of annual turnover TTC"
+    prov: "SOURCED"
+    authority: "Côte d'Ivoire, CGI articles 72 et suivants: taxe d'État de l'entreprenant at 4% of annual turnover TTC for commerce and négoce activities, halved for members of a centre de gestion agréé; libératoire of the impôt sur les bénéfices, of the contribution des patentes et licences and of VAT (the taxpayer may neither invoice nor deduct VAT); paid in monthly instalments of one twelfth of the annual tax by the 10th of each month. https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/ and https://blog.ivoire-juriste.com/2025/12/tout-savoir-sur-le-regime-de-lentreprenant-en-cote-divoire-taxe-communale-et-taxe-detat.html"
+    source: "The rate for a taxpayer selling goods. A bakery produces and sells a good, so this is the rate the base case applies through tax_rate_applied."
+    verified: "2026-07-27"
+
+  tee_rate_services:
+    value: 0.05
+    unit: "fraction of annual turnover TTC"
+    prov: "SOURCED"
+    authority: "Same instrument and articles as tee_rate_commerce_negoce — Côte d'Ivoire CGI arts. 72 et suivants: 5% for prestations de services. https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/"
+    source: "Recorded because the classification of an artisanal boulangerie as commerce/négoce rather than prestation de services is not settled by anything I could verify; it is the upper end of the elicited tax_rate_applied."
+    verified: "2026-07-27"
+
+  smig_monthly:
+    value: 75000
+    unit: "XOF/month"
+    prov: "SOURCED"
+    authority: "Côte d'Ivoire, décret n°2022-986 du 21 décembre 2022 raising the salaire minimum interprofessionnel garanti from 60 000 to 75 000 FCFA with effect 1 January 2023; still in force in 2026. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "Used as a labour-law plausibility test on baker_wage_monthly, asserted as an executable check."
+    verified: "2026-07-27"
+
+  cnps_pension_rate_employer:
+    value: 0.077
+    unit: "fraction of gross salary"
+    prov: "SOURCED"
+    authority: "CNPS Côte d'Ivoire employer contribution rates in force 1 January 2025, tabulated by CLEISS (Centre des liaisons européennes et internationales de sécurité sociale), « Les cotisations en Côte d'Ivoire »: retraite 7,70% employeur / 6,30% salarié, ceiling 3 375 000 XOF per month. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "Part of the statutory employer cost of a declared baker. Not charged in the base case — see payroll_charges_monthly."
+    verified: "2026-07-27"
+
+  cnps_family_rate_employer:
+    value: 0.05
+    unit: "fraction of capped base"
+    prov: "SOURCED"
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire », rates in force 1 January 2025: prestations familiales 5% employer only, ceiling 70 000 XOF per month. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "Part of the statutory employer cost of a declared baker."
+    verified: "2026-07-27"
+
+  cnps_maternity_rate_employer:
+    value: 0.0075
+    unit: "fraction of capped base"
+    prov: "SOURCED"
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire », rates in force 1 January 2025: maternité 0,75% employer only, ceiling 70 000 XOF per month. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "Part of the statutory employer cost of a declared baker."
+    verified: "2026-07-27"
+
+  cnps_at_mp_rate_employer_min:
+    value: 0.02
+    unit: "fraction of capped base"
+    prov: "SOURCED"
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire », rates in force 1 January 2025: accidents du travail et maladies professionnelles 2% to 5% employer only depending on sector risk class, ceiling 70 000 XOF per month. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "The bottom of the statutory 2–5% range is taken, because the exact risk class assigned to a boulangerie is not something I could verify; taking the bottom keeps the recorded statutory employer cost a lower bound rather than an inflated one."
+    verified: "2026-07-27"
+
+  cnps_capped_base_monthly:
+    value: 70000
+    unit: "XOF/month"
+    prov: "SOURCED"
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire »: the monthly contribution ceiling for prestations familiales, maternité and accidents du travail is 70 000 XOF; the pension ceiling is separate at 3 375 000 XOF. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "The ceiling binds here, because baker_wage_monthly exceeds it — which is exactly why the employer charge is not a flat percentage of the wage."
+    verified: "2026-07-27"
+
+  cnps_pension_ceiling_monthly:
+    value: 3375000
+    unit: "XOF/month"
+    prov: "SOURCED"
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire »: pension contribution ceiling equal to 45 times the monthly SMIG, i.e. 3 375 000 XOF. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    source: "Recorded for completeness; it does not bind, since baker_wage_monthly is far below it, so the pension contribution runs on the full wage."
+    verified: "2026-07-27"
+
+  cnps_employer_charge_per_baker_monthly:
+    value: 13125
+    unit: "XOF/person/month"
+    prov: "INFERRED"
+    source: "cnps_pension_rate_employer * baker_wage_monthly + (cnps_family_rate_employer + cnps_maternity_rate_employer + cnps_at_mp_rate_employer_min) * cnps_capped_base_monthly = 0.077*100000 + 0.0775*70000 = 7700 + 5425. Deduction from recorded sourced rates and a stated wage. This is what the world's rule says a declared baker costs on top of the wage; it is NOT charged in the base case, because whether these bakers are declared is a fact about this business that only the founder holds."
+    date: "2026-07-27"
+
+  flour_inventory_opening:
+    value: 75000
+    unit: "XOF"
+    prov: "INFERRED"
+    source: "flour_cover_days * loaves_baked_per_day * flour_cost_per_loaf = 1 * 500 * 150. The business is a going concern at t=0, so it already holds this stock; it is an opening balance, not a period-0 investment."
+    date: "2026-07-27"
+
+  nwc_opening:
+    value: 75000
+    unit: "XOF"
+    prov: "INFERRED"
+    source: "flour_inventory_opening + receivables (receivable_days = 0) − payables (payable_days = 0) = 75000 + 0 − 0. Opening operating working capital of the going concern."
+    date: "2026-07-27"
+
+  country:
+    value: "Côte d'Ivoire"
+    unit: "jurisdiction"
+    prov: "ELICITED"
+    source: "The currency XOF narrows this to the eight WAEMU states but no further. Base case takes Côte d'Ivoire — the largest XOF economy, and the one whose small-business tax regime I could verify to the article across three independent sources. Every statutory input in this document is Ivorian; none of them survives a change of country, which is why the question is asked first. Ranked medium rather than high on the NUMBER because small-business regimes across the XOF states are all turnover-based and cluster in a narrow band of rates, so the FCFF swing is second-order next to the omitted-cost questions; it is nonetheless the question on which the VALIDITY of six sourced inputs rests."
+    date: "2026-07-27"
+    question: "Votre boulangerie, elle est dans quel pays et dans quelle ville ?"
+    range:
+      low: "Côte d'Ivoire"
+      high: "un autre État de l'UEMOA — Sénégal, Mali, Burkina Faso, Niger, Togo, Bénin ou Guinée-Bissau — avec un régime des petites entreprises différent"
+    materiality: "medium"
+
+  tax_rate_applied:
+    value: 0.04
+    unit: "fraction of annual turnover TTC"
+    prov: "ELICITED"
+    source: "Base case applies tee_rate_commerce_negoce, on the ground that a bakery sells a good it produces rather than supplying a service, and that annual turnover falls inside the taxe d'État de l'entreprenant band. But the DGI's actual classification of this taxpayer, and whether he is a member of a centre de gestion agréé (which halves the rate), are printed on his registration papers and his avis d'imposition — he holds the answer, I do not. The base-case figure is the middle of the plausible span and the one the statutory text most directly supports."
+    date: "2026-07-27"
+    question: "Sous quel régime êtes-vous inscrit à la DGI, et qu'est-ce qui est écrit sur votre avis d'imposition — taxe d'État de l'entreprenant ou impôt des microentreprises, et est-ce que vous êtes adhérent d'un centre de gestion agréé ?"
+    range:
+      low: 0.02
+      high: 0.05
+    materiality: "medium"
+
+  loaves_sold_per_day:
+    value: 500
+    unit: "loaves/day"
+    prov: "ELICITED"
+    source: "« Je fais cinq cents pains par jour, vendus à deux cent cinquante francs pièce » fixes the quantity BAKED and the price of a loaf that sells. It does not entail that all five hundred sell. Base case takes the utterance's most direct reading — 500 baked, 500 sold — which is also the omitting choice for waste and therefore an upper bound on revenue. Waste is unusually expensive in this business because the flour is already spent when the loaf fails to sell, so every unsold loaf costs the full price_per_loaf of revenue with no cost relief."
+    date: "2026-07-27"
+    question: "Sur les cinq cents pains que vous cuisez chaque jour, combien sont réellement vendus à 250 francs, et qu'est-ce que vous faites de ceux qui restent le soir ?"
+    range:
+      low: 450
+      high: 500
+    materiality: "high"
+
+  equipment_opening_nbv:
+    value: 0
+    unit: "XOF"
+    prov: "ELICITED"
+    source: "The founder names no asset. He does name a rent of 800 000 XOF per month for « le local » — which, measured against the turnover this model derives, is an extremely heavy rent for bare premises and is entirely consistent with a fitted bakery where the four and the agencements come with the lease. Base case therefore carries no owned equipment: the omitting choice, which makes both depreciation and capex zero and makes the FCFF below an upper bound. This is the single question I would ask first if I could only ask one, because it does not merely change a number — if the answer is « le four est à moi », the correct HORIZON changes too and the grid has to be rebuilt on the oven's remaining life."
+    date: "2026-07-27"
+    question: "Les 800 000 francs de loyer, est-ce que ça comprend le four et le matériel, ou est-ce que le four vous appartient — et s'il vous appartient, il vaut combien aujourd'hui ?"
+    range:
+      low: 0
+      high: 15000000
+    materiality: "high"
+
+  equipment_remaining_life_years:
+    value: 10
+    unit: "years"
+    prov: "ELICITED"
+    source: "Keeps the depreciation formula well defined. With equipment_opening_nbv at zero it multiplies a zero and moves nothing today, which is why it is ranked low — but it inherits the materiality of equipment_opening_nbv the moment that question comes back « il est à moi ». The founder knows his oven's age and how much longer he expects to run it; I do not, and no published table can tell me about HIS oven."
+    date: "2026-07-27"
+    question: "Votre four, il a quel âge, et vous comptez le faire tourner encore combien d'années avant de devoir le remplacer ?"
+    range:
+      low: 5
+      high: 15
+    materiality: "low"
+
+  owner_labour_charge_monthly:
+    value: 0
+    unit: "XOF/month"
+    prov: "ELICITED"
+    source: "« Je travaille tous les jours » — the founder supplies daily labour to this business and charges nothing for it in his own account. For an ASSET-side cash flow that is a real omission: a buyer of the bakery would have to pay someone to do what he does. Base case carries zero, the omitting choice, so the reader can see exactly how much of the headline FCFF is in fact the founder's unpaid wage rather than a return on the asset."
+    date: "2026-07-27"
+    question: "Chaque mois, vous prenez combien dans la caisse pour vous — et si vous n'étiez pas là tous les jours, il faudrait payer qui, et combien, pour vous remplacer ?"
+    range:
+      low: 0
+      high: 200000
+    materiality: "high"
+
+  fuel_and_utilities_monthly:
+    value: 0
+    unit: "XOF/month"
+    prov: "ELICITED"
+    source: "An oven baking five hundred loaves every day of the year consumes wood, gas or electricity, and the shop consumes water and light. The founder named none of it. Base case carries zero — the omitting choice — because inventing a fuel bill would bury the most consequential thing this utterance does not contain. The founder pays this bill and can state it to the franc."
+    date: "2026-07-27"
+    question: "Votre four marche au bois, au gaz ou à l'électricité, et vous payez combien par mois pour ça — plus l'eau et l'électricité de la boutique ?"
+    range:
+      low: 100000
+      high: 800000
+    materiality: "high"
+
+  minor_inputs_monthly:
+    value: 0
+    unit: "XOF/month"
+    prov: "ELICITED"
+    source: "flour_cost_per_loaf is flour and nothing else, by the founder's own words. Yeast, salt, améliorant, water and packaging are real recurring purchases that he did not mention. Base case carries zero, the omitting choice; he buys these and knows the monthly figure."
+    date: "2026-07-27"
+    question: "En dehors de la farine, vous achetez quoi chaque mois pour faire le pain — levure, sel, améliorant, sachets — et ça vous fait combien ?"
+    range:
+      low: 50000
+      high: 400000
+    materiality: "medium"
+
+  payroll_charges_monthly:
+    value: 0
+    unit: "XOF/month"
+    prov: "ELICITED"
+    source: "« Je paie deux boulangers à cent mille par mois » is read as the cash that leaves his hand. Whether the bakers are declared to the CNPS, and whether 100 000 is net in hand or gross, are facts about HIS operation. Base case charges nothing on top — the omitting choice. What the world's rule would cost him if they are declared is recorded, separately and computed, as cnps_employer_charge_per_baker_monthly: the founder's practice and the statutory obligation are two different objects and are kept as two."
+    date: "2026-07-27"
+    question: "Vos deux boulangers sont déclarés à la CNPS ? Et les cent mille francs, c'est ce qu'ils touchent en main ou c'est avant charges ?"
+    range:
+      low: 0
+      high: 26250
+    materiality: "low"
+
+  flour_cover_days:
+    value: 1
+    unit: "days of production"
+    prov: "ELICITED"
+    source: "Base case takes one day — the minimum physically entailed by the operation, since the day's flour must be on hand before the day's bake. It is the smallest value consistent with the founder's own description, hence the conservative choice for a balance-sheet level. Ranked low because in a flat-volume year the stock level is constant, so it changes the NWC LEVEL but not ΔNWC and therefore not FCFF; it would start to matter the moment volumes moved or the horizon extended."
+    date: "2026-07-27"
+    question: "Vous gardez combien de jours de farine en stock, et le grossiste vous livre tous les combien ?"
+    range:
+      low: 1
+      high: 30
+    materiality: "low"
+
+  receivable_days:
+    value: 0
+    unit: "days of revenue"
+    prov: "ELICITED"
+    source: "Nothing in the utterance says how the bread is paid for. Base case takes cash on the counter — zero days — which is the omitting choice and the normal pattern for over-the-counter bread. Ranked low for FCFF because in a steady state any constant receivable is a level, not a movement; but the answer also carries a bad-debt risk that would show up through loaves_sold_per_day rather than here."
+    date: "2026-07-27"
+    question: "Vos pains, ils sont payés comptant au comptoir, ou vous en livrez à des revendeuses qui vous paient plus tard — et elles vous doivent combien en moyenne ?"
+    range:
+      low: 0
+      high: 15
+    materiality: "low"
+
+  payable_days:
+    value: 0
+    unit: "days of flour cost"
+    prov: "ELICITED"
+    source: "Base case takes cash on delivery — zero days — the omitting choice, and the one that does not credit the business with free supplier financing it may not have. Ranked low for the same steady-state reason as receivable_days."
+    date: "2026-07-27"
+    question: "Le meunier ou le grossiste en farine, vous le payez à la livraison ou à crédit — et à combien de jours ?"
+    range:
+      low: 0
+      high: 30
+    materiality: "low"
+
+  price_homologation_status:
+    value: "not homologated — 250 XOF is not one of the two administered price points"
+    unit: "regulatory status"
+    prov: "ELICITED"
+    source: "The Ivorian administered schedule fixes 174 g at 150 XOF and 232 g at 200 XOF. The founder's 250 XOF is neither, so his product is either outside the homologated standards (a heavier or specialty loaf, freely priced) or a homologated product sold above the administered price. The passage shows that the first reading is the only one physically consistent with flour_grams_per_loaf, so the base case takes it — but the founder can settle it in one sentence by telling me what his loaf weighs. Ranked medium: it does not move a number inside this 12-month grid, but it determines whether the entire top line is exposed to a price the founder does not control."
+    date: "2026-07-27"
+    question: "Votre pain à 250 francs, il pèse combien à la sortie du four, et est-ce que le prix est libre ou est-ce qu'il est fixé par le ministère du Commerce ?"
+    range:
+      low: "pain hors homologation, prix libre"
+      high: "produit homologué vendu au-dessus du prix administré — exposition réglementaire"
+    materiality: "medium"
+
+passage: |
+  0. WHAT THE UTTERANCE FIXES, AND WHAT IT DOES NOT
+
+  Five sentences give me six numbers and one operating fact: 500 loaves baked a day, 250 XOF a loaf,
+  150 XOF of flour a loaf, two bakers at 100 000 XOF a month each, 800 000 XOF of rent a month, and
+  seven days of operation a week. That is enough to build a complete unlevered cash flow, and it is
+  emphatically not enough to build a TRUE one. What is missing is not exotic: it is the fuel that
+  fires the oven, the yeast and salt that are not flour, whatever the founder takes out for himself,
+  and the question of whether the oven is his or the landlord's. I have not filled any of those gaps
+  with a number of my own invention. Each is carried at its omitting value with the question I would
+  ask attached to it, which makes the FCFF derived below an explicit UPPER BOUND on what this asset
+  generates. A reader who wants a point estimate needs four answers, and they are ranked.
+
+  1. THE GRID AND THE PHYSICAL LAYER
+
+  Twelve monthly periods, t = 0 (January) to t = 11 (December), of a non-leap civil year. Because the
+  founder works every day, operating days equal calendar days:
+
+    days = 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31; total 365.
+
+  Loaves baked per month = loaves_baked_per_day × days = 500 × days:
+
+    t=0  500 × 31 = 15 500
+    t=1  500 × 28 = 14 000
+    t=2  500 × 31 = 15 500
+    t=3  500 × 30 = 15 000
+    t=4  500 × 31 = 15 500
+    t=5  500 × 30 = 15 000
+    t=6  500 × 31 = 15 500
+    t=7  500 × 31 = 15 500
+    t=8  500 × 30 = 15 000
+    t=9  500 × 31 = 15 500
+    t=10 500 × 30 = 15 000
+    t=11 500 × 31 = 15 500
+    total 500 × 365 = 182 500 loaves in the year.
+
+  Loaves SOLD are carried separately from loaves BAKED, because flour is consumed against the bake
+  and revenue is earned against the sale, and the founder's sentence fixes the first without strictly
+  fixing the second. In the base case loaves_sold_per_day = loaves_baked_per_day = 500, so the two
+  rows coincide period by period; the structure is kept apart so that the day-old-bread question can
+  be answered without rebuilding the model.
+
+  The business's own purchasing unit is the 50 kg sack, so the trace also carries sacks consumed:
+
+    flour_sacks_consumed = loaves_baked × flour_grams_per_loaf / 50 000
+    t=0  15 500 × 250 / 50 000 = 77.5 sacks
+    t=1  14 000 × 250 / 50 000 = 70 sacks
+    30-day months: 15 000 × 250 / 50 000 = 75 sacks
+    31-day months: 77.5 sacks
+    which is 2.5 sacks a day, every day.
+
+  2. THE PHYSICAL CROSS-CHECK ON THE FLOUR NUMBER
+
+  The founder gives flour as money per loaf, not as weight. Converting: a 50 kg sack at 30 000 XOF is
+  30 000 / 50 000 g = 0.6 XOF per gram, so 150 XOF of flour is 150 / 0.6 = 250 g of flour in each
+  loaf, and 500 loaves a day is 125 kg, or 2.5 sacks a day.
+
+  That figure is testable, and it produces a hard deduction. The Ivorian administered bread standard
+  is a baguette of 174 g BAKED at 150 XOF. A baked loaf always weighs more than the flour it was made
+  from — dough is flour plus water, and baking drives off part of that water but never adds mass
+  below the flour weight. A 174 g baked loaf therefore cannot contain 250 g of flour. The founder's
+  product is not the homologated standard baguette. That conclusion needs no assumption about
+  hydration or baking loss; it follows from the inequality alone, and it is consistent with the other
+  visible fact — he charges 250 XOF where the administered points are 150 and 200.
+
+  Two things follow. First, the model is internally coherent: a loaf carrying 250 g of flour and
+  selling for 250 XOF is a large loaf priced roughly two thirds above the standard baguette, which is
+  what a heavier product should look like. Second, the price is probably outside the administered
+  schedule rather than in breach of it — but only the founder can confirm that, by telling me what
+  his loaf weighs.
+
+  3. REVENUE
+
+  revenue = price_per_loaf × loaves_sold = 250 × loaves_sold.
+
+    31-day month: 250 × 15 500 = 3 875 000 XOF
+    30-day month: 250 × 15 000 = 3 750 000 XOF
+    February    : 250 × 14 000 = 3 500 000 XOF
+
+  Seven 31-day months, four 30-day months, one February:
+    7 × 3 875 000 = 27 125 000
+    4 × 3 750 000 = 15 000 000
+    1 × 3 500 000 =  3 500 000
+    annual revenue = 45 625 000 XOF, which is 250 × 500 × 365.
+
+  Under IAS 18/IFRS 15 logic revenue is recognised when the loaf passes over the counter; with cash
+  sale and same-day consumption, recognition and collection coincide, so there is no revenue-timing
+  adjustment to make.
+
+  4. FLOUR
+
+  flour_cost = flour_cost_per_loaf × loaves_baked = 150 × loaves_baked.
+
+    31-day month: 150 × 15 500 = 2 325 000 XOF
+    30-day month: 150 × 15 000 = 2 250 000 XOF
+    February    : 150 × 14 000 = 2 100 000 XOF
+    annual: 7 × 2 325 000 + 4 × 2 250 000 + 2 100 000 = 16 275 000 + 9 000 000 + 2 100 000
+          = 27 375 000 XOF, which is 150 × 500 × 365.
+
+  Cost matching: because everything baked is sold the same day in the base case, flour consumed
+  equals flour expensed, and the only flour on the balance sheet is the day's cover.
+
+  Gross margin (revenue less flour only):
+    31-day month: 3 875 000 − 2 325 000 = 1 550 000
+    30-day month: 3 750 000 − 2 250 000 = 1 500 000
+    February    : 3 500 000 − 2 100 000 = 1 400 000
+    annual: 45 625 000 − 27 375 000 = 18 250 000 XOF, which is 100 × 500 × 365.
+
+  Flour alone is 60% of the selling price. That is the dominant economic fact about this business and
+  it is why the flour question — what he actually pays for a sack, and whether 150 XOF still holds —
+  sits underneath everything else.
+
+  5. LABOUR AND RENT
+
+  wages = bakers_headcount × baker_wage_monthly = 2 × 100 000 = 200 000 XOF every month, 2 400 000
+  over the year. The wage clears the statutory floor: 100 000 against a SMIG of 75 000.
+
+  payroll_charges = 0 in the base case. The world's rule, if these bakers are declared, is
+  computable from the sourced CNPS rates: pension runs on the full wage because the wage is far
+  below the pension ceiling, so 0.077 × 100 000 = 7 700; family benefits, maternity and occupational
+  accidents run on a base capped at 70 000, so (0.05 + 0.0075 + 0.02) × 70 000 = 0.0775 × 70 000
+  = 5 425; total 13 125 XOF per baker per month. That figure is recorded as an input and asserted in
+  the checks, and it is deliberately NOT charged: the founder said what he pays, and whether the
+  statutory charge also lands on him is his fact to state, not mine to assume.
+
+  rent = 800 000 XOF every month, 9 600 000 over the year. Against annual revenue of 45 625 000 that
+  is 9 600 000 / 45 625 000 = 0.2104…, i.e. rent absorbs about 21% of the top line. That is very
+  heavy for a food business paying for bare premises, and it is the observation that makes the
+  ownership of the oven a live question rather than a formality: a rent at this level is what a
+  FITTED bakery costs.
+
+  6. THE COSTS THE FOUNDER DID NOT NAME
+
+  fuel_and_utilities = 0, minor_inputs = 0, owner_labour = 0, payroll_charges = 0, for every period.
+  These are not judgments that the costs are nil. They are the omitting values that keep the
+  arithmetic complete without smuggling in invented numbers, and each carries its question in the
+  input record. The consequence is stated plainly: EBITDA, NOPAT and FCFF below are all upper bounds,
+  and the gap between them and the truth is exactly the sum of four answers the founder can give in
+  two minutes.
+
+  7. EBITDA
+
+  opex_total = flour_cost + wages + payroll_charges + rent + fuel_and_utilities + minor_inputs
+             + owner_labour
+             = flour_cost + 200 000 + 0 + 800 000 + 0 + 0 + 0
+             = flour_cost + 1 000 000.
+
+    31-day month: 2 325 000 + 1 000 000 = 3 325 000
+    30-day month: 2 250 000 + 1 000 000 = 3 250 000
+    February    : 2 100 000 + 1 000 000 = 3 100 000
+
+  ebitda = revenue − opex_total:
+    31-day month: 3 875 000 − 3 325 000 = 550 000
+    30-day month: 3 750 000 − 3 250 000 = 500 000
+    February    : 3 500 000 − 3 100 000 = 400 000
+    annual: 7 × 550 000 + 4 × 500 000 + 400 000 = 3 850 000 + 2 000 000 + 400 000 = 6 250 000 XOF.
+
+  This is where the monthly grid earns its keep. February produces 400 000 against a 31-day month's
+  550 000 — the same 1 000 000 of fixed cost spread over three fewer selling days. An annual view
+  would report 6 250 000 and hide the fact that the business's cushion in its weakest month is a
+  quarter thinner than in its strongest.
+
+  8. DEPRECIATION AND EBIT
+
+  depreciation = equipment_opening_nbv / (equipment_remaining_life_years × 12) = 0 / 120 = 0 in every
+  period, because the base case records no owned equipment. Under IAS 16 a depreciable amount is
+  allocated over the asset's useful life; with no asset recognised there is nothing to allocate.
+
+  ebit = ebitda − depreciation = ebitda.
+
+  9. TAX
+
+  Regime determination, in order.
+  (a) The currency is XOF, so the jurisdiction is one of the eight WAEMU states; the base case takes
+      Côte d'Ivoire and every statutory figure below is Ivorian.
+  (b) Annual turnover is 45 625 000 XOF. Because a taxpayer under the régime de l'entreprenant may
+      neither invoice nor deduct VAT, the price the founder receives IS the turnover TTC, so no
+      gross-up or strip-out is needed: the tax base is the revenue line as computed.
+  (c) 45 625 000 falls between 5 000 001 and 50 000 000, so the taxe d'État de l'entreprenant applies
+      (CGI arts. 72 et suivants). This is asserted as an executable check on both band edges rather
+      than claimed in prose.
+  (d) A bakery produces and sells a good, so the commerce/négoce rate of 4% applies rather than the
+      5% services rate. This tax is libératoire: it stands in place of the impôt sur les bénéfices,
+      the contribution des patentes et licences, and VAT.
+
+  tax = tax_rate_applied × revenue = 0.04 × revenue, accrued against the period that earned the
+  turnover:
+    31-day month: 0.04 × 3 875 000 = 155 000
+    30-day month: 0.04 × 3 750 000 = 150 000
+    February    : 0.04 × 3 500 000 = 140 000
+    annual: 0.04 × 45 625 000 = 1 825 000 XOF.
+
+  A friction worth naming rather than smoothing over. The brief asks for NOPAT, and NOPAT normally
+  means EBIT × (1 − t). Here the tax is not a function of EBIT at all — it is a levy on turnover. So
+  NOPAT is EBIT minus a tax computed on a different base, and the effective burden on operating
+  profit is far heavier than 4% suggests: 1 825 000 of tax against 6 250 000 of EBIT. It also means
+  the tax line is INVARIANT to every cost question in section 6 — answering the fuel question changes
+  EBIT and FCFF but leaves the tax untouched — and that depreciation, if the oven turns out to be
+  owned, carries no tax shield whatever. I have kept the natural description (a turnover levy) rather
+  than forcing it into an effective-rate-on-profit shape.
+
+  A second friction, on timing rather than amount. The statutory payment basis is one twelfth of the
+  annual tax each month, not 4% of the month's own turnover. I have run the ACCRUAL basis, matching
+  the charge to the turnover that generated it, because that is what NOPAT means; the two bases give
+  identical totals over the twelve periods and differ only in within-year timing. The instalment
+  timing is deferred rather than modelled.
+
+  nopat = ebit − tax:
+    31-day month: 550 000 − 155 000 = 395 000
+    30-day month: 500 000 − 150 000 = 350 000
+    February    : 400 000 − 140 000 = 260 000
+    annual: 6 250 000 − 1 825 000 = 4 425 000 XOF
+    (cross-check: 7 × 395 000 + 4 × 350 000 + 260 000 = 2 765 000 + 1 400 000 + 260 000 = 4 425 000).
+
+  10. WORKING CAPITAL
+
+  Three components, each driven by an elicited term.
+
+  Flour inventory. flour_cover_days = 1, so the stock is one day of production at cost:
+  1 × 500 × 150 = 75 000 XOF. Daily production is constant regardless of month length, so the stock
+  is 75 000 in every period, and the opening balance of the going concern is the same 75 000.
+  The roll-forward is therefore flat: purchases equal consumption in every month.
+    flour_consumed = flour_cost (the value of flour used in the bake)
+    flour_purchases = flour_consumed + change in inventory = flour_consumed + 0 = flour_cost
+    flour_inventory[t] = flour_inventory[t−1] + purchases[t] − consumed[t] = 75 000 throughout.
+
+  Receivables. receivable_days = 0, so receivables = 0 × daily revenue = 0 in every period.
+  Payables. payable_days = 0, so payables = 0 × daily flour cost = 0 in every period.
+
+  nwc = flour_inventory + receivables − payables = 75 000 + 0 − 0 = 75 000 in every period.
+  nwc_opening = 75 000.
+  delta_nwc[0] = 75 000 − 75 000 = 0, and delta_nwc[t] = 0 for every later t.
+
+  So ΔNWC contributes nothing to cash flow across the grid. That is a structural result of a flat
+  daily operation, not a convenience: with constant volumes and constant terms, working capital is a
+  level and not a movement. It would stop being flat the moment volumes moved, terms changed, or the
+  reseller-credit question came back positive — which is why the roll-forward is materialised in full
+  rather than collapsed to a zero row.
+
+  11. CAPEX
+
+  capex = 0 in every period, and equipment_nbv = 0 throughout:
+    equipment_nbv[0] = equipment_opening_nbv + capex[0] − depreciation[0] = 0 + 0 − 0 = 0
+    equipment_nbv[t] = equipment_nbv[t−1] + capex[t] − depreciation[t] = 0.
+  This is the direct consequence of the base-case reading that the oven and the fit-out come with the
+  local. It is the most consequential single omission in the document and it is flagged as such.
+
+  12. FCFF
+
+  FCFF = NOPAT + D&A − ΔNWC − capex. With depreciation, ΔNWC and capex all zero, FCFF equals NOPAT
+  period by period:
+
+    t=0  Jan  395 000 + 0 − 0 − 0 = 395 000
+    t=1  Feb  260 000 + 0 − 0 − 0 = 260 000
+    t=2  Mar  395 000
+    t=3  Apr  350 000
+    t=4  May  395 000
+    t=5  Jun  350 000
+    t=6  Jul  395 000
+    t=7  Aug  395 000
+    t=8  Sep  350 000
+    t=9  Oct  395 000
+    t=10 Nov  350 000
+    t=11 Dec  395 000
+
+  Annual unlevered free cash flow = 4 425 000 XOF, on turnover of 45 625 000 XOF — a 9.7% unlevered
+  cash margin, before any of the four unanswered cost questions. Expressed in the founder's own
+  units, the business converts 100 XOF of flour margin per loaf into roughly 24 XOF of after-tax
+  asset cash flow per loaf (4 425 000 / 182 500 = 24.24…), and every 100 XOF a month of unnamed cost
+  takes 100 XOF a month straight out of that, because the turnover tax gives no relief.
+
+  Presented as the crossfoot the whole derivation must satisfy:
+    revenue           45 625 000
+    − flour           27 375 000
+    − wages            2 400 000
+    − rent             9 600 000
+    − other named cost         0   (fuel, minor inputs, owner labour, payroll charges: all elicited)
+    = EBITDA           6 250 000
+    − depreciation             0
+    = EBIT             6 250 000
+    − tax (4% of turnover) 1 825 000
+    = NOPAT            4 425 000
+    + depreciation             0
+    − ΔNWC                     0
+    − capex                    0
+    = FCFF             4 425 000
+
+trace:
+  days: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  loaves_baked: [15500, 14000, 15500, 15000, 15500, 15000, 15500, 15500, 15000, 15500, 15000, 15500]
+  loaves_sold: [15500, 14000, 15500, 15000, 15500, 15000, 15500, 15500, 15000, 15500, 15000, 15500]
+  flour_sacks_consumed: [77.5, 70, 77.5, 75, 77.5, 75, 77.5, 77.5, 75, 77.5, 75, 77.5]
+  revenue: [3875000, 3500000, 3875000, 3750000, 3875000, 3750000, 3875000, 3875000, 3750000, 3875000, 3750000, 3875000]
+  flour_cost: [2325000, 2100000, 2325000, 2250000, 2325000, 2250000, 2325000, 2325000, 2250000, 2325000, 2250000, 2325000]
+  gross_margin: [1550000, 1400000, 1550000, 1500000, 1550000, 1500000, 1550000, 1550000, 1500000, 1550000, 1500000, 1550000]
+  wages: [200000, 200000, 200000, 200000, 200000, 200000, 200000, 200000, 200000, 200000, 200000, 200000]
+  payroll_charges: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  rent: [800000, 800000, 800000, 800000, 800000, 800000, 800000, 800000, 800000, 800000, 800000, 800000]
+  fuel_and_utilities: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  minor_inputs: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  owner_labour: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  opex_total: [3325000, 3100000, 3325000, 3250000, 3325000, 3250000, 3325000, 3325000, 3250000, 3325000, 3250000, 3325000]
+  ebitda: [550000, 400000, 550000, 500000, 550000, 500000, 550000, 550000, 500000, 550000, 500000, 550000]
+  depreciation: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ebit: [550000, 400000, 550000, 500000, 550000, 500000, 550000, 550000, 500000, 550000, 500000, 550000]
+  tax: [155000, 140000, 155000, 150000, 155000, 150000, 155000, 155000, 150000, 155000, 150000, 155000]
+  nopat: [395000, 260000, 395000, 350000, 395000, 350000, 395000, 395000, 350000, 395000, 350000, 395000]
+  flour_consumed: [2325000, 2100000, 2325000, 2250000, 2325000, 2250000, 2325000, 2325000, 2250000, 2325000, 2250000, 2325000]
+  flour_purchases: [2325000, 2100000, 2325000, 2250000, 2325000, 2250000, 2325000, 2325000, 2250000, 2325000, 2250000, 2325000]
+  flour_inventory: [75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000]
+  receivables: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  payables: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  nwc: [75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000, 75000]
+  delta_nwc: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  capex: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  equipment_nbv: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  cfo: [395000, 260000, 395000, 350000, 395000, 350000, 395000, 395000, 350000, 395000, 350000, 395000]
+  cfi: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff: [395000, 260000, 395000, 350000, 395000, 350000, 395000, 395000, 350000, 395000, 350000, 395000]
+
+fcff: [395000, 260000, 395000, 350000, 395000, 350000, 395000, 395000, 350000, 395000, 350000, 395000]
+
+checks:
+  - "sum(trace.days) == days_per_year"
+  - "trace.loaves_baked == loaves_baked_per_day * trace.days"
+  - "trace.loaves_sold == loaves_sold_per_day * trace.days"
+  - "trace.loaves_sold[t] <= trace.loaves_baked[t]"
+  - "trace.flour_sacks_consumed * flour_sack_weight_kg * 1000 == trace.loaves_baked * flour_grams_per_loaf"
+  - "flour_price_per_gram * flour_sack_weight_kg * 1000 == flour_sack_price_xof"
+  - "flour_cost_per_loaf == flour_grams_per_loaf * flour_price_per_gram"
+  - "flour_sacks_per_day * flour_sack_weight_kg * 1000 == loaves_baked_per_day * flour_grams_per_loaf"
+  - "gross_margin_per_loaf == price_per_loaf - flour_cost_per_loaf"
+  - "trace.revenue == price_per_loaf * trace.loaves_sold"
+  - "trace.flour_cost == flour_cost_per_loaf * trace.loaves_baked"
+  - "trace.gross_margin == trace.revenue - trace.flour_cost"
+  - "sum(trace.wages) == bakers_headcount * baker_wage_monthly * grid.periods"
+  - "sum(trace.rent) == rent_monthly * grid.periods"
+  - "sum(trace.payroll_charges) == payroll_charges_monthly * grid.periods"
+  - "sum(trace.fuel_and_utilities) == fuel_and_utilities_monthly * grid.periods"
+  - "sum(trace.minor_inputs) == minor_inputs_monthly * grid.periods"
+  - "sum(trace.owner_labour) == owner_labour_charge_monthly * grid.periods"
+  - "cnps_employer_charge_per_baker_monthly == cnps_pension_rate_employer * baker_wage_monthly + (cnps_family_rate_employer + cnps_maternity_rate_employer + cnps_at_mp_rate_employer_min) * cnps_capped_base_monthly"
+  - "baker_wage_monthly >= smig_monthly"
+  - "baker_wage_monthly <= cnps_pension_ceiling_monthly"
+  - "trace.opex_total == trace.flour_cost + trace.wages + trace.payroll_charges + trace.rent + trace.fuel_and_utilities + trace.minor_inputs + trace.owner_labour"
+  - "trace.ebitda == trace.revenue - trace.opex_total"
+  - "sum(trace.depreciation) * equipment_remaining_life_years == equipment_opening_nbv"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "sum(trace.revenue) >= tee_band_low"
+  - "sum(trace.revenue) <= tee_band_high"
+  - "tax_rate_applied <= tee_rate_services"
+  - "trace.tax == trace.revenue * tax_rate_applied"
+  - "sum(trace.tax) == sum(trace.revenue) * tax_rate_applied"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.flour_consumed == trace.flour_cost"
+  - "flour_inventory_opening == flour_cover_days * loaves_baked_per_day * flour_cost_per_loaf"
+  - "trace.flour_inventory[first] == flour_inventory_opening + trace.flour_purchases[first] - trace.flour_consumed[first]"
+  - "trace.flour_inventory[t] == trace.flour_inventory[t-1] + trace.flour_purchases[t] - trace.flour_consumed[t] for t >= 1"
+  - "sum(trace.flour_inventory) == flour_cover_days * loaves_baked_per_day * flour_cost_per_loaf * grid.periods"
+  - "sum(trace.receivables) == receivable_days * price_per_loaf * loaves_sold_per_day * grid.periods"
+  - "sum(trace.payables) == payable_days * flour_cost_per_loaf * loaves_baked_per_day * grid.periods"
+  - "nwc_opening == flour_inventory_opening + receivable_days * price_per_loaf * loaves_sold_per_day - payable_days * flour_cost_per_loaf * loaves_baked_per_day"
+  - "trace.nwc == trace.flour_inventory + trace.receivables - trace.payables"
+  - "trace.delta_nwc[first] == trace.nwc[first] - nwc_opening"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1] for t >= 1"
+  - "cumsum(trace.delta_nwc) == trace.nwc - nwc_opening"
+  - "trace.equipment_nbv[first] == equipment_opening_nbv + trace.capex[first] - trace.depreciation[first]"
+  - "trace.equipment_nbv[t] == trace.equipment_nbv[t-1] + trace.capex[t] - trace.depreciation[t] for t >= 1"
+  - "trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex"
+  - "sum(trace.fcff) == sum(trace.ebitda) - sum(trace.tax) - sum(trace.delta_nwc) - sum(trace.capex)"
+  - "trace.flour_inventory[t] >= 0"
+  - "trace.equipment_nbv[t] >= 0"
+  - "trace.capex[t] >= 0"
+  - "trace.revenue[t] >= 0"
+  - "trace.tax[t] >= 0"
+  - "trace.loaves_baked[t] >= 0"
+  - "trace.nwc[t] >= 0"
+
+notes:
+  - "BASE-CASE RULE, stated once and applied without exception. No unstated quantity enters this arithmetic with a non-zero value. Every ELICITED input runs at its omitting value — zero for costs the founder never mentioned, and the utterance's most direct reading for quantities he did mention. The consequence is that the FCFF reported here is an explicit UPPER BOUND on the asset-side cash this bakery generates, not a point estimate. Converting it into a point estimate requires four answers, and they are ranked in the materiality fields rather than guessed at here."
+  - "THE THREE (FOUR) QUESTIONS. If the founder will answer only a handful, ask, in this order: how many of the five hundred loaves actually sell at 250 (loaves_sold_per_day); who owns the oven — is it in the rent or is it his (equipment_opening_nbv); what the oven's fuel and the shop's utilities cost him each month (fuel_and_utilities_monthly); and what he takes out of the till for himself, or what a replacement for him would cost (owner_labour_charge_monthly). Every one of those can move the result by more than the entire tax line."
+  - "FLOUR IS NOT INGREDIENTS. « La farine me coûte cent cinquante francs par pain » is flour and only flour, and I have not silently widened it into a total ingredient cost. Yeast, salt, améliorant and packaging sit in minor_inputs_monthly at zero with a question attached. Widening the founder's word would have been the single easiest way to make this model look complete and be wrong."
+  - "PRODUCT IDENTIFICATION. The stated price is not one of the two Ivorian administered points, and the loaf cannot be the homologated 174 g baguette, because a baked loaf never weighs less than the flour it contains and this one carries 250 g of flour. The founder is therefore selling a heavier, non-standard loaf. Direction of the residual risk: if the product does fall under an administered schedule, the top line is set by a ministry rather than by him, and the exposure is downward."
+  - "THE TAX IS ON TURNOVER, NOT ON PROFIT — and this changes the shape of the model, not just a number. NOPAT here is EBIT minus a levy computed on a different base, so it is not EBIT × (1 − t). Two consequences a reader should carry: the tax line is completely invariant to every unanswered cost question, so answering them moves FCFF one-for-one with no tax relief; and depreciation carries no tax shield at all, so if the oven turns out to be owned, its capex bites FCFF fully while its depreciation buys nothing back. I have kept the natural description — a turnover levy — rather than forcing it into an effective-rate-on-EBIT shape, because the effective shape would mislead about exactly these two properties."
+  - "REGIME PROXIMITY. Annual turnover sits below tee_band_high but not comfortably below it. Growth in a second year would cross the boundary and move the business out of the régime de l'entreprenant into the régime des microentreprises — a different regime at a higher rate on a larger base. That is a reason not to extend the horizon, not a forecast."
+  - "FOUNDER BELIEF VERSUS WORLD RULE, kept as two objects. The utterance contains no mention of tax, of registration, or of social security. The model applies the statutory taxe d'État de l'entreprenant because a buyer of this asset would be taxed on it regardless of the seller's current practice — that is a fact about the world. Whether this founder is registered and pays it is a fact about his business, and it is asked (tax_rate_applied). Likewise on labour: what he pays his bakers is recorded from his own words at zero employer charges, while what the CNPS rules would cost on a declared baker is computed separately and asserted in the checks, without being charged. Neither object was allowed to overwrite the other."
+  - "LABOUR SANITY. The stated wage clears the statutory minimum, and it sits far below the pension contribution ceiling while sitting above the ceiling that caps the family, maternity and accident branches — which is why the statutory employer charge is not a flat percentage of the wage and had to be computed branch by branch."
+  - "RENT DOMINANCE. Rent is by far the largest fixed commitment in this business and absorbs the majority of gross margin in every month of the grid. It is also the fact that makes the oven-ownership question credible rather than pedantic: a rent at this level, measured against this turnover, is what a fitted bakery costs, not bare premises. The lease term and the rent-revision basis are DEFERRED — they do not move a number inside a twelve-month grid, but they would be the first thing to establish before extending it."
+  - "WORKING CAPITAL IS STRUCTURALLY FLAT HERE, and the roll-forward is materialised anyway. With constant daily volumes and constant payment terms, inventory, receivables and payables are levels rather than movements, so ΔNWC contributes nothing. That is a derived result, not an assumption of convenience, and it stops holding the moment volumes move or the reseller-credit answer comes back positive — which is why every stock is carried as its own row with its own conservation assertion rather than collapsed away."
+  - "MONTH LENGTH IS A REAL DRIVER, not a rounding artefact. Because output is per day and the two named fixed costs are per month, the shortest month is structurally the weakest and the annual average overstates the cushion available in it. This is the main thing the monthly grid buys over an annual one."
+  - "SOURCE CONFLICTS I DID NOT PAPER OVER. (1) Secondary sources disagree on the régime des microentreprises rate — one reports 6% reduced to 4% for CGA members, another 7% reduced to 5%. I did not resolve it and did not rely on it, because this business sits below that band; the microenterprise regime is referenced only directionally. (2) One source states that the entreprenant regime dispenses the taxpayer from charges patronales, while another limits the libératoire effect to taxes other than payroll tax. I did not resolve it and did not rely on it: CNPS contributions are social-security obligations under labour law rather than taxes, and in any case they are elicited-at-zero in the base case. (3) The classification of an artisanal boulangerie as commerce/négoce versus prestation de services is not settled by anything I could verify to the article; it sits inside the elicited tax_rate_applied rather than being asserted."
+  - "DEFERRED. The within-year cash timing of the tax (statutory instalments of one twelfth of the annual tax, against the accrual basis run here — identical totals, different intra-year profile); any adjustment to payment schedules made by the 2026 annexe fiscale (loi de finances n°2025-987 du 19 décembre 2025), which I confirmed exists and modifies payment timing but did not trace to the article; VAT treatment of bread and flour, which is moot under this regime since the taxpayer can neither invoice nor deduct VAT; the lease term and rent-revision basis; seasonality of bread demand (Ramadan, school terms, rainy season), which the founder did not mention and I did not invent."
+  - "WHAT WOULD CHANGE MY MIND ON THE HORIZON. If equipment_opening_nbv comes back positive, the twelve-month annual grid is the wrong instrument: the right horizon becomes the oven's remaining life, capex and depreciation become live rows, and the whole document should be rebuilt rather than patched. If the country answer is not Côte d'Ivoire, every sourced statutory input must be replaced before the FCFF is quoted to anyone."
+  - "WEAKEST LINK IN THE SOURCED BLOCK. The flour sack price is press reporting rather than a statistical series, and it is dated. It is deliberately confined to the physical cross-check and touches nothing in the FCFF path — but a reader should not treat the 250 g-per-loaf figure with the same confidence as the statutory rates, which are traceable to the CGI article."

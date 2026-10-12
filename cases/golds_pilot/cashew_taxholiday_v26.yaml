@@ -1,0 +1,377 @@
+# Pilot gold "cashew_taxholiday_v26": the Bouaké cashew shelling unit under gold contract v2.6: a closed
+# mass balance, a seasonal raw-nut store that leaks, the workforce the line needs, the Zone B relief
+# schedule and the working capital released at the horizon (cases/reference/golds_pilot/cashew_taxholiday_v26.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the plant (capex_total_xof) is bought in period 0; production runs from period 1, the first year at
+#     year1_utilisation_fraction of rcn_throughput_t_per_year. Tonnes, days, hours, floor area,
+#     containers, jobs and the relief fraction and tax rate are drivers (no ledger holds them);
+#   * kernel (kernel_recovery_fraction of the nut processed) sold at kernel_price_xof_per_kg plus
+#     processor_subsidy_received_xof_per_kg less kernel_price_net_deduction_xof_per_kg; shell
+#     (shell_fraction_of_rcn) at shell_price_xof_per_t; both collected on receivable_days;
+#   * raw nut bought each period: processed plus storage loss (rcn_storage_loss_rate_per_month on the
+#     average stock) plus the change in the closing store (closing_rcn_stock_months of throughput,
+#     held from period 1, run down at terminal_release_index), at rcn_price_xof_per_kg, paid on
+#     rcn_payable_days (on the purchases; the gold states it on the expense, the same at its nil); the
+#     store is held against the raw-nut expense, so the expense is the nut consumed;
+#   * labour: total_workforce_headcount (not the founder's workers_stated) at worker_wage_monthly_xof;
+#     CNPS pension and payroll tax on the gross wage, CNPS family and work injury on the wage up to
+#     cnps_ceiling_monthly; other_opex_xof_per_year; both paid on supplier_payable_days. The capped base
+#     is read as that capped charge over its rates; the founder's labour cost as the labour cost times
+#     workers_stated / total_workforce_headcount;
+#   * irrecoverable input VAT on the vatable share of other opex; export haulage at
+#     export_distance_km_roundtrip x export_logistics_rate_xof_per_tonne_km a tonne of kernel; the
+#     export duty (dus_rate_on_kernel_exports) and the TSE (tse_rate) on revenue; all paid in cash;
+#   * the patente assessed gross (patente_ca_rate of revenue capped at patente_ca_cap, plus
+#     patente_vl_rate of the rental value) and the code's exemption (the relief fraction of it) credited
+#     against it before payment: the net is what is paid;
+#   * finished kernel held at fg_stock_days of the cash production cost (raw nut consumed, labour, other
+#     opex, other taxes), bought with cash on top of the expensed costs (the gold's working-capital stock);
+#   * receivables, payables and both stocks are released at terminal_release_index (the terms end there);
+#   * straight-line depreciation over asset_life_years from period 1, to nil; the mid-life overhaul
+#     (midlife_overhaul_capex_xof at overhaul_index, nil) is its own asset class, not depreciated (the
+#     gold's depreciation is the initial capex's alone);
+#   * profit tax at is_rate x (1 - relief fraction) on EBIT: the relief is full for
+#     code_full_exemption_years from relief_start_period_index, then code_partial_relief_rate for
+#     code_partial_relief_years; paid within the year. bic_gross is EBIT times is_rate, and
+#     patente_ca_uncapped revenue times patente_ca_rate, both read from the books;
+#   * days in a year: 52 x 7 + 1 (the gold's 30/365 and 14/365 day bases).
+#   * imf_computed is NOT REPORTED: the minimum tax (IMF) is a memo the gold computes and never charges
+#     (floored at imf_floor even in the build year); no ledger or rulebook record holds it.
+gold: cashew_taxholiday_v26
+entity: plant
+plant: kernel_price_xof_per_kg
+case:
+  case: pilot-cashew-taxholiday-v26
+  periods: 16
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 16
+      inputs: gold
+      values:
+        days_a_year: 52 * 7 + 1
+        producing: t >= 1
+        held: (t >= 1) * (t < terminal_release_index)
+        rcn_t: rcn_throughput_t_per_year * producing * (year1_utilisation_fraction if t == 1 else 1)
+        operating_days: rcn_t * 1000 / daily_rcn_rate_kg
+        machine_hours: operating_days * shift_hours_per_day
+        avg_stock_t: rcn_t * avg_residence_months / 12
+        peak_stock_t: avg_stock_t * peak_to_average_stock_ratio
+        floor_m2: peak_stock_t * 1000 / warehouse_areal_capacity_kg_per_m2
+        loss_t: avg_stock_t * rcn_storage_loss_rate_per_month * 12
+        close_t: rcn_throughput_t_per_year * closing_rcn_stock_months / 12 * held
+        purchased_t: rcn_t + loss_t + close_t - lag(close_t, 1)
+        purchased_kg: purchased_t * 1000
+        kernel_t: rcn_t * kernel_recovery_fraction
+        kernel_kg: kernel_t * 1000
+        shell_t: rcn_t * shell_fraction_of_rcn
+        testa_t: rcn_t * testa_fraction_of_rcn
+        kernel_loss_t: rcn_t * kernel_process_loss_fraction
+        reject_t: rcn_t * cleaning_reject_fraction
+        water_t: rcn_t * water_loss_fraction
+        containers: kernel_t / container_payload_t_kernel
+        jobs_required: rcn_t / tonnes_rcn_per_direct_job
+        jobs_stated: workers_stated * producing
+        jobs_shortfall: jobs_required - jobs_stated
+        kernel_per_worker_day: "kernel_kg / (workers_stated * operating_days) if operating_days > 0 else 0"
+        kernel_net_price: kernel_price_xof_per_kg + processor_subsidy_received_xof_per_kg - kernel_price_net_deduction_xof_per_kg
+        revenue: kernel_kg * kernel_net_price + shell_t * shell_price_xof_per_t
+        relief: "1 if t < relief_start_period_index + code_full_exemption_years else (code_partial_relief_rate
+          if t < relief_start_period_index + code_full_exemption_years + code_partial_relief_years else 0)"
+        rate: is_rate * (1 - relief)
+        gross_wages: total_workforce_headcount * worker_wage_monthly_xof * 12 * producing
+        capped_base: total_workforce_headcount * min(worker_wage_monthly_xof, cnps_ceiling_monthly) * 12 * producing
+        gross_rate: cnps_pension_employer_rate + employer_payroll_tax_rate
+        capped_rate: cnps_family_rate + cnps_at_mp_rate
+        labour_cost: gross_wages * (1 + gross_rate) + capped_base * capped_rate
+        stated_share: workers_stated / total_workforce_headcount
+        other_opex: other_opex_xof_per_year * producing
+        vat_cost_rate: (1 - vat_credit_recovery_fraction) * vatable_opex_fraction * vat_standard_rate
+        haul_rate: export_distance_km_roundtrip * export_logistics_rate_xof_per_tonne_km
+        patente_gross: min(patente_ca_rate * revenue, patente_ca_cap) + patente_vl_rate * patente_rental_value_xof * producing
+        patente_relief: patente_gross * relief
+        other_taxes: patente_gross - patente_relief + (tse_rate + dus_rate_on_kernel_exports) * revenue
+        rcn_expense: rcn_price_xof_per_kg * 1000 * (rcn_t + loss_t)
+        rcn_inventory: close_t * 1000 * rcn_price_xof_per_kg
+        fg_inventory: (rcn_expense + labour_cost + other_opex + other_taxes) * fg_stock_days / days_a_year * held
+        initial_capex: capex_total_xof * (t == 0)
+        overhaul_capex: midlife_overhaul_capex_xof * (t == overhaul_index)
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    kernel:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: kernel_kg}, price: {generator: gold, output: kernel_net_price},
+              payment_days: {generator: gold, output: receivable_days},
+              days_per_year: {generator: gold, output: days_a_year}, periods_per_year: 1,
+              end: {generator: gold, output: terminal_release_index}}
+    shell:
+      type: offtake
+      parties: {seller: plant}
+      terms: {volume: {generator: gold, output: shell_t}, price: {generator: gold, output: shell_price_xof_per_t},
+              payment_days: {generator: gold, output: receivable_days},
+              days_per_year: {generator: gold, output: days_a_year}, periods_per_year: 1,
+              end: {generator: gold, output: terminal_release_index}}
+    rcn:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: rcn_price_xof_per_kg},
+              volume: {generator: gold, output: purchased_kg}, index: 1, periods_per_year: 1, start: 0,
+              end: {generator: gold, output: terminal_release_index}, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: rcn_payable_days}, days_per_year: {generator: gold, output: days_a_year}}
+    wages:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: gross_wages}, index: 1, periods_per_year: 1,
+              start: 0, end: {generator: gold, output: terminal_release_index}, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_payable_days}, days_per_year: {generator: gold, output: days_a_year}}
+    gross_charges:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: gross_rate}, volume: {generator: gold, output: gross_wages},
+              index: 1, periods_per_year: 1, start: 0, end: {generator: gold, output: terminal_release_index},
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: supplier_payable_days},
+              days_per_year: {generator: gold, output: days_a_year}}
+    capped_charges:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: capped_rate}, volume: {generator: gold, output: capped_base},
+              index: 1, periods_per_year: 1, start: 0, end: {generator: gold, output: terminal_release_index},
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: supplier_payable_days},
+              days_per_year: {generator: gold, output: days_a_year}}
+    other:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: other_opex}, index: 1, periods_per_year: 1,
+              start: 0, end: {generator: gold, output: terminal_release_index}, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_payable_days}, days_per_year: {generator: gold, output: days_a_year}}
+    input_vat:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: vat_cost_rate}, volume: {generator: gold, output: other_opex},
+              index: 1, periods_per_year: 1, start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    haulage:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: haul_rate}, volume: {generator: gold, output: kernel_t},
+              index: 1, periods_per_year: 1, start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    patente:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: patente_gross}, index: 1, periods_per_year: 1,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    tse:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: tse_rate}, volume: {generator: gold, output: revenue},
+              index: 1, periods_per_year: 1, start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_a_year}}
+    export_duty:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: 0, unit_rate: {generator: gold, output: dus_rate_on_kernel_exports},
+              volume: {generator: gold, output: revenue}, index: 1, periods_per_year: 1, start: 0, end: 60,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: days_a_year}}
+    plant_capex:
+      type: capex
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: initial_capex}, vat_rate: 0, vat_refund_lag: 0, end: 15}
+    overhaul:
+      type: capex_class
+      parties: {owner: plant}
+      terms: {schedule: {generator: gold, output: overhaul_capex}, vat_rate: 0, vat_refund_lag: 0, end: 15}
+  rulebooks:
+    exemption:
+      kind: transfer
+      entity: plant
+      phase: fund
+      declare: {patente_relief: income}
+      moves:
+        relief: {debit: patente.payable, credit: patente_relief, amount: {generator: gold, output: patente_relief}}
+    stock:
+      kind: held_balance
+      entity: plant
+      cash: cash
+      phase: operate
+      accounts:
+        rcn_inventory: {side: asset, target: {generator: gold, output: rcn_inventory}, against: rcn.expense}
+        fg_inventory: {side: asset, target: {generator: gold, output: fg_inventory}}
+    assets:
+      kind: asset_register
+      entity: plant
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 15
+      life_periods: {generator: gold, output: asset_life_years}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: plant
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        kernel.revenue: taxable
+        shell.revenue: taxable
+        rcn.expense: taxable
+        wages.expense: taxable
+        gross_charges.expense: taxable
+        capped_charges.expense: taxable
+        other.expense: taxable
+        input_vat.expense: taxable
+        haulage.expense: taxable
+        patente.expense: taxable
+        patente_relief: taxable
+        tse.expense: taxable
+        export_duty.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: plant
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      kernel.revenue: revenue
+      shell.revenue: revenue
+      rcn.expense: rcn
+      wages.expense: wages
+      gross_charges.expense: charges
+      capped_charges.expense: capped_charges
+      other.expense: other
+      input_vat.expense: input_vat
+      haulage.expense: haulage
+      patente.expense: patente
+      patente_relief: patente_relief
+      tse.expense: tse
+      export_duty.expense: export_duty
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      kernel.receivable: operating
+      shell.receivable: operating
+      rcn.payable: operating
+      wages.payable: operating
+      gross_charges.payable: operating
+      capped_charges.payable: operating
+      other.payable: operating
+      input_vat.payable: operating
+      haulage.payable: operating
+      patente.payable: operating
+      tse.payable: operating
+      export_duty.payable: operating
+      rcn_inventory: operating
+      fg_inventory: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: initial_capex
+      overhaul: overhaul_capex
+  cuts:
+    revenue: {kind: pnl, entity: plant, scheme: pnl, include: [revenue]}
+    rcn: {kind: pnl, entity: plant, scheme: pnl, include: [rcn]}
+    wages: {kind: pnl, entity: plant, scheme: pnl, include: [wages]}
+    capped_charges: {kind: pnl, entity: plant, scheme: pnl, include: [capped_charges]}
+    labour: {kind: pnl, entity: plant, scheme: pnl, include: [wages, charges, capped_charges]}
+    other: {kind: pnl, entity: plant, scheme: pnl, include: [other]}
+    input_vat: {kind: pnl, entity: plant, scheme: pnl, include: [input_vat]}
+    haulage: {kind: pnl, entity: plant, scheme: pnl, include: [haulage]}
+    patente_gross: {kind: pnl, entity: plant, scheme: pnl, include: [patente]}
+    patente_due: {kind: pnl, entity: plant, scheme: pnl, include: [patente, patente_relief]}
+    tse: {kind: pnl, entity: plant, scheme: pnl, include: [tse]}
+    export_duty: {kind: pnl, entity: plant, scheme: pnl, include: [export_duty]}
+    other_taxes: {kind: pnl, entity: plant, scheme: pnl, include: [patente, patente_relief, tse, export_duty]}
+    ebitda: {kind: pnl, entity: plant, scheme: pnl,
+             include: [revenue, rcn, wages, charges, capped_charges, other, input_vat, haulage, patente,
+                       patente_relief, tse, export_duty]}
+    depreciation: {kind: pnl, entity: plant, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: plant, scheme: pnl,
+           include: [revenue, rcn, wages, charges, capped_charges, other, input_vat, haulage, patente,
+                     patente_relief, tse, export_duty, depreciation]}
+    tax: {kind: pnl, entity: plant, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: plant, scheme: pnl,
+            include: [revenue, rcn, wages, charges, capped_charges, other, input_vat, haulage, patente,
+                      patente_relief, tse, export_duty, depreciation, tax]}
+    cfo: {entity: plant, account: cash, scheme: cash_flow, include: [operating]}
+    initial_capex: {entity: plant, account: cash, scheme: cash_flow, include: [initial_capex]}
+    overhaul_capex: {entity: plant, account: cash, scheme: cash_flow, include: [overhaul_capex]}
+    cfi: {entity: plant, account: cash, scheme: cash_flow, include: [initial_capex, overhaul_capex]}
+    fcff: {entity: plant, account: cash, scheme: cash_flow, include: [operating, initial_capex, overhaul_capex]}
+  measures: {}
+trace:
+  rcn_processed_t: {driver: gold.rcn_t}
+  operating_days: {driver: gold.operating_days}
+  machine_hours: {driver: gold.machine_hours}
+  rcn_avg_stock_t: {driver: gold.avg_stock_t}
+  rcn_peak_stock_t: {driver: gold.peak_stock_t}
+  warehouse_floor_required_m2: {driver: gold.floor_m2}
+  rcn_storage_loss_t: {driver: gold.loss_t}
+  rcn_stock_close_t: {driver: gold.close_t}
+  rcn_purchased_t: {driver: gold.purchased_t}
+  kernel_t: {driver: gold.kernel_t}
+  shell_t: {driver: gold.shell_t}
+  testa_t: {driver: gold.testa_t}
+  kernel_loss_t: {driver: gold.kernel_loss_t}
+  cleaning_reject_t: {driver: gold.reject_t}
+  water_loss_t: {driver: gold.water_t}
+  export_containers: {driver: gold.containers}
+  jobs_required: {driver: gold.jobs_required}
+  jobs_stated: {driver: gold.jobs_stated}
+  jobs_shortfall: {driver: gold.jobs_shortfall}
+  kernel_kg_per_stated_worker_day: {driver: gold.kernel_per_worker_day}
+  revenue: {cut: revenue}
+  rcn_expense: {cut: rcn, sign: -1}
+  gross_wages: {cut: wages, sign: -1}
+  cnps_capped_base: {cut: capped_charges, sign: -1, per: gold.capped_rate}
+  labour_cost: {cut: labour, sign: -1}
+  labour_cost_as_stated: {cut: labour, sign: -1, times: gold.stated_share}
+  labour_cost_gap: {sum: [{cut: labour, sign: -1}, {cut: labour, times: gold.stated_share}]}
+  other_opex: {cut: other, sign: -1}
+  irrecoverable_input_vat: {cut: input_vat, sign: -1}
+  patente_ca_uncapped: {cut: revenue, times: gold.patente_ca_rate}
+  patente_gross: {cut: patente_gross, sign: -1}
+  relief_fraction: {driver: gold.relief}
+  patente_due: {cut: patente_due, sign: -1}
+  tse: {cut: tse, sign: -1}
+  export_duty: {cut: export_duty, sign: -1}
+  other_taxes: {cut: other_taxes, sign: -1}
+  export_logistics_cost_xof: {cut: haulage, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  bic_gross: {cut: ebit, times: gold.is_rate}
+  tax_rate: {driver: gold.rate}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  rcn_inventory_value: {balance: rcn_inventory}
+  fg_inventory_value: {balance: fg_inventory}
+  receivables: {balance: kernel.receivable + shell.receivable}
+  payables: {balance: rcn.payable + wages.payable + gross_charges.payable + capped_charges.payable + other.payable + input_vat.payable + haulage.payable + patente.payable + tse.payable + export_duty.payable}
+  nwc: {balance: rcn_inventory + fg_inventory + kernel.receivable + shell.receivable - rcn.payable - wages.payable - gross_charges.payable - capped_charges.payable - other.payable - input_vat.payable - haulage.payable - patente.payable - tse.payable - export_duty.payable}
+  delta_nwc: {change: rcn_inventory + fg_inventory + kernel.receivable + shell.receivable - rcn.payable - wages.payable - gross_charges.payable - capped_charges.payable - other.payable - input_vat.payable - haulage.payable - patente.payable - tse.payable - export_duty.payable}
+  initial_capex: {cut: initial_capex, sign: -1}
+  overhaul_capex: {cut: overhaul_capex, sign: -1}
+  capex: {cut: cfi, sign: -1}
+  book_value: {balance: fixed_assets + overhaul}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

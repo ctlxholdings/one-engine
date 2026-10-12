@@ -1,0 +1,234 @@
+# Gold "grain_v26": the Bamako sorghum trader's storage arbitrage with the physics of the store
+# (dry-matter loss and drying), one campaign by month from the November harvest, contract v2.6
+# (cases/reference/golds_pilot/grain_v26.yaml). Built from the promoted "grain" and
+# "grain_shrinkage" translations.
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * bags_purchased bags of bag_weight_kg at moisture_in_frac bought storage_months_before_first_sale
+#     months before first_selling_period_index (period 0), at purchase_price_xof_per_bag plus
+#     transport_xof_per_bag, paid on supplier_credit_days; that cost over the dry matter bought is
+#     the unit cost per kg of dry matter (the water carries no cost);
+#   * the dry matter in store loses dm_loss_rate_monthly a month on what is at risk before that
+#     month's sale; the selling_months_count equal lots that empty the store at the end of the
+#     window are A s^n r / (1 - s^n), A the dry matter left after storage, s = 1 - r. The stock is
+#     that recursion in closed form; every physical row (kg, bags, tonnes, m3) is a driver;
+#   * grain leaves at moisture_out_frac: sold mass is dry matter sold / (1 - moisture_out_frac),
+#     sold at price_per_bag_xof per bag_weight_kg, collected on buyer_credit_days;
+#   * the purchase is expensed when bought and the stock held (unit cost x dry matter in store) is
+#     taken back out of that expense; the month's dry-matter loss is first written off at unit cost
+#     to shrinkage (its own line), so cost of sales is what was sold;
+#   * rent: rent_xof_per_month for rent_months_paid months; handling manutention_xof_per_bag (nil)
+#     on every bag in and out; both paid in cash;
+#   * dunnage: dunnage_capex_xof (nil) bought with the grain and depreciated over
+#     dunnage_life_months from that month, still in use at the end of the campaign;
+#   * tax: the impôt synthétique, impot_synthetique_rate on TURNOVER (revenue is the only taxable
+#     line), charged with the month's sales and NOT paid in the grid (due 31 March 2028): it stays
+#     in tax_payable, which the gold counts in working capital;
+#   * credit days are read on a calendar year of 52 x 7 + 1 days.
+# period_label (month names, "Nov-2026" to "Oct-2027") is a calendar label, listed under `labels`.
+# The headline: the gold names its fcff row fcff_xof; both it and the headline `fcff` read the fcff cut.
+gold: grain_v26
+labels:
+  period_label: the month of each period as printed ("Nov-2026" to "Oct-2027"), a label, not a quantity
+entity: trader
+plant: price_per_bag_xof
+case:
+  case: gold-grain-v26
+  periods: 12
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 12
+      inputs: gold
+      values:
+        calendar_days: 52 * 7 + 1
+        bought_at: first_selling_period_index - storage_months_before_first_sale
+        bags_in: bags_purchased * (t == bought_at)
+        dm_bought: bags_purchased * bag_weight_kg * (1 - moisture_in_frac)
+        landed: purchase_price_xof_per_bag + transport_xof_per_bag
+        unit_cost: bags_purchased * landed / dm_bought
+        r: dm_loss_rate_monthly
+        s: 1 - r
+        dm_at_first_sale: dm_bought * s ** storage_months_before_first_sale
+        lot: dm_at_first_sale * s ** selling_months_count * r / (1 - s ** selling_months_count)
+        held: max(0, t - bought_at + 1)
+        before_sale: min(held, storage_months_before_first_sale)
+        selling_done: max(0, min(t - first_selling_period_index + 1, selling_months_count))
+        # the stock at each month's end: decay of what was bought, less the lots sold and their decay
+        dm_stock: >-
+          (held > 0) * (dm_bought * s ** before_sale * s ** selling_done
+          - lot * (1 - s ** selling_done) / r)
+        dm_added: dm_bought * (t == bought_at)
+        dm_at_risk: lag(dm_stock, 1) + dm_added
+        dm_loss: dm_at_risk * r
+        dm_sold: lot * (t >= first_selling_period_index) * (t < first_selling_period_index + selling_months_count)
+        mass_sold: dm_sold / (1 - moisture_out_frac)
+        mass_dm_loss: dm_loss / (1 - moisture_out_frac)
+        mass_at_risk: dm_at_risk / (1 - moisture_in_frac)
+        mass_out_gross: (dm_loss + dm_sold) / (1 - moisture_in_frac)
+        mass_moisture: mass_out_gross - mass_dm_loss - mass_sold
+        bags_sold: mass_sold / bag_weight_kg
+        bags_handled: bags_in + bags_sold
+        tonnes_at_risk: mass_at_risk / 1000
+        stack_volume: tonnes_at_risk * specific_volume_m3_per_tonne
+        price_per_kg: price_per_bag_xof / bag_weight_kg
+        inventory: unit_cost * dm_stock
+        shrinkage: unit_cost * dm_loss
+        rent_annual: rent_xof_per_month * rent_months_paid
+        dunnage: dunnage_capex_xof * (t == bought_at)
+  opening:
+    trader:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: trader}
+      terms: {volume: {generator: gold, output: mass_sold}, price: {generator: gold, output: price_per_kg},
+              payment_days: {generator: gold, output: buyer_credit_days},
+              days_per_year: {generator: gold, output: calendar_days}, periods_per_year: 12, end: 11}
+    sorghum:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: 0, unit_rate: {generator: gold, output: landed}, volume: {generator: gold, output: bags_in},
+              index: 1, periods_per_year: 12, start: 0, end: 11, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_credit_days},
+              days_per_year: {generator: gold, output: calendar_days}}
+    store:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: {generator: gold, output: rent_months_paid}, start: 0, end: 11, vat_rate: 0,
+              vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: calendar_days}}
+    handling:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: 0, unit_rate: {generator: gold, output: manutention_xof_per_bag},
+              volume: {generator: gold, output: bags_handled}, index: 1, periods_per_year: 12, start: 0, end: 11,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: calendar_days}}
+    dunnage:
+      type: capex
+      parties: {owner: trader}
+      terms: {schedule: {generator: gold, output: dunnage}, vat_rate: 0, vat_refund_lag: 0, end: 11}
+  rulebooks:
+    loss:
+      kind: write_down
+      entity: trader
+      phase: fund
+      account: inventory
+      expense: shrinkage_loss
+      amount: {generator: gold, output: shrinkage}
+    stock:
+      kind: held_balance
+      entity: trader
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: inventory}, against: sorghum.expense}
+    dunnage_register:
+      kind: asset_register
+      entity: trader
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 12                            # after the campaign: the dunnage outlives it
+      life_periods: {generator: gold, output: dunnage_life_months}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: trader
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: impot_synthetique_rate}
+      carry_forward_periods: null
+      scheme:                                   # a levy on turnover: only sales enter the base
+        sales.revenue: taxable
+        sorghum.expense: non_deductible
+        shrinkage_loss: non_deductible
+        store.expense: non_deductible
+        handling.expense: non_deductible
+        depreciation: non_deductible
+        disposal_loss: non_deductible
+        tax_expense: non_deductible
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      sorghum.expense: cogs
+      shrinkage_loss: shrinkage
+      store.expense: rent
+      handling.expense: handling
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      sales.receivable: collected
+      sorghum.payable: purchases
+      store.payable: operating
+      handling.payable: operating
+      vat_receivable: operating
+      tax_payable: tax
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: trader, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: trader, scheme: pnl, include: [cogs]}
+    shrinkage: {kind: pnl, entity: trader, scheme: pnl, include: [shrinkage]}
+    rent: {kind: pnl, entity: trader, scheme: pnl, include: [rent]}
+    handling: {kind: pnl, entity: trader, scheme: pnl, include: [handling]}
+    ebitda: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, cogs, shrinkage, rent, handling]}
+    depreciation: {kind: pnl, entity: trader, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, cogs, shrinkage, rent, handling, depreciation]}
+    tax: {kind: pnl, entity: trader, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: trader, scheme: pnl,
+            include: [revenue, cogs, shrinkage, rent, handling, depreciation, tax]}
+    collected: {entity: trader, account: cash, scheme: cash_flow, include: [collected]}
+    purchases_paid: {entity: trader, account: cash, scheme: cash_flow, include: [purchases]}
+    tax_paid: {entity: trader, account: cash, scheme: cash_flow, include: [tax]}
+    capex: {entity: trader, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: trader, account: cash, scheme: cash_flow, include: [collected, purchases, operating, tax, investing]}
+  measures: {}
+trace:
+  dm_added_kg: {driver: gold.dm_added}
+  dm_at_risk_kg: {driver: gold.dm_at_risk}
+  dm_loss_kg: {driver: gold.dm_loss}
+  dm_sold_kg: {driver: gold.dm_sold}
+  dm_stock_kg: {driver: gold.dm_stock}
+  mass_sold_kg: {driver: gold.mass_sold}
+  mass_dm_loss_kg: {driver: gold.mass_dm_loss}
+  mass_moisture_kg: {driver: gold.mass_moisture}
+  mass_out_gross_kg: {driver: gold.mass_out_gross}
+  mass_at_risk_kg: {driver: gold.mass_at_risk}
+  bags_sold: {driver: gold.bags_sold}
+  bags_handled: {driver: gold.bags_handled}
+  tonnes_at_risk: {driver: gold.tonnes_at_risk}
+  stack_volume_m3: {driver: gold.stack_volume}
+  unit_cost_xof_per_kg_dm: {driver: gold.unit_cost}        # a rate per kg of dry matter: no ledger holds it
+  purchase_cost_xof: {sum: [{cut: cogs, sign: -1}, {cut: shrinkage, sign: -1}, {change: inventory}]}
+  purchase_paid_xof: {cut: purchases_paid, sign: -1}
+  revenue_xof: {cut: revenue}
+  cogs_xof: {cut: cogs, sign: -1}
+  shrinkage_xof: {cut: shrinkage, sign: -1}
+  rent_xof: {cut: rent, sign: -1}
+  handling_xof: {cut: handling, sign: -1}
+  ebitda_xof: {cut: ebitda}
+  depreciation_xof: {cut: depreciation, sign: -1}
+  ebit_xof: {cut: ebit}
+  tax_charge_xof: {cut: tax, sign: -1}
+  nopat_xof: {cut: nopat}
+  inventory_value_xof: {balance: inventory}
+  cash_collected_xof: {cut: collected}
+  receivables_xof: {balance: sales.receivable}
+  payables_xof: {balance: sorghum.payable + store.payable + handling.payable}
+  tax_paid_xof: {cut: tax_paid, sign: -1}
+  tax_payable_xof: {balance: tax_payable}
+  nwc_xof: {balance: inventory + sales.receivable - sorghum.payable - store.payable - handling.payable - tax_payable}
+  delta_nwc_xof: {change: inventory + sales.receivable - sorghum.payable - store.payable - handling.payable - tax_payable}
+  capex_xof: {cut: capex, sign: -1}
+  fcff_xof: {cut: fcff}
+  fcff: {cut: fcff}

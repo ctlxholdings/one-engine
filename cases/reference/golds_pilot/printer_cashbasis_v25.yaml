@@ -1,0 +1,991 @@
+contract: "v2.5"
+id: bf_ouaga_imprimerie_cash_basis_fcff
+title: "Imprimerie à Ouagadougou (Burkina Faso) — unlevered FCFF over the remaining life of the offset press, with the founder's cash-basis tax belief tested against Burkina Faso law"
+currency: XOF
+
+grid:
+  periods: 7
+  freq: annual
+  why: >-
+    Seven annual periods, t=0 being the next full trading year.
+
+    HORIZON. The binding physical fact in the utterance is the offset press: bought for 15,000,000
+    three years ago on a stated ten-year life, so it has exactly seven years left. Seven years is
+    therefore the span over which the asset base the founder actually described can be made to
+    produce without my inventing an investment decision he has not taken. At the end of year 7 the
+    question stops being answerable from his words: re-equipping means a fresh ~15,000,000
+    commitment whose timing, price, financing and even necessity are nowhere in the utterance, and
+    any period beyond t=6 would be my forecast of his capital plan, not his business. The seven-year
+    window has a second property that makes it clean rather than merely convenient: it contains
+    exactly one full replacement cycle of the small digital press (bought on the same equipping of
+    the workshop, five-year life, replaced at t=2 and fully written down again by t=6), so both
+    machines stand at zero net book value at the last period. No terminal value, no residual-asset
+    assumption and no stub life is smuggled into the answer — the horizon closes on itself. A
+    five-year view would have cut the offset's life arbitrarily and left 3,000,000 of undepreciated
+    machine hanging; a ten-year view would have required me to invent the re-equipping.
+
+    FREQUENCY. Annual, for four converging reasons. (i) The tax the founder is describing — and the
+    tax that is the whole point of this case — is assessed annually; a sub-annual grid would have to
+    model instalment timing (quarterly for a régime simplifié taxpayer) without changing the answer.
+    (ii) His own unit of account is the year: "une bonne année je facture", "en fin d'année".
+    (iii) The receivable cycle he complains about is 90 days, i.e. shorter than one period, and he
+    states it as a standing condition ("il y en a toujours à peu près douze"), so it is a level, not
+    a flow — a monthly grid would manufacture twelve collection swings I have no data to place, and
+    would add noise, not information. (iv) Depreciation, the patente, the minimum forfaitaire and
+    the school/NGO/donor budget cycles that drive his order book are all annual.
+
+    WHAT THE CHOICE COSTS. This grid deliberately cannot show the event the founder fears most —
+    the year the clients "settle everything at once". That is a transient in the receivable stock,
+    and nothing in his words dates it or sizes it. I have not modelled it and I have not smoothed it
+    away; I have modelled the steady state he himself describes and flagged the transient in `notes`.
+    A reader who thinks the transient is the question should reject this grid and ask for a
+    receivable-ageing schedule first.
+
+utterance:
+  fr: >-
+    Je suis imprimeur a Ouagadougou. Je fais surtout des travaux pour les ecoles, les ONG et les
+    projets - des cahiers d'exercices, des rapports, des affiches, des baches. Une bonne annee je
+    facture dans les quarante-huit millions. Le papier et l'encre me prennent a peu pres quarante
+    pour cent de ce que je facture. J'ai deux machines, une offset que j'ai achetee quinze millions
+    il y a trois ans - elle me fera dix ans - et une petite numerique a quatre millions qui tient
+    cinq ans. J'ai quatre employes a soixante-quinze mille par mois, l'atelier c'est trois cent
+    cinquante mille par mois de loyer, et le courant tourne dans les cent quatre-vingt mille par
+    mois. Le probleme c'est que mes clients ne paient pas vite : les ecoles et les ONG me reglent a
+    quatre-vingt-dix jours, parfois plus, et sur mes quarante-huit millions il y en a toujours a peu
+    pres douze qui trainent en fin d'annee. Mes fournisseurs de papier, eux, me font trente jours.
+    Et voila ce qui est particulier chez moi : l'administration me taxe sur ce que j'ai reellement
+    encaisse moins ce que j'ai reellement decaisse dans l'annee - pas sur mes factures. Le comptable
+    appelle ca la comptabilite de tresorerie. Donc quand mes clients trainent, je facture beaucoup
+    mais je paie peu d'impot cette annee-la, et l'annee ou ils me reglent tout d'un coup, je prends
+    l'impot en pleine figure.
+  en: >-
+    I am a printer in Ouagadougou. I mostly do work for schools, NGOs and donor projects - exercise
+    books, reports, posters, banners. In a good year I bill around forty-eight million. Paper and
+    ink take roughly forty percent of what I bill. I have two machines, an offset press I bought
+    for fifteen million three years ago - it will last me ten years - and a small digital press at
+    four million that lasts five years. I have four employees at seventy-five thousand a month, the
+    workshop is three hundred and fifty thousand a month in rent, and electricity runs at about one
+    hundred and eighty thousand a month. The problem is that my clients do not pay quickly: the
+    schools and the NGOs settle at ninety days, sometimes more, and out of my forty-eight million
+    there are always about twelve that are still outstanding at year end. My paper suppliers give
+    me thirty days. And here is what is peculiar in my case: the administration taxes me on what I
+    have actually collected less what I have actually disbursed during the year - not on my
+    invoices. The accountant calls it cash-basis accounting. So when my clients drag their feet, I
+    bill a lot but I pay little tax that year, and the year they settle everything at once, I take
+    the tax full in the face.
+
+inputs:
+
+  # ---------- REVENUE ----------
+  billings_good_year:
+    value: 48000000
+    unit: XOF per year
+    prov: STATED
+    source: "\"Une bonne annee je facture dans les quarante-huit millions\" / \"In a good year I bill around forty-eight million\". Note the qualifier: he calls this a GOOD year, not a typical one. The figure is his; the claim that it is the run-rate is not."
+    date: 2026-07-27
+
+  revenue_realisation_factor:
+    value: 1.0
+    unit: fraction of a good year
+    prov: ELICITED
+    source: "Base case runs at 1.0 — the omitting choice. He gave exactly one revenue figure and attached the words \"une bonne annee\" to it; I decline to invent a haircut on the only revenue number in the utterance, but I refuse to pretend the qualifier is not there. This is the single largest unknown in the model: every line below except rent, wages and depreciation scales with it."
+    date: 2026-07-27
+    question: "Sur les cinq dernieres annees, combien as-tu facture dans ta plus mauvaise annee, et combien de ces cinq annees ont ete de bonnes annees ?"
+    range: {low: 0.65, high: 1.0}
+    materiality: high
+
+  materials_share_of_billings:
+    value: 0.40
+    unit: fraction of billings
+    prov: STATED
+    source: "\"Le papier et l'encre me prennent a peu pres quarante pour cent de ce que je facture\" / \"Paper and ink take roughly forty percent of what I bill\". A value ratio, not a physical yield — see notes on the volume friction."
+    date: 2026-07-27
+
+  # ---------- LABOUR ----------
+  employees:
+    value: 4
+    unit: headcount
+    prov: STATED
+    source: "\"J'ai quatre employes\" / \"I have four employees\"."
+    date: 2026-07-27
+
+  wage_per_employee_month:
+    value: 75000
+    unit: XOF per employee per month
+    prov: STATED
+    source: "\"quatre employes a soixante-quinze mille par mois\" / \"four employees at seventy-five thousand a month\". Taken as gross pay on the payslip — see payroll_declared_fraction."
+    date: 2026-07-27
+
+  cnss_employer_rate:
+    value: 0.16
+    unit: fraction of gross payroll
+    prov: SOURCED
+    source: "Employer social contribution on declared wages. The founder never mentions it; it is a fact about the world that governs any employer of four people in Burkina Faso. Total employer share 16% = prestations familiales 6% + risques professionnels 1,5% + assurance vieillesse 8,5%. Employee share 5,5% is withheld from the worker and is not an employer cost. The 800 000 XOF/month contribution ceiling is far above 75 000, so no capping applies."
+    authority: "Caisse nationale de securite sociale du Burkina Faso (CNSS), taux de cotisations, fixes par decret n°2023-0129/PRES-TRANS/PM/MFPTPS/MEFP du 24 fevrier 2023; plafond de cotisation fixe par arrete n°2022-067/MFPTPS/SG/DGPS du 30 aout 2022. https://cnssbf.org/?p=2078"
+    verified: 2026-07-27
+
+  tpa_rate:
+    value: 0.03
+    unit: fraction of gross payroll
+    prov: SOURCED
+    source: "Taxe patronale et d'apprentissage — a state employer tax of 3% on the gross amount of all remuneration paid, distinct from and additional to the CNSS contribution. Again never mentioned by the founder."
+    authority: "Burkina Faso, Code general des impots — taxe patronale et d'apprentissage (TPA), 3% du montant brut des remunerations; fiche \"Taxe Patronale d'Apprentissage (TPA)\", portail Service public de l'administration burkinabe (servicepublic.gov.bf), corrobore par la Direction generale des impots (https://dgi.bf)."
+    verified: 2026-07-27
+
+  payroll_declared_fraction:
+    value: 1.0
+    unit: fraction of payroll actually declared
+    prov: ELICITED
+    source: "Base case 1.0 — the conservative choice (it charges the full legal employer burden and so lowers FCFF). The rates above are the law; whether this workshop actually runs its four people through CNSS and TPA is a fact only the founder holds, and non-declaration is common at this scale. If they are undeclared the near-term cash cost falls, but an arrears exposure appears that this model does not carry."
+    date: 2026-07-27
+    question: "Tes quatre employes sont-ils declares a la CNSS, et les soixante-quinze mille, c'est ce qui est ecrit sur le bulletin avant retenues ou ce qu'ils emportent a la maison ?"
+    range: {low: 0.0, high: 1.0}
+    materiality: low
+
+  manager_replacement_cost_annual:
+    value: 0
+    unit: XOF per year
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice, and it is the choice that flatters the answer. The founder is himself the printer; his own labour is in the cost base at zero and the four employees are evidently shop-floor staff. An asset-side FCFF is supposed to be independent of who owns the asset, so the cost of hiring someone to do what he does belongs in opex. He can price it; I cannot."
+    date: 2026-07-27
+    question: "Si tu devais rester six mois sans mettre les pieds a l'atelier, combien faudrait-il payer par mois a quelqu'un pour tenir la boutique a ta place ?"
+    range: {low: 1800000, high: 6000000}
+    materiality: medium
+
+  # ---------- WORKSHOP ----------
+  rent_month:
+    value: 350000
+    unit: XOF per month
+    prov: STATED
+    source: "\"l'atelier c'est trois cent cinquante mille par mois de loyer\" / \"the workshop is three hundred and fifty thousand a month in rent\"."
+    date: 2026-07-27
+
+  electricity_month:
+    value: 180000
+    unit: XOF per month
+    prov: STATED
+    source: "\"le courant tourne dans les cent quatre-vingt mille par mois\" / \"electricity runs at about one hundred and eighty thousand a month\". Read as the grid (SONABEL) bill; generator fuel, if any, is not in this figure — see other_overheads_annual."
+    date: 2026-07-27
+
+  consumables_and_maintenance_annual:
+    value: 0
+    unit: XOF per year
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice, and it is certainly wrong. He named paper and ink; an offset press pushing this volume also consumes plates, blankets, fountain solution, solvents, rollers and fitter's time, and none of that is paper or ink. I set it to zero rather than invent a percentage, which means the FCFF below is an upper bound on this line. It is the highest-materiality question in the model after the revenue level and the tax basis, precisely because the true value is certainly not zero."
+    date: 2026-07-27
+    question: "En dehors du papier et de l'encre, combien t'ont coute l'annee derniere les plaques, les produits chimiques, les pieces detachees et les reparations sur les deux machines ?"
+    range: {low: 600000, high: 4000000}
+    materiality: high
+
+  other_overheads_annual:
+    value: 0
+    unit: XOF per year
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice. Rent and the electricity bill are the only overheads he named. Ouagadougou load-shedding makes a generator normal in a print shop, and delivering exercise books and banners to schools and NGO offices is not free."
+    date: 2026-07-27
+    question: "A part le loyer et la facture SONABEL, qu'est-ce que l'atelier te coute dans l'annee — le gasoil du groupe, l'eau, le telephone et l'internet, la livraison des travaux ?"
+    range: {low: 400000, high: 3000000}
+    materiality: medium
+
+  subcontracting_cost_annual:
+    value: 0
+    unit: XOF per year
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice. This question comes out of an internal inconsistency in his own list: he sells \"des baches\" (PVC banners), but neither a sheet-fed offset press nor a small digital press prints wide-format PVC. Either there is a third machine he did not mention, or that work is bought in — in which case a real cost sits outside his 40% paper-and-ink ratio."
+    date: 2026-07-27
+    question: "Les baches, tu les imprimes toi-meme et sur quelle machine, ou tu les fais faire dehors ? Si tu les fais faire dehors, ca t'a coute combien l'annee derniere ?"
+    range: {low: 0, high: 6000000}
+    materiality: medium
+
+  # ---------- MACHINES ----------
+  offset_cost:
+    value: 15000000
+    unit: XOF
+    prov: STATED
+    source: "\"une offset que j'ai achetee quinze millions\" / \"an offset press I bought for fifteen million\"."
+    date: 2026-07-27
+
+  offset_life_years:
+    value: 10
+    unit: years
+    prov: STATED
+    source: "\"elle me fera dix ans\" / \"it will last me ten years\". His own useful-life estimate; adopted as the depreciation life rather than a tax-table rate, because the CGI prescribes no statutory schedule for printing plant (see notes)."
+    date: 2026-07-27
+
+  offset_age_years:
+    value: 3
+    unit: years
+    prov: STATED
+    source: "\"que j'ai achetee quinze millions il y a trois ans\" / \"I bought for fifteen million three years ago\"."
+    date: 2026-07-27
+
+  digital_cost:
+    value: 4000000
+    unit: XOF
+    prov: STATED
+    source: "\"une petite numerique a quatre millions\" / \"a small digital press at four million\". Also used as the replacement price at t=2 under the constant-price convention."
+    date: 2026-07-27
+
+  digital_life_years:
+    value: 5
+    unit: years
+    prov: STATED
+    source: "\"qui tient cinq ans\" / \"that lasts five years\"."
+    date: 2026-07-27
+
+  digital_age_years:
+    value: 3
+    unit: years
+    prov: ELICITED
+    source: "Base case 3 — the conservative choice. \"Il y a trois ans\" grammatically attaches to the offset alone; he never dates the digital press. Three years is the natural reading of \"j'ai deux machines\" as one equipping of the workshop, and it is conservative because it pulls the 4,000,000 replacement forward to t=2 rather than pushing it to the end of the horizon or beyond it."
+    date: 2026-07-27
+    question: "La petite numerique, tu l'as achetee quand exactement — la meme annee que l'offset, ou plus tard ?"
+    range: {low: 0, high: 4}
+    materiality: medium
+
+  digital_replacement_period:
+    value: 2
+    unit: 0-based period index
+    prov: INFERRED
+    source: "digital_life_years (5) minus digital_age_years (3) = 2 years of life left, so the press is exhausted at the end of t=1 and is replaced in t=2, the third period of the grid. Zero-based index: t=2. No new information — arithmetic on two inputs above."
+    date: 2026-07-27
+
+  nbv_offset_opening:
+    value: 10500000
+    unit: XOF
+    prov: INFERRED
+    source: "offset_cost - offset_age_years * (offset_cost / offset_life_years) = 15000000 - 3 * 1500000. Straight-line, three years already run."
+    date: 2026-07-27
+
+  nbv_digital_opening:
+    value: 1600000
+    unit: XOF
+    prov: INFERRED
+    source: "digital_cost - digital_age_years * (digital_cost / digital_life_years) = 4000000 - 3 * 800000. Carries the digital_age_years working value with it."
+    date: 2026-07-27
+
+  nbv_opening:
+    value: 12100000
+    unit: XOF
+    prov: INFERRED
+    source: "nbv_offset_opening + nbv_digital_opening = 10500000 + 1600000."
+    date: 2026-07-27
+
+  # ---------- WORKING CAPITAL ----------
+  client_payment_terms_days:
+    value: 90
+    unit: days
+    prov: STATED
+    source: "\"les ecoles et les ONG me reglent a quatre-vingt-dix jours, parfois plus\" / \"the schools and the NGOs settle at ninety days, sometimes more\". Used as a corroboration test on ar_days, not as the driver."
+    date: 2026-07-27
+
+  ar_outstanding_year_end:
+    value: 12000000
+    unit: XOF
+    prov: STATED
+    source: "\"sur mes quarante-huit millions il y en a toujours a peu pres douze qui trainent en fin d'annee\" / \"out of my forty-eight million there are always about twelve still outstanding at year end\". The word that carries the modelling weight is \"toujours\" — he describes a standing stock, not a one-off."
+    date: 2026-07-27
+
+  ar_days:
+    value: 91.25
+    unit: days
+    prov: INFERRED
+    source: "ar_outstanding_year_end / billings_good_year * days_per_year = 12000000 / 48000000 * 365 = 91.25. Purely arithmetic on two stated figures. It is worth pausing on the agreement: his two independent statements — \"they settle at ninety days\" and \"about twelve of the forty-eight are always outstanding\" — reproduce each other to within 1.25 days. The receivable figure is internally corroborated, which is more than can be said for most numbers in this utterance."
+    date: 2026-07-27
+
+  supplier_days:
+    value: 30
+    unit: days
+    prov: STATED
+    source: "\"Mes fournisseurs de papier, eux, me font trente jours\" / \"My paper suppliers give me thirty days\"."
+    date: 2026-07-27
+
+  inventory_days:
+    value: 0
+    unit: days of materials
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice. He never mentions a paper store, and a printer buying on 30-day terms for named jobs may well order per job. But a real workshop holds some reams and cartridges. Ranked low because with flat billings the inventory level is a constant stock: it changes the invested capital, not the periodic FCFF (delta_nwc stays zero at any constant level)."
+    date: 2026-07-27
+    question: "Combien de papier et d'encre gardes-tu en reserve a l'atelier — ca represente combien de semaines de travail ?"
+    range: {low: 0, high: 45}
+    materiality: low
+
+  bad_debt_writeoff_annual:
+    value: 0
+    unit: XOF per year
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice, and again the flattering one. His own \"parfois plus\" (sometimes more than ninety days) is the tell: a receivable that ages past a year against a closed donor project or a school with no budget line is not slow, it is gone. I will not invent a loss rate."
+    date: 2026-07-27
+    question: "Sur les trois dernieres annees, combien as-tu du passer par pertes et profits — des factures que tu sais que tu ne verras jamais ?"
+    range: {low: 0, high: 2400000}
+    materiality: medium
+
+  ar_opening:
+    value: 12000000
+    unit: XOF
+    prov: INFERRED
+    source: "From \"toujours a peu pres douze\": if the stock is always about twelve, the stock at the start of the projection is twelve. This is what makes delta_nwc zero rather than a 12,000,000 first-period drain — the receivable was funded years ago and is not funded again."
+    date: 2026-07-27
+
+  ap_opening:
+    value: 1578082.191780822
+    unit: XOF
+    prov: INFERRED
+    source: "Steady-state payable on the same 30-day terms: 19200000 * 30 / 365. Same logic as ar_opening — the standing payable already exists at t=0."
+    date: 2026-07-27
+
+  inventory_opening:
+    value: 0
+    unit: XOF
+    prov: INFERRED
+    source: "Follows from inventory_days = 0 held flat; carries that elicited working value."
+    date: 2026-07-27
+
+  nwc_opening:
+    value: 10421917.808219178
+    unit: XOF
+    prov: INFERRED
+    source: "ar_opening + inventory_opening - ap_opening = 12000000 + 0 - 1578082.191780822."
+    date: 2026-07-27
+
+  # ---------- TAX: THE WORLD ----------
+  tax_basis:
+    value: accrual_rsi
+    unit: regime label
+    prov: ELICITED
+    source: "Base case runs the statutory accrual column. This is the one input where the founder's own testimony and the law point in opposite directions, and the two are different objects. What he believes is a fact about his business: he says the administration taxes him on collections less disbursements and that his accountant calls it comptabilite de tresorerie. What the rule says is a fact about the world: at 48,000,000 of billings he sits in the regime du reel simplifie (15M-50M), which files SYSCOHADA financial statements; the CGI charges profits arising from creances acquises et non encore recouvrees and denies deduction of sums engaged to acquire fixed assets, allowing only amortissement; and the OHADA systeme minimal de tresorerie — the only cash-based accounting the acronym could refer to — is confined by AUDCIF art. 13 to entities under 40,000,000 of receipts for artisanal activity. I found no Burkinabe provision authorising a cash determination of IBICA for a taxpayer of his size. I therefore run the law and materialise his description in full as the *_cashbasis rows, so the reader can see both and neither is asserted in prose."
+    date: 2026-07-27
+    question: "Peux-tu me montrer ton dernier avis d'imposition et la liasse que ton comptable a deposee ? Je veux voir sur quelle ligne la DGI a assis l'impot — sur ton chiffre d'affaires facture ou sur ce que tu as encaisse."
+    range: {low: "cash basis, exactly as the founder describes it", high: "accrual RSI on creances acquises, as the CGI requires"}
+    materiality: high
+
+  ibica_rate_band1:
+    value: 0.10
+    unit: fraction
+    prov: SOURCED
+    source: "First band of the progressive IBICA scale applicable to personnes physiques. This is the trap in this case and it must not be got wrong by reflex: 27,5% is the FLAT rate of the impot sur les societes, which applies to personnes morales. The founder speaks throughout as a sole trader (\"je suis imprimeur\", \"j'ai deux machines\", \"mes clients\"), so his business income falls under IBICA at a progressive scale, not under IS at a flat rate. He is also, on the same facts, in the RSI band, from which personnes morales are in any case not the natural occupant."
+    authority: "Burkina Faso, Code general des impots (loi n°058-2017/AN portant CGI, texte consolide, a jour des lois de finances successives) — impot sur les benefices industriels, commerciaux et agricoles (IBICA), tarif progressif par tranches: 0 a 500 000 FCFA 10%; 500 001 a 1 000 000 FCFA 20%; au-dela de 1 000 000 FCFA 27,5% (art. 13 dans la numerotation du texte consolide consulte). Texte officiel: Direction generale des impots, https://dgi.bf/verification/CGI; corrobore par la fiche IBICA du portail Service public burkinabe (servicepublic.gov.bf)."
+    verified: 2026-07-27
+
+  ibica_rate_band2:
+    value: 0.20
+    unit: fraction
+    prov: SOURCED
+    source: "Second band of the progressive IBICA scale (500 001 to 1 000 000 FCFA)."
+    authority: "Burkina Faso, Code general des impots, tarif IBICA (art. 13 du texte consolide consulte), https://dgi.bf/verification/CGI; fiche IBICA, servicepublic.gov.bf."
+    verified: 2026-07-27
+
+  ibica_rate_band3:
+    value: 0.275
+    unit: fraction
+    prov: SOURCED
+    source: "Top band of the progressive IBICA scale, above 1 000 000 FCFA. Numerically equal to the flat IS rate borne by a personne morale on the whole of its profit — which is exactly why the difference between the two treatments is not the rate but the two lower bands, worth ibica_top_band_offset a year and nothing more."
+    authority: "Burkina Faso, Code general des impots, tarif IBICA (art. 13 du texte consolide consulte), https://dgi.bf/verification/CGI; fiche IBICA, servicepublic.gov.bf."
+    verified: 2026-07-27
+
+  ibica_band1_ceiling:
+    value: 500000
+    unit: XOF
+    prov: SOURCED
+    source: "Upper edge of the 10% band."
+    authority: "Burkina Faso, Code general des impots, tarif IBICA (art. 13 du texte consolide consulte), https://dgi.bf/verification/CGI."
+    verified: 2026-07-27
+
+  ibica_band2_ceiling:
+    value: 1000000
+    unit: XOF
+    prov: SOURCED
+    source: "Upper edge of the 20% band; above it the 27,5% rate applies."
+    authority: "Burkina Faso, Code general des impots, tarif IBICA (art. 13 du texte consolide consulte), https://dgi.bf/verification/CGI."
+    verified: 2026-07-27
+
+  ibica_top_band_offset:
+    value: 125000
+    unit: XOF per year
+    prov: INFERRED
+    source: "Closed form of the progressive scale for any base above ibica_band2_ceiling: T(x) = 0.10*500000 + 0.20*500000 + 0.275*(x - 1000000) = 0.275*x - 125000. Equivalently 500000*(0.275-0.10) + 500000*(0.275-0.20) = 87500 + 37500. Deductive consequence of the three SOURCED band rates and two SOURCED ceilings; no new information."
+    date: 2026-07-27
+
+  mfp_rate:
+    value: 0.005
+    unit: fraction of turnover
+    prov: SOURCED
+    source: "Minimum forfaitaire de perception — the floor under the profits tax. It bites when the profit computation produces little or nothing, which is precisely the scenario the founder thinks his cash basis buys him (\"je paie peu d'impot cette annee-la\"). It does not, below 300 000."
+    authority: "Burkina Faso, Code general des impots, art. 24 — le minimum forfaitaire de perception est egal a 0,5% du chiffre d'affaires vise a l'art. 23, le chiffre d'affaires etant arrondi aux cent mille (100 000) francs CFA inferieurs. https://dgi.bf/verification/CGI"
+    verified: 2026-07-27
+
+  mfp_floor_rsi:
+    value: 300000
+    unit: XOF per year
+    prov: SOURCED
+    source: "Absolute floor of the minimum forfaitaire for a taxpayer in the regime du reel simplifie. At 48,000,000 of turnover the 0,5% computation yields 240,000, which is BELOW this floor — so the floor, not the rate, is what binds. Note the cliff: the same floor is 1,000,000 for a taxpayer in the regime du reel normal, i.e. above 50,000,000 of turnover."
+    authority: "Burkina Faso, Code general des impots, art. 24 — le montant ne peut en aucun cas etre inferieur a un million (1 000 000) de francs CFA pour les contribuables relevant du regime du reel normal d'imposition, ou trois cent mille (300 000) francs CFA pour ceux relevant du regime du reel simplifie d'imposition; versement par acomptes trimestriels pour le RSI (art. 25). https://dgi.bf/verification/CGI"
+    verified: 2026-07-27
+
+  rsi_threshold_low:
+    value: 15000000
+    unit: XOF of annual turnover
+    prov: SOURCED
+    source: "Lower edge of the regime du reel simplifie d'imposition. Below it a taxpayer falls into the contribution des micro-entreprises."
+    authority: "Burkina Faso, Direction generale des impots, \"Regimes d'imposition\" (https://dgi.bf/regime_imposition/), et Code general des impots: RSI pour un chiffre d'affaires annuel hors taxes egal ou superieur a quinze millions (15 000 000) et inferieur a cinquante millions (50 000 000) de francs CFA."
+    verified: 2026-07-27
+
+  rsi_threshold_high:
+    value: 50000000
+    unit: XOF of annual turnover
+    prov: SOURCED
+    source: "Upper edge of the RSI and the entry point of the regime du reel normal. The founder bills 48,000,000 — he is 2,000,000, roughly 4%, below this line. Crossing it changes four things at once: the SYSCOHADA systeme normal becomes mandatory, filing goes monthly, the minimum forfaitaire floor triples, and he enters the VAT net (RSI taxpayers are not authorised to invoice VAT and correspondingly cannot recover input VAT). This is a genuine discontinuity sitting one good order away from him, and it is one reason no growth is projected."
+    authority: "Burkina Faso, Direction generale des impots, \"Regimes d'imposition\" (https://dgi.bf/regime_imposition/): RNI a partir de 50 000 000 FCFA de chiffre d'affaires annuel, systeme normal du SYSCOHADA, declarations mensuelles, assujettissement a la TVA; RSI 15 000 000 a 49 999 999 FCFA, declarations trimestrielles, non autorise a facturer la TVA."
+    verified: 2026-07-27
+
+  smt_ceiling_artisanal:
+    value: 40000000
+    unit: XOF of annual receipts
+    prov: SOURCED
+    source: "The ceiling that decides whether the founder's \"comptabilite de tresorerie\" exists as an option for him at all. The OHADA systeme minimal de tresorerie is the only cash-based accounting system in the SYSCOHADA framework, and it is reserved for very small entities. A printing works is an artisanal/industrial activity, so 40,000,000 is his ceiling; the 30,000,000 services ceiling would be lower still, and the 60,000,000 ceiling applies to negoce, which a firm that manufactures to order is not. At 48,000,000 of billings he is above the applicable ceiling and the SMT is not open to him."
+    authority: "OHADA, Acte uniforme relatif au droit comptable et a l'information financiere (AUDCIF), adopte le 26 janvier 2017, art. 13 — systeme minimal de tresorerie applicable aux tres petites entites dont les recettes annuelles n'excedent pas 60 000 000 FCFA (entites de negoce), 40 000 000 FCFA (entites artisanales et assimilees), 30 000 000 FCFA (entites de services); au-dela, systeme normal. https://www.ohada.org/en/uniform-act-relating-to-accounting-law-and-financial-information-audcif/"
+    verified: 2026-07-27
+
+  withholding_rate_prestations:
+    value: 0.05
+    unit: fraction of gross payment
+    prov: SOURCED
+    source: "Retenue a la source on sums paid to registered service providers by debtors established in Burkina Faso — which is what schools, NGOs and donor projects are. It is an ACOMPTE, creditable against the profits tax, not an additional charge; at annual frequency it nets out entirely, so it does not touch FCFF. It matters here for one reason only: it means part of his profits tax is already collected at the moment the client pays, which cuts directly against his belief that slow-paying clients let him \"pay little tax that year\"."
+    authority: "Burkina Faso, Code general des impots — retenue a la source sur les sommes versees aux prestataires: 5% pour les prestataires immatricules, 25% pour les non immatricules, 1% pour les travaux BTP; la retenue s'impute sur l'impot sur les benefices. https://dgi.bf/verification/CGI"
+    verified: 2026-07-27
+
+  vat_standard_rate:
+    value: 0.18
+    unit: fraction
+    prov: SOURCED
+    source: "Recorded because it governs him twice over even though it appears in no line below. As an RSI taxpayer he may not invoice it, so his 48,000,000 of billings carries none of it and no gross-up is warranted; and for the same reason he cannot recover the VAT charged to him on paper and ink, so his stated 40% materials ratio is a VAT-inclusive cost and must not be grossed up either. Both facts are load-bearing for reading the numbers below correctly."
+    authority: "Burkina Faso, Code general des impots — taxe sur la valeur ajoutee, taux normal 18%; assujettissement reserve aux contribuables du regime du reel normal (Direction generale des impots, \"Regimes d'imposition\", https://dgi.bf/regime_imposition/: le RSI n'est pas autorise a facturer la TVA)."
+    verified: 2026-07-27
+
+  patente_droit_proportionnel_rate:
+    value: 0.08
+    unit: fraction of valeur locative
+    prov: SOURCED
+    source: "The proportional limb of the contribution des patentes, still levied in Burkina Faso and payable by RSI taxpayers alongside IBICA, the MFP and the TPA. For rented premises the valeur locative is taken here as the rent actually paid, i.e. rent_month * months_per_year."
+    authority: "Burkina Faso, Code general des impots — contribution des patentes: droit fixe (assis sur le chiffre d'affaires de l'annee N-2) plus droit proportionnel de 8% de la valeur locative des locaux professionnels, sans pouvoir etre inferieur au cinquieme du droit fixe. https://dgi.bf/verification/CGI; fiche \"Contribution des patentes\", portail Service public burkinabe."
+    verified: 2026-07-27
+
+  patente_droit_fixe:
+    value: 0
+    unit: XOF per year
+    prov: ELICITED
+    source: "Base case 0 — the omitting choice. The fixed limb is set by a turnover-banded table that I could not retrieve in a form I would be willing to quote, and I will not invent a band amount. Setting it to zero understates the patente and, incidentally, keeps the one-fifth-of-droit-fixe floor on the proportional limb non-binding. The founder does not need the table: the figure is printed on his assessment notice."
+    date: 2026-07-27
+    question: "Sur ton dernier avis de patente, quel est le montant inscrit en droit fixe ?"
+    range: {low: 50000, high: 700000}
+    materiality: low
+
+  # ---------- CONVENTIONS ----------
+  months_per_year:
+    value: 12
+    unit: months
+    prov: DEFAULTED
+    source: "Calendar convention. Monthly figures stated by the founder are annualised by twelve."
+    date: 2026-07-27
+
+  days_per_year:
+    value: 365
+    unit: days
+    prov: DEFAULTED
+    source: "Actual/365 day-count convention for translating stated payment terms into balance-sheet stocks. Named because the alternative 30/360 convention would move the payable by about 1.4% and the receivable check by 1.25 days."
+    date: 2026-07-27
+
+  depreciation_method:
+    value: straight_line
+    unit: method
+    prov: DEFAULTED
+    source: "Straight-line over the useful life the founder states for each machine, from cost to nil residual. Named as a convention rather than sourced because the Burkinabe CGI prescribes no statutory rate table for printing plant — deduction rests on amortissements computed selon les usages de chaque nature d'industrie, with a degressif option available; the founder's own ten-year and five-year lives are the best available evidence of those usages here, and the straight-line reading is the neutral one."
+    date: 2026-07-27
+
+  price_convention:
+    value: constant_prices
+    unit: convention
+    prov: DEFAULTED
+    source: "Constant-price (today's prices) projection: no inflation escalation on any revenue or cost line, and the digital press is replaced at t=2 at its stated 4,000,000 cost. The founder gave every figure in current terms and gave no view on price movement; escalating some lines and not others would be worse than escalating none. The consequence is stated plainly: this FCFF is a real, not nominal, stream and must be discounted with a real rate."
+    date: 2026-07-27
+
+passage: |
+  ================================================================================
+  0. WHAT KIND OF BUSINESS THIS IS, AND WHERE THE MODEL HAS TO BE HONEST ABOUT IT
+  ================================================================================
+  A jobbing print shop is not a single-product plant. The founder's own natural quantities are jobs
+  and print runs -- cahiers d'exercices, rapports, affiches, baches -- each with its own format,
+  substrate, run length and machine routing. The clean operating build for such a business is
+  impressions (or sheets, or square metres for the wide-format work) times a price per thousand,
+  cross-checked against press capacity in hours.
+
+  I cannot do that build, and I am not going to pretend otherwise. The founder gave no volumes, no
+  run lengths, no unit prices and no press hours. What he gave was a single VALUE ratio -- paper and
+  ink at forty percent of billings -- and a set of period costs. So the operating build below is a
+  value build: billings drive materials through a ratio, and everything else is a fixed annual
+  charge. This is the sector friction and it has a consequence a reader should hold onto: with no
+  volume data I cannot test whether two presses can physically produce 48,000,000 of work, and I
+  cannot tell whether a bad year is fewer jobs or thinner margins on the same jobs. The question that
+  would unlock the volume build is recorded in `notes`.
+
+  Everything below is per annum, in XOF, in constant prices, for seven periods t=0..t=6.
+
+  ================================================================================
+  1. REVENUE AND THE COST STACK -- IDENTICAL IN EVERY PERIOD
+  ================================================================================
+  Billings. 48,000,000 x 1.0 = 48,000,000. The factor of 1.0 is an elicited working value, not a
+  finding: he called 48,000,000 a GOOD year and I have kept his number while keeping the question
+  attached to it.
+
+  Paper and ink. 40% x 48,000,000 = 19,200,000. Because an RSI taxpayer can neither charge nor
+  recover VAT, this is a VAT-inclusive cash cost and is used as stated, with no gross-up.
+
+  Wages. 4 employees x 75,000 x 12 = 3,600,000.
+
+  Employer social contribution (CNSS), 16% of declared payroll: 3,600,000 x 0.16 x 1.0 = 576,000.
+  He never mentioned this. It is not optional in law.
+
+  Employer and apprenticeship tax (TPA), 3% of payroll: 3,600,000 x 0.03 x 1.0 = 108,000.
+  He never mentioned this either.
+
+  Rent. 350,000 x 12 = 4,200,000.
+  Electricity. 180,000 x 12 = 2,160,000.
+
+  Patente, proportional limb: 8% x 4,200,000 (the rent, taken as the valeur locative of the rented
+  workshop) = 336,000. The fixed limb is carried at zero, elicited, and therefore understated.
+
+  Four cost lines are carried at zero because he did not name them and I refuse to invent them:
+  consumables and maintenance (plates, chemicals, spares, repairs), other overheads (generator fuel,
+  water, telecoms, delivery), bought-in work (the baches puzzle), and the cost of replacing his own
+  labour. Bad-debt write-offs are likewise zero. Every one of these is a real cost of a real print
+  shop; all five being zero means the profit below is an upper bound and the reader must treat it as
+  one.
+
+  Total operating cost:
+     19,200,000 + 3,600,000 + 576,000 + 108,000 + 4,200,000 + 2,160,000 + 336,000 + 0 + 0 + 0 + 0
+   = 30,180,000
+
+  EBITDA = 48,000,000 - 30,180,000 = 17,820,000, every period.
+
+  ================================================================================
+  2. THE MACHINES -- DEPRECIATION AND THE ONE REPLACEMENT
+  ================================================================================
+  Offset press: 15,000,000 over 10 years straight-line = 1,500,000 a year. Three years are already
+  run, so the opening net book value is 15,000,000 - 4,500,000 = 10,500,000 and there are exactly
+  seven charges left. That is the horizon, and it is not a coincidence: 1,500,000 x 7 = 10,500,000
+  is asserted as a check.
+
+  Digital press: 4,000,000 over 5 years = 800,000 a year. On the working assumption that it was
+  bought with the offset three years ago, its opening net book value is 4,000,000 - 2,400,000 =
+  1,600,000, it takes its last two charges in t=0 and t=1, and it is replaced in t=2 for 4,000,000
+  -- which then depreciates over t=2..t=6, exactly five periods, exactly filling the horizon.
+
+  The arithmetic consequence is worth noticing because it makes the whole model legible: the
+  depreciation charge is 1,500,000 + 800,000 = 2,300,000 in EVERY one of the seven periods. The old
+  digital press hands over to the new one without a gap.
+
+  Net book value roll-forward, opening 12,100,000:
+     t=0   12,100,000 + 0 - 2,300,000 =  9,800,000   (offset 9,000,000 + digital   800,000)
+     t=1    9,800,000 + 0 - 2,300,000 =  7,500,000   (offset 7,500,000 + digital         0)
+     t=2    7,500,000 + 4,000,000 - 2,300,000 = 9,200,000 (offset 6,000,000 + digital 3,200,000)
+     t=3    9,200,000 + 0 - 2,300,000 =  6,900,000   (offset 4,500,000 + digital 2,400,000)
+     t=4    6,900,000 + 0 - 2,300,000 =  4,600,000   (offset 3,000,000 + digital 1,600,000)
+     t=5    4,600,000 + 0 - 2,300,000 =  2,300,000   (offset 1,500,000 + digital   800,000)
+     t=6    2,300,000 + 0 - 2,300,000 =          0   (offset         0 + digital         0)
+  Both machines land on zero at the last period. Nothing is left over to be valued away.
+
+  EBIT = EBITDA - depreciation = 17,820,000 - 2,300,000 = 15,520,000, every period.
+
+  ================================================================================
+  3. WORKING CAPITAL -- THE POINT WHERE THE FOUNDER'S INTUITION AND THE ARITHMETIC PART
+  ================================================================================
+  Receivables. 48,000,000 x 91.25 / 365 = 12,000,000, which is his own figure back again, because
+  91.25 days was derived from it. His two statements agree: 12/48 of a year is 91.25 days against a
+  stated 90-day term.
+
+  Inventory. 0 (elicited working value).
+
+  Payables. 19,200,000 x 30 / 365 = 1,578,082.191780822.
+
+  Net working capital = 12,000,000 + 0 - 1,578,082.191780822 = 10,421,917.808219178, in every
+  period, including the opening position -- because he said the twelve million is ALWAYS there.
+
+  Therefore the change in net working capital is ZERO in every period of this model.
+
+  This is the finding that a reader is most likely to resist, so let me be explicit about it. The
+  founder experiences the 12,000,000 as a wound. It is a wound: it is 10.4 million of his capital
+  parked in other people's accounts payable, and it is why he is short of cash. But it was parked
+  years ago. Free cash flow measures the CHANGE in that parking, and on his own testimony -- "il y
+  en a toujours a peu pres douze" -- the change is nil. A standing receivable is a level, not a
+  drain. It depresses the return on capital employed; it does not recur in FCFF. The only way it
+  reappears as a flow is if it GROWS (with billings, or with slippage past ninety days) or if it is
+  written off -- and the second of those is the elicited bad-debt question.
+
+  ================================================================================
+  4. TAX -- THE BASE CASE (THE LAW)
+  ================================================================================
+  Taxable income = EBIT = 15,520,000. There is no interest deduction because this is an unlevered
+  build; no leverage was described and none is assumed.
+
+  He is a sole trader, so the tax is IBICA on a progressive scale, NOT the flat 27,5% corporate
+  rate. Applying the bands:
+     first  500,000 at 10.0%  =    50,000
+     next   500,000 at 20.0%  =   100,000
+     remaining 14,520,000 at 27.5% = 3,993,000
+     IBICA                          = 4,143,000
+  The closed form confirms it: 0.275 x 15,520,000 - 125,000 = 4,268,000 - 125,000 = 4,143,000.
+
+  Minimum forfaitaire de perception: 0.5% x 48,000,000 = 240,000, which is below the 300,000 floor
+  for an RSI taxpayer, so the MFP is 300,000. It does not bite here -- 4,143,000 is far above it --
+  but it is materialised and asserted, because the entire premise of the founder's story is that in
+  a bad collection year his tax nearly vanishes, and the MFP is the reason it cannot vanish
+  altogether.
+
+  Withholding at source: his clients are schools, NGOs and donor projects, all debtors established
+  in Burkina Faso, and 5% of 48,000,000 = 2,400,000 would be withheld and credited against the
+  liability. It is fully absorbed (2,400,000 < 4,143,000) and changes no number below; it is
+  materialised only so that the absorption can be asserted.
+
+  Tax = 4,143,000. NOPAT = 15,520,000 - 4,143,000 = 11,377,000.
+
+  ================================================================================
+  5. FCFF -- THE BASE CASE
+  ================================================================================
+  FCFF = NOPAT + D&A - change in NWC - capex.
+
+     t=0:  11,377,000 + 2,300,000 - 0 -         0 = 13,677,000
+     t=1:  11,377,000 + 2,300,000 - 0 -         0 = 13,677,000
+     t=2:  11,377,000 + 2,300,000 - 0 - 4,000,000 =  9,677,000
+     t=3:  11,377,000 + 2,300,000 - 0 -         0 = 13,677,000
+     t=4:  11,377,000 + 2,300,000 - 0 -         0 = 13,677,000
+     t=5:  11,377,000 + 2,300,000 - 0 -         0 = 13,677,000
+     t=6:  11,377,000 + 2,300,000 - 0 -         0 = 13,677,000
+
+  Cross-checked the other way round, via the cash-flow statement: CFO = EBITDA - change in NWC - tax
+  = 17,820,000 - 0 - 4,143,000 = 13,677,000 every period; CFI = -capex; FCFF = CFO + CFI. The two
+  routes agree period by period, which is asserted rather than claimed.
+
+  Seven-year total: 91,739,000.
+
+  ================================================================================
+  6. THE FOUNDER'S OWN TAX BASIS, MODELLED IN FULL
+  ================================================================================
+  Taken literally -- cash in, less cash out, machines deducted when paid for, no depreciation:
+
+  Collections = billings - change in receivables - write-offs = 48,000,000 - 0 - 0 = 48,000,000. In
+  a steady state, collections EQUAL billings. This is the first thing his story does not survive.
+
+  Cash disbursed = paper and ink paid (19,200,000 - change in payables = 19,200,000) + wages
+  3,600,000 + CNSS 576,000 + TPA 108,000 + rent 4,200,000 + electricity 2,160,000 + patente 336,000
+  + capex. That is 30,180,000 in every period, plus 4,000,000 in t=2.
+
+  Cash-basis taxable income:
+     t=0,1,3,4,5,6: 48,000,000 - 30,180,000 = 17,820,000
+     t=2:           48,000,000 - 34,180,000 = 13,820,000
+
+  IBICA on that base (top band throughout, so 0.275 x base - 125,000):
+     t=0,1,3,4,5,6: 0.275 x 17,820,000 - 125,000 = 4,900,500 - 125,000 = 4,775,500
+     t=2:           0.275 x 13,820,000 - 125,000 = 3,800,500 - 125,000 = 3,675,500
+
+  NOPAT on that basis = 15,520,000 - tax, and FCFF = NOPAT + 2,300,000 - 0 - capex:
+     t=0,1,3,4,5,6: 15,520,000 - 4,775,500 = 10,744,500;  +2,300,000        = 13,044,500
+     t=2:           15,520,000 - 3,675,500 = 11,844,500;  +2,300,000 -4,000,000 = 10,144,500
+
+  Seven-year totals: tax 32,328,500 on his basis against 29,001,000 on the statutory basis; FCFF
+  88,411,500 against 91,739,000.
+
+  So his cash basis, if the administration really applied it, would cost him 3,327,500 more over
+  seven years, not less. The reason is exact and is asserted as a check: over the horizon the two
+  bases differ ONLY by depreciation taken (16,100,000) versus capex deducted (4,000,000), and
+  12,100,000 x 27.5% = 3,327,500. He would be trading the write-down of machines he has ALREADY
+  bought for the write-off of the one machine he buys during the window. That is a bad trade, and it
+  is bad in exactly the years when nothing is being bought -- six years out of seven.
+
+  His intuition -- "I bill a lot but pay little tax that year" -- is not wrong about mechanics; it
+  is wrong about his own steady state. Deferral requires the receivable to be GROWING. He told me it
+  is not: it is always about twelve. On a flat book, cash-basis and accrual-basis taxable income
+  differ by depreciation alone, and depreciation is the larger number.
+
+  ================================================================================
+  7. WHAT THE READER SHOULD DO WITH 13,677,000
+  ================================================================================
+  It is a real-terms, pre-financing, pre-owner's-drawings figure that assumes: a good year repeated
+  seven times; no cost the founder failed to mention; no bad debt; his own labour free; and the law
+  applied as written rather than as he describes it. Three of those five push the number down and
+  none pushes it up. The three questions worth asking first are ranked in `inputs`, and they are the
+  revenue level, the tax basis, and what he really spends on plates, chemicals and repairs.
+
+trace:
+  billings:                    [48000000, 48000000, 48000000, 48000000, 48000000, 48000000, 48000000]
+  collections:                 [48000000, 48000000, 48000000, 48000000, 48000000, 48000000, 48000000]
+  materials_cost:              [19200000, 19200000, 19200000, 19200000, 19200000, 19200000, 19200000]
+  materials_purchased:         [19200000, 19200000, 19200000, 19200000, 19200000, 19200000, 19200000]
+  materials_paid:              [19200000, 19200000, 19200000, 19200000, 19200000, 19200000, 19200000]
+  wages:                       [3600000, 3600000, 3600000, 3600000, 3600000, 3600000, 3600000]
+  cnss_employer:               [576000, 576000, 576000, 576000, 576000, 576000, 576000]
+  tpa:                         [108000, 108000, 108000, 108000, 108000, 108000, 108000]
+  rent:                        [4200000, 4200000, 4200000, 4200000, 4200000, 4200000, 4200000]
+  electricity:                 [2160000, 2160000, 2160000, 2160000, 2160000, 2160000, 2160000]
+  patente:                     [336000, 336000, 336000, 336000, 336000, 336000, 336000]
+  consumables_and_maintenance: [0, 0, 0, 0, 0, 0, 0]
+  other_overheads:             [0, 0, 0, 0, 0, 0, 0]
+  subcontracting:              [0, 0, 0, 0, 0, 0, 0]
+  manager_replacement:         [0, 0, 0, 0, 0, 0, 0]
+  bad_debt_writeoff:           [0, 0, 0, 0, 0, 0, 0]
+  opex_total:                  [30180000, 30180000, 30180000, 30180000, 30180000, 30180000, 30180000]
+  ebitda:                      [17820000, 17820000, 17820000, 17820000, 17820000, 17820000, 17820000]
+  depreciation_offset:         [1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000]
+  depreciation_digital:        [800000, 800000, 800000, 800000, 800000, 800000, 800000]
+  depreciation:                [2300000, 2300000, 2300000, 2300000, 2300000, 2300000, 2300000]
+  ebit:                        [15520000, 15520000, 15520000, 15520000, 15520000, 15520000, 15520000]
+  accounts_receivable:         [12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000]
+  inventory:                   [0, 0, 0, 0, 0, 0, 0]
+  accounts_payable:            [1578082.191780822, 1578082.191780822, 1578082.191780822, 1578082.191780822, 1578082.191780822, 1578082.191780822, 1578082.191780822]
+  nwc:                         [10421917.808219178, 10421917.808219178, 10421917.808219178, 10421917.808219178, 10421917.808219178, 10421917.808219178, 10421917.808219178]
+  delta_ar:                    [0, 0, 0, 0, 0, 0, 0]
+  delta_inventory:             [0, 0, 0, 0, 0, 0, 0]
+  delta_ap:                    [0, 0, 0, 0, 0, 0, 0]
+  delta_nwc:                   [0, 0, 0, 0, 0, 0, 0]
+  capex:                       [0, 0, 4000000, 0, 0, 0, 0]
+  nbv_offset:                  [9000000, 7500000, 6000000, 4500000, 3000000, 1500000, 0]
+  nbv_digital:                 [800000, 0, 3200000, 2400000, 1600000, 800000, 0]
+  nbv:                         [9800000, 7500000, 9200000, 6900000, 4600000, 2300000, 0]
+  taxable_income_statutory:    [15520000, 15520000, 15520000, 15520000, 15520000, 15520000, 15520000]
+  taxable_band1:               [500000, 500000, 500000, 500000, 500000, 500000, 500000]
+  taxable_band2:               [500000, 500000, 500000, 500000, 500000, 500000, 500000]
+  taxable_band3:               [14520000, 14520000, 14520000, 14520000, 14520000, 14520000, 14520000]
+  ibica_band1:                 [50000, 50000, 50000, 50000, 50000, 50000, 50000]
+  ibica_band2:                 [100000, 100000, 100000, 100000, 100000, 100000, 100000]
+  ibica_band3:                 [3993000, 3993000, 3993000, 3993000, 3993000, 3993000, 3993000]
+  ibica_statutory:             [4143000, 4143000, 4143000, 4143000, 4143000, 4143000, 4143000]
+  mfp_computed:                [240000, 240000, 240000, 240000, 240000, 240000, 240000]
+  mfp:                         [300000, 300000, 300000, 300000, 300000, 300000, 300000]
+  tax_statutory:               [4143000, 4143000, 4143000, 4143000, 4143000, 4143000, 4143000]
+  withholding_advance:         [2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000]
+  nopat:                       [11377000, 11377000, 11377000, 11377000, 11377000, 11377000, 11377000]
+  cfo:                         [13677000, 13677000, 13677000, 13677000, 13677000, 13677000, 13677000]
+  cfi:                         [0, 0, -4000000, 0, 0, 0, 0]
+  fcff:                        [13677000, 13677000, 9677000, 13677000, 13677000, 13677000, 13677000]
+  cash_disbursements:          [30180000, 30180000, 34180000, 30180000, 30180000, 30180000, 30180000]
+  taxable_income_cashbasis:    [17820000, 17820000, 13820000, 17820000, 17820000, 17820000, 17820000]
+  ibica_cashbasis:             [4775500, 4775500, 3675500, 4775500, 4775500, 4775500, 4775500]
+  tax_cashbasis:               [4775500, 4775500, 3675500, 4775500, 4775500, 4775500, 4775500]
+  nopat_cashbasis:             [10744500, 10744500, 11844500, 10744500, 10744500, 10744500, 10744500]
+  fcff_cashbasis:              [13044500, 13044500, 10144500, 13044500, 13044500, 13044500, 13044500]
+
+fcff: [13677000, 13677000, 9677000, 13677000, 13677000, 13677000, 13677000]
+
+checks:
+  - "trace.accounts_receivable[t] == trace.accounts_receivable[t-1] + trace.delta_ar[t] for t >= 1"
+  - "trace.accounts_receivable[t] == ar_opening + trace.delta_ar[t] for t < 1"
+  - "trace.accounts_payable[t] == trace.accounts_payable[t-1] + trace.delta_ap[t] for t >= 1"
+  - "trace.accounts_payable[t] == ap_opening + trace.delta_ap[t] for t < 1"
+  - "trace.inventory[t] == trace.inventory[t-1] + trace.delta_inventory[t] for t >= 1"
+  - "trace.inventory[t] == inventory_opening + trace.delta_inventory[t] for t < 1"
+  - "trace.nwc == trace.accounts_receivable + trace.inventory - trace.accounts_payable"
+  - "trace.delta_nwc == trace.delta_ar + trace.delta_inventory - trace.delta_ap"
+  - "sum(trace.delta_nwc) == trace.nwc[last] - nwc_opening"
+  - "trace.nbv_offset[t] == trace.nbv_offset[t-1] - trace.depreciation_offset[t] for t >= 1"
+  - "trace.nbv_offset[t] == nbv_offset_opening - trace.depreciation_offset[t] for t < 1"
+  - "trace.nbv_digital[t] == trace.nbv_digital[t-1] + trace.capex[t] - trace.depreciation_digital[t] for t >= 1"
+  - "trace.nbv_digital[t] == nbv_digital_opening + trace.capex[t] - trace.depreciation_digital[t] for t < 1"
+  - "trace.nbv == trace.nbv_offset + trace.nbv_digital"
+  - "nbv_opening + sum(trace.capex) - sum(trace.depreciation) == trace.nbv[last]"
+  - "trace.nbv[last] == 0"
+  - "sum(trace.capex) == digital_cost"
+  - "trace.capex == 0 for t < digital_replacement_period"
+  - "cumsum(trace.capex) == digital_cost for t >= digital_replacement_period"
+  - "trace.depreciation_offset[first] * grid.periods == nbv_offset_opening"
+  - "nbv_offset_opening == offset_cost - offset_age_years * offset_cost / offset_life_years"
+  - "nbv_digital_opening == digital_cost - digital_age_years * digital_cost / digital_life_years"
+  - "nbv_opening == nbv_offset_opening + nbv_digital_opening"
+  - "nwc_opening == ar_opening + inventory_opening - ap_opening"
+  - "trace.billings == billings_good_year * revenue_realisation_factor"
+  - "trace.materials_cost == trace.billings * materials_share_of_billings"
+  - "trace.materials_purchased == trace.materials_cost + trace.delta_inventory"
+  - "trace.materials_paid == trace.materials_purchased - trace.delta_ap"
+  - "trace.collections == trace.billings - trace.delta_ar - trace.bad_debt_writeoff"
+  - "trace.wages == employees * wage_per_employee_month * months_per_year"
+  - "trace.cnss_employer == trace.wages * cnss_employer_rate * payroll_declared_fraction"
+  - "trace.tpa == trace.wages * tpa_rate * payroll_declared_fraction"
+  - "trace.rent == rent_month * months_per_year"
+  - "trace.electricity == electricity_month * months_per_year"
+  - "trace.patente == trace.rent * patente_droit_proportionnel_rate + patente_droit_fixe"
+  - "trace.consumables_and_maintenance == consumables_and_maintenance_annual"
+  - "trace.other_overheads == other_overheads_annual"
+  - "trace.subcontracting == subcontracting_cost_annual"
+  - "trace.manager_replacement == manager_replacement_cost_annual"
+  - "trace.bad_debt_writeoff == bad_debt_writeoff_annual"
+  - "trace.accounts_receivable == trace.billings * ar_days / days_per_year"
+  - "trace.accounts_payable == trace.materials_purchased * supplier_days / days_per_year"
+  - "trace.inventory == trace.materials_cost * inventory_days / days_per_year"
+  - "ar_outstanding_year_end / billings_good_year * days_per_year >= client_payment_terms_days"
+  - "trace.depreciation_offset == offset_cost / offset_life_years"
+  - "trace.depreciation_digital == digital_cost / digital_life_years"
+  - "trace.depreciation == trace.depreciation_offset + trace.depreciation_digital"
+  - "trace.opex_total == trace.materials_cost + trace.wages + trace.cnss_employer + trace.tpa + trace.rent + trace.electricity + trace.patente + trace.consumables_and_maintenance + trace.other_overheads + trace.subcontracting + trace.manager_replacement + trace.bad_debt_writeoff"
+  - "trace.ebitda == trace.billings - trace.opex_total"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.taxable_income_statutory == trace.ebit"
+  - "trace.billings[t] >= rsi_threshold_low"
+  - "trace.billings[t] < rsi_threshold_high"
+  - "trace.billings[t] > smt_ceiling_artisanal"
+  - "trace.taxable_income_statutory >= ibica_band2_ceiling"
+  - "trace.taxable_band1 == ibica_band1_ceiling"
+  - "trace.taxable_band2 == ibica_band2_ceiling - ibica_band1_ceiling"
+  - "trace.taxable_band1 + trace.taxable_band2 + trace.taxable_band3 == trace.taxable_income_statutory"
+  - "trace.ibica_band1 == trace.taxable_band1 * ibica_rate_band1"
+  - "trace.ibica_band2 == trace.taxable_band2 * ibica_rate_band2"
+  - "trace.ibica_band3 == trace.taxable_band3 * ibica_rate_band3"
+  - "trace.ibica_statutory == trace.ibica_band1 + trace.ibica_band2 + trace.ibica_band3"
+  - "ibica_top_band_offset == ibica_band1_ceiling * (ibica_rate_band3 - ibica_rate_band1) + (ibica_band2_ceiling - ibica_band1_ceiling) * (ibica_rate_band3 - ibica_rate_band2)"
+  - "trace.ibica_statutory == trace.taxable_income_statutory * ibica_rate_band3 - ibica_top_band_offset"
+  - "trace.mfp_computed == trace.billings * mfp_rate"
+  - "trace.mfp >= trace.mfp_computed"
+  - "trace.mfp >= mfp_floor_rsi"
+  - "trace.tax_statutory >= trace.ibica_statutory"
+  - "trace.tax_statutory >= trace.mfp"
+  - "trace.withholding_advance == trace.billings * withholding_rate_prestations"
+  - "trace.tax_statutory >= trace.withholding_advance"
+  - "trace.nopat == trace.ebit - trace.tax_statutory"
+  - "trace.cfo == trace.ebitda - trace.delta_nwc - trace.tax_statutory"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex"
+  - "trace.cash_disbursements == trace.materials_paid + trace.wages + trace.cnss_employer + trace.tpa + trace.rent + trace.electricity + trace.patente + trace.consumables_and_maintenance + trace.other_overheads + trace.subcontracting + trace.manager_replacement + trace.capex"
+  - "trace.taxable_income_cashbasis == trace.collections - trace.cash_disbursements"
+  - "trace.taxable_income_cashbasis >= ibica_band2_ceiling"
+  - "trace.ibica_cashbasis == trace.taxable_income_cashbasis * ibica_rate_band3 - ibica_top_band_offset"
+  - "trace.tax_cashbasis >= trace.ibica_cashbasis"
+  - "trace.tax_cashbasis >= trace.mfp"
+  - "trace.nopat_cashbasis == trace.ebit - trace.tax_cashbasis"
+  - "trace.fcff_cashbasis == trace.nopat_cashbasis + trace.depreciation - trace.delta_nwc - trace.capex"
+  - "sum(trace.tax_cashbasis) - sum(trace.tax_statutory) == (sum(trace.depreciation) - sum(trace.capex)) * ibica_rate_band3"
+  - "sum(trace.fcff) - sum(trace.fcff_cashbasis) == sum(trace.tax_cashbasis) - sum(trace.tax_statutory)"
+  - "trace.nbv[t] >= 0"
+  - "trace.nbv_offset[t] >= 0"
+  - "trace.nbv_digital[t] >= 0"
+  - "trace.inventory[t] >= 0"
+  - "trace.accounts_receivable[t] >= 0"
+  - "trace.accounts_payable[t] >= 0"
+  - "trace.capex[t] >= 0"
+  - "trace.tax_statutory[t] >= 0"
+  - "trace.tax_cashbasis[t] >= 0"
+  - "trace.opex_total[t] >= 0"
+
+notes:
+  - >-
+    THE CENTRAL FINDING, AND IT IS ABOUT TWO DIFFERENT OBJECTS. The founder states as a fact about
+    his business that the administration taxes him on collections less disbursements, and that his
+    accountant calls this comptabilite de tresorerie. I have recorded that faithfully and modelled it
+    in full. Separately, the following are facts about the world, each verified on 2026-07-27 and
+    carried in `inputs` with its authority: at 48,000,000 of annual billings he sits inside the
+    regime du reel simplifie d'imposition, whose band runs from 15,000,000 to 50,000,000; RSI
+    taxpayers file SYSCOHADA financial statements and are not authorised to invoice VAT; the
+    Burkinabe CGI brings into charge profits arising from creances acquises et non encore recouvrees
+    and refuses deduction for sommes engagees pour l'acquisition des immobilisations, allowing only
+    amortissement; and the OHADA systeme minimal de tresorerie, the only cash-based accounting system
+    in the SYSCOHADA framework, is closed by AUDCIF art. 13 to entities whose annual receipts exceed
+    40,000,000 for artisanal activity. I searched for and did not find any Burkinabe provision
+    authorising a cash determination of IBICA for a taxpayer of his size. I therefore run the law as
+    the base case and materialise his description as the *_cashbasis rows. I am not asserting that
+    his accountant is wrong about what has been filed; I am asserting that what he describes is not
+    what the instruments I checked provide, and that the gap is a live exposure rather than a
+    modelling nicety.
+  - >-
+    THE BELIEF IS NOT MERELY WRONG, IT IS WRONG IN THE UNFAVOURABLE DIRECTION -- and this is
+    materialised in the trace, not asserted in prose. Over the horizon the two tax bases differ only
+    by depreciation taken against capex deducted, so the founder's basis produces the HIGHER lifetime
+    tax and the LOWER lifetime FCFF. The deferral he believes he enjoys exists only while the
+    receivable book is growing; on his own testimony it is not growing -- "toujours a peu pres
+    douze". Direction, for a reader who wants the intuition: a cash basis rewards a business that is
+    still building its receivable and still buying machines, and punishes one that has finished doing
+    both and is living off assets already paid for. He is the second kind.
+  - >-
+    THE TRANSIENT HE ACTUALLY FEARS IS NOT IN THIS MODEL. "L'annee ou ils me reglent tout d'un coup,
+    je prends l'impot en pleine figure" describes a collapse in the receivable stock, which under a
+    cash basis would spike one year's taxable income and, under either basis, would deliver a large
+    one-off cash inflow. Nothing in the utterance dates it, sizes it, or says whether it has ever
+    happened. I have neither modelled it nor smoothed it away. Direction only: a year in which the
+    stock falls releases cash and, on his stated basis, raises that year's tax; the following year
+    reverses on both counts. The prerequisite for modelling it is a receivable ageing schedule, which
+    is an interview question, not an assumption.
+  - >-
+    THE BASE CASE IS SYSTEMATICALLY OPTIMISTIC AND THE READER SHOULD KNOW WHICH WAY. Five cost lines
+    are carried at zero because the founder did not name them -- consumables and maintenance, other
+    overheads, bought-in work, replacement of his own labour, bad debt -- and the revenue line runs
+    at his self-described GOOD year. Every one of those choices, if corrected, moves FCFF down. None
+    moves it up. The three highest-materiality questions in `inputs` are, in order: what a normal
+    (not good) year bills; what basis the DGI has actually assessed him on; and what he spends
+    annually on plates, chemicals, spares and repairs. If the founder will answer only three
+    questions, those are the three.
+  - >-
+    HE IS SITTING ON A REGIME CLIFF. At 48,000,000 he is roughly 4% below the 50,000,000 line
+    separating the RSI from the regime du reel normal. Crossing it -- one good donor contract --
+    changes four things at once: mandatory SYSCOHADA systeme normal, monthly rather than quarterly
+    filing, a minimum forfaitaire floor more than three times higher, and entry into the VAT net,
+    which means charging output VAT to school and NGO buyers who are highly price-sensitive and
+    frequently exempt on donor-funded procurement, in exchange for recovering input VAT on paper.
+    Direction only: the recovery of input VAT is a real gain against a real commercial risk on price,
+    and the net sign depends on facts about his customers' VAT status that are not in the utterance.
+    This cliff is a second reason, alongside the absence of any growth statement, why the model
+    projects flat billings rather than growth.
+  - >-
+    A CONSEQUENCE OF RSI STATUS THAT IS EASY TO DOUBLE-COUNT. Because he can neither charge nor
+    recover VAT, his 48,000,000 of billings carries no output VAT and his stated 40% paper-and-ink
+    ratio is already a VAT-inclusive cash cost. Neither figure should be grossed up. Part of the
+    reason his materials ratio looks high for a jobbing printer is precisely that it contains
+    irrecoverable input VAT.
+  - >-
+    WITHHOLDING AT SOURCE CUTS AGAINST HIS OWN STORY. His customer base -- schools, NGOs, donor
+    projects -- consists of debtors established in Burkina Faso, who withhold on payments to
+    registered providers and remit the withholding as an advance creditable against the profits tax.
+    At annual frequency it nets to zero and it touches no line of FCFF; the model materialises it
+    only to assert that it is fully absorbed by the liability rather than stranding him in permanent
+    credit. Its analytical significance is qualitative: a meaningful slice of his profits tax is
+    already collected at the moment each client pays, so slow payment defers rather less of his tax
+    than he believes. A friction I have not resolved: whether printed exercise books delivered to
+    specification are a prestation de services (withheld) or a sale of manufactured goods (treated
+    differently) is a characterisation question I could not settle from public sources, and the
+    absorption check above is a bound, not a determination.
+  - >-
+    THE VOLUME BUILD I COULD NOT DO. A print shop's natural quantities are impressions, sheets, run
+    lengths and square metres, priced per thousand and constrained by press hours. The founder gave
+    none of these -- only a single value ratio. So the operating layer here is a value build, and it
+    carries two blind spots that a volume build would close: I cannot test whether two presses can
+    physically deliver 48,000,000 of work in a year, and I cannot distinguish a bad year caused by
+    fewer jobs from one caused by thinner margins on the same jobs. The question that would open this
+    up -- how many impressions the offset ran last year and what he charges per thousand -- is worth
+    asking alongside the three ranked in `inputs`, and I have deliberately not invented a sheet count
+    or an impression rate to fill the hole.
+  - >-
+    AN INCONSISTENCY IN HIS OWN PRODUCT LIST, WHICH BECAME A QUESTION. He sells baches -- wide-format
+    PVC banners -- but names only a sheet-fed offset press and a small digital press, neither of which
+    prints PVC. Either there is a machine he did not mention or that work is bought in, and if it is
+    bought in there is a cost sitting outside the 40% paper-and-ink ratio. Carried at zero and
+    elicited rather than assumed, because he plainly holds the answer.
+  - >-
+    DEPRECIATION LIVES ARE HIS, NOT THE TAX CODE'S. The Burkinabe CGI allows amortissements computed
+    by reference to the usages of each industry rather than a published statutory rate table for
+    printing plant, with a degressif option available on qualifying equipment. I have therefore used
+    the founder's own ten-year and five-year lives on a straight-line basis and named the convention
+    rather than sourcing a rate I could not find. Direction only: a degressif election would
+    front-load the deduction and shift tax between periods within the horizon without changing the
+    lifetime total materially, since both machines reach nil book value inside the window either way.
+  - >-
+    OWNER'S LABOUR AND OWNER'S DRAWINGS ARE TWO DIFFERENT THINGS AND BOTH ARE ABSENT. The FCFF above
+    is asset-side and pre-distribution, so drawings are correctly excluded; but the founder's own
+    labour as the printer is a genuine operating input carried at zero, which flatters the number
+    against a third-party operator. I have materialised the replacement cost as a zero-valued elicited
+    line rather than a note, so a reader can switch it on. A separate wrinkle worth flagging: an
+    individual entrepreneur's own drawings are not deductible for IBICA in any case -- the profit IS
+    his income -- so the tax line above would be unaffected by what he pays himself, whereas a salary
+    to a hired manager would be deductible.
+  - >-
+    WHAT I DELIBERATELY DID NOT MODEL. No leverage (none described, and the build is unlevered by
+    construction). No growth (no growth statement in the utterance, and the 50,000,000 regime cliff
+    makes casual growth a materially different business). No inflation (constant-price convention,
+    named; the resulting stream is real and requires a real discount rate). No terminal value (the
+    horizon is chosen so both machines end at nil book value). No IUTS: the wage tax on salaries is
+    withheld from the employee, not borne by the employer, and does not belong in this cost stack.
+    No CNSS employee share, for the same reason.

@@ -1,0 +1,1093 @@
+contract: "v2.6"
+id: juice_nondeductible_bouake_v26
+title: "Mango-juice unit, Bouake (Cote d'Ivoire) - unlevered FCFF over the remaining life of the production line, with the undocumented-fruit-purchase reintegration"
+currency: XOF
+
+grid:
+  periods: 9
+  freq: "annual (campaign year: one mango campaign plus the twelve months of sales that drain it)"
+  why: >-
+    The horizon is set by the only durable asset. The founder bought the line one year ago against a
+    stated ten-year life, so nine campaign-years of that life remain; the model runs t=0..t=8 and the
+    line's net book value reaches exactly zero at t=8. Stopping there is a choice, and it is the
+    choice that keeps the question answerable: continuing past t=8 requires a replacement decision the
+    founder has not made and a machine price at a date nine years out that I cannot source, so a
+    tenth period would be invention rather than derivation. Shortening it would truncate an asset that
+    is demonstrably not worn out.
+    The period length is one year because that is the length of this business's actual cycle, not a
+    convention. The fruit arrives in a single window (Ivorian mango harvest runs roughly mid-April to
+    early July), the entire year's production is made inside that window, and the bottles are then
+    sold over the following twelve months; a period shorter than the full cycle would cut a purchase
+    campaign away from the sales that pay for it. Every tax that matters here - the profits tax, the
+    minimum tax, the patente, and the taxe d'Etat de l'entreprenant that I find he is statutorily in
+    the band for - is assessed annually, and the founder's whole question (a permanent
+    non-deduction) is an annual computation.
+    A monthly grid would be more faithful to the cash trough the campaign creates - he pays 12.5m XOF
+    in cash for fruit inside about twelve weeks and recovers it over the following year - but it would
+    need 108 periods and would not change a single annual figure below, because the working-capital
+    position is already funded and does not move in steady state. I record the trough as a finding
+    instead. A reader who thinks the financing question dominates the asset-side question should
+    rebuild this monthly; that is a legitimate disagreement with my choice, and it is why the choice
+    is written down.
+
+utterance:
+  fr: >-
+    J'ai une petite unite de jus de mangue a Bouake. J'achete la mangue directement aux paysans des
+    vergers autour, a la recolte : je prends cent tonnes dans la saison, a cent vingt-cinq francs le
+    kilo. Il faut trois kilos de mangue pour faire un litre de jus. Je vends le jus en bouteilles
+    d'un litre aux supermarches et aux boutiques d'Abidjan, a mille deux cents francs la bouteille.
+    Les bouteilles, les bouchons et les etiquettes me coutent deux cents francs par bouteille, et le
+    sucre et l'acide citrique cent francs. J'ai la ligne de production que j'ai payee trente-cinq
+    millions il y a un an - on me dit dix ans. Trois ouvriers a quatre-vingt-dix mille par mois, le
+    hangar a deux cent mille par mois, et le courant et l'eau a trois cent mille par mois. Je suis
+    une societe declaree, je paie l'impot sur le benefice. Mais il y a un truc qui me fait mal : les
+    paysans ne me donnent aucune facture - ils n'ont pas de registre de commerce, ils veulent le cash
+    et c'est tout. Mon comptable me dit que sans facture il ne peut pas passer ces achats en charge
+    deductible. Donc pour l'impot, c'est comme si je n'avais jamais achete ces mangues : je paie
+    l'impot sur un benefice bien plus gros que celui que je fais vraiment. Et ce n'est pas un decalage
+    dans le temps - cette deduction-la, je ne la recupere jamais.
+  en: >-
+    I have a small mango-juice unit in Bouake. I buy the mangoes directly from the farmers in the
+    orchards around, at harvest time: I take one hundred tonnes over the season, at one hundred and
+    twenty-five francs a kilo. It takes three kilos of mango to make one litre of juice. I sell the
+    juice in one-litre bottles to the supermarkets and the small shops in Abidjan, at one thousand
+    two hundred francs a bottle. The bottles, the caps and the labels cost me two hundred francs per
+    bottle, and the sugar and citric acid one hundred. I have the production line, which I paid
+    thirty-five million for a year ago - they tell me ten years. Three workers at ninety thousand a
+    month, the shed at two hundred thousand a month, and power and water at three hundred thousand a
+    month. I am a registered company, I pay profits tax. But there is one thing that hurts: the
+    farmers give me no invoice - they have no trade register entry, they want cash and that is all.
+    My accountant tells me that without an invoice he cannot put those purchases through as a
+    deductible expense. So for tax it is as if I had never bought those mangoes: I pay tax on a
+    profit far bigger than the one I actually make. And it is not a timing difference - that
+    deduction, I never get it back.
+
+inputs:
+
+  fruit_purchased_kg_per_season:
+    value: 100000
+    unit: kg of fresh mango per campaign
+    prov: STATED
+    source: "\"je prends cent tonnes dans la saison\" / \"I take one hundred tonnes over the season\""
+    date: 2026-07-27
+
+  mango_price_xof_per_kg:
+    value: 125
+    unit: XOF per kg
+    prov: STATED
+    source: "\"a cent vingt-cinq francs le kilo\". Corroborated by the sector benchmark below."
+    date: 2026-07-27
+
+  mango_farmgate_benchmark_xof_per_kg:
+    value: 122.5
+    unit: XOF per kg
+    prov: SOURCED
+    source: "Cross-check on the founder's 125 XOF/kg: the official bord-champ reference is 2,450 FCFA per ~20 kg crate. His price is 2% above bord-champ, consistent with buying at the orchard and carrying the fruit himself. Not used in the arithmetic; used to accept mango_price_xof_per_kg as sound."
+    authority: "Inter-Mangue official bord-champ price, 2,450 FCFA/caisse (~20 kg) = 122.5 XOF/kg; 220 XOF/kg at a conditioning station. Reported by AIP (Agence Ivoirienne de Presse). Annex fact CI-SEC-07."
+    verified: 2026-07-26
+    fact_id: CI-SEC-07
+
+  mango_kg_per_litre:
+    value: 3
+    unit: kg of purchased fresh mango per litre of bottled juice
+    prov: STATED
+    source: "\"Il faut trois kilos de mangue pour faire un litre de jus\". This is a RATIO the founder hands me, and it is net of everything the fruit loses: see reject_rate, peel_fraction, stone_fraction, finisher_recovery and line_loss_rate below, which decompose it into a balance that sums to 3.000 kg exactly. Roughly two of the three kilos never reach a bottle."
+    date: 2026-07-27
+
+  bottle_price_xof:
+    value: 1200
+    unit: XOF per 1-litre bottle
+    prov: STATED
+    source: "\"a mille deux cents francs la bouteille\""
+    date: 2026-07-27
+
+  bottle_size_l:
+    value: 1
+    unit: litre per bottle
+    prov: STATED
+    source: "\"bouteilles d'un litre\""
+    date: 2026-07-27
+
+  packaging_cost_per_bottle_xof:
+    value: 200
+    unit: XOF per bottle produced
+    prov: STATED
+    source: "\"Les bouteilles, les bouchons et les etiquettes me coutent deux cents francs par bouteille\". Charged on bottles PRODUCED, not sold: the empty is consumed at filling, so a bottle later broken or expired has already consumed its packaging."
+    date: 2026-07-27
+
+  ingredient_cost_per_bottle_xof:
+    value: 100
+    unit: XOF per bottle produced
+    prov: STATED
+    source: "\"le sucre et l'acide citrique cent francs\". See sugar_dose_kg_per_bottle: at a physically drinkable dose this cash figure is about twice the dose-implied cost, which is a finding, not a correction - the cash figure is his and the model uses it."
+    date: 2026-07-27
+
+  line_cost_xof:
+    value: 35000000
+    unit: XOF
+    prov: STATED
+    source: "\"la ligne de production que j'ai payee trente-cinq millions\""
+    date: 2026-07-27
+
+  line_life_years:
+    value: 10
+    unit: years
+    prov: STATED
+    source: "\"on me dit dix ans\". Taken as both the accounting and the tax life; 10%/yr straight-line on industrial plant is inside the ordinary Ivorian amortissement lineaire range, so no book/tax timing difference is created."
+    date: 2026-07-27
+
+  line_age_years:
+    value: 1
+    unit: years
+    prov: STATED
+    source: "\"il y a un an\" - the line is one year old at t=0, so nine years of life remain."
+    date: 2026-07-27
+
+  workers:
+    value: 3
+    unit: persons
+    prov: STATED
+    source: "\"Trois ouvriers\""
+    date: 2026-07-27
+
+  wage_per_worker_month_xof:
+    value: 90000
+    unit: XOF per worker per month
+    prov: STATED
+    source: "\"a quatre-vingt-dix mille par mois\". Taken as gross salary, twelve months a year - he states a monthly rate with no seasonal qualifier, and the workers are on the payroll through the nine months in which there is no fruit."
+    date: 2026-07-27
+
+  shed_rent_per_month_xof:
+    value: 200000
+    unit: XOF per month
+    prov: STATED
+    source: "\"le hangar a deux cent mille par mois\""
+    date: 2026-07-27
+
+  utilities_per_month_xof:
+    value: 300000
+    unit: XOF per month
+    prov: STATED
+    source: "\"le courant et l'eau a trois cent mille par mois\""
+    date: 2026-07-27
+
+  smig_monthly:
+    value: 75000
+    unit: XOF per month
+    prov: SOURCED
+    source: "Compliance floor only. The stated 90,000 XOF exceeds it, so the wage is lawful and needs no adjustment; asserted in checks."
+    authority: "Cote d'Ivoire, decret n. 2022-986 du 21 decembre 2022, SMIG raised to 75,000 FCFA from 1 January 2023, still in force in 2026. Annex fact CI-V25-09 / CI-TAX-09."
+    verified: 2026-07-27
+    fact_id: CI-V25-09
+
+  bottles_produced_per_season:
+    value: 33333
+    unit: filled 1-litre bottles per campaign
+    prov: INFERRED
+    source: "floor(fruit_purchased_kg_per_season / mango_kg_per_litre) = floor(100000/3) = 33333. The division does not close on a whole bottle: 1 kg of fruit is left over at the end of the campaign as a part-batch that cannot fill a bottle, carried explicitly as trace.fruit_unconverted_kg so the mass balance closes on 100,000 kg exactly rather than on a rounded 33,333.33."
+    date: 2026-07-27
+
+  nbv_opening_xof:
+    value: 31500000
+    unit: XOF
+    prov: INFERRED
+    source: "line_cost_xof - line_cost_xof/line_life_years * line_age_years = 35,000,000 - 3,500,000 = 31,500,000. No new information: cost, life and age are all stated."
+    date: 2026-07-27
+
+  reintegration_basis:
+    value: 12500000
+    unit: XOF per year
+    prov: INFERRED
+    source: "The whole mango spend is reintegrated, because the whole mango spend is undocumented: \"les paysans ne me donnent aucune facture\" applies to all of it, and the fruit is bought from one homogeneous class of supplier. mango_price_xof_per_kg * fruit_purchased_kg_per_season = 12,500,000."
+    date: 2026-07-27
+
+  invoice_substantiation_rule:
+    value: facture_normalisee_required_for_deduction
+    unit: label
+    prov: SOURCED
+    source: "The founder's accountant is right on the current facts: a purchase with no compliant invoice is not deductible, and the reintegration is permanent, not a timing difference - he never recovers it, exactly as he says. What he is NOT right about is that nothing can be done: see bapa_available."
+    authority: "Cote d'Ivoire CGI arts. 384 et suivants (facture normalisee / facture normalisee electronique) and the reintegration consequence; DGI note de service on the FNE. Annex fact CI-V25-46."
+    verified: 2026-07-27
+    fact_id: CI-V25-46
+
+  bapa_available:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "FINDING, not used in the base arithmetic. The DGI's own electronic-invoicing platform issues a buyer-created agricultural reception document that has the value of a purchase invoice - precisely the instrument for buying from farmers with no trade-register entry. If it is open to him, the reintegration disappears prospectively; the base case does NOT assume it, because eligibility and the accompanying withholding are not established from his words. Its value is quantified in trace.invoice_cost."
+    authority: "DGI Cote d'Ivoire, plateforme Facture Normalisee Electronique (FNE), FAQ: document types include \"Le bordereau electronique de reception de produits agricoles (valeur de facture d'achat)\" and \"Le recu electronique de reception de produits agricoles (valeur de facture d'achat)\" - https://www.fne.dgi.gouv.ci/faq.php ; FNE legal basis CGI arts. 384, 385 et suivants and LPF arts. 144 et suivants."
+    verified: 2026-07-27
+
+  is_rate:
+    value: 0.25
+    unit: fraction of taxable profit
+    prov: SOURCED
+    source: "Applied to the reintegrated taxable profit. The 25% rate does not vary by legal form, so his description of himself as a societe does not change it."
+    authority: "Cote d'Ivoire, impot BIC/IS at 25% (30% telecom/ICT, 35% non-resident); DGI, Le systeme fiscal ivoirien; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income. Annex facts CI-V25-45 / CI-TAX-01."
+    verified: 2026-07-27
+    fact_id: CI-V25-45
+
+  imf_rate:
+    value: 0.005
+    unit: fraction of turnover TTC
+    prov: SOURCED
+    source: "The minimum tax is computed on turnover INCLUDING taxes, which is why revenue_ttc is materialised separately from revenue."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income, minimum tax 0.5% of total turnover. Annex fact CI-V25-17 / CI-TAX-02."
+    verified: 2026-07-27
+    fact_id: CI-V25-17
+
+  imf_floor:
+    value: 3000000
+    unit: XOF per year
+    prov: SOURCED
+    source: "This is the single most consequential number in the whole computation and the founder does not mention it. At his turnover 0.5% of CA TTC is only ~234k, so the IMF is the floor, and the floor is what he pays whenever his profits tax would be smaller. It is what makes his grievance far smaller than he believes."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income, minimum tax floor XOF 3 million. Annex fact CI-V25-18 / CI-TAX-02."
+    verified: 2026-07-27
+    fact_id: CI-V25-18
+
+  imf_ceiling:
+    value: 35000000
+    unit: XOF per year
+    prov: SOURCED
+    source: "Not binding at this scale; carried so the min/max nesting of the IMF computation is materialised and checkable rather than assumed away."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income, minimum tax ceiling XOF 35 million. Annex fact CI-V25-19 / CI-TAX-02."
+    verified: 2026-07-27
+    fact_id: CI-V25-19
+
+  imf_rule_shape:
+    value: max_of_bic_and_imf
+    unit: label
+    prov: SOURCED
+    source: "The floor and cap sit INSIDE the IMF computation and the IMF then substitutes for the profits tax (\"en lieu et place\"); it is not a credit. Implemented as tax = max(bic, min(max(rate*CA_TTC, floor), ceiling))."
+    authority: "DGI, IMF rule shape; annex fact CI-TAX-03."
+    verified: 2026-07-26
+    fact_id: CI-TAX-03
+
+  vat_rate:
+    value: 0.18
+    unit: fraction
+    prov: SOURCED
+    source: "Processed fruit juice is standard-rated - it is not an unprocessed staple. Used to build revenue_ttc for the IMF base, and to size the input VAT that becomes an irrecoverable cost under the entreprenant regime."
+    authority: "Cote d'Ivoire CGI, VAT 18%; processed fruit juice standard-rated. Annex facts CI-TAX-10 and CI-V25-39."
+    verified: 2026-07-26
+    fact_id: CI-TAX-10
+
+  tee_band_lower:
+    value: 5000001
+    unit: XOF per year, turnover TTC
+    prov: SOURCED
+    source: "Lower edge of the regime de l'entreprenant band; asserted against revenue_ttc in checks."
+    authority: "Cote d'Ivoire CGI art. 73 (band 5,000,001 - 50,000,000 XOF TTC), annexe fiscale 2021 (loi n. 2020-972 du 23 decembre 2020). Annex facts CI-V25-05 / CI-TAX-05."
+    verified: 2026-07-27
+    fact_id: CI-V25-05
+
+  tee_band_upper:
+    value: 50000000
+    unit: XOF per year, turnover TTC
+    prov: SOURCED
+    source: "Upper edge of the band. His turnover TTC of 46.76m sits inside it with about 7% of headroom - and it sits inside it on EITHER reading of whether his 1,200 XOF price is net or gross of VAT, so the regime finding does not depend on that open question."
+    authority: "Cote d'Ivoire CGI art. 73; annexe fiscale 2021 (loi n. 2020-972 du 23 decembre 2020, art. 33). Annex fact CI-V25-42 / CI-TAX-05."
+    verified: 2026-07-27
+    fact_id: CI-V25-42
+
+  statutory_regime_at_this_turnover:
+    value: taxe_etat_de_l_entreprenant
+    unit: label
+    prov: SOURCED
+    source: "ESTABLISHED FROM HIS OWN NUMBERS, not assumed: 100 t / 3 kg per litre = 33,333 bottles, less warehouse loss, at 1,200 XOF = 39.63m XOF, or 46.76m TTC. That falls in the 5,000,001-50,000,000 TTC band, so the DEFAULT regime for this turnover is the regime de l'entreprenant, in which a turnover tax substitutes for the profits tax and there are no deductible charges to argue about. He nonetheless describes himself as filing under the profits tax with an accountant who computes charges deductibles - which is only meaningful in a reel regime, and is the internal evidence that he has OPTED out of the default. Both objects are recorded: what he believes about his business, and what the rule says about the world. The base case runs on what he actually files; the alternative is materialised in trace.fcff_tee."
+    authority: "Cote d'Ivoire, CGI arts. 72 et suivants (regime de l'entreprenant), art. 73 (persons subject and the 5,000,001-50,000,000 XOF TTC band), art. 77 (rates), introduced by the annexe fiscale to loi de finances n. 2020-972 du 23 decembre 2020. Annex fact CI-V25-40."
+    verified: 2026-07-27
+    fact_id: CI-V25-40
+
+  tee_substitutes_for_profits_tax:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "The substitution is what makes the founder's entire grievance regime-dependent: under the TEE there is no deductible-charge computation at all, so an unsupported purchase costs nothing in tax."
+    authority: "Cote d'Ivoire CGI arts. 72 et suivants; \"Cette taxe se substitue a la patente, a l'impot sur les benefices et a la TVA\". Annex facts CI-V25-41 / CI-TAX-06."
+    verified: 2026-07-27
+    fact_id: CI-V25-41
+
+  tee_rate:
+    value: 0.05
+    unit: fraction of turnover TTC
+    prov: SOURCED
+    source: "5% is the residual rate (prestations de services and other activities); 4% applies to commerce/negoce, i.e. buying and reselling. A unit that transforms fruit into juice is not negoce, so 5% is the correct reading and also the conservative one. The classification is not perfectly settled in the published guidance; the rate is wired into trace.tax_tee, so a reader who takes the 4% view gets a different number mechanically."
+    authority: "Cote d'Ivoire CGI art. 77 - 4% commerce/negoce, 5% prestations de services, both halved for members of a centre de gestion agree. Annex facts CI-V25-43 / CI-V25-44 / CI-TAX-06."
+    verified: 2026-07-27
+    fact_id: CI-V25-43
+
+  patente_ca_rate:
+    value: 0.005
+    unit: fraction of turnover HT
+    prov: SOURCED
+    source: "Droit sur le chiffre d'affaires. At his turnover this yields ~198k, below the floor, so the floor governs."
+    authority: "Cote d'Ivoire, contribution des patentes - droit sur le chiffre d'affaires, 0.5% of turnover HT. PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes. Annex facts CI-V25-51 / CI-V25-20 / CI-TAX-07."
+    verified: 2026-07-27
+    fact_id: CI-V25-51
+
+  patente_ca_floor:
+    value: 300000
+    unit: XOF per year
+    prov: SOURCED
+    source: "Binding here. A cost the founder does not mention and which follows necessarily from his being a declared taxpayer in a reel regime."
+    authority: "Contribution des patentes, minimum du droit sur le chiffre d'affaires. Annex fact CI-V25-52."
+    verified: 2026-07-27
+    fact_id: CI-V25-52
+
+  patente_vl_rate:
+    value: 0.185
+    unit: fraction of annual rental value
+    prov: SOURCED
+    source: "Droit sur la valeur locative, applied to the shed rent he states (2,400,000/yr) as the natural measure of valeur locative."
+    authority: "Contribution des patentes - droit sur la valeur locative, 18.5% of the rental value of professional premises (16% in rural zones). PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes. Annex facts CI-V25-54 / CI-TAX-07."
+    verified: 2026-07-27
+    fact_id: CI-V25-54
+
+  cnps_pension_rate_employer:
+    value: 0.077
+    unit: fraction of gross salary
+    prov: SOURCED
+    source: "Uncapped at this wage (the pension ceiling is 3,375,000/month, far above 90,000)."
+    authority: "CLEISS, Les cotisations en Cote d'Ivoire, rates in force 1 January 2025: retraite 7.70% employer. Annex facts CI-V25-32 / CI-V25-10 / CI-TAX-08."
+    verified: 2026-07-27
+    fact_id: CI-V25-32
+
+  cnps_family_rate_employer:
+    value: 0.05
+    unit: fraction of capped base
+    prov: SOURCED
+    source: "Applied to the 70,000 XOF/month capped base, not to the 90,000 gross - the cap bites here and a model that ignored it would overstate the charge."
+    authority: "CLEISS, Les cotisations en Cote d'Ivoire, 1 January 2025: prestations familiales 5% employer only, ceiling 70,000 XOF/month. Annex fact CI-V25-11."
+    verified: 2026-07-27
+    fact_id: CI-V25-11
+
+  cnps_maternity_rate_employer:
+    value: 0.0075
+    unit: fraction of capped base
+    prov: SOURCED
+    source: "Same capped base of 70,000 XOF/month."
+    authority: "CLEISS, Les cotisations en Cote d'Ivoire, 1 January 2025: maternite 0.75% employer only, ceiling 70,000 XOF/month. Annex fact CI-V25-12."
+    verified: 2026-07-27
+    fact_id: CI-V25-12
+
+  cnps_at_rate_employer:
+    value: 0.02
+    unit: fraction of capped base
+    prov: SOURCED
+    source: "Bottom of the 2-5% risk-class band. Chosen as the low end deliberately: a food-processing unit is not a high-risk class, and taking the low end is the conservative choice against overstating an unstated cost."
+    authority: "CLEISS, Les cotisations en Cote d'Ivoire, 1 January 2025: accidents du travail et maladies professionnelles 2% to 5% employer only depending on sector risk class, ceiling 70,000 XOF/month. Annex facts CI-V25-13 / CI-V25-33."
+    verified: 2026-07-27
+    fact_id: CI-V25-13
+
+  cnps_capped_base_monthly:
+    value: 70000
+    unit: XOF per worker per month
+    prov: SOURCED
+    source: "Ceiling for prestations familiales, maternite and accidents du travail."
+    authority: "CLEISS, Les cotisations en Cote d'Ivoire: monthly contribution ceiling 70,000 XOF. Annex facts CI-V25-14 / CI-V25-31."
+    verified: 2026-07-27
+    fact_id: CI-V25-14
+
+  employer_payroll_tax_rate:
+    value: 0.028
+    unit: fraction of gross payroll
+    prov: SOURCED
+    source: "DISCREPANCY REPORTED, and I prefer what I can reconcile. The annex row CI-V25-35 carries the value 0.044 but quotes its own authority as saying \"Payroll taxes: 2.8 percent of total taxable remuneration for local employees, 12 percent for expatriates\". The value contradicts the quotation it is built on. I use 2.8%, which reconciles to the standard build of contribution a la charge de l'employeur plus taxe d'apprentissage plus formation professionnelle continue for local staff, and I flag the row."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes: payroll taxes 2.8% of total taxable remuneration for local employees. Annex row CI-V25-35 (value 0.044 not adopted; its own quotation says 2.8%). Cf. CI-TAX-08 (TAP 0.4% + TFPC 1.2%)."
+    verified: 2026-07-27
+    fact_id: CI-V25-35
+
+  mango_flesh_fraction_literature:
+    value: 0.675
+    unit: fraction of whole fruit (midpoint of the published 0.60-0.75 range)
+    prov: SOURCED
+    source: "Used to validate, not to drive: my derived pulp recovery of 62.04% of purchased fruit must sit inside the published flesh and industrial-pulp-recovery ranges, and it does. Reference point only; the balance is driven by peel_fraction and stone_fraction."
+    authority: "Frontiers in Plant Science (2019), \"Chemical Composition of Mango (Mangifera indica L.) Fruit\": mango consists of 60-75% flesh, 14-22% seed, 11-18% peel; industrial processing yields 60-75% pulp with 25-40% as by-product. https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2019.01073/full"
+    verified: 2026-07-27
+
+  peel_fraction:
+    value: 0.17
+    unit: fraction of fruit entering the line, peel with adhering flesh
+    prov: ASSUMED
+    source: "Prior. Inside the published 11-18% peel range and at its upper end, because the figure is peel WITH the flesh that stays attached to it in a small hand-fed unit rather than clean peel. Nobody in this business could state it: the founder does not weigh his peel, and the world publishes ranges, not this plant's number - so it is ASSUMED rather than ELICITED, and that is a claim I am making deliberately."
+    date: 2026-07-27
+
+  stone_fraction:
+    value: 0.17
+    unit: fraction of fruit entering the line, stone with adhering flesh
+    prov: ASSUMED
+    source: "Prior. Published seed fraction is 14-22%; 17% with adhering flesh is mid-range. Same reasoning as peel_fraction: a published range exists, this plant's number does not."
+    date: 2026-07-27
+
+  finisher_recovery:
+    value: 0.545
+    unit: fraction of pulp recovered as strained juice
+    prov: ASSUMED
+    source: "Prior, and it is the residual that makes the founder's own 3 kg/litre close. Given 6% reception reject, 17% peel and 17% stone, pulp is 62.04% of purchased fruit; to land on one litre of bottled juice per 3 kg the finisher and filtration stage must retain about 45.5% of the pulp as fibrous pomace. That is a low recovery by industrial standards and a plausible one for a small unit with a coarse finisher - and it is a consequence of the founder's ratio, not an independent guess."
+    date: 2026-07-27
+
+  reject_rate:
+    value: 0.06
+    unit: fraction of fruit converted, rejected at reception
+    prov: ASSUMED
+    source: "Prior for fruit sorted out at reception as rotten, bruised, immature or over-ripe. Mango is picked ripe and moves to Bouake on unrefrigerated transport; a reception reject of a few percent is unavoidable, and it also absorbs the loss on the one to three days the fruit is held before processing - which is why the fresh-fruit stock carries no separate loss rate."
+    date: 2026-07-27
+
+  line_loss_rate:
+    value: 0.03
+    unit: fraction of finisher juice lost between finisher and capped bottle
+    prov: ASSUMED
+    source: "Prior for CIP flush, first and last runnings, foam, filler spillage and under/over-fill rejects. Three percent is a normal small-line figure."
+    date: 2026-07-27
+
+  bottle_net_mass_kg:
+    value: 1.055
+    unit: kg of product in a filled 1-litre bottle
+    prov: ASSUMED
+    source: "Prior. Density of a sweetened fruit juice at roughly 15-19 degrees Brix. Used only to close the fill balance (juice + sugar + citric acid = bottle contents); it moves no XOF."
+    date: 2026-07-27
+
+  citric_dose_kg_per_bottle:
+    value: 0.0012
+    unit: kg per bottle
+    prov: ASSUMED
+    source: "Prior. 1.2 g/litre of citric acid is the normal dose to bring mango juice below pH 4 so that a simple pasteurisation is microbiologically sufficient - which is what lets him hold stock at ambient for the nine months between campaigns."
+    date: 2026-07-27
+
+  line_design_hours:
+    value: 20000
+    unit: operating hours over the machine's mechanical life
+    prov: ASSUMED
+    source: "Prior for stainless food-processing machinery. Used only as the yardstick for the cumulative-hours test in checks: it is the figure my 9-year total has to fit inside, and it does, by a factor of more than twenty."
+    date: 2026-07-27
+
+  hours_per_working_day:
+    value: 8
+    unit: hours
+    prov: DEFAULTED
+    source: "Standard single shift. Nothing in the utterance suggests shift work, and the capacity test below shows none is needed."
+    date: 2026-07-27
+
+  working_day_fraction:
+    value: 0.8571428571428571
+    unit: fraction of calendar days worked (6 days in 7)
+    prov: DEFAULTED
+    source: "Standard six-day week for an Ivorian processing unit in campaign."
+    date: 2026-07-27
+
+  months_per_year:
+    value: 12
+    unit: months
+    prov: DEFAULTED
+    source: "Monthly costs stated by the founder are annualised over twelve months, not over the campaign: rent and wages run whether or not there is fruit, and he gives them as unqualified monthly rates."
+    date: 2026-07-27
+
+  days_per_year:
+    value: 365
+    unit: days
+    prov: DEFAULTED
+    source: "Standard convention for converting days-based working-capital terms into a fraction of a year."
+    date: 2026-07-27
+
+  salvage_value_xof:
+    value: 0
+    unit: XOF
+    prov: DEFAULTED
+    source: "Standard convention where no residual is stated: straight-line to zero over the stated life. Food-contact stainless has scrap value, so this is the conservative choice; noted."
+    date: 2026-07-27
+
+  price_net_factor:
+    value: 1.0
+    unit: multiplier on the stated bottle price to reach net revenue
+    prov: ELICITED
+    question: "When you invoice a supermarket for a bottle at 1,200 francs, do you add the 18% TVA on top of the 1,200, or is the 1,200 the total the supermarket pays you including TVA?"
+    range: {low: "1,200 is TTC - VAT is inside the price (factor 0.847457627118644)", high: "1,200 is HT - VAT is added on top (factor 1.0)"}
+    materiality: high
+    value_basis: "Base case runs on 1,200 HT, i.e. factor 1.0."
+    source: "This is the largest single open question in the model and it is the founder's to answer. Base case takes the price as HT because that is the reading consistent with the rest of his account: he describes his input costs the way a taxpayer in a reel regime with a comptable describes them, and a VAT-registered producer quotes B2B prices net. If the 1,200 is in fact TTC, net revenue falls by about 15% and the operation's real profit before the tax argument is close to nil. Wired through trace.revenue. Note that it does NOT disturb the regime finding: on either reading his turnover TTC stays inside the entreprenant band."
+    date: 2026-07-27
+
+  regime_option_filed:
+    value: reel_by_option
+    unit: label
+    prov: ELICITED
+    question: "Did you or your accountant file an option to be taxed under a regime du reel, and in which year - or were you simply registered under it when the company was created?"
+    range: {low: "no option filed - default regime de l'entreprenant applies", high: "option for the reel filed and in force"}
+    materiality: high
+    value_basis: "Base case assumes the reel is in force, because his accountant is computing deductible charges, which only a reel taxpayer does."
+    source: "STRUCTURAL as well as numerical: the answer changes which tax exists, not the size of one. It is nonetheless wired, through the parallel trace rows tax_tee / ebit_tee / fcff_tee, so a different answer produces a different FCFF mechanically rather than in prose."
+    date: 2026-07-27
+
+  freight_per_bottle_xof:
+    value: 0
+    unit: XOF per bottle sold
+    prov: ELICITED
+    question: "Who pays to get the bottles from Bouake to Abidjan - do the buyers collect from your shed, or do you hire a truck, and what does one truck cost you?"
+    range: {low: 0, high: 60}
+    materiality: high
+    value_basis: "Zero - the omitting choice."
+    source: "Set to zero because the founder gave what reads as a complete cost list and did not mention transport, so the base case treats his sale as ex-works Bouake and does not invent a cost he may not bear. But the finished goods weigh roughly 50 tonnes a year and Abidjan is about 350 km away, so if he does bear it the amount is real. Zero is the omitting choice, not a belief. Wired through trace.freight_cost."
+    date: 2026-07-27
+
+  maintenance_rate:
+    value: 0.02
+    unit: fraction of line cost per year
+    prov: ELICITED
+    question: "In the twelve months you have had the line, what did you actually spend on spare parts, servicing, and cleaning products for it?"
+    range: {low: 0.005, high: 0.05}
+    materiality: medium
+    value_basis: "2% of installed cost = 700,000 XOF/yr."
+    source: "He has owned the line a year, so he holds the answer exactly. A machine that runs about a hundred hours a year does not wear out, but it does need seals, gaskets, filter cloths, descaling and CIP chemicals, and it spends nine months a year standing idle in a hot shed, which is the condition that actually degrades it. Two percent is a middle figure. Wired through trace.maintenance."
+    date: 2026-07-27
+
+  workers_declared_flag:
+    value: 1
+    unit: 1 if the three workers are declared to CNPS, 0 if not
+    prov: ELICITED
+    question: "Are your three workers declared to the CNPS, and is the ninety thousand francs what lands in their hand or what you pay in total?"
+    range: {low: 0, high: 1}
+    materiality: medium
+    value_basis: "1 - declared."
+    source: "Taken as declared because he presents himself as a societe declaree with an accountant, and because a taxpayer who is being denied a deduction for want of paperwork is unlikely to be running undeclared payroll on top. If they are not declared, 535,500 XOF/yr of cost comes out and a contingent liability goes in. Wired through trace.social_charges."
+    date: 2026-07-27
+
+  campaign_days:
+    value: 84
+    unit: calendar days of fruit intake per year
+    prov: ELICITED
+    question: "Across how many weeks does the fruit actually come in - what were the first and last dates you took delivery last season?"
+    range: {low: 60, high: 120}
+    materiality: medium
+    value_basis: "84 days (12 weeks)."
+    source: "The published Ivorian harvest window is roughly mid-April to early July, and a processor taking the fruit the fresh exporters reject can run the tail of it, so twelve weeks is the central figure. He holds the exact answer. It drives the average finished-goods stock, hence the stock loss and the working-capital level. Wired through trace.avg_fg_bottles and trace.campaign_available_hours."
+    date: 2026-07-27
+
+  fg_loss_rate_pa:
+    value: 0.024
+    unit: fraction of average bottle stock lost per year
+    prov: ELICITED
+    question: "Out of a season's production, how many bottles do you end up throwing away - broken, blown, or still on the shelf when they go out of date?"
+    range: {low: 0.005, high: 0.06}
+    materiality: medium
+    value_basis: "2.4%/yr on the average stock, i.e. 0.2% per bottle-month."
+    source: "This is the rule that a loss rate must act on the quantity actually AT RISK. The stock is not 33,333 bottles for a year; it builds through the campaign and drains through the following nine months, averaging 12,831 bottles, so the exposure is 12,831 bottle-years and the loss is 308 bottles - not the 800 that a flat 2.4% on production would give. Charging the rate on production would overstate the tail of a draining store. Wired through trace.bottles_lost."
+    date: 2026-07-27
+
+  receivable_days:
+    value: 45
+    unit: days of turnover TTC outstanding
+    prov: ELICITED
+    question: "How many days after you deliver do the supermarkets actually pay you, and do the small shops pay cash?"
+    range: {low: 0, high: 90}
+    materiality: low
+    value_basis: "45 days blended across supermarkets on terms and boutiques paying cash."
+    source: "Materiality is LOW for the FCFF answer specifically, and I want to be honest about why rather than inflate it: the business is in steady state, so the receivable level is constant and the change in net working capital is zero in every period, which means this number never touches FCFF. It matters enormously for whether he can fund the next campaign, which is a financing question, not an asset-side one. Wired through trace.receivables and trace.nwc."
+    date: 2026-07-27
+
+  payable_days:
+    value: 30
+    unit: days of credit taken from suppliers other than the farmers
+    prov: ELICITED
+    question: "Do your bottle and sugar suppliers give you credit, and how long?"
+    range: {low: 0, high: 60}
+    materiality: low
+    value_basis: "30 days on packaging, ingredients, utilities and maintenance."
+    source: "The farmers are excluded from this by his own words - they take cash, and that is the whole shape of his working-capital problem. Same steady-state reasoning as receivable_days: it sets the level, not the change. Wired through trace.payables."
+    date: 2026-07-27
+
+  packaging_stock_days:
+    value: 30
+    unit: days of campaign-rate packaging and ingredient usage held in store
+    prov: ELICITED
+    question: "How many empty bottles do you buy at a time, and how long does one delivery of bottles last you in campaign?"
+    range: {low: 7, high: 60}
+    materiality: low
+    value_basis: "30 days at the campaign consumption rate."
+    source: "Measured at the CAMPAIGN rate, not the annual rate, because that is when the bottles are consumed: 30/84 of the annual packaging and ingredient spend. Wired through trace.inventory_packaging."
+    date: 2026-07-27
+
+  bad_debt_rate:
+    value: 0
+    unit: fraction of revenue
+    prov: ELICITED
+    question: "In the year you have been selling, has any supermarket or shop failed to pay you, and for how much?"
+    range: {low: 0, high: 0.03}
+    materiality: medium
+    value_basis: "Zero - the omitting choice."
+    source: "Receivables are a stock too, and a stock that leaks through default rather than through spoilage. I set the leak to zero because he reports none, not because none is likely; a small supplier to Abidjan boutiques carries real default risk. Zero is the omitting choice and the question stays attached. Wired through trace.bad_debt."
+    date: 2026-07-27
+
+  byproduct_price_xof_per_kg:
+    value: 0
+    unit: XOF per kg of peel, stone and pomace
+    prov: ELICITED
+    question: "What happens to the peel, the stones and the pressed fibre - do you pay someone to take them away, do the cattle herders take them for free, or do you sell them?"
+    range: {low: "you pay for disposal (negative)", high: 15}
+    materiality: medium
+    value_basis: "Zero - the omitting choice."
+    source: "The transformation balance shows 60.2 tonnes of wet residue a year, produced inside a twelve-week window, which is a real operational fact whether or not it carries a price. Mango by-products have an established use as livestock feed and as orchard compost. Zero is the omitting choice; the true answer could be positive or negative and I do not know its sign. Wired through trace.byproduct_revenue."
+    date: 2026-07-27
+
+  sugar_dose_kg_per_bottle:
+    value: 0.06987662
+    unit: kg of sugar per bottle
+    prov: ELICITED
+    question: "How many kilos of sugar go into a batch, and how many bottles does that batch fill - and what do you pay for a fifty-kilo sack?"
+    range: {low: 0.03, high: 0.14}
+    materiality: low
+    value_basis: "0.0699 kg/bottle - the residual that closes the fill balance against a 1.055 kg net fill."
+    source: "Materiality is low for FCFF because the CASH cost is stated at 100 XOF/bottle and the model uses the stated cash. But the question is worth asking because the two numbers do not agree: at this dose, with sugar around 700 XOF/kg wholesale against an administered retail reference of 825 XOF/kg, sugar and citric acid come to roughly half of the 100 XOF he quotes. Either he buys in small lots at retail, or the 100 XOF also carries preservative and antioxidant he did not itemise, or the drink is sweeter than a drinkable Brix allows. Wired through trace.sugar_kg."
+    date: 2026-07-27
+
+  pulper_rate_kg_per_hour:
+    value: 1000
+    unit: kg of fruit per hour
+    prov: ELICITED
+    question: "How many kilos of mango does your line get through in an hour when it is running properly?"
+    range: {low: 300, high: 2000}
+    materiality: low
+    value_basis: "1,000 kg/h."
+    source: "Materiality is low because the capacity test passes with more than three times the headroom needed at any value in the range - the plant is limited by fruit, not by machinery. Small-scale mango pulp plants are marketed from 300 kg/h, and small complete lines are described as 10 tonnes/day, so 1,000 kg/h is central for a line at this price. Wired through trace.pulper_hours."
+    date: 2026-07-27
+
+  filler_rate_l_per_hour:
+    value: 500
+    unit: litres per hour
+    prov: ELICITED
+    question: "How many bottles an hour does the filler do?"
+    range: {low: 300, high: 1000}
+    materiality: low
+    value_basis: "500 L/h - the bottom of the marketed range for a complete line of this class."
+    source: "Same reasoning as pulper_rate: not binding. 500 L/h is the entry point of the range quoted for complete juice processing lines (500-10,000 L/h). Wired through trace.filler_hours."
+    date: 2026-07-27
+
+  sort_rate_kg_per_hour_per_worker:
+    value: 200
+    unit: kg of fruit per worker per hour
+    prov: ELICITED
+    question: "With your three workers on the line, how many crates of mango do you get through in a morning?"
+    range: {low: 120, high: 350}
+    materiality: low
+    value_basis: "200 kg/worker/hour for receiving, sorting, washing and feeding."
+    source: "This turns out to be the BINDING stage - the crew is slower than the machine - which is why it is worth asking even though the constraint is not close to biting. Wired through trace.crew_hours."
+    date: 2026-07-27
+
+  availability:
+    value: 0.55
+    unit: fraction of nominal campaign hours actually available
+    prov: ELICITED
+    question: "In a normal week of campaign, how many days do you lose - to power cuts, to a breakdown, or to the fruit simply not arriving?"
+    range: {low: 0.35, high: 0.8}
+    materiality: low
+    value_basis: "55%."
+    source: "Nothing runs all the time. This carries grid outages, breakdowns, the daily clean-down, and days when the fruit does not come in. Low materiality only because the plant has so much headroom; at the bottom of the range the capacity test still passes. Wired through trace.campaign_available_hours."
+    date: 2026-07-27
+
+  mango_stock_loss_rate:
+    value: 0
+    unit: fraction per period
+    prov: DEFAULTED
+    source: "DECLARED ZERO, WITH THE REASON. Fresh mango is not a stock that can be carried: at Bouake ambient temperatures a ripe mango holds a few days, and he buys \"a la recolte\" and processes inside the campaign. There is therefore no fruit inventory at any period end and no carrying loss to charge - the loss that does occur, on the one to three days between the orchard and the pulper, is already inside reject_rate and is not counted twice. Silence would have been the failure; the number is zero and this is why."
+    date: 2026-07-27
+
+  packaging_stock_loss_rate:
+    value: 0
+    unit: fraction per period
+    prov: DEFAULTED
+    source: "DECLARED ZERO, WITH THE REASON. Empty bottles do break and labels do spoil in store, but the founder quotes packaging at 200 XOF per bottle FILLED, which is a cost per good output and is therefore already net of whatever he breaks on the way there. Charging a separate loss on the empties would double-count his own figure."
+    date: 2026-07-27
+
+passage: >-
+  STEP 1 - WHAT THE FRUIT ACTUALLY BECOMES. The founder hands me one ratio, three kilos of mango to
+  the litre, and that ratio is the whole of his physical model. It is not a balance. A balance has to
+  say where the other two kilos go, and in this business they are the majority of the mass, so I
+  build it explicitly on a basis of 3.000 kg of purchased fruit per bottle.
+  Of every 3.000 kg he pays for, 0.180 kg (6%) never reaches the line: mango is picked ripe, travels
+  to Bouake unrefrigerated and waits a day or two, and what arrives rotten, bruised, immature or
+  crushed is sorted out at reception. 2.820 kg goes onto the line. Of that, peel with the flesh that
+  stays attached to it is 0.4794 kg (17%) and the stone - endocarp plus kernel - with its adhering
+  flesh is another 0.4794 kg (17%), leaving 1.8612 kg of pulp. Both fractions sit inside the
+  published composition of mango fruit (60-75% flesh, 14-22% seed, 11-18% peel), and the implied pulp
+  recovery of 62.0% of purchased weight sits inside the published industrial range of 60-75%.
+  The pulp is then strained. At a finisher recovery of 54.5% it yields 1.014354 kg of juice and
+  retains 0.846846 kg as fibrous pomace; 3% of the juice, 0.03043062 kg, is then lost between
+  finisher and capped bottle to CIP flush, first and last runnings, foam and fill rejects. What
+  reaches the bottle is 0.98392338 kg of mango juice.
+  The balance closes exactly: 0.180 + 0.4794 + 0.4794 + 0.846846 + 0.03043062 + 0.98392338 = 3.000000
+  kg. So the founder's ratio is net of 67.2% of the mass he pays for. He buys 100 tonnes of fruit and
+  32.80 tonnes of it reaches a bottle. The 54.5% finisher recovery is low by industrial standards, and
+  I want to be plain that it is the residual: it is what the founder's own 3 kg/litre requires once
+  reject, peel and stone are set at literature-consistent values. If his true finisher recovery is
+  better than that, then either his reject rate is far worse than 6% or his ratio is not 3 kg/litre.
+  STEP 2 - THE BOTTLE. Filling the litre needs mango juice plus what he adds. Against a net fill of
+  1.055 kg, the 0.98392338 kg of juice leaves 0.07107662 kg, of which citric acid takes 0.0012 kg
+  (1.2 g/litre, the dose that drops the pH below 4 so a simple pasteurisation is sufficient - which is
+  what lets him hold stock at ambient for nine months) and sugar takes the remaining 0.06987662 kg.
+  Juice + sugar + acid = 1.055 kg exactly. That dose is a finding rather than a comfort: at roughly
+  700 XOF/kg wholesale sugar it costs about 49 XOF and the acid about 3 XOF, against the 100 XOF a
+  bottle he states. His cash figure is roughly double the dose. It is his cash and the model uses it,
+  but either he buys sugar at or near the administered retail reference of 825 XOF/kg, or the 100 XOF
+  also carries a preservative or antioxidant he did not itemise, or the drink is sweeter than a
+  drinkable Brix allows. At this dose the finished juice runs around 18-19 degrees Brix, which is at
+  the top of the commercial band, so there is not much room to move upward.
+  STEP 3 - BOTTLES AND THE INTEGER. 100,000 kg at 3 kg/litre is 33,333.33 litres, and a third of a
+  litre does not fill a bottle. Production is 33,333 bottles; 99,999 kg of fruit is converted and
+  1 kg is left in the tank at the end of the campaign as a part-batch that goes out as loss. I carry
+  that 1 kg as its own line rather than rounding it away, so the season balance closes on 100,000 kg
+  and not on a tidy fiction. Scaled up: reject 5,999.94 kg, peel 15,979.8402 kg, stone 15,979.8402
+  kg, pomace 28,227.917718 kg, line loss 1,014.34385646 kg, bottled juice 32,797.11802554 kg,
+  unconverted 1 kg - summing to 100,000.00 kg.
+  STEP 4 - THE STOCK, AND WHAT LEAKS FROM IT. Two stocks exist and both have to declare themselves.
+  Fresh fruit: zero carried, and the reason is physical rather than financial - a ripe mango at
+  Bouake ambient does not keep, he buys at harvest and processes inside the campaign, so there is no
+  fruit inventory at any period end. The loss that does occur is on the day or two between the
+  orchard and the pulper and is already inside the 6% reception reject; charging it again would be
+  double counting.
+  Finished bottles: a real stock, and the interesting one. The whole year is made in 84 days and sold
+  over 365, so the stock builds through the campaign and drains through the following nine months.
+  With production uniform across the campaign and sales uniform across the year, the average stock is
+  production x (1 - 84/365) / 2 = 33,333 x 0.3849315 = 12,830.92 bottles, and it returns to zero at
+  the end of the campaign year. That average, not the year-end snapshot of zero, is the capital
+  actually tied up, and it is what I put into working capital.
+  The loss rate then has to act on the quantity at risk, which falls as the store drains. At 0.2% per
+  bottle-month the exposure of 12,830.92 bottle-years costs 307.94 bottles a year. A flat 2.4% charge
+  on the 33,333 produced would have given 800 and would have been wrong in exactly the way this rule
+  is written to catch: it would tax bottles that had already been sold. Bottles sold are therefore
+  33,333 - 307.94 = 33,025.06.
+  STEP 5 - DOES THE CLAIMED OUTPUT FIT THE PLANT? Three capacities, each in its own units, against
+  the campaign.
+  The line: 93,999.06 kg of fruit reaches the pulper at a rated 1,000 kg/h, so 93.999 hours. The
+  filler: 33,333 litres at 500 L/h, so 66.666 hours. The crew: three workers receiving, sorting,
+  washing and feeding at 200 kg/h each, so 100,000 kg / 600 kg/h = 166.667 hours. The binding stage is
+  the CREW, not the machine - the people are slower than the equipment they feed.
+  Against that, the campaign offers 84 calendar days, six days in seven, eight hours a day, at 55%
+  availability once grid outages, breakdowns, the daily clean-down and days when the fruit does not
+  arrive are taken out: 84 x 0.857143 x 8 x 0.55 = 316.8 productive hours. The binding 166.67 hours
+  fits inside 316.8 with 90% headroom, and the machine's 94 hours fit with more than three times over.
+  The claimed output fits the plant described, comfortably.
+  What that headroom actually means is the finding. Spread across the campaign it is 1,190 kg of
+  fruit a day, about two hours of line time a day. The line runs about 94 hours in a year of 8,760.
+  Three workers are paid for 36 worker-months and the whole year's production consumes about 63
+  worker-days of line work. The shed is rented for twelve months and used for three. So the
+  employment cost of 3,775,500 XOF, the rent of 2,400,000 and the utilities of 3,600,000 are standing
+  charges, not variable costs: 9,775,500 XOF a year of capacity that the fruit supply does not use.
+  The binding constraint on this business is not machinery, labour or space - it is the 100 tonnes of
+  mango, and everything else is oversized against it.
+  STEP 6 - THE CUMULATIVE TEST. Over the nine years the model runs: 900 tonnes of fruit bought,
+  299,997 bottles filled, 604,816.94 kg of wet residue produced, 845.99 hours on the pulper and
+  599.99 hours on the filler. Set the 846 hours against what a stainless food line is built to deliver
+  - on the order of 20,000 operating hours - and it is 4.2% of the machine's mechanical life. The
+  ten-year life the founder was told is therefore not a wear-out figure; on hours the machine is
+  barely started. What will actually end it is calendar: nine months a year standing wet and idle in a
+  hot shed, seals perishing, pumps seizing, gaskets hardening, stainless pitting where the clean-down
+  was imperfect. I keep the ten years because it is what he was told and it is a defensible tax and
+  book convention, but the reader should know it is a corrosion-and-idleness life, not a throughput
+  life, and that the risk to it is how the plant is looked after between campaigns. One number makes
+  the point: at 94 productive hours a year the depreciation alone is about 37,000 XOF for every hour
+  the line runs.
+  The 60.2 tonnes a year of peel, stone and pomace also has to go somewhere, in a twelve-week window,
+  in the heat. Mango by-product has established uses as cattle feed and orchard compost. I value it at
+  zero because he says nothing about it, but zero is a choice about revenue, not a statement that the
+  material does not exist.
+  STEP 7 - REVENUE. 33,025.05787397260 bottles at 1,200 XOF is 39,630,069.44876712 XOF. The base case
+  treats the 1,200 as net of VAT, so turnover including tax is 46,763,481.9495452 XOF. That gross
+  figure matters twice: it is the base for the minimum tax, and it is what decides which regime he is
+  in.
+  STEP 8 - COSTS. Fruit 100,000 kg x 125 = 12,500,000. Packaging 33,333 x 200 = 6,666,600, charged on
+  bottles produced because the empty is consumed at filling. Sugar and acid 33,333 x 100 = 3,333,300.
+  Wages 3 x 90,000 x 12 = 3,240,000, and 90,000 clears the 75,000 SMIG.
+  Two costs he did not mention follow necessarily from what he did say. First, employer social
+  charges: a declared societe pays CNPS pension at 7.70% of the 90,000 gross (6,930), plus family
+  allowances at 5%, maternity at 0.75% and work-injury at 2% on the capped base of 70,000 (5,425 in
+  total - the cap bites, and a model that applied those rates to the full 90,000 would overstate
+  them), plus employer payroll taxes at 2.8% of gross (2,520). That is 14,875 per worker per month,
+  535,500 a year for three. Second, the patente: the droit sur le chiffre d'affaires at 0.5% of
+  39,630,069 is 198,150, below the 300,000 floor, so the floor governs; the droit sur la valeur
+  locative at 18.5% of the 2,400,000 shed rent is 444,000. Patente 744,000.
+  Shed 2,400,000, power and water 3,600,000, maintenance and CIP consumables at 2% of the line cost
+  700,000. Outbound freight to Abidjan and bad debts are both set to zero - the omitting choice, with
+  the questions attached, because he gave what reads as a complete cost list. Total cash operating
+  cost 33,719,400 XOF.
+  STEP 9 - DOWN TO EBIT. EBITDA = 39,630,069.44876712 - 33,719,400 = 5,910,669.44876712.
+  Depreciation is 35,000,000 / 10 = 3,500,000 a year, straight line, book equal to tax, on an opening
+  net book value of 31,500,000 that runs to exactly zero at t=8. EBIT = 2,410,669.44876712.
+  STEP 10 - THE TAX, WHICH IS WHERE HIS QUESTION LIVES. His accountant is right on the current facts:
+  a purchase with no compliant invoice is not deductible, and the reintegration is permanent, not a
+  timing difference. So the whole 12,500,000 of fruit is added back and taxable profit is
+  2,410,669.44876712 + 12,500,000 = 14,910,669.44876712. Profits tax at 25% is 3,727,667.36219178.
+  Then the minimum tax. At 0.5% of turnover including tax it is 233,817.41, which is below the
+  3,000,000 floor, so the minimum tax is 3,000,000; the 35,000,000 cap does not reach. The rule is
+  substitution, not credit: he pays the greater of the two, which is 3,727,667.36219178.
+  STEP 11 - WHAT THE INVOICE PROBLEM ACTUALLY COSTS. This is the number the founder does not have.
+  He believes the lost deduction costs him 25% of 12,500,000, which is 3,125,000 a year. It does not.
+  If the fruit were fully deductible his profits tax would be 25% of 2,410,669.45 = 602,667.36 - and
+  that is BELOW the 3,000,000 minimum, so he would pay 3,000,000 anyway. The true cost of the missing
+  invoices is 3,727,667.36 - 3,000,000 = 727,667.36 a year, not 3,125,000. The minimum tax was going
+  to take the first three million from him whatever his accountant did with the mangoes. His grievance
+  is real and it is a quarter of the size he thinks it is, and I carry both figures as trace rows so
+  the comparison is checked rather than asserted.
+  STEP 12 - AND THE LARGER FINDING, WHICH IS THE REGIME. His turnover including tax is 46.76m XOF,
+  inside the 5,000,001 - 50,000,000 band in which the default regime is the regime de l'entreprenant,
+  where a turnover tax substitutes for the profits tax, the patente and VAT alike - and where there is
+  no deductible-charge computation at all, so an unsupported purchase costs nothing. He is evidently
+  not in it: an accountant computing charges deductibles is an accountant working in a regime du reel.
+  So the founder's belief about his own affairs and the default rule of the world are two different
+  objects, and I record both.
+  What the arithmetic then says is more interesting than a simple "he is in the wrong regime". Under
+  the entreprenant regime he would pay 5% of turnover, 1,981,503.47, and save the 744,000 patente -
+  but he would lose the right to recover input VAT, and at 18% on packaging, ingredients, utilities
+  and maintenance that is 2,573,982 a year of tax that turns into cost. He cannot pass it on: his
+  supermarket customers recover the VAT he charges them today, so a switch to a VAT-free 1,200 leaves
+  them indifferent and he cannot raise the price to compensate. The two regimes land within 4% of each
+  other, with the reel slightly ahead - 2,183,002.09 of FCFF against 2,099,183.98. His accountant's
+  choice of the reel is defensible, and the reason is the input-VAT cascade on a business whose
+  largest input, the fruit, carries no VAT to lose.
+  STEP 13 - NOPAT, WORKING CAPITAL AND FCFF. NOPAT = EBIT - tax = 2,410,669.44876712 -
+  3,727,667.36219178 = -1,316,997.91342466. There is no debt anywhere in the utterance, so the cash
+  tax is already the unlevered tax and no interest shield has to be stripped out. The operation earns
+  a positive operating profit and a negative after-tax operating profit: the tax bill exceeds the
+  economic profit that produced it.
+  Working capital: receivables at 45 days of gross turnover 5,765,360.79; finished-goods stock at the
+  average 12,830.92 bottles valued at direct materials of 675 XOF a bottle (375 of fruit, 200 of
+  packaging, 100 of ingredients) = 8,660,872.29; packaging and ingredient stock at 30 days of
+  campaign-rate usage 3,571,428.57; less payables of 1,175,334.25 at 30 days on everything except the
+  farmers, who take cash. Net working capital 16,822,327.41 XOF - about 2.8 times EBITDA, and heavy
+  precisely because the largest single input is paid in cash inside a twelve-week window against sales
+  that take a year to come back. That position is already funded: the line has been running a year and
+  a campaign has already been through it. So the change in net working capital is zero in every period
+  of the forecast, and the FCFF is not burdened with building a position that already exists. I do not
+  release it at t=8 either, because nothing in the utterance says the business stops.
+  Capex is zero throughout: the line was bought before the horizon opens and the horizon closes when
+  it is written down.
+  FCFF = NOPAT + D&A - change in NWC - capex = -1,316,997.91342466 + 3,500,000 - 0 - 0 =
+  2,183,002.08657534 XOF a year, flat across all nine periods, 19,647,018.78 XOF cumulative. The same
+  number from the other direction: EBITDA 5,910,669.45 less cash tax 3,727,667.36 less nil working
+  capital movement = 2,183,002.09, with nil investing flow. The entire free cash flow of this business
+  is, to within a rounding, its depreciation charge: it is converting a machine into cash and
+  distributing it, and the operating business underneath is running at an after-tax loss.
+
+trace:
+
+  fruit_purchased_kg:      [100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000]
+  fruit_unconverted_kg:    [1, 1, 1, 1, 1, 1, 1, 1, 1]
+  fruit_converted_kg:      [99999, 99999, 99999, 99999, 99999, 99999, 99999, 99999, 99999]
+  reject_kg:               [5999.94, 5999.94, 5999.94, 5999.94, 5999.94, 5999.94, 5999.94, 5999.94, 5999.94]
+  fruit_to_line_kg:        [93999.06, 93999.06, 93999.06, 93999.06, 93999.06, 93999.06, 93999.06, 93999.06, 93999.06]
+  peel_kg:                 [15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402]
+  stone_kg:                [15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402, 15979.8402]
+  pulp_kg:                 [62039.3796, 62039.3796, 62039.3796, 62039.3796, 62039.3796, 62039.3796, 62039.3796, 62039.3796, 62039.3796]
+  finisher_juice_kg:       [33811.461882, 33811.461882, 33811.461882, 33811.461882, 33811.461882, 33811.461882, 33811.461882, 33811.461882, 33811.461882]
+  pomace_kg:               [28227.917718, 28227.917718, 28227.917718, 28227.917718, 28227.917718, 28227.917718, 28227.917718, 28227.917718, 28227.917718]
+  line_loss_kg:            [1014.34385646, 1014.34385646, 1014.34385646, 1014.34385646, 1014.34385646, 1014.34385646, 1014.34385646, 1014.34385646, 1014.34385646]
+  bottled_juice_kg:        [32797.11802554, 32797.11802554, 32797.11802554, 32797.11802554, 32797.11802554, 32797.11802554, 32797.11802554, 32797.11802554, 32797.11802554]
+  sugar_kg:                [2329.19737446, 2329.19737446, 2329.19737446, 2329.19737446, 2329.19737446, 2329.19737446, 2329.19737446, 2329.19737446, 2329.19737446]
+  citric_kg:               [39.9996, 39.9996, 39.9996, 39.9996, 39.9996, 39.9996, 39.9996, 39.9996, 39.9996]
+  bottle_contents_kg:      [35166.315, 35166.315, 35166.315, 35166.315, 35166.315, 35166.315, 35166.315, 35166.315, 35166.315]
+  waste_kg:                [67201.88197446, 67201.88197446, 67201.88197446, 67201.88197446, 67201.88197446, 67201.88197446, 67201.88197446, 67201.88197446, 67201.88197446]
+  byproduct_kg:            [60187.598118, 60187.598118, 60187.598118, 60187.598118, 60187.598118, 60187.598118, 60187.598118, 60187.598118, 60187.598118]
+
+  bottles_produced:        [33333, 33333, 33333, 33333, 33333, 33333, 33333, 33333, 33333]
+  avg_fg_bottles:          [12830.921917808219, 12830.921917808219, 12830.921917808219, 12830.921917808219, 12830.921917808219, 12830.921917808219, 12830.921917808219, 12830.921917808219, 12830.921917808219]
+  bottles_lost:            [307.94212602739726, 307.94212602739726, 307.94212602739726, 307.94212602739726, 307.94212602739726, 307.94212602739726, 307.94212602739726, 307.94212602739726, 307.94212602739726]
+  bottles_sold:            [33025.05787397260, 33025.05787397260, 33025.05787397260, 33025.05787397260, 33025.05787397260, 33025.05787397260, 33025.05787397260, 33025.05787397260, 33025.05787397260]
+  fg_bottles_close:        [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  pulper_hours:            [93.99906, 93.99906, 93.99906, 93.99906, 93.99906, 93.99906, 93.99906, 93.99906, 93.99906]
+  filler_hours:            [66.666, 66.666, 66.666, 66.666, 66.666, 66.666, 66.666, 66.666, 66.666]
+  crew_hours:              [166.66666666666666, 166.66666666666666, 166.66666666666666, 166.66666666666666, 166.66666666666666, 166.66666666666666, 166.66666666666666, 166.66666666666666, 166.66666666666666]
+  campaign_available_hours: [316.8, 316.8, 316.8, 316.8, 316.8, 316.8, 316.8, 316.8, 316.8]
+
+  cum_fruit_kg:            [100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000]
+  cum_bottles:             [33333, 66666, 99999, 133332, 166665, 199998, 233331, 266664, 299997]
+  cum_pulper_hours:        [93.99906, 187.99812, 281.99718, 375.99624, 469.9953, 563.99436, 657.99342, 751.99248, 845.99154]
+  cum_waste_kg:            [67201.88197446, 134403.76394892, 201605.64592338, 268807.52789784, 336009.4098723, 403211.29184676, 470413.17382122, 537615.05579568, 604816.93777014]
+
+  revenue:                 [39630069.44876712, 39630069.44876712, 39630069.44876712, 39630069.44876712, 39630069.44876712, 39630069.44876712, 39630069.44876712, 39630069.44876712, 39630069.44876712]
+  revenue_ttc:             [46763481.9495452, 46763481.9495452, 46763481.9495452, 46763481.9495452, 46763481.9495452, 46763481.9495452, 46763481.9495452, 46763481.9495452, 46763481.9495452]
+  byproduct_revenue:       [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  mango_cost:              [12500000, 12500000, 12500000, 12500000, 12500000, 12500000, 12500000, 12500000, 12500000]
+  packaging_cost:          [6666600, 6666600, 6666600, 6666600, 6666600, 6666600, 6666600, 6666600, 6666600]
+  ingredient_cost:         [3333300, 3333300, 3333300, 3333300, 3333300, 3333300, 3333300, 3333300, 3333300]
+  wages:                   [3240000, 3240000, 3240000, 3240000, 3240000, 3240000, 3240000, 3240000, 3240000]
+  social_charges:          [535500, 535500, 535500, 535500, 535500, 535500, 535500, 535500, 535500]
+  rent:                    [2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000]
+  utilities:               [3600000, 3600000, 3600000, 3600000, 3600000, 3600000, 3600000, 3600000, 3600000]
+  maintenance:             [700000, 700000, 700000, 700000, 700000, 700000, 700000, 700000, 700000]
+  patente:                 [744000, 744000, 744000, 744000, 744000, 744000, 744000, 744000, 744000]
+  freight_cost:            [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  bad_debt:                [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  opex:                    [33719400, 33719400, 33719400, 33719400, 33719400, 33719400, 33719400, 33719400, 33719400]
+
+  ebitda:                  [5910669.44876712, 5910669.44876712, 5910669.44876712, 5910669.44876712, 5910669.44876712, 5910669.44876712, 5910669.44876712, 5910669.44876712, 5910669.44876712]
+  depreciation:            [3500000, 3500000, 3500000, 3500000, 3500000, 3500000, 3500000, 3500000, 3500000]
+  book_value:              [28000000, 24500000, 21000000, 17500000, 14000000, 10500000, 7000000, 3500000, 0]
+  ebit:                    [2410669.44876712, 2410669.44876712, 2410669.44876712, 2410669.44876712, 2410669.44876712, 2410669.44876712, 2410669.44876712, 2410669.44876712, 2410669.44876712]
+
+  reintegration:           [12500000, 12500000, 12500000, 12500000, 12500000, 12500000, 12500000, 12500000, 12500000]
+  taxable_profit:          [14910669.44876712, 14910669.44876712, 14910669.44876712, 14910669.44876712, 14910669.44876712, 14910669.44876712, 14910669.44876712, 14910669.44876712, 14910669.44876712]
+  bic:                     [3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178]
+  imf:                     [3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  tax:                     [3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178, 3727667.36219178]
+  nopat:                   [-1316997.91342466, -1316997.91342466, -1316997.91342466, -1316997.91342466, -1316997.91342466, -1316997.91342466, -1316997.91342466, -1316997.91342466, -1316997.91342466]
+
+  receivables:             [5765360.7883, 5765360.7883, 5765360.7883, 5765360.7883, 5765360.7883, 5765360.7883, 5765360.7883, 5765360.7883, 5765360.7883]
+  inventory_fg:            [8660872.294520548, 8660872.294520548, 8660872.294520548, 8660872.294520548, 8660872.294520548, 8660872.294520548, 8660872.294520548, 8660872.294520548, 8660872.294520548]
+  inventory_packaging:     [3571428.571428571, 3571428.571428571, 3571428.571428571, 3571428.571428571, 3571428.571428571, 3571428.571428571, 3571428.571428571, 3571428.571428571, 3571428.571428571]
+  payable_base:            [14299900, 14299900, 14299900, 14299900, 14299900, 14299900, 14299900, 14299900, 14299900]
+  payables:                [1175334.246575342, 1175334.246575342, 1175334.246575342, 1175334.246575342, 1175334.246575342, 1175334.246575342, 1175334.246575342, 1175334.246575342, 1175334.246575342]
+  nwc:                     [16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777]
+  nwc_prior:               [16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777, 16822327.407673777]
+  delta_nwc:               [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  capex:                   [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  cfo:                     [2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534]
+  cfi:                     [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff:                    [2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534]
+
+  bic_if_deductible:       [602667.36219178, 602667.36219178, 602667.36219178, 602667.36219178, 602667.36219178, 602667.36219178, 602667.36219178, 602667.36219178, 602667.36219178]
+  tax_if_deductible:       [3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  fcff_if_deductible:      [2910669.44876712, 2910669.44876712, 2910669.44876712, 2910669.44876712, 2910669.44876712, 2910669.44876712, 2910669.44876712, 2910669.44876712, 2910669.44876712]
+  invoice_cost:            [727667.36219178, 727667.36219178, 727667.36219178, 727667.36219178, 727667.36219178, 727667.36219178, 727667.36219178, 727667.36219178, 727667.36219178]
+
+  tee_irrecoverable_vat:   [2573982, 2573982, 2573982, 2573982, 2573982, 2573982, 2573982, 2573982, 2573982]
+  opex_tee:                [35549382, 35549382, 35549382, 35549382, 35549382, 35549382, 35549382, 35549382, 35549382]
+  ebit_tee:                [580687.44876712, 580687.44876712, 580687.44876712, 580687.44876712, 580687.44876712, 580687.44876712, 580687.44876712, 580687.44876712, 580687.44876712]
+  tax_tee:                 [1981503.472438356, 1981503.472438356, 1981503.472438356, 1981503.472438356, 1981503.472438356, 1981503.472438356, 1981503.472438356, 1981503.472438356, 1981503.472438356]
+  fcff_tee:                [2099183.976328764, 2099183.976328764, 2099183.976328764, 2099183.976328764, 2099183.976328764, 2099183.976328764, 2099183.976328764, 2099183.976328764, 2099183.976328764]
+
+fcff: [2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534, 2183002.08657534]
+
+checks:
+  # --- conservation: the fruit transformation must close, not merely have a yield ratio
+  - "trace.fruit_purchased_kg == trace.reject_kg + trace.peel_kg + trace.stone_kg + trace.pomace_kg + trace.line_loss_kg + trace.bottled_juice_kg + trace.fruit_unconverted_kg"
+  - "trace.fruit_purchased_kg == trace.reject_kg + trace.fruit_to_line_kg + trace.fruit_unconverted_kg"
+  - "trace.fruit_converted_kg == trace.fruit_purchased_kg - trace.fruit_unconverted_kg"
+  - "trace.fruit_to_line_kg == trace.peel_kg + trace.stone_kg + trace.pulp_kg"
+  - "trace.pulp_kg == trace.finisher_juice_kg + trace.pomace_kg"
+  - "trace.finisher_juice_kg == trace.bottled_juice_kg + trace.line_loss_kg"
+  - "trace.waste_kg == trace.reject_kg + trace.peel_kg + trace.stone_kg + trace.pomace_kg + trace.line_loss_kg"
+  - "trace.byproduct_kg == trace.peel_kg + trace.stone_kg + trace.pomace_kg"
+  - "trace.fruit_converted_kg == trace.waste_kg + trace.bottled_juice_kg"
+  # --- conservation: the bottle must close on its contents
+  - "trace.bottle_contents_kg == trace.bottled_juice_kg + trace.sugar_kg + trace.citric_kg"
+  - "trace.bottle_contents_kg == trace.bottles_produced * bottle_net_mass_kg"
+  # --- conservation: the finished-goods stock roll-forward
+  - "trace.fg_bottles_close[t] == trace.fg_bottles_close[t-1] + trace.bottles_produced[t] - trace.bottles_sold[t] - trace.bottles_lost[t]"
+  - "trace.bottles_sold == trace.bottles_produced - trace.bottles_lost"
+  # --- conservation: the fixed-asset roll-forward
+  - "trace.book_value[first] == nbv_opening_xof - trace.depreciation[first]"
+  - "trace.book_value[t] == trace.book_value[t-1] - trace.depreciation[t] for t >= 1"
+  - "sum(trace.depreciation) == nbv_opening_xof"
+  - "trace.book_value[last] == 0"
+  # --- conservation: working capital
+  - "cumsum(trace.delta_nwc) == trace.nwc - trace.nwc_prior"
+  - "trace.nwc == trace.receivables + trace.inventory_fg + trace.inventory_packaging - trace.payables"
+  # --- conservation: cumulative physical quantities against the world (rule d)
+  - "trace.cum_fruit_kg == cumsum(trace.fruit_purchased_kg)"
+  - "trace.cum_bottles == cumsum(trace.bottles_produced)"
+  - "trace.cum_pulper_hours == cumsum(trace.pulper_hours)"
+  - "trace.cum_waste_kg == cumsum(trace.waste_kg)"
+  - "trace.cum_fruit_kg[last] == fruit_purchased_kg_per_season * grid.periods"
+  - "trace.cum_pulper_hours[last] <= line_design_hours"
+  # --- capacity: the claimed output must fit inside the plant described (rule c)
+  - "trace.pulper_hours == trace.fruit_to_line_kg / pulper_rate_kg_per_hour"
+  - "trace.filler_hours == trace.bottles_produced * bottle_size_l / filler_rate_l_per_hour"
+  - "trace.crew_hours == trace.fruit_purchased_kg / (workers * sort_rate_kg_per_hour_per_worker)"
+  - "trace.campaign_available_hours == campaign_days * working_day_fraction * hours_per_working_day * availability"
+  - "trace.pulper_hours <= trace.campaign_available_hours"
+  - "trace.filler_hours <= trace.campaign_available_hours"
+  - "trace.crew_hours <= trace.campaign_available_hours"
+  # --- driver-bridge: physical
+  - "trace.bottles_produced * mango_kg_per_litre == trace.fruit_converted_kg"
+  - "trace.reject_kg == reject_rate * trace.fruit_converted_kg"
+  - "trace.peel_kg == peel_fraction * trace.fruit_to_line_kg"
+  - "trace.stone_kg == stone_fraction * trace.fruit_to_line_kg"
+  - "trace.finisher_juice_kg == finisher_recovery * trace.pulp_kg"
+  - "trace.line_loss_kg == line_loss_rate * trace.finisher_juice_kg"
+  - "trace.sugar_kg == sugar_dose_kg_per_bottle * trace.bottles_produced"
+  - "trace.citric_kg == citric_dose_kg_per_bottle * trace.bottles_produced"
+  - "trace.avg_fg_bottles == trace.bottles_produced * (1 - campaign_days / days_per_year) / 2"
+  - "trace.bottles_lost == fg_loss_rate_pa * trace.avg_fg_bottles"
+  # --- driver-bridge: revenue and cost
+  - "trace.revenue == bottle_price_xof * price_net_factor * trace.bottles_sold"
+  - "trace.revenue_ttc == trace.revenue * (1 + vat_rate)"
+  - "trace.byproduct_revenue == byproduct_price_xof_per_kg * trace.byproduct_kg"
+  - "trace.mango_cost == mango_price_xof_per_kg * trace.fruit_purchased_kg"
+  - "trace.packaging_cost == packaging_cost_per_bottle_xof * trace.bottles_produced"
+  - "trace.ingredient_cost == ingredient_cost_per_bottle_xof * trace.bottles_produced"
+  - "trace.wages == workers * wage_per_worker_month_xof * months_per_year"
+  - "trace.social_charges == workers_declared_flag * workers * months_per_year * (cnps_pension_rate_employer * wage_per_worker_month_xof + (cnps_family_rate_employer + cnps_maternity_rate_employer + cnps_at_rate_employer) * cnps_capped_base_monthly + employer_payroll_tax_rate * wage_per_worker_month_xof)"
+  - "trace.rent == shed_rent_per_month_xof * months_per_year"
+  - "trace.utilities == utilities_per_month_xof * months_per_year"
+  - "trace.maintenance == maintenance_rate * line_cost_xof"
+  - "trace.patente == max(patente_ca_rate * trace.revenue, patente_ca_floor) + patente_vl_rate * trace.rent"
+  - "trace.freight_cost == freight_per_bottle_xof * trace.bottles_sold"
+  - "trace.bad_debt == bad_debt_rate * trace.revenue"
+  - "trace.depreciation == line_cost_xof / line_life_years"
+  - "wage_per_worker_month_xof >= smig_monthly"
+  # --- driver-bridge: working capital
+  - "trace.receivables == trace.revenue_ttc * receivable_days / days_per_year"
+  - "trace.inventory_fg == trace.avg_fg_bottles * (mango_price_xof_per_kg * mango_kg_per_litre + packaging_cost_per_bottle_xof + ingredient_cost_per_bottle_xof)"
+  - "trace.inventory_packaging == (trace.packaging_cost + trace.ingredient_cost) * packaging_stock_days / campaign_days"
+  - "trace.payable_base == trace.packaging_cost + trace.ingredient_cost + trace.utilities + trace.maintenance"
+  - "trace.payables == trace.payable_base * payable_days / days_per_year"
+  # --- definition: the ladder to FCFF
+  - "trace.opex == trace.mango_cost + trace.packaging_cost + trace.ingredient_cost + trace.wages + trace.social_charges + trace.rent + trace.utilities + trace.maintenance + trace.patente + trace.freight_cost + trace.bad_debt"
+  - "trace.ebitda == trace.revenue + trace.byproduct_revenue - trace.opex"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.taxable_profit == trace.ebit + trace.reintegration"
+  - "trace.reintegration == trace.mango_cost"
+  - "trace.bic == is_rate * trace.taxable_profit"
+  - "trace.imf == min(max(imf_rate * trace.revenue_ttc, imf_floor), imf_ceiling)"
+  - "trace.tax == max(trace.bic, trace.imf)"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.cfo == trace.ebitda - trace.tax - trace.delta_nwc"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex"
+  - "fcff == trace.fcff"
+  # --- definition: what the missing invoices actually cost, and the founder's overstatement
+  - "trace.bic_if_deductible == is_rate * trace.ebit"
+  - "trace.tax_if_deductible == max(trace.bic_if_deductible, trace.imf)"
+  - "trace.fcff_if_deductible == trace.ebit - trace.tax_if_deductible + trace.depreciation - trace.delta_nwc - trace.capex"
+  - "trace.invoice_cost == trace.tax - trace.tax_if_deductible"
+  - "trace.invoice_cost <= is_rate * trace.reintegration"
+  - "trace.fcff_if_deductible - trace.fcff == trace.invoice_cost"
+  # --- definition: the alternative statutory regime, materialised rather than asserted
+  - "trace.revenue_ttc >= tee_band_lower"
+  - "trace.revenue_ttc <= tee_band_upper"
+  - "trace.tee_irrecoverable_vat == vat_rate * (trace.packaging_cost + trace.ingredient_cost + trace.utilities + trace.maintenance)"
+  - "trace.opex_tee == trace.opex - trace.patente + trace.tee_irrecoverable_vat"
+  - "trace.ebit_tee == trace.revenue + trace.byproduct_revenue - trace.opex_tee - trace.depreciation"
+  - "trace.tax_tee == tee_rate * trace.revenue"
+  - "trace.fcff_tee == trace.ebit_tee - trace.tax_tee + trace.depreciation - trace.delta_nwc - trace.capex"
+  # --- non-negativity
+  - "trace.book_value >= 0"
+  - "trace.inventory_fg >= 0"
+  - "trace.fg_bottles_close >= 0"
+  - "trace.bottles_sold >= 0"
+  - "trace.bottled_juice_kg >= 0"
+  - "trace.pomace_kg >= 0"
+  - "trace.pulp_kg >= 0"
+  - "trace.nwc >= 0"
+  - "trace.tax >= imf_floor"
+  - "trace.taxable_profit >= trace.ebit"
+
+notes:
+  - "HEADLINE FINDING. The founder is asking the right question about the wrong number. He believes the missing invoices cost him 25% of 12,500,000 = 3,125,000 a year. They do not: because the minimum tax would take 3,000,000 from him even with the deduction, the true annual cost is the 727,667 carried in trace.invoice_cost. He is aggrieved by roughly four times the amount he is actually losing. Nothing internal to a model can catch this - it needs the statutory floor, which he never mentions."
+  - "SECOND FINDING, ON REGIME. His turnover including tax, 46.76m XOF, sits inside the 5,000,001-50,000,000 band whose default regime is the regime de l'entreprenant, where a turnover tax substitutes for the profits tax, the patente and VAT and where deductibility is not a concept. He is not in it, and the internal evidence for that is his own sentence about his accountant computing charges deductibles. I record both objects as different objects: his belief about his business, and the rule about the world. The materialised comparison shows the two regimes land within 4% of each other and that the reel is marginally better, because the entreprenant regime would turn 2,573,982 of recoverable input VAT into cost with no way to pass it on to VAT-registered supermarket customers. The choice his accountant made is defensible; what is not established is whether it was made deliberately."
+  - "THIRD FINDING, AND THE ACTIONABLE ONE. The accountant's advice is correct on today's facts but may be incomplete on the law. The DGI's electronic invoicing platform issues a buyer-created agricultural reception document explicitly carrying the value of a purchase invoice - the instrument designed for exactly this situation, buying from producers with no trade-register entry. If it is open to him, the reintegration ends prospectively and trace.invoice_cost goes to zero. I have deliberately NOT assumed it in the base case: eligibility, the mechanics for a taxpayer of his size, and any accompanying withholding on payments to unregistered suppliers are not established from his words and I could not settle them from published sources. This is the first thing I would put to his accountant."
+  - "PHYSICAL FINDING - THE RATIO HIDES THE MAJORITY OF THE MASS. His 3 kg/litre is net of a 6% reception reject, 17% peel, 17% stone, a 45.5% finisher retention and a 3% line loss. Two of every three kilos he pays for never reach a bottle, and 60.2 tonnes a year of peel, stone and pressed fibre leaves the plant inside a twelve-week window. It is valued at zero here because he says nothing about it; the sign of its true value is unknown to me - it could be a small revenue as cattle feed or orchard compost, or a disposal cost."
+  - "PHYSICAL FINDING - THE PLANT IS FRUIT-LIMITED, NOT CAPACITY-LIMITED. The binding stage is the three-person crew at 166.7 hours a campaign against 316.8 available; the machine needs only 94. The line runs about 94 hours in a year of 8,760 and about 846 hours over the whole nine-year horizon, which is roughly 4% of what stainless food machinery is built to deliver. The ten-year life is therefore a calendar convention, not a wear-out figure, and the real threat to the asset is nine months a year standing wet and idle in a hot shed. Direction only: better idle-period care lengthens the asset's life, and any lengthening raises the answer, because the machine is nowhere near its throughput limit."
+  - "PHYSICAL FINDING - THE FIXED COSTS ARE STANDING CHARGES. Wages plus social charges, rent, and power and water total 9,775,500 a year against about three months of activity. Power and water in particular are charged at 300,000 a month against roughly 94 productive hours a year, which means the great majority of it cannot be process load - it is subscription, lighting, and whatever runs year-round. Worth verifying against a CIE bill before anyone treats it as variable."
+  - "INTERNAL TENSION I DID NOT RESOLVE. The stated ingredient cost of 100 XOF a bottle is about twice what sugar and citric acid cost at a physically drinkable dose. I did not adjust the cost - it is his cash and cash is what the model needs - and I did not adjust the dose to fit the cost, because at a dose that consumed the whole 100 XOF the drink would be far outside a saleable Brix. Both numbers are kept and the friction is reported rather than smoothed."
+  - "SIMPLIFICATION - THE ACCOUNTING YEAR. I run a campaign year, opening at the start of the fruit intake, which is why the finished-goods stock closes each period at zero and the roll-forward is exact. If his fiscal year is instead the calendar year, the year-end balance sheet carries stock and the average is somewhat different; FCFF is unaffected either way, because in steady state the change in working capital is zero on either phasing. I value the finished-goods stock at the average rather than the year-end level deliberately: the average is the capital actually employed, and a year-end snapshot of zero would understate it."
+  - "SIMPLIFICATION - INVENTORY VALUATION. Finished goods are carried at direct materials only (675 XOF a bottle). Full absorption under IAS 2 would add production labour and overhead - but IAS 2 also requires allocation on NORMAL capacity and expenses the unallocated fixed overhead of an under-utilised plant, and this plant runs at about a third of its campaign capacity and a twentieth of its annual capacity. Rather than construct a normal-capacity allocation on a plant whose utilisation is this far from normal, I value at direct materials and flag it. It affects the balance sheet, not FCFF."
+  - "SIMPLIFICATION - WORKING CAPITAL IS ALREADY FUNDED. The line has run a campaign, so the position exists at t=0 and the forecast is not charged with building it. This is why the change in net working capital is zero throughout and why the receivable and payable questions rank LOW on materiality for this answer despite being large numbers. I also do not release working capital at t=8: nothing in the utterance says the business stops when the machine does. A reader who assumes liquidation at the end of the horizon would add the release; a reader who assumes continuation would add replacement capex. Both are decisions outside the horizon I chose, which is why I chose it there."
+  - "NO DEBT ANYWHERE IN THE UTTERANCE. The cash tax is therefore already the unlevered tax and no interest shield needed stripping out of NOPAT. If the 35,000,000 line was in fact bought on credit, the FCFF is unchanged by construction but the equity story is not."
+  - "DEFERRED - PENALTY EXPOSURE. Undocumented purchases attract not only reintegration but a penalty regime under the invoicing rules. I have not quantified it because I could not establish, from published sources, how it would be applied to a buyer purchasing from unregistered farmers. Direction only: it is a downside risk to the tax line, not an upside."
+  - "DEFERRED - THE VARIABLE MINIMUM-TAX TRIGGER. There is a second limb of the minimum tax keyed to cumulative taxes falling below a threshold, with an uplift coefficient, and the published drafting of it is ambiguous. I have applied only the ordinary minimum tax. Direction only: if the second limb reaches him, the tax line rises and the answer falls."
+  - "DEFERRED - INSURANCE AND LISTING FEES. A 35,000,000 asset and a stock of bottled food would normally be insured, and Abidjan supermarket chains commonly charge listing or referencing fees. Neither is in the utterance and neither is set out in a source I could verify for a supplier of this size, so both are omitted and named here rather than buried."
+  - "THE THREE QUESTIONS TO ASK IF HE WILL ONLY ANSWER THREE. (1) Is the 1,200 francs net of TVA or the total the supermarket pays - it moves revenue by 15%. (2) Who pays to move the bottles to Abidjan - about 50 tonnes a year over 350 km is not a rounding. (3) Did anyone actually choose the reel regime, or was it simply assumed - it is the only question here whose answer changes which taxes exist rather than how large one is."

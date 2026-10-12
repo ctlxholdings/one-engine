@@ -1,0 +1,1034 @@
+contract: "v2.6"
+id: cashew_taxholiday_bouake_v26
+title: "Cashew shelling unit, Bouake (Cote d'Ivoire) - unlevered FCFF over the 15-year life of the plant"
+currency: XOF
+
+grid:
+  periods: 16
+  freq: annual
+  why: >
+    Sixteen ANNUAL periods: t=0 = 2026, the construction year the founder is standing in
+    ("je demarre l'annee prochaine", said in July 2026), and t=1..15 = 2027..2041, the fifteen
+    production years he himself puts on the equipment ("sur ce genre d'equipement on compte
+    quinze ans"). Three things fix this choice. (1) The asset. Fifteen years is his own stated
+    life; ending there makes the horizon exhaust the asset exactly - book value is zero at
+    t=last - so no terminal value has to be invented, and the question of whether he re-equips
+    in 2042 is a different question he has not answered. (2) The relief. The Zone B / categorie 1
+    schedule runs ten years (five full, five at half) and only then reverts to 25%; a horizon
+    shorter than eleven periods would never show the normal-tax steady state and would flatter
+    the investment, which is precisely the error the founder is already making. (3) The cycle.
+    ANNUAL, not monthly, because the operating cycle that governs this business is the cashew
+    CAMPAIGN - one buying window per year (opened 9 February 2026, ~5 months) feeding twelve
+    months of processing. A monthly grid would be the physically truthful frame for working
+    capital, but 180 monthly periods cannot be derived by hand; instead the intra-year campaign
+    profile is carried explicitly inside each annual period as average stock, peak stock and
+    average residence time (see trace.rcn_avg_stock_t, trace.rcn_peak_stock_t), so the
+    seasonality is not lost, only summarised. A reader who thinks the plant should be judged on
+    a 10-year horizon (the relief window) or a 20-year one (the building) will get different
+    numbers, and should say so.
+
+utterance:
+  fr: >
+    Je monte une unite de transformation de noix de cajou a Bouake. L'usine me coute cent
+    quatre-vingts millions a installer - les machines de decorticage, les sechoirs, le batiment -
+    et sur ce genre d'equipement on compte quinze ans. Je demarre l'annee prochaine. Je traiterai
+    deux mille tonnes de noix brutes par an, que j'achete aux cooperatives a cinq cents francs le
+    kilo. Le rendement, c'est vingt-deux kilos d'amande blanche pour cent kilos de noix brutes -
+    le reste, c'est la coque. L'amande, je l'exporte a quatre mille cinq cents francs le kilo.
+    J'aurai soixante ouvriers a quatre-vingt mille par mois, et le courant, l'eau, les sacs et
+    l'entretien me feront dans les cent vingt millions par an. Ce qui a decide l'investissement,
+    c'est l'agrement : j'ai obtenu l'agrement au code des investissements, et il me donne cinq
+    ans d'exoneration totale d'impot sur le benefice a compter de la premiere annee de
+    production. Apres ces cinq ans, je repasse au taux normal comme tout le monde, vingt-cinq
+    pour cent. C'est pour ca que je me depeche de demarrer.
+  en: >
+    I am setting up a cashew processing unit in Bouake. The plant costs me one hundred and eighty
+    million to install - the shelling machines, the dryers, the building - and on that kind of
+    equipment you reckon fifteen years. I start next year. I will process two thousand tonnes of
+    raw nuts a year, which I buy from the cooperatives at five hundred francs a kilo. The yield
+    is twenty-two kilos of white kernel per hundred kilos of raw nuts - the rest is shell. The
+    kernel I export at four thousand five hundred francs a kilo. I will have sixty workers at
+    eighty thousand a month, and power, water, bags and maintenance will run me around one
+    hundred and twenty million a year. What decided the investment was the approval: I obtained
+    approval under the investment code, and it gives me five years of complete exemption from
+    profit tax starting from the first year of production. After those five years I go back to
+    the normal rate like everyone else, twenty-five percent. That is why I am hurrying to start.
+
+inputs:
+
+  # ---------- STATED: the founder's own words ----------
+  capex_total_xof:
+    value: 180000000
+    unit: XOF
+    prov: STATED
+    source: "\"L'usine me coute cent quatre-vingts millions a installer - les machines de decorticage, les sechoirs, le batiment\""
+    date: "2026-07-27"
+  asset_life_years:
+    value: 15
+    unit: years
+    prov: STATED
+    source: "\"sur ce genre d'equipement on compte quinze ans\""
+    date: "2026-07-27"
+  rcn_throughput_t_per_year:
+    value: 2000
+    unit: tonnes of raw cashew nut processed per year
+    prov: STATED
+    source: "\"Je traiterai deux mille tonnes de noix brutes par an\" - note this is PROCESSED, not purchased; purchases must exceed it by the storage loss"
+    date: "2026-07-27"
+  rcn_price_xof_per_kg:
+    value: 500
+    unit: XOF per kg of raw nut
+    prov: STATED
+    source: "\"que j'achete aux cooperatives a cinq cents francs le kilo\""
+    date: "2026-07-27"
+  kernel_recovery_fraction:
+    value: 0.22
+    unit: kg white kernel per kg raw nut
+    prov: STATED
+    source: "\"vingt-deux kilos d'amande blanche pour cent kilos de noix brutes\". Read as INDUSTRIAL RECOVERY, i.e. total white kernel actually shipped (wholes plus pieces), net of cutting breakage, scorching, peeling fines, grading rejects and kernel drying loss - not as the kernel physically present in the nut. See lab_kor_fraction and process_efficiency."
+    date: "2026-07-27"
+  kernel_price_xof_per_kg:
+    value: 4500
+    unit: XOF per kg of white kernel
+    prov: STATED
+    source: "\"L'amande, je l'exporte a quatre mille cinq cents francs le kilo\""
+    date: "2026-07-27"
+  workers_stated:
+    value: 60
+    unit: workers
+    prov: STATED
+    source: "\"J'aurai soixante ouvriers\""
+    date: "2026-07-27"
+  worker_wage_monthly_xof:
+    value: 80000
+    unit: XOF per worker per month, gross
+    prov: STATED
+    source: "\"soixante ouvriers a quatre-vingt mille par mois\""
+    date: "2026-07-27"
+  other_opex_xof_per_year:
+    value: 120000000
+    unit: XOF per year
+    prov: STATED
+    source: "\"le courant, l'eau, les sacs et l'entretien me feront dans les cent vingt millions par an\". F-210 note, 2026-08-04: 'l'entretien' (maintenance) is read as bundling any RCN-store fumigation/treatment cost implied by rcn_storage_loss_rate_per_month - see that input's source for the order-of-magnitude check. It excludes, on the founder's own wording, export logistics, insurance, certification, security and administration."
+    date: "2026-07-27"
+  founder_belief_exempt_years:
+    value: 5
+    unit: years of total exemption believed to run from first production year
+    prov: STATED
+    source: "\"il me donne cinq ans d'exoneration totale d'impot sur le benefice a compter de la premiere annee de production\" - recorded as a fact about what the founder BELIEVES. The rule says otherwise on both the duration and the anchor: see code_partial_relief_years and relief_start_period_index."
+    date: "2026-07-27"
+  founder_belief_post_relief_rate:
+    value: 0.25
+    unit: fraction, believed rate from year 6
+    prov: STATED
+    source: "\"Apres ces cinq ans, je repasse au taux normal comme tout le monde, vingt-cinq pour cent\" - a belief. The law gives him a further five years at half rate before 25% returns."
+    date: "2026-07-27"
+
+  # ---------- SOURCED: facts about the world (annex + own research) ----------
+  investment_zone:
+    value: B
+    unit: label
+    prov: SOURCED
+    source: "Bouake is a chef-lieu de region and therefore Zone B, not Zone A. fact_id CI-INV-01 / CI-V25-22. The founder never states his zone; it is inferred from the town he names and then verified."
+    authority: "Ordonnance n.2018-646 du 1er aout 2018 portant Code des Investissements, art. 8 (zones); CEPICI zone schedule"
+    verified: "2026-07-26"
+  investment_category:
+    value: 1
+    unit: label
+    prov: SOURCED
+    source: "Cashew shelling is agro-industrie, expressly within categorie 1 (\"l'agriculture, l'agro-industrie, la sante et l'hotellerie\"). fact_id CI-INV-02 / CI-V25-23."
+    authority: "Ordonnance n.2018-646, art. 5"
+    verified: "2026-07-26"
+  code_full_exemption_years:
+    value: 5
+    unit: years at 100% relief
+    prov: SOURCED
+    source: "Zone B / categorie 1: \"une exoneration d'une duree de dix ans, totale sur les cinq premieres annees\". fact_id CI-INV-03 / CI-V25-24."
+    authority: "Ordonnance n.2018-646, arts. 11 (declaration) & 17 (agrement)"
+    verified: "2026-07-26"
+  code_partial_relief_years:
+    value: 5
+    unit: years at partial relief
+    prov: SOURCED
+    source: "\"...de cinquante pour cent sur les cinq annees suivantes\" - the relief runs TEN years, not five. This is the founder's largest legal error and it is in his favour. fact_id CI-INV-03 / CI-V25-25."
+    authority: "Ordonnance n.2018-646, arts. 11 & 17"
+    verified: "2026-07-26"
+  code_partial_relief_rate:
+    value: 0.5
+    unit: fraction of the profit tax relieved in years six to ten
+    prov: SOURCED
+    source: "50% for a grande entreprise, 75% for a PME. This business is a grande entreprise because its turnover (1.98 bn) exceeds the PME ceiling of 1 bn, notwithstanding its small headcount - so 50%, giving an effective 12.5%. fact_id CI-INV-03 / CI-V25-26 / CI-V25-29."
+    authority: "Ordonnance n.2018-646, arts. 11 & 17; CEPICI, Fiche de renseignements - regime d'agrement a l'investissement, note 2 (PME definition)"
+    verified: "2026-07-26"
+  relief_covers_imf:
+    value: true
+    unit: boolean
+    prov: SOURCED
+    source: "\"y compris l'impot minimum forfaitaire\" - express. Strictly zero profit tax in the fully exempt years is legally correct; the IMF does not claw anything back. fact_id CI-INV-04."
+    authority: "Ordonnance n.2018-646, arts. 11 & 17"
+    verified: "2026-07-26"
+  agrement_threshold_large_company:
+    value: 200000000
+    unit: XOF of investment, HT, excluding working capital
+    prov: SOURCED
+    source: "Threshold for a grande entreprise to take the AGREMENT route; PME threshold is 50,000,000. Below it the investor falls to the regime de DECLARATION, whose advantages are restricted to the exploitation phase (art. 10) - i.e. the profit-tax holiday survives but the investment-phase customs/VAT exemption on the equipment does not. fact_id CI-INV-05 / CI-V25-27."
+    authority: "Ordonnance n.2018-646, arts. 1(m), 13, 10"
+    verified: "2026-07-26"
+  pme_turnover_ceiling:
+    value: 1000000000
+    unit: XOF of annual turnover
+    prov: SOURCED
+    source: "A PME is an enterprise with fewer than 200 employees AND turnover at or below 1 bn. This plant fails the second limb. fact_id CI-V25-29."
+    authority: "CEPICI, Fiche de renseignements - regime d'agrement a l'investissement, note 2"
+    verified: "2026-07-27"
+  rni_threshold_turnover:
+    value: 500000000
+    unit: XOF of annual turnover TTC
+    prov: SOURCED
+    source: "Above 500,000,001 XOF TTC the taxpayer is in the reel normal d'imposition. At 1.98 bn this business is squarely RNI - not TEE, not microentreprise, not RSI - so BIC/IS and the IMF are the operative taxes. fact_id CI-TAX-05 / CI-V25-49."
+    authority: "Code general des impots, art. 73 and the regimes d'imposition schedule; DGI"
+    verified: "2026-07-26"
+  is_rate:
+    value: 0.25
+    unit: fraction of taxable profit
+    prov: SOURCED
+    source: "General BIC/IS rate, identical for personnes physiques and morales. The founder's \"vingt-cinq pour cent\" is right about the rate and wrong only about when it starts. fact_id CI-TAX-01 / CI-V25-16."
+    authority: "DGI, Le systeme fiscal ivoirien; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income, https://taxsummaries.pwc.com/ivory-coast/corporate/taxes-on-corporate-income"
+    verified: "2026-07-26"
+  imf_rate:
+    value: 0.005
+    unit: fraction of turnover TTC
+    prov: SOURCED
+    source: "Impot minimum forfaitaire, substituted en lieu et place of the BIC where it is higher. fact_id CI-TAX-02 / CI-V25-17."
+    authority: "DGI; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income"
+    verified: "2026-07-26"
+  imf_floor:
+    value: 3000000
+    unit: XOF per year
+    prov: SOURCED
+    source: "Floor nested inside the IMF computation. fact_id CI-TAX-02 / CI-V25-18."
+    authority: "DGI; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income"
+    verified: "2026-07-26"
+  imf_cap:
+    value: 35000000
+    unit: XOF per year
+    prov: SOURCED
+    source: "Cap nested inside the IMF computation. fact_id CI-TAX-02 / CI-V25-19."
+    authority: "DGI; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Taxes on corporate income"
+    verified: "2026-07-26"
+  patente_ca_rate:
+    value: 0.005
+    unit: fraction of turnover
+    prov: SOURCED
+    source: "Droit sur le chiffre d'affaires of the contribution des patentes. fact_id CI-TAX-07 / CI-V25-20."
+    authority: "Code general des impots, contribution des patentes; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes, https://taxsummaries.pwc.com/ivory-coast/corporate/other-taxes"
+    verified: "2026-07-26"
+  patente_ca_cap:
+    value: 3000000
+    unit: XOF per year
+    prov: SOURCED
+    source: "Cap on the droit sur CA in the turnover band above 1 bn (the band this plant sits in; the 1,300,000 cap belongs to the 500m-1bn band). fact_id CI-V25-21 / CI-V25-53."
+    authority: "Contribution des patentes, plafonnement du droit sur le chiffre d'affaires by turnover band; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes"
+    verified: "2026-07-26"
+  patente_vl_rate:
+    value: 0.185
+    unit: fraction of annual rental value
+    prov: SOURCED
+    source: "Droit sur la valeur locative, 18.5% (16% in rural zones). fact_id CI-TAX-07 / CI-V25-54."
+    authority: "Code general des impots, contribution des patentes; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes"
+    verified: "2026-07-26"
+  tse_rate:
+    value: 0.001
+    unit: fraction of turnover HT
+    prov: SOURCED
+    source: "Taxe speciale d'equipement, 0.1% of turnover, paid monthly. Not in the investment-code exemption list, so it is charged in every period including the holiday. fact_id CI-V25-55."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes, https://taxsummaries.pwc.com/ivory-coast/corporate/other-taxes"
+    verified: "2026-07-26"
+  dus_rate_on_kernel_exports:
+    value: 0
+    unit: fraction of export value
+    prov: SOURCED
+    source: "The droit unique de sortie on cashew applies ONLY to raw nut in shell; processed kernel is exempt. This is the whole fiscal point of shelling in-country and it works in the founder's favour; he does not mention it. fact_id CI-SEC-01 / CI-V25-36."
+    authority: "Ordonnance n.2024-993 (DUS anacarde); Ministere des Finances et du Budget, coverage of the ratification"
+    verified: "2026-07-26"
+  cnps_pension_employer_rate:
+    value: 0.077
+    unit: fraction of gross salary
+    prov: SOURCED
+    source: "Retraite, employer share 7.70%; ceiling 3,375,000 XOF/month, not binding at an 80,000 wage. fact_id CI-V25-32 / CI-TAX-08."
+    authority: "CLEISS, Le regime ivoirien de securite sociale - les cotisations, situation au 1er janvier 2025, https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    verified: "2026-07-27"
+  cnps_family_rate:
+    value: 0.0575
+    unit: fraction of capped monthly wage
+    prov: SOURCED
+    source: "Prestations familiales 5% + maternite 0.75%, employer only, on the capped base. fact_id CI-V25-30."
+    authority: "CLEISS, Le regime ivoirien de securite sociale - les cotisations, 1er janvier 2025"
+    verified: "2026-07-27"
+  cnps_ceiling_monthly:
+    value: 70000
+    unit: XOF per worker per month
+    prov: SOURCED
+    source: "Monthly ceiling for prestations familiales, maternite and accidents du travail. Note it is BELOW the 80,000 wage, so the capped base is 70,000, not 80,000. fact_id CI-V25-31 / CI-TAX-08."
+    authority: "CLEISS, Le regime ivoirien de securite sociale - les cotisations, 1er janvier 2025"
+    verified: "2026-07-27"
+  employer_payroll_tax_rate:
+    value: 0.044
+    unit: fraction of gross payroll
+    prov: SOURCED
+    source: "Contribution a la charge de l'employeur 2.8% (local staff) + taxe d'apprentissage 0.4% + taxe a la formation professionnelle continue 1.2% = 4.4%. fact_id CI-V25-35 / CI-TAX-08. Charged in every period here (see notes) even though the code exempts the 2.8% limb during the relief years - the conservative treatment."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes; FDFP"
+    verified: "2026-07-27"
+  smig_monthly:
+    value: 75000
+    unit: XOF per month
+    prov: SOURCED
+    source: "Legal minimum wage since 1 January 2023, still in force. The founder's 80,000 clears it by 5,000 - his wage is legal, but only just, and it leaves no room for a statutory uplift. fact_id CI-V25-09 / CI-TAX-09."
+    authority: "Decret n.2022-986 du 21 decembre 2022"
+    verified: "2026-07-27"
+  vat_standard_rate:
+    value: 0.18
+    unit: fraction
+    prov: SOURCED
+    source: "Standard VAT. Exports of kernel are zero-rated, so output VAT is nil and input VAT on power, bags and maintenance accumulates as a credit against the DGI. fact_id CI-V25-39 / CI-TAX-10."
+    authority: "Code general des impots; PwC Worldwide Tax Summaries, Ivory Coast - Corporate - Other taxes"
+    verified: "2026-07-27"
+  cca_floor_price_magasin_usine:
+    value: 454
+    unit: XOF per kg of raw nut, delivered to the factory store
+    prov: SOURCED
+    source: "Mandatory floor price magasin-usine for the campaign announced 17 February 2026 (bord-champ minimum 400). The founder's 500 sits above the floor and inside the 450-500 delivered band, so his purchase price is the one number in his plan that benchmarks cleanly. fact_id CI-V25-37 / CI-SEC-02."
+    authority: "Conseil du coton, de l'anacarde et du karite (CCA), prix planchers obligatoires, campagne 2026"
+    verified: "2026-07-27"
+  campaign_window_months:
+    value: 5
+    unit: months per year in which raw nut can be bought
+    prov: SOURCED
+    source: "The 2026 campaign opened 9 February, with 9 February to 15 March reserved for local processors. Raw nut is a single-harvest crop: a plant running twelve months must buy its whole year's feed inside this window and store it. This one fact generates the entire working-capital and storage-loss structure of the model. fact_id CI-V25-38."
+    authority: "Conseil du coton, de l'anacarde et du karite (CCA), ouverture de la campagne 2026, 9 fevrier 2026"
+    verified: "2026-07-27"
+  lab_kor_fraction:
+    value: 0.265
+    unit: kg of white kernel per kg of raw nut, laboratory cut-test
+    prov: SOURCED
+    source: "Ivorian lab KOR 46-48 lbs per 80 kg bag, i.e. 26-27%; 0.265 is the midpoint. This is what is PHYSICALLY IN the nut; the founder's 22% is what comes OUT of the factory. fact_id CI-SEC-04."
+    authority: "World Bank ICR (Cote d'Ivoire cashew); cashew trade references"
+    verified: "2026-07-26"
+  shell_fraction_of_rcn:
+    value: 0.66
+    unit: kg shell per kg raw nut
+    prov: SOURCED
+    source: "Shell removed is 640-720 g per kg of raw nut; 0.66 sits at the lower-middle of that band, chosen so the six-stream balance closes at exactly 1.000 with defensible values for the other five. CNSL is 18-26% of the SHELL, i.e. a sub-fraction of this stream, not an additional one."
+    authority: "Agriculture.Institute, Cashew Nut Processing - From Raw Nut to Edible Kernel, https://agriculture.institute/post-harvest-mgt-value-addition/cashew-nut-processing-edible-kernel/ ; UNIDO, Cashew Nut Processing manual - the basics, https://www.unido.org/sites/default/files/2013-07/Cashew_nuts_final_presentation_PP_0.pdf"
+    verified: "2026-07-27"
+  manual_peeling_kg_per_person_day:
+    value: 7
+    unit: kg of kernel peeled per person per day
+    prov: SOURCED
+    source: "Skilled labour peels 6-8 kg of kernel per day; 7 is the midpoint. Peeling is the labour bottleneck of a semi-mechanised line and is what makes the founder's headcount impossible."
+    authority: "Agriculture.Institute / cashewplus.com cashew processing references (manual peeling 6-8 kg/person/day; manual grading 20-50 kg/person/day; pneumatic peelers to 300 kg/hour)"
+    verified: "2026-07-27"
+  tonnes_rcn_per_direct_job:
+    value: 7.5
+    unit: tonnes of annual raw-nut capacity per direct job
+    prov: SOURCED
+    source: "ECOCAJOU, Odienne: 15,000 t/year of raw nut capacity, 2,000 direct jobs at full regime (840 employed at inauguration). 15,000/2,000 = 7.5. A real, contemporary, Ivorian plant - the best available benchmark for how many people a cashew line of this type actually needs."
+    authority: "AIP (Agence Ivoirienne de Presse), 'La capacite de transformation de l'anacarde s'accroit de 15 000 tonnes a Odienne', inauguration 19 June 2024, https://www.aip.ci/74850/cote-divoire-aip-la-capacite-de-transformation-de-lanacarde-saccroit-de-15-000-tonnes-a-odienne/"
+    verified: "2026-07-27"
+  capex_benchmark_low_xof_per_t:
+    value: 250000
+    unit: XOF of capex per tonne of annual capacity
+    prov: SOURCED
+    source: "Observed Ivorian range 250,000-833,000 XOF per tonne of annual capacity (Toumodi 250k, Kpouebo 401k, Attinguie 533k, Boundiali 833k); 250,000 is the CHEAPEST point observed. ECOCAJOU Odienne independently gives 10.2 bn for 15,000 t = 680,000/t. Sub-scale lines cost MORE per tonne, not less. fact_id CI-SEC-05."
+    authority: "Ecofin / AgriTech reporting on Ivorian cashew units; AIP on ECOCAJOU Odienne (10.2 bn FCFA for 15,000 t)"
+    verified: "2026-07-26"
+  kernel_rcn_price_ratio_working_high:
+    value: 6
+    unit: ratio of kernel price to raw-nut price
+    prov: SOURCED
+    source: "The working kernel:RCN price ratio in the trade is 5-6x; Vietnamese WW320 FOB was USD 7.2-7.5/kg at Dec-2025 and African origin trades at a DISCOUNT to Vietnam, not a premium. fact_id CI-SEC-06."
+    authority: "Cashew trade quotes / African Cashew Alliance market reporting"
+    verified: "2026-07-26"
+  processor_subsidy_rate_xof_per_kg:
+    value: 400
+    unit: XOF per kg of exported kernel
+    prov: SOURCED
+    source: "State support to processors of 400 FCFA per kg of exported kernel, explicitly described as the official competitiveness gap against Vietnam. Its existence is itself evidence that Ivorian shelling does not clear on unsubsidised prices. fact_id CI-SEC-03. Whether THIS founder receives it is a separate, elicited question."
+    authority: "Ivorian cashew sector reporting (CCA / Conseil coton-anacarde processor support scheme)"
+    verified: "2026-07-26"
+  rcn_bulk_density_kg_per_m3:
+    value: 600
+    unit: kg per cubic metre, loose
+    prov: SOURCED
+    source: "Measured bulk density of raw cashew nut 592-626 kg/m3 over 5-9% moisture; 600 is the working value. Used to size the store the campaign forces him to build."
+    authority: "Physical properties of raw cashew nut, Journal of Agricultural Engineering Research / Taylor & Francis, Physical, morphological and mechanical properties of raw and steamed cashew nuts, https://www.tandfonline.com/doi/full/10.1080/10942912.2024.2304271"
+    verified: "2026-07-27"
+  container_payload_t_kernel:
+    value: 15.6
+    unit: tonnes of kernel per 20-foot container
+    prov: SOURCED
+    source: "Kernel ships in 22.68 kg (50 lb) vacuum cartons, ~700 cartons per 20-foot container, 15.5-15.7 t loaded. Used for the cumulative logistics test."
+    authority: "Cashew Export Promotion Council of India, packing standards (11.34 kg tins, 2 per 22.68 kg carton); trade loading practice ~700 cartons per 20ft"
+    verified: "2026-07-27"
+  export_distance_km_roundtrip:
+    value: 720
+    unit: km per round trip, factory to Abidjan port and back
+    prov: SOURCED
+    source: "F-212 correction, 2026-08-04: promoted to a first-class input. Road-distance references put Bouake-Abidjan at roughly 340-360 km each way via the N1; 720 km round trip (already the figure STEP 4 used to derive '302,900 truck-km/yr' before this fix costed it) sits at the upper end of that band, allowing for in-town drayage to the container terminal. Kept unchanged from the pre-existing figure so the previously-published truck-km total is not disturbed by this fix."
+    authority: "General Cote d'Ivoire road-distance references (Bouake-Abidjan via N1, ~340-360 km one way)"
+    verified: "2026-08-04"
+  export_logistics_rate_xof_per_tonne_km:
+    value: 42.5
+    unit: XOF per tonne-km
+    prov: SOURCED
+    source: "F-212 correction, 2026-08-04: added because STEP 4 computed the export haulage volume (420.73 containers/yr, 302,900 truck-km/yr) but the gold priced none of it, self-disclosing the gap as DEFERRED. SEC-V26-13 gives West African road freight at 25-60 XOF/tonne-km; 42.5 is the midpoint, taken as the working value in the same style as rcn_bulk_density_kg_per_m3 and other unband midpoint picks in this file."
+    authority: "spec/FACT_BASE.md SEC-V26-13"
+    verified: "2026-08-04"
+
+  # ---------- INFERRED: entailed by the above, no new information ----------
+  process_efficiency:
+    value: 0.8301886792452830
+    unit: fraction of laboratory-attainable kernel actually recovered
+    prov: INFERRED
+    source: "kernel_recovery_fraction / lab_kor_fraction = 0.22 / 0.265. Ties to the independently sourced statement that 22% industrial recovery against a 26-27% lab KOR is realistic at ~83% process efficiency. This is the number that tells you what the founder's ratio is NET OF."
+    date: "2026-07-27"
+  kernel_rcn_price_ratio:
+    value: 9
+    unit: ratio
+    prov: INFERRED
+    source: "kernel_price_xof_per_kg / rcn_price_xof_per_kg = 4500 / 500. Compare kernel_rcn_price_ratio_working_high = 6."
+    date: "2026-07-27"
+  capex_per_tonne_capacity:
+    value: 90000
+    unit: XOF per tonne of annual capacity
+    prov: INFERRED
+    source: "capex_total_xof / rcn_throughput_t_per_year = 180,000,000 / 2,000."
+    date: "2026-07-27"
+  capex_benchmark_gap_xof:
+    value: 320000000
+    unit: XOF
+    prov: INFERRED
+    source: "capex_benchmark_low_xof_per_t * rcn_throughput_t_per_year - capex_total_xof = 500,000,000 - 180,000,000. The shortfall against the CHEAPEST observed Ivorian plant; against ECOCAJOU's 680,000/t the shortfall would be far larger."
+    date: "2026-07-27"
+  partial_relief_start_index:
+    value: 5
+    unit: 0-based period index
+    prov: INFERRED
+    source: "relief_start_period_index + code_full_exemption_years = 0 + 5."
+    date: "2026-07-27"
+  full_rate_start_index:
+    value: 10
+    unit: 0-based period index
+    prov: INFERRED
+    source: "partial_relief_start_index + code_partial_relief_years = 5 + 5."
+    date: "2026-07-27"
+  terminal_release_index:
+    value: 15
+    unit: 0-based period index
+    prov: INFERRED
+    source: "grid.periods - 1. The final period, in which the operation reaches the end of the asset life and working capital is wound down."
+    date: "2026-07-27"
+  overhaul_index:
+    value: 8
+    unit: 0-based period index
+    prov: INFERRED
+    source: "Mid-point of the 15 production years (t=1..15), the period in which a mid-life overhaul would fall if one is budgeted."
+    date: "2026-07-27"
+  daily_rcn_rate_kg:
+    value: 8000
+    unit: kg of raw nut processed per operating day
+    prov: INFERRED
+    source: "rcn_throughput_t_per_year * 1000 / operating_days_per_year_full = 2,000,000 / 250. Over an 8-hour shift this is 1,000 kg of raw nut per hour on the shelling line."
+    date: "2026-07-27"
+  avg_residence_months:
+    value: 4.5
+    unit: months
+    prov: INFERRED
+    source: "Derived by rolling the campaign month by month: purchases of 400 t/month in each of the five campaign months against consumption of 166.667 t/month all twelve months, opening and closing at a two-month bridging stock. Month-end stocks are 166.7, 400, 633.3, 866.7, 1100, 1333.3, 1166.7, 1000, 833.3, 666.7, 500, 333.3 t; their mean is 750 t, and 750 t held against 2,000 t of throughput is 750*12/2000 = 4.5 months of average residence."
+    date: "2026-07-27"
+  peak_to_average_stock_ratio:
+    value: 1.7777777777777777
+    unit: ratio
+    prov: INFERRED
+    source: "From the same monthly roll: peak 1,333.333 t at the end of the campaign against a 750 t mean = 16/9."
+    date: "2026-07-27"
+  closing_rcn_stock_months:
+    value: 2
+    unit: months of feed carried at 31 December
+    prov: INFERRED
+    source: "The campaign opens 9 February (SOURCED) and new-crop nut needs receipt, calibration and conditioning before it can be cut. The store must therefore bridge January and most of February - two months of feed - or the line stops. Not a policy choice; a calendar entailment."
+    date: "2026-07-27"
+  year1_utilisation_fraction:
+    value: 0.9166666666666666
+    unit: fraction of a full year's throughput achieved in the first production year
+    prov: INFERRED
+    source: "11/12. In 2027 the store starts empty; the first nut cannot be bought before the campaign opens on 9 February, so January is unfeedable and the first production year is eleven months at nameplate rate, not twelve. This is the CEILING set by the campaign calendar - commissioning delays can only reduce it (see notes)."
+    date: "2026-07-27"
+  plant_availability:
+    value: 0.8333333333333334
+    unit: fraction of scheduled days actually available for production
+    prov: INFERRED
+    source: "F-211 correction, 2026-08-04: promoted to a first-class input. It was previously only used inside the operating_days_per_year_full check formula and the STEP 3 prose, with no declared symbol behind it - the check referenced an undefined name. Value is 5/6: CIE load-shedding, water interruptions, boiler and dryer servicing, cutting-blade changes, and illness take roughly one scheduled day in six out of a West African agro-processing line. Declaring it does not move operating_days_per_year_full, which was already fixed independently at 250 as its own INFERRED value."
+    date: "2026-08-04"
+  operating_days_per_year_full:
+    value: 250
+    unit: effective processing days per year
+    prov: INFERRED
+    source: "365 calendar days less 52 Sundays less 13 jours feries = 300 scheduled days; times plant_availability 0.8333 = 250. Availability is not decoration: CIE load-shedding, water interruptions, boiler and dryer servicing, cutting-blade changes, and illness take roughly one scheduled day in six out of a West African agro-processing line."
+    date: "2026-07-27"
+  scheduled_days_per_year:
+    value: 300
+    unit: days
+    prov: INFERRED
+    source: "365 - 52 Sundays - 13 Ivorian public holidays."
+    date: "2026-07-27"
+  shift_hours_per_day:
+    value: 8
+    unit: hours
+    prov: DEFAULTED
+    source: "One 8-hour shift, the standard single-shift working day. Stated so that the hourly line rate and the cumulative machine-hours test are visible and arguable."
+    date: "2026-07-27"
+  warehouse_areal_capacity_kg_per_m2:
+    value: 800
+    unit: kg of bagged raw nut per square metre of gross warehouse floor
+    prov: INFERRED
+    source: "rcn_bulk_density_kg_per_m3 600 * 0.80 bag-packing efficiency (voids between 80 kg jute bags) = 480 kg/m3 of stack; times a 2.5 m stack height on pallets = 1,200 kg/m2 of stack footprint; times 2/3 for aisles, weighing, turning and wall clearance = 800 kg/m2 of gross floor."
+    date: "2026-07-27"
+  fg_stock_days:
+    value: 14
+    unit: days of production held as finished kernel
+    prov: INFERRED
+    source: "One 20-foot container of 15.6 t is 8.9 operating days of kernel at 1.76 t/day; a container in build plus one awaiting documents is about fourteen days. Valued at cash production cost, not selling price."
+    date: "2026-07-27"
+  supplier_payable_days:
+    value: 30
+    unit: days
+    prov: DEFAULTED
+    source: "Standard 30-day settlement on utilities, consumables and payroll (salaries paid monthly in arrears). Applied to labour and other opex only, not to raw nut."
+    date: "2026-07-27"
+  vatable_opex_fraction:
+    value: 0.85
+    unit: fraction of other_opex bearing input VAT
+    prov: ASSUMED
+    source: "Power, bags, spares and contracted maintenance are standard-rated; water and some charges are not. No source distinguishes the split for a plant of this type and no one in the business can state it before the plant runs, so this is a supplied prior, flagged. It only bites if vat_credit_recovery_fraction is below 1."
+    date: "2026-07-27"
+  rcn_storage_loss_rate_per_month:
+    value: 0.0025
+    unit: fraction of the raw-nut stock at risk lost per month
+    prov: ASSUMED
+    source: "A supplied prior. The published evidence is bimodal and unusable directly: well-dried nut in new or fumigated gunny bags, palletised, keeps six months without significant loss, while an uncontrolled jute-bag trial recorded ~20% weight loss and 21% kernel damage in three months. 0.25%/month - about 1.1% over the 4.5-month average residence - represents a competently run, fumigated, palletised store. It is a mass loss to insects (Plodia, Cryptolestes), rodents, mould and handling; it EXCLUDES drying-down, because water leaving the nut raises KOR and does not destroy kernel. What no source can supply is which regime this particular store will be in - hence rcn_store_capacity_t is elicited alongside it. F-210, 2026-08-04: this rate is conditioned on treatment being applied, but no fumigation line is separately costed anywhere in the file. No cashew-specific fumigation-cost figure exists in the sourced set; the nearest analogue, SEC-V26-11 (phosphine fumigation, 20 t bagged cereal, 2-3 rounds/campaign, 70,000-150,000 XOF/campaign all-in), scaled to the 1,333 t peak stock here, implies on the order of a few million XOF/yr - under 5% of other_opex_xof_per_year. That is treated as bundled inside the 'entretien' component of other_opex_xof_per_year (see its source note) rather than broken out as its own line, because it is immaterial (well under 1% of steady-state EBITDA) and not separately itemised anywhere the founder gave figures."
+    date: "2026-07-27"
+  testa_fraction_of_rcn:
+    value: 0.0075
+    unit: kg testa per kg raw nut
+    prov: SOURCED
+    source: "F-209 correction, 2026-08-04. Was 0.016 (ASSUMED, 'the pellicule stripped at peeling, ~6% of the kernel-with-testa mass'), 1.6-3.2x the top of SEC-V26-05's sourced band. SEC-V26-05 (cashew mass balance beyond kernel+shell, processing benchmark, verified 2026-07-27) gives testa 0.5-1% of raw nut; 0.75% is the midpoint, taken here. Neither testa nor water carries a price anywhere in checks, so the correction reallocates within the closed six-stream balance and does not move revenue, cost or FCFF."
+    authority: "spec/FACT_BASE.md SEC-V26-05"
+    verified: "2026-08-04"
+  kernel_process_loss_fraction:
+    value: 0.026
+    unit: kg per kg raw nut
+    prov: ASSUMED
+    source: "Scorched, oil-stained and insect-damaged kernel rejected at grading, plus cutting and peeling fines and kernel drying-down. A supplied prior, sized so that recovered kernel plus this stream plus testa reconciles to the sourced laboratory KOR at the sourced ~83% process efficiency."
+    date: "2026-07-27"
+  cleaning_reject_fraction:
+    value: 0.02
+    unit: kg per kg raw nut
+    prov: ASSUMED
+    source: "Foreign matter, dust, stones, immature and void nuts removed at reception and calibration - the reason delivered weight and processable weight differ. A supplied prior at the low end of trade practice."
+    date: "2026-07-27"
+  water_loss_fraction:
+    value: 0.0665
+    unit: kg per kg raw nut
+    prov: INFERRED
+    source: "Residual of the six-stream balance: 1 - 0.22 - 0.66 - 0.0075 - 0.026 - 0.02 (F-209 correction, 2026-08-04: testa_fraction_of_rcn moved from 0.016 to the SEC-V26-05 midpoint 0.0075, so the residual absorbs the difference, exactly as designed). 6.65% sits comfortably inside SEC-V26-05's own 4-8% moisture band. Net water leaving the line - nut received at 8-10% moisture, steam added at conditioning, kernel dried from ~7% to ~3% and shell dried after cutting. Made the residual deliberately, because it is the least observable stream and should carry the estimation error rather than the shell or the kernel."
+    date: "2026-08-04"
+
+  # ---------- ELICITED: the founder holds these answers ----------
+  total_workforce_headcount:
+    value: 266.66666666666666
+    unit: workers employed
+    prov: ELICITED
+    question: "Are the sixty workers at eighty thousand your entire workforce, or are they your permanent staff, with seasonal peelers and graders taken on during the processing season on top?"
+    range: {low: 60, high: 400}
+    materiality: high
+    source: "Base case runs on rcn_throughput_t_per_year / tonnes_rcn_per_direct_job = 2000 / 7.5 = 266.67, the headcount a real Ivorian plant of this type actually carries - NOT on the founder's sixty. This is the only place in the model where I override a stated figure, and I do it because sixty is not a cost estimate, it is a claim about physics: sixty workers producing 440 t of peeled, graded, export-packed kernel over 250 operating days is 29.33 kg of finished kernel per worker per day, when a skilled peeler manages 6-8 kg/day at the peeling station alone, before anyone shells, dries, grades or packs. His own capex forecloses the escape route: 180,000,000 XOF cannot buy automatic peeling, so the peeling must be by hand, and by hand it takes hundreds of people. 266.67 is chosen over a bottom-up build of ~368 because it is the lower, sourced, whole-plant figure and therefore the more conservative statement of the problem. His sixty is preserved and costed in trace.labour_cost_as_stated and the gap is materialised."
+  processor_subsidy_received_xof_per_kg:
+    value: 0
+    unit: XOF per kg of exported kernel
+    prov: ELICITED
+    question: "Are you registered for the State's support of four hundred francs a kilo on exported kernel, and has it actually been paid out to processors in the last two campaigns?"
+    range: {low: 0, high: 400}
+    materiality: high
+    source: "Base case takes zero - the omitting choice, because he never mentions it and because arrears on this scheme are the norm rather than the exception. The rate itself is SOURCED (processor_subsidy_rate_xof_per_kg = 400); what is elicited is whether it reaches him and when."
+  rcn_store_capacity_t:
+    value: 1333.3333333333333
+    unit: tonnes of raw nut that can be held under cover at one time
+    prov: ELICITED
+    question: "How many tonnes of raw nut can you keep under cover on the site at one time, and can the store be closed up and fumigated?"
+    range: {low: 200, high: 1400}
+    materiality: high
+    source: "Base case is set equal to the peak stock the campaign calendar forces on him, so the check binds exactly and any smaller answer breaks it. He has not costed a store: the peak needs about 1,667 m2 of gross covered floor, a building of roughly 60 x 30 m, and that is before the process hall, the boiler, the dryers and the packing room. If the honest answer is 200 t he cannot buy a year's feed in the campaign at all and the 2,000 t plan collapses to whatever he can store."
+  relief_start_period_index:
+    value: 0
+    unit: 0-based period index at which the relief clock starts
+    prov: ELICITED
+    question: "What date is written on your certificat d'agrement, and when do you expect the achevement des travaux to be certified - this year or next?"
+    range: {low: 0, high: 1}
+    materiality: high
+    source: "Base case starts the clock at t=0, the construction year - the conservative reading, which burns one of the five full-exemption years on a period with no profit and leaves only four tax-free production years. The founder believes the clock starts with first production; the code anchors it to achevement des travaux / the certificat d'agrement a l'exploitation, and art. 45 defaults to the certificate date (fact_id CI-INV-06, Ord. 2018-646 arts. 1(d), 45, verified 2026-07-26). Which of the two dates applies is a fact about his file that only he holds."
+  kernel_price_net_deduction_xof_per_kg:
+    value: 0
+    unit: XOF per kg deducted from the stated kernel price
+    prov: ELICITED
+    question: "Is your four thousand five hundred francs a kilo what lands in your account at the factory gate, or is it the FOB Abidjan price out of which you still pay the trucking, the container stuffing and the port charges?"
+    range: {low: 0, high: 250}
+    materiality: medium
+    source: "Base case takes zero - the omitting choice, and the reading most favourable to him. He mentions bags among his costs but nothing about moving 28 containers a year 360 km to Abidjan. Note separately that the 4,500 price itself benchmarks badly: kernel_rcn_price_ratio is 9x against a working trade ratio of 5-6x, and 4,500 XOF/kg is at the very top of the Vietnamese WW320 FOB range for an origin that trades at a discount to Vietnam."
+  receivable_days:
+    value: 30
+    unit: days
+    prov: ELICITED
+    question: "When does the money actually reach you - against documents at loading, or thirty, sixty or ninety days after shipment?"
+    range: {low: 0, high: 90}
+    materiality: medium
+    source: "Base case 30 days: cash against documents with normal presentation and transit lag. He says nothing about payment terms, and on a 1.98 bn turnover each thirty days is about 163 million of working capital."
+  rcn_payable_days:
+    value: 0
+    unit: days
+    prov: ELICITED
+    question: "Do the cooperatives give you any credit at all on the nut, or is every lot paid cash on delivery?"
+    range: {low: 0, high: 30}
+    materiality: medium
+    source: "Base case zero - both the conservative choice and campaign practice, since the cooperative needs the cash to pay its farmers on the spot. This is why the campaign is so brutal on working capital: he must find over a billion francs of nut money inside five months with no supplier credit, and he has not mentioned where it comes from."
+  shell_price_xof_per_t:
+    value: 0
+    unit: XOF per tonne of shell
+    prov: ELICITED
+    question: "Do you sell the shell, and at what price a tonne, or do you burn it under your own boiler?"
+    range: {low: 0, high: 60000}
+    materiality: medium
+    source: "Base case zero - the omitting choice. He calls the whole 78% 'la coque' and prices none of it. The balance says 1,320 t of actual shell a year has to leave the site or be burned; shell has traded at USD 50-145/t globally with European buyers now active in Cote d'Ivoire, so zero is conservative but it may also be right if the shell fires his own steam."
+  vat_credit_recovery_fraction:
+    value: 1
+    unit: fraction of input VAT actually recovered
+    prov: ELICITED
+    question: "Of the VAT credits you have claimed, have you ever had the DGI refuse or write down the amount, rather than simply pay it late?"
+    range: {low: 0, high: 1}
+    materiality: medium
+    source: "Base case 1.0 - full recovery, the omitting choice. Exports are zero-rated, so there is no output VAT to absorb the input VAT on power, bags and maintenance; the credit must be refunded in cash or it becomes a permanent cost. F-214 correction, 2026-08-04: the question previously also asked 'how long did that refund take' (timing/lag), but vat_credit_recovery_fraction is a completeness fraction only (0 to 1) - no working-capital line in this file models a VAT-refund delay, unlike receivable_days for trade receivables, so a timing answer had nowhere to land and would have silently been discarded. The question is narrowed to the half it can actually feed: whether the credit is eventually recovered in full, not when. Refund lags are the standard complaint of Ivorian exporters, but modelling that delay would require a new working-capital mechanism (a vat_refund_lag_days line alongside a vat_receivable stock) that does not exist here and is not added by this fix; if it is added later, that is the place for the timing half of the original question to return."
+  midlife_overhaul_capex_xof:
+    value: 0
+    unit: XOF, one-off, at overhaul_index
+    prov: ELICITED
+    question: "Have you put anything aside for a mid-life overhaul around year eight - retubing the boiler, rebuilding the shellers and the dryers - or is the hundred and twenty million a year of maintenance meant to cover that too?"
+    range: {low: 8000000, high: 60000000}
+    materiality: medium
+    source: "Base case zero, matching his words - this is his STATED omission, an explicit belief-vs-physics pair of the same kind as founder_belief_exempt_years next to code_full_exemption_years elsewhere in this file: what he implies (nothing set aside) is a fact about his plan, kept as the base case even though it is not what the physics argues. F-213 correction, 2026-08-04: the ELICIT range itself was wrong - a floor of 0 XOF is what the original range asserted was the low end of the physically plausible outcomes, but STEP 4's own machine-hour arithmetic (29,833 hours over 15 years) makes a true zero-spend outcome physically unavailable: at least one boiler retube AND one sheller rebuild are required, not one or the other, so the old 36,000,000 ceiling may also have undercounted. No cashew-specific overhaul-cost benchmark exists to price either bound precisely (order-of-magnitude only, a supplied prior, matching the treatment already used for testa_fraction_of_rcn and rcn_storage_loss_rate_per_month before their own sourcing): the floor is raised to 8,000,000 (order of magnitude for a boiler retube alone) and the ceiling to 60,000,000 (room for both named items). The base-case VALUE stays at 0 because it still records what the founder said, not what the range now argues is physically likely; a reader who wants the physically-argued case should substitute a value inside the corrected range and re-run, exactly as with total_workforce_headcount. Zero is what he said; it is unlikely to be what happens."
+  cnps_at_mp_rate:
+    value: 0.05
+    unit: fraction of the capped monthly wage
+    prov: ELICITED
+    question: "What accidents-du-travail rate has CNPS notified for your establishment?"
+    range: {low: 0.02, high: 0.05}
+    materiality: low
+    source: "Base case takes the top of the statutory 2-5% band (SOURCED, CLEISS, fact_id CI-V25-33/34) - the conservative choice, and defensible for a plant combining steam, hot caustic shell liquid and cutting machinery. It applies only to the 70,000/month capped base, so the whole band is worth a few million a year."
+  patente_rental_value_xof:
+    value: 0
+    unit: XOF of annual valeur locative assessed on the premises
+    prov: ELICITED
+    question: "What annual valeur locative has the administration assigned to your plant for the patente?"
+    range: {low: 0, high: 20000000}
+    materiality: low
+    source: "Base case zero - the omitting choice, since no assessment exists yet for a plant not built. It is relieved along with the droit sur CA during the exemption years, so it only starts to matter from period 5."
+
+passage: >
+  STEP 0 - WHO IS THIS TAXPAYER, AND UNDER WHICH RULE. Before any arithmetic, three
+  determinations, because the founder gets two of them wrong and they change the answer more
+  than any operating assumption.
+
+  (i) REGIME. Turnover is 440 t of kernel at 4,500 XOF/kg = 1,980,000,000 XOF. That is far above
+  the 500,000,001 XOF TTC entry to the reel normal, so this is an RNI taxpayer: BIC/IS at 25%,
+  with the impot minimum forfaitaire at 0.5% of turnover substituting where it is higher. It is
+  not a TEE and not a microentreprise; those bands stop at 50 m and 200 m.
+
+  (ii) SIZE. 1.98 bn also exceeds the 1 bn PME turnover ceiling. Sixty workers - or even 267 -
+  would satisfy the headcount limb of the PME test, but the turnover limb fails, so this is a
+  GRANDE ENTREPRISE. That matters because the second half of the investment-code relief is 50%
+  for a large company and 75% for a PME.
+
+  (iii) RELIEF. Bouake is a chef-lieu de region, therefore Zone B. Cashew shelling is
+  agro-industrie, therefore categorie 1. Zone B / categorie 1 gives "une exoneration d'une duree
+  de DIX ans, totale sur les cinq premieres annees, de cinquante pour cent sur les cinq annees
+  suivantes". The founder says five years and then straight back to 25%. He is WRONG, and wrong
+  in his own favour: he has five further years at an effective 12.5% that he is not counting.
+  The relief expressly covers the IMF, so zero really means zero in the exempt years. Against
+  that, two things cut the other way. First, he believes the clock starts at first production;
+  the code anchors it to achevement des travaux / the certificat d'agrement a l'exploitation,
+  and on the conservative reading adopted here it starts in the construction year, so one full
+  exempt year is spent before a franc of profit exists and only four production years are
+  tax-free. Second, and more seriously, his 180,000,000 of capex is BELOW the 200,000,000
+  threshold a grande entreprise must clear to take the agrement route at all - so the agrement
+  he says he has obtained may in fact be a regime de declaration. The good news is that the
+  exploitation-phase exemption schedule is the same under both (arts. 11 and 17); what he would
+  lose is the investment-phase duty and VAT exemption on the equipment. That risk is recorded,
+  not modelled.
+
+  STEP 1 - THE TRANSFORMATION, CLOSED. The founder gives a ratio and calls the remainder shell:
+  "vingt-deux kilos d'amande blanche pour cent kilos de noix brutes - le reste, c'est la coque".
+  A ratio is not a balance. Per 100 kg of raw nut delivered, the six streams are: white kernel
+  shipped 22.00 kg; shell 66.00 kg; testa stripped at peeling 0.75 kg (SEC-V26-05 midpoint,
+  corrected 2026-08-04 from an earlier 1.60 kg that sat 1.6-3.2x above that band's top, F-209);
+  kernel process losses (scorched, stained and undersized kernel rejected at grading, plus cutting
+  and peeling fines) 2.60 kg; cleaning rejects (foreign matter, dust, immature and void nuts)
+  2.00 kg; net water evaporated 6.65 kg, the residual that absorbed the testa correction and still
+  sits inside SEC-V26-05's 4-8% moisture band. They sum to exactly 100.00. So "le reste, c'est la coque" overstates the
+  shell by 12 kg in every 100: the actual shell stream is 66%, not 78%, and the missing 12% is
+  water, dirt, skin and broken kernel. On 2,000 t/year that is 1,320 t of shell, not 1,560 t -
+  a 240 t/year error in a stream he must physically move off the site or burn.
+  What is his 22% NET OF? The Ivorian laboratory cut-test KOR is 26-27%; take 26.5%. His 22% is
+  22.0/26.5 = 83.02% of what is physically in the nut. So the ratio is net of cutting breakage,
+  scorching, peeling loss, grading rejects and kernel drying-down - roughly one kernel in six
+  never reaches a carton. This is the correct industrial figure and he is right to use it; the
+  point is that it silently discards 78 kg of matter per 100, and 66 of those 78 have value.
+
+  STEP 2 - THE STOCK, AND WHAT IT LOSES. Raw cashew is a single-harvest crop. The 2026 campaign
+  opened on 9 February with 9 February to 15 March reserved for local processors; the buying
+  window is about five months. A plant that processes twelve months must buy twelve months of
+  feed in five and store the difference. Rolling the year month by month at 400 t/month of
+  purchases against 166.667 t/month of consumption, with a two-month bridging stock at each end,
+  gives month-end stocks of 166.7, 400, 633.3, 866.7, 1100, 1333.3, 1166.7, 1000, 833.3, 666.7,
+  500 and 333.3 t. Mean 750 t; peak 1,333.3 t at the end of June; average residence 4.5 months.
+  These three numbers do all the work below.
+  Loss. The stock leaks - Plodia and Cryptolestes through the stem end, rodents, mould, handling.
+  The rate is applied to the QUANTITY AT RISK, which is the 750 t average, not the 2,000 t
+  throughput and not the 1,333 t peak: 750 t x 0.25%/month x 12 months = 22.5 t/year in a steady
+  year, and 687.5 t x 0.03 = 20.625 t in the eleven-month first year. Deliberately excluded from
+  this rate is drying-down: water leaving the nut raises KOR and destroys no kernel, so charging
+  it as loss would double-count against the moisture stream in Step 1.
+  Consequence: he must BUY more than he processes. In a steady year, purchases = 2,000 processed
+  + 22.5 lost + nil net stock change = 2,022.5 t, costing 1,011,250,000 XOF. In the first year he
+  must additionally BUILD the 333.333 t bridging stock, so purchases are 1,833.333 + 20.625 +
+  333.333 = 2,187.292 t. In the final year he runs the store down and buys 1,689.167 t. Over the
+  horizon: 30,168.958 t bought, 29,833.333 t processed, 335.625 t lost, closing at zero.
+  Two other stocks. Finished kernel: fourteen days of production, about one container in build
+  and one awaiting documents, carried at cash production cost; its own loss rate is taken as ZERO
+  and that is a claim, not silence - kernel is vacuum-packed under CO2 in sealed 22.68 kg cartons
+  and turns over in a fortnight. Shell: ZERO stock carried, because the base case sells it for
+  nothing and it leaves continuously as boiler fuel or waste; if he sells it, a stock and a loss
+  rate both appear.
+
+  STEP 3 - DOES THE CLAIMED OUTPUT FIT THE PLANT? Take each resource in its own units.
+  TIME. 365 days less 52 Sundays less 13 jours feries = 300 scheduled days. Availability 0.8333 -
+  one scheduled day in six lost to CIE load-shedding, water cuts, boiler and dryer servicing,
+  blade changes and illness - gives 250 effective processing days. 2,000 t over 250 days is
+  8,000 kg of raw nut a day, or 1,000 kg an hour on a single 8-hour shift. That is a substantial
+  but ordinary line rate; the plant is not being asked to do anything exotic per hour.
+  PEOPLE. This is where it fails. 250 days at 8,000 kg/day yields 1,760 kg of finished kernel a
+  day. Divided over sixty workers that is 29.33 kg of export-graded kernel per worker per day.
+  A skilled hand-peeler manages 6-8 kg/day at the peeling bench alone - and the same sixty people
+  would still have to clean, calibrate, steam, cut, dry, peel, grade, weigh and pack. The claimed
+  output is roughly four times what sixty people could do if every one of them peeled and nobody
+  did anything else. The escape route would be automatic peeling (pneumatic peelers run to
+  300 kg/hour), but automatic peeling costs far more than the whole 180,000,000 he has budgeted,
+  so his own capex figure forecloses it. The benchmark confirms the arithmetic from the other
+  side: ECOCAJOU at Odienne carries 2,000 direct jobs on 15,000 t of capacity - 7.5 t per job -
+  which puts a 2,000 t line at 266.67 people, four and a half times his sixty. THIS IS A FINDING
+  ABOUT THE BUSINESS, NOT A ROUNDING. The base case is therefore costed at 266.67 workers; his
+  sixty is preserved, costed and differenced in trace.labour_cost_as_stated and
+  trace.labour_cost_gap, and trace.jobs_shortfall carries the missing 206.67 people explicitly.
+  SPACE. The store must hold the 1,333.3 t June peak. At 600 kg/m3 loose, 80% packing efficiency
+  in 80 kg jute bags, 2.5 m of palletised stack and two-thirds floor utilisation after aisles,
+  that is 800 kg per gross m2, so 1,666.67 m2 of covered floor - a shed of about 60 x 30 m,
+  before the process hall, boiler, dryers and packing room. Nothing in "les machines de
+  decorticage, les sechoirs, le batiment" at 180,000,000 pays for that.
+  MONEY (as a physical constraint). 2,022.5 t at 500 XOF/kg is 1,011,250,000 XOF of nut, of which
+  essentially all must be paid cash inside a five-month window, because cooperatives do not lend.
+  That is 5.6 times his entire fixed investment, and he does not mention it.
+
+  STEP 4 - CUMULATIVE TESTS AGAINST THE WORLD. Over the sixteen periods the derivation implies:
+  29,833.33 t of nut processed; 6,563.33 t of kernel shipped; 19,690.0 t of shell produced;
+  335.625 t lost in store; 3,729.17 operating days; 29,833.33 machine-hours on the cutting,
+  drying and steam plant; and 420.73 twenty-foot containers exported, which at 720 km round trip
+  to Abidjan is roughly 302,900 truck-km of outbound haulage. F-212, 2026-08-04: this haulage is
+  now costed - see trace.export_logistics_cost_xof - at 13,464,000 XOF/yr in a steady year
+  (440 t x 720 km x 42.5 XOF/t-km, SEC-V26-13 midpoint), inside the audit's own 8-19 Mn XOF/yr
+  estimate; it was self-disclosed as DEFERRED and uncosted before this fix. The machine-hours
+  figure is the one that bites: 29,833 hours is a full industrial life for cashew cutting and
+  peeling equipment, and reaching the end of year 15 on the original plant with zero replacement
+  capex - which is what "on compte quinze ans" plus a flat 120,000,000 of maintenance asserts -
+  requires at least one boiler retube and one sheller rebuild that are not in the budget.
+
+  STEP 5 - THE INCOME LADDER, PER PERIOD. t=0 (2026) is construction: capex 180,000,000, no
+  revenue, no payroll, FCFF = -180,000,000. t=1 (2027) is eleven-twelfths of a year because the
+  store starts empty and the campaign does not open until 9 February. t=2..15 are full years.
+  REVENUE. Kernel = processed x 0.22. Steady year: 2,000 x 0.22 = 440 t at 4,500,000 XOF/t =
+  1,980,000,000. First year: 1,833.333 x 0.22 = 403.333 t = 1,815,000,000. Shell revenue nil and
+  subsidy nil in the base case, both elicited. No DUS is charged: the export duty on cashew falls
+  on raw nut in shell only and kernel is exempt - the single largest fiscal advantage of shelling
+  in-country, and he never mentions it.
+  RAW NUT EXPENSE. Accrual, so the charge is nut CONSUMED (processed + storage loss), not nut
+  bought; the difference is inventory and flows through working capital. Steady year 2,022.5 t x
+  500,000 = 1,011,250,000. First year 1,853.958 t x 500,000 = 926,979,166.67.
+  LABOUR. 266.6667 x 80,000 x 12 = 256,000,000 gross. CNPS retraite 7.7% on gross = 19,712,000.
+  The capped base is 266.6667 x 70,000 x 12 = 224,000,000 - note the 70,000 ceiling bites below
+  the 80,000 wage - giving prestations familiales and maternite at 5.75% = 12,880,000 and
+  accidents du travail at 5% = 11,200,000. Employer payroll taxes 4.4% on gross = 11,264,000.
+  Total 311,056,000. At the founder's sixty the same build gives 69,987,600, so his labour line
+  understates by 241,068,400 a year - and even his own sixty-worker figure understates itself by
+  21.5%, because he quotes gross wages and forgets that CNPS and the payroll taxes ride on top.
+  OTHER OPEX. 120,000,000 as stated, flat, including the first year. Of the founder's four cost
+  estimates this is the only one that benchmarks plausibly: 60,000 XOF per tonne of nut, with
+  shell firing the boiler so thermal energy is nearly free. It excludes, on his own wording,
+  insurance, certification, security and administration.
+  EXPORT LOGISTICS (F-212, 2026-08-04). STEP 4 computed the haulage volume - 420.73
+  containers/yr, 302,900 truck-km/yr at 720 km round trip - but left it uncosted, self-disclosed
+  as DEFERRED. Costed here at trace.kernel_t x export_distance_km_roundtrip x
+  export_logistics_rate_xof_per_tonne_km (SEC-V26-13 midpoint, 42.5 XOF/tonne-km): steady year
+  440 t x 720 km x 42.5 = 13,464,000; first year 403.333 t x 720 km x 42.5 = 12,342,000. A new
+  expense line, not folded into other_opex, because "le courant, l'eau, les sacs et l'entretien"
+  does not reach outbound trucking.
+  OTHER TAXES. Patente droit sur CA = 0.5% of 1,980,000,000 = 9,900,000, capped at 3,000,000 in
+  the above-1bn band; valeur locative nil pending assessment. Patente is inside the investment
+  code exemption, so it is nil in t=0..4, half (1,500,000) in t=5..9 and full (3,000,000) from
+  t=10. The taxe speciale d'equipement at 0.1% of turnover is NOT in the exemption list and is
+  charged throughout: 1,815,000 in the first year, 1,980,000 thereafter.
+  EBITDA. Steady exempt year: 1,980,000,000 - 1,011,250,000 - 311,056,000 - 120,000,000 -
+  1,980,000 - 13,464,000 = 522,250,000. First year: 442,807,833.33. Half-relief years
+  520,750,000; full-rate years 519,250,000.
+  DEPRECIATION. 180,000,000 straight line over the founder's own fifteen years = 12,000,000 a
+  year from t=1, book value reaching exactly zero at t=15.
+  EBIT. 510,250,000 in a steady exempt year; 430,807,833.33 in the first; 508,750,000 in
+  t=5..9; 507,250,000 from t=10.
+  TAX. Effective rate = 25% x (1 - relief). Relief is 1.0 in t=0..4, 0.5 in t=5..9, 0 from t=10,
+  so the rate array is nought for five periods, 12.5% for five and 25% for six. Tax is
+  63,593,750 in each of t=5..9 and 126,812,500 in each of t=10..15. The IMF is computed but never
+  binds: 0.5% of 1,980,000,000 is 9,900,000, inside the 3 m floor and 35 m cap, against a gross
+  BIC of 127,562,500 - so max(BIC, IMF) is always the BIC, and in the exempt years the relief
+  covers the IMF anyway. That margin is real but not structural - see the price-pair note below
+  (F-215) for how close the model's own flagged kernel-price uncertainty comes to closing it.
+  Note what the holiday costs him: the depreciation shield is worth nothing in years where the
+  rate is zero, so 48,000,000 of allowances are consumed against exempt profit.
+  NOPAT. 430,807,833.33 (t=1); 510,250,000 (t=2..4); 445,156,250 (t=5..9); 380,437,500 (t=10..15).
+
+  STEP 6 - WORKING CAPITAL. Four components, all at period end. Raw nut inventory: 333.333 t x
+  500,000 = 166,666,666.67, held t=1..14, released at t=15. Finished kernel: cash production cost
+  x 14/365, about 55.4 m in a steady year. Receivables: revenue x 30/365 = 162,739,726.03 in a
+  steady year. Payables: (labour + other opex) x 30/365 = 35,429,260.27; nothing on raw nut,
+  because the cooperatives are paid cash. Net working capital settles at about 349.4 m and is
+  released in full at t=15 as the operation reaches the end of the asset life. The shape is what
+  matters: 332,574,125.11 of it is absorbed in the FIRST production year, which is 1.85 times the
+  entire fixed investment, and it is absorbed in the same five months in which the whole nut
+  purchase must be paid. Working capital, not capex, is the financing problem in this business.
+
+  STEP 7 - FCFF = NOPAT + D&A - dNWC - capex. t=0: 0 + 0 - 0 - 180,000,000 = -180,000,000.
+  t=1: 430,807,833.33 + 12,000,000 - 332,574,125.11 = 110,233,708.22. t=2: 510,250,000 +
+  12,000,000 - 16,800,278.54 = 505,449,721.46. t=3 and t=4: 522,250,000 each. t=5:
+  445,156,250 + 12,000,000 - 57,534.25 = 457,098,715.75; t=6..9: 457,156,250 each. t=10:
+  380,437,500 + 12,000,000 - 57,534.25 = 392,379,965.75; t=11..14: 392,437,500 each. t=15:
+  380,437,500 + 12,000,000 + 349,489,472.15 released = 741,926,972.15. Total across the horizon
+  6,469,964,083.33 XOF. F-212, 2026-08-04: export logistics, previously self-disclosed as
+  DEFERRED and uncosted, now removes 172,227,000 XOF from the horizon total (12.3-13.5 Mn XOF/yr)
+  against the earlier, uncosted trace - the numbers above supersede a prior, higher total that
+  omitted this line. The investment still pays back inside the second production year even after
+  the labour is corrected; the holiday is worth real money but it is not what makes this work,
+  and the founder's haste to start is aimed at the wrong deadline - the ten-year Zone B schedule
+  is more generous than he thinks, while the capex, the store, the payroll and the outbound
+  haulage are all wrong or missing by multiples.
+
+trace:
+  rcn_processed_t: [0, 1833.3333333333333, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000]
+  operating_days: [0, 229.16666666666666, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250]
+  machine_hours: [0, 1833.3333333333333, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000]
+  rcn_avg_stock_t: [0, 687.5, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750]
+  rcn_peak_stock_t: [0, 1222.2222222222222, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333, 1333.3333333333333]
+  warehouse_floor_required_m2: [0, 1527.7777777777778, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667, 1666.6666666666667]
+  rcn_storage_loss_t: [0, 20.625, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5, 22.5]
+  rcn_stock_close_t: [0, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 333.3333333333333, 0]
+  rcn_purchased_t: [0, 2187.2916666666665, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 2022.5, 1689.1666666666667]
+  kernel_t: [0, 403.3333333333333, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440, 440]
+  shell_t: [0, 1210, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320, 1320]
+  testa_t: [0, 13.75, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
+  kernel_loss_t: [0, 47.666666666666664, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52]
+  cleaning_reject_t: [0, 36.666666666666664, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40]
+  water_loss_t: [0, 121.91666666666666, 133, 133, 133, 133, 133, 133, 133, 133, 133, 133, 133, 133, 133, 133]
+  export_containers: [0, 25.854700854700855, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204, 28.205128205128204]
+  jobs_required: [0, 244.44444444444443, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666, 266.66666666666666]
+  jobs_stated: [0, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60]
+  jobs_shortfall: [0, 184.44444444444443, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666, 206.66666666666666]
+  kernel_kg_per_stated_worker_day: [0, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332, 29.333333333333332]
+  revenue: [0, 1815000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000, 1980000000]
+  rcn_expense: [0, 926979166.6666666, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000, 1011250000]
+  gross_wages: [0, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000, 256000000]
+  cnps_capped_base: [0, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000, 224000000]
+  labour_cost: [0, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000, 311056000]
+  labour_cost_as_stated: [0, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600, 69987600]
+  labour_cost_gap: [0, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400, 241068400]
+  other_opex: [0, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000, 120000000]
+  irrecoverable_input_vat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  patente_ca_uncapped: [0, 9075000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000]
+  patente_gross: [0, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  relief_fraction: [1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0]
+  patente_due: [0, 0, 0, 0, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 3000000, 3000000, 3000000, 3000000, 3000000, 3000000]
+  tse: [0, 1815000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000, 1980000]
+  export_duty: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  other_taxes: [0, 1815000, 1980000, 1980000, 1980000, 3480000, 3480000, 3480000, 3480000, 3480000, 4980000, 4980000, 4980000, 4980000, 4980000, 4980000]
+  export_logistics_cost_xof: [0, 12342000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000, 13464000]
+  ebitda: [0, 442807833.3333333, 522250000, 522250000, 522250000, 520750000, 520750000, 520750000, 520750000, 520750000, 519250000, 519250000, 519250000, 519250000, 519250000, 519250000]
+  depreciation: [0, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000, 12000000]
+  ebit: [0, 430807833.3333333, 510250000, 510250000, 510250000, 508750000, 508750000, 508750000, 508750000, 508750000, 507250000, 507250000, 507250000, 507250000, 507250000, 507250000]
+  bic_gross: [0, 107701958.33333333, 127562500, 127562500, 127562500, 127187500, 127187500, 127187500, 127187500, 127187500, 126812500, 126812500, 126812500, 126812500, 126812500, 126812500]
+  imf_computed: [3000000, 9075000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000, 9900000]
+  tax_rate: [0, 0, 0, 0, 0, 0.125, 0.125, 0.125, 0.125, 0.125, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+  tax: [0, 0, 0, 0, 0, 63593750, 63593750, 63593750, 63593750, 63593750, 126812500, 126812500, 126812500, 126812500, 126812500, 126812500]
+  nopat: [0, 430807833.3333333, 510250000, 510250000, 510250000, 445156250, 445156250, 445156250, 445156250, 445156250, 380437500, 380437500, 380437500, 380437500, 380437500, 380437500]
+  rcn_inventory_value: [0, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 166666666.66666666, 0]
+  fg_inventory_value: [0, 52158636.52968037, 55397271.23287671, 55397271.23287671, 55397271.23287671, 55454805.47945205, 55454805.47945205, 55454805.47945205, 55454805.47945205, 55454805.47945205, 55512339.7260274, 55512339.7260274, 55512339.7260274, 55512339.7260274, 55512339.7260274, 0]
+  receivables: [0, 149178082.19178082, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 162739726.02739726, 0]
+  payables: [0, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 35429260.273972604, 0]
+  nwc: [0, 332574125.1141552, 349374403.652968, 349374403.652968, 349374403.652968, 349431937.8995434, 349431937.8995434, 349431937.8995434, 349431937.8995434, 349431937.8995434, 349489472.1461187, 349489472.1461187, 349489472.1461187, 349489472.1461187, 349489472.1461187, 0]
+  delta_nwc: [0, 332574125.1141552, 16800278.53881279, 0, 0, 57534.24657535, 0, 0, 0, 0, 57534.24657535, 0, 0, 0, 0, -349489472.1461187]
+  initial_capex: [180000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  overhaul_capex: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  capex: [180000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  book_value: [180000000, 168000000, 156000000, 144000000, 132000000, 120000000, 108000000, 96000000, 84000000, 72000000, 60000000, 48000000, 36000000, 24000000, 12000000, 0]
+  cfo: [0, 110233708.2191781, 505449721.46118721, 522250000, 522250000, 457098715.75342465, 457156250, 457156250, 457156250, 457156250, 392379965.75342465, 392437500, 392437500, 392437500, 392437500, 741926972.1461187]
+  cfi: [-180000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff: [-180000000, 110233708.2191781, 505449721.46118721, 522250000, 522250000, 457098715.75342465, 457156250, 457156250, 457156250, 457156250, 392379965.75342465, 392437500, 392437500, 392437500, 392437500, 741926972.1461187]
+
+fcff: [-180000000, 110233708.2191781, 505449721.46118721, 522250000, 522250000, 457098715.75342465, 457156250, 457156250, 457156250, 457156250, 392379965.75342465, 392437500, 392437500, 392437500, 392437500, 741926972.1461187]
+
+checks:
+  # ---- (a) transformation closes ----
+  - "kernel_recovery_fraction + shell_fraction_of_rcn + testa_fraction_of_rcn + kernel_process_loss_fraction + cleaning_reject_fraction + water_loss_fraction == 1"
+  - "trace.rcn_processed_t == trace.kernel_t + trace.shell_t + trace.testa_t + trace.kernel_loss_t + trace.cleaning_reject_t + trace.water_loss_t"
+  - "trace.kernel_t == kernel_recovery_fraction * trace.rcn_processed_t"
+  - "trace.shell_t == shell_fraction_of_rcn * trace.rcn_processed_t"
+  - "trace.testa_t == testa_fraction_of_rcn * trace.rcn_processed_t"
+  - "trace.kernel_loss_t == kernel_process_loss_fraction * trace.rcn_processed_t"
+  - "trace.cleaning_reject_t == cleaning_reject_fraction * trace.rcn_processed_t"
+  - "trace.water_loss_t == water_loss_fraction * trace.rcn_processed_t"
+  - "kernel_recovery_fraction == process_efficiency * lab_kor_fraction"
+  - "sum(trace.rcn_processed_t) == rcn_throughput_t_per_year * (year1_utilisation_fraction + grid.periods - 2)"
+
+  # ---- (b) every stock declares its loss ----
+  - "trace.rcn_stock_close_t == trace.rcn_stock_close_t[t-1] + trace.rcn_purchased_t - trace.rcn_processed_t - trace.rcn_storage_loss_t"
+  - "trace.rcn_avg_stock_t == trace.rcn_processed_t * avg_residence_months / 12"
+  - "trace.rcn_storage_loss_t == trace.rcn_avg_stock_t * rcn_storage_loss_rate_per_month * 12"
+  - "trace.rcn_peak_stock_t == trace.rcn_avg_stock_t * peak_to_average_stock_ratio"
+  - "trace.rcn_stock_close_t <= rcn_throughput_t_per_year * closing_rcn_stock_months / 12"
+  - "trace.rcn_stock_close_t[last] == 0"
+  - "sum(trace.rcn_purchased_t) == sum(trace.rcn_processed_t) + sum(trace.rcn_storage_loss_t)"
+  - "min(trace.rcn_stock_close_t) >= 0"
+  - "trace.rcn_inventory_value == trace.rcn_stock_close_t * rcn_price_xof_per_kg * 1000"
+  - "min(trace.fg_inventory_value) >= 0"
+
+  # ---- (c) every rate fits the thing that produces it ----
+  - "trace.operating_days == trace.rcn_processed_t * 1000 / daily_rcn_rate_kg"
+  - "operating_days_per_year_full == scheduled_days_per_year * plant_availability"
+  - "daily_rcn_rate_kg * operating_days_per_year_full == rcn_throughput_t_per_year * 1000"
+  - "trace.operating_days[t] == operating_days_per_year_full for t >= 2"
+  - "trace.machine_hours == trace.operating_days * shift_hours_per_day"
+  - "trace.rcn_peak_stock_t <= rcn_store_capacity_t"
+  - "trace.warehouse_floor_required_m2 == trace.rcn_peak_stock_t * 1000 / warehouse_areal_capacity_kg_per_m2"
+  - "trace.jobs_required == trace.rcn_processed_t / tonnes_rcn_per_direct_job"
+  - "trace.jobs_shortfall == trace.jobs_required - trace.jobs_stated"
+  - "trace.jobs_stated[t] == workers_stated for t >= 1"
+  - "trace.kernel_kg_per_stated_worker_day * workers_stated * trace.operating_days == trace.kernel_t * 1000"
+  - "trace.kernel_kg_per_stated_worker_day >= manual_peeling_kg_per_person_day for t >= 1"
+  - "capex_per_tonne_capacity * rcn_throughput_t_per_year == capex_total_xof"
+  - "capex_benchmark_gap_xof == capex_benchmark_low_xof_per_t * rcn_throughput_t_per_year - capex_total_xof"
+  - "kernel_rcn_price_ratio * rcn_price_xof_per_kg == kernel_price_xof_per_kg"
+  - "rcn_price_xof_per_kg >= cca_floor_price_magasin_usine"
+  - "worker_wage_monthly_xof >= smig_monthly"
+
+  # ---- (d) cumulative quantities against the world ----
+  - "cumsum(trace.machine_hours)[last] == sum(trace.operating_days) * shift_hours_per_day"
+  - "cumsum(trace.kernel_t)[last] == sum(trace.rcn_processed_t) * kernel_recovery_fraction"
+  - "sum(trace.export_containers) * container_payload_t_kernel == sum(trace.kernel_t)"
+  - "trace.export_containers == trace.kernel_t / container_payload_t_kernel"
+  - "sum(trace.depreciation) == capex_total_xof"
+  - "grid.periods == relief_start_period_index + asset_life_years + 1"
+
+  # ---- regime, relief and tax ----
+  - "trace.revenue[t] >= rni_threshold_turnover for t >= 1"
+  - "trace.revenue[t] >= pme_turnover_ceiling for t >= 1"
+  - "agrement_threshold_large_company >= capex_total_xof"
+  - "partial_relief_start_index == relief_start_period_index + code_full_exemption_years"
+  - "full_rate_start_index == partial_relief_start_index + code_partial_relief_years"
+  - "trace.relief_fraction[t] == 1 for t < partial_relief_start_index"
+  - "trace.relief_fraction[t] == 0 for t >= full_rate_start_index"
+  - "sum(trace.relief_fraction) == code_full_exemption_years + code_partial_relief_rate * code_partial_relief_years"
+  - "trace.tax_rate == is_rate * (1 - trace.relief_fraction)"
+  - "trace.tax == trace.tax_rate * trace.ebit"
+  - "trace.bic_gross == is_rate * trace.ebit"
+  - "trace.imf_computed[t] == imf_rate * trace.revenue[t] for t >= 1"
+  - "trace.imf_computed[first] == imf_floor"
+  - "trace.imf_computed <= imf_cap"
+  - "trace.bic_gross[t] >= trace.imf_computed[t] for t >= 1"
+  - "trace.patente_ca_uncapped == patente_ca_rate * trace.revenue"
+  - "trace.patente_gross <= patente_ca_cap + patente_vl_rate * patente_rental_value_xof"
+  - "trace.patente_due == trace.patente_gross * (1 - trace.relief_fraction)"
+  - "trace.tse == tse_rate * trace.revenue"
+  - "trace.export_duty == dus_rate_on_kernel_exports * trace.revenue"
+  - "trace.other_taxes == trace.patente_due + trace.tse + trace.export_duty"
+
+  # ---- driver bridges ----
+  - "trace.revenue == kernel_price_xof_per_kg * trace.kernel_t * 1000 + shell_price_xof_per_t * trace.shell_t + processor_subsidy_received_xof_per_kg * trace.kernel_t * 1000 - kernel_price_net_deduction_xof_per_kg * trace.kernel_t * 1000"
+  - "trace.rcn_expense == rcn_price_xof_per_kg * 1000 * (trace.rcn_processed_t + trace.rcn_storage_loss_t)"
+  - "trace.gross_wages[t] == total_workforce_headcount * worker_wage_monthly_xof * 12 for t >= 1"
+  - "trace.gross_wages[first] == 0"
+  - "trace.cnps_capped_base[t] == total_workforce_headcount * cnps_ceiling_monthly * 12 for t >= 1"
+  - "trace.labour_cost == trace.gross_wages * (1 + cnps_pension_employer_rate + employer_payroll_tax_rate) + trace.cnps_capped_base * (cnps_family_rate + cnps_at_mp_rate)"
+  - "trace.labour_cost_as_stated * total_workforce_headcount == trace.labour_cost * workers_stated"
+  - "trace.labour_cost_gap == trace.labour_cost - trace.labour_cost_as_stated"
+  - "trace.other_opex[t] == other_opex_xof_per_year for t >= 1"
+  - "trace.irrecoverable_input_vat == (1 - vat_credit_recovery_fraction) * vatable_opex_fraction * trace.other_opex * vat_standard_rate"
+  - "trace.receivables[t] == trace.revenue[t] * receivable_days / 365 for t < terminal_release_index"
+  - "trace.receivables[last] == 0"
+  - "trace.payables[t] == (trace.labour_cost[t] + trace.other_opex[t]) * supplier_payable_days / 365 + trace.rcn_expense[t] * rcn_payable_days / 365 for t < terminal_release_index"
+  - "trace.payables[last] == 0"
+  - "trace.fg_inventory_value[t] == (trace.rcn_expense[t] + trace.labour_cost[t] + trace.other_opex[t] + trace.other_taxes[t]) * fg_stock_days / 365 for t < terminal_release_index"
+  - "trace.fg_inventory_value[last] == 0"
+  - "trace.overhaul_capex[t] == 0 for t < overhaul_index"
+  - "sum(trace.overhaul_capex) == midlife_overhaul_capex_xof"
+  - "trace.capex == trace.initial_capex + trace.overhaul_capex"
+  - "sum(trace.initial_capex) == capex_total_xof"
+  - "trace.depreciation[t] == capex_total_xof / asset_life_years for t >= 1"
+  - "trace.export_logistics_cost_xof == trace.kernel_t * export_distance_km_roundtrip * export_logistics_rate_xof_per_tonne_km"
+
+  # ---- definition: the ladder ----
+  - "trace.ebitda == trace.revenue - trace.rcn_expense - trace.labour_cost - trace.other_opex - trace.other_taxes - trace.irrecoverable_input_vat - trace.export_logistics_cost_xof"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.nwc == trace.rcn_inventory_value + trace.fg_inventory_value + trace.receivables - trace.payables"
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "trace.delta_nwc == trace.nwc - trace.nwc[t-1]"
+  - "trace.nwc[last] == 0"
+  - "trace.book_value == trace.book_value[t-1] + trace.capex - trace.depreciation"
+  - "trace.book_value[last] == 0"
+  - "trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex"
+
+  # ---- non-negativity ----
+  - "min(trace.kernel_t) >= 0"
+  - "min(trace.book_value) >= 0"
+  - "min(trace.revenue) >= 0"
+  - "min(trace.tax) >= 0"
+  - "min(trace.rcn_purchased_t) >= 0"
+  - "min(trace.export_logistics_cost_xof) >= 0"
+
+notes:
+  - "HEADLINE JUDGMENT CALL. The fcff array is costed at 266.67 workers, not the sixty the founder states. This is the one place a stated figure is overridden, and the reason is that sixty is not a cost estimate but a physical claim, and the claim fails: 29.33 kg of export-graded kernel per worker per day against a skilled hand-peeler's 6-8 kg/day at the peeling bench alone. His own capex closes the only escape - automatic peeling costs far more than 180,000,000 - so the peeling must be manual and manual peeling needs hundreds of hands. The stated case is preserved and fully costed in trace.labour_cost_as_stated, and the difference in trace.labour_cost_gap, so a reader who disagrees can substitute one row and re-run. The direction is unambiguous: on his own headcount FCFF is higher in every period."
+  - "THE CAPEX IS THE DEEPEST PROBLEM AND IT IS NOT MODELLED AWAY. capex_per_tonne_capacity is 90,000 XOF per tonne of annual capacity against a cheapest observed Ivorian point of 250,000 and a directly comparable plant (ECOCAJOU Odienne, 15,000 t for 10.2 bn) at 680,000; sub-scale lines cost more per tonne, not less. The model runs on his 180,000,000 because that is what he said, which means the depreciation charge, the book value and the capex outflow are all almost certainly too small, and FCFF is correspondingly too high in the early years. The gap is materialised in capex_benchmark_gap_xof so it cannot hide."
+  - "THE FOUNDER IS WRONG ABOUT HIS OWN RELIEF, IN HIS FAVOUR. He describes five years of exemption and then 25%. Zone B / categorie 1 gives ten years - five full, five at half - and because his turnover puts him above the PME ceiling the half is 50%, not 75%, giving an effective 12.5% in years six to ten. What he believes is a fact about his business; what Ord. 2018-646 says is a fact about the world; they are different objects and both are recorded."
+  - "HE MAY NOT HOLD THE AGREMENT HE THINKS HE HOLDS. A grande entreprise needs 200,000,000 XOF HT of investment excluding working capital to take the agrement route; he has 180,000,000, and he cannot use the 50,000,000 PME threshold because his turnover exceeds 1 bn. He may therefore be under the regime de declaration. The exploitation-phase exemption schedule is the same under both (arts. 11 and 17), so the tax holiday in this model survives either way; what would be lost is the investment-phase customs and VAT exemption on the equipment, which would raise the cash cost of the plant. Whether his 180,000,000 is HT or TTC is unresolved and pushes the same direction."
+  - "THE RELIEF CLOCK MAY ALREADY BE RUNNING. He believes it starts at first production; the code anchors it to achevement des travaux / the certificat d'agrement a l'exploitation. The base case takes the conservative reading and starts it in the construction year, which costs him one of the five full-exemption years. If the certificate is dated 2027 he gains a year of full exemption; the direction is favourable and the answer is on his file, not in the law."
+  - "THE PRICE PAIR DOES NOT BENCHMARK, AND THE MISPRICING IS LARGE ENOUGH TO FLIP THE TAX BRANCH ON ITS OWN. His purchase price of 500 sits correctly above the CCA floor of 454 magasin-usine. His kernel price of 4,500 does not: kernel_rcn_price_ratio is 9x against a working trade ratio of 5-6x, and 4,500 XOF/kg is at the top of the Vietnamese WW320 FOB range for an origin that trades at a discount to Vietnam. The existence of a 400 FCFA/kg State support to processors, described as the official competitiveness gap against Vietnam, is itself evidence that Ivorian shelling does not clear at unsubsidised prices. The model runs his stated price because it is his contract to know; the direction of any correction is downward and it lands directly on FCFF. F-215, 2026-08-04: the checks formula that asserts BIC always beats the IMF (trace.bic_gross[t] >= trace.imf_computed[t]) is arithmetically true here, but only ~13x clear of its own crossover (EBIT = 0.02 x revenue = 39,600,000 against an actual full-rate EBIT of 507,250,000) - and correcting kernel_rcn_price_ratio to the sourced trade ceiling of 6x (4,500 to 3,000 XOF/kg, a 33% cut) removes about 660,000,000 XOF/yr of revenue at unchanged cost, taking steady-state EBIT negative and flipping the operative tax from the profit-tax branch (BIC) to the turnover-based minimum forfaitaire (IMF) entirely. This model does not re-price the kernel - it stays on the founder's stated 4,500, per the paragraph above - but a reader treating 'the IMF never binds' as a structural property of this business rather than a contingent fact of its current, disputed price is reading the checks formula wider than it is licensed to be read."
+  - "WORKING CAPITAL, NOT CAPEX, IS THE BINDING CONSTRAINT. The campaign forces a year's feed to be bought in five months, in cash, from cooperatives that do not lend. The first production year absorbs more net working capital than the entire fixed investment. He does not mention campaign finance at all. This is the single largest omission in the plan after the headcount."
+  - "\"LE RESTE, C'EST LA COQUE\" IS WRONG BY TWELVE POINTS. Shell is 66% of the raw nut, not 78%; the other twelve points are water, cleaning rejects, testa and broken kernel. It matters twice: the shell tonnage he must move or burn is smaller than he thinks, and the streams he has not named (testa, fines, rejects) are not nothing."
+  - "SIMPLIFICATIONS, EACH DELIBERATE. (1) IAS 16 requires component depreciation and a building does not have the same life as a sheller; the founder's single fifteen-year life is kept because splitting it needs a capex breakdown he has not given, and because the shield is worthless in the exempt years anyway. (2) The 4.4% employer payroll tax is charged in all periods although the code exempts its 2.8% limb during the relief years - the conservative treatment. (3) Other opex is held flat at 120,000,000 including the eleven-month first year, although power and water would scale down. (4) Finished goods are carried at cash production cost, excluding depreciation, which IAS 2 would include. (5) All 266.67 workers are paid the same 80,000, although management would earn multiples of it - this understates payroll. (6) Working capital is released in full in the terminal period as a wind-down convention; no terminal value is taken."
+  - "DEFERRED AND NOT PRICED. Insurance; food-safety certification and residue testing; site security; administration and management above the shop floor; CCA and ARECA sector levies on kernel exports; and the mid-life overhaul that 29,833 machine-hours makes near-certain. Every one of these is a cost, so every one pushes FCFF down further. (Export logistics - Bouake-Abidjan haulage, about 421 containers over the horizon - was in this list through 2026-08-03; F-212 costed it 2026-08-04 via export_logistics_rate_xof_per_tonne_km x export_distance_km_roundtrip x trace.kernel_t, removing 172,227,000 XOF from the horizon FCFF total.)"
+  - "WHAT WOULD CHANGE THE ANSWER MOST. In order: the true workforce, whether the 400 F/kg processor support is actually received, how much nut he can physically store, and the date on his certificat d'agrement. If the founder will answer only three questions, those are the first three."

@@ -1,0 +1,776 @@
+contract: "v2.5"
+id: "gold_bamako_sorghum_storage_trader_v1"
+title: "Bamako sorghum storage trader — one harvest-to-soudure campaign (November to October), unlevered FCFF"
+currency: "XOF"
+
+grid:
+  periods: 12
+  freq: "monthly"
+  why: |
+    Twelve monthly periods, t=0 = November (the harvest month in which he buys) through
+    t=11 = October (the month before the next harvest). Three separate choices, each defensible
+    and each contestable.
+
+    WHY MONTHLY, NOT ANNUAL. This business has no production, no plant and no staff. Its entire
+    economics is the decision to hold 200 bags of grain off the market from November to June and
+    to pay rent for the privilege. An annual grid nets the November purchase against the
+    June-August sale inside one period and the carry — the thing he is actually paid for —
+    becomes invisible: revenue 4,000,000, cost 2,915,000, rent 360,000, and no working capital
+    movement at all. That is not a model of this business, it is a model of a business that buys
+    and sells on the same day. The founder also quotes his one recurring cost in months
+    ("trente mille par mois"), which is the frequency his own operation is denominated in.
+
+    WHY THE CAMPAIGN YEAR, NOT THE CALENDAR YEAR. The natural unit here is the campagne, and it
+    is anchored on the harvest, not on 1 January. Starting at November makes the grid open on
+    the single largest cash event (the 2,915,000 outlay), close after the stock is exhausted,
+    and return working capital to zero at t=11 — so the campaign's FCFF is an economically
+    complete number with no stub inventory and no terminal-value tail to argue about. A calendar
+    grid would split one indivisible trade across two reporting years and force an arbitrary
+    allocation of the carry.
+
+    WHY ONE CAMPAIGN AND NOT FIVE. Everything needed for period 1 is in the utterance.
+    Nothing needed for period 2 is. The entire margin of this trade is one number — the spread
+    between the November purchase price and the soudure selling price — and that spread is set
+    by rainfall, by the size of the national harvest, and by the security situation on the roads
+    from the production zones. The founder can tell me what he paid and what he sells at; nobody,
+    including him, can tell me what the spread will be next year. Extending the horizon would
+    require me to supply that number myself, and it would be the one genuinely ASSUMED input in
+    the whole solution — sitting directly on top of the only line that matters. A reader who
+    wants five years should ask for a price scenario, explicitly, and own it. This solution
+    stops at the point past which the question stops being answerable from what was said.
+
+    WHY NOT LONGER TO CATCH THE TAX. One consequence is recorded openly: the impôt synthétique
+    on this campaign's turnover is statutorily settled on 31 March of the calendar year AFTER
+    the grid closes. Rather than extend a mostly-dead 17-month grid, or park the charge as a
+    payable that escapes the horizon, the levy is charged and disbursed with the revenue that
+    triggers it (see notes — the campaign total is unaffected, the timing is earlier than
+    statute requires).
+
+utterance:
+  fr: |
+    Moi je suis commerçant, je fais le sorgho à Bamako. À la récolte, en novembre,
+    j'achète deux cents sacs à quatorze mille cinq cents le sac. Je stocke dans mon
+    magasin à Bamako. Je paie le magasin trente mille par mois. Je vends pendant la
+    soudure, entre juin et août, à vingt mille le sac. Les deux cents sacs, je les
+    écoule en trois mois. Le transport depuis les zones de production, c'est
+    soixante-quinze francs par sac. Je travaille seul.
+  en: |
+    I'm a trader, I deal in sorghum in Bamako. At harvest, in November, I buy two
+    hundred bags at fourteen thousand five hundred a bag. I store them in my
+    warehouse in Bamako — thirty thousand a month rent. I sell during the lean
+    season, June to August, at twenty thousand a bag. The two hundred bags I sell
+    off over three months. Transport from the production zones is seventy-five
+    francs a bag. I work alone.
+
+inputs:
+
+  bags_purchased_total:
+    value: 200
+    unit: "bags"
+    prov: "STATED"
+    source: "j'achète deux cents sacs / I buy two hundred bags"
+    date: "2026-07-27"
+
+  purchase_price_per_bag:
+    value: 14500
+    unit: "XOF per bag"
+    prov: "STATED"
+    source: "à quatorze mille cinq cents le sac / at fourteen thousand five hundred a bag"
+    date: "2026-07-27"
+
+  selling_price_per_bag:
+    value: 20000
+    unit: "XOF per bag"
+    prov: "STATED"
+    source: "Je vends pendant la soudure, entre juin et août, à vingt mille le sac / I sell during the lean season, June to August, at twenty thousand a bag"
+    date: "2026-07-27"
+
+  transport_cost_per_bag:
+    value: 75
+    unit: "XOF per bag"
+    prov: "STATED"
+    source: "Le transport depuis les zones de production, c'est soixante-quinze francs par sac / Transport from the production zones is seventy-five francs a bag"
+    date: "2026-07-27"
+
+  warehouse_rent_per_month:
+    value: 30000
+    unit: "XOF per month"
+    prov: "STATED"
+    source: "Je paie le magasin trente mille par mois / thirty thousand a month rent. Note he calls it 'mon magasin' but pays for it monthly — it is rented, not owned. This is the single most consequential reading in the model: it is why there is no capex and no depreciation anywhere below."
+    date: "2026-07-27"
+
+  bags_sold_total:
+    value: 200
+    unit: "bags"
+    prov: "STATED"
+    source: "Les deux cents sacs, je les écoule en trois mois / The two hundred bags I sell off over three months. He asserts the sale of two hundred bags, not of whatever survives storage."
+    date: "2026-07-27"
+
+  selling_window_months:
+    value: 3
+    unit: "months"
+    prov: "STATED"
+    source: "je les écoule en trois mois / I sell off over three months — corroborated independently by 'entre juin et août', which is the same three months named a second way"
+    date: "2026-07-27"
+
+  employees:
+    value: 0
+    unit: "persons"
+    prov: "STATED"
+    source: "Je travaille seul / I work alone"
+    date: "2026-07-27"
+
+  purchase_period_index:
+    value: 0
+    unit: "0-based period index"
+    prov: "INFERRED"
+    source: "The grid is anchored on the harvest month; 'À la récolte, en novembre, j'achète' places the whole purchase in November, which is t=0 by construction of the grid. No new information — this is the utterance restated in the grid's coordinates."
+    date: "2026-07-27"
+
+  first_sale_period_index:
+    value: 7
+    unit: "0-based period index"
+    prov: "INFERRED"
+    source: "From 'entre juin et août' with t=0 = November: Nov 0, Dec 1, Jan 2, Feb 3, Mar 4, Apr 5, May 6, Jun 7. Counting only, no added premise."
+    date: "2026-07-27"
+
+  last_sale_period_index:
+    value: 9
+    unit: "0-based period index"
+    prov: "INFERRED"
+    source: "From 'entre juin et août' with t=0 = November: August is the ninth month after November, index 9. Consistent with first_sale_period_index + selling_window_months - 1 = 7 + 3 - 1 = 9."
+    date: "2026-07-27"
+
+  payroll_and_employer_charges_xof:
+    value: 0
+    unit: "XOF per campaign"
+    prov: "INFERRED"
+    source: "'Je travaille seul' entails no employees; no employees entails no wages, no ITS, no taxe de formation professionnelle and no contribution forfaitaire à la charge de l'employeur. A sole proprietor's own labour is not an employee cost and his drawings are equity distributions, not operating expenses — see notes for the consequence, which is that the FCFF below still contains his implicit wage."
+    date: "2026-07-27"
+
+  unit_inventory_cost_per_bag:
+    value: 14575
+    unit: "XOF per bag"
+    prov: "DEFAULTED"
+    source: "Cost of purchase rule: inventories are measured at coût d'acquisition, comprising the purchase price plus transport and other costs directly attributable to bringing the goods to their present location and condition. 14500 + 75 + other_cost_per_bag_xof (0 in the base case) = 14575. The rule is named under accounting_framework; the arithmetic follows from it plus two STATED prices. Transport is capitalised into the bags; the warehouse rent is NOT (storage costs of a merchant are expensed as incurred) — see notes for the friction this creates in a business whose entire value creation IS the storage."
+    date: "2026-07-27"
+
+  accounting_framework:
+    value: "AUDCIF (SYSCOHADA revise)"
+    unit: "framework"
+    prov: "SOURCED"
+    source: "Mali is an OHADA member state, so the applicable financial reporting framework is the Acte uniforme relatif au droit comptable et à l'information financière (AUDCIF / SYSCOHADA révisé), adopted 26 January 2017 and in force for individual accounts from 1 January 2018. Under it, stocks are carried at coût d'acquisition including charges directly related to the purchase, i.e. transport in and handling in. This governs two decisions: transport is inventoriable (so it lands in COGS on sale, not in November opex), and a simple rental (location simple) of the warehouse is expensed as incurred rather than capitalised as a right-of-use asset. Both are convergent with IAS 2.11 (costs of purchase include transport) and IAS 2.16(b) (storage costs excluded from the cost of inventories for a merchant), and with the IFRS 16 short-term-lease exemption."
+    authority: "OHADA, Acte uniforme relatif au droit comptable et à l'information financière (AUDCIF) / SYSCOHADA révisé, adopted 26 January 2017, effective 1 January 2018 — https://www.ohada.org/en/ohada-accounting-law/ ; jurisdiction status confirmed at IFRS Foundation, 'Who uses IFRS Accounting Standards? — Mali' — https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/mali"
+    verified: "2026-07-27"
+
+  tax_regime:
+    value: "impot_synthetique"
+    unit: "regime"
+    prov: "SOURCED"
+    source: "Campaign turnover is 4,000,000 XOF HT, far below the ceiling of Mali's régime de l'Impôt Synthétique, and an exploitant individuel trading cereals is not on the exclusion list (comptables et experts-comptables, conseils fiscaux, entreprises agréées au Code des Investissements). The regime is libératoire: paying it discharges the BIC together with the other direct and indirect taxes of Titles I and II of the CGI — patente, taxe de voirie, ITS, taxe de formation professionnelle, contribution forfaitaire employeur, taxe sur les affaires (now TVA), taxe-logement and the contribution chambre de commerce. This is why no separate patente, no VAT and no payroll levy appears anywhere below: they are not omitted, they are subsumed."
+    authority: "République du Mali, Code Général des Impôts, régime de l'Impôt Synthétique (Titre III, art. 70 et suivants); Direction Générale des Impôts du Mali, 'Les types d'entreprises et les régimes d'imposition' — https://www.dgi.gouv.ml/les-types-dentreprises-et-les-regimes/"
+    verified: "2026-07-27"
+
+  impot_synthetique_rate:
+    value: 0.03
+    unit: "fraction of annual turnover excluding tax"
+    prov: "SOURCED"
+    source: "The DGI states the tariff as '3 % du chiffre d'affaires annuel hors taxe', payable annually. Note the base: this is a levy on TURNOVER, not on profit. It is therefore recognised progressively as the turnover that triggers it is generated (the obligating-event logic of IFRIC 21 for turnover-based levies), which is why it is charged in June, July and August in proportion to each month's sales rather than in one block."
+    authority: "Direction Générale des Impôts du Mali, 'Les types d'entreprises et les régimes d'imposition' — https://www.dgi.gouv.ml/les-types-dentreprises-et-les-regimes/ ; République du Mali, Code Général des Impôts, régime de l'Impôt Synthétique (Titre III, art. 70 et suivants)"
+    verified: "2026-07-27"
+
+  impot_synthetique_threshold_xof:
+    value: 50000000
+    unit: "XOF of annual turnover excluding tax"
+    prov: "SOURCED"
+    source: "Upper turnover limit of the impôt synthétique regime for an exploitant individuel. Raised from 30,000,000 to 50,000,000 XOF in 2014 and aligned with the VAT registration threshold; above it the taxpayer moves to the réel simplifié (to 250,000,000) and then to the réel normal, where profits are taxed at 30 % with a turnover-based minimum. Carried as an input precisely so the regime choice is itself checkable — see checks."
+    authority: "Direction Générale des Impôts du Mali, 'Les types d'entreprises et les régimes d'imposition' — https://www.dgi.gouv.ml/les-types-dentreprises-et-les-regimes/ ; République du Mali, Code Général des Impôts, régime de l'Impôt Synthétique (Titre III, art. 70 et suivants)"
+    verified: "2026-07-27"
+
+  vat_rate_on_sales:
+    value: 0
+    unit: "fraction"
+    prov: "SOURCED"
+    source: "Two independent grounds, either sufficient. (i) Verified and load-bearing: the impôt synthétique is libératoire of the indirect taxes of Titles I and II of the CGI, VAT included — a synthétique taxpayer neither charges output VAT nor recovers input VAT. (ii) Secondary and less precisely verified: unprocessed agricultural produce sits on the CGI's VAT exemption list (art. 195). Consequence for the arithmetic: 20,000 per bag is a gross price with no VAT inside it, and the 14,500 purchase and the 75 transport carry no recoverable VAT — every figure in this model is a cash figure exactly as the founder states it. See notes on the residual verification gap in ground (ii)."
+    authority: "République du Mali, Code Général des Impôts — libératoire scope of the impôt synthétique (Titre III, art. 70 et suivants) and exonérations de TVA (art. 195); Direction Générale des Impôts du Mali — https://www.dgi.gouv.ml/les-types-dentreprises-et-les-regimes/"
+    verified: "2026-07-27"
+
+  impot_synthetique_deadline:
+    value: "31 mars de l'annee suivant l'annee d'imposition"
+    unit: "statutory date"
+    prov: "SOURCED"
+    source: "Declaration and payment of the impôt synthétique fall due on 31 March following the taxable year; the DGI re-issued this échéance for the 2026 campaign (impôt synthétique / patente synthétique due 31 March 2026, vignettes 30 April). This is recorded because the model departs from it: the campaign's turnover arises in June-August of the grid's second calendar year, so its statutory settlement date falls outside a 12-month harvest-anchored horizon. The departure and its direction are stated in notes."
+    authority: "République du Mali, Livre de Procédures Fiscales, art. 259; Direction Générale des Impôts du Mali, échéance notice for 31 March 2026 — https://www.dgi.gouv.ml/prorogation-du-delai-de-paiement-de-limpot-synthetique/"
+    verified: "2026-07-27"
+
+  bags_lost_in_storage:
+    value: 0
+    unit: "bags per campaign"
+    prov: "ELICITED"
+    source: "Base case 0 because he says he sells the two hundred bags — 'Les deux cents sacs, je les écoule' — and running on his own account of his own store is the omitting choice. The range is set from the published loss literature, not from his words: APHLIS records a cumulative whole-chain dry-weight loss for sorghum in Mali of 11.1 % (2013-2022 average), covering harvesting, drying, threshing, winnowing, farm storage, transport and market-level storage. Trader warehouse storage is one stage of that seven-stage chain, so 0 to 10 bags (0 to 5 % of the position) brackets his stage. This is the belief-versus-rule split in its purest form: what he says about his own magasin is a fact about his business and the model runs on it; the loss profile is a fact about the world and it is why the question is asked first."
+    question: "Sur les deux cents sacs que vous mettez en magasin en novembre, combien vous en reste-t-il vraiment à vendre en juin — combien perdez-vous aux charançons, aux rongeurs ou à l'humidité pendant les sept mois de stockage ?"
+    range: {low: 0, high: 10}
+    materiality: "high"
+    date: "2026-07-27"
+
+  tax_registration_status:
+    value: "immatricule et a jour"
+    unit: "categorical"
+    prov: "ELICITED"
+    source: "Base case is full compliance with the sourced statutory charge — the conservative choice, since it costs the model money. He holds this answer: he knows whether he has a NIF, whether the DGI assesses him, and what he hands over each 31 March. The distinction matters because the sourced rate is a fact about the world while his registration is a fact about his business, and only the second decides whether the first bites."
+    question: "Êtes-vous immatriculé à la DGI pour ce commerce, et payez-vous l'impôt synthétique chaque année avant le 31 mars — de quel montant sur votre dernier avis ?"
+    range: {low: "non immatricule, aucun impot synthetique verse", high: "immatricule, impot synthetique acquitte chaque 31 mars"}
+    materiality: "high"
+    date: "2026-07-27"
+
+  purchase_payment_lag_months:
+    value: 0
+    unit: "months"
+    prov: "ELICITED"
+    source: "Base case 0 — full cash settlement in November, the conservative choice for the asset-side profile because it puts the largest single outflow of the campaign at the earliest possible date. He holds this answer: he knows his own terms with the collector. Ranked high not because it moves the campaign total (it does not, the two legs net out over twelve months) but because the deliverable here is a per-period array, and this one answer displaces the biggest number in that array — the November outflow — by up to a quarter of the horizon."
+    question: "Quand vous prenez les deux cents sacs en novembre, vous réglez tout comptant le jour même, ou le collecteur vous laisse une partie à payer plus tard — et au bout de combien de temps réglez-vous le solde ?"
+    range: {low: 0, high: 3}
+    materiality: "high"
+    date: "2026-07-27"
+
+  other_cost_per_bag_xof:
+    value: 0
+    unit: "XOF per bag"
+    prov: "ELICITED"
+    source: "Base case 0 — the omitting choice: he named transport as his only per-bag cost, so nothing else is added on his behalf. He holds this answer precisely because these are the costs a trader pays out of pocket and rarely recites. If non-zero it is inventoriable alongside transport under the cost-of-purchase rule, which is why it enters through unit_inventory_cost_per_bag rather than through opex."
+    question: "En dehors des soixante-quinze francs de transport, qu'est-ce que vous payez d'autre par sac — la manutention au chargement et au déchargement, les sacs neufs, le courtage du coxeur, la taxe de marché — et combien par sac au total ?"
+    range: {low: 0, high: 500}
+    materiality: "medium"
+    date: "2026-07-27"
+
+  rent_months_per_year:
+    value: 12
+    unit: "months"
+    prov: "ELICITED"
+    source: "Base case 12 — both the literal reading of an unqualified 'trente mille par mois' and the conservative one (more cost). He holds this answer: he knows whether the magasin is his all year or taken for the campaign only. The stock is physically in the warehouse from November to August, so a Nov-Aug lease of 10 months is the plausible other end."
+    question: "Le loyer de trente mille francs, vous le payez les douze mois de l'année, ou seulement les mois où il y a du sorgho dans le magasin ?"
+    range: {low: 10, high: 12}
+    materiality: "medium"
+    date: "2026-07-27"
+
+  campaign_treatment_cost_xof:
+    value: 0
+    unit: "XOF per campaign"
+    prov: "ELICITED"
+    source: "Base case 0 — the omitting choice; he described the storage without naming any treatment. He holds this answer: he knows whether he fumigates and what the product costs him. Recognised as a storage cost and therefore expensed, not capitalised into the bags, on the same rule that expenses the rent. Note the linkage to bags_lost_in_storage — an answer of zero here makes a non-zero answer there considerably more likely, and vice versa; ask them together."
+    question: "Pendant les sept mois de stockage, est-ce que vous traitez le stock — phostoxin, insecticide, bâches, réensachage — et combien ça vous coûte pour toute la campagne ?"
+    range: {low: 0, high: 75000}
+    materiality: "medium"
+    date: "2026-07-27"
+
+  sales_payment_lag_months:
+    value: 0
+    unit: "months"
+    prov: "ELICITED"
+    source: "Base case 0 — cash on collection, the omitting choice; he describes selling, not lending. He holds this answer: he knows which of his soudure buyers pay on the spot and which take the grain first. At the high end part of the August receipts would fall outside the grid entirely, which is the reason to ask rather than to guess."
+    question: "Vos acheteurs de juin à août, ils vous payent comptant à l'enlèvement du sac, ou vous leur laissez du crédit — et au bout de combien de temps vous encaissez ?"
+    range: {low: 0, high: 2}
+    materiality: "medium"
+    date: "2026-07-27"
+
+  bags_sold_first_selling_month:
+    value: 66
+    unit: "bags"
+    prov: "ELICITED"
+    source: "Two hundred bags do not divide into three months, and a bag is not divisible — an even split is arithmetically unavailable, so an integer profile must be chosen and he is the person who knows it. Base case 66 in June, 67 in July, 67 in August: as even as the integers allow, with the residual bag placed later rather than earlier because that is the conservative choice for the cash array and because it matches the trader's own logic of holding into deepening scarcity. Ranked low because he quotes one flat price for the whole window, so the profile moves the shape of the array and not the campaign total."
+    question: "En juin, juillet et août, vous sortez à peu près le même nombre de sacs chaque mois, ou vous gardez le gros du stock pour août — combien de sacs par mois à peu près ?"
+    range: {low: 0, high: 200}
+    materiality: "low"
+    date: "2026-07-27"
+
+  owned_equipment_capex_xof:
+    value: 0
+    unit: "XOF per campaign"
+    prov: "ELICITED"
+    source: "Base case 0 — the omitting choice, and consistent with everything he described: a rented warehouse, a bought-in transport service, and one man. He holds this answer: he knows what tools he owns and what he paid. Ranked low because at the top of the range the annual depreciation charge on a twelve-month horizon is a small fraction of the margin, and because it is the only line in the model that would create a fixed asset at all."
+    question: "Est-ce que vous possédez du matériel à vous pour ce commerce — une bascule, des palettes, des bâches, une charrette, une moto — et vous l'avez payé combien quand vous l'avez acheté ?"
+    range: {low: 0, high: 300000}
+    materiality: "low"
+    date: "2026-07-27"
+
+passage: |
+  0. WHAT THIS BUSINESS IS, IN ASSET TERMS
+
+  Read the utterance for what it does NOT contain and the shape of the answer appears before any
+  arithmetic. There is no production. There is no processing. There is no vehicle: transport is
+  bought in at 75 XOF a bag. There is no staff: he works alone. And there is no owned building:
+  he calls it "mon magasin" but he pays 30,000 a month for it, which makes it a rental. So this
+  business has no fixed assets, and therefore no capex and no depreciation. FCFF = NOPAT + D&A
+  - dNWC - capex collapses, for this operation, to FCFF = NOPAT - dNWC.
+
+  What is left is the whole business: he buys 200 bags of sorghum in November when the harvest
+  has driven the price to its floor, he pays rent to keep them off the market for seven months,
+  and he sells them in the soudure when the price has risen. He is not a merchant in the sense
+  of moving goods from A to B. He is a merchant in time. The asset he invests in is inventory,
+  the entire asset side of his balance sheet is one working capital position, and the answer to
+  "what free cash flow does this business generate" is very nearly the answer to "what does that
+  one position cost to carry and what does it return".
+
+  1. THE GRID
+
+  Twelve monthly periods, t=0 = November through t=11 = October:
+
+    t=0  November   (buys 200 bags, transport paid in, stock into the magasin)
+    t=1  December
+    t=2  January
+    t=3  February
+    t=4  March
+    t=5  April
+    t=6  May
+    t=7  June       (soudure opens, selling begins)
+    t=8  July
+    t=9  August     (last selling month, stock exhausted)
+    t=10 September
+    t=11 October    (empty magasin, campaign closes before the next harvest)
+
+  Two internal consistency points on the dates. First, "entre juin et août" and "je les écoule
+  en trois mois" are two independent statements of the same window and they agree: index 9
+  minus index 7 plus 1 = 3. Second, the transport must be incurred at t=0, since the bags come
+  "depuis les zones de production" and are in a Bamako warehouse being stored from November —
+  the grain cannot be both in Ségou and in the magasin, so the movement is a November event.
+
+  2. QUANTITIES
+
+  Purchases:   200 bags, all in t=0.
+  Losses:      0 bags in the base case. He states that the two hundred bags are what he sells.
+               This is his account of his own store and the model runs on it; it is also the
+               single highest-ranked question in the solution, for reasons in the notes.
+  Sales:       200 bags across t=7, t=8, t=9.
+
+  Two hundred does not divide by three, and a bag of sorghum is not divisible. An exact integer
+  split is required, and 66 / 67 / 67 is chosen — as even as the integers allow, with the
+  residual bag placed later rather than earlier, which is both the conservative choice for the
+  cash profile and the one consistent with a trader holding into deepening scarcity.
+
+  Inventory in bags then rolls forward as a pure conservation identity, opening at zero:
+    t=0    0 + 200 - 0        = 200
+    t=1..6                    = 200   (nothing happens for six months; that IS the business)
+    t=7    200 - 66           = 134
+    t=8    134 - 67           =  67
+    t=9     67 - 67           =   0
+    t=10, t=11                =   0
+
+  3. WHAT A BAG COSTS TO PUT INTO THE MAGASIN
+
+  Under the cost-of-purchase rule of the applicable framework (AUDCIF / SYSCOHADA révisé, and
+  identically IAS 2.11), inventories carry the purchase price plus the costs directly
+  attributable to bringing the goods to their present location and condition. The 75 XOF of
+  transport from the production zones is exactly such a cost. It is capitalised into the bags,
+  not expensed in November.
+
+    unit inventory cost = 14,500 + 75 + 0 (other per-bag costs, elicited) = 14,575 XOF per bag
+
+  The warehouse rent is treated differently, and deliberately so. Storage costs of a merchant
+  are excluded from the cost of inventories (IAS 2.16(b), and the same position under AUDCIF);
+  they are expensed as incurred. So the 30,000 a month runs through the income statement month
+  by month and never touches the carrying value of the grain. There is a real friction here —
+  in this business the storage IS the value-creating activity, and the accounting refuses to
+  capitalise it — and it is flagged in the notes rather than papered over.
+
+  Opening inventory value at t=0:
+
+    200 bags x 14,575 = 2,915,000 XOF
+
+  This one number is the business. It is 4.8 times the campaign's entire NOPAT and it is
+  committed eight months before the first franc comes back.
+
+  4. REVENUE, PER PERIOD
+
+  At 20,000 XOF a bag:
+
+    t=7  (June)    66 x 20,000 = 1,320,000
+    t=8  (July)    67 x 20,000 = 1,340,000
+    t=9  (August)  67 x 20,000 = 1,340,000
+    all other periods           =         0
+    campaign total              = 4,000,000
+
+  Revenue is recognised on transfer of the bags to the buyer, which on the base-case terms
+  (cash on collection) is also when the cash arrives.
+
+  5. COST OF GOODS SOLD, PER PERIOD
+
+  Cost follows the bags out of the magasin at 14,575 each:
+
+    t=7   66 x 14,575 =   961,950
+    t=8   67 x 14,575 =   976,525
+    t=9   67 x 14,575 =   976,525
+    campaign total    = 2,915,000   (exactly the opening inventory value — nothing is left)
+
+  Inventory value therefore rolls: 2,915,000 for t=0 to t=6; 2,915,000 - 961,950 = 1,953,050 at
+  t=7; 1,953,050 - 976,525 = 976,525 at t=8; 976,525 - 976,525 = 0 at t=9 and thereafter.
+
+  6. GROSS PROFIT, PER PERIOD
+
+    t=7   1,320,000 -   961,950 = 358,050
+    t=8   1,340,000 -   976,525 = 363,475
+    t=9   1,340,000 -   976,525 = 363,475
+    campaign total              = 1,085,000
+
+  Cross-check on the whole campaign: 200 bags x (20,000 - 14,575) = 200 x 5,425 = 1,085,000.
+  The spread per bag is 5,425 XOF, or 37.4 % on cost — that is the price of seven months of
+  patience and it is the only source of margin in the operation.
+
+  7. OPERATING EXPENSES, PER PERIOD
+
+  Rent is 30,000 in every one of the twelve months (base case: a full-year lease):
+
+    every t   30,000
+    campaign  360,000
+
+  Storage treatment is 0 in the base case. There is no payroll: he works alone, and a sole
+  proprietor's own labour is not an employee cost. So opex = 30,000 per month throughout.
+
+  Note what this does to the shape of the year: for nine of the twelve months this business
+  has no revenue at all and a fixed 30,000 running against it. The rent is 33.2 % of the gross
+  margin — the carry is not a rounding item, it is a third of the trade.
+
+  8. EBITDA, D&A, EBIT
+
+    EBITDA = gross profit - opex
+
+    t=0 to t=6   0 - 30,000            = -30,000  (seven months)
+    t=7          358,050 - 30,000      = 328,050
+    t=8          363,475 - 30,000      = 333,475
+    t=9          363,475 - 30,000      = 333,475
+    t=10, t=11   0 - 30,000            = -30,000  (two months)
+    campaign     1,085,000 - 360,000   = 725,000
+
+  Depreciation is 0 in every period: there are no owned assets to depreciate, because the
+  warehouse is rented, the transport is a purchased service, and no equipment was described.
+  EBIT is therefore identical to EBITDA, period by period, and 725,000 for the campaign.
+
+  9. TAX
+
+  This is the step where a purely internal derivation would go wrong invisibly, so it is done
+  from the instrument rather than from habit.
+
+  Campaign turnover is 4,000,000 XOF excluding tax. Mali's régime de l'Impôt Synthétique
+  applies to an exploitant individuel below 50,000,000 XOF of annual turnover HT; 4,000,000 is
+  8 % of that ceiling, so he sits deep inside the regime, and a cereal trader is not on the
+  exclusion list. The tariff is 3 % of annual turnover excluding tax, and the tax is
+  libératoire: it discharges the BIC together with the patente, the taxe de voirie, the ITS,
+  the taxe de formation professionnelle, the contribution forfaitaire employeur, the taxe sur
+  les affaires (now VAT), the taxe-logement and the chambre de commerce contribution. That is
+  why no separate patente line and no VAT line appear anywhere in this model — they are not
+  forgotten, they are inside the 3 %.
+
+  Two structural consequences follow, and both matter more than the number.
+
+  (a) The base is TURNOVER, not profit. The standard NOPAT identity NOPAT = EBIT x (1 - t) does
+      not apply here at all, because the charge is not proportional to EBIT. The statutory
+      charge is subtracted from EBIT directly.
+
+  (b) Because the base is turnover, there is no interest deduction and therefore no interest
+      tax shield in this regime whatsoever. The unlevered and the levered tax charges of this
+      business are the same charge. The usual gap between FCFF and FCFE tax treatment is empty.
+
+  The levy is triggered progressively by the turnover that generates it, so it is charged in
+  proportion to each month's sales:
+
+    t=7  0.03 x 1,320,000 =  39,600
+    t=8  0.03 x 1,340,000 =  40,200
+    t=9  0.03 x 1,340,000 =  40,200
+    campaign               = 120,000   = 0.03 x 4,000,000
+
+  Cash timing: the impôt synthétique is declared and paid on 31 March following the taxable
+  year. This campaign's turnover falls in June-August of the grid's second calendar year, so
+  the statutory settlement lands on a 31 March that is beyond t=11. The charge is disbursed
+  here as the revenue arises rather than carried out of the horizon as a payable, so that the
+  campaign's cash flow is complete; the departure and its direction are recorded in the notes.
+
+  10. NOPAT, PER PERIOD
+
+    NOPAT = EBIT - tax
+
+    t=0 to t=6   -30,000                (seven months)
+    t=7          328,050 - 39,600 = 288,450
+    t=8          333,475 - 40,200 = 293,275
+    t=9          333,475 - 40,200 = 293,275
+    t=10, t=11   -30,000                (two months)
+
+    campaign  = -270,000 + 875,000 = 605,000    ( = 725,000 - 120,000 )
+
+  The effective charge on EBIT is 120,000 / 725,000 = 16.55 %. That figure is an OUTPUT of the
+  turnover levy meeting this particular margin, not a rate anyone legislated; at a thinner
+  spread the same 3 % of turnover would bite far harder, which is the real risk this regime
+  carries for a low-margin trade.
+
+  11. WORKING CAPITAL
+
+  Net working capital = inventory + receivables - payables. On the base-case terms he pays cash
+  in November and is paid cash on collection, so receivables and payables are zero throughout
+  and NWC is simply the inventory position:
+
+    t=0 to t=6   2,915,000
+    t=7          1,953,050
+    t=8            976,525
+    t=9 to t=11          0
+
+  The movement, measured against an opening balance of zero:
+
+    t=0          2,915,000 - 0         = +2,915,000
+    t=1 to t=6                          =          0
+    t=7          1,953,050 - 2,915,000 =   -961,950
+    t=8            976,525 - 1,953,050 =   -976,525
+    t=9                  0 -   976,525 =   -976,525
+    t=10, t=11                          =          0
+    campaign sum                        =          0
+
+  The campaign sum is zero by construction of the horizon: the grid opens before the position
+  is built and closes after it is fully unwound. That is the single most important property of
+  the horizon choice, because it means the campaign FCFF is a complete number and not an
+  artefact of where the grid was cut.
+
+  12. CAPEX
+
+  Zero in every period. The warehouse is rented, the transport is bought as a service, and no
+  equipment was described. Nothing in the utterance creates a fixed asset.
+
+  13. FCFF, PER PERIOD
+
+    FCFF = NOPAT + D&A - dNWC - capex, with D&A = 0 and capex = 0 throughout.
+
+    t=0   -30,000 - 2,915,000        = -2,945,000
+    t=1   -30,000 - 0                =    -30,000
+    t=2   -30,000                    =    -30,000
+    t=3   -30,000                    =    -30,000
+    t=4   -30,000                    =    -30,000
+    t=5   -30,000                    =    -30,000
+    t=6   -30,000                    =    -30,000
+    t=7   288,450 - (-961,950)       =  1,250,400
+    t=8   293,275 - (-976,525)       =  1,269,800
+    t=9   293,275 - (-976,525)       =  1,269,800
+    t=10  -30,000                    =    -30,000
+    t=11  -30,000                    =    -30,000
+
+  Campaign total: -2,945,000 - (8 x 30,000) + 1,250,400 + 1,269,800 + 1,269,800
+                = -3,185,000 + 3,790,000
+                =    605,000
+
+  Which equals the campaign NOPAT exactly, as it must once working capital has fully unwound
+  and there is neither depreciation nor capex to separate the two.
+
+  14. WHAT THE SHAPE SAYS
+
+  The campaign generates 605,000 XOF of unlevered free cash flow on a peak asset commitment of
+  2,915,000 XOF — a return of 20.8 % on the capital tied up, earned over one twelve-month
+  campaign of which eight months are pure outflow. Every franc of that return is manufactured
+  in three months, and the business spends the other nine paying rent into an empty-handed
+  wait.
+
+  The distribution matters as much as the total. Cumulative cash is at its worst at t=6, by
+  which point 2,915,000 has gone out for the grain and 210,000 more for seven months of rent,
+  and nothing has come back. This is not a trading business with a financing question attached;
+  it is a financing question with a trading business attached. FCFF is unlevered by
+  construction, so how he funds that trough — own savings, supplier credit, a warrantage loan
+  against the stock — sits below this line and does not change any number above it. But it is
+  where the business actually lives, and it is why the purchase payment terms are one of the
+  three questions ranked high.
+
+trace:
+  bags_purchased:        [200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  bags_sold:             [0, 0, 0, 0, 0, 0, 0, 66, 67, 67, 0, 0]
+  bags_lost:             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  inventory_bags:        [200, 200, 200, 200, 200, 200, 200, 134, 67, 0, 0, 0]
+  inventory_value:       [2915000, 2915000, 2915000, 2915000, 2915000, 2915000, 2915000, 1953050, 976525, 0, 0, 0]
+  revenue:               [0, 0, 0, 0, 0, 0, 0, 1320000, 1340000, 1340000, 0, 0]
+  cogs:                  [0, 0, 0, 0, 0, 0, 0, 961950, 976525, 976525, 0, 0]
+  gross_profit:          [0, 0, 0, 0, 0, 0, 0, 358050, 363475, 363475, 0, 0]
+  rent:                  [30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]
+  storage_treatment_cost: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  opex:                  [30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]
+  ebitda:                [-30000, -30000, -30000, -30000, -30000, -30000, -30000, 328050, 333475, 333475, -30000, -30000]
+  depreciation:          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ebit:                  [-30000, -30000, -30000, -30000, -30000, -30000, -30000, 328050, 333475, 333475, -30000, -30000]
+  tax:                   [0, 0, 0, 0, 0, 0, 0, 39600, 40200, 40200, 0, 0]
+  nopat:                 [-30000, -30000, -30000, -30000, -30000, -30000, -30000, 288450, 293275, 293275, -30000, -30000]
+  accounts_receivable:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  accounts_payable:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  nwc:                   [2915000, 2915000, 2915000, 2915000, 2915000, 2915000, 2915000, 1953050, 976525, 0, 0, 0]
+  delta_nwc:             [2915000, 0, 0, 0, 0, 0, 0, -961950, -976525, -976525, 0, 0]
+  capex:                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  cfo:                   [-2945000, -30000, -30000, -30000, -30000, -30000, -30000, 1250400, 1269800, 1269800, -30000, -30000]
+  cfi:                   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff:                  [-2945000, -30000, -30000, -30000, -30000, -30000, -30000, 1250400, 1269800, 1269800, -30000, -30000]
+
+fcff: [-2945000, -30000, -30000, -30000, -30000, -30000, -30000, 1250400, 1269800, 1269800, -30000, -30000]
+
+checks:
+  - "trace.inventory_bags[t] == trace.inventory_bags[t-1] + trace.bags_purchased[t] - trace.bags_sold[t] - trace.bags_lost[t]"
+  - "trace.inventory_value[t] == trace.inventory_value[t-1] + trace.bags_purchased[t] * unit_inventory_cost_per_bag - trace.cogs[t] - trace.bags_lost[t] * unit_inventory_cost_per_bag"
+  - "trace.inventory_value[t] == trace.inventory_bags[t] * unit_inventory_cost_per_bag"
+  - "sum(trace.bags_purchased) == sum(trace.bags_sold) + sum(trace.bags_lost)"
+  - "sum(trace.bags_purchased) == bags_purchased_total"
+  - "sum(trace.bags_sold) == bags_sold_total"
+  - "sum(trace.bags_lost) == bags_lost_in_storage"
+  - "sum(trace.bags_purchased) == trace.bags_purchased[first]"
+  - "trace.inventory_bags[last] == 0"
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "trace.nwc[t] == trace.inventory_value[t] + trace.accounts_receivable[t] - trace.accounts_payable[t]"
+  - "trace.nwc[last] == 0"
+  - "trace.gross_profit == trace.revenue - trace.cogs"
+  - "trace.opex == trace.rent + trace.storage_treatment_cost"
+  - "trace.ebitda == trace.gross_profit - trace.opex"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex"
+  - "sum(trace.fcff) == sum(trace.nopat) + sum(trace.depreciation) - sum(trace.capex)"
+  - "trace.revenue == selling_price_per_bag * trace.bags_sold"
+  - "trace.cogs == unit_inventory_cost_per_bag * trace.bags_sold"
+  - "unit_inventory_cost_per_bag == purchase_price_per_bag + transport_cost_per_bag + other_cost_per_bag_xof"
+  - "sum(trace.revenue) == selling_price_per_bag * bags_sold_total"
+  - "sum(trace.cogs) == unit_inventory_cost_per_bag * bags_sold_total"
+  - "trace.tax == impot_synthetique_rate * trace.revenue"
+  - "sum(trace.tax) == impot_synthetique_rate * sum(trace.revenue)"
+  - "sum(trace.revenue) < impot_synthetique_threshold_xof"
+  - "sum(trace.rent) == warehouse_rent_per_month * rent_months_per_year"
+  - "sum(trace.storage_treatment_cost) == campaign_treatment_cost_xof"
+  - "sum(trace.opex) == warehouse_rent_per_month * rent_months_per_year + campaign_treatment_cost_xof + payroll_and_employer_charges_xof"
+  - "sum(trace.capex) == owned_equipment_capex_xof"
+  - "sum(trace.depreciation) <= sum(trace.capex)"
+  - "last_sale_period_index - first_sale_period_index + 1 == selling_window_months"
+  - "trace.revenue == 0 for t < first_sale_period_index"
+  - "trace.bags_sold == 0 for t < first_sale_period_index"
+  - "trace.bags_purchased == 0 for t >= first_sale_period_index"
+  - "trace.inventory_bags == 0 for t >= last_sale_period_index"
+  - "cumsum(trace.bags_sold) >= bags_sold_first_selling_month for t >= first_sale_period_index"
+  - "trace.inventory_bags[t] >= 0"
+  - "trace.inventory_value[t] >= 0"
+  - "trace.nwc[t] >= 0"
+  - "trace.tax[t] >= 0"
+  - "trace.rent[t] >= 0"
+
+notes: |
+  FINDING — THIS BUSINESS HAS NO ASSET SIDE EXCEPT WORKING CAPITAL. The most consequential
+  reading in the whole solution is four words long: "Je paie le magasin". He calls the warehouse
+  "mon magasin", which invites the assumption that he owns it, and then in the next breath prices
+  it at 30,000 a month, which settles that he rents it. Combined with bought-in transport and
+  working alone, that leaves the operation with no fixed assets at all: capex is zero, D&A is
+  zero, and the unlevered build collapses to NOPAT minus the working capital movement. Anyone
+  modelling this as a warehouse business with a depreciating building would produce a different
+  and wrong number while ticking every internal consistency check, which is precisely the class
+  of error internal checks cannot catch.
+
+  FRICTION — THE ACCOUNTING REFUSES TO CAPITALISE THE ONE THING HE ACTUALLY DOES. Economically,
+  storage is not an overhead here; it is the production process. He manufactures a 5,425 XOF per
+  bag price gain out of seven months of holding, and the rent is the direct input to that
+  manufacture. The cost-of-inventories rules disagree: transport in is capitalised into the bags
+  (AUDCIF coût d'acquisition, IAS 2.11) but storage costs of a merchant are expensed as incurred
+  (IAS 2.16(b) and the equivalent AUDCIF position), because the exclusion is drafted around
+  production stages and a trader is deemed not to have one. The natural description and the line
+  items do not align and the friction is left visible rather than forced. Over the full campaign
+  the treatment does not change the total; it changes the monthly profile of EBIT and the
+  carrying value of the stock. Direction, if one preferred the economic view: costs would shift
+  out of the wait and into the sale months, and the inventory position would carry higher.
+
+  FRICTION — LEASE ACCOUNTING. Under IFRS 16 a warehouse lease running longer than twelve months
+  would be capitalised as a right-of-use asset with a matching lease liability, converting rent
+  into depreciation plus interest and pushing the cash payment below the FCFF line entirely —
+  which would raise reported FCFF while the actual cash position was unchanged and would require
+  the lease liability to be carried as debt. That is not the framework here: Mali applies AUDCIF
+  / SYSCOHADA révisé, under which a location simple is expensed, and IFRS 16 itself exempts
+  short-term leases. Rent is expensed. Flagged because what changes between the two treatments
+  is the presentation and the debt classification, not the cash, and a reader comparing this to
+  an IFRS-16 model of the same trade would otherwise be comparing two different objects.
+
+  FRICTION — NOPAT DOES NOT MEAN WHAT IT USUALLY MEANS HERE. The impôt synthétique is assessed on
+  TURNOVER at 3 %, not on profit. NOPAT = EBIT x (1 - t) is therefore inapplicable, and the
+  statutory charge is subtracted from EBIT directly. Two consequences follow that matter beyond
+  this model. First, the effective burden on EBIT is an output of the levy meeting this
+  particular margin rather than a legislated rate, and it rises without limit as the trading
+  spread thins — a turnover levy is a regressive instrument against a low-margin trade, and this
+  trade's margin is entirely a price spread that can compress. Second, a turnover base admits no
+  interest deduction, so this business has no interest tax shield at all: its unlevered and
+  levered tax charges are identical, and the customary FCFF-versus-FCFE tax adjustment is empty.
+
+  JUDGMENT CALL — TAX CASH TIMING. The impôt synthétique is declared and paid on 31 March
+  following the taxable year. This campaign's turnover arises in June-August of the grid's second
+  calendar year, so its statutory settlement date falls beyond t=11 on any harvest-anchored
+  twelve-month horizon. Three options existed: extend the grid to seventeen mostly-dead months;
+  carry a tax payable inside NWC, which pushes a real and certain outflow out of the horizon and
+  flatters the campaign; or charge and disburse the levy with the revenue that triggers it, which
+  is the progressive recognition a turnover-based levy attracts in any case. The third was taken.
+  Direction of the resulting error: the modelled cash tax is EARLIER than statute requires, so
+  the intra-campaign cash profile in the selling months is understated relative to the legal
+  position. The campaign total is unaffected. What would change this call: a founder who runs
+  this trade every year in steady state, in which case the prior campaign's liability falling due
+  on 31 March inside the grid is the better placement, and the two treatments converge.
+
+  JUDGMENT CALL — WHOSE LABOUR IS IN THIS NUMBER. "Je travaille seul." A sole proprietor's own
+  labour is not an employee cost, and what he takes out to live on is a drawing against equity,
+  not an operating expense. So no wage line appears and the FCFF above still contains his
+  implicit wage: it is not a clean return to capital, and it should not be compared to the FCFF of
+  a business that pays a manager. Direction: a true return to capital alone would be lower.
+  Deliberately not quantified — nobody, including him, was asked what a year of his work is
+  worth, and inventing that number would be exactly the silent guess this method exists to
+  prevent.
+
+  ON THE PROVENANCE MIX — THERE ARE NO ASSUMED INPUTS IN THIS SOLUTION, AND THAT IS A CLAIM.
+  Every input is STATED, INFERRED from what was stated, SOURCED from a published rule, DEFAULTED
+  to a named convention, or ELICITED with the question attached. Nothing was quietly invented.
+  That is not a boast about the analysis; it is a property of the business. A one-man,
+  one-commodity, one-cycle trade has almost no room for a prior that nobody could state — every
+  gap is either a rule that lives in the world and can be looked up, or a fact that lives in his
+  magasin and can be asked. The one place where a genuine ASSUMED input would have been
+  unavoidable is deliberately excluded: whether next lean season's price will again be 20,000 is
+  knowable to no one, and that is the principal reason the horizon stops at one campaign rather
+  than running five.
+
+  ON THE BELIEF-VERSUS-RULE SPLIT, TWICE. First, storage loss. He says he sells the two hundred
+  bags; the published post-harvest literature does not agree that a Sahelian cereal store loses
+  nothing over seven months, and the APHLIS whole-chain figure recorded under
+  bags_lost_in_storage is why. His account of his own magasin is a fact about his business and
+  the base case runs on it. The published loss profile is a fact about the world and it is a
+  different object. They are kept apart and the question is ranked first. Second, tax. The 3 %
+  rate and the 50,000,000 ceiling are facts about the world, verified against the DGI; whether
+  this particular trader is registered and assessed is a fact about his business that only he can
+  supply. A founder can be entirely right about his own operation and entirely wrong about the
+  rule that governs it, and the reverse, so the two are recorded as separate inputs.
+
+  RESIDUAL VERIFICATION GAP, STATED RATHER THAN HIDDEN. The impôt synthétique rate, threshold,
+  libératoire scope and 31 March deadline were verified against the Direction Générale des Impôts
+  du Mali directly and against its 2026 échéance notice. The precise CGI article numbering could
+  not be pinned to a single article from a primary text within this exercise — the numbering
+  shifted when the threshold was raised from 30 to 50 million XOF, and secondary sources cite
+  different articles — so the authority is given as "art. 70 et suivants" plus the administration's
+  own published statement, which is the stronger evidence of the operative rule in any case.
+  Likewise, the VAT conclusion rests on the verified libératoire scope of the synthétique, with
+  the separate cereals exemption in the CGI's exemption list carried as a secondary and less
+  precisely verified ground. Both are flagged because a statutory claim taken on trust is the one
+  error that survives every internal check: the arithmetic would tie perfectly around a false rate.
+
+  CORROBORATION OF THE STATED PRICES. His purchase price per bag and his lean-season selling
+  price both sit on top of independently published Malian market observations for sorghum in
+  100 kg bags — the OMA / APCAM market reporting relayed via ORTM gives the same harvest-period
+  bag price, and Bamako lean-season retail sorghum at the same per-kilo level his selling price
+  implies. He is quoting the market, not a rounded recollection. This raises confidence in the
+  two price inputs specifically. It does not raise confidence in the volume inputs, which are the
+  ones carrying the high-materiality questions.
+
+  ON THE BAG. He counts in "sacs" and every price and cost in this model is already per bag, so
+  no figure below depends on what a sac weighs. The corroborating market data is quoted per
+  100 kg bag and his prices match it at that size, which is the natural West African cereal
+  trading unit. Recorded for the reader's orientation only, and kept out of the inputs precisely
+  because it enters no derivation.
+
+  WHAT IS DEFERRED. Financing is excluded by construction, this being an unlevered measure — how
+  the November trough is funded (own savings, supplier credit, a warrantage loan against the
+  stock) belongs to FCFE, not here. But there is a boundary case worth naming: if credit-priced
+  grain carries a higher purchase price than cash-priced grain, then the funding decision changes
+  FCFF and not merely FCFE, which is one of two reasons the purchase payment terms are ranked
+  high. No scaling, no second campaign, no price path and no terminal value are modelled, for the
+  reasons given in the grid rationale.
+
+  IF THE FOUNDER WILL ONLY ANSWER THREE QUESTIONS, ASK THESE. How many of the two hundred bags
+  actually survive to June. Whether he is registered with the DGI and pays the impôt synthétique.
+  Whether the two hundred bags are paid for in cash in November. The first two move the number;
+  the third moves the shape of the year, which for a business that lives eight months in deficit
+  is the same thing as moving the number.
