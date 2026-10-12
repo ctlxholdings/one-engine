@@ -16,6 +16,8 @@
 # Readings: the project cost per toe of annual savings is the plant read from the books per the
 # printed annual_savings (a unit cost, rule 4); the year-one certificates against the full-run savings
 # are the year's certificate revenue per what 1,900 certificates a year would fetch at the same price.
+# The MWh per toe is a driver (an energy conversion, physical: rule 4): the 23 GWh printed in brackets
+# after the 1900 toe (annual_savings__2, the text's second number) times 1000 per the 1900 toe.
 esco: innowatio_humanitas_hospitals
 entity: innowatio
 plant: first_year_certificates
@@ -35,6 +37,7 @@ case:
         certificates: {each_period: first_year_certificates * (t == 1)}
         half_of_revenue: certificates * certificate_value * 1 / 2
         full_run_value: annual_savings * certificate_value
+        mwh_per_toe: annual_savings__2 * 1000 / annual_savings
   contracts:
     funding:
       type: equity_funding
@@ -82,6 +85,5 @@ figures:
   in.first_year_certificate_value: {cut: certificate_revenue, at: 1}
   in.certificates_vs_annual_pct: {cut: certificate_revenue, at: 1, per: src.full_run_value, scale: 0.01}
   in.cost_per_toe_year: {balance: equipment, at: 0, per: src.annual_savings}
-not_compared:
-  in.mwh_per_toe: "the 23 GWh is printed in brackets after the 1900 toe, so it is not an input (a text counts for
-    its first number); an energy conversion, not money"
+  in.mwh_per_toe: {driver: src.mwh_per_toe, at: 1}
+not_compared: {}

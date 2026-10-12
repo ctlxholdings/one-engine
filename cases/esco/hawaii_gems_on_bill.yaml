@@ -18,9 +18,14 @@
 # Revenues and costs since inception are not booked: the report does not split revenue into interest
 # and principal repaid, and the capital check leaves both out. No tax.
 #
-# Set aside: the counts of on-bill obligations, applications, projects and customers (physical
-# statistics). Only the first number of each printed list is an input (226 PV loans, 17 commercial
-# OBOs, 850 PV projects, 1,188 applications); the other counts the figures add are not inputs.
+# The counts of on-bill obligations and projects are physical statistics no ledger holds: they are
+# drivers over the printed list's numbers (residential_obo_counts: PV loans 226, owner-occupied __2
+# 225, renter __3 1, PV leases __4 34, solar water heating __5 17, the printed total __6 277, the
+# quarter's __7 25 + __8 1 + __9 0; projects_financed_all_products: the seven products' counts, the
+# first to __7). The totals are the parts added; the PV and solar-water-heating shares are counts per
+# the printed total of 277 (scale 0.01).
+#
+# Set aside: the counts of customers by income band, printed only in the derived block (not inputs).
 esco: hawaii_gems_on_bill
 entity: hgia
 plant: gems_loans_funded_since_inception_usd
@@ -38,6 +43,12 @@ case:
       values:
         proceeds: bond_net_proceeds_usd * 1000 * 1000
         capital_left: gems_loan_capital_left_usd * 1000 * 1000
+        obo_total: residential_obo_counts + residential_obo_counts__4 + residential_obo_counts__5
+        obo_quarter: residential_obo_counts__7 + residential_obo_counts__8 + residential_obo_counts__9
+        obo_pv_loans: residential_obo_counts__2 + residential_obo_counts__3
+        pv_share: (residential_obo_counts + residential_obo_counts__4) / residential_obo_counts__6
+        swh_share: residential_obo_counts__5 / residential_obo_counts__6
+        projects_total: projects_financed_all_products + projects_financed_all_products__2 + projects_financed_all_products__3 + projects_financed_all_products__4 + projects_financed_all_products__5 + projects_financed_all_products__6 + projects_financed_all_products__7
   contracts: {}
   rulebooks:
     loan_fund:
@@ -59,14 +70,12 @@ case:
 figures:
   hi.capital_accounted_usd_m: {balance: gems_loans + loan_capital_to_lend, scale: 1000000}
   hi.capital_unaccounted_usd_m: {balance: cash, scale: 1000000}
+  hi.obo_total: {driver: src.obo_total}
+  hi.obo_quarter: {driver: src.obo_quarter}
+  hi.obo_owner_renter_split: {driver: src.obo_pv_loans}
+  hi.pv_share_pct: {driver: src.pv_share, scale: 0.01}
+  hi.swh_share_pct: {driver: src.swh_share, scale: 0.01}
+  hi.projects_total: {driver: src.projects_total}
 not_compared:
-  hi.obo_total: "a count of on-bill obligations (226 + 34 + 17): only the 226 is an input"
-  hi.obo_quarter: "a count of the quarter's on-bill obligations (25 + 1 + 0): not inputs"
-  hi.obo_owner_renter_split: "a count (225 owner-occupied + 1 renter): not inputs; the total is the input
-    residential_obo_counts"
-  hi.pv_share_pct: "a share of counts of on-bill obligations (226 + 34 of 277): the 34 and 277 are not inputs"
-  hi.swh_share_pct: "a share of counts (17 solar water heating of 277): neither is an input (the input
-    commercial_obo_counts is the 17 commercial PV obligations)"
-  hi.projects_total: "a count of projects financed by product: only the 850 PV projects is an input"
-  hi.income_tables_agree: "counts of customers by income band, printed only in the derived block"
-  hi.income_quarter_matches_obo: "counts of the quarter's customers by income band, printed only in the derived block"
+  hi.income_tables_agree: "counts of customers by income band, printed only in the derived block (not inputs)"
+  hi.income_quarter_matches_obo: "counts of the quarter's customers by income band, printed only in the derived block (not inputs)"

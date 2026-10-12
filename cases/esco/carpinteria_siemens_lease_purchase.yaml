@@ -6,20 +6,24 @@
 #
 # The draft leaves the principal blank ('$[Principal Amount]'; the input principal_amount_usd is the
 # 17 of 'CVWD17', a document code, not an amount), so no lease payment can be computed and none is
-# booked. Every amount is a number of the deal by name (generator `src`). One period, the effective
-# date, in the district's books:
+# booked. Every amount is a number of the deal by name (generator `src`). One period, the escrow's
+# first year from the effective date, in the district's books:
 #   * the district pays the escrow agent its fee due on the effective date (escrow_fees_usd,
-#     Escrow s.5.4), expensed;
+#     Escrow s.5.4) and, in arrears at the end of the year, the annual fee (escrow_fees_usd__2, the
+#     second number of the same text), both expensed;
 #   * the lease runs number_of_lease_payments payments, quarterly (Leasing Schedule s.4): the term
 #     in years is a driver over that count at four payments a year (a time quantity, rule 4).
-# Set aside: the first-year escrow fee and the monthly fee for a partial year need the annual fee
-# ($1,200 a year), the second number of the printed fee text; the inputs carry only its first ($600).
-# With the principal blank and the annual fee not an input, no compared figure is a money amount:
-# the plant (the payment count) moves the term by a fraction of a year that the printed whole years
-# do not show, so the planted run is not caught. No tax, no interest (no principal printed).
+# The figures: carp.escrow_fee_first_year, the escrow fees of the year, from the books;
+# carp.escrow_monthly_vs_annual, the annual fee from the books over the twelve months of a year (the
+# draft's $100 a month for a partial year, escrow_fees_usd__3, is that figure printed, so it is not
+# used); carp.lease_term_years as above.
+# Revisit (later numbers of a text are inputs now): the annual fee was the second number of the fee
+# text; both escrow figures are now read, and the plant moves to the annual fee, a money amount both
+# read. The deal was blind (no money figure compared) and is now caught. No tax, no interest (no
+# principal printed).
 esco: carpinteria_siemens_lease_purchase
 entity: district
-plant: number_of_lease_payments
+plant: escrow_fees_usd__2
 case:
   case: esco-carpinteria-lease-purchase
   periods: 1
@@ -33,6 +37,7 @@ case:
       inputs: esco
       values:
         lease_term_years: number_of_lease_payments / 4
+        months_in_year: 12
   opening:
     district:
       cash: {nature: asset, value: 0}
@@ -44,14 +49,21 @@ case:
       entity: district
       phase: settle
       declare:
-        escrow_fees: expense
+        escrow_initial_fee: expense
+        escrow_annual_fee: expense
       moves:
-        initial_fee: {debit: escrow_fees, credit: cash, amount: {generator: src, output: escrow_fees_usd}}
-  schemes: {}
-  cuts: {}
+        initial_fee: {debit: escrow_initial_fee, credit: cash, amount: {generator: src, output: escrow_fees_usd}}
+        annual_fee: {debit: escrow_annual_fee, credit: cash, amount: {generator: src, output: escrow_fees_usd__2}}
+  schemes:
+    pnl:
+      escrow_initial_fee: escrow_fees
+      escrow_annual_fee: annual_fee
+  cuts:
+    escrow_fees: {kind: pnl, entity: district, scheme: pnl, include: [escrow_fees, annual_fee]}
+    annual_fee: {kind: pnl, entity: district, scheme: pnl, include: [annual_fee]}
   measures: {}
 figures:
   carp.lease_term_years: {driver: src.lease_term_years}
-not_compared:
-  carp.escrow_fee_first_year: "needs the annual escrow fee ($1,200 a year), the second number of the printed fee text; the inputs carry only its first ($600 on the effective date)"
-  carp.escrow_monthly_vs_annual: "needs the annual escrow fee ($1,200 a year), the second number of the printed fee text; the inputs carry only its first ($600 on the effective date)"
+  carp.escrow_fee_first_year: {cut: escrow_fees, sign: -1}
+  carp.escrow_monthly_vs_annual: {cut: annual_fee, sign: -1, per: src.months_in_year}
+not_compared: {}

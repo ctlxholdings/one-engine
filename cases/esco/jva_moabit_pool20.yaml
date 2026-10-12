@@ -23,8 +23,12 @@
 # windows share is the windows account per the investment. The phase's months and the months
 # from signing to the phase are `driver` formulas over the printed dates (time quantities).
 #
-# Set aside: moabit.pct_band_base needs the printed 35,0 Prozent, the second number of the
-# guarantee's text, which the harness does not hand over: no input carries it.
+# The base implied by the guarantee (moabit.pct_band_base, in EUR million) is the client's annual
+# saving in a phase year per the guarantee's printed share of the base (the 35,0 Prozent the dena
+# page prints after the 454.000 Euro: the guarantee text's second number,
+# guaranteed_savings_eur_per_year__printed__2, over 100): a money reading per a rate.
+#
+# Nothing is set aside.
 esco: jva_moabit_pool20
 entity: esco
 plant: guaranteed_savings_eur_per_year
@@ -46,6 +50,7 @@ case:
         windows_spend: {each_period: (t == 0) * window_works_eur}
         other_spend: {each_period: (t == 0) * (investment_eur - window_works_eur)}
         esco_share: (guaranteed_savings_eur_per_year - budget_relief_eur_per_year) / guaranteed_savings_eur_per_year
+        guarantee_share: guaranteed_savings_eur_per_year__printed__2 / 100
   contracts:
     funding:
       type: equity_funding
@@ -84,5 +89,5 @@ figures:
   moabit.relief_share_pct: {cut: client_net, per: src.guaranteed_savings_eur_per_year, at: 1, scale: 0.01}
   moabit.guarantee_less_relief: {cut: esco_revenue, at: 1}
   moabit.windows_share_pct: {balance: windows, per: src.investment_eur, at: 0, scale: 0.01}
-not_compared:
-  moabit.pct_band_base: "needs the printed 35,0 Prozent (the base implied by the guarantee), the second number of the guarantee's text, which the harness does not hand over: no input carries it"
+  moabit.pct_band_base: {cut: client_savings, per: src.guarantee_share, at: 1, scale: 1000000}
+not_compared: {}

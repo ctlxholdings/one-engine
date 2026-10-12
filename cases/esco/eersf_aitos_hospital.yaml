@@ -13,13 +13,23 @@
 #     against its own contribution): its equity in the project;
 #   * nothing printed sizes the hospital's payments, the loan's rate or its tenor, so no flow after
 #     the investment is modelled; no tax.
+# The fund's own books (entity eersf, the same period): its 2004-2008 capitalisation, each donor's
+# grant into the fund's cash (fund_capitalisation_2004_2008: GEF __2 15,5M, Bulgaria __4 3M, Austria
+# __6 about 3M, private donors __8 0,4M BGN), entered in BGN (the printed millions times 1000 x 1000)
+# and read in millions (scale); the fund's other flows are not printed and are not modelled.
 # The credit and own shares are the loan and the own contribution read from the books, per the cost.
-# The implied annual saving at the sheet's 5.6-year payback is the capitalised investment per the
-# printed payback (project_payback_years, a time quantity read as the divisor).
+# The implied annual saving at either payback (the sheet's 5.6 years, project_payback_years; the ESCO
+# list's 6.8, project_payback_years__2) is the capitalised investment per that payback (a time quantity
+# read as the divisor). The capitalisation is the fund's cash cut of all four grants; the public share
+# (GEF, Bulgaria, Austria) and the GEF's share are those grants' cuts per the printed total (almost
+# 21,9M, __10). Drivers (no ledger holds them): the savings columns' kWh sum (electricity, naphtha/
+# diesel __2, wood pellets __3, a physical quantity) and the gap between the two paybacks (__2 less
+# the first, a time quantity).
 #
-# Set aside: figures built from numbers the inputs do not carry. A text counts for its first number,
-# so 6.8 years (the ESCO list), the naphtha and pellet columns, 15,5 (read as 15) and the other donor
-# amounts, 45,8 and 67,6M BGN, and the other projects' credits are not inputs.
+# Set aside: figures built from numbers the inputs do not carry. The euro figures need the BGN/EUR peg
+# (1.95583), which no input prints (the euro amounts the text prints beside the BGN ones are the figures
+# themselves, not a rate); the other projects' credits and the 53/29/19 portfolio mix are printed only
+# under numbers.derived.
 esco: eersf_aitos_hospital
 entity: almina
 plant: total_project_cost_bgn
@@ -34,9 +44,19 @@ case:
       kind: formulas
       periods: 1
       inputs: esco
-      values: {}
+      values:
+        gef_bgn: fund_capitalisation_2004_2008__2 * 1000 * 1000
+        bulgaria_bgn: fund_capitalisation_2004_2008__4 * 1000 * 1000
+        austria_bgn: fund_capitalisation_2004_2008__6 * 1000 * 1000
+        private_bgn: fund_capitalisation_2004_2008__8 * 1000 * 1000
+        capitalisation_printed_bgn: fund_capitalisation_2004_2008__10 * 1000 * 1000
+        savings_kwh: expected_savings_bgeef + expected_savings_bgeef__2 + expected_savings_bgeef__3
+        payback_gap: project_payback_years__2 - project_payback_years
   opening:
     almina:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    eersf:
       cash: {nature: asset, value: 0}
       equity: {nature: equity, value: 0}
   contracts: {}
@@ -59,25 +79,47 @@ case:
       phase: fund
       accounts:
         cash: {side: asset, target: 0, against: own_contribution}
-  schemes: {}
-  cuts: {}
+    capitalisation:
+      kind: transfer
+      entity: eersf
+      phase: invest
+      declare:
+        gef_grant: equity
+        bulgaria_grant: equity
+        austria_grant: equity
+        private_grant: equity
+      moves:
+        gef: {debit: cash, credit: gef_grant, amount: {generator: src, output: gef_bgn}}
+        bulgaria: {debit: cash, credit: bulgaria_grant, amount: {generator: src, output: bulgaria_bgn}}
+        austria: {debit: cash, credit: austria_grant, amount: {generator: src, output: austria_bgn}}
+        private: {debit: cash, credit: private_grant, amount: {generator: src, output: private_bgn}}
+  schemes:
+    fund_cash:
+      gef_grant: gef
+      bulgaria_grant: public
+      austria_grant: public
+      private_grant: private
+  cuts:
+    fund_capital: {entity: eersf, account: cash, scheme: fund_cash, include: [gef, public, private]}
+    fund_public_capital: {entity: eersf, account: cash, scheme: fund_cash, include: [gef, public]}
+    fund_gef_capital: {entity: eersf, account: cash, scheme: fund_cash, include: [gef]}
   measures: {}
 figures:
   eersf.credit_share_pct: {balance: eersf_credit, per: src.total_project_cost_bgn, scale: 0.01}
   eersf.own_share_bgn: {balance: own_contribution}
   eersf.own_share_pct: {balance: own_contribution, per: src.total_project_cost_bgn, scale: 0.01}
   eersf.implied_saving_at_5_6: {balance: ee_works, per: src.project_payback_years}
+  eersf.implied_saving_at_6_8: {balance: ee_works, per: src.project_payback_years__2}
+  eersf.savings_columns_kwh: {driver: src.savings_kwh}
+  eersf.payback_gap_years: {driver: src.payback_gap}
+  eersf.capitalisation_sum: {cut: fund_capital, scale: 1000000}
+  eersf.public_share_pct: {cut: fund_public_capital, per: src.capitalisation_printed_bgn, scale: 0.01}
+  eersf.gef_share_over_70: {cut: fund_gef_capital, per: src.capitalisation_printed_bgn, scale: 0.01}
 not_compared:
-  eersf.savings_columns_kwh: "needs the naphtha/diesel (577 275) and wood-pellet (-171 733) columns; the input expected_savings_bgeef carries only the text's first number (69 452)"
-  eersf.implied_saving_at_6_8: "needs the ESCO list's 6.8-year payback; project_payback_years carries only the text's first number (5.6)"
-  eersf.payback_gap_years: "needs the ESCO list's 6.8-year payback, which is not an input (project_payback_years is 5.6)"
   eersf.other_project_70pct: "another ESCO-list project's cost and credit, printed only under numbers.derived (not inputs)"
   eersf.other_project_75pct: "another ESCO-list project's cost and credit, printed only under numbers.derived (not inputs)"
-  eersf.capitalisation_sum: "the donors' amounts are one text whose first number is read as 15 (15,5 with a decimal comma); 3, 3 and 0,4 are not inputs"
-  eersf.public_share_pct: "the donors' amounts and the 21.9 total are not inputs (fund_capitalisation_2004_2008 carries 15 only)"
-  eersf.gef_share_over_70: "the GEF's 15,5 and the 21.9 total are not inputs (the text's first number reads 15)"
-  eersf.capitalisation_eur: "the 21.9M BGN total and the BGN/EUR peg are not inputs"
-  eersf.gef_eur_band: "the GEF's 15,5M BGN and the BGN/EUR peg are not inputs (the text's first number reads 15)"
-  eersf.funded_eur: "the fund book's 45,8M BGN is not an input (fund_book_end_2014 carries the 170 projects) nor is the BGN/EUR peg"
-  eersf.book_value_eur: "the fund book's 67,6M BGN and the BGN/EUR peg are not inputs"
+  eersf.capitalisation_eur: "needs the BGN/EUR peg (1.95583), which no input prints; the 11,2M euro beside the total (fund_capitalisation_2004_2008__11) is the figure itself"
+  eersf.gef_eur_band: "needs the BGN/EUR peg, which no input prints; the 8,0M euro beside the GEF's amount (__3) is the figure itself"
+  eersf.funded_eur: "needs the BGN/EUR peg, which no input prints (fund_book_end_2014__2 carries the 45,8M BGN, but nothing converts it)"
+  eersf.book_value_eur: "needs the BGN/EUR peg, which no input prints (fund_book_end_2014__3 carries the 67,6M BGN, but nothing converts it)"
   eersf.portfolio_mix_rounding: "the 53/29/19 portfolio shares are printed only under numbers.derived (not inputs)"

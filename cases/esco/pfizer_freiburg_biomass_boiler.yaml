@@ -12,9 +12,11 @@
 #     year; the buyer is an anonymous market;
 #   * the heat contract's price (a cap at price_cap percent of the oil-equivalent cost), the boiler's
 #     cost and its financing are not published, so nothing else is booked.
-# Set aside: the heat the avoided CO2 implies if all displaced fuel were oil, or all gas, divides by
-# the oil (0.25) and gas (0.19) factors, the second and third numbers of the printed factor text;
-# the inputs carry only its first number (wood pellets, 0). No tax.
+#   * the heat the avoided CO2 implies if all displaced fuel were oil, or all gas (MWh, a physical
+#     scale check no ledger holds), is a `driver`: the avoided tonnes per the oil factor (0.25 t/MWh)
+#     or the natural-gas factor (0.19), the printed factor text's second and third numbers
+#     (co2_factors_t_per_mwh__2, __3; its first is wood pellets' 0).
+# Nothing is set aside. No tax.
 esco: pfizer_freiburg_biomass_boiler
 entity: facility
 plant: credit_price_eur_per_t
@@ -29,7 +31,9 @@ case:
       kind: formulas
       periods: 1
       inputs: esco
-      values: {}
+      values:
+        heat_if_oil: co2_saved_t_per_year / co2_factors_t_per_mwh__2
+        heat_if_gas: co2_saved_t_per_year / co2_factors_t_per_mwh__3
   opening:
     facility:
       cash: {nature: asset, value: 0}
@@ -49,6 +53,6 @@ case:
   measures: {}
 figures:
   pf.credit_revenue: {cut: credit_revenue}
-not_compared:
-  pf.heat_if_oil_mwh: "divides by the oil factor 0.25, the second number of the printed factor text; the inputs carry only its first (wood pellets, 0)"
-  pf.heat_if_gas_mwh: "divides by the natural-gas factor 0.19, the third number of the printed factor text; the inputs carry only its first (wood pellets, 0)"
+  pf.heat_if_oil_mwh: {driver: src.heat_if_oil}
+  pf.heat_if_gas_mwh: {driver: src.heat_if_gas}
+not_compared: {}

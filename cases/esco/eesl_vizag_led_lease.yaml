@@ -4,9 +4,10 @@
 # miniature/cases/eesl_vizag_led_lease-lod0.yaml; answer key cases/reference/esco/tests/
 # test_lod0_numbers.py). Amounts in INR million.
 #
-# Periods are years; 0 is the investment year, 1-7 the annuity years. The harness hands each text
-# its first number only, so the annuity's "for 7 years" enters as the case's horizon (8 periods,
-# a count of periods: rule 2). Every amount is a number of the case by name (generator `src`):
+# Periods are years; 0 is the investment year, 1-7 the annuity years: the annuity's "for 7 years" is
+# annuity__3 (the third number of its text), which sets the annuity's years and the stated terms'
+# repayment periods; the horizon's period count (8) is typed, structural. Every amount is a number of
+# the case by name (generator `src`):
 #   * EESL (the ESCO) invests capital_investment in period 0 (equipment, capitalised), funded by a
 #     KfW loan of kfw_share percent of it and EESL equity of eesl_equity_share percent; the KfW
 #     loan's repayment terms are not printed, so it is carried and never repaid in the case;
@@ -19,11 +20,16 @@
 # Readings: the loan and equity are balances at period 0; their sum per capital_investment is the
 # shares' sum; the annuity total is EESL's revenue over the term; the implied rate is the IRR of
 # EESL's project cash flow (investment and annuity); the present value is the npv of the annuity
-# cash at the stated rate. installation_weeks is a driver (a time quantity, days over 7).
-#
-# Set aside (the inputs carry no number for them): the US$ amounts (9.8 and 2.8 million) and the
-# summary's 92,000 lights are the second numbers of their texts, which the harness does not hand
-# over, so the two exchange rates, the KfW loan in US$ and the lights gap cannot be derived.
+# cash at the stated rate. installation_weeks is a driver (a time quantity, days over 7). The KfW loan
+# in US$ is its balance per the exchange rate the investment's two amounts imply (INR 650 million,
+# US$9.8 million: capital_investment__2). The two exchange rates (the investment's, and the annuity's
+# INR 185 million over US$2.8 million, annuity__2) are rates no ledger holds (the case keeps one
+# currency), drivers (rule 4), as hep_croatia reads its rate; the lights gap is the summary's 92,000
+# lights (luminaires__3) over Figure 2's 91,775, a count, a driver.
+# Revisit (later numbers of a text are inputs now): the four figures set aside for want of the US$
+# amounts and the 92,000 lights are now read, and the seven years come from annuity__3 instead of
+# the horizon. Not used: luminaires__2 (Figure 2's number), kfw_figure_label (the '50 million' whose
+# unit and currency are not printed: the answer key reads no figure from it).
 esco: eesl_vizag_led_lease
 entity: eesl
 plant: annuity
@@ -47,7 +53,10 @@ case:
       values:
         kfw_loan: kfw_share / 100 * capital_investment
         equity: eesl_equity_share / 100 * capital_investment
-        annuity_paid: {each_period: (t >= 1) * annuity}
+        annuity_paid: {each_period: (t >= 1) * (t <= annuity__3) * annuity}
+        fx_investment: capital_investment / capital_investment__2
+        fx_annuity: annuity / annuity__2
+        lights_gap: luminaires__3 / luminaires - 1
         stated_rate: interest_rate_stated / 100
         stated_draw: {each_period: (t == 0) * capital_investment}
         weeks: installation_time / 7
@@ -75,7 +84,7 @@ case:
         capitalise_from: 1
         capitalise_until: 0
         repay_from: 1
-        repay_periods: 7
+        repay_periods: {generator: src, output: annuity__3}
         sculpt_dscr: null
         principal_schedule: {loop: stated_annuity, output: repayment}
         arrangement_fee: 0
@@ -135,8 +144,8 @@ figures:
   ev.implied_rate_pct: {measure: implied_rate, scale: 0.01}
   ev.pv_at_stated_rate: {measure: pv_stated}
   ev.installation_weeks: {driver: src.weeks, at: 0}
-not_compared:
-  ev.fx_investment: "needs the investment in US$ (9.8 million), the second number of its text, which the harness does not hand over: no input carries it"
-  ev.fx_annuity: "needs the annuity in US$ (2.8 million), the second number of its text, which the harness does not hand over: no input carries it"
-  ev.kfw_loan_usd_m: "needs the exchange rate from the US$ investment (9.8 million), which no input carries (second number of its text)"
-  ev.lights_gap_pct: "needs the summary's 92,000 lights, the second number of the luminaires text, which the harness does not hand over: no input carries it"
+  ev.fx_investment: {driver: src.fx_investment, at: 0}
+  ev.fx_annuity: {driver: src.fx_annuity, at: 0}
+  ev.kfw_loan_usd_m: {balance: kfw_loan, at: 0, per: src.fx_investment}
+  ev.lights_gap_pct: {driver: src.lights_gap, at: 0, scale: 0.01}
+not_compared: {}

@@ -13,13 +13,19 @@
 #     say whether it sits inside the 185.8);
 #   * the static payback is the case file's investment / annual savings: the measures read from the
 #     books per the annual saving; the savings' share is the owner's saving per its global cost
-#     baseline (global_cost_baseline_eur_per_yr, printed "446k": energy, water and sewage).
+#     baseline (global_cost_baseline_eur_per_yr, printed "446k": energy, water and sewage);
+#   * the floor areas (thousand m2, physical) are money read from the books per the EUR per m2 rate
+#     the source prints after it: the measures per the 93.1 EUR/m2 (total_investment_keur__2), the
+#     owner's annual saving per the 7.2 EUR/m2 yr (total_energy_cost_savings_keur_per_yr__2);
+#   * the award weights (Table A-4's DER EPC column: 50, 40 and 10, award_weights_der_epc_pct and its
+#     __2, __3) are a tender scoring rule, not money: their sum is a `driver` (a rate no ledger holds).
 # Periods are years; 0 is the investment, 1 one year of savings (the contract period is not published).
 #
-# Set aside: the table rows (seven measures' investments and savings, Table A-3's eight heating costs,
-# its kWh, kW and tariff columns), the EUR per m2 rates and the award sub-weights are printed only in
-# the case file's derived block or after a text's first number, so they are not inputs; the totals the
-# rows add to are themselves inputs.
+# Set aside: Table A-5's rows (seven of the nine investments, eight of the nine savings), Table A-3's
+# eight heating costs and building 42's kWh, kW and tariff columns, and the CHP's 28 EUR/m2 are printed
+# only in the case file's derived block, not as inputs: the CHP's own savings (113,
+# chp_supply_solution_investment_keur__2) and the heating table's lowest and highest cost
+# (heating_baseline_cost_eur_per_yr__3, __4) are now inputs, but not the other rows the sums need.
 esco: mannheim_ludwig_frank_der_epc
 entity: esco
 plant: total_energy_cost_savings_keur_per_yr
@@ -39,6 +45,7 @@ case:
         annual_savings: total_energy_cost_savings_keur_per_yr * 1000
         baseline: global_cost_baseline_eur_per_yr * 1000
         savings: {each_period: annual_savings * (t >= 1)}
+        award_weights: award_weights_der_epc_pct + award_weights_der_epc_pct__2 + award_weights_der_epc_pct__3
   contracts:
     funding:
       type: equity_funding
@@ -69,20 +76,23 @@ case:
 figures:
   mh.static_payback: {balance: equipment, at: 0, per: src.annual_savings}
   mh.savings_share_of_baseline: {cut: owner_savings, at: 1, per: src.baseline, scale: 0.01}
+  mh.floor_area_from_investment: {balance: equipment, at: 0, per: src.total_investment_keur__2, scale: 1000}
+  mh.floor_area_from_savings: {cut: owner_savings, at: 1, per: src.total_energy_cost_savings_keur_per_yr__2, scale: 1000}
+  mh.award_weights_sum: {driver: src.award_weights, at: 0}
 not_compared:
-  mh.investment_sum: "the sum of Table A-5's nine investment rows: seven of them are printed only in the case
-    file's derived block, not as inputs, and the total is the input total_investment_keur"
-  mh.investment_sum_matches_input: "the same nine rows less the input total: the rows are not inputs"
-  mh.savings_sum: "the sum of Table A-5's nine savings rows: printed only in the derived block (the CHP's 113 after
-    the 749 of its own input), and the total is the input total_energy_cost_savings_keur_per_yr"
-  mh.heating_cost_sum: "the eight heating costs of Table A-3: printed only in the derived block (the input
-    heating_baseline_cost_eur_per_year reads its text's first number, the table's name)"
+  mh.investment_sum: "the sum of Table A-5's nine investment rows: seven of them (118, 118, 115, 105, 119, 120,
+    115) are printed only in the case file's derived block, not as inputs (the deep retrofit's 982 and the CHP's
+    749 are), and the total is the input total_investment_keur"
+  mh.investment_sum_matches_input: "the same nine rows less the input total: seven of the rows are not inputs"
+  mh.savings_sum: "the sum of Table A-5's nine savings rows: only the CHP's 113 is an input
+    (chp_supply_solution_investment_keur__2); the other eight are printed only in the derived block, and the
+    total is the input total_energy_cost_savings_keur_per_yr"
+  mh.heating_cost_sum: "the eight heating costs of Table A-3: the inputs carry only the range the text prints, its
+    lowest and highest (heating_baseline_cost_eur_per_yr__3, __4); the six others are printed only in the
+    derived block"
   mh.table_a3_building_42: "building 42's kWh, EUR/kWh, kW, EUR/kW and fixed charge are printed only in the derived
     block, not as inputs"
   mh.dynamic_payback_label: "the dynamic payback needs a discount rate and savings path the inputs do not carry; the
     figure is the input dynamic_payback_years rounded"
-  mh.floor_area_from_investment: "a physical floor area from the 93.1 EUR/m2 printed after the 2,541 (not an input)"
-  mh.floor_area_from_savings: "a physical floor area from the 7.2 EUR/m2 yr printed after the 185.8 (not an input)"
-  mh.floor_area_from_chp: "a physical floor area from the CHP's 28 EUR/m2, printed only in the derived block"
-  mh.award_weights_sum: "the award criteria weights (50 + 40 + 10): only the first is an input, and they are a
-    tender scoring rule, not money of the deal"
+  mh.floor_area_from_chp: "a physical floor area from the CHP's 28 EUR/m2, printed only in the derived block (the
+    CHP's text carries 749 and its 113 savings, no rate per m2)"

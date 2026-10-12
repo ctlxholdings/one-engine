@@ -12,15 +12,23 @@
 #     period 0 out of its own capital and sells the eeef's share of its savings revenues for the
 #     fund's initial investment (eeef_investment_eur_m, its first figure 1.7), which the fund pays
 #     out of its capital and carries as a receivable;
-#   * as revised in 2015 (AR18 p.34), a parallel world (`jc_revised`, `eeef_revised`): the project
-#     at its total project size (total_project_size_eur_m), the fund buying share_bought_pct of it;
+#   * the 2015 revision (AR18 p.34: the fund's investment "1.7 initial; 1.0 after the 2015 revision",
+#     eeef_investment_eur_m and __2) reduces the fund's receivable to the revised amount: the
+#     difference comes back to the fund's cash in the revision year, period 2015 - 2012 = 3
+#     (eeef_investment_eur_m__3 less financial_close__2, years read as years: a time quantity);
+#   * as revised (AR18 p.34), a parallel world (`jc_revised`, `eeef_revised`): the project at its
+#     total project size (total_project_size_eur_m), the fund buying share_bought_pct of it;
 #   * the museum's payments to JC and the fund's collections are not stated (only the savings
 #     guarantee is), so they are not booked; no tax.
-# Readings: the ratios are book readings per an input amount or per the share bought; the CO2 ratio
-# is a physical statistic (tonnes over tonnes), a driver.
-# Set aside: the four figures built on the fund's investment after the 2015 revision (1.0) and on
-# the Munich line (0.6), and the implied baseline (on the 43.2%): those are second numbers of a
-# text the harness reads by its first number only, so no input carries them.
+# Readings: the ratios are book readings per an input amount or per the share bought; the revised
+# investment over the initial is the fund's purchase cash, cumulated to the revision year, per its
+# initial purchase; the cut is the revision year's return of cash per the same; the implied baseline
+# is the museum's guaranteed saving in a year per its printed share of the baseline (43.2%, the
+# second number of the guaranteed_savings_eur_per_year text: an assumption of the case file, "if
+# 43.2% is a share of baseline cost"). The CO2 ratio is a physical statistic (tonnes over tonnes),
+# a driver.
+# Set aside: the Germany line adds the Munich loan (0.6), printed only under numbers.derived (not an
+# input).
 esco: jewish_museum_berlin_eeef
 entity: museum
 plant: guaranteed_savings_eur_per_year
@@ -47,6 +55,9 @@ case:
         works_2018: start * total_project_size_eur_m * eur_m
         purchase_2018: share * works_2018
         co2_ratio: actual_co2e_t_per_year / co2_forecast
+        initial_eur: eeef_investment_eur_m * eur_m
+        revision: (t == eeef_investment_eur_m__3 - financial_close__2) * (eeef_investment_eur_m - eeef_investment_eur_m__2) * eur_m
+        savings_share: guaranteed_savings_eur_per_year__2 / 100
   contracts: {}
   rulebooks:
     museum:
@@ -73,6 +84,7 @@ case:
       moves:
         capital: {debit: cash, credit: share_capital, amount: {generator: src, output: purchase_2012}}
         purchase: {debit: savings_receivables, credit: cash, amount: {generator: src, output: purchase_2012}}
+        revision: {debit: cash, credit: savings_receivables, amount: {generator: src, output: revision}}
     jc_revised:
       kind: transfer
       entity: jc_revised
@@ -115,8 +127,8 @@ figures:
   jmb.guarantee_over_term: {cut: savings, total: true}
   jmb.guarantee_over_volume_pct: {cut: savings, per: src.volume_eur, total: true, scale: 0.01}
   jmb.co2_actual_over_forecast: {driver: src.co2_ratio, at: 0}
+  jmb.revision_eeef_pct: {cumulative: purchase_2012, at: 3, sign: -1, per: src.initial_eur, scale: 0.01}
+  jmb.revision_eeef_cut_pct: {cut: purchase_2012, at: 3, per: src.initial_eur, scale: 0.01}
+  jmb.implied_baseline_cost: {cut: savings, at: 1, per: src.savings_share}
 not_compared:
-  jmb.revision_eeef_pct: "the fund's investment after the 2015 revision (1.0) is the second number of the eeef_investment_eur_m text; the harness reads its first (1.7), so no input carries it"
-  jmb.revision_eeef_cut_pct: "the fund's investment after the 2015 revision (1.0) is the second number of the eeef_investment_eur_m text; no input carries it"
-  jmb.implied_baseline_cost: "the 43.2% savings share is the second number of the guaranteed_savings_eur_per_year text; no input carries it"
-  jmb.germany_line: "the 1.0 (museum, after revision) and the 0.6 (Munich) are a second number of an input text and a derived block; no input carries either"
+  jmb.germany_line: "adds the Munich loan (0.6), printed only under numbers.derived (not an input); the museum's 1.0 is now an input (eeef_investment_eur_m__2), the 0.6 is not"

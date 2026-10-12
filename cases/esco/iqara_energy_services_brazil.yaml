@@ -8,12 +8,22 @@
 #     (total_investment_usd_m, the first number of the source's "US$10-12 million" range) is spent
 #     in one period, period 0, out of IES's own capital, across the projects_listed projects;
 #   * the client's guaranteed cost reduction (cost_reduction_guaranteed_pct of a cost X the source
-#     never quantifies) and the service payments are not amounts, so nothing else is booked; no tax.
-# Reading: the investment per project is IES's investing cash flow per listed project (a count).
-# Set aside: the per-row figures of Table CS12.1 (row count, 0 kW rows, the peak plant, the
-# cogeneration total, the largest unit), the top of the investment range (12) and the programme
-# target's dollars (300): each is a later number of a text the harness reads by its first number
-# only, so no input carries it (and the row count would only repeat projects_listed).
+#     never quantifies) and the service payments are not amounts, so they are not booked;
+#   * the top of the "US$10-12 million" range (total_investment_usd_m__2) is booked as its own
+#     scenario, a second entity (ies_top, the same plants at the top of the range) that spends it the
+#     same way, so the range's two ends are both read from the books;
+#   * the programme target (target: 600 projects and target__2 US$300 million by 2010) is a plan,
+#     not a payment: booked on its own plan books (entity ies_target, funded and spent in period 0);
+#     its end year (target__3, 2010) is not read. No tax.
+# Readings: the investment per project is IES's investing cash flow per listed project (a count), at
+# either end of the range; the target per project is the plan's investing cash per its 600 projects.
+# The rows of Table CS12.1 (capacity_kw_listed, its twelve numbers: eleven rows' kW, the ninth
+# number being Taboao's "800 only for peak", a note within the Taboao row, not a row) are physical:
+# drivers (rule 4). The row count counts the rows' capacities; the 0 kW rows are those whose
+# capacity is nil; the cogeneration total adds the seven rows with capacity and thermal output (every
+# row but the three 0 kW rows and Osasco, "1,300 (peak hour)"); the largest unit is the largest row.
+# Set aside: which row is the peak load plant is the label "peak hour" in the text, a word no number
+# carries, so the count of peak plant rows is not derived.
 esco: iqara_energy_services_brazil
 entity: ies
 plant: total_investment_usd_m
@@ -28,7 +38,11 @@ case:
       kind: formulas
       periods: 1
       inputs: esco
-      values: {}
+      values:
+        rows_listed: (capacity_kw_listed >= 0) + (capacity_kw_listed__2 >= 0) + (capacity_kw_listed__3 >= 0) + (capacity_kw_listed__4 >= 0) + (capacity_kw_listed__5 >= 0) + (capacity_kw_listed__6 >= 0) + (capacity_kw_listed__7 >= 0) + (capacity_kw_listed__8 >= 0) + (capacity_kw_listed__10 >= 0) + (capacity_kw_listed__11 >= 0) + (capacity_kw_listed__12 >= 0)
+        zero_kw_rows: (capacity_kw_listed == 0) + (capacity_kw_listed__2 == 0) + (capacity_kw_listed__3 == 0) + (capacity_kw_listed__4 == 0) + (capacity_kw_listed__5 == 0) + (capacity_kw_listed__6 == 0) + (capacity_kw_listed__7 == 0) + (capacity_kw_listed__8 == 0) + (capacity_kw_listed__10 == 0) + (capacity_kw_listed__11 == 0) + (capacity_kw_listed__12 == 0)
+        cogeneration_kw: capacity_kw_listed + capacity_kw_listed__2 + capacity_kw_listed__3 + capacity_kw_listed__4 + capacity_kw_listed__5 + capacity_kw_listed__8 + capacity_kw_listed__12
+        largest_kw: max(capacity_kw_listed, capacity_kw_listed__2, capacity_kw_listed__3, capacity_kw_listed__4, capacity_kw_listed__5, capacity_kw_listed__6, capacity_kw_listed__7, capacity_kw_listed__8, capacity_kw_listed__10, capacity_kw_listed__11, capacity_kw_listed__12)
   contracts:
     capital:
       type: equity_funding
@@ -38,20 +52,38 @@ case:
       type: one_off_purchase
       parties: {buyer: ies}
       terms: {amount: {generator: src, output: total_investment_usd_m}, period: 0}
+    capital_top:
+      type: equity_funding
+      parties: {issuer: ies_top}
+      terms: {amount: {generator: src, output: total_investment_usd_m__2}, period: 0}
+    plants_top:
+      type: one_off_purchase
+      parties: {buyer: ies_top}
+      terms: {amount: {generator: src, output: total_investment_usd_m__2}, period: 0}
+    target_capital:
+      type: equity_funding
+      parties: {issuer: ies_target}
+      terms: {amount: {generator: src, output: target__2}, period: 0}
+    target_plants:
+      type: one_off_purchase
+      parties: {buyer: ies_target}
+      terms: {amount: {generator: src, output: target__2}, period: 0}
   schemes:
     cash_flow:
       share_capital: financing
       equipment: investing
   cuts:
     investing: {entity: ies, account: cash, scheme: cash_flow, include: [investing]}
+    investing_top: {entity: ies_top, account: cash, scheme: cash_flow, include: [investing]}
+    target_investing: {entity: ies_target, account: cash, scheme: cash_flow, include: [investing]}
   measures: {}
 figures:
   iq.investment_per_project_low: {cut: investing, sign: -1, per: src.projects_listed}
+  iq.investment_per_project_high: {cut: investing_top, sign: -1, per: src.projects_listed}
+  iq.target_per_project: {cut: target_investing, sign: -1, per: src.target}
+  iq.rows_listed: {driver: src.rows_listed}
+  iq.zero_kw_rows: {driver: src.zero_kw_rows}
+  iq.cogeneration_kw: {driver: src.cogeneration_kw}
+  iq.largest_kw: {driver: src.largest_kw}
 not_compared:
-  iq.rows_listed: "the rows of Table CS12.1 are one text the harness reads by its first number; the only count input, projects_listed, is this figure itself"
-  iq.zero_kw_rows: "the per-row capacities of Table CS12.1 are one text (capacity_kw_listed) the harness reads by its first number (395); no input carries the rows"
-  iq.peak_plant_rows: "the per-row capacities of Table CS12.1 are one text the harness reads by its first number; no input carries the rows"
-  iq.cogeneration_kw: "the per-row capacities of Table CS12.1 are one text the harness reads by its first number; no input carries the rows"
-  iq.largest_kw: "the per-row capacities of Table CS12.1 are one text the harness reads by its first number; no input carries the rows"
-  iq.investment_per_project_high: "the top of the US$10-12 million range is the second number of the total_investment_usd_m text; no input carries it"
-  iq.target_per_project: "the target's US$300 million is the second number of the target text; no input carries it"
+  iq.peak_plant_rows: "which row is the peak load plant is the label 'peak hour' (Osasco) in the text, a word no number carries; a count of it would be typed, not derived"

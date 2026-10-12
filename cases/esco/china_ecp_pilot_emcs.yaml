@@ -3,24 +3,47 @@
 # cases/reference/esco/ontology/miniature/cases/china_ecp_pilot_emcs-lod0.yaml; answer key
 # cases/reference/esco/tests/test_lod0_numbers.py).
 #
-# Every amount is a number of the case by name (generator `src`), in USD millions:
-#   * the three EMCs are one party, as in the case file; the GEF grant reaches each of them through
-#     the Ministry of Finance, gef_used_per_emc_usd_m each ("US$ 5 million for each EMCo", ICR Annex
-#     6), and they book it as 'GEF grant' in shareholders' funds, apart from paid-in capital (ICR
-#     Table 3.3): a non-repayable contribution received in cash, three of them (three EMCs: a count);
-#   * the case holds the programme's totals in one period: the receipts by year and the EMCs'
-#     514 EPCs are not inputs;
-#   * the IBRD loan and its on-lending, the EC grant, the EMCs' own funds and the host enterprises'
-#     shared savings feed no figure the inputs can reach (see below) and are not booked. No tax.
+# Every amount is a number of the case by name (generator `src`), in USD millions. One period, the
+# programme's totals; three sets of books:
+#   * emcs, what happened (ICR): the three EMCs are one party, as in the case file. The GEF grant reaches
+#     each of them through the Ministry of Finance, gef_used_per_emc_usd_m each ("US$ 5 million for each
+#     EMCo", ICR Annex 6, three EMCs: a count), booked as 'GEF grant' in shareholders' funds apart from
+#     paid-in capital (ICR Table 3.3); the EC grant in US$ (ec_grant__3, ICR Annex 1) likewise; the IBRD
+#     loan on-lent to them as disbursed (ibrd_loan_usd_m__2, 60.5), a liability; they invest
+#     epc_investment_three_emcs_usd_m in their EPCs, and their own funds are what the investment leaves
+#     after the external money (ICR Annex 2: "$100.84 EMC own financing"), so the Annex 1 rounding of
+#     them (emc_own_funds_usd_m__2, 100.8) is not used;
+#   * emcs_plan, the appraisal's financing plan (PAD), kept in books of its own so that it never mixes
+#     with what happened: the EC grant "about US$4.5m" (ec_grant__2), the GEF demonstration money as PAD
+#     Table C allocates it (gef_grant_usd_m__7 to each of three EMCs plus gef_grant_usd_m__8
+#     unallocated), the IBRD loan as PAD Table C allocates it (ibrd_loan_usd_m__3 to each of three EMCs)
+#     and the EMCs' own funds at appraisal (emc_own_funds_usd_m);
+#   * centre, the information and project-management components (the same at appraisal and actual,
+#     ICR Annex 1): GEF gef_grant_usd_m__3 and gef_grant_usd_m__4, the Government government_usd_m.
+#   * the host enterprises' shared savings, the IBRD terms and the EMCs' paid-in capital feed no figure
+#     and are not booked. No tax, no interest (the on-lending rate is not printed).
 # The figures:
 #   * china.gef_three_emcs: the GEF grant the EMCs received, from the books;
-#   * china.gef_share_pct: the same over the EMCs' EPC investment, epc_investment_three_emcs_usd_m
-#     (the input: `per` divides by a generator value only), as a percent.
-# The other figures need numbers the case's inputs do not carry. Each input is the first number of its
-# text, and the case file's tables (savings, investment by company and year, the IBRD draws, Table 3,
-# the EIRR sample) sit under numbers.derived, which is not an input. Several figures also equal an
-# input outright (63, 22, 150.8, 194.8, 5.92, 180.84, 12,380) and the inputs hold nothing else they
-# are computed from. They are set aside below.
+#   * china.gef_share_pct, china.external_share_pct: the GEF grant, and all the external money (grants and
+#     the IBRD loan), over the EMCs' EPC investment, epc_investment_three_emcs_usd_m (`per` divides by a
+#     generator value only), as a percent;
+#   * china.gef_split_sum: the GEF money the EMCs and the centre received;
+#   * china.ibrd_pad_allocation: the IBRD loan in the appraisal's books;
+#   * china.component1_appraisal / _actual: the money the EMCs received, in the plan's books and in theirs
+#     (the actual reads 180.84, Annex 1 prints it to one decimal, 180.8);
+#   * china.total_cost_appraisal_by_source / _actual_by_source: the same plus the centre's;
+#   * china.emc_own_funds_residual: the EMCs' own funds, from their books;
+#   * china.average_epc_usd_m: the EMCs' EPC investment per EPC (epc_investment_three_emcs_usd_m__3, the
+#     514 EPCs of its text: a count);
+#   * china.savings_vs_revised_pct, savings_vs_original_pct, co2_vs_revised_pct: tonnes of coal
+#     equivalent and of carbon achieved over the revised and original targets (energy_savings_mtce__2,
+#     __3; co2_mt_c__2), physical quantities no ledger holds: drivers (rule 4).
+# Revisit (later numbers of a text are inputs now): the nine figures above from ibrd_pad_allocation on
+# were set aside because the 21.0, 60.5, 4.5, 15.0/5.0/2.0, 3.75, 514 and the revised and original
+# targets were later numbers of their texts; they are now read. Still set aside: the tables under
+# numbers.derived (not inputs), and the two ICR Table 3.3 bands, whose amounts are RMB 10k: the case
+# keeps one currency (US$ m), and the only rate printed is the 2007 cover rate, at which the 1999-2005
+# receipts were not made.
 esco: china_ecp_pilot_emcs
 entity: emcs
 plant: gef_used_per_emc_usd_m
@@ -37,49 +60,107 @@ case:
       inputs: esco
       values:
         gef_to_emcs: 3 * gef_used_per_emc_usd_m
+        ibrd_on_lent: ibrd_loan_usd_m__2
+        ec_to_emcs: ec_grant__3
+        own_funds: epc_investment_three_emcs_usd_m - gef_to_emcs - ibrd_on_lent - ec_to_emcs
+        plan_gef_to_emcs: 3 * gef_grant_usd_m__7 + gef_grant_usd_m__8
+        plan_ibrd_to_emcs: 3 * ibrd_loan_usd_m__3
+        savings_vs_revised: energy_savings_mtce / energy_savings_mtce__2
+        savings_vs_original: energy_savings_mtce / energy_savings_mtce__3
+        co2_vs_revised: co2_mt_c / co2_mt_c__2
   contracts: {}
   opening:
     emcs:
       cash: {nature: asset, value: 0}
+    emcs_plan:
+      cash: {nature: asset, value: 0}
+    centre:
+      cash: {nature: asset, value: 0}
   rulebooks:
-    subsidiary_grants:
+    emc_financing:
       kind: transfer
       entity: emcs
       phase: accrue
       declare:
         gef_grant: equity
+        ec_grant: equity
+        ibrd_on_lending: liability
+        own_funds: equity
+        epc_investments: asset
       moves:
         gef: {debit: cash, credit: gef_grant, amount: {generator: src, output: gef_to_emcs}}
+        ec: {debit: cash, credit: ec_grant, amount: {generator: src, output: ec_to_emcs}}
+        ibrd: {debit: cash, credit: ibrd_on_lending, amount: {generator: src, output: ibrd_on_lent}}
+        own: {debit: cash, credit: own_funds, amount: {generator: src, output: own_funds}}
+        invest: {debit: epc_investments, credit: cash, amount: {generator: src, output: epc_investment_three_emcs_usd_m}}
+    appraisal_plan:
+      kind: transfer
+      entity: emcs_plan
+      phase: accrue
+      declare:
+        gef_grant: equity
+        ec_grant: equity
+        ibrd_on_lending: liability
+        own_funds: equity
+      moves:
+        gef: {debit: cash, credit: gef_grant, amount: {generator: src, output: plan_gef_to_emcs}}
+        ec: {debit: cash, credit: ec_grant, amount: {generator: src, output: ec_grant__2}}
+        ibrd: {debit: cash, credit: ibrd_on_lending, amount: {generator: src, output: plan_ibrd_to_emcs}}
+        own: {debit: cash, credit: own_funds, amount: {generator: src, output: emc_own_funds_usd_m}}
+    centre_financing:
+      kind: transfer
+      entity: centre
+      phase: accrue
+      declare:
+        gef_grant: equity
+        government_funds: equity
+      moves:
+        gef_information: {debit: cash, credit: gef_grant, amount: {generator: src, output: gef_grant_usd_m__3}}
+        gef_management: {debit: cash, credit: gef_grant, amount: {generator: src, output: gef_grant_usd_m__4}}
+        government: {debit: cash, credit: government_funds, amount: {generator: src, output: government_usd_m}}
   schemes:
     cash_flow:
-      gef_grant: grants
+      gef_grant: gef
+      ec_grant: grants
+      government_funds: grants
+      ibrd_on_lending: loans
+      own_funds: own_funds
+      epc_investments: investing
   cuts:
-    gef_received: {entity: emcs, account: cash, scheme: cash_flow, include: [grants]}
+    gef_received: {entity: emcs, account: cash, scheme: cash_flow, include: [gef]}
+    external_money: {entity: emcs, account: cash, scheme: cash_flow, include: [gef, grants, loans]}
+    own_funds: {entity: emcs, account: cash, scheme: cash_flow, include: [own_funds]}
+    emc_sources: {entity: emcs, account: cash, scheme: cash_flow, include: [gef, grants, loans, own_funds]}
+    epc_investment: {entity: emcs, account: cash, scheme: cash_flow, include: [investing]}
+    plan_ibrd: {entity: emcs_plan, account: cash, scheme: cash_flow, include: [loans]}
+    plan_sources: {entity: emcs_plan, account: cash, scheme: cash_flow, include: [gef, grants, loans, own_funds]}
+    centre_gef: {entity: centre, account: cash, scheme: cash_flow, include: [gef]}
+    centre_sources: {entity: centre, account: cash, scheme: cash_flow, include: [gef, grants]}
   measures: {}
 figures:
   china.gef_three_emcs: {cut: gef_received}
   china.gef_share_pct: {cut: gef_received, per: src.epc_investment_three_emcs_usd_m, scale: 0.01}
+  china.gef_split_sum: {sum: [{cut: gef_received}, {cut: centre_gef}]}
+  china.ibrd_pad_allocation: {cut: plan_ibrd}
+  china.component1_appraisal: {cut: plan_sources}
+  china.component1_actual: {cut: emc_sources}
+  china.total_cost_appraisal_by_source: {sum: [{cut: plan_sources}, {cut: centre_sources}]}
+  china.total_cost_actual_by_source: {sum: [{cut: emc_sources}, {cut: centre_sources}]}
+  china.emc_own_funds_residual: {cut: own_funds}
+  china.external_share_pct: {cut: external_money, per: src.epc_investment_three_emcs_usd_m, scale: 0.01}
+  china.average_epc_usd_m: {cut: epc_investment, sign: -1, per: src.epc_investment_three_emcs_usd_m__3}
+  china.savings_vs_revised_pct: {driver: src.savings_vs_revised, scale: 0.01}
+  china.savings_vs_original_pct: {driver: src.savings_vs_original, scale: 0.01}
+  china.co2_vs_revised_pct: {driver: src.co2_vs_revised, scale: 0.01}
 not_compared:
-  china.ibrd_pad_allocation: "the PAD's US$21.0m per EMC is not an input (ibrd_loan_usd_m is the text's first number, 63.0, the figure itself)"
-  china.gef_split_sum: "the 15.0 + 5.0 + 2.0 components are not inputs (gef_grant_usd_m is the text's first number, 22.0, the figure itself)"
-  china.component1_appraisal: "the EC grant in US$ (4.5) is not an input: ec_grant is the text's first number, ECU 4"
-  china.component1_actual: "the EC grant in US$ (4.5), the IBRD disbursement (60.5) and the actual own funds (100.8) are not inputs"
-  china.total_cost_appraisal_by_source: "the EC grant in US$ (4.5) is not an input (and total_project_cost_usd_m is the figure itself)"
-  china.total_cost_actual_by_source: "the EC grant in US$ (4.5), the IBRD disbursement (60.5) and the actual own funds (100.8) are not inputs"
-  china.emc_own_funds_residual: "the IBRD disbursement (60.5) and the EC grant in US$ (4.5) are not inputs"
-  china.external_share_pct: "the IBRD disbursement (60.5) and the EC grant in US$ (4.5) are not inputs"
   china.savings_by_year: "ICR Table 2.1 by year sits in numbers.derived, not an input"
   china.savings_by_company: "ICR Table 2.1 by company sits in numbers.derived, not an input"
   china.savings_matches_headline: "ICR Table 2.1 sits in numbers.derived, not an input"
   china.investment_by_company: "ICR Table 2.3 by company sits in numbers.derived, not an input"
   china.investment_by_year: "ICR Table 2.3 by year sits in numbers.derived, not an input"
-  china.average_epc_usd_m: "the 514 EPCs are not an input (the text's first number is the 180.84 investment)"
-  china.savings_vs_revised_pct: "the revised target (5.22 Mtce) is not an input (energy_savings_mtce is the text's first number, 5.92)"
-  china.savings_vs_original_pct: "the original target (13.0 Mtce) is not an input"
-  china.co2_vs_revised_pct: "the revised CO2 target (3.77) is not an input (co2_mt_c is the text's first number, 5.06)"
   china.table3_share_of_market: "ICR Table 3 sits in numbers.derived, not an input"
   china.eirr_sample_sum: "ICR Tables 3.1-3.2 sit in numbers.derived, not an input"
   china.ibrd_draws_vs_disbursed: "the IBRD draws by EMC (21, 21, 19.0827) sit in numbers.derived, not an input"
   china.table3_vs_table23_2006: "ICR Tables 3 and 2.3 for 2006 sit in numbers.derived, not an input"
-  china.gef_receipts_vs_balance: "the GEF grant receipts by year (ICR Table 3.3) are not inputs: emc_books_rmb_10k is the text's first number, the 12,380 balance, the figure itself"
-  china.ec_receipts_vs_balance: "the EC grant receipts and the 2,737 balance (ICR Table 3.3) are not inputs"
+  china.gef_receipts_vs_balance: "the GEF grant receipts by year are inputs now (emc_books_rmb_10k__8 to __14), but in RMB 10k: the case keeps one currency (US$ m) and the only rate printed is the 2007 cover rate (exchange_rate_icr__2), at which the 1999-2005 receipts were not made; booking them needs an entity in its own currency"
+  china.ec_receipts_vs_balance: "the EC grant receipts are inputs now (emc_books_rmb_10k__15 to __17), but in RMB 10k: the case keeps one currency (US$ m) and the only rate printed is the 2007 cover rate, at which the receipts were not made; booking them needs an entity in its own currency"

@@ -27,9 +27,12 @@
 # "over EUR 4m in 15 blocks", whose 4m is the same programme capex printed by CITYnvest, which the
 # case file's derived note says it equals). The EBRD share of the fund is LABEEF's EBRD draw per the
 # fund's design size (labeef_fund_size_eur_m, in EUR m, times 1000 x 1000).
+# The kWh savings shares are physical (heating and hot-water consumption per m2, which no ledger
+# holds), so `driver` formulas over the printed "from 200-240 to 70-80" (specific_consumption_
+# kwh_m2_year and its __2, __3, __4 in order): the low share is 80 after on 200 before, the high 70
+# after on 240 before.
 #
-# Set aside: the kWh savings shares need 240, 80 and 70 kWh/m2, which are not inputs
-# (specific_consumption_kwh_m2_year carries only the text's first number, 200).
+# Nothing is set aside.
 esco: renesco_labeef_latvia
 entity: renesco
 plant: programme_capex_eur
@@ -54,6 +57,8 @@ case:
         labeef_keeps: collected * labeef_purchased_share_pct / 100
         esco_gets: collected * esco_retained_share_pct / 100
         draw: {each_period: "project_cost_pct * (t == 0)"}
+        kwh_saving_low: 1 - specific_consumption_kwh_m2_year__4 / specific_consumption_kwh_m2_year
+        kwh_saving_high: 1 - specific_consumption_kwh_m2_year__3 / specific_consumption_kwh_m2_year__2
         cut_rate: (renesco_cost_of_capital_pct - interest_vs_subsidy) / 100
         cost_of_capital: renesco_cost_of_capital_pct / 100
   loops:
@@ -158,6 +163,6 @@ figures:
       - {cut: esco_share, sign: -1, per: src.collected}
     scale: 0.01
     at: 0
-not_compared:
-  labeef.savings_from_kwh_low_pct: "needs the 80 kWh/m2 after renovation; specific_consumption_kwh_m2_year carries only the text's first number (200)"
-  labeef.savings_from_kwh_high_pct: "needs 240 and 70 kWh/m2; specific_consumption_kwh_m2_year carries only the text's first number (200)"
+  labeef.savings_from_kwh_low_pct: {driver: src.kwh_saving_low, scale: 0.01, at: 0}
+  labeef.savings_from_kwh_high_pct: {driver: src.kwh_saving_high, scale: 0.01, at: 0}
+not_compared: {}

@@ -12,18 +12,21 @@
 #   * it spends the total on the lighting portfolio: the first project, Rozzano
 #     (rozzano_investment_volume_eur_m, 'circa'), and the rest of the portfolio, each its own asset;
 #   * the eeef's ownership and Rozzano's share are those balances read per the total project size;
+#     the pie share (p.21) is the eeef's junior funds per the 'current total committed capital' of
+#     166 (eeef_total_investments_eur_m__3, the text's third number; its first, 170.5, is the total
+#     invested since inception);
 #   * the savings are physical (MWh of primary energy, t CO2e) and no ledger holds them: their
 #     ratios are drivers (rule 4). The p.63 cumulative line (cumulative_savings_table_p63, 11,190
-#     MWh) is half of one year's estimate; the cumulative carbon it implies is the annual carbon
-#     times that ratio (3,245 x 0.5 = 1,622.5, against the printed 1,623, inside the band); the
-#     savings over the loan's maturity are the annual estimate times maturity years.
-# Set aside (the inputs do not carry what the figure needs): the printed 1,623 t is the second
-# number of the p.63 text (the harness reads only its first, 11,190), so the two figures built on
-# it; the 166 'current total committed capital' is the second number of its text (the first,
-# 170.5, is the invested-since-inception total), so the pie share; the p.30 commitment lines
-# (senior, subordinated, junior) and the other Italian investments exist only in the case file's
-# derived block, so the six instrument figures and the Italy total. No tax, no money over time
-# (the report prints no payment to or from the municipality).
+#     MWh; its third number, __3, the 1,623 t CO2e cumulative carbon) is half of one year's
+#     estimate, both in MWh and in t; the cumulative carbon the MWh ratio implies is the annual
+#     carbon times that ratio (3,245 x 0.5 = 1,622.5, against the printed 1,623, inside the band);
+#     the t per MWh is read on the annual estimates and on the cumulative line; the savings over the
+#     loan's maturity are the annual estimate times maturity years. (The text's fifth number, 4, is
+#     its footnote mark, not read.)
+# Set aside (the inputs do not carry what the figure needs): the p.30 commitment lines (senior,
+# subordinated, junior) and the other Italian investments exist only in the case file's derived
+# block, so the six instrument figures and the Italy total. No tax, no money over time (the report
+# prints no payment to or from the municipality).
 esco: illuminated_cities_eeef_siram
 entity: citta_illuminate
 plant: eeef_investment_size_eur_m
@@ -45,6 +48,8 @@ case:
         cumulative_co2: estimated_co2e_savings_t_per_year * cumulative_over_annual
         maturity_mwh: estimated_primary_energy_savings_mwh_per_year * maturity
         t_per_mwh: estimated_co2e_savings_t_per_year / estimated_primary_energy_savings_mwh_per_year
+        cumulative_over_annual_co2: cumulative_savings_table_p63__3 / estimated_co2e_savings_t_per_year
+        t_per_mwh_cumulative: cumulative_savings_table_p63__3 / cumulative_savings_table_p63
   opening:
     citta_illuminate:
       cash: {nature: asset, value: 0}
@@ -74,11 +79,11 @@ figures:
   ic.cumulative_co2_half_rounding: {driver: src.cumulative_co2}
   ic.expected_cumulative_15y_mwh: {driver: src.maturity_mwh}
   ic.t_per_mwh_annual: {driver: src.t_per_mwh}
+  ic.pie_share_pct: {balance: eeef_junior_funds, per: src.eeef_total_investments_eur_m__3, scale: 0.01}
+  ic.cumulative_over_annual_co2: {driver: src.cumulative_over_annual_co2}
+  ic.t_per_mwh_cumulative: {driver: src.t_per_mwh_cumulative}
 not_compared:
-  ic.italy_total: "the Italian total adds the other two Italian investments (31.8 and 7.0), which only the case file's derived block carries; the printed 54.8 is itself an input"
-  ic.pie_share_pct: "the denominator, 166 'current total committed capital', is the second number of its text; the inputs carry only the first, 170.5 (invested since inception)"
-  ic.cumulative_over_annual_co2: "needs the printed cumulative 1,623 t, the second number of the p.63 text; the inputs carry only its first, 11,190 MWh"
-  ic.t_per_mwh_cumulative: "needs the printed cumulative 1,623 t, the second number of the p.63 text; the inputs carry only its first, 11,190 MWh"
+  ic.italy_total: "the Italian total adds the other two Italian investments (31.8 and 7.0), which only the case file's derived block carries; the printed 54.8 is itself an input (eeef_italy_total_eur_m)"
   ic.instrument_senior_sum: "the p.30 commitment lines are only in the case file's derived block, not inputs"
   ic.instrument_junior_sum: "the p.30 commitment lines are only in the case file's derived block, not inputs"
   ic.instrument_total_vs_166: "the p.30 commitment lines are only in the case file's derived block, not inputs"

@@ -14,6 +14,12 @@
 # Periods are years; 0 is signature and construction, 1-12 the phase. No tax.
 # Two drivers are time quantities from the printed dates (rule 4): the phase's months, both end months
 # counted, and the months from signature to the phase's first month; the phase's years set the term.
+# hamburg.pct_band_base is the energy-cost base the printed share implies: the client's guaranteed
+# saving of a year, from the books, over the '14,7 Prozent' the dena page prints beside it
+# (guaranteed_savings_eur_per_year__printed__2, as a rate), in EUR million.
+# Revisit (later numbers of a text are inputs now): pct_band_base, set aside for want of the 14,7
+# Prozent, is now read. The base itself (baseline_energy_cost_eur_per_year) is the figure printed
+# rounded and is not used.
 esco: hamburg_bundeswehr
 entity: esco
 plant: guaranteed_savings_eur_per_year
@@ -32,6 +38,7 @@ case:
         phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
         signing_months: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
         phase_years: phase_months / 12
+        guarantee_share: guaranteed_savings_eur_per_year__printed__2 / 100
         savings: {each_period: guaranteed_savings_eur_per_year * (t >= 1) * (t <= phase_years)}
   contracts:
     funding:
@@ -65,6 +72,5 @@ figures:
   hamburg.guarantee_over_phase: {cut: client_savings, total: true}
   hamburg.simple_payback: {balance: equipment, at: 0, per: src.guaranteed_savings_eur_per_year}
   hamburg.signing_to_phase: {driver: src.signing_months, at: 0}
-not_compared:
-  hamburg.pct_band_base: "the base implied by the printed '14,7 Prozent': that percentage is not an input (the text
-    counts for its first number, the 149.000), and the base itself is the input baseline_energy_cost_eur_per_year"
+  hamburg.pct_band_base: {cut: client_savings, at: 1, per: src.guarantee_share, scale: 1000000}
+not_compared: {}

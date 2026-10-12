@@ -15,8 +15,12 @@
 # Readings: the debt stack is the two liens' balances; the second lien's share is its balance per
 # that stack (the two printed liens); the KeyBank share is that account's balance per the
 # unencumbered cash.
-# Set aside: the days from the interest default to the complaint: the default date is printed "on or
-# around 2025-08-04", a text the harness reads by its first number (2025), so no input carries the day.
+# Set aside: the days from the interest default to the complaint. The harness now hands the default
+# date's month and day (interest_default_date__2, __3) beside the complaint's, but a count of days
+# across months needs the calendar's month lengths (August 31, September 30), which are neither
+# inputs nor structural numbers, and the formulas generator has no date function. Counting months
+# at 52 x 7 / 12 days (as the dena deals do for a day of signature) gives 86.7, an approximation that
+# only rounds to the printed 87, so it is not read.
 esco: posigen_backleverage
 entity: backleverage_entities
 plant: backleverage_loan_usd
@@ -50,4 +54,4 @@ figures:
   posigen.second_lien_share_pct: {balance: second_lien_loan, at: 0, per: src.liens, scale: 0.01}
   posigen.keybank_share_pct: {balance: keybank_lease_account, at: 0, per: src.unencumbered_cash_at_petition_usd, scale: 0.01}
 not_compared:
-  posigen.days_default_to_complaint: "the interest default date is printed 'on or around 2025-08-04', a text the harness reads by its first number (2025); no input carries its month and day"
+  posigen.days_default_to_complaint: "the default date's month and day are now inputs (interest_default_date__2, __3), but a day count from 4 August to 30 October needs the calendar's month lengths, which no input carries and the formulas generator (no date function) cannot supply; a 52 x 7 / 12-day month gives 86.7, an approximation, not the count"

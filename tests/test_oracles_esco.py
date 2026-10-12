@@ -47,8 +47,6 @@ UNPLANTABLE: dict = {}
 #: translated deals that agree but whose planted 1% change cannot show, because every figure they can
 #: compare is printed coarser than 1% of it; each translation's header says which figures and why
 BLIND = {
-    "carpinteria_siemens_lease_purchase",   # only the lease term in whole years (principal left blank)
-    "hungary_moe_school_espc_framework",    # one figure, a whole percent (45.045 printed 45)
     "kawarna_biomass",                      # 0.90, 40 and 15: per-unit and year counts, coarsely rounded
 }
 

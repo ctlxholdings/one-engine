@@ -4,33 +4,51 @@
 # cases/reference/esco/ontology/miniature/cases/hungary_moe_school_espc_framework-lod0.yaml; answer key
 # cases/reference/esco/tests/test_lod0_numbers.py).
 #
-# Every amount is a number of the case by name (generator `src`), in HUF bn:
+# Every amount is a number of the case by name (generator `src`), in HUF bn or US$ million. Twenty
+# yearly periods, the framework's term, from its launch year (period 0 is launch_year, 2006):
 #   * the consortium finances the school projects it signs: the contracts signed by August 2008
-#     (contracts_signed_august_2008) are booked as its investment in one period, out of its own
-#     funds (the bank consortium's lending is not split out by the source);
-#   * the programme's annual goal (annual_goal, HUF 11.1 bn a year) is a target, not a payment, and
-#     is not booked; the IFC guarantee is a ceiling, never drawn; no savings or fees are printed.
-# Reading: signed against the goal is the consortium's investing cash flow per the annual goal.
-# Set aside: every figure built on the dollar side of a "HUF x bn (US$y m)" text, or on the goal's
-# end year (2010): those are later numbers of a text the harness reads by its first number only, so
-# no input carries them.
-# The planted error goes unseen: the one compared figure is printed to whole percent (45.045), and a
-# 1% change in either input it rests on (45.5 or 44.6) still rounds to 45.
+#     (contracts_signed_august_2008) are booked as its investment in period 0 (the source gives no
+#     signing dates), out of its own funds (the bank consortium's lending is not split out);
+#   * the framework's total expected size (total_expected_size, HUF 56 bn) is the consortium's
+#     envelope under the framework, a commitment: held on its books as a memo pair (the envelope
+#     undrawn, asset, against the commitment, liability); no cash moves;
+#   * the programme's annual goal is a target, not a payment: it is booked on the goal's own plan books
+#     (entities goal_huf in HUF bn and goal_usd in US$ million, not the consortium's), funded and spent
+#     each year from the goal's first year to its last (annual_goal__3 2006 and __4 2010, years read as
+#     years: the period's calendar year is launch_year + t), at annual_goal (HUF 11.1 bn) and
+#     annual_goal__2 (US$50 million) a year; the books add up the years;
+#   * the IFC guarantee is a ceiling, never drawn; no savings or fees are printed; no tax.
+# Readings: the goal times its years is the plan's investing cash over every period (HUF; US$); signed
+# against the goal is the consortium's investing cash flow per the annual goal; each implied rate is a
+# HUF amount from the books per its US$ twin (contracts_signed_august_2008__2 US$22 million, the goal's
+# US$50 million, total_expected_size__2 US$250 million), times 1000 (bn per million, scale 0.001):
+# the signed contracts' investing cash, the goal's first year of plan cash, the framework envelope.
+# The goal times its years (55.5) sits within the answer key's band of the printed HUF 56 bn.
+# Set aside: the guarantee over the programme (US$250 million each) needs the IFC's US$ guarantee read
+# as a balance beside the consortium's HUF envelope, and a figure's balance reading reaches one entity
+# only (an engine piece, not an input, is missing).
+# The planted error is now caught: the implied rate on the signed contracts (5.0 bn per US$22 million,
+# 227.27) moves to 229.5 when the signed amount is 1% higher. The signed-vs-goal share alone (45.045,
+# printed to whole percent) would not see it.
 esco: hungary_moe_school_espc_framework
 entity: consortium
 plant: contracts_signed_august_2008
 case:
   case: esco-hungary-moe-school-espc-framework
-  periods: 1
+  periods: 20
   phases: [accrue]
   currency: HUF
   floors: {}
   generators:
     src:
       kind: formulas
-      periods: 1
+      periods: 20
       inputs: esco
-      values: {}
+      values:
+        in_goal: {each_period: (launch_year + t >= annual_goal__3) * (launch_year + t <= annual_goal__4)}
+        goal_huf: annual_goal * in_goal
+        envelope: {each_period: total_expected_size * (t == 0)}
+        goal_usd: annual_goal__2 * in_goal
   contracts:
     capital:
       type: equity_funding
@@ -40,19 +58,52 @@ case:
       type: one_off_purchase
       parties: {buyer: consortium}
       terms: {amount: {generator: src, output: contracts_signed_august_2008}, period: 0}
+  opening:
+    goal_huf:
+      cash: {nature: asset, value: 0}
+    goal_usd:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    framework:
+      kind: transfer
+      entity: consortium
+      phase: accrue
+      declare: {framework_undrawn: asset, framework_commitment: liability}
+      moves:
+        envelope: {debit: framework_undrawn, credit: framework_commitment, amount: {generator: src, output: envelope}}
+    goal_plan_huf:
+      kind: transfer
+      entity: goal_huf
+      phase: accrue
+      declare: {goal_funding: equity, goal_projects: asset}
+      moves:
+        fund: {debit: cash, credit: goal_funding, amount: {generator: src, output: goal_huf}}
+        invest: {debit: goal_projects, credit: cash, amount: {generator: src, output: goal_huf}}
+    goal_plan_usd:
+      kind: transfer
+      entity: goal_usd
+      phase: accrue
+      declare: {goal_funding: equity, goal_projects: asset}
+      moves:
+        fund: {debit: cash, credit: goal_funding, amount: {generator: src, output: goal_usd}}
+        invest: {debit: goal_projects, credit: cash, amount: {generator: src, output: goal_usd}}
   schemes:
     cash_flow:
       share_capital: financing
       equipment: investing
+      goal_funding: financing
+      goal_projects: investing
   cuts:
     investing: {entity: consortium, account: cash, scheme: cash_flow, include: [investing]}
+    goal_investing_huf: {entity: goal_huf, account: cash, scheme: cash_flow, include: [investing]}
+    goal_investing_usd: {entity: goal_usd, account: cash, scheme: cash_flow, include: [investing]}
   measures: {}
 figures:
-  hu.signed_vs_goal_pct: {cut: investing, sign: -1, per: src.annual_goal, scale: 0.01}
+  hu.signed_vs_goal_pct: {cut: investing, at: 0, sign: -1, per: src.annual_goal, scale: 0.01}
+  hu.goal_times_years_usd: {cut: goal_investing_usd, total: true, sign: -1}
+  hu.goal_times_years_huf: {cut: goal_investing_huf, total: true, sign: -1}
+  hu.fx_total: {balance: framework_commitment, at: 0, per: src.total_expected_size__2, scale: 0.001}
+  hu.fx_goal: {cut: goal_investing_huf, at: 0, sign: -1, per: src.annual_goal__2, scale: 0.001}
+  hu.fx_signed: {cut: investing, at: 0, sign: -1, per: src.contracts_signed_august_2008__2, scale: 0.001}
 not_compared:
-  hu.goal_times_years_usd: "the goal's US$50 million and its end year 2010 are later numbers of the annual_goal text; no input carries them"
-  hu.goal_times_years_huf: "the goal runs 2006 to 2010; the end year is a later number of the annual_goal text, so no input counts the years"
-  hu.fx_total: "the programme's US$250 million is the second number of the total_expected_size text; no input carries it"
-  hu.fx_goal: "the goal's US$50 million is the second number of the annual_goal text; no input carries it"
-  hu.fx_signed: "the signed contracts' US$22 million is the second number of their text; no input carries it"
-  hu.guarantee_over_total: "the programme's US$250 million is the second number of the total_expected_size text; no input carries it"
+  hu.guarantee_over_total: "needs the IFC's US$250 million guarantee read as a balance beside the consortium's HUF books; a figure's balance reading reaches one entity only, so the guarantee (US$) and the framework envelope (HUF, read for the implied rate) cannot both be balances (engine piece missing, not an input)"

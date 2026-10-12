@@ -9,16 +9,34 @@
 #     years, not a financing total"); the profile is not published (a monthly payment stepping up 4%
 #     every six months through year 5, from an unstated base), so the case holds the contract's totals
 #     over its life in one period: the Council's expense and Amey's revenue, paid in cash;
+#   * of the unitary payments, the lighting is the study's US$117 million (contract_value__3), put in
+#     pounds at the rate the study's own pair of contract values implies (US$4.2 billion,
+#     contract_value__2, for GBP 2.7 billion); the rest is roads, footways, trees, signals and structures;
 #   * the UK Government's PFI credits, pfi_credits_gbp_m (GBP 996m, the case-study text), are the
 #     Council's grant income over the same life, received in cash;
+#   * the study's findings print another version (L1427-1428): GBP 620m of PFI credits
+#     (pfi_credits_gbp_m__4) on a contract value of GBP 2.6 billion (contract_value__4). The study does not
+#     reconcile them and the case file keeps both, so the findings' version is booked in books of its own
+#     (council_findings), never mixed with the first;
 #   * the funds' GBP 330m into Amey's SPV, the installation price and the certifier's fee feed no
 #     figure (or are not printed) and are not booked. No tax.
-# The figure bh.credits_vs_value_996 is the PFI credits the Council received, from the books, over the
-# contract value (a generator value: `per` divides by one only), as a percent.
-# The other figures need numbers the case's inputs do not carry: each input is the first number of its
-# text, so the US$ contract value (4,200) and lighting value (117), the 97,000 streetlights, the funds'
-# '$530M', the second credits figure (620) and value (2,600), and the six months and five years of the
-# payment step are description, not inputs. They are set aside below.
+# The figures:
+#   * bh.credits_vs_value_996 / _620: each version's PFI credits, from its books, over its contract value
+#     (a generator value: `per` divides by one only), as a percent;
+#   * bh.credits_gap_gbp_m: the first version's credits less the findings' credits, from the two books;
+#   * bh.lighting_share_pct: the lighting payments over the contract value, as a percent;
+#   * bh.lighting_per_point: the lighting payments per streetlight (assets__3, the 97,000 of the assets
+#     text: a count, in millions so the pounds come out per light), put back in US$ at the same rate;
+#   * bh.fx_contract (US$4.2bn over GBP 2.7bn), bh.fx_funds (the funds' '$530M' of Figure 4,
+#     funds_gbp_m__3, over GBP 330m) and bh.fx_gap_pct (the two rates apart): exchange rates no ledger
+#     holds (the case keeps one currency), drivers (rule 4), as hep_croatia reads its rate;
+#   * bh.escalation_compounded: the payment's index after the step-ups, 4% (payment_step) every six
+#     months (payment_step__2) through year 5 (payment_step__3), compounded as the case file reads it: an
+#     index with no base payment printed, so no ledger holds it, a driver (rule 4).
+# Revisit (later numbers of a text are inputs now): all eight figures set aside before (the US$ values,
+# the 97,000 lights, the '$530M', the 620 and 2.6bn version, the step's months and years) are now read.
+# Not inputs and not used: funds_gbp_m__2 and __4, pfi_credits_gbp_m__3 (a source line and Figure 4's
+# number), pfi_credits_gbp_m__2 (Figure 4's '$996M', the same credits again).
 esco: birmingham_pfi_amey
 entity: council
 plant: pfi_credits_gbp_m
@@ -35,9 +53,19 @@ case:
       inputs: esco
       values:
         contract_value_gbp_m: contract_value * 1000
+        findings_value_gbp_m: contract_value__4 * 1000
+        fx_contract: contract_value__2 / contract_value
+        fx_funds: funds_gbp_m__3 / funds_gbp_m
+        fx_gap: fx_funds / fx_contract - 1
+        lighting_gbp_m: contract_value__3 / fx_contract
+        other_unitary_gbp_m: contract_value_gbp_m - lighting_gbp_m
+        streetlights_m: assets__3 / 1000 / 1000
+        escalation_index: (1 + payment_step / 100) ** (payment_step__3 * 12 / payment_step__2)
   contracts: {}
   opening:
     council:
+      cash: {nature: asset, value: 0}
+    council_findings:
       cash: {nature: asset, value: 0}
     amey:
       cash: {nature: asset, value: 0}
@@ -47,11 +75,23 @@ case:
       entity: council
       phase: settle
       declare:
-        unitary_payment: expense
+        unitary_lighting: expense
+        unitary_other: expense
         pfi_credits: income
       moves:
         credits: {debit: cash, credit: pfi_credits, amount: {generator: src, output: pfi_credits_gbp_m}}
-        unitary: {debit: unitary_payment, credit: cash, amount: {generator: src, output: contract_value_gbp_m}}
+        lighting: {debit: unitary_lighting, credit: cash, amount: {generator: src, output: lighting_gbp_m}}
+        other: {debit: unitary_other, credit: cash, amount: {generator: src, output: other_unitary_gbp_m}}
+    council_findings_books:
+      kind: transfer
+      entity: council_findings
+      phase: settle
+      declare:
+        unitary_payment: expense
+        pfi_credits: income
+      moves:
+        credits: {debit: cash, credit: pfi_credits, amount: {generator: src, output: pfi_credits_gbp_m__4}}
+        unitary: {debit: unitary_payment, credit: cash, amount: {generator: src, output: findings_value_gbp_m}}
     amey_books:
       kind: transfer
       entity: amey
@@ -62,19 +102,23 @@ case:
         unitary: {debit: cash, credit: unitary_revenue, amount: {generator: src, output: contract_value_gbp_m}}
   schemes:
     pnl:
+      unitary_lighting: lighting
+      unitary_other: unitary
       unitary_payment: unitary
       pfi_credits: credits
   cuts:
     council_credits: {kind: pnl, entity: council, scheme: pnl, include: [credits]}
+    council_lighting: {kind: pnl, entity: council, scheme: pnl, include: [lighting]}
+    findings_credits: {kind: pnl, entity: council_findings, scheme: pnl, include: [credits]}
   measures: {}
 figures:
   bh.credits_vs_value_996: {cut: council_credits, per: src.contract_value_gbp_m, scale: 0.01}
-not_compared:
-  bh.lighting_share_pct: "the lighting value (US$117m) and the US$ contract value (4,200) are not inputs: the contract_value input is the text's first number, GBP 2.7bn"
-  bh.lighting_per_point: "the lighting value (US$117m) and the 97,000 streetlights are not inputs: the assets input is the text's first number, 2,500 km of roads"
-  bh.fx_contract: "the US$ contract value (4,200) is not an input, so no exchange rate can be derived"
-  bh.fx_funds: "the funds' '$530M' (Figure 4) is not an input: funds_gbp_m is the text's first number, 330"
-  bh.fx_gap_pct: "needs both implied exchange rates, neither of which the inputs carry"
-  bh.credits_gap_gbp_m: "the second PFI credits figure (620) is not an input: pfi_credits_gbp_m is the text's first number, 996"
-  bh.credits_vs_value_620: "the second credits figure (620) and contract value (2,600) are not inputs"
-  bh.escalation_compounded: "the step's six months and five years are not inputs (payment_step is the text's first number, 4), and the base and compounding are not stated"
+  bh.credits_vs_value_620: {cut: findings_credits, per: src.findings_value_gbp_m, scale: 0.01}
+  bh.credits_gap_gbp_m: {sum: [{cut: council_credits}, {cut: findings_credits, sign: -1}]}
+  bh.lighting_share_pct: {cut: council_lighting, sign: -1, per: src.contract_value_gbp_m, scale: 0.01}
+  bh.lighting_per_point: {cut: council_lighting, sign: -1, per: src.streetlights_m, times: src.fx_contract}
+  bh.fx_contract: {driver: src.fx_contract}
+  bh.fx_funds: {driver: src.fx_funds}
+  bh.fx_gap_pct: {driver: src.fx_gap, scale: 0.01}
+  bh.escalation_compounded: {driver: src.escalation_index}
+not_compared: {}

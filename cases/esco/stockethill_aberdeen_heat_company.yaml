@@ -12,8 +12,11 @@
 #     "loan-only rate" is the return of the company's project cash flow (the loan spent on the system,
 #     then the payments), the rate at which the payments alone would serve the loan.
 # Periods are years; 0 is the investment year. No tax, no indexation (none printed).
-# The two dollar conversions (US$350,000, US$1.6 million) are printed in brackets, so they are not
-# inputs; their ratios are set aside.
+# The two dollar conversions the source prints in brackets are now inputs (annual_payment__2,
+# US$350,000; capital_loan__2, US$1.6 million). The case keeps one currency (GBP), so the exchange
+# rates they imply (US$ per GBP) are rates no ledger holds: `driver` formulas, each dollar amount
+# over the pound amount printed before it (as the other esco deals read a printed conversion).
+# Nothing is set aside.
 esco: stockethill_aberdeen_heat_company
 entity: company
 plant: annual_payment
@@ -33,6 +36,8 @@ case:
         drawn: {each_period: loan * (t == 0)}
         payment: {each_period: annual_payment * (t >= 1) * (t <= term)}
         flat_months: apartments * 12
+        fx_payment: annual_payment__2 / annual_payment
+        fx_loan: capital_loan__2 / capital_loan
   contracts:
     system:
       type: one_off_purchase
@@ -74,8 +79,6 @@ figures:
   st.payment_per_flat: {cut: company_revenue, at: 1, per: src.apartments}
   st.payment_per_flat_month: {cut: company_revenue, at: 1, per: src.flat_months}
   st.loan_only_rate_pct: {measure: irr, scale: 0.01}
-not_compared:
-  st.fx_payment: "the US$350,000 is printed in brackets after the GBP 219,000, so it is not an input (a text counts
-    for its first number); the GBP/US$ rate is not a figure of the deal's money"
-  st.fx_loan: "the US$1.6 million is printed in brackets after the GBP 1 million, so it is not an input; the
-    GBP/US$ rate is not a figure of the deal's money"
+  st.fx_payment: {driver: src.fx_payment, at: 0}
+  st.fx_loan: {driver: src.fx_loan, at: 0}
+not_compared: {}

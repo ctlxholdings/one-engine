@@ -13,6 +13,13 @@
 #     compensation (max_underwriter_compensation_pct_of_principal of it), both expensed as issuance
 #     costs, and the rest of the discount to par is an original-issue discount. The actual price and
 #     compensation are not printed; the minutes state these bounds, which is what the figures are;
+#   * the programme's expenditures of the fiscal year July 2024 to June 2025 (GJGNY Table 10, the year
+#     the issue falls in): origination, servicing, title/filing, bond issuance and advice, and fees to
+#     utilities (expenditures_fy_jul2024_jun2025_usd and its __2 to __5, the text's five items in
+#     order), each expensed and paid in cash in the period. The text's sixth number is the printed
+#     total (the figure itself, so not read) and its seventh the table's own number (10), not money.
+#     Table 10's issuance line is the programme's own cost, booked apart from the underwriter's
+#     compensation and discount, which the underwriter keeps out of the price;
 #   * the loans, the reserve and the debt service are not modelled (no coupons per class, no pool);
 #     no tax.
 # The issue total is the two classes' balances. The serial bonds are what the underwriter paid for the
@@ -20,9 +27,9 @@
 # the share of collateral they are, one less the overall enhancement (overall_enhancement_pct), only if
 # KBRA measures the enhancement against collateral, as the case file says. The efficiency share of the
 # programme's loans is a count (loans, not money): a driver over the three printed loan counts.
+# Table 10's total is the five expenditure lines read from the P&L.
 #
-# Set aside: Table 10's total needs its five items; expenditures_fy_jul2024_jun2025_usd carries only
-# the text's first number (origination, 2,391,497).
+# Nothing is set aside.
 esco: nyserda_green_bonds_2024a
 entity: nyserda
 plant: bonds_issued_usd
@@ -71,16 +78,43 @@ case:
         price: {debit: cash, credit: underwriter_receivable, amount: {generator: src, output: floor_price}}
         compensation: {debit: underwriter_compensation, credit: underwriter_receivable, amount: {generator: src, output: compensation}}
         discount: {debit: original_issue_discount, credit: underwriter_receivable, amount: {generator: src, output: discount}}
+    programme_costs:
+      kind: transfer
+      entity: nyserda
+      phase: settle
+      declare:
+        origination: expense
+        servicing: expense
+        title_filing: expense
+        issuance_and_advice: expense
+        utility_fees: expense
+      moves:
+        origination: {debit: origination, credit: cash, amount: {generator: src, output: expenditures_fy_jul2024_jun2025_usd}}
+        servicing: {debit: servicing, credit: cash, amount: {generator: src, output: expenditures_fy_jul2024_jun2025_usd__2}}
+        title_filing: {debit: title_filing, credit: cash, amount: {generator: src, output: expenditures_fy_jul2024_jun2025_usd__3}}
+        issuance_and_advice: {debit: issuance_and_advice, credit: cash, amount: {generator: src, output: expenditures_fy_jul2024_jun2025_usd__4}}
+        utility_fees: {debit: utility_fees, credit: cash, amount: {generator: src, output: expenditures_fy_jul2024_jun2025_usd__5}}
   schemes:
     pnl:
       underwriter_compensation: compensation
       original_issue_discount: discount
+      origination: programme
+      servicing: programme
+      title_filing: programme
+      issuance_and_advice: programme
+      utility_fees: programme
     cash_flow:
       underwriter_receivable: issue
+      origination: programme
+      servicing: programme
+      title_filing: programme
+      issuance_and_advice: programme
+      utility_fees: programme
   cuts:
     proceeds: {entity: nyserda, account: cash, scheme: cash_flow, include: [issue]}
     compensation: {kind: pnl, entity: nyserda, scheme: pnl, include: [compensation]}
     discount: {kind: pnl, entity: nyserda, scheme: pnl, include: [discount]}
+    programme_costs: {kind: pnl, entity: nyserda, scheme: pnl, include: [programme]}
   measures: {}
 figures:
   nyserda.serial_sum:
@@ -100,5 +134,5 @@ figures:
   nyserda.purchase_floor: {cut: proceeds}
   nyserda.implied_collateral_m: {balance: "serial_bonds + term_bond", per: src.bond_share_of_collateral, scale: 1000000}
   nyserda.ee_share_of_loans_pct: {driver: src.ee_share, scale: 0.01}
-not_compared:
-  nyserda.table10_total: "needs Table 10's five expenditure items; expenditures_fy_jul2024_jun2025_usd carries only the text's first number (origination, 2,391,497)"
+  nyserda.table10_total: {cut: programme_costs, sign: -1}
+not_compared: {}

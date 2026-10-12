@@ -9,19 +9,23 @@
 #     funded by the bank loan (loan_cny_m, drawn in period 0) and, for the rest, its own funds:
 #     the equity is what keeps the EMC's cash from falling below nil once the loan is in
 #     (deficit_funding), so "the remainder" comes out of the books, not out of a subtraction;
+#   * the loan is 90 percent guaranteed (loan_cny_m__2, the second number of its text): the EMC
+#     books it as two liabilities, the guaranteed part and the rest, so each is read from the books;
 #   * the station's electricity replaces grid power worth annual_revenue_cny_m a year at the grid
 #     tariff (price_cny_per_kwh); the replaced kWh are that worth over the tariff (a physical
 #     quantity, million kWh); the client books it as avoided energy cost and pays the EMC its share
 #     (split_and_term, the 65%) each year from period 1 (shared_savings);
-#   * the 10-year term is the second number of the split_and_term text, which the harness does not
-#     hand over: it is typed as the horizon's period count (periods 0..10, term 10), structural;
+#   * the term is the 10 years of the split_and_term text (split_and_term__3); the horizon's period
+#     count (periods 0..10) is typed, structural;
 #   * the loan's repayment (a one-year term, repaid "a good percentage" from project cash flow) and
 #     its interest are not printed as amounts, so they are not booked; no tax.
 # Readings: the EMC's share and the client's net from the P&L; own funds from the equity cash
-# flow; the 65% price per kWh is the EMC's revenue per replaced kWh; the paybacks are the
-# `payback` measure of the EMC's project cash flow (investment and revenue).
-# Set aside: the guaranteed and unguaranteed parts of the loan, which rest on its 90% guarantee, the
-# third number of the loan_cny_m text, carried by no input.
+# flow; the guaranteed and unguaranteed loan from the debt cash flow; the 65% price per kWh is the
+# EMC's revenue per replaced kWh; the paybacks are the `payback` measure of the EMC's project cash
+# flow (investment and revenue).
+# Revisit (later numbers of a text are inputs now): dy.guaranteed and dy.unguaranteed, set aside for
+# want of the 90% guarantee, are now read; the term, typed before, now comes from its input. The
+# 3.98 to the EMC (annual_revenue_cny_m__2) is dy.revenue_split itself and is not used.
 esco: dongying_shengdong_waste_gas
 entity: emc
 plant: annual_revenue_cny_m
@@ -40,6 +44,8 @@ case:
         kwh_m: annual_revenue_cny_m / price_cny_per_kwh
         split: split_and_term / 100
         loan: loan_cny_m * (t == 0)
+        loan_guaranteed: loan * loan_cny_m__2 / 100
+        loan_unguaranteed: loan - loan_guaranteed
   contracts:
     station:
       type: one_off_purchase
@@ -53,15 +59,16 @@ case:
       type: shared_savings
       parties: {provider: emc, client: coking_plant}
       terms: {kwh: {generator: src, output: kwh_m}, tariff: {generator: src, output: price_cny_per_kwh},
-              performance: 1, split: {generator: src, output: split}, start: 1, terms: 10}
+              performance: 1, split: {generator: src, output: split}, start: 1, terms: {generator: src, output: split_and_term__3}}
   rulebooks:
     bank_loan:
       kind: transfer
       entity: emc
       phase: accrue
-      declare: {bank_loan: liability}
+      declare: {bank_loan_guaranteed: liability, bank_loan_unguaranteed: liability}
       moves:
-        draw: {debit: cash, credit: bank_loan, amount: {generator: src, output: loan}}
+        draw_guaranteed: {debit: cash, credit: bank_loan_guaranteed, amount: {generator: src, output: loan_guaranteed}}
+        draw_unguaranteed: {debit: cash, credit: bank_loan_unguaranteed, amount: {generator: src, output: loan_unguaranteed}}
     own_funds:
       kind: deficit_funding
       entity: emc
@@ -77,7 +84,8 @@ case:
     cash_flow:
       owners.capital: equity
       owners.distributions: equity
-      bank_loan: debt
+      bank_loan_guaranteed: guaranteed_debt
+      bank_loan_unguaranteed: unguaranteed_debt
       equipment: investing
       shared_savings_revenue: operating
       avoided_energy_cost: operating
@@ -86,6 +94,8 @@ case:
     emc_revenue: {kind: pnl, entity: emc, scheme: pnl, include: [revenue]}
     client_net: {kind: pnl, entity: coking_plant, scheme: pnl, include: [savings, fee]}
     own_funds: {entity: emc, account: cash, scheme: cash_flow, include: [equity]}
+    guaranteed_loan: {entity: emc, account: cash, scheme: cash_flow, include: [guaranteed_debt]}
+    unguaranteed_loan: {entity: emc, account: cash, scheme: cash_flow, include: [unguaranteed_debt]}
     emc_project: {entity: emc, account: cash, scheme: cash_flow, include: [operating, investing]}
   measures:
     payback: {measure: payback, cut: emc_project}
@@ -98,6 +108,6 @@ figures:
   dy.revenue_vs_loan_pct: {cut: emc_revenue, at: 1, per: src.loan_cny_m, scale: 0.01}
   dy.payback: {measure: payback}
   dy.payback_about_two: {measure: payback}
-not_compared:
-  dy.guaranteed: "rests on the loan's 90% guarantee, the third number of the loan_cny_m text; no input carries it"
-  dy.unguaranteed: "rests on the loan's 90% guarantee, the third number of the loan_cny_m text; no input carries it"
+  dy.guaranteed: {cut: guaranteed_loan, at: 0}
+  dy.unguaranteed: {cut: unguaranteed_loan, at: 0}
+not_compared: {}

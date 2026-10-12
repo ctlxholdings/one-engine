@@ -13,15 +13,19 @@
 #     each year after the retrofit;
 #   * the pilot fund's capital: five providers each pay in pilot_fund (US$ million, x 1000 to the
 #     case's thousands). The five are five moves of the fund's book (the deal's structure, not a
-#     number), so the fund's size is read from its books.
+#     number), so the fund's size is read from its books;
+#   * the fund's first-loss reserve (pilot_fund__2, the pilot-fund text's second number, US$ 2.5
+#     million, x 1000) is held by the fund as a reserve asset against its obligation to the reserve's
+#     guarantors (City of Chicago, MacArthur; who puts the cash up is not published, so it is a
+#     reserve and its funding liability in the fund's book, not a cash move).
 # Readings: the payback is the retrofit held per the annual savings; cost and savings per unit are
 # the retrofit and the year's savings per unit (units), in dollars (scale 0.001 of a thousand);
-# the fund size is the capital the providers paid into the fund, in US$ million (scale 1000).
+# the fund size is the capital the providers paid into the fund, in US$ million (scale 1000); the
+# reserve ratio is the reserve held per the fund's size (fund_size: the five providers' commitment,
+# five being the deal's count of providers, as in the five moves).
 #
-# Set aside (the inputs carry no number for them; the harness hands each text its first number
-# only): the first-loss reserve of US$2.5 million (second number of the pilot-fund text, the
-# reserve ratio's numerator; the 'fifty percent' is a word and the ratio input reads the line
-# reference 349), and the completion month (May 2009: month names, second date of its text).
+# Set aside: the completion month (contract November 2008, completion May 2009). The harness now
+# hands both years (contracted_completed, __2) but the months are names, so no input carries them.
 esco: mercy_housing_lakefront_chicago
 entity: mercy
 plant: annual_savings_usd_thousand
@@ -40,6 +44,8 @@ case:
         retrofit: {each_period: (t == 0) * project_cost_usd_thousand}
         savings: {each_period: (t >= 1) * annual_savings_usd_thousand}
         provider_commitment: {each_period: (t == 0) * pilot_fund * 1000}
+        fund_size: 5 * pilot_fund * 1000
+        first_loss: {each_period: (t == 0) * pilot_fund__2 * 1000}
   contracts: {}
   rulebooks:
     retrofit:
@@ -54,8 +60,9 @@ case:
       kind: transfer
       entity: fund
       phase: accrue
-      declare: {cash: asset, provider_capital: equity}
+      declare: {cash: asset, provider_capital: equity, first_loss_reserve: asset, reserve_funding: liability}
       moves:
+        reserve: {debit: first_loss_reserve, credit: reserve_funding, amount: {generator: src, output: first_loss}}
         provider_a: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
         provider_b: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
         provider_c: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
@@ -66,7 +73,9 @@ case:
       avoided_energy_cost: savings
     cash_flow:
       provider_capital: capital
+      reserve_funding: reserve
   cuts:
+    fund_reserve: {entity: fund, account: first_loss_reserve, scheme: cash_flow, include: [reserve]}
     savings: {kind: pnl, entity: mercy, scheme: pnl, include: [savings]}
     fund_capital: {entity: fund, account: cash, scheme: cash_flow, include: [capital]}
   measures: {}
@@ -75,6 +84,6 @@ figures:
   me.simple_payback: {balance: retrofit, per: src.annual_savings_usd_thousand, at: 0}
   me.cost_per_unit: {balance: retrofit, per: src.units, at: 0, scale: 0.001}
   me.savings_per_unit: {cut: savings, per: src.units, at: 1, scale: 0.001}
+  me.reserve_ratio_pct: {cut: fund_reserve, per: src.fund_size, at: 0, scale: 0.01}
 not_compared:
-  me.reserve_ratio_pct: "needs the US$2.5 million first-loss reserve, the second number of the pilot-fund text, which the harness does not hand over (the 'fifty percent' is a word; the ratio's input reads the line reference 349): no input carries it"
-  me.contract_to_completion_months: "needs the contract and completion months (November 2008, May 2009), printed as month names in one text whose first number (2008) is all the harness hands over: no input carries the months"
+  me.contract_to_completion_months: "needs the contract and completion months (November 2008, May 2009): the harness now hands the text's two years (contracted_completed, __2), but the months are printed as names, so no input carries them"

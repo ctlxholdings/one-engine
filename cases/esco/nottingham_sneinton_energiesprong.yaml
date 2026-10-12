@@ -1,0 +1,128 @@
+# esco deal "nottingham_sneinton_energiesprong": the Sneinton, Nottingham Energiesprong-type whole-house
+# retrofit of ten homes by Melius Homes (REMOURBAN pilot, works December 2017 to 2018; STUNNING D5.2
+# "Case studies results", 2019, business case W12, and D5.3; cases/reference/esco/ontology/miniature/
+# cases/nottingham_sneinton_energiesprong-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`), in GBP. One period, the works:
+#   * the private owners' leg, per home: the improvement costs "upwards of 8900 euro = £8000" without
+#     the grant (cost_without_grant__2, the pound amount, the second number of its text), paid to the
+#     provider; the owner pays a contribution of £1260 to £2280 by property type (owner_contribution__3
+#     and __4, the pound amounts of the text) and the grant pays the rest. The two property types are
+#     booked side by side in the owners' books, one home each, so each grant is read from the books
+#     (the case file's "grant floor": indicative, if the cost covers the same work as the contribution);
+#   * the zero-interest credit-union loan towards the contribution, the social homes' fixed price and
+#     the tenants' energy plan (as little as £600 a year) have no amount the figures need, or none
+#     printed, and are not booked;
+#   * the city's EU Horizon 2020 money, programme level and not linked to these homes by the source,
+#     is booked in books of its own (nottingham_programme): £5 million received (horizon_2020), £3m of it
+#     spent on domestic efficiency (horizon_2020__2), both in millions (x 1000 x 1000).
+# No tax, no interest (the loan is at zero interest).
+# The figures:
+#   * nt.grant_floor_low / _high: the grant on the home with the larger and the smaller contribution;
+#   * nt.horizon_per_home_ceiling: the programme's domestic-efficiency spending per home, over the
+#     "over 400" homes (horizon_2020__3, a count);
+#   * nt.fx_low, nt.fx_high, nt.fx_cost: the euro and pound amounts the source prints for the same
+#     contributions and cost, as euro per pound: exchange rates no ledger holds (the case keeps one
+#     currency), drivers (rule 4), as hep_croatia reads its rate;
+#   * nt.consumption_cut_pct: the cut in energy use per square metre, 97 before and 43 after
+#     (energy_use_kwh_m2_yr and __2), a physical quantity, a driver.
+# Not used: works_period (years), homes_in_business_case and share_of_social_housing_in_area_pct
+# (no figure), energy_plan_content and retrofit_result (comfort and kWh levels no figure reads),
+# second_generation_module_cost (an expected cut with no base cost printed).
+esco: nottingham_sneinton_energiesprong
+entity: owners
+plant: cost_without_grant__2
+case:
+  case: esco-nottingham-sneinton-energiesprong
+  periods: 1
+  phases: [settle]
+  currency: GBP
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        works_cost: cost_without_grant__2
+        grant_small_contribution: works_cost - owner_contribution__3
+        grant_large_contribution: works_cost - owner_contribution__4
+        horizon_received: horizon_2020 * 1000 * 1000
+        horizon_domestic: horizon_2020__2 * 1000 * 1000
+        fx_low: owner_contribution / owner_contribution__3
+        fx_high: owner_contribution__2 / owner_contribution__4
+        fx_cost: cost_without_grant / cost_without_grant__2
+        consumption_cut: (energy_use_kwh_m2_yr - energy_use_kwh_m2_yr__2) / energy_use_kwh_m2_yr
+  contracts: {}
+  opening:
+    owners:
+      cash: {nature: asset, value: 0}
+    melius:
+      cash: {nature: asset, value: 0}
+    nottingham_programme:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    home_small_contribution:
+      kind: transfer
+      entity: owners
+      phase: settle
+      declare:
+        owner_funds: equity
+        grant_small: income
+        retrofit_small: asset
+      moves:
+        contribution: {debit: cash, credit: owner_funds, amount: {generator: src, output: owner_contribution__3}}
+        grant: {debit: cash, credit: grant_small, amount: {generator: src, output: grant_small_contribution}}
+        works: {debit: retrofit_small, credit: cash, amount: {generator: src, output: works_cost}}
+    home_large_contribution:
+      kind: transfer
+      entity: owners
+      phase: settle
+      declare:
+        grant_large: income
+        retrofit_large: asset
+      moves:
+        contribution: {debit: cash, credit: owner_funds, amount: {generator: src, output: owner_contribution__4}}
+        grant: {debit: cash, credit: grant_large, amount: {generator: src, output: grant_large_contribution}}
+        works: {debit: retrofit_large, credit: cash, amount: {generator: src, output: works_cost}}
+    provider:
+      kind: transfer
+      entity: melius
+      phase: settle
+      declare:
+        works_revenue: income
+      moves:
+        works: {debit: cash, credit: works_revenue, amount: {generator: src, output: works_cost}}
+        works_second_home: {debit: cash, credit: works_revenue, amount: {generator: src, output: works_cost}}
+    horizon:
+      kind: transfer
+      entity: nottingham_programme
+      phase: settle
+      declare:
+        horizon_grant: income
+        domestic_efficiency: expense
+      moves:
+        received: {debit: cash, credit: horizon_grant, amount: {generator: src, output: horizon_received}}
+        domestic: {debit: domestic_efficiency, credit: cash, amount: {generator: src, output: horizon_domestic}}
+  schemes:
+    pnl:
+      grant_small: grant_small
+      grant_large: grant_large
+      domestic_efficiency: domestic
+      horizon_grant: horizon
+      works_revenue: works
+  cuts:
+    grant_small: {kind: pnl, entity: owners, scheme: pnl, include: [grant_small]}
+    grant_large: {kind: pnl, entity: owners, scheme: pnl, include: [grant_large]}
+    horizon_domestic: {kind: pnl, entity: nottingham_programme, scheme: pnl, include: [domestic]}
+  measures: {}
+figures:
+  nt.grant_floor_low: {cut: grant_large}
+  nt.grant_floor_high: {cut: grant_small}
+  nt.horizon_per_home_ceiling: {cut: horizon_domestic, sign: -1, per: src.horizon_2020__3}
+  nt.fx_low: {driver: src.fx_low}
+  nt.fx_high: {driver: src.fx_high}
+  nt.fx_cost: {driver: src.fx_cost}
+  nt.consumption_cut_pct: {driver: src.consumption_cut, scale: 0.01}
+not_compared: {}
