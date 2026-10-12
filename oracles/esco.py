@@ -27,10 +27,16 @@ Inputs and figures
 ------------------
 * **inputs**: every number in the case's ``numbers`` block, named as
   :func:`one_engine.oracles.published.published_inputs` names them, except
-  the ``derived`` block (the transcriber's own arithmetic, which holds the
-  answers) and ``engine_inputs`` (esco's own wiring). A text value counts
-  for its first number, read with the answer key's own ``num`` (``'220 000
-  (source; ...)'`` is 220000), because the answer key reads it that way.
+  the ``derived`` and ``checks`` blocks (the transcriber's own arithmetic,
+  which holds the answers) and ``engine_inputs`` (esco's own wiring). A text
+  value counts for its first number, read with the answer key's own ``num``
+  (``'220 000 (source; ...)'`` is 220000), because the answer key reads it
+  that way, except the text under a key that describes a number
+  (``source``, ``unit``, ``evidence``... ``DESCRIPTIONS``). A printed date or
+  month is its parts, as the answer key's
+  ``date`` and ``phase_bounds`` read it: ``contract_signed: 2006-06-01`` gives
+  ``contract_signed__year``, ``__month`` and ``__day``; a range ``01/2010 to
+  06/2016`` gives ``<name>__from__year`` ... ``<name>__to__month``.
 * **figures**: the answer key's checks for this case, by check id. A check
   whose published value is not a number (a date, a word) and a check the
   answer key marks ``xfail`` (the source's figure does not re-compute) are set
@@ -55,7 +61,9 @@ The input named by ``plant``, times 1.01 (plus 1 when it is zero).
 """
 from __future__ import annotations
 
+import datetime as dt
 import pathlib
+import re
 import runpy
 from fractions import Fraction
 from functools import lru_cache
@@ -70,8 +78,19 @@ FOLDER = "esco"
 CASES = f"{FOLDER}/ontology/miniature/cases"
 ANSWER_KEY = f"{FOLDER}/tests/test_lod0_numbers.py"
 TRANSLATIONS = pathlib.Path(__file__).resolve().parent.parent / "cases" / "esco"
-#: blocks of ``numbers`` that are not inputs: the transcriber's arithmetic and esco's engine wiring
-NOT_INPUTS = ("derived", "engine_inputs")
+#: blocks of ``numbers`` that are not inputs: the transcriber's arithmetic (``derived``, and the
+#: ``checks`` some deals keep beside it, which state results) and esco's engine wiring
+NOT_INPUTS = ("derived", "checks", "engine_inputs")
+#: a printed day (2006-06-01) or month (2006-07, 04/2007), as the answer key's ``date`` and
+#: ``phase_bounds`` read them
+_DAY = r"(\d{4})-(\d{2})-(\d{2})"
+_MONTH = r"(\d{4})-(\d{2})|(\d{1,2})/(\d{4})"
+_WHEN = re.compile(rf"\s*(?:{_DAY}|{_MONTH})")
+_RANGE = re.compile(r"\s*(.+?)\s+to\s+(.+?)\s*$")
+#: keys whose text describes a number (its citation, unit, evidence...) and is never one
+DESCRIPTIONS = frozenset({"assumptions", "cite", "citation", "currency", "cusip", "evidence", "excluded_demoted",
+                          "kind", "not_given", "note", "notes", "origin", "promise_kind", "quote", "read",
+                          "scale_rule", "scale_status", "source", "unit"})
 
 
 @lru_cache(maxsize=None)
@@ -91,17 +110,37 @@ def _case(oid: str) -> Dict[str, Any]:
     return yaml.safe_load((REFERENCE / CASES / f"{oid}-lod0.yaml").read_text())
 
 
+def _when(text: str) -> Optional[Dict[str, int]]:
+    """A text that opens with a printed day or month, as ``{year, month[, day]}``; else None."""
+    m = _WHEN.match(text)
+    if not m:
+        return None
+    y, mo, d, y2, mo2, mo3, y3 = m.groups()
+    if y:
+        return {"year": int(y), "month": int(mo), "day": int(d)}
+    return {"year": int(y2 or y3), "month": int(mo2 or mo3)}
+
+
 def esco_inputs(case: Mapping[str, Any]) -> Dict[str, Any]:
     """The case's inputs by name (see the module docstring)."""
     num = answer_key()["num"]
 
     def strip(node: Any) -> Any:
-        # a text that holds a number is that number, as the answer key reads it; other text is dropped
+        # a printed date or month range is its parts (a phase's months need the year, which the first
+        # number alone would lose); a text that holds a number is that number, as the answer key reads
+        # it; other text is dropped
+        if isinstance(node, dt.date):
+            return {"year": node.year, "month": node.month, "day": node.day}
         if isinstance(node, Mapping):
-            return {k: strip(v) for k, v in node.items()}
+            return {k: strip(v) for k, v in node.items() if not (k in DESCRIPTIONS and isinstance(v, str))}
         if isinstance(node, list):
             return [strip(v) for v in node]
         if isinstance(node, str):
+            span = _RANGE.match(node)
+            if span and _when(span.group(1)) and _when(span.group(2)):
+                return {"from": _when(span.group(1)), "to": _when(span.group(2))}
+            if _when(node):
+                return _when(node)
             try:
                 return num(node) if any(ch.isdigit() for ch in node) else node
             except (AttributeError, ValueError):

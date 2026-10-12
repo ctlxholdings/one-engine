@@ -69,6 +69,24 @@ def test_inputs_leave_out_the_transcribers_arithmetic_and_read_text_for_its_numb
     assert num("220 000 (source; rounded)") == 220000
     # a deal whose numbers are all printed with their source citation still has its inputs
     assert esco_inputs(_case("birmingham_pfi_amey"))["term_years"] == 25
+    # the transcriber's ``checks`` block is arithmetic over the inputs, like ``derived``: not an input
+    assert not [k for k in esco_inputs(_case("baw_karlsruhe")) if k.startswith("checks")]
+
+
+def test_a_printed_date_or_month_range_is_read_as_its_year_month_and_day():
+    # as the answer key reads them (its date and phase_bounds): '2006-06-01', a {from, to} pair of
+    # '04/2007' months, and a '01/2010 to 06/2016' range in one text
+    # (names are the shortest unique tails: ``from`` is a keyword, so ``_from``)
+    bfr = esco_inputs(_case("bfr_berlin"))
+    assert (bfr["contract_signed__year"], bfr["contract_signed__month"], bfr["day"]) == (2006, 6, 1)
+    assert (bfr["_from__year"], bfr["_from__month"], bfr["to__year"], bfr["to__month"]) == (2007, 4, 2016, 3)
+    ehingen = esco_inputs(_case("ehingen_berufsschulzentrum"))
+    assert (ehingen["_from__year"], ehingen["to__month"]) == (2010, 6)
+
+
+def test_a_citation_or_unit_is_not_an_input_even_when_it_holds_a_number():
+    # ehingen's contract_signed.source quotes 'Vertragsschluss: 01.03.2009': a citation, not 1.03
+    assert not [k for k in esco_inputs(_case("ehingen_berufsschulzentrum")) if k.endswith("__source")]
 
 
 @pytest.mark.parametrize("oid", ORACLES)
