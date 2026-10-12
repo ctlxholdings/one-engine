@@ -35,9 +35,11 @@
 #     code_full_exemption_years from relief_start_period_index, then code_partial_relief_rate for
 #     code_partial_relief_years; paid within the year. bic_gross is EBIT times is_rate, and
 #     patente_ca_uncapped revenue times patente_ca_rate, both read from the books;
+#   * the minimum tax (IMF): income_tax's minimum, imf_rate of kernel and shell revenue between imf_floor and
+#     imf_cap, computed every period (the floor even in the build year) and charged only where the relief is
+#     not full (the gold's relief_covers_imf, a yes/no the formulas cannot read: the full exemption covers the
+#     IMF); it never binds after. imf_computed is read from the tax record;
 #   * days in a year: 52 x 7 + 1 (the gold's 30/365 and 14/365 day bases).
-#   * imf_computed is NOT REPORTED: the minimum tax (IMF) is a memo the gold computes and never charges
-#     (floored at imf_floor even in the build year); no ledger or rulebook record holds it.
 gold: cashew_taxholiday_v26
 entity: plant
 plant: kernel_price_xof_per_kg
@@ -83,6 +85,7 @@ case:
         relief: "1 if t < relief_start_period_index + code_full_exemption_years else (code_partial_relief_rate
           if t < relief_start_period_index + code_full_exemption_years + code_partial_relief_years else 0)"
         rate: is_rate * (1 - relief)
+        imf_applies: relief < 1
         gross_wages: total_workforce_headcount * worker_wage_monthly_xof * 12 * producing
         capped_base: total_workforce_headcount * min(worker_wage_monthly_xof, cnps_ceiling_monthly) * 12 * producing
         gross_rate: cnps_pension_employer_rate + employer_payroll_tax_rate
@@ -243,6 +246,12 @@ case:
         depreciation: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
+      minimum:
+        turnover: [kernel.revenue, shell.revenue]
+        rate: {generator: gold, output: imf_rate}
+        floor: {generator: gold, output: imf_floor}
+        cap: {generator: gold, output: imf_cap}
+        applies: {generator: gold, output: imf_applies}
     pay_tax:
       kind: settle
       entity: plant
@@ -360,6 +369,7 @@ trace:
   ebit: {cut: ebit}
   bic_gross: {cut: ebit, times: gold.is_rate}
   tax_rate: {driver: gold.rate}
+  imf_computed: {record: tax.minimum}
   tax: {cut: tax, sign: -1}
   nopat: {cut: nopat}
   rcn_inventory_value: {balance: rcn_inventory}

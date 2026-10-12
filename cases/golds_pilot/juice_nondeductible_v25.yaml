@@ -17,10 +17,9 @@
 #   * variant commerce: the same tax at tee_rate_commerce;
 #   * variant reel (the founder's own world): no TEE; profits tax at is_rate on profit with the
 #     mango reintegrated (non_deductible), and the higher of that and the IMF
-#     (imf_rate x turnover between imf_floor and imf_ceiling). income_tax has no minimum-tax
-#     floor, so the top-up max(0, IMF - profits tax) is posted to tax by a transfer, the profits
-#     tax recomputed in formulas from the same inputs (nil here: the profits tax is above the
-#     floor). imf_reel, the floor itself, is a memo amount no ledger holds: read as a driver.
+#     (imf_rate x turnover between imf_floor and imf_ceiling): the reel income_tax's minimum on
+#     juice.revenue, charged only where reel_on (the profits tax is above it here);
+#   * the reel column's profits tax and IMF are read from its tax record.
 gold: juice_nondeductible_v25
 entity: unit
 plant: price_per_bottle
@@ -62,14 +61,6 @@ case:
         reel_on: 0
         tee: tee_choice * (1 - cga_member_reduction) * tee_on
         is_used: is_rate * reel_on
-        # the reel column's profits tax, recomputed for the IMF top-up
-        revenue_f: bottles_sold * price_per_bottle
-        cash_opex_f: >-
-          purchased * mango_price_per_kg + bottles_produced * (packaging_per_bottle + ingredients_per_bottle)
-          + labour_annual + rent_annual + utilities_annual
-        taxable_f: revenue_f - cash_opex_f - opening_nbv / life_left + purchased * mango_price_per_kg
-        imf: min(imf_ceiling, max(imf_rate * revenue_f, imf_floor))
-        imf_topup: max(0, imf - is_rate * max(0, taxable_f)) * reel_on
   opening:
     unit:
       cash: {nature: asset, value: 0}
@@ -158,7 +149,6 @@ case:
         disposal_loss: non_deductible
         tee_expense: non_deductible
         is_expense: non_deductible
-        imf_topup: non_deductible
     reel:
       kind: income_tax
       entity: unit
@@ -179,15 +169,12 @@ case:
         disposal_loss: taxable
         tee_expense: non_deductible
         is_expense: non_deductible
-        imf_topup: non_deductible
-    minimum_tax:
-      kind: transfer
-      entity: unit
-      phase: tax
-      declare:
-        imf_topup: expense
-      moves:
-        topup: {debit: imf_topup, credit: tax_payable, amount: {generator: gold, output: imf_topup}}
+      minimum:
+        turnover: [juice.revenue]
+        rate: {generator: gold, output: imf_rate}
+        floor: {generator: gold, output: imf_floor}
+        cap: {generator: gold, output: imf_ceiling}
+        applies: {generator: gold, output: reel_on}
     pay_tax:
       kind: settle
       entity: unit
@@ -207,7 +194,6 @@ case:
       disposal_loss: depreciation
       tee_expense: tax
       is_expense: tax
-      imf_topup: tax
     cash_flow:
       juice.receivable: operating
       mango.payable: operating
@@ -271,8 +257,8 @@ trace:
   tax_tee_commerce: {cut: tax, sign: -1, variant: commerce}
   fcff_tee_commerce: {cut: fcff, variant: commerce}
   taxable_profit_reel: {record: reel.base, variant: reel}
-  is_reel: {record: reel.tax, variant: reel}
-  imf_reel: {driver: gold.imf}
+  is_reel: {record: reel.profit_tax, variant: reel}
+  imf_reel: {record: reel.minimum, variant: reel}
   tax_reel: {cut: tax, sign: -1, variant: reel}
   nopat_reel: {cut: nopat, variant: reel}
   fcff_reel: {cut: fcff, variant: reel}

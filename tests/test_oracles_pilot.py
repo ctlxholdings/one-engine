@@ -11,7 +11,9 @@ Then every pilot gold gets its recorded verdict: a translated one matches with
 the planted error caught, except a pilot that contradicts itself, or whose row
 needs an engine piece that does not exist, which differs at exactly the rows
 named in ``PILOT_FINDINGS`` (the cause is in each translation's header); the
-rest are blocked.
+rest are blocked. (The income_tax rulebook's ``minimum`` was built for nine of
+them: before it, cashew_taxholiday_v26 and pharmacy_expiry each had rows no book
+held.)
 """
 import pytest
 
@@ -27,11 +29,6 @@ PILOT_FINDINGS = {
     "juice_nondeductible": {"tax_if_deductible", "tax_leakage", "fcff_if_deductible"},
     # inventory_packaging uses the unrounded 33,333.33 bottles; the gold's own check and cost rows round
     "juice_nondeductible_v26": {"inventory_packaging", "nwc", "nwc_prior"},
-    # imf_computed is a minimum-tax memo floored even when turnover is nil: no book, record or cut holds it
-    "cashew_taxholiday_v26": {"imf_computed"},
-    # the shop run as a company needs the owner's pay deductible and a minimum tax replacing the IS when
-    # higher: a variant cannot reclassify a tax line and income_tax has no minimum tax
-    "pharmacy_expiry": {"tax_cash_societe", "fcff_societe"},
 }
 
 

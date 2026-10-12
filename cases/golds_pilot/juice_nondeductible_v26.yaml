@@ -28,10 +28,10 @@
 #     (line_life_years - line_age_years) to nil; no capex is stated (cfi has no line);
 #   * tax (régime réel): is_rate on profit with the fruit reintegrated (the reintegration_basis
 #     share of the mango is non_deductible); the company pays the higher of that and the IMF
-#     (imf_rate x turnover TTC, between imf_floor and imf_ceiling). income_tax has no
-#     minimum-tax floor, so the top-up max(0, IMF - profits tax) is posted to tax by a transfer,
-#     the profits tax recomputed in formulas from the same inputs; tax paid within the year. The
-#     IMF itself is a memo amount no ledger holds: read as a driver;
+#     (imf_rate x turnover TTC, between imf_floor and imf_ceiling): the reel income_tax's minimum
+#     on juice.revenue (booked gross, so turnover TTC), charged only where reel_on; tax paid within
+#     the year;
+#   * the profits tax (bic) and the IMF are read from the reel tax record;
 #   * variant deductible: the whole fruit invoiced and deductible (the IMF floor then binds);
 #   * variant tee (the regime de l'entreprenant): no VAT charged, no patente, the input VAT on
 #     packaging, ingredients, utilities and maintenance an irrecoverable cost paid with them, and
@@ -127,7 +127,6 @@ case:
         irrecoverable_vat: vat_rate * (packaging + ingredients + utilities + maintenance) * tee_on
         freight: freight_per_bottle_xof * sold
         bad_debt: bad_debt_rate * revenue_f
-        byproduct_revenue_f: byproduct_price_xof_per_kg * byproduct
         life_left: line_life_years - line_age_years
         # the working-capital position carried in (already funded)
         receivable_carried: revenue_ttc_f * receivable_days / days_per_year
@@ -137,18 +136,8 @@ case:
         ingredients_owed: ingredients * payable_days / days_per_year
         utilities_owed: utilities * payable_days / days_per_year
         maintenance_owed: maintenance * payable_days / days_per_year
-        # the profits tax the books charge, recomputed for the IMF top-up
-        opex_f: >-
-          purchased * mango_price_xof_per_kg + packaging + ingredients + wages + social + rent + utilities
-          + maintenance + patente + irrecoverable_vat + freight + bad_debt
-        taxable_f: >-
-          revenue_f + byproduct_revenue_f - opex_f - nbv_opening_xof / life_left
-          + mango_uninvoiced * mango_price_xof_per_kg
-        imf: min(max(imf_rate * revenue_ttc_f, imf_floor), imf_ceiling)
-        imf_topup: max(0, imf - is_rate * max(0, taxable_f)) * reel_on
         is_used: is_rate * reel_on
         tee: tee_rate * tee_on
-        imf_s: {each_period: imf}
   opening:
     unit:
       cash: {nature: asset, value: 0}
@@ -312,7 +301,12 @@ case:
         disposal_loss: taxable
         is_expense: non_deductible
         tee_expense: non_deductible
-        imf_topup: non_deductible
+      minimum:
+        turnover: [juice.revenue]
+        rate: {generator: gold, output: imf_rate}
+        floor: {generator: gold, output: imf_floor}
+        cap: {generator: gold, output: imf_ceiling}
+        applies: {generator: gold, output: reel_on}
     tee:
       kind: income_tax                 # a turnover tax: (net) revenue is the only line in its base
       entity: unit
@@ -342,15 +336,6 @@ case:
         disposal_loss: non_deductible
         is_expense: non_deductible
         tee_expense: non_deductible
-        imf_topup: non_deductible
-    minimum_tax:
-      kind: transfer
-      entity: unit
-      phase: tax
-      declare:
-        imf_topup: expense
-      moves:
-        topup: {debit: imf_topup, credit: tax_payable, amount: {generator: gold, output: imf_topup}}
     pay_tax:
       kind: settle
       entity: unit
@@ -379,7 +364,6 @@ case:
       disposal_loss: depreciation
       is_expense: tax
       tee_expense: tax
-      imf_topup: tax
     cash_flow:
       juice.receivable: operating
       byproduct.receivable: operating
@@ -490,8 +474,8 @@ trace:
   ebit: {cut: ebit}
   reintegration: {cut: mango_uninvoiced, sign: -1}
   taxable_profit: {record: reel.base}
-  bic: {record: reel.tax}
-  imf: {driver: gold.imf_s}
+  bic: {record: reel.profit_tax}
+  imf: {record: reel.minimum}
   tax: {cut: tax, sign: -1}
   nopat: {cut: nopat}
   receivables: {balance: juice.receivable + byproduct.receivable}
@@ -506,7 +490,7 @@ trace:
   cfo: {cut: cfo}
   cfi: {cut: cfi}
   fcff: {cut: fcff}
-  bic_if_deductible: {record: reel.tax, variant: deductible}
+  bic_if_deductible: {record: reel.profit_tax, variant: deductible}
   tax_if_deductible: {cut: tax, sign: -1, variant: deductible}
   fcff_if_deductible: {cut: fcff, variant: deductible}
   invoice_cost: {sum: [{cut: tax, sign: -1}, {cut: tax, variant: deductible}]}

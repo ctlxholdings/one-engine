@@ -31,12 +31,21 @@
 #     less the lower bands' relief spread over the year's months, posted as a tax credit (the
 #     promoted gold paygo_solar's schedule, valid while each year's base is in the fourth band,
 #     which the gold's checks assert); accrued and paid in the month;
-#   * not reported: tax_cash_societe and fcff_societe, the same shop as a company. That column
-#     needs the owner's pay deductible (a variant cannot reclassify a tax line) and the IMF
-#     replacing the IS when higher (income_tax has no minimum tax); neither exists.
+#   * the same shop as a company (variant societe: ir_on 0, societe_on 1): a second income_tax,
+#     dormant in the base (rate corporate_tax_rate x societe_on), classifies the owner's pay as
+#     a deductible salary and the stock losses still not; the IR and its band relief are off
+#     (x ir_on). Its minimum is the IMF (imf_applies_to_societies_only: charged only where
+#     societe_on), imf_rate of the month's sales between the annual floor and cap spread over
+#     months_per_year (the sales are level, so this is the gold's annual IMF / 12); it binds.
+#     tax_cash_societe and fcff_societe are that variant's tax and FCFF.
 gold: pharmacy_expiry
 entity: officine
 plant: basket_average
+variants:
+  societe:
+    values:
+      ir_on: 0
+      societe_on: 1
 case:
   case: gold-pharmacy-expiry
   periods: 24
@@ -93,7 +102,14 @@ case:
         relief_annual: >-
           (ir_rate_b4 - ir_rate_b1) * ir_band_1 + (ir_rate_b4 - ir_rate_b2) * (ir_band_2 - ir_band_1)
           + (ir_rate_b4 - ir_rate_b3) * (ir_band_3 - ir_band_2)
-        relief: {each_period: relief_annual / months_per_year}
+        # the legal form (variant societe): 1 the sole proprietor's IR, 0 the company's IS and IMF
+        ir_on: 1
+        societe_on: 0
+        relief: {each_period: relief_annual * ir_on / months_per_year}
+        ir_used: ir_rate_b4 * ir_on
+        is_used: corporate_tax_rate * societe_on
+        imf_floor_month: imf_floor / months_per_year
+        imf_cap_month: imf_cap / months_per_year
         boxes: stock_level / (basket_average * box_cost_ratio / boxes_per_customer)
         boxes_on_shelf: {each_period: boxes}
         boxes_per_reference: {each_period: boxes / references_on_shelf}
@@ -237,7 +253,7 @@ case:
       phase: tax
       expense: tax_expense
       payable: tax_payable
-      rate: {generator: gold, output: ir_rate_b4}
+      rate: {generator: gold, output: ir_used}
       carry_forward_periods: null
       scheme:
         cash_sales.revenue: taxable
@@ -257,6 +273,40 @@ case:
         disposal_loss: taxable
         tax_expense: non_deductible
         ir_band_relief: non_deductible
+        is_expense: non_deductible
+    societe:
+      kind: income_tax
+      entity: officine
+      phase: tax
+      expense: is_expense
+      payable: tax_payable
+      rate: {generator: gold, output: is_used}
+      carry_forward_periods: null
+      scheme:
+        cash_sales.revenue: taxable
+        credit_sales.revenue: taxable
+        purchases.expense: taxable
+        expiry: non_deductible        # the destruction record is indifferent to legal form
+        shrinkage: non_deductible
+        coldchain_loss: non_deductible
+        bad_debts: taxable
+        rent.expense: taxable
+        payroll.expense: taxable
+        electricity.expense: taxable
+        owner.expense: taxable        # a company's salary
+        cel.expense: taxable
+        other_opex.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+        ir_band_relief: non_deductible
+        is_expense: non_deductible
+      minimum:
+        turnover: [cash_sales.revenue, credit_sales.revenue]
+        rate: {generator: gold, output: imf_rate}
+        floor: {generator: gold, output: imf_floor_month}
+        cap: {generator: gold, output: imf_cap_month}
+        applies: {generator: gold, output: societe_on}
     bands:                            # the lower bands' relief on the fourth band's rate
       kind: transfer
       entity: officine
@@ -290,6 +340,7 @@ case:
       disposal_loss: depreciation
       tax_expense: tax
       ir_band_relief: tax
+      is_expense: tax
     cash_flow:
       cash_sales.receivable: operating
       credit_sales.receivable: operating
@@ -382,3 +433,5 @@ trace:
   cfo: {cut: cfo}
   cfi: {cut: cfi}
   fcff: {cut: fcff}
+  tax_cash_societe: {cut: tax, sign: -1, variant: societe}
+  fcff_societe: {cut: fcff, variant: societe}

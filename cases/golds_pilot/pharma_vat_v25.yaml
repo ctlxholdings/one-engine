@@ -23,10 +23,10 @@
 #     (van_replacement_index) over a full life from the period it is bought, in its own account;
 #   * the VAT inside depreciation and inside the capex is read as the amount x VAT/(1 + VAT): every
 #     asset rests on the same VAT-inclusive base (the gold's own identity, D&A x 18/118);
-#   * IS at corporate_tax_rate on EBIT (no debt), paid in the year. The IMF (imf_rate of revenue,
-#     between imf_floor and imf_cap) is below the IS in every year: its uncapped amount is read
-#     from the books' revenue, the bounded one is the gold's memo row (a driver, as in the promoted
-#     golds), since income_tax has no minimum-tax floor;
+#   * IS at corporate_tax_rate on EBIT (no debt), or the IMF (imf_rate of revenue, between
+#     imf_floor and imf_cap) when higher: income_tax's minimum on sales.revenue (it never binds);
+#     paid in the year. The IS and the bounded IMF are read from the tax record, the uncapped IMF
+#     as imf_rate x the books' revenue;
 #   * no disposal proceeds (the old vans are fully written off): disposal_proceeds is an empty cut.
 gold: pharma_vat_v25
 entity: wholesaler
@@ -65,7 +65,6 @@ case:
         cel_vl_owned: warehouse_fitout_cost * cel_vl_owned_valeur_locative_pct * cel_vl_rate_owned
         cel_va: max(value_added * cel_va_rate, revenue_annual * cel_va_floor_rate)
         stamp_duty: (payroll_annual + vatable_ttc) * cash_settlement_share_opex * cash_stamp_duty_rate
-        imf: max(imf_floor, min(imf_cap, revenue_annual * imf_rate))
         coldchain_carried: warehouse_fitout_cost * (warehouse_fitout_life_years - warehouse_fitout_age_years) / warehouse_fitout_life_years
         coldchain_life_left: warehouse_fitout_life_years - warehouse_fitout_age_years
         vans_carried: vans_cost * (vans_life_years - van_age_years) / vans_life_years
@@ -220,6 +219,11 @@ case:
         dep_vans: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
+      minimum:
+        turnover: [sales.revenue]
+        rate: {generator: gold, output: imf_rate}
+        floor: {generator: gold, output: imf_floor}
+        cap: {generator: gold, output: imf_cap}
     pay_tax:
       kind: settle
       entity: wholesaler
@@ -315,9 +319,9 @@ trace:
   irrecoverable_vat_in_d_and_a: {cut: depreciation, sign: -1, times: gold.vat_share}
   vat_dead_cost_pl: {sum: [{cut: input_vat, sign: -1}, {cut: depreciation, sign: -1, times: gold.vat_share}]}
   ebit: {cut: ebit}
-  tax_is: {cut: tax, sign: -1}
+  tax_is: {record: tax.profit_tax}
   tax_imf_uncapped: {cut: revenue, times: gold.imf_rate}
-  tax_imf: {driver: gold.imf}
+  tax_imf: {record: tax.minimum}
   tax: {cut: tax, sign: -1}
   nopat: {cut: nopat}
   receivables: {balance: sales.receivable}

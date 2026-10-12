@@ -19,12 +19,11 @@
 #     (truck_replacement_cost) is bought at capex_replacement_period_index and depreciated from
 #     the period after (its own register), so it is carried at cost at the horizon's end;
 #   * tax at bic_rate on profit, or the IMF (imf_rate x turnover, between imf_floor and imf_cap)
-#     when higher. income_tax has no minimum-tax floor, so the top-up max(0, IMF - profit tax) is
-#     posted to tax by a transfer, the profit tax recomputed in formulas from the same inputs (it
-#     binds every period); tax paid within the year;
-#   * memo amounts no ledger holds, read as drivers: the IMF on turnover and the IMF due, and the
-#     maintenance capex of the normalised view (truck_replacement_cost / truck_useful_life_years);
-#     the indifference EBIT is the IMF due per bic_rate;
+#     when higher: income_tax's minimum on rice.revenue; tax paid within the year;
+#   * the profit tax, the IMF due and the tax charged are read from the tax record; the IMF on
+#     turnover is imf_rate x revenue, the indifference EBIT the IMF due per bic_rate;
+#   * memo amounts no ledger holds, read as drivers: the maintenance capex of the normalised view
+#     (truck_replacement_cost / truck_useful_life_years);
 #   * volume_growth and price_growth are nil and there is no debt (interest_bearing_debt nil).
 gold: rice_mintax
 entity: wholesaler
@@ -59,12 +58,6 @@ case:
         receivable_carried: sale_price_per_bag * annual_bags * days_receivable / days_per_year_convention
         payable_carried: >-
           purchase_price_per_bag * annual_bags * (1 + shrinkage_rate) * days_payable / days_per_year_convention
-        # the profit tax the books charge, recomputed for the IMF top-up
-        revenue_f: sale_price_per_bag * sold
-        ebit_f: revenue_f - landed * sold - shrinkage - rent_annual - wages_annual - nbv_carried / life_left
-        imf_turnover: imf_rate * revenue_f
-        imf: min(max(imf_turnover, imf_floor), imf_cap)
-        imf_topup: max(0, imf - bic_rate * max(0, ebit_f))
         normal_capex: {each_period: truck_replacement_cost / truck_useful_life_years}
   opening:
     wholesaler:
@@ -169,15 +162,11 @@ case:
         depreciation: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
-        imf_topup: non_deductible
-    minimum_tax:
-      kind: transfer
-      entity: wholesaler
-      phase: tax
-      declare:
-        imf_topup: expense
-      moves:
-        topup: {debit: imf_topup, credit: tax_payable, amount: {generator: gold, output: imf_topup}}
+      minimum:
+        turnover: [rice.revenue]
+        rate: {generator: gold, output: imf_rate}
+        floor: {generator: gold, output: imf_floor}
+        cap: {generator: gold, output: imf_cap}
     pay_tax:
       kind: settle
       entity: wholesaler
@@ -195,7 +184,6 @@ case:
       depreciation: depreciation
       disposal_loss: depreciation
       tax_expense: tax
-      imf_topup: tax
     cash_flow:
       rice.receivable: operating
       purchases.payable: operating
@@ -244,12 +232,12 @@ trace:
   nbv_open: {opening: fixed_assets + fixed_assets_new}
   nbv_close: {balance: fixed_assets + fixed_assets_new}
   ebit: {cut: ebit}
-  tax_bic_normal: {record: tax.tax}
-  imf_on_turnover: {driver: gold.imf_turnover}
-  imf_due: {driver: gold.imf}
+  tax_bic_normal: {record: tax.profit_tax}
+  imf_on_turnover: {cut: revenue, times: gold.imf_rate}
+  imf_due: {record: tax.minimum}
   tax_due: {cut: tax, sign: -1}
-  ebit_imf_indifference: {driver: gold.imf, per: gold.bic_rate}
-  imf_headroom: {sum: [{cut: ebit}, {driver: gold.imf, per: gold.bic_rate, sign: -1}]}
+  ebit_imf_indifference: {record: tax.minimum, per: gold.bic_rate}
+  imf_headroom: {sum: [{cut: ebit}, {record: tax.minimum, per: gold.bic_rate, sign: -1}]}
   nopat: {cut: nopat}
   inventory: {balance: inventory}
   receivables: {balance: rice.receivable}

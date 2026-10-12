@@ -104,6 +104,17 @@ Rulebooks
     losses, as IAS 12.34 requires when no taxable profit is expected
     against them (the case states no income).
 
+    ``minimum`` (the golds' pilots: OHADA's "impôt minimum forfaitaire")
+    charges the higher of the profits tax and a minimum on turnover:
+    ``rate`` times the period's ``turnover`` (the income lines listed),
+    raised to ``floor`` and lowered to ``cap`` (each optional; any of the
+    three a number or one per period). ``applies`` (default 1; 0 in a
+    period whose holiday covers the minimum too) says where it is charged;
+    it is computed every period regardless, because the golds report it.
+    The minimum neither feeds nor draws on the loss pool. The tax record
+    then carries ``profit_tax`` (the rate on the base after losses),
+    ``minimum`` and ``tax``, what is charged.
+
     ``losses_in: tax`` carries losses as tax, at the rate of the period
     they arose in (``TaxPolicy.losses_in``: ModelOff 2015 "Tax", step 7k);
     the tax record's ``expired`` is what the period could use but the next
@@ -563,6 +574,14 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         raise InputError(f"income_tax: loss_relief is carry_forward or refund, not {relief!r}")
     from one_engine.packs.contracts import _at
     scheme = dict(r.take("scheme"))
+    minimum = r.take_or_default("minimum", None, reason="no minimum tax: the charge is the profits tax").value
+    if minimum is not None:
+        mr = Reader(minimum, source="income_tax.minimum")
+        m_lines, m_rate = list(mr.take("turnover")), mr.take("rate")
+        m_floor = mr.take_or_default("floor", 0, reason="no floor: the minimum is the rate on turnover").value
+        m_cap = mr.take_or_default("cap", None, reason="no cap on the minimum").value
+        m_applies = mr.take_or_default("applies", 1, reason="the minimum is charged in every period").value
+        mr.finish()
     group.declare(entity, expense, Nature.EXPENSE, unit)
     group.declare(entity, payable, Nature.LIABILITY, unit)
     pool = LossPool(cf)
@@ -609,6 +628,17 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         opening = pool.available(t)
         # a refunded loss is relieved now, at the rate: the pool is never fed, so it stays empty
         tax = policy.rate * base if relief == "refund" else policy.charge(t, base, pool)
+        profit_tax = tax
+        if minimum is not None:
+            book = g.book(entity)
+            wrong = [a for a in m_lines if book.accounts[a].nature is not Nature.INCOME]
+            if wrong:
+                raise InputError(f"income_tax: minimum.turnover lists {wrong}, which are not income lines")
+            turnover = sum((book.balance(a, t) - book.opening(a, t) for a in m_lines), Fraction(0))
+            least = max(_at(m_rate, t) * turnover, _at(m_floor, t))
+            least = least if m_cap is None else min(least, _at(m_cap, t))
+            if _at(m_applies, t):
+                tax = max(tax, least)
         if tax > 0:
             g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"{ctx['name']}.charge:{t}"))
         elif tax < 0:
@@ -617,6 +647,8 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                                    f"{ctx['name']}.credit:{t}"))
         # what this period could still use but the next cannot: the vintages that expire at its end
         rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
+        if minimum is not None:
+            rec.update(profit_tax=profit_tax, minimum=least)
         # the pool's roll-forward (the golds report it): opening + added - used = what this period can still use
         added = Fraction(0) if relief == "refund" else \
             max(Fraction(0), -base) if losses_in == "base" else max(Fraction(0), -policy.rate * base)

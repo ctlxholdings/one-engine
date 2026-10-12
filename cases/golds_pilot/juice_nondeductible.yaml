@@ -16,11 +16,9 @@
 #     remaining_life_years to nil; capex_per_year (nil) is spent each year;
 #   * tax at tax_rate on profit, mango_deductible_fraction of the mango deductible (the rest a
 #     permanent difference, classified non_deductible); the company pays the higher of that and
-#     minimum_tax_per_year. income_tax has no minimum-tax floor, so the top-up
-#     max(0, minimum - profits tax) is posted to tax by a transfer, the profits tax recomputed in
-#     formulas from the same inputs (nil in every period of the base: the floor never binds);
-#     tax paid within the year;
-#   * tax_min is the floor itself, a memo amount no ledger holds: read as a driver;
+#     minimum_tax_per_year: income_tax's minimum, a floor with no rate on turnover (it never binds
+#     in the base); tax paid within the year;
+#   * tax_min is the minimum, read from the tax record;
 #   * the "if deductible" rows are the variant with the whole mango deductible.
 # Gold finding (the variant rows differ, t=0..8): the gold's counterfactual takes the tax as
 # tax_rate x EBIT = 1,190,000, ignoring the minimum tax its own §8 imposes ("the company pays the
@@ -59,15 +57,9 @@ case:
         rent_annual: rent_per_month * months_per_year
         utilities_annual: utilities_per_month * months_per_year
         capex: {each_period: capex_per_year}
-        tax_min: {each_period: minimum_tax_per_year}
-        # the profits tax the books charge, recomputed for the minimum-tax top-up
-        revenue_f: litres_sold * price_per_bottle
         cash_opex_f: >-
           purchased * mango_price_per_kg + bottles * (packaging_cost_per_bottle + ingredient_cost_per_bottle)
           + labour_annual + rent_annual + utilities_annual
-        depreciation_f: nbv_opening / remaining_life_years
-        taxable_f: revenue_f - cash_opex_f - depreciation_f + mango_cash * mango_price_per_kg
-        imf_topup: max(0, tax_min - tax_rate * max(0, taxable_f))
         inventory: cash_opex_f * inventory_days / days_per_year
   opening:
     unit:
@@ -176,15 +168,10 @@ case:
         depreciation: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
-        imf_topup: non_deductible
-    minimum_tax:
-      kind: transfer
-      entity: unit
-      phase: tax
-      declare:
-        imf_topup: expense
-      moves:
-        topup: {debit: imf_topup, credit: tax_payable, amount: {generator: gold, output: imf_topup}}
+      minimum:
+        turnover: [juice.revenue]
+        rate: 0
+        floor: {generator: gold, output: minimum_tax_per_year}
     pay_tax:
       kind: settle
       entity: unit
@@ -204,7 +191,6 @@ case:
       depreciation: depreciation
       disposal_loss: depreciation
       tax_expense: tax
-      imf_topup: tax
     cash_flow:
       juice.receivable: operating
       mango.payable: operating
@@ -269,7 +255,7 @@ trace:
   ebit: {cut: ebit}
   non_deductible_mango: {cut: mango_uninvoiced, sign: -1}
   taxable_profit: {record: tax.base}
-  tax_min: {driver: gold.tax_min}
+  tax_min: {record: tax.minimum}
   tax: {cut: tax, sign: -1}
   nopat: {cut: nopat}
   receivables: {balance: juice.receivable}
