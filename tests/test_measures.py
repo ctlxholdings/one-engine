@@ -62,8 +62,8 @@ def test_xirr_refuses_like_irr():
         xirr([-100, 230, -132], d)
     with pytest.raises(MeasureError, match="2 dates"):
         xirr([-100, 50, 60], d[:2])
-    with pytest.raises(MeasureError, match="go back"):
-        xirr([-100, 50, 60], [d[0], d[2], d[1]])
+    with pytest.raises(MeasureError, match="before the first"):
+        xirr([-100, 50, 60], [d[1], d[0], d[2]])
 
 
 def test_discount_needs_one_factor_per_flow():
@@ -110,5 +110,42 @@ def test_xnpv_discounts_from_the_first_date_on_actual_days_over_365():
     assert xnpv([-100, 110, 121], d, 0.1) == pytest.approx(-100 + 110 / 1.1 + 121 / 1.1 ** (731 / 365), abs=1e-12)
     with pytest.raises(MeasureError, match="2 dates"):
         xnpv([1, 2, 3], d[:2], 0.1)
-    with pytest.raises(MeasureError, match="go back"):
-        xnpv([1, 2, 3], [d[0], d[2], d[1]], 0.1)
+    with pytest.raises(MeasureError, match="before the first"):
+        xnpv([1, 2, 3], [d[1], d[0], d[2]], 0.1)
+
+
+# ── what the library suites need (numpy-financial, pyxirr: one_engine/oracles/library.py) ──
+
+def test_dated_flows_after_the_first_may_come_in_any_order():
+    # Excel's XIRR and XNPV, and pyxirr's samples: only a date before the first (the valuation
+    # date) is refused; the rest may be listed in any order
+    d = [dt.date(2015, 1, 1), dt.date(2016, 1, 1), dt.date(2017, 3, 1)]
+    assert xirr([-100, 60, 50], [d[0], d[2], d[1]]) == pytest.approx(xirr([-100, 50, 60], d), abs=1e-12)
+    assert xnpv([-100, 60, 50], [d[0], d[2], d[1]], 0.1) == pytest.approx(xnpv([-100, 50, 60], d, 0.1), abs=1e-12)
+
+
+def test_irr_finds_a_rate_near_minus_100_percent_or_above_1000_percent():
+    # one sign change, so one rate; the scan used to stop at -99% and +1000%
+    assert irr([-1, 1e-4]) == pytest.approx(-0.9999, abs=1e-12)
+    assert irr([-3000, 2.4e-7]) == pytest.approx(-1 + 8e-11, abs=1e-15)
+    assert irr([-1, 33.9]) == pytest.approx(32.9, abs=1e-9)
+    d = [dt.date(2015, 1, 1), dt.date(2016, 1, 1)]
+    assert xirr([-100, 1e-3], d) == pytest.approx(-0.99999, abs=1e-12)
+    assert xirr([-1, 33.9], d) == pytest.approx(32.9, abs=1e-9)
+
+
+def test_irr_scan_survives_long_streams_at_extreme_rates():
+    # 400 years: scanning down to a rate near -100%, a discount factor of (1 + r) ** 400 under- or
+    # overflows a float unless the scan rescales it, and Python's ** raises rather than returning inf
+    stream = [-1000.0] + [1.0] * 399 + [5000.0]
+    dates = [dt.date(2000 + t, 1, 1) for t in range(len(stream))]
+    for r in (irr(stream), xirr(stream, dates)):
+        assert 0 < r < 0.01
+    assert abs(npv(stream, irr(stream))) < 1e-6
+
+
+def test_npv_refuses_a_rate_of_minus_100_percent_or_below():
+    # numpy-financial: npv at -1 is NaN (no answer); the engine said ZeroDivisionError
+    for rate in (-1, -1.0, -2.5):
+        with pytest.raises(MeasureError, match="-100%"):
+            npv([0, 1, 2, 3, 4], rate)
