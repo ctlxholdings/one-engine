@@ -1,0 +1,121 @@
+id: modeloff_2014_precise_debt_modeling
+title: "ModelOff 2014 Round 1 'Precise Debt Modeling' — bank personal-loan schedule tool, business-day-adjusted, Act/365"
+
+meta:
+  source:
+    - "DSBench (GitHub liqiangjing/dsbench, NeurIPS 2024 paper), data_analysis/data_old.zip -> data/00000033/{introduction.txt, question1.txt..question8.txt}"
+    - "Answer key: dsbench/data_analysis/data.json, line for id '00000033'"
+    - "Original competition page (referenced by DSBench, not fetched): https://www.eloquens.com/tool/gyD1iM3L/finance/modeloff-sample-past-questions/2014-round-1-precise-debt-modeling"
+    - "Full path root: /Users/aliadoudou/Documents/CTLX_search/02_Active Search/021_Target _Companies/00_Active_Opportunities/99-Current/00-Consulting Frameworks/_generic_framework/benchmarks/dsbench/data_analysis/data_old.zip"
+  licence: "DSBench repository = MIT (LICENSE file: 'MIT License, Copyright (c) 2024 Liqiang Jing'). The underlying ModelOff/Eloquens exam content is redistributed by DSBench as 'sample past questions'; the original competition content's own copyright status was not independently verified."
+  kind: engine_oracle
+
+inputs:
+  mechanism: "level-payment amortizing personal loan; monthly payments in arrears; first payment one month after drawdown; level Monthly Payment Amount found by goal-seek (NOT solvable via PMT/IPMT/PPMT because interest periods have irregular day counts)"
+  interest_day_count: "Actual/365, based on days between successive Actual Payment Dates"
+  rounding: "Do not round any of the calculations"
+  business_day_rule: >-
+    A Business Day = weekday (Mon-Fri) that is not a Holiday. The Actual Payment Date equals the
+    Regular Payment Date (same DAY-of-month as drawdown), adjusted by: Condition 1 - if the Regular
+    Payment Date is not a Business Day, move to the first Business Day after it, UNLESS that would
+    land in a new calendar month; Condition 2 - if Condition 1 would cross into a new calendar
+    month, use the last Business Day of the ORIGINAL month instead; Condition 3 - if the Regular
+    Payment Date is the 29th/30th/31st and the month is shorter, use the last Business Day of that
+    month.
+  holiday_schedule: [2015-04-03, 2015-04-06, 2015-10-25, 2016-03-25, 2016-03-28, 2016-10-24, 2017-04-14, 2017-04-17, 2017-10-30, 2018-03-30, 2018-04-02, 2018-10-19, 2019-04-19, 2019-04-22, 2019-10-14, 2020-04-10, 2020-04-13, 2020-10-19]
+  loan_1:
+    amount: 250000
+    duration_months: 72
+    drawdown_date: 2015-01-19
+    interest_rate_pa: 0.0520
+  loan_2:
+    amount: 100000
+    duration_months: 48
+    drawdown_date: 2015-06-30
+    interest_rate_pa: 0.0700
+  currency: "not stated in the source beyond '$' — treat as an abstract currency unit"
+
+expected:
+  # Each of these is multiple-choice in the source (4 options, a/b/c/d). I transcribed every
+  # option verbatim, then applied the official answer LETTER from data.json (answers array for
+  # id 00000033 = ["C","D","A","C","B","B","B","A"]) to select the published value below. The
+  # numeric values are ModelOff's own published option text, not something I computed.
+  q1_loan1_non_business_regular_payment_dates_count:
+    question: "For Loan 1, how many of the 72 Regular Payment Dates are not Business Days?"
+    options: {a: 18, b: 21, c: 24, d: 27}
+    answer_letter: c
+    answer_value: 24
+  q2_loan1_total_interest_paid:
+    question: "For Loan 1, the total interest paid over the life of the loan is closest to:"
+    options: {a: "$41,560", b: "$41,570", c: "$41,580", d: "$41,590"}
+    answer_letter: d
+    answer_value: "$41,590"
+  q3_loan1_monthly_payment_cents:
+    question: "For Loan 1, the Monthly Payment Amount ends in what number of cents (rounded to the nearest cent)?"
+    options: {a: 85, b: 47, c: 32, d: 11}
+    answer_letter: a
+    answer_value: 85
+  q4_loan1_payments_until_balance_below_40pct:
+    question: "For Loan 1, after how many payments does the outstanding loan balance first drop below 40% of the original drawdown value?"
+    options: {a: 44, b: 45, c: 46, d: 47}
+    answer_letter: c
+    answer_value: 46
+  q5_loan2_interest_periods_with_31_days:
+    question: "For Loan 2, how many interest periods have exactly 31 days?"
+    options: {a: 12, b: 13, c: 14, d: 15}
+    answer_letter: b
+    answer_value: 13
+  q6_loan2_monthly_payment_amount:
+    question: "For Loan 2, the Monthly Payment Amount is:"
+    options: {a: "$2,394.62", b: "$2,394.98", c: "$2,395.14", d: "$2,395.40"}
+    answer_letter: b
+    answer_value: "$2,394.98"
+  q7_loan2_balance_after_12th_payment:
+    question: "For Loan 2, the loan balance immediately after the 12th payment on 30 June 2016 is:"
+    options: {a: "$77,566.02", b: "$77,566.34", c: "$77,566.87", d: "$77,567.31"}
+    answer_letter: b
+    answer_value: "$77,566.34"
+  q8_loan2_interest_proportion_of_total_payments:
+    question: "For Loan 2, what proportion of total payments made over the life of the loan are interest payments, rounded to the nearest percent?"
+    options: {a: "13%", b: "14%", c: "15%", d: "16%"}
+    answer_letter: a
+    answer_value: "13%"
+
+notes: |
+  Because every answer is "closest of 4 options" rather than an exact printed figure, each expected
+  value is only precise to the option's own granularity (e.g. Q2's four candidates are $10 apart;
+  the true exact total interest is merely known to round to "$41,590", not necessarily equal to it
+  exactly). This is a genuine limit of ModelOff's MC format, not a transcription gap on my part.
+
+  data_old.zip also contains two real workbooks for this competition ID which were NOT opened for
+  this transcription (the text alone was unambiguous and sufficient):
+    - data/00000033/MO14-Round-1-Debt-Modeling-Workbook.xlsx (80,882 bytes) — likely the blank
+      template
+    - data/00000033/Precise-Debt-Modelling-Model-Citizn.xlsm (541,664 bytes, macro-enabled) —
+      name suggests a completed/solved model (possibly a contestant's or reference submission
+      named "Model Citizn"); worth opening in a follow-up pass if a full period-by-period
+      amortization schedule (not just the 8 MC checkpoints above) is wanted
+  Both are flagged in cases/golds/INVENTORY.md as a "surveyed, not transcribed" candidate.
+
+  I did not attempt to independently recompute the amortization schedule myself (that is "running
+  it through our engine," explicitly out of scope for this harvest) — the 8 values above are
+  exactly what ModelOff published as correct, nothing derived.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:` block, and it SHOULD.
+  What the source publishes is a DEBT-SCHEDULE EXERCISE and its answer key, nothing more: two
+  personal loans (250,000 over 72 months at 5.20% drawn 19 Jan 2015; 100,000 over 48 months at
+  7.00% drawn 30 Jun 2015), an Actual/365 day-count rule, a three-condition business-day
+  adjustment rule, an 18-date holiday schedule, an instruction not to round, and the eight
+  multiple-choice answers transcribed above (24 non-business payment dates; total interest
+  "closest to $41,590"; a payment ending in 85 cents; balance below 40% after 46 payments; 13
+  interest periods of exactly 31 days; a monthly payment of $2,394.98; a balance of $77,566.34
+  after the 12th payment; interest at 13% of total payments).
+  There is no borrower and no business anywhere in the question — no revenue, no expense line, no
+  cost total, no trading result, not even a stated currency (the source uses a bare "$"). The
+  only expense-shaped figure in the whole file is Loan 1's lifetime interest, and it is (i)
+  INTEREST, a financing charge that the engine's CANON does not place in `cost_of_sales` at all,
+  and (ii) not an exact printed figure but the nearest of four options $10 apart, so it could not
+  carry a cost check even if it belonged in one. Building a `costs:` block here would invent an
+  enterprise around a loan calculator. Unrunnable is the correct state.
+  Separately noted, not fixed: this file also carries no `mapping:` and no `tolerance:` key, so
+  it would refuse on those grounds too — the gold runner requires a tolerance with a `why`.

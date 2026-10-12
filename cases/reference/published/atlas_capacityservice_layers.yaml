@@ -1,0 +1,131 @@
+meta:
+  source: "Land and Agricultural Development Bank of South Africa (Land Bank), Agricultural Economics Advisory Division, \"Livestock Enterprise Budget — Digital Book, 2023/24, Version 2\", p.20, https://landbank.co.za/Media-Centre/Publications/2025/Livestock%20Budget%20Enterprise%20Book.pdf"
+  registry_index: 127
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: capacity_service
+  jurisdiction: ZA
+  currency: ZAR
+  trade: "Layers — 500-egg-laying-cage poultry system, one batch/annum — South Africa (national)"
+  isic_class: "0146 — Raising of poultry"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: two revenue streams (eggs + cull hens) combine into one printed
+  # total — no single quantity x price the engine's `sale:` block can hold.
+  resolution: L2
+  basis: per batch, one laying cycle (500 pullets to end-of-lay, then culled)
+  periods: 1
+
+# Registry tags this entry BOTH capacity_service (the cage system is a fixed-capacity facility
+# batch-costed per annum, structurally the same shape as the GIZ capacity_service atelier CEPs)
+# AND grow_then_sell (500 pullets are raised to end-of-lay and culled for meat). Filed here
+# under capacity_service since the facility-batch structure (fixed cage capacity, one annual
+# cycle, cost allocated across a batch) is what's otherwise thin in the ten transcribed golds
+# outside the GIZ Cameroon data. Picked over the other 9 Land Bank entries specifically for
+# its NEGATIVE margin plus a clean, well-documented internal income conflict — the richest
+# "source disagrees with itself" case in the whole registry.
+
+inputs:
+  # `expected.gross_margin_section_3` is built from `total_income_gm_section`
+  # (198,550.00), NOT `total_income_section_1c` (161,209.46) — the source's
+  # own printed composition names the section-3 figure explicitly, so that
+  # is what is mirrored here, not the (also-printed, but unused-downstream)
+  # section-1c figure or its two constituent lines (income_cull_hens,
+  # income_eggs).
+  revenue: 198550.00
+  # the SIX individual cost lines. `cost_subtotal` (234,122.33, the first
+  # five lines' own printed rollup) and `total_costs` (238,804.78, the
+  # grand total including contingencies) are BOTH excluded — they are the
+  # source's own totals, not additional lines; including either alongside
+  # the six lines below would double-count.
+  costs:
+    cost_purchase_pullets: 39388.33
+    cost_feed_all_mash: 181486.20
+    cost_sanitation: 39.80
+    cost_transport_pullets: 671.00
+    cost_egg_trays: 12537.00
+    cost_contingencies: 4682.45
+  stocks:
+    pullets_purchased: {value: 500, unit: "pullets"}
+    cull_hens_per_batch: {value: 475, unit: "birds", composition: "500 − 5% mortality"}
+    batches_per_annum: {value: 1.0, unit: "batches/yr"}
+    eggs_per_batch_dozens: {value: 9500, unit: "dozen"}
+  generators:
+    price_per_cull_hen: {value: 39.39, unit: "R/bird"}
+    price_per_dozen_eggs: {value: 15.0, unit: "R/dozen"}
+    price_per_egg_sold: {value: 1.25, unit: "R/egg"}
+    cost_per_pullet: {value: 78.78, unit: "R/pullet", note: "20-week-old point-of-lay pullet"}
+    feed_all_mash: {value: 432.11, unit: "R/50kg"}
+    feed_qty_per_batch: {value: 420, unit: "50kg bags"}
+    sanitation_virokill: {value: 199.0, unit: "R/litre"}
+    transport_pullets: {value: 671.0, unit: "R/100km"}
+    contingencies_pct: {value: 2, unit: "%", note: "applied above all other costs"}
+  movements:
+    income_cull_hens: {value: 18709.46, unit: "R/batch", direction: in, kind: revenue}
+    income_eggs: {value: 142500.00, unit: "R/batch", direction: in, kind: revenue}
+    total_income_section_1c: {value: 161209.46, unit: "R/batch", direction: in, kind: revenue,
+      composition: "income_cull_hens (18,709.46) + income_eggs (142,500.00) — section 1c of the source table"}
+    total_income_gm_section: {value: 198550.00, unit: "R/batch", direction: in, kind: revenue,
+      note: "\"section 3\" (GM) of the source table — CONFLICTS with total_income_section_1c, see notes"}
+    cost_purchase_pullets: {value: 39388.33, unit: "R/batch", direction: out, kind: opex}
+    cost_feed_all_mash: {value: 181486.20, unit: "R/batch", direction: out, kind: opex}
+    cost_sanitation: {value: 39.80, unit: "R/batch", direction: out, kind: opex}
+    cost_transport_pullets: {value: 671.00, unit: "R/batch", direction: out, kind: opex}
+    cost_egg_trays: {value: 12537.00, unit: "R/batch", direction: out, kind: opex}
+    cost_subtotal: {value: 234122.33, unit: "R/batch", direction: out, kind: opex}
+    cost_contingencies: {value: 4682.45, unit: "R/batch", direction: out, kind: opex}
+    total_costs: {value: 238804.78, unit: "R/batch", direction: out, kind: opex}
+  gates: [sante_animale, biosecurite]
+  grid: {period: per_batch, cycle_length: "1 laying batch per annum (cull at end of lay)", annualization: 1}
+
+expected:
+  gross_margin_section_3: {value: -40254.78, unit: "R/batch", provenance: cited,
+    composition: "total_income_gm_section (198,550.00) − total_costs (238,804.78) = −40,254.78 — verified exact, using the section-3 income figure, NOT the section-1c figure"}
+  gross_margin_per_bird_sold: {value: -84.75, unit: "R/bird", provenance: cited}
+  gross_margin_per_doz_eggs: {value: -4.24, unit: "R/dozen", provenance: cited}
+  gross_margin_per_egg_sold: {value: -0.35, unit: "R/egg", provenance: cited}
+
+# only the herd-level figure maps — the three per-bird/per-dozen/per-egg
+# figures are ratios with no canonical equivalent
+mapping:
+  gross_margin_section_3: gross_margin
+
+tolerance:
+  abs: 0.01
+  why: >
+    every figure carries two decimals (cents) and the source's own
+    composition note verifies this exact subtraction (198,550.00 −
+    238,804.78 = −40,254.78); any gap beyond a cent is real
+
+notes: |
+  **INCOME CONFLICT, quoted and independently re-derived:** section 1c of the source table
+  prints TOTAL INCOME = R161,209.46 (cull hens R18,709.46 + eggs R142,500.00, at the stated
+  price_per_dozen_eggs of R15.00/dozen × 9,500 dozen = R142,500 exactly). Section 3 (the
+  gross-margin section) prints a DIFFERENT total income, R198,550.00 — built from cull income
+  of R18,050.00 (not R18,709.46) plus egg income of R180,500.00 (not R142,500.00). The
+  egg-income line changes between the two sections with no reconciling note anywhere in the
+  source (R180,500 implies either a different dozens-sold figure or a different price per
+  dozen than section 1c states — the source does not say which). Both totals are recorded
+  above (`total_income_section_1c`, `total_income_gm_section`); `expected.gross_margin_
+  section_3` is built from the section-3 figure specifically because that is the section
+  where the source itself performs the gross-margin subtraction — the number the source
+  actually computed with, not the number that looks more "consistent" from outside.
+
+  **The margin is NEGATIVE under EITHER income interpretation** — even the higher section-3
+  income of R198,550 does not cover R238,804.78 of total costs. This is stated by the source
+  as-is, not an artifact of picking the lower income figure: the 500-bird caged-layer system
+  is loss-making at 2023/24 South African input prices. A useful property for a gold to carry:
+  it forces the engine to represent a genuine negative-margin outcome rather than only ever
+  reproducing profitable cases.
+
+  Other gaps explicit in the source: mortality (500 pullets → 475 cull hens = 5%) is implicit
+  in the stock figures but never stated as a named parameter; no depreciation schedule for
+  cages/feeders/watering equipment; no financing structure, no working-capital timing, no tax
+  detail; labour cost is not disclosed anywhere in the table.
+
+  A near-identical INCOME CONFLICT pattern (section 1 vs. section-3 GM using different
+  per-unit prices) recurs one entry later in the same source, in the Broilers — 500-poultry
+  batch system entry (registry #128, R57.60/bird in section 1 vs. R65.09/bird in the GM
+  section) — that entry resolves to a small POSITIVE margin (R1,438.39/batch) rather than a
+  loss, and was left untranscribed here in favor of this richer, negative-margin case, but is
+  worth pulling in later precisely because the same conflict pattern produces the opposite
+  sign of outcome.

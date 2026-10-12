@@ -1,0 +1,137 @@
+id: numpy_financial_irr_npv_pmt_mirr
+title: "numpy-financial published test suite — IRR / NPV / PMT / MIRR / PV / Rate known-answer primitives (kernel-level, not a trade)"
+
+meta:
+  source:
+    - "numpy-financial (GitHub numpy/numpy-financial), numpy_financial/tests/test_financial.py, classes TestIrr / TestNpv / TestPmt / TestMirr / TestPV / TestRate"
+    - "Full path: /Users/aliadoudou/Documents/CTLX_search/02_Active Search/021_Target _Companies/00_Active_Opportunities/99-Current/00-Consulting Frameworks/_generic_framework/benchmarks/tier1_primitives/numpy-financial/numpy_financial/tests/test_financial.py"
+  licence: "BSD-3-Clause. Confirmed from LICENSE.txt in the same repo: 'Copyright (c) 2005-2019, NumPy Developers. All rights reserved.' (standard NumPy BSD redistribution licence)."
+  kind: engine_oracle
+
+inputs:
+  irr_cases:
+    - id: irr_1
+      cashflows: [-150000, 15000, 25000, 35000, 45000, 60000]
+    - id: irr_2
+      cashflows: [-100, 0, 0, 74]
+    - id: irr_3
+      cashflows: [-100, 39, 59, 55, 20]
+    - id: irr_4
+      cashflows: [-100, 100, 0, -7]
+    - id: irr_5
+      cashflows: [-100, 100, 0, 7]
+    - id: irr_6_with_trailing_zeros_variant
+      cashflows: [-5, 10.5, 1, -8, 1]
+    - id: irr_gh44_cross_checked_vs_google_sheets
+      cashflows: [-1678.87, 771.96, 1814.05, 3520.30, 3552.95, 3584.99, 4789.91, -1]
+  npv_case:
+    rate: 0.05
+    cashflows: [-15000.0, 1500.0, 2500.0, 3500.0, 4500.0, 6000.0]
+  pv_case:
+    rate: 0.07
+    nper: 20
+    pmt: 12000
+    fv: 0
+  rate_case:
+    nper: 10
+    pmt: 0
+    pv: -3500
+    fv: 10000
+  pmt_cases:
+    - id: pmt_1
+      rate_per_period: 0.006666667   # 0.08/12
+      n_periods: 60                  # 5*12
+      present_value: 15000
+    - id: pmt_zero_rate
+      rate_per_period: 0.0
+      n_periods: 60
+      present_value: 15000
+  mirr_cases:
+    - id: mirr_1
+      cashflows: [-4500, -800, 800, 800, 600, 600, 800, 800, 700, 3000]
+      finance_rate: 0.08
+      reinvest_rate: 0.055
+    - id: mirr_2
+      cashflows: [-120000, 39000, 30000, 21000, 37000, 46000]
+      finance_rate: 0.10
+      reinvest_rate: 0.12
+    - id: mirr_3
+      cashflows: [100, 200, -50, 300, -200]
+      finance_rate: 0.05
+      reinvest_rate: 0.06
+    - id: mirr_no_real_solution
+      cashflows: [39000, 30000, 21000, 37000, 46000]   # all positive -> no sign change
+      finance_rate: 0.10
+      reinvest_rate: 0.12
+
+expected:
+  irr_cases:
+    irr_1: {value: 0.0524, tolerance: "rtol=1e-2"}
+    irr_2: {value: -0.0955, tolerance: "rtol=1e-2"}
+    irr_3: {value: 0.28095, tolerance: "rtol=1e-2"}
+    irr_4: {value: -0.0833, tolerance: "rtol=1e-2"}
+    irr_5: {value: 0.06206, tolerance: "rtol=1e-2"}
+    irr_6_with_trailing_zeros_variant: {value: 0.0886, tolerance: "rtol=1e-2", extra_check: "appending [0,0,0] to the same cashflows (trailing zero periods) is a separate test and must still give 0.0886"}
+    irr_gh44_cross_checked_vs_google_sheets: {value: 1.00426, tolerance: "rtol=1e-4", note: "source comment: \"'true' value as calculated by Google sheets\" -- independently cross-validated by numpy-financial's own maintainers, the strongest single case in this file"}
+  npv_case: {value: 122.89, tolerance: "rtol=1e-2"}
+  pv_case: {value: -127128.17, tolerance: "rtol=1e-2", full_precision_decimal_variant: -127128.1709461939327295222005}
+  rate_case: {value: 0.1107, tolerance: "rtol=1e-4"}
+  pmt_cases:
+    pmt_1: {value: -304.145914, full_precision_decimal_variant: -304.1459143262052370338701494}
+    pmt_zero_rate: {value: -250.0}
+  mirr_cases:
+    mirr_1: {value: 0.0666, tolerance: "atol=1e-4 (4 published decimal places)"}
+    mirr_2: {value: 0.126094, tolerance: "atol=1e-6 (6 published decimal places)"}
+    mirr_3: {value: 0.3428, tolerance: "atol=1e-4 (4 published decimal places)"}
+    mirr_no_real_solution: {value: null, note: "expected result is NaN -- mathematically undefined, not a missing value. All cashflows share the same sign so no finance/reinvestment split is possible."}
+
+notes: |
+  This gold validates the KERNEL arithmetic layer (pure IRR/NPV/PMT/MIRR/PV/Rate primitives), not
+  a trade or a full model -- it is the natural complement to the other 4 golds in this batch, which
+  are all scenario-level. Per CLAUDE.md's own kernel/library distinction, this is exactly the shape
+  of evidence a kernel change would need: a case that cannot be expressed by what's already there,
+  backed by a named, versioned, independently-authored reference implementation.
+
+  Every value above is copied verbatim from parametrized pytest cases (`@pytest.mark.parametrize`)
+  or single asserts in the source file -- I did not compute any of them myself. Tolerances are
+  copied from each test's own `assert_allclose(..., rtol=...)` / `atol=...` call, since the source
+  itself is explicit that e.g. the six basic IRR cases are only checked to rtol=1e-2 (2 significant
+  digits) while the Google-Sheets-cross-checked case is held to rtol=1e-4.
+
+  mirr_no_real_solution is included deliberately: a gold-checker that only stores "the answer"
+  could mistake numpy-financial returning NaN for a bug, when it is the mathematically correct
+  response (source docstring: "if there is no solution because all the cashflows have the same
+  sign, then npf.mirr returns... NaN"). This is a genuine expected non-answer, not a gap in
+  transcription.
+
+  PMT sign convention: a loan of +15000 (present value received) produces a payment of
+  -304.145914/month (cash outflow from the borrower) -- Python/numpy-financial's outflow-negative
+  convention should be preserved when comparing against our engine, which may use a different sign
+  convention internally.
+
+  Did not transcribe numpy-financial's NPER, IPMT, PPMT, or FV test classes, or its broadcast/array
+  and Decimal-dtype parametrized variants beyond the two full-precision decimal figures noted above
+  -- the file has ~885 lines and dozens more cases; this gold covers the primitives most relevant
+  to this project's debt-service and equity-IRR mechanisms (per BENCHMARK_REGISTRY.md's own
+  "Engine mapping: S3 debt service primitives, S7 equity IRR, S5 depreciation helpers"), not the
+  full test file.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:` block, and it SHOULD.
+  What the source publishes is a set of KNOWN-ANSWER TEST VECTORS for six pure functions, taken
+  verbatim from numpy-financial's own pytest classes TestIrr / TestNpv / TestPmt / TestMirr /
+  TestPV / TestRate: seven bare cashflow arrays with their expected IRRs (0.0524, -0.0955,
+  0.28095, -0.0833, 0.06206, 0.0886, 1.00426), one NPV case at 5% expecting 122.89, one PV case
+  expecting -127,128.17, one Rate case expecting 0.1107, two PMT cases (-304.145914 and -250.0),
+  and four MIRR cases including one whose correct answer is NaN. Each carries the tolerance from
+  its own `assert_allclose` call. That is the entire content.
+  There is no business, no period, no currency, no revenue and no expense here — this file
+  validates ARITHMETIC, not an enterprise. The negative entries in the cashflow arrays
+  (-150,000 · -100 · -5 · -8 · -4,500 · -800 · -1,678.87 · -1) are signed elements of a vector
+  fed to a root-finder; they are not cost lines, they carry no names, no basis and no dates, and
+  several of them are mid-series (irr_4's -7 in the final period, mirr_3's -50 and -200) where a
+  "cost" reading is meaningless. Grouping them into a `costs:` block would sum arbitrary vector
+  elements across unrelated test cases into a total that exists in no source anywhere, and there
+  is no published cost total to bind `cost_of_sales` to because there is no accounting statement
+  in the file at all. Unrunnable is the correct state: this gold's job is to hold the kernel's
+  primitives to an independently-authored reference implementation, and it does that whether or
+  not the L2 money converter can build a template from it.

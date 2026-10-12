@@ -1,0 +1,139 @@
+id: bfap_maize_bloedrivier_2024_25
+title: "BFAP/PRF Summer Crop Budget 2024/25 — dryland maize, Bloedrivier (KwaZulu-Natal, South Africa)"
+
+meta:
+  source:
+    - "BFAP / PRF (with GSA & regional collaborators), 'Summer Crop Income & Cost Budgets 2024/25', Table 2.1, p.10: https://www.opot.co.za/imgs/income-cost-budgets/2024-2025/prf-bfap-summer-crop-budgets-icb-2024-2025.pdf"
+    - "Already catalogued in this repo: docs/atlas/registry.yaml, isic_class '0111' entry 'Maize (Dryland, Bloedrivier)' (this file is a standalone transcription for the golds harvest; I did not edit registry.yaml)"
+  licence: "Publicly published PDF (opot.co.za); no explicit reuse licence stated in the document or in registry.yaml's source block."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 so the runner can read it ──────────────────
+  # The blocks below (`sale`, `costs`, `mapping`, `tolerance`) are the ONLY
+  # additions. Every figure is the source's own, moved not changed; nothing
+  # is inferred, because a name-pattern guess over this corpus was built,
+  # measured and deleted (engine/golds.py:_HEURISTICS_DO_NOT_WORK).
+  resolution: L3          # the source gives yield AND price, so revenue is
+  #                         derived rather than restated — quantity x price
+  basis: per hectare, one summer season
+  periods: 1
+  mechanism: grow_then_sell
+  jurisdiction: ZA
+  currency: ZAR
+
+inputs:
+  # the sale, as quantity x price: 7.0 t/ha at the net farm-gate price the
+  # source itself derives (3798 SAFEX less 550 deductions = 3248)
+  sale: {quantity: 7.0, unit: t, price: 3248}
+  # the twelve variable-cost lines, verbatim from Table 2.1
+  costs:
+    contracting: 0
+    crop_insurance: 864
+    fertilizer: 5289
+    lime: 786
+    seed: 4015
+    fuel: 1421
+    herbicide: 1219
+    insecticide_fungicide: 703
+    marketing_costs: 0
+    repairs_maintenance: 767
+    casual_labour: 335
+    aerial_spray: 0
+    other_expenditure: 0
+
+  region: "South Africa - KwaZulu-Natal, Bloedrivier"
+  season: "2024/25 summer crop production season (Oct planting -> Apr/May harvest, single annual cycle)"
+  area_ha: 1
+  yield_t_per_ha: 7.0    # "Yield: Deterministic" -- target/deterministic yield under normal weather, not a probabilistic average
+  safex_simulated_price_zar_per_t: 3798    # "SAFEX simulated producer price 2025"
+  total_deductions_zar_per_t: 550    # "transport + grade + handling & commission + seed breeding & technology levy"
+  variable_costs_zar_per_ha:
+    contracting: 0
+    crop_insurance: 864
+    fertilizer: 5289
+    lime: 786
+    seed: 4015
+    fuel: 1421
+    herbicide: 1219
+    insecticide_fungicide: 703
+    marketing_costs: 0
+    repairs_maintenance: 767
+    casual_labour: 335
+    aerial_spray: 0
+    other_expenditure: 0
+
+expected:
+  net_farm_gate_price_zar_per_t:
+    value: 3248
+    composition_as_printed: "safex_simulated_price (3798) - total_deductions (550)"
+  gross_income_zar_per_ha:
+    value: 22738
+    label_as_printed: "GROSS INCOME"
+    composition_as_printed: "yield (7.0 t/ha) x net_farm_gate_price (3248 ZAR/t)"
+  total_variable_expenditure_zar_per_ha:
+    value: 15401
+    label_as_printed: "TOTAL VARIABLE EXPENDITURE"
+    composition_as_printed: "sum of the 12 variable-cost line items above"
+  total_variable_expenditure_zar_per_t:
+    value: 2200
+    label_as_printed: "TOTAL VARIABLE EXPENDITURE R/TON (= break-even price)"
+  gross_margin_zar_per_ha:
+    value: 7338
+    label_as_printed: "3.1 GROSS MARGIN R/HA"
+    composition_as_printed: "gross_income (22738) - total_variable_expenditure (15401)"
+  gross_margin_zar_per_t:
+    value: 1048
+    label_as_printed: "3.2 GROSS MARGIN R/TON"
+  break_even_yield_t_per_ha: 4.74
+  break_even_price_zar_per_t: 2200
+
+# which of the source's own names we check against which of ours
+mapping:
+  gross_income_zar_per_ha: revenue
+  total_variable_expenditure_zar_per_ha: cost_of_sales
+  gross_margin_zar_per_ha: gross_margin
+
+# HALF A RAND, deliberately tight. BFAP prints whole rand, so half a rand IS
+# the display rounding; anything larger is the source's own chain and we want
+# to see it rather than absorb it. This is the "declared with a reason" rule:
+# a looser number here would hide the three gaps the notes below record.
+tolerance:
+  abs: 0.5
+  why: >
+    every figure in Table 2.1 is printed as a whole rand, so 0.5 is exactly
+    the display rounding; a gap wider than that is BFAP's own arithmetic and
+    must surface as a divergence
+
+notes: |
+  Re-derived the chain myself to check BFAP's own internal consistency (per project convention of
+  never trusting a source's self-report without recomputing). Found small, non-dramatic rounding
+  gaps -- NOT flagged as an error by registry.yaml, but worth stating precisely since I checked:
+
+    - yield (7.0) x net_farm_gate_price (3248) = 22,736.0 exactly, vs. the published GROSS INCOME
+      of 22,738 -- a 2-Rand gap. Most likely cause: safex_simulated_price (3798) and
+      total_deductions (550) are themselves rounded-for-display versions of finer decimal figures
+      in BFAP's own spreadsheet.
+
+    - My sum of the 12 published variable-cost line items = 15,399 (864+5289+786+4015+1421+1219+
+      703+767+335 = 15,399; the remaining 4 lines are 0), vs. the published TOTAL VARIABLE
+      EXPENDITURE of 15,401 -- also a 2-Rand gap, same likely cause.
+
+    - Using BFAP's OWN published headline figures: 22,738 - 15,401 = 22,737 - 401 = 7,337, not the
+      published GROSS MARGIN of 7,338 -- a 1-Rand internal inconsistency AMONG BFAP's own three
+      printed numbers (not just my recomputation vs. theirs). Transcribed as printed (7338); the
+      1-Rand gap is real and small enough to be pure rounding noise, but it is a genuine finding
+      that the source's own three headline numbers don't perfectly self-reconcile.
+
+    - The two secondary per-tonne figures ARE consistent with the per-ha figures under normal
+      rounding: 15401/7.0 = 2200.14 -> 2200 (matches); 7338/7.0 = 1048.28 -> 1048 (matches);
+      15401/3248 = 4.741 -> 4.74 break-even yield (matches).
+
+  Structural shape (yield x price - itemised variable costs = gross margin) transfers cleanly to
+  African smallholder contexts per registry.yaml's own transferability note ("~30% of nodes need
+  rebuild"), but several specific cost nodes are South-Africa-specific: SAFEX-based price
+  discovery, commercial GM seed, hail-cover crop insurance, an own-machinery assumption (no
+  contracting cost), paid casual labour, and no irrigation electricity/water tariffs (dryland).
+
+  This is a GROSS MARGIN budget, not a full P&L: overhead/fixed costs, land tenure, financing
+  structure, tax, and depreciation are explicitly EXCLUDED by the source ("only direct variable
+  costs carried" per registry.yaml's gaps list). This gold validates the variable-cost/gross-margin
+  layer only.

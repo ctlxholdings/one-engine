@@ -1,0 +1,160 @@
+# Transcribed EXACTLY as published. Verified by hand against the primary PDF
+# (curl + pdftotext, machine-readable vector text). Includes both a gross
+# margin AND a break-even calculation -- two computed answers from one input
+# block.
+
+meta:
+  source: >
+    BFAP (Bureau for Food and Agricultural Policy) / PRF (Protein Research
+    Foundation) / Oil & Protein Seeds Development Trust / Grain SA, "Income &
+    Cost Budgets - Summer Crops 2024/25" (joint industry publication, Oct
+    2024), "2024/25 Income & Cost Budgets - Dryland Production Regions -
+    KwaZulu-Natal", Table 2.1 "Income & cost budgets for maize & soybeans for
+    KwaZulu-Natal (Bloedrivier Region) - Dryland" (maize column only), p.10.
+    https://www.opot.co.za/imgs/income-cost-budgets/2024-2025/prf-bfap-summer-crop-budgets-icb-2024-2025.pdf
+  accessed: "2026-08-11"
+  licence: >
+    No explicit licence/copyright statement found in the document; publicly
+    hosted at opot.co.za, joint industry publication (BFAP/PRF/Oil & Protein
+    Seeds Development Trust/Grain SA). Table itself credits "Source: BFAP,
+    GSA & Individual Farmers, 2024". Transcribed here, with full citation,
+    for engine-verification/research use only.
+  kind: trade_case
+
+inputs:
+  currency: ZAR
+  region: "KwaZulu-Natal (Bloedrivier Region)"
+  production_system: "Dryland"
+  crop: Maize
+  price_vintage: 2025    # "SAFEX SIMULATED PRICE / PRODUCER PRICE: 2025"
+
+  yield_deterministic_t_per_ha: 7.00
+  safex_simulated_price_R_per_ton: 3798
+
+  deduction_transport_differential_R_per_ton: 465
+  deduction_grade_differential_R_per_ton: 19
+  deduction_handling_and_commission_R_per_ton: 66
+  deduction_seed_breeding_technology_levy_R_per_ton: 0
+  total_deductions_R_per_ton: 550          # printed subtotal; see notes
+  price_premiums_R_per_ton: 0
+
+  variable_expenditure_contracting_R_per_ha: 0
+  variable_expenditure_crop_insurance_R_per_ha: 864
+  variable_expenditure_fertilizer_R_per_ha: 5289
+  variable_expenditure_lime_R_per_ha: 786
+  variable_expenditure_seed_R_per_ha: 4015
+  variable_expenditure_fuel_R_per_ha: 1421
+  variable_expenditure_herbicide_R_per_ha: 1219
+  variable_expenditure_insecticide_fungicide_R_per_ha: 703
+  variable_expenditure_marketing_costs_R_per_ha: 0
+  variable_expenditure_repairs_maintenance_R_per_ha: 767
+  variable_expenditure_casual_labour_R_per_ha: 335
+  variable_expenditure_aerial_spray_R_per_ha: 0
+  variable_expenditure_other_R_per_ha: 0
+
+  # THE RUNNER'S COST LINES — the source's own thirteen VARIABLE EXPENDITURE
+  # rows, transcribed line by line and NOT as the printed R15,401/ha total (a
+  # total would double-count against its own parts). Every figure is repeated
+  # verbatim from the block above; nothing new is read out of the source here.
+  #
+  # BASIS: RAND PER HECTARE, one 2024/25 dryland maize season — the same basis
+  # as the revenue this gold maps (GROSS INCOME R22,738/ha). The table's other
+  # basis, R/ton, is deliberately NOT used: the deduction rows (transport
+  # differential, grade differential, handling and commission) are per TON and
+  # are price deductions taken off the SAFEX price before gross income, not
+  # expenditure lines, so folding them in here would charge them twice.
+  #
+  # HAND CHECK: 0 + 864 + 5,289 + 786 + 4,015 + 1,421 + 1,219 + 703 + 0 + 767
+  # + 335 + 0 + 0 = 15,399, against the source's printed TOTAL VARIABLE
+  # EXPENDITURE of R15,401/ha — R2 SHORT, NOT exact. Kept exactly as printed;
+  # this is the same display-rounding gap the notes below already document
+  # (the source computes its total from unrounded components and then rounds
+  # each component for display). The discrepancy is the finding, not a defect
+  # to repair.
+  costs:
+    contracting: 0
+    crop_insurance: 864
+    fertilizer: 5289
+    lime: 786
+    seed: 4015
+    fuel: 1421
+    herbicide: 1219
+    insecticide_fungicide: 703
+    marketing_costs: 0
+    repairs_maintenance: 767
+    casual_labour: 335
+    aerial_spray: 0
+    other: 0
+
+notes: |
+  We independently re-derived the full cascade by hand:
+    - total_deductions = 465+19+66+0 = 550 -- EXACT match to printed Total
+      deductions (R550/ton).
+    - net_farm_gate_price = 3,798 - 550 = 3,248 -- EXACT match to printed Net
+      Farm Gate Price (R3,248/ton).
+    - gross_income (hand) = Yield x Net Farm Gate Price = 7.00 x 3,248 =
+      22,736, but the source prints GROSS INCOME = R22,738/ha -- a $2
+      rounding gap (consistent with the source computing gross income from
+      an unrounded net-farm-gate-price before display-rounding to the
+      nearest Rand, per the source's own general note flagged for this
+      table series: "GROSS INCOME sometimes prints R1-R6 away from Yield x
+      Net Farm Gate [Price]").
+    - total_variable_expenditure (hand) = 864+5289+786+4015+1421+1219+703+
+      767+335 = 15,399, but the source prints TOTAL VARIABLE EXPENDITURE =
+      R15,401/ha -- a $2 gap, same rounding-of-unrounded-components pattern.
+    - gross_margin_R_per_ha (hand, using the SOURCE'S OWN printed subtotals)
+      = 22,738 - 15,401 = 7,337, but the source prints GROSS MARGIN =
+      R7,338/ha -- a further $1 gap stacked on top of the two above.
+    - gross_margin_R_per_ton = 7,338/7.00 = 1,048.28 -> R1,048/ton -- EXACT
+      match to the printed value (using the source's own, already-rounded,
+      R/ha gross margin).
+    - total_variable_expenditure_R_per_ton = 15,401/7.00 = 2,200.14 ->
+      R2,200/ton -- EXACT match.
+    - break_even_yield = Total variable expenditure (R/ha) / Net Farm Gate
+      Price = 15,401/3,248 = 4.741 -> 4.74 t/ha -- EXACT match to printed
+      BREAK-EVEN YIELD.
+    - break_even_price = Total variable expenditure (R/ha) / Yield =
+      15,401/7.00 = 2,200.14 -> R2,200/ton -- EXACT match to printed
+      BREAK-EVEN PRICE (identical figure to total_variable_expenditure_R_per_ton
+      by construction, since yield here is exactly at the stated 7.00 t/ha).
+  Net effect: every headline figure (Net Farm Gate Price, both break-even
+  lines, both per-ton margin figures) reproduces EXACTLY; the three R/ha
+  money totals (Gross Income, Total Variable Expenditure, Gross Margin) each
+  carry a small ($1-2) rounding gap relative to a literal re-sum of their own
+  printed component lines, which the source's own methodology note
+  acknowledges is a display-rounding artifact from unrounded underlying
+  figures, not a computation error. All flagged, none corrected.
+
+expected:
+  net_farm_gate_price_R_per_ton: 3248
+  gross_income_R_per_ha: 22738              # see notes: hand-recompute gives 22,736
+  total_variable_expenditure_R_per_ha: 15401  # see notes: hand-recompute gives 15,399
+  total_variable_expenditure_R_per_ton: 2200
+  gross_margin_R_per_ha: 7338                # see notes: hand-recompute gives 7,337
+  gross_margin_R_per_ton: 1048
+  break_even_yield_t_per_ha: 4.74
+  break_even_price_R_per_ton: 2200
+
+# which of the source's own names we check against which of ours. All three
+# are the R/HA rows, so both sides of the margin are on one basis. This gold
+# previously declared no mapping at all and the runner inferred exactly these
+# three from the key names; they are written down here so the binding is
+# declared rather than guessed.
+mapping:
+  gross_income_R_per_ha: revenue
+  total_variable_expenditure_R_per_ha: cost_of_sales
+  gross_margin_R_per_ha: gross_margin
+
+tolerance:
+  abs: 2.0
+  why: >
+    the source's own display rounding, read not assumed (declared
+    2026-08-13): BFAP computes its R/ha money totals from unrounded
+    components and rounds for display, and the notes above document the
+    measured gaps on exactly the three mapped rows — R2 on GROSS INCOME
+    (prints 22,738 vs its own lines' 22,736), R2 on TOTAL VARIABLE
+    EXPENDITURE (15,401 vs 15,399), R1 on GROSS MARGIN (7,338 vs 7,337).
+    R2 is the largest gap the source exhibits on a mapped figure; the
+    R1-R6 span its methodology note quotes belongs to the monthly table
+    series this gold does not map. Anything beyond R2 is a real
+    divergence, not rounding.

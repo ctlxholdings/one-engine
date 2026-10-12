@@ -1,0 +1,141 @@
+id: ext_hay_tamu2023
+title: "Texas A&M AgriLife Extension — 2023 Estimated Costs and Returns per Acre, Coastal Bermudagrass Hay, North Texas Extension District 4"
+
+meta:
+  source:
+    - "Blake Bennet, Associate Professor and Extension Economist, Texas A&M AgriLife Extension Service, '2023 Estimated Costs and Returns per Acre — Coastal Bermudagrass Hay — North Texas Extension District 4': https://agecoext.tamu.edu/wp-content/uploads/2023/02/2023D4CoastalHay.pdf"
+  accessed: 2026-08-11
+  licence: public/extension
+  kind: trade_case
+  unit_of_analysis: "per acre (100-acre enterprise shown; per-acre and x100 enterprise-total columns both printed)"
+  mechanism: grow_then_sell
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  resolution: L3          # the source gives both a per-acre bale yield and
+  #                          a price per bale, so revenue is quantity x price
+  basis: "per acre, one season (150 bales/acre)"
+  periods: 1
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  crop_acres_in_enterprise: 100
+  revenue:
+    bermuda_hay: {quantity_bales_per_acre: 150.00, price_usd_per_bale: 5.00}
+  variable_costs_per_acre:
+    custom_baling: {quantity_bales: 150, price_usd_per_bale: 1.74}
+    custom_hay_hauling: {quantity_bales: 150, price_usd_per_bale: 1.45}
+    fertilizer_18_46_0: {quantity_lbs: 100, price_usd_per_lb: 0.66}
+    fertilizer_34_0_0: {quantity_lbs: 750, price_usd_per_lb: 1.04}
+    herbicide_pre_emerge_bermuda: {quantity_acre: 1, price_usd_per_acre: 10.25}
+    machinery_labor_tractors_self_propelled: {quantity_hours: 0.38, price_usd_per_hour: 12.00}
+    diesel_fuel_tractors_self_propelled: {quantity_gallons: 2.08, price_usd_per_gallon: 3.70}
+    repairs_maintenance_tractors: {quantity_acre: 1, price_usd_per_acre: 3.35}
+    repairs_maintenance_implements: {quantity_acre: 1, price_usd_per_acre: 0.23}
+    interest_on_credit_line: {rate_pct: 6.00, cost_usd_per_acre: 25.50, note: "base amount for the 6% rate is not itself printed as a separate line in the table; back-solving 25.50 / 0.06 = $425.00/acre implied base — see notes"}
+  fixed_costs_per_acre:
+    machinery_depreciation_tractors: {quantity_acre: 1, price_usd_per_acre: 3.44}
+    machinery_depreciation_implements: {quantity_acre: 1, price_usd_per_acre: 0.19}
+    equipment_investment_tractors: {base_usd: 26.76, rate_pct: 6.00}
+    equipment_investment_implements: {base_usd: 1.37, rate_pct: 6.00}
+    rent_coastal: {quantity_acre: 1, price_usd_per_acre: 12.00}
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  # `sale` restates `revenue.bermuda_hay` above as quantity x price. `costs`
+  # is the 15 genuine cost lines (10 variable + 5 fixed); the two
+  # `equipment_investment_*` fixed lines are computed from their own printed
+  # base x rate (26.76x6%=1.61; 1.37x6%=0.08), already shown in this file's
+  # own `total_fixed_costs_per_acre.composition_as_printed` below — nothing
+  # new is derived here.
+  sale: {quantity: 150.00, unit: bale, price: 5.00}
+  costs:
+    custom_baling: 261.00
+    custom_hay_hauling: 217.50
+    fertilizer_18_46_0: 66.00
+    fertilizer_34_0_0: 780.00
+    herbicide_pre_emerge_bermuda: 10.25
+    machinery_labor_tractors_self_propelled: 4.56
+    diesel_fuel_tractors_self_propelled: 7.70
+    repairs_maintenance_tractors: 3.35
+    repairs_maintenance_implements: 0.23
+    interest_on_credit_line: 25.50
+    machinery_depreciation_tractors: 3.44
+    machinery_depreciation_implements: 0.19
+    equipment_investment_tractors: 1.61
+    equipment_investment_implements: 0.08
+    rent_coastal: 12.00
+
+expected:
+  total_revenue_per_acre: {value: 750.00, label_as_printed: "Total Revenue"}
+  total_variable_costs_per_acre:
+    value: 1376.09
+    label_as_printed: "Total Variable Costs"
+    composition_as_printed: "261.00+217.50+66.00+780.00+10.25+4.56+7.70+3.35+0.23+25.50 = 1376.09"
+  planned_returns_above_variable_costs_per_acre: {value: -626.09, label_as_printed: "Planned Returns Above Variable Costs"}
+  breakeven_price_to_cover_variable_costs_usd_per_bale: {value: 9.17, composition_as_printed: "1376.09 / 150 bales = 9.1739 -> 9.17"}
+  total_fixed_costs_per_acre:
+    value: 17.32
+    label_as_printed: "Total Fixed Costs"
+    composition_as_printed: "3.44+0.19+1.61+0.08+12.00 = 17.32"
+  total_specified_costs_per_acre: {value: 1393.41, label_as_printed: "Total Specified Costs", composition_as_printed: "1376.09 + 17.32 = 1393.41"}
+  returns_above_specified_costs_per_acre: {value: -643.41, label_as_printed: "Returns Above Specified Costs"}
+  breakeven_price_to_cover_total_costs_usd_per_bale: {value: 9.29, composition_as_printed: "1393.41 / 150 bales = 9.2894 -> 9.29"}
+  enterprise_total_100_acres:
+    total_revenue: 75000.00
+    total_variable_costs: 137608.95
+    total_fixed_costs: 1731.59
+    total_specified_costs: 139340.53
+    returns_above_specified_costs: -64340.53
+
+mapping:
+  total_revenue_per_acre: revenue
+  total_specified_costs_per_acre: cost_of_sales
+  returns_above_specified_costs_per_acre: gross_margin
+
+# HALF A CENT, deliberately tight (every figure prints to the cent and the
+# per-acre column reconciles EXACTLY per the hand re-derivation below — this
+# is a NEGATIVE-margin gold, which the engine must reproduce as a negative
+# number, not just an absolute-value match).
+tolerance:
+  abs: 0.005
+  why: >
+    every figure is printed to the cent and the per-acre column reconciles
+    exactly (revenue, costs, and the negative margin all re-derive with
+    zero gap), so half a cent is exactly the display rounding
+
+notes: |
+  Fully re-derived by hand, per-acre column:
+    - Revenue: 150 bales x $5.00 = $750.00 exact.
+    - Every one of the 10 variable-cost line items multiplies out exactly (e.g. custom baling
+      150 x 1.74 = 261.00; fertilizer 34-0-0 750 x 1.04 = 780.00), and they SUM to exactly
+      $1,376.09 — matches the printed "Total Variable Costs" to the penny.
+    - Planned Returns Above Variable Costs: 750.00 - 1376.09 = -626.09, exact match.
+    - Breakeven price/bale (variable): 1376.09/150 = 9.1739 -> 9.17, exact match.
+    - Fixed costs: all 5 lines sum to $17.32 exact; Total Specified Costs 1376.09+17.32=1393.41
+      exact; Returns Above Specified Costs 750.00-1393.41=-643.41 exact; breakeven price/bale
+      (total) 1393.41/150=9.2894->9.29 exact.
+    - Enterprise-total (x100) column reproduces the per-acre figures almost exactly EXCEPT for
+      three lines where the source's per-acre "Total" column is itself a ROUNDED display of a
+      finer unrounded number: repairs/maint-tractors ($3.35/acre x100 = $335, but enterprise total
+      printed is $335.41), repairs/maint-implements ($0.23 x100=$23.00, enterprise printed $23.02),
+      machinery depreciation-tractors ($3.44 x100=$344, enterprise printed $343.55), depreciation-
+      implements ($0.19 x100=$19.00, enterprise printed $19.22). These are NOT arithmetic errors —
+      they are exactly what you'd expect if the per-acre "Total" column is rounded to 2dp for
+      display while the enterprise-total column is computed from the unrounded underlying value
+      x100. Total Fixed Costs enterprise ($1,731.59) is $0.01 off a hand-sum of its own 5 printed
+      enterprise-level lines (343.55+19.22+160.58+8.23+1200.00=1731.58), and Total Specified Costs
+      enterprise ($139,340.53) is likewise $0.01 off (137608.95+1731.59=139340.54) — both
+      immaterial penny-level rounding, not the double-counting or transposition kind of error.
+
+  ONE UNRESOLVED ITEM: "Interest on Credit Line" is printed as "6.00% | $25.50 | $2,549.91" with no
+  visible Quantity/Units cell (unlike every other line, which shows quantity x unit price = total).
+  Back-solving, $25.50 / 6% = $425.00/acre exactly — so the rate is being applied to an implied
+  $425/acre base that is not itself printed as a labelled line anywhere in the extracted table.
+  $425 does not equal the running sum of any obvious subset of the other variable-cost lines I can
+  construct (e.g. all items above the interest line sum to $1,350.59, not $425), so I cannot state
+  with confidence what the $425 base represents (e.g. it could be a "half financed, half season"
+  operating-capital convention specific to TAMU's template that isn't visible from a single-page
+  extraction). Transcribed the printed $25.50 and $2,549.91 verbatim; flagging the base as
+  UNVERIFIED rather than asserting a derivation I can't confirm.
+
+  This is a NEGATIVE-MARGIN gold at the printed 2023 hay price ($5.00/bale) and cost levels — a
+  useful contrast to the positive-margin maple syrup gold and the small-positive wheat-pasture
+  gold in this same batch.

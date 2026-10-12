@@ -1,0 +1,144 @@
+# Transcribed EXACTLY as published. Narrower in scope than the other nine
+# golds in this batch -- a single adjusting-entry estimate compared across
+# three methods, not a full journal-to-statements cycle -- included
+# because CLAUDE.md's brief names "accruals" as an explicit mechanism-
+# spread target and this is OpenStax's own worked multi-method comparison
+# for bad-debt estimation. No arithmetic inconsistency found (a clean
+# control case).
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting",
+    Section 9.7 "Appendix: Comprehensive Example of Bad Debt Estimation"
+    -- "Furniture Direct" (three bad-debt estimation methods on the same
+    year-end data).
+    https://openstax.org/books/principles-financial-accounting/pages/9-7-appendix-comprehensive-example-of-bad-debt-estimation
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0); see fc_openstax_clipem_cliff_barbershop.yaml for the
+    full verification note (same title, not repeated here).
+  kind: full_cycle
+  reaches: schedule
+  reaches_note: >
+    Reaches a verified bad-debt-expense estimate under three alternative
+    methods (each with its own adjusting journal entry) but NOT a
+    formatted income statement, balance sheet, or cash flow statement --
+    included for mechanism coverage (accrual/estimation) rather than
+    cycle depth. Do not treat `reaches: schedule` as satisfying a "full
+    cycle" test on its own.
+  mechanism: buy_resell
+  mechanism_note: >
+    Furniture Direct sells office furniture to large-scale businesses on
+    an in-house credit account -- a merchandiser (buy_resell) whose credit
+    policy generates the receivables this case estimates bad debt against;
+    no purchase/sale transaction detail is given, only year-end totals.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: the three methods are ALTERNATIVES for the SAME estimate, never
+  # three things that happened together -- a real company picks one. This
+  # file journals only the AGING method's own adjusting entry (the most
+  # granular of the three, and the one with the richest independently-
+  # checkable sub-detail: three buckets that foot to the AR total exactly).
+  # The source prints this exact entry verbatim
+  # (expected.balance_sheet_aging_method_usd.journal_entry), so it is
+  # copied rather than invented. No revenue or other cost line exists
+  # anywhere in this gold (`reaches: schedule`, explicitly not a full P&L),
+  # so mapping this to `operating_costs` -- rather than `net_profit` --
+  # avoids asserting a net-loss figure the source never claims; the
+  # income-statement and balance-sheet PERCENTAGE methods (67,500 and
+  # 59,600) are left unmodelled, which is the real limitation this file
+  # records: the comparison ACROSS methods, the actual point of this
+  # OpenStax section, is not testable through one T journal.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Furniture Direct"
+  year_end: "2018"
+  prior_year_allowance_for_doubtful_accounts_balance: 0
+
+  # ── added for the T-journal reader — copies the source's OWN published
+  #    aging-method adjusting entry verbatim; see meta above for why the
+  #    other two methods are not also journalled ─────────────────────────
+  accounts:
+    allowance_for_doubtful_accounts: asset
+  journal:
+    - {desc: "bad debt expense, balance-sheet aging method", amount: 58250,
+       debit: EXPENSE, credit: allowance_for_doubtful_accounts, period: 0}
+
+  year_end_totals_usd:
+    credit_sales: 1350000
+    accounts_receivable: 745000
+
+  accounts_receivable_aging_usd:
+    "0_30_days_past_due": 485000
+    "31_90_days_past_due": 180000
+    "over_90_days_past_due": 80000
+    total: 745000
+
+  estimation_method_rates:
+    income_statement_method_pct_of_credit_sales: 5
+    balance_sheet_method_pct_of_accounts_receivable: 8
+    balance_sheet_aging_method_rates_pct: {"0_30_days": 5, "31_90_days": 10, "over_90_days": 20}
+
+notes: |
+  No arithmetic inconsistency found; all three methods independently
+  re-derived and match the source exactly:
+  Income statement method: 1,350,000 x 5% = 67,500.
+  Balance sheet method: 745,000 x 8% = 59,600.
+  Balance sheet aging method: (485,000 x 5%) + (180,000 x 10%) +
+  (80,000 x 20%) = 24,250 + 18,000 + 16,000 = 58,250.
+  The three aging buckets (485,000 + 180,000 + 80,000 = 745,000) sum
+  exactly to the total Accounts Receivable figure given, confirming the
+  aging schedule and the balance-sheet-method AR base are the same
+  underlying $745,000.
+  All three adjusting entries debit Bad Debt Expense and credit Allowance
+  for Doubtful Accounts for their respective method's estimate (no
+  existing allowance balance to net against, since the prior year's
+  balance is explicitly zero).
+
+# which of the source's own names we check against which of ours
+mapping:
+  aging_method_bad_debt_expense: operating_costs
+
+# whole dollars, and the aging buckets foot exactly to AR (see notes) —
+# any gap is a transcription or engine defect
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and the three aging buckets
+    (485,000+180,000+80,000) foot exactly to the stated $745,000 AR total,
+    so any divergence here is real rather than display rounding
+
+expected:
+  # added top-level pointer for `mapping:` — mirrors
+  # balance_sheet_aging_method_usd.total_estimated_uncollectible below,
+  # the only one of the three methods this gold journals (see meta)
+  aging_method_bad_debt_expense: 58250
+
+  income_statement_method_usd:
+    rate_pct: 5
+    base: "credit_sales"
+    bad_debt_expense: 67500
+    journal_entry: {debit_bad_debt_expense: 67500, credit_allowance_for_doubtful_accounts: 67500}
+
+  balance_sheet_method_usd:
+    rate_pct: 8
+    base: "accounts_receivable"
+    bad_debt_expense: 59600
+    journal_entry: {debit_bad_debt_expense: 59600, credit_allowance_for_doubtful_accounts: 59600}
+
+  balance_sheet_aging_method_usd:
+    detail:
+      "0_30_days": {amount: 485000, rate_pct: 5, estimated_uncollectible: 24250}
+      "31_90_days": {amount: 180000, rate_pct: 10, estimated_uncollectible: 18000}
+      "over_90_days": {amount: 80000, rate_pct: 20, estimated_uncollectible: 16000}
+    total_estimated_uncollectible: 58250
+    journal_entry: {debit_bad_debt_expense: 58250, credit_allowance_for_doubtful_accounts: 58250}
+
+  method_comparison_usd:
+    income_statement_method: 67500
+    balance_sheet_method: 59600
+    balance_sheet_aging_of_receivables_method: 58250

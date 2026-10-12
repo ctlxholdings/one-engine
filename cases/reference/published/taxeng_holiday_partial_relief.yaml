@@ -1,0 +1,88 @@
+id: taxeng_holiday_partial_relief
+title: "OLD tax engine self-test — a tax holiday that steps DOWN (100% relief, then 50%, then none)"
+
+meta:
+  source:
+    - "This repository's OWN old tax engine — engine/layers/tax/run.py (521 lines), function `_relief_fraction()` (lines 263-268), the holiday-window lookup this gold exercises."
+    - "engine/tests/test_tax.py, class TestHoliday, test_partial_relief_window (lines 172-178) — the worked assertion this gold transcribes verbatim. Docstring: 'cashew: Zone B is 10 years — 5 at 100%, then 5 at 50%. Not 5.' (the test itself uses 2+2 years, not the cited 5+5, to keep the fixture short; see notes)."
+  licence: "Internal — this repository's own code and test suite, not an external publication. No third-party licence applies."
+  kind: engine_oracle
+  self_graded: true   # see taxeng_flat_profit.yaml for the full caveat this repeats
+  resolution: L4       # physics — a time-windowed relief fraction applied to an otherwise-flat tax
+  basis: "per period, 5 periods, annual grid — constant profit throughout, so every change in cash tax is caused by the holiday schedule alone"
+  periods: 5
+  mechanism: "not applicable — a fiscal overlay, not a trade mechanism (see taxeng_flat_profit.yaml)"
+  jurisdiction: "none as tested — 2+2 years, illustrative. The test's own docstring names a REAL West African investment-code shape (Cote d'Ivoire cashew processing, Zone B: 10 years at a stepped relief rate) as the motivation, but the numbers actually run here (2 years/100%, 2 years/50%) are the test's own shortened fixture, not the cited 5+5 statute figure — stated precisely rather than overclaimed."
+  currency: "unspecified in the source — abstract currency units"
+
+inputs:
+  tax_declaration:
+    grid: {periods: 5}
+    bases:
+      profit_before_allowances: [100.0, 100.0, 100.0, 100.0, 100.0]
+      turnover: [0.0, 0.0, 0.0, 0.0, 0.0]
+    taxes:
+      - id: cit
+        base: profit
+        rate: {kind: flat, value: 0.30}
+        holiday:
+          - {from: 0, years: 2, relief_fraction: 1.0}   # t=0,1: full relief
+          - {from: 2, years: 2, relief_fraction: 0.5}   # t=2,3: half relief
+          # t=4: no holiday clause covers it -> full rate
+
+expected:
+  cash_tax:
+    value: [0.0, 0.0, 15.0, 15.0, 30.0]
+    engine_field: "out['cash_tax']"
+    composition: >
+      Gross tax is CONSTANT at 30 every period (100 profit x flat 30%, unaffected by the holiday —
+      the holiday relieves the LIABILITY, not the base). t=0,1: 100% relief -> 30x(1-1.0)=0.
+      t=2,3: the SECOND clause now applies (50% relief) -> 30x(1-0.5)=15. t=4: neither clause
+      covers t=4 (clause 2 runs from=2, years=2, so it covers t=2 and t=3 only) -> full 30. NOT a
+      flat "5 years at 50%" or "5 years free then full rate" — the step is at t=2, mid-schedule.
+  taxes_cit_relief_holiday:
+    value: [30.0, 30.0, 15.0, 15.0, 0.0]
+    engine_field: "out['taxes']['cit']['relief_holiday']"
+    composition: "gross (constant 30) minus net (the cash_tax above) — the amount of tax FORGIVEN each period, reported as its own row so the trace shows the relief explicitly rather than only its net effect"
+  taxes_cit_gross:
+    value: [30.0, 30.0, 30.0, 30.0, 30.0]
+    engine_field: "out['taxes']['cit']['gross']"
+    composition: "flat 30% of the (unchanging) 100 profit, BEFORE the holiday is applied — confirms the holiday acts on the liability, not the base"
+
+mapping:
+  cash_tax: tax_cash_paid_this_period
+  taxes_cit_relief_holiday: holiday_relief_granted
+  taxes_cit_gross: tax_before_relief
+
+tolerance:
+  abs: 1.0e-9
+  why: >
+    Exact deterministic floating-point arithmetic, re-run directly from the cited test (see notes
+    for the exact reproduction command). No display rounding to forgive.
+
+notes: |
+  Reproduce with:
+    python3 -c "from engine.layers.tax.run import run; \
+    out = run({'grid': {'periods': 5}, \
+               'bases': {'profit_before_allowances': [100.0]*5, 'turnover': [0.0]*5}, \
+               'taxes': [{'id': 'cit', 'base': 'profit', 'rate': {'kind': 'flat', 'value': 0.30}, \
+                          'holiday': [{'from': 0, 'years': 2, 'relief_fraction': 1.0}, \
+                                      {'from': 2, 'years': 2, 'relief_fraction': 0.5}]}]}); \
+    print(out['cash_tax'], out['taxes']['cit']['relief_holiday'])"
+  -> [0.0, 0.0, 15.0, 15.0, 30.0]  [30.0, 30.0, 15.0, 15.0, 0.0] — matches `expected` exactly
+  (run myself, not copied blind from the test file).
+
+  WHY "PARTIAL RELIEF" AND NOT JUST "A HOLIDAY": the trivial version of this shape (100% relief
+  for N years, then the full rate) is a plain GATE on a driver path — a boolean "is this period
+  inside the holiday window", multiplying the tax to zero or not. The test transcribed here is
+  harder because it is TWO overlapping-in-spirit clauses at different relief fractions (1.0, then
+  0.5), which is a step function of MORE than two values and, per `_relief_fraction`'s own
+  docstring at run.py:263-268, takes the MAX applicable fraction where clauses could overlap
+  (they do not here, but the function is written to handle it). TAXENG_VERDICT.md treats this as
+  the "trivially expressible" shape of the five for exactly the reason above — a multi-level step
+  function of a period index is still just an expression over `when`/`size`, no new state needed —
+  and explains precisely why on that basis, not by assertion.
+
+  A field NOT transcribed here: `out['losses']['relief_forgone_tax']` has no meaning in this
+  gold (no `losses:` block is declared on this tax) — left out rather than reported as a
+  misleading zero.

@@ -1,0 +1,195 @@
+id: express_fiji_toll_road_pf
+title: "Express Fiji — 40-year toll-road concession, full project-finance model (construction + operations, non-recourse debt, tax, dividends)"
+
+meta:
+  source:
+    - "Question brief (PDF, 2 pages, 'Meta Brains' branded): benchmarks/tier1_pf_models/packt-pf-model/Project+Finance+Modeling+Test+-+Express+Fiji.pdf"
+    - "Solved workbook (10 sheets, real numbers not a template): benchmarks/tier1_pf_models/packt-pf-model/Financial+Model.xlsx"
+    - "Companion GitHub repo per BENCHMARK_REGISTRY.md: PacktPublishing/Project-Finance-and-Excel---Build-Financial-Models-from-Scratch"
+    - "Full path root: /Users/aliadoudou/Documents/CTLX_search/02_Active Search/021_Target _Companies/00_Active_Opportunities/99-Current/00-Consulting Frameworks/_generic_framework/benchmarks/tier1_pf_models/packt-pf-model/"
+  licence: "Packt GitHub repo = MIT (per BENCHMARK_REGISTRY.md). The PDF brief itself carries no licence statement on either of its 2 pages (just a 'Meta Brains' logo, no copyright line)."
+  kind: trade_case   # also engine_oracle-grade: a full 10-sheet solved workbook, not just a headline number
+
+inputs:
+  timing:
+    concession_duration_years: 40
+    construction_duration_years: 4
+    operations_duration_years: 36
+  traffic_first_operating_year:
+    passenger_car_veh_per_year: 3125000
+    heavy_vehicle_veh_per_year: 2800000
+    traffic_growth_rate_per_year: 0.02
+  tariff_2023_value:
+    passenger_car_gbp: 3.56
+    heavy_vehicle_gbp_STARTING_VALUE: 13.96   # PDF's literal stated 2023 tariff — NOT the answer, see expected.toll_rate_hv_solved_gbp
+    tariff_inflation_rate_per_year: 0.04       # "starting from contract award"
+  capex:
+    total_gbp: 300000000
+    per_year_of_construction_gbp: 75000000    # 4 years -> 300,000,000
+  opex:
+    maintenance_2023_gbp_per_year: 8900000     # "including heavy maintenance and SPV costs"
+    maintenance_inflation_rate_per_year: 0.04  # "starting from contract award"
+  financing:
+    structure: "non-recourse: equity + senior debt"
+    door_to_door_maturity_years: 40
+    gearing_debt_pct: 0.65
+    gearing_equity_pct: 0.35
+    base_interest_rate_pa: 0.015
+    fixed_rate_margin_pa: 0.0585
+    arrangement_fee_pct_of_debt: 0.015
+    engagement_fee_pct_of_margin: 0.35
+    repayment_type: constant_annuity_debt_service   # confirmed in solved workbook's 'Debt' sheet; the PDF brief does not dictate a repayment profile, only door-to-door maturity — this is a modelling choice resolved in the workbook, not the brief
+  tax_and_accounting:
+    corporate_tax_rate: 0.30
+    depreciation_method: straight_line
+    depreciation_period_years: 36   # "amortized on a linear basis over the term of the concession as of the commissioning of the motorway"
+    dividend_distribution_pct: 1.00  # 100% distribution policy, confirmed in workbook, not stated explicitly in the PDF
+  question_verbatim: "What should be the tariff charged to HVs in order to obtain an IRR of 23%?"
+
+  # THE RUNNER'S COST LINES — the solved workbook's own operating-cost row for
+  # the checked year. The figure is repeated verbatim from
+  # `expected.spot_check_year_5.opex_nominal_kgbp` below; nothing new is read
+  # out of the workbook here.
+  #
+  # BASIS: THOUSANDS OF GBP, CONCESSION YEAR 5 = THE FIRST OPERATING YEAR.
+  # This gold declares no `meta.basis`, and the choice is forced by the source:
+  # years 1-4 are construction and carry no revenue and no opex at all, so year
+  # 5 is the first year on which a revenue and a cost sit side by side. It is
+  # the same year and the same unit as the revenue mapped below
+  # (revenue_nominal_year_5_kgbp = 76,504.579389 k£), which is what makes the
+  # two sides comparable. The other transcribed years (20 and 40) carry their
+  # own escalated opex and stay in `expected` — a one-period template must not
+  # be handed three years of cost against one year of revenue.
+  #
+  # ONE LINE, BECAUSE THE SOURCE PUBLISHES ONE. The brief's cost side is a
+  # single undifferentiated figure — "maintenance ... including heavy
+  # maintenance and SPV costs", £8.9m at 2023 values, escalated 4% a year from
+  # contract award — so there is no breakdown to transcribe and no total to
+  # double-count against. The workbook models no cost of goods, no staff line
+  # and no separate SPV line; it inflates the one number. Recorded as the line
+  # it is rather than split into components the source never published.
+  #
+  # DELIBERATELY EXCLUDED: debt service (17,099.33), interest (15,768.56),
+  # principal (1,330.78) and the construction capex (75,000/yr, years 1-4).
+  # Financing is not a cost of sales, and capex is not an expense of the year
+  # it is spent in — the workbook itself depreciates it straight-line over the
+  # 36 operating years from commissioning.
+  #
+  # HAND CHECK: the workbook's own year-5 EBITDA line proves this is the whole
+  # cost side and it re-adds EXACTLY: revenue 76,504.579389 less opex
+  # 10,411.741184 = 66,092.838205 — identical to the printed EBITDA, to the
+  # sixth decimal of a thousand pounds (i.e. to the tenth of a penny).
+  costs:
+    maintenance_and_spv_costs: 10411.741184
+
+expected:
+  toll_rate_hv_solved_gbp: 19.382655   # Input Assumptions sheet, 'Base Case' column, row 'Toll Rate - Heavy Vehicule (HV)'; PDF's own rounded headline would read ~£19.38/HV
+  equity_irr: 0.229584   # Ratios sheet 'Equity IRR' row — confirms the solved tariff achieves the brief's 23% target (rounds to 23.0%)
+  project_irr: 0.179747  # Ratios sheet 'Project IRR' row (unlevered)
+  total_investment_kgbp_year1: -330058.75  # Ratios sheet, Total Investment column for year 1, thousands of GBP
+  dscr_annual_series:
+    unit: "x (ratio), thousands-of-GBP internal, one value per concession year 1-40"
+    note: "years 1-4 are construction (DSCR undefined -> 0.0); years 5-40 are operations"
+    values: [0.0, 0.0, 0.0, 0.0, 3.143166, 3.31482, 3.497243, 3.691102, 3.897107, 4.116009, 4.348606, 4.595745, 4.858326, 5.137302, 5.433688, 5.748556, 6.08305, 6.438379, 6.815829, 7.216763, 7.64263, 8.094964, 8.575397, 9.085659, 9.627584, 10.203122, 10.814339, 11.46343, 12.152723, 12.884687, 13.661944, 14.487275, 15.363632, 16.294146, 17.282139, 18.331138, 19.444884, 20.627345, 21.882733, 23.215515]
+  spot_check_year_1:
+    description: "first construction year"
+    construction_cost_kgbp: 75000.0
+    equity_injection_kgbp: 82610.739837
+  spot_check_year_5:
+    description: "first operations year"
+    revenue_nominal_kgbp: 76504.579389
+    opex_nominal_kgbp: 10411.741184
+    ebitda_kgbp: 66092.838205
+    cfads_kgbp: 53746.043089
+    debt_service_kgbp: -17099.33365
+    interest_kgbp: -15768.556207
+    principal_repayment_kgbp: -1330.777443
+    net_profit_kgbp: 28809.188604
+    dscr: 3.143166
+  spot_check_year_20:
+    description: "mid-life operations"
+    revenue_nominal_kgbp: 185434.312176
+    opex_nominal_kgbp: 18750.957666
+    ebitda_kgbp: 166683.35451
+    cfads_kgbp: 123401.840034
+    debt_service_kgbp: -17099.33365
+    net_profit_kgbp: 100990.200445
+    dscr: 7.216763
+    debt_balance_kgbp: 176325.522103
+  spot_check_year_40:
+    description: "final year / end of concession"
+    revenue_nominal_kgbp: 603754.414093
+    opex_nominal_kgbp: 41085.657297
+    ebitda_kgbp: 562668.756797
+    cfads_kgbp: 396969.844492
+    net_profit_kgbp: 386630.795378
+    dscr: 23.215515
+    closing_debt_kgbp: 0.0
+    cash_in_hand_kgbp: 115520.558295
+    total_assets_kgbp: 115520.558295
+
+  # flat aliases of the two year-5 figures already printed inside
+  # `spot_check_year_5` above, so `mapping` can name them without a dotted
+  # path (this corpus's mapping keys are top-level names — the same device
+  # cap_sugarmill_ncdc_solapur_2500tcd.yaml uses for its two Annexure II
+  # subtotals). NOT new readings: both values are character-for-character the
+  # ones in `spot_check_year_5`, and neither figure there was altered.
+  revenue_nominal_year_5_kgbp:
+    value: 76504.579389
+    unit: "k£ (thousands of GBP), nominal"
+    label_as_printed: "Operation sheet, first operating year — alias of spot_check_year_5.revenue_nominal_kgbp"
+  opex_nominal_year_5_kgbp:
+    value: 10411.741184
+    unit: "k£ (thousands of GBP), nominal"
+    label_as_printed: "Operation sheet, first operating year — alias of spot_check_year_5.opex_nominal_kgbp"
+
+# which of the source's own names we check against which of ours. Both are
+# year 5, both in k£ — one basis, so the margin between them is the
+# workbook's own EBITDA. The IRRs, the solved toll and the DSCR series are
+# deliberately NOT mapped: `irr` is in the canonical vocabulary but the
+# money-in-money-out template this gold derives does not compute one, and a
+# mapped figure the engine cannot answer reports PARTIAL rather than a pass.
+mapping:
+  revenue_nominal_year_5_kgbp: revenue
+  opex_nominal_year_5_kgbp: cost_of_sales
+
+tolerance:
+  abs: 0.001
+  why: >
+    the source is the solved workbook itself, read at full float
+    precision with openpyxl (declared 2026-08-13) — there is no display
+    rounding to absorb; the only truncation is this gold's own 6-decimal
+    transcription of the k£ figures, and 0.001 k£ (one pound) bounds it
+    with room. Anything beyond a pound is a real divergence.
+
+notes: |
+  Verified independently, not taken on trust: opened Financial+Model.xlsx directly with openpyxl
+  (data_only=True). Confirmed sheet names ['Input Assumptions','TBA','Construction','Operation',
+  'Amortization','Debt','P&L','CFS','Balance Sheet','Ratios'] — a full solved 10-statement model,
+  not a blank template. Confirmed the 'Input Assumptions' Base Case column matches every input
+  above verbatim (capex 300,000,000; base rate 0.015; margin 0.0585; gearing 0.65; maintenance
+  8,900,000; solved HV toll 19.382655390995694). Confirmed 'Ratios' sheet Equity IRR =
+  0.22958362329219462 (rounds to 23.0%, matching the brief's target) and Project IRR =
+  0.17974705561048743.
+
+  A pre-existing 'express_fiji_fixture.json' sits alongside the source files in the same folder —
+  it appears to be a prior transcription by whoever assembled this benchmark corpus (not by
+  Packt/Meta Brains). I used its 'schedules'/'outputs'/'spot_checks' structure as a map of where
+  to look, but re-derived and independently confirmed the headline numbers against the raw xlsx
+  myself rather than copying it blind (per project convention: re-verify, don't trust a prior
+  tool's self-report).
+
+  The PDF brief states the STARTING 2023 HV tariff as 13.96 £/HV in its narrative (section B) —
+  this is a red herring / initial assumption, NOT the answer to the brief's own closing question.
+  The three non-Base-Case scenario columns in the workbook's 'Input Assumptions' sheet (Scenario
+  2/3/4) still show HV toll at the unsolved 13.96 — only the Base Case column was goal-sought.
+  Not a defect, just a scope note: this gold covers the Base Case only.
+
+  Units mix GBP and thousands-of-GBP (k£) across sheets/rows — kept explicit per figure above
+  rather than normalizing, to stay verbatim to what's printed in each cell.
+
+  Full 40-column × 10-sheet period-by-period schedule (Construction/Operation/Amortization/Debt/
+  P&L/CFS/Balance Sheet, not just Ratios) exists in the source xlsx; only the headline outputs,
+  the full DSCR series, and 4 spot-check years are transcribed here to keep this file a reasonable
+  size. For any other line item, re-open Financial+Model.xlsx at the path in meta.source — do not
+  regenerate it from formulas, the point of a gold is the already-computed answer.

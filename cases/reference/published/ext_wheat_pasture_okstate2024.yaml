@@ -1,0 +1,153 @@
+id: ext_wheat_pasture_okstate2024
+title: "Oklahoma State University Extension CR-212 — Dryland Wheat Enterprise Budget, Grain and Pasture (dual-purpose wheat, 26 bu/acre grain + grazed forage)"
+
+meta:
+  source:
+    - "Roger Sahs, Amanda de Oliveira Silva, Eric DeVuyst, 'Should I Buy (or Retain) Stockers to Graze Wheat Pasture?', Oklahoma State University Extension Fact Sheet CR-212, published September 2024, Tables 1a/1b/1c: https://extension.okstate.edu/fact-sheets/should-i-buy-or-retain-stockers-to-graze-wheat-pasture"
+    - "Direct URL returns HTTP 403 to automated fetchers (Cloudflare bot check); content extracted from the Wayback Machine mirror's HTML table markup (parsed with BeautifulSoup, not a crude text scrape) to avoid cell-merging errors: https://web.archive.org/web/2024/https://extension.okstate.edu/fact-sheets/should-i-buy-or-retain-stockers-to-graze-wheat-pasture.html"
+  accessed: 2026-08-11
+  licence: public/extension
+  kind: trade_case
+  unit_of_analysis: "per acre, dual-purpose dryland wheat (grain harvested + forage grazed out before first hollow stem)"
+  mechanism: grow_then_sell
+  mechanism_note: "primary product is wheat GRAIN (grow_then_sell). The 'Small Grain Pasture' line is a joint/byproduct revenue stream — the wheat grower is paid for grazing rights on the same acre (priced at $0.75/lb of cattle gain per the source text), which is closer in character to a land-rental / rent_use transaction bundled into the same enterprise budget rather than the grower owning cattle. Transcribed as printed (a single per-acre budget with two revenue lines), with this duality flagged rather than forced into one mechanism tag."
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  resolution: L2          # revenue is TWO lines (grain + pasture) at two
+  #                          different unit bases — not one sale
+  basis: "per acre, one season (26 bu/acre grain + grazed forage)"
+  periods: 1
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  assumed_wheat_yield_bu_per_acre: 26
+  yield_basis: "statewide average wheat yield 2014-2023, reduced 18% for dual-purpose (grazed) production"
+  wheat_price_usd_per_bu: 5.50
+  pasture_rental_rate_usd_per_lb_gain: 0.75
+  production_table_1a:
+    wheat: {unit: Bu., price_usd: 5.50, quantity: 26, total_usd_per_acre: 143.00}
+    small_grain_pasture: {unit: Acre, price_usd: 123.50, quantity: 1, total_usd_per_acre: 123.50}
+  operating_inputs_table_1b:
+    wheat_seed: {unit: "Bu./acre", price_usd: 16.80, quantity: 2, total_usd_per_acre: 33.60}
+    fertilizer: {unit: Acre, price_usd: 64.99, quantity: 1, total_usd_per_acre: 64.99, composition_footnote: "NH3 100 lbs @ $0.36/lb + DAP 60 lbs @ $0.38/lb + UAN(28%N) 30 lbs @ $0.18/lb — LOWER CONFIDENCE: this footnote text was captured via a crude full-text scrape (not the clean table parser used for the rest of this gold) and its own arithmetic (100x.36+60x.38+30x.18=36.00+22.80+5.40=64.20) is $0.79 short of the printed $64.99 fertilizer total; treat the footnote wording as approximate, the $64.99 total as the verified figure"}
+    custom_harvest: {unit: Acre, price_usd: 31.44, quantity: 1, total_usd_per_acre: 31.44}
+    pesticide: {unit: Acre, price_usd: 33.41, quantity: 1, total_usd_per_acre: 33.41}
+    crop_insurance: {unit: Acre, price_usd: 15.00, quantity: 1, total_usd_per_acre: 15.00}
+    annual_operating_capital: {unit: Dollars, rate_pct: 9.00, base_usd: 88.45, total_usd_per_acre: 7.96}
+    machinery_labor: {unit: Hrs., price_usd: 18.25, quantity: 0.51, total_usd_per_acre: 9.31}
+    custom_hire: {unit: Acre, price_usd: 12.96, quantity: 1, total_usd_per_acre: 12.96}
+    machinery_fuel_lube_repairs: {unit: Acre, price_usd: 27.78, quantity: 1, total_usd_per_acre: 27.78}
+    other_expenses: {price_usd: 5.00, quantity: 1, total_usd_per_acre: 5.00}
+  fixed_costs_table_1c:
+    machinery_irrigation_interest: {unit: Dollars, rate_pct: 9.00, total_usd_per_acre: 9.96}
+    machinery_irrigation_taxes: {unit: Dollars, rate_pct: 1.00, total_usd_per_acre: 1.69}
+    machinery_irrigation_insurance: {unit: Dollars, rate_pct: 0.85, total_usd_per_acre: 0.94, note: "printed as '0.94' immediately after the 0.85% rate cell in the source's HTML table with no separate '$' glyph captured; verified by exact residual: 24.30-9.96-1.69-11.71 = 0.94"}
+    machinery_irrigation_depreciation: {unit: Dollars, total_usd_per_acre: 11.71}
+    land_interest: {rate_pct: 0.00, total_usd_per_acre: 0}
+    land_taxes: {rate_pct: 0.00, total_usd_per_acre: 0}
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  # `costs` is the 10 `operating_inputs_table_1b` lines only — deliberately
+  # EXCLUDING the 6 `fixed_costs_table_1c` lines ($24.30). Reason: this
+  # source's own "Returns Above All Specified Costs" (all-in, operating+
+  # fixed) row is the file's flagship finding — a printed SIGN ERROR
+  # ("$(0.75)" vs. the correct +$0.75, see notes below) — and `expected`
+  # already records that field WITHOUT a plain `value` key specifically so
+  # an automated check can't silently pick a side of that dispute. Mapping
+  # `costs` to the unambiguous operating-only total keeps this gold's
+  # checked figures (receipts, operating costs, returns above operating
+  # costs) all clean and undisputed, while the sign error stays visible in
+  # `expected`/`notes` for a human reader rather than being asserted either
+  # way by this file's `mapping`.
+  costs:
+    wheat_seed: 33.60
+    fertilizer: 64.99
+    custom_harvest: 31.44
+    pesticide: 33.41
+    crop_insurance: 15.00
+    annual_operating_capital: 7.96
+    machinery_labor: 9.31
+    custom_hire: 12.96
+    machinery_fuel_lube_repairs: 27.78
+    other_expenses: 5.00
+
+expected:
+  total_receipts_usd_per_acre: {value: 266.50, label_as_printed: "Total Receipts", composition_as_printed: "143.00 + 123.50 = 266.50"}
+  total_operating_costs_usd_per_acre:
+    value: 241.45
+    label_as_printed: "Total Operating Costs"
+    composition_as_printed: "33.60+64.99+31.44+33.41+15.00+7.96+9.31+12.96+27.78+5.00 = 241.45 exact"
+  returns_above_total_operating_costs_usd_per_acre: {value: 25.05, label_as_printed: "Returns Above Total Operating Costs", composition_as_printed: "266.50 - 241.45 = 25.05"}
+  total_fixed_costs_usd_per_acre:
+    value: 24.30
+    label_as_printed: "Total Fixed Costs"
+    composition_as_printed: "9.96+1.69+0.94+11.71+0+0 = 24.30 exact"
+  total_costs_operating_plus_fixed_usd_per_acre:
+    value: 265.75
+    label_as_printed: "Total Costs (Operating+ Fixed)"
+    composition_as_printed: "241.45 + 24.30 = 265.75"
+  returns_above_all_specified_costs_usd_per_acre:
+    value_as_printed: "$(0.75)"
+    label_as_printed: "Returns Above All Specified Costs"
+    my_computed_value: 0.75
+    sign_discrepancy: "SOURCE SIGN ERROR — see notes"
+
+# `returns_above_all_specified_costs_usd_per_acre` is deliberately NOT
+# mapped: it carries the source's own sign error (see notes below) and its
+# `expected` entry has no plain `value` key for exactly that reason. The
+# three figures below are all undisputed.
+mapping:
+  total_receipts_usd_per_acre: revenue
+  total_operating_costs_usd_per_acre: cost_of_sales
+  returns_above_total_operating_costs_usd_per_acre: gross_margin
+
+# HALF A CENT, deliberately tight (every figure here prints to the cent and
+# the three mapped figures all reconcile EXACTLY per the notes below).
+tolerance:
+  abs: 0.005
+  why: >
+    every figure is printed to the cent and receipts/operating-costs/
+    returns-above-operating-costs all reconcile exactly by hand, so half a
+    cent is exactly the display rounding
+
+notes: |
+  Re-extracted this page's tables with a proper HTML table parser (BeautifulSoup) after an initial
+  crude text-scrape produced garbled/unreconcilable numbers on this page's companion stocker-cattle
+  table (Table 3a) — see the excluded-candidate note in EXTENSION_INVENTORY.md. With clean table
+  parsing, every number here reconciles except one, and that one is a genuine, well-isolated source
+  error:
+
+  SOURCE SIGN ERROR, HIGH CONFIDENCE: the source prints "Returns Above All Specified Costs" as
+  "$(0.75)" for this budget. In this document's own notation, parentheses mean NEGATIVE — confirmed
+  by cross-checking the companion stocker-cattle table on the same page (Table 3c), which prints
+  "Returns Above all Specified Costs $(31.40)" and the article's own body text says "A negative
+  return to land, overhead, risk and management of $30 per head is projected" — so parentheses
+  reliably mean negative throughout this document. But for THIS table, Total Receipts ($266.50)
+  minus Total Costs ($265.75) = POSITIVE $0.75, not negative — and both of those inputs are
+  independently verified: Total Receipts is the exact sum of the two printed Table 1a lines
+  (143.00+123.50), and Total Costs is the exact sum of Total Operating Costs (itself an exact
+  10-line sum, 241.45) plus Total Fixed Costs (itself an exact 4-line sum after resolving the
+  insurance cell, 24.30). There is no way to construct $(0.75) [i.e. -0.75] from these two
+  correctly-summed, independently-verified numbers by ordinary subtraction. The source's OWN
+  upstream arithmetic (25.05 = 266.50-241.45, and 24.30 = its own 4 fixed-cost lines) is exactly
+  right; only the FINAL headline figure has its sign flipped from what its own inputs demand. This
+  reads as a manual sign-entry slip in the source's final summary row, not a conceptual or
+  compounding error — exactly the kind of isolated, well-bounded source defect this harvest is
+  meant to surface. Transcribed both the printed value ("$(0.75)") and my derived correct value
+  (+$0.75) explicitly in `expected` so a downstream check can decide which one to test against.
+
+  The "Annual Operating Capital" line ($7.96 = 9% x $88.45) and "fertilizer" line's underlying
+  per-nutrient footnote both cite bases/compositions I could not fully re-derive from a single-page
+  extraction (see the per-field notes above for exact gaps: $88.45 isn't the sum of any obvious
+  subset of the other 9 operating-input lines I could construct, and the fertilizer footnote's own
+  arithmetic falls $0.79 short of the line total). Both are flagged as lower-confidence sub-details
+  rather than asserted with false precision; the headline lines that matter for a P&L check
+  (receipts, operating costs, fixed costs, total costs) are all independently exact.
+
+  EXCLUDED FROM THIS GOLD: the same page's Table 3a/3b/3c (a 150-head stocker-cattle budget) was
+  investigated as a second candidate but dropped — Table 3a's "Stockers" production row carries a
+  "Quantity: 98 Hd." cell that does not reconcile against the row's own printed $/Head figure
+  ($1,593.87) under any shrink-percentage assumption I could construct from the article text (0%,
+  3%, or a double-shrink), and 98 does not match the "150 Steers" stated in the table's own title.
+  Per the harvest's hard constraint ("a number you cannot source is not transcribed"), that table
+  is left out of the ten transcribed golds; noted in EXTENSION_INVENTORY.md as a found-but-
+  unverified candidate rather than silently dropped.

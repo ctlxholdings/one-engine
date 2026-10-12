@@ -1,0 +1,70 @@
+meta:
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur les Métiers Rentables — Région de l'Adamaoua\", p.63, https://trust-fund-for-africa.europa.eu/document/download/0f7dde62-c3c3-4650-86de-d18aa361058e_en?filename=ETUDES%20SUR%20LES%20METIERS%20RENTABLES%20-%20ADAMAOUA"
+  registry_index: 50
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: buy_resell
+  jurisdiction: CM
+  currency: XAF
+  trade: "Friperie de sous-vêtements / secondhand underwear retail — régionale, Adamaoua region, one representative étalage (stall)"
+  isic_class: "4782 — Retail sale via stalls and markets of textiles, clothing and footwear"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: the source's own notes say this entry gives "only the annual
+  # aggregate purchase and sale figures, with no unit economics" (unlike the
+  # smoked-fish sibling, which prints cartons x price/carton) — so revenue
+  # and cost are read directly, never multiplied up from a quantity.
+  resolution: L2
+  basis: one representative secondhand-underwear stall, annual
+  periods: 1
+
+# One of only 2 `buy_resell` entries in the registry (with atlas_buyresell_smokedfish, entry
+# #16) — the complete set. The cleanest arithmetic of any of the ten transcribed here: every
+# input reconciles to the cent, no rounding gap, no source conflict.
+
+inputs:
+  # mirrors generators.vente_sous_vetements below
+  revenue: 4000000
+  # mirrors the two P&L movements below. `fonds_roulement` (300,000) is
+  # DELIBERATELY EXCLUDED — the source's own verified `benefice` computation
+  # (4,000,000 − 2,400,000 − 25,000 = 1,575,000) never subtracts it; it is a
+  # working-capital stock sitting outside the P&L, not a cost line.
+  costs:
+    matieres_premieres_intrants_achats: 2400000
+    autres_charges: 25000
+  generators:
+    vente_sous_vetements: {value: 4000000, unit: "FCFA / an"}
+  movements:
+    matieres_premieres_intrants_achats: {value: 2400000, unit: "FCFA / an", direction: out, kind: opex,
+      composition: "achats ballots — sourced from Douala"}
+    autres_charges: {value: 25000, unit: "FCFA / an", direction: out, kind: opex}
+    fonds_roulement: {value: 300000, unit: "FCFA", direction: out, kind: working_capital,
+      note: "one-time working-capital figure, source's own body text — this is one of a small minority of CEPs in this source family that states fonds de roulement explicitly rather than omitting it"}
+  grid: {period: annual, annualization: 1}
+
+mapping:
+  benefice: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints whole francs and its own notes verify the arithmetic
+    exactly (4,000,000 − 2,400,000 − 25,000 = 1,575,000); any gap is real
+
+expected:
+  benefice: {value: 1575000, unit: "FCFA / an", provenance: cited,
+    composition: "vente_sous_vetements (4,000,000) − matieres_premieres_intrants_achats (2,400,000) − autres_charges (25,000) = 1,575,000 — verified exact"}
+
+notes: |
+  Clean arithmetic: 4,000,000 − 2,400,000 − 25,000 = 1,575,000 exactly. `fonds_roulement`
+  (300,000, working capital) is NOT subtracted in this computation — it sits outside the P&L
+  as a stock the enterprise must hold, consistent with how working capital is treated
+  everywhere else in this source family (a balance-sheet item, not an income-statement line).
+
+  Ambiguities:
+  - The entire supply chain runs through Douala ("achats ballots"), and transport/logistics
+    from Douala to the Adamaoua sale point is not isolated as its own cost line — it is
+    presumably folded into the 2,400,000 FCFA purchase figure, but the source does not say so.
+  - No stock/turnover rate is given (how many "ballots" per year, at what unit cost) — unlike
+    the smoked-fish buy_resell case (48 cartons/year at a stated per-carton price), this entry
+    gives only the annual aggregate purchase and sale figures, with no unit economics to
+    cross-check them against.

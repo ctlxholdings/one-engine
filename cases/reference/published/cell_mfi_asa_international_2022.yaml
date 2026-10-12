@@ -1,0 +1,164 @@
+id: cell_mfi_asa_international_2022
+title: "ASA International Group plc — FY2022 Group results (microfinance loan book, IFRS 9 credit losses, interest income)"
+
+meta:
+  source:
+    - "ASA International Group plc, 'ASA International Group plc reports FY 2022 results' (unaudited preliminary results announcement), 18 April 2023: p.1 (headline KPIs), p.6 (Group Financial Performance table — OLP/Gross OLP/PAR>30), p.18 (Consolidated Income Statement), p.19 (Consolidated Statement of Financial Position). https://www.asa-international.com/media/2235/180423-asa-international-group-plc-2022-fy-results.pdf"
+  licence: >
+    Public regulatory-market disclosure by an LSE-listed company (LSE: ASAI), released via the
+    company's own investor-relations site specifically for public/market dissemination; no explicit
+    Creative-Commons-style reuse licence stated. Figures transcribed for verification/testing
+    purposes only.
+  kind: trade_case
+  resolution: L2   # itemised income-statement lines, with the source's own printed subtotals
+  basis: "Group consolidated, one financial year (FY2022, year ended 31 December 2022)"
+  periods: 1
+  # NO TAG FITS — a lender "rents out the use of money": sells the USE of a financial asset
+  # (interest, for the temporary use of principal) while KEEPING the asset (the loan is on the
+  # lender's own balance sheet, expected back). engine/ledger/mechanisms.py's two "rent_use" tags
+  # (convey, rent_asset) are hardcoded to ("rent_use","physical"); capacity_service is hardcoded to
+  # ("rent_use","human"). None reaches ("rent_use","financial"). See notes and CELLS_INVENTORY.md.
+  mechanism: null
+  cell: "rent_use x financial (Financial Landlord)"
+  jurisdiction: "Group (13 markets: Bangladesh, Ghana, India, Kenya, Myanmar, Nigeria, Pakistan, Philippines, Rwanda, Sierra Leone, Sri Lanka, Tanzania, Uganda, Zambia)"
+  currency: USD
+  trade: "ASA International Group plc — international group of microfinance institutions, group-consolidated loan book"
+
+inputs:
+  stock:
+    gross_olp_opening:
+      value: 430698
+      unit: "USD'000"
+      label_as_printed: "Gross OLP"
+      note: "FY2021 closing balance = FY2022 opening balance (p.6)"
+    gross_olp_closing:
+      value: 367535
+      unit: "USD'000"
+      label_as_printed: "Gross OLP"
+      note: "FY2022 closing balance (p.6)"
+    net_olp_closing:
+      value: 351151
+      unit: "USD'000"
+      label_as_printed: "OLP"
+      note: "outstanding loan portfolio net of the ECL reserve, off-book BC portfolio and interest receivable, per the source's own footnote (1), p.1"
+  costs:
+    interest_and_similar_expense: 40322
+    credit_loss_expense: 643        # the ECL/impairment charge under IFRS 9 — the "leak" on this stock
+    personnel_expenses: 60475
+    depreciation_property_and_equipment: 1816
+    depreciation_right_of_use_assets: 3931
+    other_operating_expenses: 33303
+    exchange_rate_differences: 1559
+    income_tax_expense: 27174
+    withholding_tax_expense: 1220
+  revenue_lines:
+    interest_income_eir:
+      value: 173856
+      unit: "USD'000"
+      label_as_printed: "Interest income calculated using Effective Interest Rate (EIR)"
+    other_interest_income:
+      value: 4123
+      unit: "USD'000"
+      label_as_printed: "Other interest and similar income"
+    other_operating_income:
+      value: 10351
+      unit: "USD'000"
+      label_as_printed: "Other operating income"
+  par_over_30_days:
+    value: 5.9
+    unit: "%"
+    label_as_printed: "PAR > 30 days"
+    note: "FY2022; FY2021 was 5.2%, FY2020 was 13.1% (p.1, p.6) — a per-period portfolio-quality ratio, the same shape as a herd's mortality rate"
+  ecl_reserve_balance_sheet:
+    fy2022: {value: 16900, unit: "USD thousand"}
+    fy2021: {value: 27500, unit: "USD thousand"}
+    label_as_printed: "reserves ... for expected credit losses"
+  number_of_clients: {value: 2299558, unit: clients}
+
+expected:
+  interest_and_similar_income:
+    value: 177979
+    unit: "USD'000"
+    label_as_printed: "Interest and similar income"
+    composition_as_printed: "interest_income_eir (173,856) + other_interest_income (4,123) = 177,979 — verified exact"
+  net_interest_income:
+    value: 137657
+    unit: "USD'000"
+    label_as_printed: "Net interest income"
+    composition_as_printed: "interest_and_similar_income (177,979) - interest_and_similar_expense (40,322) = 137,657 — verified exact"
+  total_operating_income:
+    value: 148008
+    unit: "USD'000"
+    label_as_printed: "Total operating income"
+    composition_as_printed: "net_interest_income (137,657) + other_operating_income (10,351) = 148,008 — verified exact"
+  net_operating_income:
+    value: 147365
+    unit: "USD'000"
+    label_as_printed: "Net operating income"
+    composition_as_printed: "total_operating_income (148,008) - credit_loss_expense (643) = 147,365 — verified exact"
+  profit_before_tax:
+    value: 46281
+    unit: "USD'000"
+    label_as_printed: "Profit before tax"
+    composition_as_printed: "net_operating_income (147,365) - personnel_expenses (60,475) - depreciation_property_and_equipment (1,816) - depreciation_right_of_use_assets (3,931) - other_operating_expenses (33,303) - exchange_rate_differences (1,559) = 46,281 — verified exact"
+  profit_for_the_period:
+    value: 17887
+    unit: "USD'000"
+    label_as_printed: "Profit for the period"
+    composition_as_printed: "profit_before_tax (46,281) - income_tax_expense (27,174) - withholding_tax_expense (1,220) = 17,887 — verified exact"
+
+# which of the source's own names we check against which of ours
+mapping:
+  net_interest_income: revenue
+  net_operating_income: gross_margin
+  profit_for_the_period: net_profit
+
+tolerance:
+  abs: 1
+  why: >
+    every figure is printed to the nearest USD thousand, and the full income-statement chain
+    re-adds EXACTLY to the thousand by hand (173,856+4,123=177,979; 177,979-40,322=137,657;
+    137,657+10,351=148,008; 148,008-643=147,365; 147,365-60,475-1,816-3,931-33,303-1,559=46,281;
+    46,281-27,174-1,220=17,887 — every one of these checked directly against the source's own
+    printed subtotal) — a gap beyond $1k is real, not display rounding.
+
+notes: |
+  WHY THIS IS "rent_use x financial" WITH NO TAG: the trade sold here is the USE of money — ASA's
+  operating subsidiaries advance principal (an asset, USD 367.5m gross at FY2022 close) and earn
+  interest for its use (USD 173.9m in FY2022) while the principal itself remains ASA's own asset,
+  expected back with the stock reduced only by write-offs/impairment (`credit_loss_expense`, THE
+  SAME LAW as animal mortality or storage shrinkage elsewhere in this corpus's library layer: a
+  stock that depletes at a per-period rate — here 643/367,535 thousand = 0.17% in FY2022, vastly
+  lower than FY2021's 37,509/430,698 = 8.7%, because 2021 carried the pandemic-era write-up).
+  PAR>30 (5.9% FY2022, up from 5.2% FY2021) is the portfolio-quality ratio — conceptually the same
+  "how much of the stock is compromised" question a herd's mortality rate answers, over a financial
+  rather than biological asset. This is exactly the test the brief that produced this gold asked
+  for: proving the physics layer's leak/depletion law is not agriculture-shaped by running it over
+  a loan book instead of a herd.
+
+  MECHANISM VOCABULARY GAP (see CELLS_INVENTORY.md): `engine/ledger/mechanisms.py`'s eight tags
+  each hardcode BOTH the right sold AND the asset kind together. The two "rent_use" tags that exist
+  (`convey`, `rent_asset`) are pinned to `("rent_use", "physical")`; `capacity_service` is pinned to
+  `("rent_use", "human")`. None reaches `("rent_use", "financial")`. Using any existing tag here
+  would silently misclassify this gold into the wrong cell via `classify()`'s hardcoded lookup — so
+  `mechanism:` is left null rather than forced, exactly the case this brief names as its own example
+  ("a lender, for instance").
+
+  WHY FY2022, NOT THE MORE DRAMATIC FY2021 (when `credit_loss_expense` was USD 37.5m against a
+  similar income base): FY2022 is the year with a FULLY legible income statement AND balance sheet
+  from the fetched pages, letting every subtotal above be independently re-verified by hand rather
+  than merely copied — see `tolerance.why`. FY2021's comparative column (restated) is printed in the
+  SAME statement and is available for a second, shock-year scenario if wanted later: interest and
+  similar income 189,767; credit loss expense (37,509); profit for the period 6,358 (all USD'000).
+
+  The Group's PAR>30 EXCLUDING India specifically is 3% (source's own bullet, p.1) — India alone
+  carries the deterioration (PAR>30 India 11.1% vs Group 5.9%, p.7), and the source explicitly
+  downsizes India's book by strategic choice (OLP India -35% YoY, collections focus) rather than by
+  market failure. A country-level version of this gold is available in the same source if a second,
+  contrasting instance of this cell is wanted later — e.g. Pakistan (OLP +30% in PKR, PAR>30 0.2% ->
+  0.7%, p.7) or India (OLP -74% in INR, PAR>30 19.7% -> 49.0%, p.7-8).
+
+  A related earlier ECL fact from the company's own FY2022 results, cited for context and NOT
+  re-derived into `expected` here (different reporting cut — balance-sheet reserve, not the P&L
+  charge): reserves for expected credit losses on the balance sheet fell from USD 27.5m (FY2021) to
+  USD 16.9m (FY2022), concentrated in India (57%) and Myanmar (20%) (p.4 of the same announcement).

@@ -1,0 +1,179 @@
+id: energy_irena_solar_pv_2023
+title: "IRENA 'Renewable Power Generation Costs in 2023' — utility-scale solar PV, global weighted averages"
+
+meta:
+  source:
+    - "IRENA (2024), Renewable Power Generation Costs in 2023, International Renewable Energy Agency, Abu Dhabi, ISBN 978-92-9260-621-3. Chapter 3 'Solar Photovoltaics': Total installed costs p.88 (Fig 3.3); Capacity factors p.96-97 (Table 3.1); O&M costs p.98; LCOE p.100 (Fig 3.10). Annex I 'Cost Metric Methodology': LCOE formula p.199; Table A1 'Standardised assumptions for LCOE calculations' p.200. https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2024/Sep/IRENA_Renewable_power_generation_costs_in_2023.pdf"
+  licence: "IRENA (2024) — CC BY-IGO per IRENA's standard publication terms; free to use/share with attribution."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ──────────────────────────────────────────
+  # This is a COST-side-only reference, structurally like the FAO broiler
+  # gold's "no revenue published" case (engine/golds.py:_find_revenue
+  # returns None gracefully for exactly this shape). IRENA's LCOE is a
+  # BREAK-EVEN cost metric ("the price at which revenues would equal
+  # costs" p.199) computed from capex + capacity factor + O&M + WACC +
+  # economic life — never an observed market tariff. No MWh-and-tariff
+  # pair exists to build a `sale:` block from, and forcing one by
+  # equating price-to-LCOE would be inventing the one thing IRENA is
+  # explicit it is NOT reporting (an observed revenue). See notes for the
+  # hand re-derivation this absence still allows.
+  resolution: L2       # four itemised RATE lines (per kW / per kWh), not
+  #                       a single quantity x price, and not a plain ratio
+  #                       over one base — closest rung is L2's "itemised
+  #                       money lines", generalised from lump sums to rates
+  basis: "1 kW of installed utility-scale capacity, one year, global weighted average of newly-commissioned projects"
+  periods: 1
+  # MECHANISM — the vocabulary's four rows in engine/ledger/mechanisms.py
+  # are RIGHTS sold (create / distribute / rent_use / match); solar PV
+  # sells ELECTRICITY, a new physical good whose ownership transfers to
+  # the offtaker at the meter — the generator keeps 100% operational
+  # control of the panel, so the offtaker is not "using the asset"
+  # (rent_use x physical = rent_asset) the way a car-hire or machinery
+  # customer does. That places it in create x physical (the Manufacturer
+  # cell), same row as grow_then_sell/make_to_order/extract. WITHIN that
+  # row the three tags differ only by TRANSFORMATION KIND: grow (time
+  # does the work, biological), extract (a source stock depletes),
+  # assemble (a recipe converts). Solar fits NONE cleanly — nothing
+  # biological, sunlight does not deplete with use (unlike the
+  # atlas_extract_freshfish stock), and there is no bill-of-materials
+  # recipe (no `consumes:` line at all: the "fuel" is free and
+  # unmetered). `make_to_order` (transformation "assemble") is the least
+  # wrong of the three, because a real machine performs a real physical
+  # conversion every period even with an empty BOM — but the field's own
+  # framing (a recipe converting priced inputs) does not describe what a
+  # panel does to sunlight. FINDING: the sixteen-cell grid has no
+  # transformation kind for "gate a free, non-depleting ambient flow
+  # through a capacity-factor derating with zero material throughput" —
+  # solar and wind both need it and neither gets it from grow/extract/
+  # assemble. Recorded here rather than guessed past.
+  mechanism: make_to_order
+  jurisdiction: ASK_country   # IRENA's figures are GLOBAL WEIGHTED
+  #   AVERAGES across every country in the IRENA Renewable Cost Database
+  #   — no single jurisdiction. An ASK_ hole is the honest form (per
+  #   fao_broiler.yaml's own precedent for "the source states no
+  #   country"); the currency is real (USD, as the source states
+  #   explicitly: "all costs ... in real, 2023 US dollars"), the place is
+  #   not.
+  currency: USD
+
+inputs:
+  capacity_factor:
+    value: 0.162
+    unit: fraction
+    label_as_printed: "global weighted average capacity factor (2023)"
+    source: "Table 3.1, p.97 — AC-to-DC capacity factor (footnote 34); 5th percentile 10.0%, 95th percentile 21.7%"
+  total_installed_cost_usd_per_kw:
+    value: 758
+    label_as_printed: "global weighted average total installed cost (2023, newly-commissioned)"
+    source: "Fig 3.3, p.88; 5th percentile USD 526/kW, 95th percentile USD 1,663/kW"
+  om_cost_usd_per_kw_yr:
+    value: 10.3
+    label_as_printed: "capacity weighted average utility-scale O&M cost (2023, all-in incl. insurance/asset management)"
+    source: "p.98 — 'a decline of 62% on 2010'; 2022 value was USD 13.3/kW/yr"
+  economic_life_years:
+    value: 25
+    source: "Table A1, p.200"
+  wacc_real:
+    oecd_and_china: 0.05
+    rest_of_world: 0.075
+    source: "Table A1, p.200 — '7.5% in 2010 falling to 5% in 2020' (OECD/China), '10% in 2010 falling to 7.5% in 2020' (rest of world); since 2022 IRENA's WACC benchmark tool gives country-specific values, but Table A1's simpler bands are what the report itself states as the STANDARDISED assumption (p.200)"
+  # F_t (fuel expenditure) = 0 for solar every period; not separately
+  # transcribed as a driver since IRENA states it structurally, not as
+  # a number.
+  lcoe_formula_as_printed: "LCOE = sum_t[(I_t + M_t + F_t)/(1+r)^t] / sum_t[E_t/(1+r)^t] — investment + O&M + fuel expenditures over discounted generation, r = discount rate (WACC), n = life of the system"
+
+expected:
+  lcoe_usd_per_kwh_2023:
+    value: 0.044
+    label_as_printed: "the global average cost of electricity (LCOE) from utility-scale solar PV"
+    source: "Foreword p.3 and Fig 3.10 p.100; 5th percentile USD 0.031/kWh, 95th percentile USD 0.110/kWh"
+  lcoe_usd_per_kwh_2010:
+    value: 0.460
+    label_as_printed: "LCOE 2010, Fig 3.10 — the reference point for the printed 90% decline (2010->2023)"
+  lcoe_decline_pct_2010_to_2023:
+    value: 0.90
+    label_as_printed: "the global weighted average LCOE of utility-scale PV plants declined by 90% between 2010 and 2023"
+
+# no CANON concept applies: LCOE is a BREAK-EVEN cost, never an observed
+# revenue/margin, so there is nothing to bind to `revenue`/`cost_of_
+# sales`/`gross_margin`. This gold is a PHYSICS/RATE reference for
+# `cases/golds/templates/energy_solar_pv.yaml`, not a run_gold trade case
+# — same standing as numpy_financial_irr_npv_pmt_mirr.yaml ("kernel
+# primitives, not a trade").
+mapping: {}
+
+tolerance:
+  abs: 0.001
+  why: >
+    every rate IRENA prints in this chapter is rounded to 3 significant
+    figures (758, 10.3, 0.044, 0.162) — a display convention, not a
+    computed exactness claim the way BFAP's whole-Rand table is, so a
+    tolerance of a tenth of a cent per kWh is the display rounding on the
+    LCOE figure specifically; the notes below show my own re-derivation
+    sits several PERCENT away, which is a modelling-assumption gap, not
+    a transcription one, and tolerance is not stretched to absorb it
+
+notes: |
+  HAND RE-DERIVATION, using IRENA's OWN published formula (p.199) and OWN published Table A1
+  assumptions (p.200) against its OWN published capacity factor / installed cost / O&M — exactly
+  the same check the BFAP gold performs on its own headline numbers:
+
+    annual generation per kW  = capacity_factor x 8,760 h/yr = 0.162 x 8,760 = 1,419.12 kWh/kW/yr
+    capital recovery factor   = r(1+r)^n / [(1+r)^n - 1], n = 25 yr
+      at r = 5%  (OECD/China band): CRF = 0.070952 -> annualised capex = 758 x 0.070952 = 53.78 $/kW/yr
+      at r = 7.5% (rest-of-world):  CRF = 0.089711 -> annualised capex = 758 x 0.089711 = 68.00 $/kW/yr
+    LCOE = (annualised capex + O&M) / annual generation
+      at r = 5%:   (53.78 + 10.3) / 1,419.12 = 0.0452 $/kWh  ->  2.6% ABOVE the published 0.044
+      at r = 7.5%: (68.00 + 10.3) / 1,419.12 = 0.0552 $/kWh  ->  25% ABOVE the published 0.044
+
+  The 5% (OECD/China) scenario lands within 3% of IRENA's own printed 0.044 — close enough to
+  corroborate the formula and Table A1 read correctly — while the 7.5% (rest-of-world) scenario
+  overshoots by a quarter. That is consistent with the report's own narrative: 2023 additions were
+  63% Asia-led and "China drove growth ... accounting for around 91% of all new Asian ... (and
+  about 63% of all global) installations" (p.82), so a GLOBAL weighted average sits far closer to
+  the OECD/China WACC band than the rest-of-world one. The residual 2.6% gap at 5% WACC is not
+  transcription error: since 2022 IRENA's real LCOE calc uses a country-by-country WACC BENCHMARK
+  TOOL (p.201-202), not the flat Table A1 band, so the true blended WACC behind 0.044 is some
+  weighted mix finer than the two bands this gold can re-derive from published numbers alone.
+
+  DEGRADATION — SEARCHED FOR, NOT FOUND. The task brief for this harvest expected a published
+  annual degradation rate (the physics the full-grammar template is meant to exercise via
+  `recipes.losses`). The word "degrad" appears ZERO times in this 211-page report (confirmed by
+  full-text search of every page) — IRENA's capacity-factor and LCOE methodology is silent on
+  within-life output decline; the capacity factor is treated as a single, flat annual number for
+  the plant's whole economic life. A commonly-cited industry rate (~0.5-0.7%/yr, e.g. NREL's
+  Annual Technology Baseline) exists in other literature, but bringing an EXTERNAL number into a
+  gold whose whole point is "every number is the SOURCE's own" would be exactly the invented
+  coefficient RULE 2 forbids. This gold therefore carries NO degradation figure; the full-grammar
+  template (`templates/energy_solar_pv.yaml`) states this same absence and picks a different,
+  clearly-labelled source for the one degradation number it needs.
+
+  MECHANISM — see meta.mechanism above for the full argument; short form: create x physical fits
+  (a new good, ownership transfers, generator keeps operational control), but none of the three
+  transformation kinds (grow/extract/assemble) actually describes "gate a free ambient flow
+  through a capacity-factor derating, no BOM". This is a genuine gap in the sixteen-cell grid for
+  solar AND wind, not a labelling mistake on my part.
+
+  NO COST SIDE: this gold gets no `inputs.costs:` block, which sounds wrong for a report titled
+  "Renewable Power Generation COSTS" and is not. IRENA publishes cost RATES on THREE INCOMPATIBLE
+  BASES and never a cost total on any of them:
+    total installed cost   USD   758   per kW          — a ONE-TIME capital outlay
+    O&M                    USD    10.3 per kW PER YEAR — an annual flow
+    LCOE                   USD     0.044 per kWh       — an outcome, not an input
+  Adding 758 to 10.3 would add a stock to a flow; adding either to 0.044 would add per-kW to
+  per-kWh. RULE 7 forbids both, and RULE 2 has nothing to verify against in any case: IRENA prints
+  no summed cost figure anywhere in Chapter 3, so there is no field to bind to `cost_of_sales`
+  under RULE 4.
+  The obvious candidate for a total — LCOE — is disqualified by IRENA's own definition of it
+  (p.199): "the price at which revenues would equal costs", a BREAK-EVEN metric produced BY a
+  discounted-cash-flow calculation over 25 years at an assumed WACC, not a cost line summed FROM
+  the two figures above. It cannot be both the total and the thing the lines are checked against.
+  The notes above already show what happens if one tries: the same two published lines run through
+  IRENA's own published formula land at 0.0452 (r=5%) or 0.0552 (r=7.5%) against a published
+  0.044 — a spread driven entirely by a discount-rate assumption the report does not fully
+  disclose. A `costs:` block would hard-code one of those choices as if it were transcription.
+  What the source DOES publish for the cost side, kept in `inputs` as rates and not as lines: the
+  installed cost with its 5th/95th percentiles (526 / 1,663 USD/kW), the O&M rate and its prior
+  year (13.3 USD/kW/yr in 2022), the 25-year economic life, and the two WACC bands. What it does
+  NOT publish: any project's actual annual cost, any currency total, any revenue, and — per the
+  notes above — any degradation rate.

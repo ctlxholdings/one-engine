@@ -1,0 +1,193 @@
+# Transcribed EXACTLY as published. Verified by hand against the primary PDF
+# (curl + pdftotext; page numbers confirmed against the document's own footer
+# sequence). This is a WITH-PROJECT vs WITHOUT-PROJECT (WP/WOP) incremental
+# gross-margin case, not a multi-year cash-flow series — the two "years" are
+# two parallel scenarios (before/after the irrigation investment), each a
+# steady state.
+
+meta:
+  source: >
+    IFAD, "Economic and Financial Analysis of Rural Investment Projects"
+    (Internal Guidelines, Volume 3: Case Studies, 184pp, 2016), Case study 10
+    "Small-scale irrigation", Example 1 "Integrated Agricultural Productivity
+    Project" (Bangladesh, World Bank, 2013) — Table 5 "Characterization of the
+    cropping pattern for Nilphamari District" (p.169) and Table 6 "Summary of
+    an average scheme (21 ha) for Nilphamari District (Rangpur)" (p.171).
+    https://openknowledge.fao.org/server/api/core/bitstreams/d4c754e1-8d57-4eb4-bf08-9409264a3348/content
+  accessed: "2026-08-11"
+  licence: >
+    (c) 2016 by IFAD and FAO. No Creative Commons marking found in the
+    document; publicly hosted via the FAO Open Knowledge repository.
+    Transcribed here, with full citation, for engine-verification/research
+    use only.
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: revenues_usd / costs_of_production_*_usd are direct aggregate
+  # money lines per scenario — no per-unit price is printed for the
+  # 98,211/126,000 kg production figures, so this is read directly, not
+  # multiplied up.
+  #
+  # UNRUNNABLE, deliberately, not a mislabel: every figure in `expected` is
+  # either a `{without_project: X, with_project: Y}` pair (which `_num()`
+  # cannot read — it only reads a bare scalar or `{value: ...}`) or a
+  # pct_change/abs_change DELTA between the two scenarios, and CANON has no
+  # "change" concept — only single-period absolute figures (revenue,
+  # cost_of_sales, gross_margin, ...). Mapping a delta onto an absolute
+  # canon name would misrepresent it (e.g. `revenues_abs_change_usd: 7408`
+  # is NOT total revenue), so `mapping` below is deliberately empty rather
+  # than guessing. `costs`/`revenue` below encode the WITHOUT-PROJECT
+  # scenario only — the one pairing the notes independently verify as
+  # EXACT (26,179 − 11,513 = 14,666) — so a reader can see the underlying
+  # economics genuinely reconcile even though this harness cannot check it
+  # against `expected`'s paired-dict shape.
+  resolution: L2
+  basis: >
+    per 21 ha average scheme, WITHOUT-PROJECT baseline only (mature
+    steady state, one of two WP/WOP scenarios — see UNRUNNABLE note above)
+  periods: 1
+  jurisdiction: BD
+  currency: USD
+
+inputs:
+  currency: "US$ (financial prices)"
+  scheme_average_size_ha: 21
+  discount_rate_pct: 12
+  project_lifetimes_evaluated_years: [15, 20]
+  # WITHOUT-PROJECT scenario only, mirroring revenues_usd.without_project
+  # and costs_of_production_excl_labour_usd.without_project below — the
+  # one pairing the notes verify EXACT. See UNRUNNABLE note above: nothing
+  # in `expected` is checkable against this via `mapping` today.
+  revenue: 26179
+  costs:
+    costs_of_production_excl_labour: 11513
+
+  # ── Table 5 — cropping pattern, Nilphamari District, p.169 ─────────────────
+  cropping_pattern_wop:
+    boro_rice_ha: 101
+    boro_rice_share_pct: 80
+    wheat_ha: 25
+    wheat_share_pct: 20
+    total_land_use_ha: 126
+  cropping_pattern_wp:
+    boro_rice_ha: 126
+    boro_rice_share_pct: 100
+    total_land_use_ha: 126
+
+  # ── Table 6 footnote, p.171 — the WP/WOP scenario definition ────────────────
+  wp_scenario_note: "100% of the area sown with Boro rice in the WP situation"
+  wop_scenario_note: "80% sown with Boro rice and 20% with wheat in the WOP situation"
+
+  # ── Table 6 — the two "given" money/quantity lines the rest is built from ──
+  production_kg: {without_project: 98211, with_project: 126000}
+  revenues_usd: {without_project: 26179, with_project: 33587}
+  costs_of_production_excl_labour_usd: {without_project: 11513, with_project: 12929}
+  costs_of_production_incl_hired_labour_usd: {without_project: 16903, with_project: 19845}
+  labour_pers_day: {without_project: 1536, with_project: 1970}
+  family_labour_pers_day: {without_project: 482, with_project: 619}
+  irrigation_fees_usd: {without_project: 5024, with_project: 4604}
+  irrigation_system_total_cost_usd: {without_project: 1426, with_project: 1349}
+
+notes: |
+  "WOP" = without project (baseline, before the buried-pipe irrigation
+  investment); "WP" = with project, "for a year after the project has reached
+  maturity" (i.e. this is a mature-state comparison, not a construction-year
+  cash flow).
+
+  We independently re-derived the arithmetic backbone of Table 6 by hand and
+  found it exact except for a cluster of $1 rounding artifacts, all in the
+  same direction as flagged below (consistent with the source rounding each
+  cell independently from unrounded underlying figures rather than deriving
+  every cell from the other printed, already-rounded cells):
+    - Gross margin (WOP) = Revenues - Costs excl. labour: 26,179 - 11,513 =
+      14,666 -- EXACT match to the printed Gross margin (WOP) of 14,666.
+    - Gross margin (WP) = 33,587 - 12,929 = 20,658 by hand, but the source
+      prints Gross margin (WP) = 20,657 -- off by $1. FLAGGED, not corrected.
+    - Gross margin (incl. hired labour) reproduces EXACTLY both ways: WOP
+      26,179-16,903=9,276; WP 33,587-19,845=13,742. Both match the source.
+    - Return to labour = Gross margin (excl. hired labour, i.e. the row
+      above) / Labour (pers. day): WOP 14,666/1,536=9.549 -> 9.5; WP
+      20,657/1,970=10.486 -> 10.5. Both match the printed Return to labour
+      exactly (using the source's own, possibly-off-by-$1, WP gross margin).
+    - Return to family labour = Gross margin (incl. hired labour) / Family
+      labour: WOP 9,276/482=19.24 -> 19.2; WP 13,742/619=22.20 -> 22.2. Both
+      match exactly.
+    - The "% change" and "Abs. change" columns (not transcribed as separate
+      fields here, since they are arithmetically redundant with the two
+      scenario values above) mostly reproduce cleanly from the WOP/WP pair,
+      but four rows show a $1/1-unit gap between our hand-computed change and
+      the source's printed change column: Costs of production (incl. hired
+      labour) abs. change hand-computed 2,942 vs printed 2,941; Gross margin
+      abs. change hand-computed 5,991 (using the source's own, already-$1-off,
+      WP figure of 20,657) vs printed abs. change 5,992 -- i.e. TWO stacked
+      $1 discrepancies on this one row; Labour (pers. day) abs. change
+      hand-computed 434 vs printed 435; Family labour abs. change
+      hand-computed 137 vs printed 136. All four are transcribed as printed
+      in `expected` (we did not have access to the underlying unrounded
+      figures that would resolve them).
+    - "Net margin considering irrigation fees (i)" and "Net margin system
+      (ii)" (both printed in the source, included in `expected` below for
+      completeness) could NOT be reconciled to any combination of the other
+      rows visible in this table using a formula we could verify by hand --
+      the text explains only that "(i)" uses irrigation FEES and "(ii)" uses
+      actual irrigation COSTS as the two different bases, but the exact
+      linkage to Gross margin is not shown in the excerpt we could read
+      (possibly involves a land-rent or other cost component not itemised in
+      Table 6). Flagged as an ambiguity, not a source error -- transcribed
+      verbatim.
+  Two-column academic layout in the source PDF interleaves narrative and
+  table text in `pdftotext` extraction around Tables 2-5 (pump/energy/
+  construction-cost detail); we relied only on the single-column, unambiguous
+  Table 6 block for the money figures above, and on the clean Table 5 block
+  for the cropping pattern.
+
+# deliberately empty — see the UNRUNNABLE note under meta above. Every
+# expected figure is either a without_project/with_project pair (unreadable
+# by `_num()`) or a scenario-to-scenario delta (no canon equivalent); there
+# is no bare absolute figure to point at.
+mapping: {}
+
+tolerance:
+  abs: 1.0
+  why: >
+    the WOP gross margin reconciles exactly (26,179 − 11,513 = 14,666, see
+    notes) — kept for consistency and so the reported unrunnable reason is
+    the true structural one ("nothing... maps"), not a missing-tolerance
+    complaint
+
+expected:
+  gross_margin_usd: {without_project: 14666, with_project: 20657}   # WP: see notes ($1 rounding)
+  gross_margin_pct_change: 40.9
+  gross_margin_abs_change_usd: 5992    # see notes: hand-recompute gives 5,991
+
+  gross_margin_incl_hired_labour_usd: {without_project: 9276, with_project: 13742}
+  gross_margin_incl_hired_labour_pct_change: 48.1
+  gross_margin_incl_hired_labour_abs_change_usd: 4466
+
+  return_to_labour_usd_per_pers_day: {without_project: 9.5, with_project: 10.5}
+  return_to_labour_pct_change: 9.8
+  return_to_labour_abs_change_usd: 0.9
+
+  return_to_family_labour_usd_per_pers_day: {without_project: 19.2, with_project: 22.2}
+  return_to_family_labour_pct_change: 15.5
+  return_to_family_labour_abs_change_usd: 3.0
+
+  production_pct_change: 28.3
+  production_abs_change_kg: 27789
+  revenues_pct_change: 28.3
+  revenues_abs_change_usd: 7408
+  costs_excl_labour_pct_change: 12.3
+  costs_excl_labour_abs_change_usd: 1416
+  costs_incl_hired_labour_pct_change: 17.4
+  costs_incl_hired_labour_abs_change_usd: 2941   # see notes: hand-recompute gives 2,942
+  labour_pct_change: 28.3
+  labour_abs_change_pers_day: 435                # see notes: hand-recompute gives 434
+  family_labour_pct_change: 28.3
+  family_labour_abs_change_pers_day: 136          # see notes: hand-recompute gives 137
+
+  # net margins (i)=fee-based, (ii)=actual-cost-based; see notes re: derivation
+  net_margin_considering_irrigation_fees_usd: {without_project: 7042, with_project: 10876}
+  net_margin_considering_irrigation_fees_pct_change: 54.4
+  net_margin_considering_irrigation_fees_abs_change_usd: 3834
+  net_margin_system_usd: {without_project: 10640, with_project: 14131}
+  net_margin_system_pct_change: 32.8
+  net_margin_system_abs_change_usd: 3491

@@ -1,0 +1,243 @@
+# YIELD / CO-PRODUCT HARVEST — a rice mill: ONE input (paddy), FOUR separately
+# priced outputs (milled rice sold on own account, a MILLING SERVICE sold on
+# the same machine, bran, husk), each with its own yield percentage AND its own
+# price printed by the source. This is the STRONG shape the brief asks for:
+# the source prints tonnes-in, the yield %, the tonnes-out and the price/MT
+# separately, so every factor of every product is testable, not just the
+# product of the factors.
+#
+# It is also a source that CONTRADICTS ITSELF, and that is the reason this file
+# exists rather than a cleaner one. The "Total income" ROW of the profitability
+# table does not equal the sum of the four income lines printed directly above
+# it in the same table — it is the correct sum SHIFTED ONE YEAR TO THE RIGHT.
+# Everything downstream of it (PBDIT, tax, PAT, the break-even table) is
+# computed from the CORRECT, unshifted sum, which is how the shift is provable
+# rather than merely suspected. See notes for the full re-derivation.
+#
+# THIS FILE TAKES YEAR 3 — 90% capacity utilisation, the first year at the
+# plateau (Years 3-5 are identical in physical terms) — restated as a single
+# period, the same way sep_fao_bl811e_oilmill_steadystate.yaml lifts Beta Ltd's
+# Year 3.
+
+meta:
+  source: >
+    Government of West Bengal, Directorate of Food Processing Industries &
+    Horticulture, "Model Project on Rice Milling", prepared by NABARD
+    Consultancy Services Private Limited (NABCONS), 11 pp. Sections XI
+    ("Project Profitability" — Installed Capacity and Capacity Utilization,
+    p.7; Yield and Production, Sales Revenue, Profitability Calculations, p.8),
+    XII ("Financial Parameters" — Break Even Analysis, p.9) and XIII
+    ("Assumptions", p.11).
+    https://www.wbfpih.wb.gov.in/assets/user_uploads/directorate_fpi/486772847_1484835828.pdf
+  accessed: "2026-08-12"
+  licence: >
+    Government of West Bengal / NABCONS publication, publicly hosted PDF on a
+    Government of West Bengal domain; no explicit reuse licence stated in the
+    document. Transcribed here, with full citation, for engine-verification /
+    research use only.
+  kind: trade_case
+  resolution: L2
+  # L2, not L3: four priced outputs, and the L3 `sale:` block
+  # (engine/golds.py:to_template) is ONE {quantity, unit, price} triple.
+  # A single combined `revenue` is stated instead, exactly as the oil-mill
+  # sibling does, with the disaggregation kept alongside it.
+  basis: >
+    one rice mill, 0.5 MT paddy/hour installed, 16 hours/day (two shifts),
+    225 days/year = 1,800 MT paddy/year at 100% utilisation; one third of
+    capacity (600 MT) is CUSTOM MILLING (the customer owns the paddy and takes
+    the by-products away), two thirds (1,200 MT) is milled and traded on own
+    account. YEAR 3 of the 5-year projection, at 90% capacity utilisation.
+  periods: 1
+  mechanism: separate
+  # `separate` is the honest tag for the physical event (one paddy stream ->
+  # rice + bran + husk), but note that ONE of the four revenue lines is not a
+  # product at all: "Milling Charges for Milled Rice On custom Basis" is a
+  # SERVICE sold on the same machine, priced per MT of rice milled for a third
+  # party whose paddy the mill never owns. A single asset earning both a
+  # product margin and a tolling fee, on a split of its own capacity, is not
+  # expressible as one mechanism — see notes.
+  jurisdiction: IN          # West Bengal, India
+  currency: INR
+
+inputs:
+  # ── capacity, and the split of it (Section XI, p.7) ───────────────────────
+  installed_capacity_mt_paddy_per_hour: 0.5
+  hours_per_day: 16
+  operating_days_per_year: 225
+  installed_capacity_mt_paddy_per_year: 1800    # 0.5 x 16 x 225
+  capacity_utilisation_pct: 90                  # Year 3 (Yr1 50%, Yr2 80%)
+  paddy_custom_milled_mt_at_100pct: 600         # one third — customer's paddy
+  paddy_own_account_mt_at_100pct: 1200          # two thirds — mill's own paddy
+
+  # ── the yield split, stated explicitly (Section XI, "Yield and Production")
+  # NOTE the source prints these three yields against the 1,200 MT own-account
+  # stream only; the custom stream's bran and husk are NOT the mill's, and the
+  # source says so in its own footnote under the Sales Revenue table.
+  milled_rice_yield_pct: 62.0
+  bran_yield_pct: 5.0
+  husk_yield_pct: 18.0
+  # 62 + 5 + 18 = 85 -- 15% of the paddy is NOT accounted for anywhere in the
+  # document. See notes: this is a printed gap, not a transcription gap.
+  milled_rice_mt_at_100pct: 744                 # 1200 x 62%
+  custom_milled_rice_mt_at_100pct: 372          # 600 x 62%
+  bran_mt_at_100pct: 60                         # 1200 x 5%
+  husk_mt_at_100pct: 216                        # 1200 x 18%
+
+  # ── prices (Section XI, "Sales Revenue", Rs/MT) ───────────────────────────
+  price_milled_rice_inr_per_mt: 20500
+  price_custom_milling_charge_inr_per_mt: 1200  # a SERVICE fee, per MT milled
+  price_bran_inr_per_mt: 3000
+  price_husk_inr_per_mt: 1000
+
+  # ── Year 3 quantities and revenue (90% of the 100% column) ────────────────
+  milled_rice_mt_year3: 669.6                   # 744 x 90% (see notes: the
+                                                # source prints only the money,
+                                                # never this tonnage)
+  milled_rice_revenue_inr_year3: 13726800       # printed as 137.268 lakh
+  custom_milling_revenue_inr_year3: 401760      # printed as 4.0176 lakh
+  bran_revenue_inr_year3: 162000                # printed as 1.62 lakh
+  husk_revenue_inr_year3: 194400                # printed as 1.94 lakh (rounded
+                                                # from 1.944)
+  revenue: 14484600                             # 144.85 lakh -- the source's
+                                                # own Year-3 figure, taken from
+                                                # the BREAK EVEN table (p.9),
+                                                # which is the place the
+                                                # document prints it correctly
+  costs:
+    total_expenditure_year3: 10885000           # 108.85 lakh, Section XI,
+                                                # "Profitability Calculations".
+                                                # The source NEVER itemises
+                                                # this -- no paddy price, no
+                                                # power, no packing line
+                                                # appears anywhere in the
+                                                # document (see notes: GAPS).
+
+expected:
+  # every figure below is PRINTED by the source; none is inferred
+  installed_capacity_mt_paddy_per_year: 1800
+  milled_rice_mt_at_100pct: 744
+  custom_milled_rice_mt_at_100pct: 372
+  bran_mt_at_100pct: 60
+  husk_mt_at_100pct: 216
+  total_sales_at_100pct_inr: 16094000            # 160.94 lakh
+  milled_rice_revenue_inr_year3: 13726800
+  custom_milling_revenue_inr_year3: 401760
+  bran_revenue_inr_year3: 162000
+  husk_revenue_inr_year3: 194400
+  total_income_inr_year3: 14484600               # 144.85 lakh (break-even tbl)
+  total_expenditure_inr_year3: 10885000          # 108.85 lakh
+  pbdit_inr_year3: 3600000                       # 36.00 lakh
+  profit_after_dep_and_interest_inr_year3: 1866000   # 18.66 lakh
+  tax_inr_year3: 672000                          # 6.72 lakh @ 36%
+  padit_inr_year3: 1194000                       # 11.94 lakh
+  break_even_pct_year3: 34.78                    # printed, p.9
+  average_dscr: 1.52
+  irr_pct: 38.24
+
+mapping:
+  total_income_inr_year3: revenue
+  total_expenditure_inr_year3: cost_of_sales
+  pbdit_inr_year3: gross_margin
+  # PBDIT is income minus total expenditure and nothing else in this document
+  # (verified below to the rupee for all five years), so it is the source's own
+  # gross margin under a different name -- not a re-labelling of an EBITDA that
+  # had other deductions in it.
+
+tolerance:
+  abs: 5000.0
+  why: >
+    the source prints money in LAKHS to two decimals (Rs 0.01 lakh = Rs 1,000)
+    and rounds inconsistently between tables -- husk Year 3 is printed 1.94 in
+    the profitability table where the exact figure is 1.944, and the same
+    year's total is printed 144.85 where the exact sum is 144.846. Rs 5,000 is
+    half a printing unit either side of a four-line sum, i.e. the largest gap
+    that can be created purely by the source's own two-decimal-lakh rounding.
+    Anything beyond it is a real disagreement.
+
+notes: |
+  RE-ADDITION, done by hand (python) against the printed figures:
+
+  CAPACITY
+    0.5 MT/h x 16 h x 225 days                  = 1,800 MT   -- printed 1800 OK
+    1,800 x 1/3 = 600 custom; x 2/3 = 1,200 own -- printed 600 / 1200 OK
+
+  YIELD AND PRODUCTION (the source's own table, at 100%)
+    1,200 x 62%  = 744 MT milled rice           -- printed 744    OK
+      600 x 62%  = 372 MT custom-milled rice    -- printed 372    OK
+    1,200 x  5%  =  60 MT bran                  -- printed 60     OK
+    1,200 x 18%  = 216 MT husk                  -- printed 216    OK
+    Note the base: rice/bran/husk are struck on the 1,200 MT OWN-ACCOUNT
+    stream, the milling-charge line on the 600 MT CUSTOM stream. The source
+    never says this in the yield table; it is forced by the numbers and
+    confirmed by the footnote under the sales table ("For milling on custom
+    basis by products like bran and husk produced during milling will be taken
+    away by the customer himself").
+
+  SALES REVENUE AT 100% (Rs lakh)
+    744 x 20,500 = 152.52   -- printed 152.52  OK (exact)
+    372 x  1,200 =   4.464  -- printed 4.46    OK (rounded down, 0.004 lakh)
+     60 x  3,000 =   1.80   -- printed 1.80    OK (exact)
+    216 x  1,000 =   2.16   -- printed 2.16    OK (exact)
+    sum          = 160.944  -- printed 160.94  OK (rounded, 0.004 lakh)
+
+  THE CONTRADICTION — the "Total income" row is SHIFTED ONE YEAR RIGHT.
+    Correct per-year sums of the four income lines the source itself prints:
+      Yr1 (50%)  76.26  + 2.232  + 0.90 + 1.08  =  80.472
+      Yr2 (80%) 122.016 + 3.5712 + 1.44 + 1.728 = 128.755
+      Yr3 (90%) 137.268 + 4.0176 + 1.62 + 1.944 = 144.846
+      Yr4, Yr5  identical to Yr3                = 144.846
+    The row the source PRINTS as "Total income":
+      Yr1  74.89   Yr2  80.47   Yr3 128.76   Yr4 144.85   Yr5 144.85
+    i.e. Yr2..Yr5 of the printed row are the CORRECT sums for Yr1..Yr4, and
+    the Yr1 cell (74.89) matches nothing in the document at all.
+
+    That this is a display error and not a different concept is provable,
+    because PBDIT is computed from the CORRECT sums:
+      Yr1  80.472 - 63.74  = 16.73  -- printed PBDIT 16.73   OK
+      Yr2 128.755 - 97.53  = 31.23  -- printed PBDIT 31.23   OK
+      Yr3 144.846 - 108.85 = 36.00  -- printed PBDIT 36.00   OK
+      Yr4 144.846 - 108.99 = 35.86  -- printed PBDIT 35.86   OK
+      Yr5 144.846 - 109.13 = 35.72  -- printed PBDIT 35.71   (0.01 rounding)
+    and because the BREAK EVEN table on the next page prints the sales line
+    correctly aligned: 80.47 / 128.76 / 144.85 / 144.85 / 144.85.
+    This gold therefore takes 144.85 as Year 3 income, from the break-even
+    table, and records 128.76 as what the profitability table misprints.
+
+  DOWNSTREAM, YEAR 3 — every identity holds exactly:
+    36.00 - 5.55 (dep) - 7.27 (int, term loan) - 4.12 (int, WC) - 0.40
+      (intangibles) = 18.66      -- printed 18.66              OK (exact)
+    18.66 x 36%    = 6.7176      -- printed tax 6.72           OK (rounded)
+    18.66 - 6.72   = 11.94       -- printed PADIT 11.94        OK (exact)
+
+  GAPS — recorded, never filled:
+    - THE MASS BALANCE DOES NOT CLOSE. 62% + 5% + 18% = 85%. 15% of the paddy
+      (180 MT/year at 100% on the own-account stream) has no destination in the
+      document: not an output, not a named loss, not a stock. And the source's
+      OWN introduction (p.2) states a different split again: "The paddy
+      comprises of 20% rice hull or husk, 11% bran layers, and 69% starchy
+      endosperm" -- 20/11/69, against the 18/5/62 its financial model uses.
+      The narrative and the model disagree about the physical thing being
+      modelled, and the document reconciles neither.
+    - NO RAW MATERIAL PRICE ANYWHERE. The mill buys 1,080 MT of paddy in Year 3
+      and the document never prints what a tonne of paddy costs. "Total
+      expenditure" (108.85 lakh in Year 3) is given as one undifferentiated
+      number with no schedule behind it, so the largest single cost in a rice
+      mill is unobservable and no gross margin per tonne of paddy can be
+      checked. The working-capital table's "Raw material 25 days = Rs 9.30
+      lakh" is the only trace of it and is NOT used here to back one out: that
+      would be an inference, not a reading.
+    - THE YEAR-3 TONNAGES ARE NOT PRINTED. The source prints Year-3 income in
+      rupees but not the Year-3 quantities; 669.6 MT of rice above is
+      90% x 744 and is flagged as such. It is in `inputs` for completeness and
+      deliberately NOT in `expected`, which contains only printed figures.
+
+  WHY `mechanism: separate` IS NOT THE WHOLE STORY. One of the four revenue
+  lines is a tolling SERVICE, not a product: the mill sells 62%-yield milling
+  on paddy it never owns, at Rs 1,200 per MT of rice produced, and hands the
+  bran and husk back. So the same machine, in the same period, runs two
+  different businesses over a split of one capacity -- a product business on
+  two thirds of it and a service business on one third -- and the service's
+  own by-products belong to someone else. No single conversion tag covers
+  that: `separate` describes the physical event on the own-account stream and
+  is simply silent about the other third. This is a genuine shape the corpus
+  does not yet have a word for, and it is left named rather than forced.

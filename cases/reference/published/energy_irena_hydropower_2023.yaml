@@ -1,0 +1,181 @@
+id: energy_irena_hydropower_2023
+title: "IRENA 'Renewable Power Generation Costs in 2023' — hydropower, global and Africa-specific weighted averages"
+
+meta:
+  source:
+    - "IRENA (2024), Renewable Power Generation Costs in 2023, International Renewable Energy Agency, Abu Dhabi, ISBN 978-92-9260-621-3. Chapter 7 'Hydropower': Highlights p.153 (Fig 7.1); Total installed costs pp.154-161 (Fig 7.2, Table 7.2, Fig 7.5); Capacity factors pp.162-163 (Fig 7.7, Table 7.3, Table 7.4); O&M costs pp.164-165 (Table 7.5); LCOE pp.165-167. Annex I Table A1 p.200 (economic life, WACC). https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2024/Sep/IRENA_Renewable_power_generation_costs_in_2023.pdf"
+  licence: "IRENA (2024) — CC BY-IGO per IRENA's standard publication terms; free to use/share with attribution."
+  kind: trade_case
+  # same standing as energy_irena_solar_pv_2023.yaml: a COST-side rate
+  # reference (capacity factor / installed cost / O&M / LCOE), no
+  # observed tariff, no `sale:` block — see that file's meta comment for
+  # the full argument, not repeated here.
+  resolution: L2
+  basis: "1 kW of installed hydropower capacity, one year, global weighted average of newly-commissioned projects, plus the Africa-specific slice IRENA breaks out separately"
+  periods: 1
+  # MECHANISM — the borderline case of the four. Two readings, both
+  # defensible, and I did not find a way to settle it from the source:
+  #   (a) create x physical, "assemble": a turbine converts a flowing
+  #       input (water) into electricity via a head/flow-rate relation —
+  #       structurally the same shape as the diesel genset's Leontief
+  #       recipe, just with a free (unpriced) input.
+  #   (b) create x physical, "extract": mechanisms.py defines this
+  #       transformation as "a source stock depletes" — and for
+  #       RESERVOIR (storage) hydropower specifically, that is literally
+  #       true: water held behind a dam IS a depleting stock the turbine
+  #       draws down between inflows, the same shape as
+  #       atlas_extract_freshfish's fishery. RUN-OF-RIVER hydropower (no
+  #       reservoir, "little or no storage to provide a buffer", p.154)
+  #       has no such stock — closer to (a).
+  # IRENA's own capacity-factor number BLENDS both plant types into one
+  # weighted average (p.154: "this chapter covers the costs of reservoir
+  # and run-of-river hydropower"), so the single figure this gold
+  # transcribes cannot be assigned to one reading over the other. Tagged
+  # `make_to_order` for consistency with the diesel genset's Leontief
+  # framing (reading (a)) since that is the reading that survives for
+  # BOTH plant types the source bundles together; reading (b) is real for
+  # half the population IRENA is describing and is recorded here rather
+  # than discarded.
+  mechanism: make_to_order
+  jurisdiction: ASK_country   # global weighted average across every
+  #   hydropower project in the IRENA Renewable Cost Database; the
+  #   Africa-specific rows (Table 7.3/7.4) are a REGIONAL weighted
+  #   average, still not one country
+  currency: USD
+
+inputs:
+  global:
+    capacity_factor_2023:
+      value: 0.53
+      label_as_printed: "the annual global weighted average capacity factor of newly-commissioned hydropower projects, 2023"
+      source: "p.162 — increased from 44% (2010) to 53% (2023)"
+    capacity_factor_2010:
+      value: 0.44
+    total_installed_cost_usd_per_kw_2023:
+      value: 2806
+      source: "Fig 7.1/7.2, p.153/156; 2022 was USD 3,053/kW, the recorded historical high"
+    om_cost_pct_of_capex_per_yr:
+      lo: 0.02
+      hi: 0.025
+      label_as_printed: "an average value for O&M costs of 2% to 2.5% is considered the norm for large-scale projects (IPCC, 2011)"
+      source: "p.164. A separate IRENA-collected 25-project sample (2010-2016) found 1-3%, average 'slightly less than 2%' — the two IRENA-cited figures do not fully agree with each other, both transcribed"
+    om_cost_eia_reference:
+      fixed_pct_of_capex_per_yr: 0.0006
+      variable_usd_per_kwh: 0.003
+      label_as_printed: "for a conventional, 500 MW hydropower plant commissioned in 2020, the Energy Information Agency (EIA) assumes 0.06% of total installed costs as fixed annual O&M costs, along with USD 0.003/kWh as variable O&M costs (EIA, 2017)"
+      source: "p.164"
+    economic_life_years:
+      value: 30
+      source: "p.165 and Table A1 p.200, consistent between the narrative text and the annex table"
+  africa_large_hydro_2016_2023:      # Table 7.3, ">10 MW" column, p.163
+    capacity_factor_5th_pct: 0.34
+    capacity_factor_weighted_avg: 0.51
+    capacity_factor_95th_pct: 0.78
+    total_installed_cost_usd_per_kw: 2608
+    total_installed_cost_source: "p.160 — 'in Africa, ... the weighted average installed cost were USD 2,608/kW'"
+  africa_small_hydro_2016_2023:      # Table 7.4, "<10 MW" column, p.164
+    capacity_factor_5th_pct: 0.51
+    capacity_factor_weighted_avg: 0.55
+    capacity_factor_95th_pct: 0.65
+  wacc_real:
+    oecd_and_china: 0.05
+    rest_of_world: 0.075
+    source: "Table A1, p.200 — same bands as solar; hydropower's only difference from solar in Table A1 is the 30-year economic life"
+
+expected:
+  lcoe_usd_per_kwh_2023:
+    value: 0.057
+    label_as_printed: "the global weighted average cost of electricity from hydropower, 2023"
+    source: "p.153/166; 2022 was 0.061 (7% lower in 2023), 2010 was 0.043 (2023 is 33% HIGHER than 2010 — the one energy technology in this harvest whose LCOE ROSE over the period, per IRENA's own highlight box, p.153: 'the increase in LCOE since 2010 has been driven by rising installed costs, notably in Asia')"
+  lcoe_usd_per_kwh_2023_lowest_project:
+    value: 0.016
+    label_as_printed: "a low of USD 0.016/kWh in Georgia for a 34 MW project"
+    source: "p.166"
+  lcoe_usd_per_kwh_2023_highest_project:
+    value: 0.250
+    label_as_printed: "a high of USD 0.250/kWh for a 5.5 MW Canadian project. The latter had high associated costs due to its site location and the impact of extreme weather events on the site"
+    source: "p.166"
+
+# no CANON concept applies — same reasoning as the solar gold. Cost-side
+# rate reference, held for the templates/full-grammar layer.
+mapping: {}
+
+tolerance:
+  abs: 0.001
+  why: >
+    IRENA prints hydropower figures to the same 3-significant-figure
+    display convention as the solar chapter (2,806; 0.057; 53%), so a
+    tenth of a cent per kWh is the display rounding on the LCOE line;
+    the notes below show my own re-derivation sits 10-15% away at
+    plausible WACC/O&M combinations, which is real assumption spread
+    IRENA itself only partly discloses, not something to widen the
+    tolerance to hide
+
+notes: |
+  HAND RE-DERIVATION, same method and same published formula/Table-A1 assumptions as the solar
+  gold (LCOE = (annualised capex + O&M) / annual generation, CRF at n=30 years):
+
+    annual generation per kW = 0.53 x 8,760 = 4,642.8 kWh/kW/yr
+
+    using IPCC's 2.0-2.5%-of-capex O&M band (56.1-70.2 $/kW/yr):
+      at r=5%  (OECD/China): LCOE = 0.0514 to 0.0544 $/kWh  -> 5-10% BELOW the published 0.057
+      at r=7.5% (rest-of-world): LCOE = 0.0633 to 0.0663 $/kWh -> 11-16% ABOVE the published 0.057
+    using the EIA 500 MW reference O&M instead (0.06% capex + $0.003/kWh -> 15.6 $/kW/yr):
+      at r=5%: LCOE = 0.0427 $/kWh -> 25% BELOW the published 0.057
+
+  Unlike solar, where the OECD/China WACC band alone landed within 3% of the published figure,
+  hydro's published 0.057 sits BETWEEN the two WACC bands under the IPCC O&M assumption — a
+  genuinely blended global mix, consistent with hydropower deployment being far less
+  China-concentrated than 2023 solar was (hydro: "China contributed 41% of newly-commissioned
+  ... capacity in 2023" per p.154, vs solar's 63% of ALL global installations). The EIA-based
+  scenario undershoots badly at EITHER WACC, which is itself the useful finding: EIA's single
+  bottom-up 500 MW reference plant is NOT representative of IRENA's actual global weighted-average
+  O&M — the two named sources IRENA cites for hydropower O&M (IPCC's %-of-capex rule and EIA's
+  fixed-plus-variable reference plant) do not agree with each other by a factor of roughly 4,
+  and IRENA presents both without reconciling them (p.164). Recording this rather than picking
+  whichever scenario happens to land closest to the published LCOE.
+
+  THE LCOE ROSE, not fell — the one sign-flip among the four technologies in this harvest. Every
+  other gold here (solar -90%, and diesel/mini-grid trending down per their own sources) tells a
+  falling-cost story; IRENA states hydropower's global weighted-average LCOE is 33% HIGHER in
+  2023 than 2010, driven by rising installed costs in Asia (p.153). Worth stating plainly because
+  a reader skimming only the executive framing ("renewables keep getting cheaper") would not
+  expect this from the chapter their own foreword summarises as merely "7% lower" (that 7% is the
+  2022-to-2023 move, not the 2010-to-2023 trend).
+
+  AFRICA SLICE — genuinely regional, not extrapolated: Table 7.3/7.4's Africa rows and the p.160
+  Africa-specific installed-cost figure are IRENA's OWN regional breakouts, not a global number
+  relabelled. I did NOT compute an "Africa LCOE" to compare against a published one, because
+  IRENA's own text states which regions' weighted-average LCOE rose or fell between the two
+  periods (p.166: "the exceptions were Central America and the Caribbean, Europe, India and Other
+  Asia, where the weighted average LCOE decreased" — Africa is not in that exceptions list, so it
+  rose, but no exact Africa LCOE figure is given in prose; the only place it appears is inside
+  Figure 7.8's chart, and a bar height read off a chart is not a transcribable printed number by
+  this corpus's own standard) — an honest gap left open rather than eyeballed.
+
+  MECHANISM — see meta.mechanism above; this is the one technology in the harvest where the
+  create/extract-vs-assemble question genuinely depends on a fact (reservoir vs run-of-river) that
+  the single blended capacity-factor figure this gold transcribes does not resolve.
+
+  NO COST SIDE: this gold gets no `inputs.costs:` block, for the same structural reason as
+  energy_irena_solar_pv_2023.yaml and one reason of its own that is sharper.
+  THE SHARED REASON — incompatible bases, no printed total. Chapter 7 publishes total installed
+  cost as USD 2,806 per kW (a one-time capital outlay), O&M as 2.0-2.5% of that capex per year (a
+  RATIO, not a currency figure at all), and LCOE as USD 0.057 per kWh (a break-even outcome of a
+  30-year discounted calculation, by IRENA's own p.199 definition). A stock, a ratio and a
+  per-kWh rate cannot be summed (RULE 7), IRENA never sums them, and so no field exists to bind to
+  `cost_of_sales` under RULE 4 and nothing for lines to re-add to under RULE 2.
+  THE REASON OF ITS OWN — the source contradicts ITSELF on the one cost line a model most needs.
+  IRENA prints TWO O&M figures for hydropower on the same page (p.164) and reconciles neither:
+    IPCC (2011), large-scale norm     2.0-2.5% of capex/yr  ->  56.1-70.2 USD/kW/yr on 2,806
+    IRENA's own 25-project sample     1-3%, "slightly less than 2%"
+    EIA (2017), 500 MW reference      0.06% of capex + USD 0.003/kWh  ->  ~15.6 USD/kW/yr
+  The IPCC-based and EIA-based figures differ by roughly a factor of FOUR on the identical plant.
+  Any `costs:` block would have to pick one, and picking would be my authorship presented as
+  transcription — the exact move RULE 6 and this corpus's leave-as-printed convention forbid. The
+  three figures are kept side by side in `inputs` as the source presents them: unreconciled.
+  What the source DOES publish: capacity factors (global 53% in 2023 vs 44% in 2010; Africa large
+  hydro 51% weighted average, small hydro 55%), installed cost globally and for Africa (USD
+  2,608/kW), the three O&M references above, a 30-year economic life, two WACC bands, and LCOE
+  with its extreme projects. What it does NOT publish: any project's annual cost in currency, any
+  tariff, any revenue, and — per the notes above — any Africa LCOE figure in prose.

@@ -1,0 +1,176 @@
+# Transcribed EXACTLY as published. Verified by hand against the primary PDF
+# (curl + pdftotext, 184-page document; page numbers confirmed against the
+# document's own footer sequence, see notes). Every line of `expected` was
+# independently recomputed from `inputs` and the source's own printed
+# subtotals, and matched exactly across all tabulated years unless flagged.
+
+meta:
+  source: >
+    IFAD, "Economic and Financial Analysis of Rural Investment Projects"
+    (Internal Guidelines, Volume 3: Case Studies, 184pp, 2016), Case study 4
+    "Livestock", Example 2 "Study on enhancement of the Smallholder Livestock
+    Investment Programme (E-SLIP)" — Zambia, poultry "pass-on the gift" model,
+    Table 12 (p.72) and Table 13 (p.73).
+    https://openknowledge.fao.org/server/api/core/bitstreams/d4c754e1-8d57-4eb4-bf08-9409264a3348/content
+  accessed: "2026-08-11"
+  licence: >
+    (c) 2016 by IFAD and FAO. No Creative Commons marking found in the
+    document (standard institutional disclaimer only); publicly hosted via
+    the FAO Open Knowledge repository. Transcribed here, with full citation,
+    for engine-verification/research use only.
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L4 (physics): mortality_chicks_pct / mortality_broilers_pct,
+  # hatched_chicks_per_hen_per_year, and an offtake schedule rolling
+  # forward a fixed stock (stock_total_head) over a 20-year horizon are
+  # exactly the "recipe · capacity · losses · cycle" shape — not a flat
+  # itemised budget.
+  #
+  # UNRUNNABLE, deliberately, not a mislabel — for TWO independent reasons:
+  # (1) `engine/golds.py:to_template` has no L4 converter ("no converter
+  # for L4 yet"), same structural gap as fao_bl811e_beta_ltd_oilmill.yaml.
+  # (2) Even with a converter, every economic figure in `expected` is a
+  # per-year ARRAY (Table 13's 5 columns: WOP, Yr1, Yr2, Yr3, Yr4/Yr5-20) —
+  # `_num()` cannot read a list. The gold's own notes state its purpose
+  # plainly: "reproducing [FIRR/NPV] from inputs/expected is the reason
+  # this gold exists" — a 20-year cash-flow IRR/NPV oracle, the exact case
+  # the task brief anticipates as possibly unrunnable. `mapping` below
+  # names the intended check; `_ours()` computes no `irr`/`npv` today
+  # regardless of level, so it cannot be reached either way.
+  resolution: L4
+  basis: >
+    20-year poultry investment cash-flow (E-SLIP "pass-on-the-gift" model),
+    Year1-4 tabulated individually + Year5-20 steady-state repeating column
+  periods: 20
+  jurisdiction: ZM
+  currency: ZMW
+
+inputs:
+  currency: "Zambian Kwacha (K)"
+  discount_rate_pct: 8       # "average deposit rates prevailing in Zambia"
+  project_life_years: 20     # years 3-20 repeat the year-3 pattern
+
+  # ── Table 12 — Model's assumptions and parameters, p.72 ────────────────────
+  selling_price_hen_K_per_head: 14.0
+  selling_price_rooster_K_per_head: 17.0
+  selling_price_broiler_K_per_head: 24.0
+  family_labour_days_per_year: 70.0
+  family_labour_wage_K_per_day: 8.5
+  feed_cost_chicks_K_per_head: 3.0        # "4 weeks"
+  feed_cost_broilers_K_per_head: 9.0      # "12 weeks"
+  veterinary_cost_K_per_head: 4.0
+  one_time_veterinary_contribution_pct_of_gross_revenue: 10
+  housing_K: 472.5
+  miscellaneous_expenditure_pct_of_gross_revenue: 10
+
+  # technical parameters, by year [1, 2, "3-20"]
+  mortality_chicks_pct: [40, 40, 40]
+  mortality_broilers_pct: [30, 30, 30]
+  hatched_chicks_per_hen_per_year: 150
+  stock_chickens_head: [2700, 2700, 2700]
+  stock_broilers_head: [1890, 1890, 1890]
+  stock_hens_head: [30, 30, 30]
+  stock_roosters_head: [4, 4, 4]
+  stock_total_head: [1924, 1924, 1924]
+
+  # offtake (heads), by year [1, 2, "3-20"]
+  offtake_hens_selling_head: [0, 30, 0]      # "* Animal sold every two years"
+  offtake_roosters_selling_head: [0, 2, 2]
+  offtake_hens_passon_head: [0, 30, 0]
+  offtake_broilers_head: [0, 1828, 1888]
+  offtake_total_head: [0, 1890, 1890]
+
+  wop_baseline_net_income_K: 2500   # "estimate of foregone income related to
+                                     # alternative investment activities" — the
+                                     # deduction used to get incremental benefits
+
+notes: |
+  Years, throughout: "Year 1" through "Year 4" are individually tabulated;
+  "Year(s) 5-20" is a single repeating column (the source states cash flows
+  "for a period of 20 years" and gives one steady-state column standing in for
+  all 16 remaining years). Recorded as printed — a 4-value-plus-repeating-tail
+  series, not a full 20-element array, because the source itself only prints
+  5 distinct columns.
+
+  We independently re-derived every row of Table 13 from Table 12's
+  assumptions plus the source's own printed subtotals and found the whole
+  cascade internally exact:
+    - Total investment costs = Housing + one-time vet contribution (Year 1
+      only: 473 + 4,433 = 4,906 by hand vs 4,905 printed — 1-unit rounding,
+      see below).
+    - Total operating costs = feed(chicks) + feed(broilers) + animal health +
+      miscellaneous, each year — reproduces the printed total EXACTLY in
+      Year 1 (35,489) but is off by 1 (higher by 1 than printed) in every
+      other tabulated year: Year 2 hand-sum 35,922 vs printed 35,921; Year 3
+      hand-sum 36,024 vs printed 36,023; Year 4 hand-sum 35,994 vs printed
+      35,993; Years 5-20 hand-sum 36,024 vs printed 36,023. This looks like a
+      one-off rounding difference carried from an unrounded miscellaneous-cost
+      line (10% of gross revenue) that we can only see rounded to the nearest
+      K in the printed inputs.
+    - Given the PRINTED subtotals (not our recomputed ones), Total costs =
+      investment + operating + labour reproduces the source's Total costs row
+      EXACTLY in all 5 columns (40,989 / 36,516 / 36,618 / 36,588 / 36,618).
+    - Net income = Total revenues - Total costs reproduces the source EXACTLY
+      in all 5 columns.
+    - Net incremental benefits = Net income - 2,500 (the WOP baseline)
+      reproduces the source EXACTLY in all 5 columns (-43,489 / 5,310 / 6,228
+      / 5,958 / 6,228).
+    - Return to labour = Net income / 70 (family labour days) reproduces the
+      source EXACTLY (rounded to the nearest K) in all 5 columns: -586 / 112 /
+      125 / 121 / 125.
+    - Benefit/cost ratio = Total revenues / Total costs reproduces the source
+      exactly (rounded to 1 decimal) in all 5 columns: 0.0 / 1.2 / 1.2 / 1.2 /
+      1.2.
+  So the ONLY unreconciled arithmetic in this gold is the pair of small,
+  one-directional rounding gaps noted above (Total investment costs and Total
+  operating costs both print 1 unit lower than a literal re-sum of their own
+  listed components, in every year after Year 1) — flagged, not corrected,
+  and transcribed exactly as printed.
+
+  We did not attempt to independently re-derive the headline FIRR (12.3%) or
+  NPV (K13,280) by hand from the 20-year cash-flow series — reproducing those
+  from `inputs`/`expected` is the reason this gold exists.
+
+mapping:
+  # documents intent only — see the UNRUNNABLE note under meta above;
+  # `_ours()` computes no `irr` and L4 has no converter, so this can never
+  # be reached by `compare()` today
+  financial_internal_rate_of_return_pct: irr
+
+tolerance:
+  abs: 1.0
+  why: >
+    the whole cascade reconciles closely on independent re-derivation (see
+    notes; the only gaps are two small, one-directional $1 rounding
+    artifacts, not flagged as errors) — kept for consistency and so the
+    reported unrunnable reason is the true structural one, not a
+    missing-tolerance complaint
+
+expected:
+  # ── Table 13 — Poultry-keeping costs and revenues, p.73. Columns: [WOP, Yr1, Yr2, Yr3, Yr4, "Yr5-20"] ──
+  sales_live_animals_K: [0, 0, 44326, 45346, 45046, 45346]
+  total_revenues_K: [0, 0, 44326, 45346, 45046, 45346]
+
+  investment_housing_K: [0, 473, 0, 0, 0, 0]
+  investment_one_time_veterinary_contribution_K: [0, 4433, 0, 0, 0, 0]
+  total_investment_costs_K: [0, 4905, 0, 0, 0, 0]     # printed; see notes (hand-sum 4,906)
+
+  operating_feed_chicks_K: [0, 6480, 6480, 6480, 6480, 6480]
+  operating_feed_broilers_K: [0, 17314, 17314, 17314, 17314, 17314]
+  operating_animal_health_care_K: [0, 7695, 7695, 7695, 7695, 7695]
+  operating_miscellaneous_K: [0, 4000, 4433, 4535, 4505, 4535]
+  total_operating_costs_K: [0, 35489, 35921, 36023, 35993, 36023]  # printed; see notes
+
+  labour_hired_K: [0, 0, 0, 0, 0, 0]
+  labour_family_K: [0, 595, 595, 595, 595, 595]
+
+  total_costs_K: [null, 40989, 36516, 36618, 36588, 36618]   # WOP column blank in source
+  net_income_K: [2500, -40989, 7810, 8728, 8458, 8728]       # WOP = 2,500 (foregone-income estimate)
+  net_incremental_benefits_K: [null, -43489, 5310, 6228, 5958, 6228]  # not defined for WOP column
+
+  financial_internal_rate_of_return_pct: 12.3
+  npv_at_8pct_K: 13280
+  npv_at_8pct_usd_approx: 1300    # "about US$1,300", source's own approximation
+
+  return_to_labour_K_per_day: [null, -586, 112, 125, 121, 125]
+  benefit_cost_ratio: [null, 0.0, 1.2, 1.2, 1.2, 1.2]

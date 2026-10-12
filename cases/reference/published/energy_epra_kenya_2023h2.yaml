@@ -1,0 +1,315 @@
+id: energy_epra_kenya_2023h2
+title: "EPRA Kenya Bi-Annual Energy & Petroleum Statistics, Jul-Dec 2023 — installed vs EFFECTIVE capacity by technology, monthly generation, and the 23.2% system-loss series"
+
+meta:
+  source:
+    - >
+      Energy and Petroleum Regulatory Authority (EPRA), Republic of Kenya, "Bi-Annual Energy &
+      Petroleum Statistics Report, Financial Year 2023/2024" (covering 1 July - 31 December 2023),
+      published April 2024.
+      Primary: https://www.epra.go.ke/sites/default/files/2025-02/EPRA%20Statistics%20Report%20-%20January%20-%20December%202023.pdf
+      Retrieved 2026-08-12 via mirror (the epra.go.ke host timed out repeatedly):
+      https://mwangocapital.com/wp-content/uploads/2024/04/epra-statistics-report-january-december-2023.pdf
+    - >
+      Page and table numbers below are the report's OWN printed ones. Sections used: 1.1.1
+      Installed capacity, Table 1.1 (p.10); 1.1.2 Energy generated, Table 1.2 (p.11); 1.3 System
+      losses, Table 1.8 (p.18); 1.4 reliability indices, Table 1.9 (p.18); 1.5.1 Market share,
+      Table 1.10 (p.19); Chapter 2 Renewable Energy, Table 2.1 (p.21) and Figures 2.2-2.11
+      (pp.21-25).
+  accessed: "2026-08-12"
+  licence: >
+    Publication of a Kenyan statutory regulator (EPRA), published free on the Authority's own
+    website. No explicit reuse licence is stated in the document.
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────────
+  # WHY THIS ONE, given the corpus already holds a Kenyan regulator gold
+  # (svc_water_utility_wasreb_kenya.yaml, WATER). Two things this source has
+  # that no other gold in the corpus does:
+  #   (a) an INSTALLED vs EFFECTIVE capacity pair, printed side by side, per
+  #       technology. That IS an availability derating published as two
+  #       separate numbers rather than as a percentage — geothermal 940.0 MW
+  #       installed against 841.1 MW effective is an 89.5% derating the
+  #       regulator never expresses as a rate, so a model must form it.
+  #   (b) SIX MONTHLY generation observations per technology, plus a six-month
+  #       system-loss series where every monthly loss percentage is computed
+  #       by the source from a printed purchased/sold pair. That is a
+  #       thirteen-point reconciliation on one page.
+  resolution: L3   # capacity -> effective capacity -> monthly energy ->
+  #                  half-year total -> share of mix -> purchased vs sold ->
+  #                  loss rate. Each stage's output is the next stage's input
+  #                  and the source prints both ends of every stage.
+  basis: "the whole Kenyan electricity supply industry — interconnected, captive and off-grid — for the six months 1 July to 31 December 2023 (184 days = 4,416 hours)"
+  periods: 6      # six calendar months, for generation and for system losses
+  # MECHANISM — capacity_service, on the same offtake-relationship argument as
+  # energy_esmap_africa_minigrid_2019.yaml: the money side of this document is
+  # Kenya Power's single-buyer purchase-and-resale (energy purchased from
+  # producers, energy sold to consumers, losses in between), a metered service
+  # to a captive national customer base, not a wholesale commodity market.
+  mechanism: capacity_service
+  jurisdiction: KE
+  currency: KES   # the only money figures used are the Time-of-Use customer
+  #                 savings in Ksh millions; all electricity figures are MW,
+  #                 GWh and percentages.
+
+inputs:
+  period_hours:
+    value: 4416
+    derivation: "1 Jul - 31 Dec 2023 = 31+31+30+31+30+31 = 184 days x 24 h"
+    source: "not printed by EPRA; stated here because every capacity-factor check in the notes needs it"
+  # ── TABLE 1.1: THE INSTALLED / EFFECTIVE PAIR ──────────────────────────────
+  capacity_mw:
+    # [interconnected_installed, interconnected_effective, captive, off_grid, total_installed, pct_total_as_printed]
+    hydro:      [839.3, 810.4,  33.0,  0.1,  872.4, 25.00]
+    geothermal: [940.0, 841.1,   3.7,  0.0,  943.7, 27.04]
+    thermal:    [572.8, 562.4,  21.3, 35.6,  629.7, 18.05]
+    wind:       [435.5, 425.5,   0.0,  0.6,  436.1, 12.50]
+    solar:      [210.3, 210.3, 196.2,  3.9,  410.4, 11.76]
+    bioenergy:  [  2.0,   2.0, 111.8,  0.0,  113.8,  3.26]
+    imports:    [200.0, 200.0,   0.0,  0.0,  200.0,  null]
+    whrc:       [  0.0,   0.0,  83.5,  0.0,   83.5,  2.39]
+    total_printed: [3199.9, 3051.7, 449.5, 40.1, 3689.5, 100.00]
+    schema: [interconnected_installed_mw, interconnected_effective_mw, captive_mw, off_grid_mw, total_installed_mw, pct_of_total_as_printed]
+    label_as_printed: "Table 1.1: Installed, Effective and Captive Power Capacity as at 31st December 2023"
+    source: "Table 1.1, p.10. WHRC = waste heat recovery. The narrative on the same page adds: 'Kenya experienced a decrease of 73.5 MW in its interconnected capacity, settling at 3,199.9 MW, primarily attributed to the expiration of the power purchase agreement for the Kipevu 1 power plant. Notably, no new grid-interconnected power generation plants were commissioned during this review period.'"
+  # ── TABLE 1.2: ENERGY BY TECHNOLOGY, HALF-YEAR ─────────────────────────────
+  energy_generated_gwh:
+    hydro:      {gwh: 1534.01, pct_as_printed: 22.5}
+    thermal:    {gwh:  606.09, pct_as_printed:  8.9}
+    wind:       {gwh:  972.82, pct_as_printed: 14.3}
+    geothermal: {gwh: 3032.03, pct_as_printed: 44.6}
+    biomass:    {gwh:    0.21, pct_as_printed:  0.0}
+    imports:    {gwh:  419.13, pct_as_printed:  6.2}
+    solar:      {gwh:  240.99, pct_as_printed:  3.5}
+    total_printed: {gwh: 6805.28, pct_as_printed: 100}
+    source: "Table 1.2, p.11 and narrative p.11 ('a total of 6,805.28 GWh was generated')"
+  # ── MONTHLY GENERATION SERIES, per technology (Figures 2.2, 2.4, 2.8, 2.10) ─
+  monthly_generation_gwh:
+    geothermal: {jul: 494.812, aug: 522.915, sep: 511.882, oct: 509.543, nov: 495.190, dec: 497.690}
+    hydro:      {jul: 279.484, aug: 258.715, sep: 247.199, oct: 205.281, nov: 269.689, dec: 273.642}
+    wind:       {jul: 198.461, aug: 186.661, sep: 141.301, oct: 183.360, nov: 177.530, dec:  85.504}
+    solar:      {jul:  37.896, aug:  40.847, sep:  39.250, oct:  42.866, nov:  35.691, dec:  44.443}
+    source: "Figures 2.2 (p.22), 2.4 (p.22), 2.8 (p.24), 2.10 (p.25) — data labels printed on every bar"
+  # ── THE SINGLE-BUYER PURCHASE / SALE / LOSS SERIES ─────────────────────────
+  system_losses:
+    purchased_gwh: {jul: 1159, aug: 1154, sep: 1120, oct: 1149, nov: 1114, dec: 1110, total: 6805.8}
+    sales_gwh:     {jul: 883.92, aug: 889.62, sep: 879.27, oct: 879.53, nov: 862.23, dec: 832.35, total: 5226.9}
+    benchmark_pct: 18.5
+    label_as_printed: "total system losses, both technical and commercial, totalled 23.2% exceeding the 18.5% benchmark set by the Authority ... monthly system losses as a factor of energy purchased by Kenya Power from power producers and energy sold to consumers"
+    source: "Table 1.8, p.18 and narrative p.18. Source line under the neighbouring table: 'Source: Kenya Power'"
+  # ── HALF-ON-HALF COMPARATIVES the source prints for its own change rates ───
+  prior_period_gwh:
+    geothermal_h2_2022: 3034.95
+    hydro_h2_2022: 1454.40
+    wind_h2_2022: 1148.63
+    series_geothermal: {h2_2021: 2470.55, h1_2022: 2482.60, h2_2022: 3034.95, h1_2023: 3000.05, h2_2023: 3032.03}
+    series_hydro:      {h2_2021: 1763.23, h1_2022: 1585.48, h2_2022: 1454.40, h1_2023: 1114.78, h2_2023: 1534.01}
+    series_wind:       {h2_2021: 1057.86, h1_2022:  994.40, h2_2022: 1148.63, h1_2023: 1053.09, h2_2023:  972.82}
+    source: "Figures 2.3 (p.22), 2.7 (p.23), 2.9 (p.25)"
+  captive_solar:
+    installations: 167
+    combined_capacity_mw: 48.356
+    energy_fy2021_22_gwh: 27.579
+    energy_fy2022_23_gwh: 46.722
+    source: "narrative p.25 and Figure 2.11"
+
+expected:
+  # Everything below is a figure the SOURCE ITSELF computed and printed.
+  total_energy_generated_gwh: 6805.28
+  renewable_share_of_generation_pct:
+    value: 84.93
+    label_as_printed: "84.93% of the energy supplied to Kenya's national grid was obtained from renewable energy sources. Thermal plants contributed 8.91%, while 6.16% was imported."
+    source: "p.21"
+  technology_shares_pct:
+    geothermal: 44.55
+    hydro: 22.54
+    wind: 14.30
+    solar: 3.54
+    thermal: 8.91
+    imports: 6.16
+    source: "p.21 narrative (2 dp) — Table 1.2 on p.11 prints the same shares to 1 dp"
+  renewable_installed_capacity_mw:
+    value: 2776.3
+    share_pct: 79.56
+    interconnected: 2429.2
+    captive: 344.6
+    label_as_printed: "the installed capacity of renewable energy sources reached 2,776.3 MW, constituting 79.56% of Kenya's total installed capacity. This includes 2,429.2 MW of interconnected renewable energy capacity and 344.6 MW of captive renewable energy capacity."
+    source: "p.21"
+  captive_capacity_mw:
+    value: 449.5
+    share_of_total_installed_pct: 12.18
+    solar_share_of_captive_pct: 43.77
+    source: "p.10 and p.25"
+  half_on_half_changes_pct:
+    geothermal: -0.10
+    hydro: 5.19
+    wind: -18.07
+    captive_solar: 69.41
+    source: "pp.22-25 narrative"
+  system_loss_pct:
+    jul: 23.7
+    aug: 22.9
+    sep: 21.5
+    oct: 23.5
+    nov: 22.6
+    dec: 25.0
+    total: 23.2
+    source: "Table 1.8, p.18"
+  reliability_indices:
+    caidi: {jul: 1.966, aug: 2.616, sep: 2.222, oct: 2.235, nov: 2.387, dec: 2.255, average: 2.280, epra_target_fy2324: 3.53}
+    saidi: {jul: 5.525, aug: 8.579, sep: 11.078, oct: 8.145, nov: 10.746, dec: 8.941, average: 8.836, epra_target_fy2324: 5.00}
+    saifi: {jul: 2.811, aug: 3.279, sep: 4.987, oct: 3.644, nov: 4.503, dec: 3.965, average: 3.865, epra_target_fy2324: 2.15}
+    source: "Table 1.9, p.18 — SAIDI/SAIFI/CAIDI are the outage-duration, outage-frequency and average-restoration indices; these are the DISTRIBUTION-side uptime measures, the network analogue of the plant availability factor"
+  market_share_pct:
+    KenGen: 62.24
+    LTWP: 10.25
+    Orpower: 6.26
+    Imports: 6.19
+    Kipeto: 3.45
+    Rabai: 3.18
+    Sosian: 1.90
+    Thika: 1.42
+    Alten: 0.78
+    Selenkei: 0.72
+    Cedate: 0.72
+    Malindi: 0.71
+    Gulf: 0.67
+    Garissa: 0.63
+    Others: 0.89
+    source: "Table 1.10, p.19 — share of energy PURCHASED by the offtaker (Kenya Power)"
+
+mapping: {}
+# No CANON binding, same reason as svc_water_utility_wasreb_kenya.yaml: this is
+# a national regulator's SECTOR aggregate spanning dozens of separately-owned
+# producers plus a single-buyer utility, not one enterprise's accounts. No
+# tariff per kWh, no revenue and no cost line is printed in the sections used —
+# the only money in the document is Ksh 947.3m of Time-of-Use customer savings
+# (Table 1.7), which is a discount total, not a revenue.
+
+tolerance:
+  abs: 0.01
+  rel: 0.005
+  why: >
+    EPRA prints generation to 2-3 decimal places (494.812 GWh; 6,805.28 GWh), capacity to 1 dp
+    (940.0 MW; 841.1 MW) and shares to 2 dp (44.55%), so 0.01 absolute is the last printed digit on
+    the figures this gold actually checks. The 0.5% relative band exists for the four half-on-half
+    change rates, where the source compares a 2-dp figure against a prior-period figure printed only
+    as a chart label; two of those four do NOT reproduce at all (see notes) and are recorded as
+    findings rather than absorbed — the band is deliberately far too tight to hide a 2.8-percentage-
+    point miss.
+
+notes: |
+  RE-DERIVED BY HAND. Nineteen checks. Fourteen reconcile exactly; five do not, and two of the five
+  are outright contradictions inside the same document.
+
+  RECONCILES — the monthly series sum to their own half-year totals, to the last printed digit:
+    geothermal  494.812+522.915+511.882+509.543+495.190+497.690 = 3,032.032  -> printed 3,032.03
+    hydro       279.484+258.715+247.199+205.281+269.689+273.642 = 1,534.010  -> printed 1,534.01
+    wind        198.461+186.661+141.301+183.360+177.530+ 85.504 =   972.817  -> printed   972.82
+    solar        37.896+ 40.847+ 39.250+ 42.866+ 35.691+ 44.443 =   240.993  -> printed   240.99
+
+  RECONCILES — Table 1.2's seven technology rows sum to its printed total EXACTLY:
+    1,534.01+606.09+972.82+3,032.03+0.21+419.13+240.99 = 6,805.28  -> printed 6,805.28
+  and every share divides out: 3,032.03/6,805.28 = 44.55%; 1,534.01/6,805.28 = 22.54%;
+  972.82/6,805.28 = 14.30%; 240.99/6,805.28 = 3.54%; 606.09/6,805.28 = 8.91%;
+  419.13/6,805.28 = 6.16%. The renewable aggregate 44.55+22.54+14.30+3.54 = 84.93% -> printed
+  84.93%, and 84.93+8.91+6.16 = 100.00%.
+
+  RECONCILES — Table 1.8, all seven loss percentages, from the printed purchased/sold pair:
+    Jul (1,159-883.92)/1,159 = 23.73%   printed 23.7%
+    Aug (1,154-889.62)/1,154 = 22.91%   printed 22.9%
+    Sep (1,120-879.27)/1,120 = 21.49%   printed 21.5%
+    Oct (1,149-879.53)/1,149 = 23.45%   printed 23.5%
+    Nov (1,114-862.23)/1,114 = 22.60%   printed 22.6%
+    Dec (1,110-832.35)/1,110 = 25.01%   printed 25.0%
+    Total (6,805.8-5,226.9)/6,805.8 = 23.20%  printed 23.2%
+  and the sales column sums to its own total: 5,226.92 -> printed 5,226.9.
+
+  RECONCILES — Table 1.1's column totals:
+    interconnected installed 839.3+940.0+572.8+435.5+210.3+2.0+200.0 = 3,199.9  -> printed 3,199.9
+    interconnected effective 810.4+841.1+562.4+425.5+210.3+2.0+200.0 = 3,051.7  -> printed 3,051.7
+    captive 33.0+3.7+21.3+0+196.2+111.8+83.5 = 449.5  -> printed 449.5
+    and 3,199.9 + 449.5 + 40.1 = 3,689.5  -> printed 3,689.5
+  RECONCILES — captive share: 449.5/3,689.5 = 12.18%  -> printed 12.18%.
+  RECONCILES — captive solar growth: 46.722/27.579 - 1 = +69.41%  -> printed 69.41%.
+  RECONCILES — geothermal half-on-half: 3,032.03/3,034.95 - 1 = -0.096%  -> printed -0.10%.
+
+  DOES NOT RECONCILE (1) — TABLE 1.1's PERCENTAGE COLUMN IS COMPUTED ON A DIFFERENT DENOMINATOR
+  THAN ITS OWN TOTAL ROW. The table's total installed capacity is 3,689.5 MW and the % column's
+  total row reads 100.00%. But hydro 872.4/3,689.5 = 23.65%, not the printed 25.00%. Divide instead
+  by 3,489.5 (= 3,689.5 minus the 200.0 MW import interconnector) and every row lands exactly:
+  872.4/3,489.5 = 25.00%; 943.7 = 27.04%; 629.7 = 18.05%; 436.1 = 12.50%; 410.4 = 11.76%;
+  113.8 = 3.26%; 83.5 = 2.39% — summing to 100.00%. The imports row is the only one with a BLANK in
+  the % column, which is the tell. So the column is internally consistent and its printed 100.00%
+  total is attached to the wrong base. The same choice explains Chapter 2's renewable share:
+  2,776.3/3,489.5 = 79.56% (printed 79.56%), whereas 2,776.3/3,689.5 = 75.25%. A model fed the
+  printed total and the printed shares will disagree with the source by 4.3 percentage points, and
+  nothing in either table says why.
+
+  DOES NOT RECONCILE (2) — TWO OF THE FOUR PRINTED HALF-ON-HALF CHANGES:
+    hydro: printed "a notable increase of 5.19% in hydro energy generation, from 1,454.4 GWh"
+           1,534.01/1,454.40 - 1 = +5.47%.  MISSES by 0.28pp.
+    wind:  printed "decreased by 18.07% from 1,148.63 GWh in the second half of 2022"
+           972.82/1,148.63 - 1 = -15.31%.   MISSES by 2.76pp.
+  The wind miss is large and cannot be rounding: to produce -18.07% the base would have to be
+  1,187.4 GWh, a figure that appears nowhere in the report (the H2 2022 chart label is 1,148.63).
+  Both printed figures are kept; neither is corrected.
+
+  DOES NOT RECONCILE (3) — THE NARRATIVE CONTRADICTS ITS OWN CHART ON THE GEOTHERMAL PEAK MONTH.
+  Page 21 states "the highest geothermal energy generation occurred in August 2023, reaching
+  529.915 GWh". Figure 2.2 on the same page labels August 522.915 GWh. The chart value is the
+  correct one: only 522.915 makes the six monthly figures sum to the printed half-year total of
+  3,032.03 GWh (with 529.915 the sum is 3,039.03, seven GWh too high). This is a transposed digit
+  in the narrative, and it is provable from the source's own total — the cleanest kind of
+  self-contradiction, because the document contains its own disproof.
+
+  DOES NOT RECONCILE (4) — TWO TOTALS FOR THE SAME SIX MONTHS. Table 1.2 (energy generated) totals
+  6,805.28 GWh; Table 1.8 (energy purchased by Kenya Power) totals 6,805.8 GWh. A 0.52 GWh gap
+  between two tables eight pages apart. Plausibly generated-vs-purchased (own-use, or the biomass
+  0.21 GWh), but the report never reconciles them and no note appears on either table.
+
+  DOES NOT RECONCILE (5) — CAPTIVE SOLAR SHARE. Printed "196.2 MW, which constitutes 43.77% of the
+  total captive capacity"; 196.2/449.5 = 43.65%. To give 43.77% the captive base would be 448.25 MW.
+  MISSES by 0.12pp.
+
+  THE AVAILABILITY CONTENT — WHAT MAKES THIS A CAPACITY-FACTOR GOLD AND NOT A STATISTICS DUMP.
+  EPRA publishes INSTALLED and EFFECTIVE capacity as two columns and never divides them. The
+  derating is the availability number a plant model needs, and it differs sharply by technology:
+    geothermal  841.1/940.0 = 89.48%   (the largest derating in the table)
+    hydro       810.4/839.3 = 96.56%
+    wind        425.5/435.5 = 97.70%
+    thermal     562.4/572.8 = 98.18%
+    solar       210.3/210.3 = 100.00% (no derating at all)
+  And the capacity factors the source never computes, over its own 4,416 hours:
+    geothermal  3,032.03 GWh / (940.0 MW x 4,416 h) = 73.04% on installed; 81.63% on EFFECTIVE
+    hydro       1,534.01 GWh / (839.3 MW x 4,416 h) = 41.39% on installed; 42.86% on effective
+    wind          972.82 GWh / (435.5 MW x 4,416 h) = 50.59% on installed; 51.78% on effective
+    solar         240.99 GWh / (210.3 MW x 4,416 h) = 25.96% (installed = effective)
+  Wind's 50.6% is exceptionally high for wind and is a real feature of the Lake Turkana site, not a
+  transcription error — LTWP alone holds 10.25% of national purchased energy off 310 MW.
+
+  A PHYSICS NOTE THE MODEL MUST NOT LOSE: the December wind collapse (177.53 -> 85.50 GWh, a 52%
+  fall in one month on unchanged capacity) is explicitly NOT a resource event. EPRA attributes it to
+  "wind curtailment, favoring geothermal generation and electricity imports" (p.24). In the same
+  half-year, hydro output tracks two named DAM LEVELS: Turkwel averaged 1,133.56 m.a.s.l against a
+  minimum operating level of 1,105 and a full supply level of 1,150; Masinga averaged 1,043.66
+  against an MOL of 1,035 and FSL of 1,056.5, bottoming at 1,036.85 in October — 1.85 m above the
+  level at which the plant cannot run — before heavy November/December rain took it to 1,054.10
+  (pp.22-23). So within ONE table, one technology's monthly output is set by a merit-order dispatch
+  decision, another's by a physical stock with a hard floor, and a third's by mechanical
+  availability. "Capacity factor" names all three.
+
+  NO COST SIDE: this gold gets no `inputs.costs:` block, because EPRA publishes no cost line for
+  any entity anywhere in the sections used. What the source DOES publish is physical and
+  ratio-shaped: capacity in MW (installed, effective, captive, off-grid), energy in GWh (monthly
+  and half-yearly, by technology), energy purchased and sold in GWh, loss percentages, three
+  distribution reliability indices, and each producer's share of energy purchased. What it does
+  NOT publish is a tariff per kWh, a revenue figure, a fuel cost, a capacity payment, an O&M
+  figure, or any total operating cost — for Kenya Power, for KenGen, or for the sector. The ONLY
+  money in the whole document is Ksh 947.3 million of Time-of-Use customer savings (Table 1.7),
+  which is a discount granted, not a cost incurred and not a revenue earned; it has no lines
+  beneath it and nothing to reconcile against. There is therefore no printed cost total to bind to
+  `cost_of_sales` under RULE 4, and no set of lines that could re-add to one under RULE 2.
+  Constructing costs from the physical series would mean importing a fuel price or a tariff from
+  outside the document — the invented coefficient this corpus refuses. `mapping: {}` is left
+  exactly as the original author set it, and this gold stays `unrunnable` as an accurate statement
+  about the source rather than a defect in the transcription.

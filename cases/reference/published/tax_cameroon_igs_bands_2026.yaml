@@ -1,0 +1,157 @@
+id: tax_cameroon_igs_bands_2026
+title: "Cameroon Impôt Général Synthétique (IGS) — turnover-banded flat-amount table, 2026 Finance Law"
+
+meta:
+  source:
+    - "Cameroon, 'Projet de Loi de Finances de la République du Cameroun pour l'exercice 2026' (building on Loi n°2024/020 du 23 décembre 2024, LF2025), Article 93 quater / Article C39: https://www.dgb.cm/wp-content/uploads/2025/11/PROJET-DE-LOI-FINANCES-2026_FR_26112025.pdf — extracted via curl + pdftotext -layout (WebFetch cannot parse this PDF's encoding directly)."
+    - "lefisk.cm, 'Impôt Général Synthétique Cameroun': https://lefisk.cm/blog/impot-general-synthetique-cameroun — practitioner guide corroborating the class table."
+    - "cga3s.com, 'IGS vs IL simplifié: changements Cameroun': https://www.cga3s.com/igs-vs-il-simplifie-changements-cameroun/ — second, independent practitioner guide giving the same class structure and amounts."
+    - "Already catalogued in this repo: cases/external/regimes/cameroon.yaml, regime_checks.profit_or_turnover.bands.impot_general_synthetique.classes (this file is a standalone gold transcription of that same primary-sourced table for the golds harvest; I did not edit cameroon.yaml)."
+  licence: "The Finance Law PDF is a public government legal text (dgb.cm); the two practitioner guides are publicly published web pages with no explicit reuse licence stated."
+  kind: tax_case
+  # ── HAND-LABELLED 2026-08-12 ──────────────────────────────────────────
+  # IGS is a STEP LOOKUP TABLE (turnover falls in a bracket -> a FLAT FCFA
+  # amount for that bracket, not a formula applied to the excess). None of
+  # the engine/golds.py driver-ladder rungs (L1 ratio, L2 itemised, L3
+  # qty x price, L4 physics) describe a step table cleanly; L2 is the
+  # closest (one input maps to one published output figure, no recipe/qty
+  # involved) and is declared here with that caveat spelled out in `notes`.
+  resolution: L2
+  basis: "annual turnover (CA HT), a single flat FCFA amount per class — not a rate applied to a base"
+  periods: 1
+  mechanism: "n/a — a regime lookup table, not a business trade"
+  jurisdiction: CM
+  currency: XAF
+
+inputs:
+  # the ONE tested point: turnover of 2,500,000 XAF, which the source's own
+  # class table places in the "> 2,000,000 and <= 3,000,000" bracket
+  turnover_xaf: 2500000
+  # the FULL published class table, verbatim from the primary source (Article
+  # C39) as corroborated by both practitioner guides — kept here so any other
+  # turnover point in the table can be checked, not just the one tested above
+  class_table:
+    - {ceiling: 500000, annual_amount: 0, note: "exonéré"}
+    - {ceiling: 1000000, annual_amount: 20000}
+    - {ceiling: 2000000, annual_amount: 40000}
+    - {ceiling: 3000000, annual_amount: 75000}
+    - {ceiling: 5000000, annual_amount: 125000}
+    - {ceiling: 7500000, annual_amount: 200000}
+    - {ceiling: 10000000, annual_amount: 300000}
+    - {ceiling: 15000000, annual_amount: 500000}
+    - {ceiling: 20000000, annual_amount: 700000}
+    - {ceiling: 30000000, annual_amount: 1000000}
+    - {ceiling: 40000000, annual_amount: 1500000}
+    - {ceiling: 50000000, annual_amount: 2000000}
+  turnover_scope: "commercial/industrial/artisanal/agropastoral activities — the band relevant to a livestock or poultry trade (professions libérales use a lower 30,000,000 XAF ceiling instead, not modelled here)"
+  discharges: ["patente", "TVA (19.25%)", "IRPP au titre des BIC/BA/BNC"]
+
+expected:
+  igs_annual_amount_xaf:
+    value: 75000
+    label_as_printed: "classe: plafond 3 000 000 FCFA -> 75 000 FCFA"
+    composition_as_printed: "STEP LOOKUP, not a formula: the first class whose ceiling is not exceeded by turnover (2,500,000 <= 3,000,000, and 2,500,000 > the prior ceiling of 2,000,000) sets the amount directly — there is no per-franc rate anywhere in the mechanism"
+
+mapping: {}
+# no entry: engine/golds.py's CANON (revenue, cost_of_sales, gross_margin,
+# total_assets/liabilities/equity, cash flows, irr, npv) has no concept of a
+# tax liability or a regime-lookup figure at all, so nothing here can map onto
+# a figure the engine currently computes — see TAX_INVENTORY.md's own finding
+# that the GOLD-RUNNING HARNESS, not just the ledger grammar, has zero tax
+# vocabulary yet.
+
+tolerance:
+  abs: 0
+  why: >
+    a class-table lookup is exact by construction — the source publishes the
+    FCFA amount directly for each bracket, with no rate multiplication and no
+    rounding involved anywhere in the chain. Any deviation would be a
+    transcription error, not a source rounding artefact (contrast bfap's 0.5
+    tolerance, which exists BECAUSE that source's own chain rounds).
+
+notes: |
+  WHY THIS SHAPE MATTERS. This is the actual mechanism most of the francophone
+  West/Central African "small-business" turnover regimes use in practice —
+  Cameroon's IGS, Senegal's CGU new-enterprise minimum (cases/external/regimes/
+  senegal.yaml), Benin's TPS — a bracket does not compute a marginal rate on
+  the excess; it names a FLAT AMOUNT for the whole bracket, and the amount
+  JUMPS at each boundary (2,000,000.00 XAF owes 40,000; 2,000,000.01 XAF owes
+  75,000). That discontinuity is the crux of the grammar finding below.
+
+  GRAMMAR FINDING (engine/ledger/compile.py, trade.py, units.py — empirically
+  probed, not guessed; scripts run against the live engine, not committed):
+
+  1. A CONTINUOUS marginal-bracket formula (the excess over each threshold
+     taxed at ITS OWN rate — the shape a personal-income-tax barème usually
+     is) IS cleanly, correctly expressible with the existing grammar: nested
+     min()/max() over provenanced drivers, no new verb needed. Empirically
+     confirmed exact (a 2-bracket 0%/10% test matched the hand-computed
+     answer to the franc) AND correctly dimensionally typed as money — with
+     one landmine: `max(0, X)` mistypes to a dimensionless fraction (the
+     bare literal 0 sits first in `_minmax()`'s argument list and its "type"
+     — none — wins), while `max(X, 0)` types correctly. This is a narrow,
+     reproducible defect in engine/ledger/units.py's `_minmax()`, tangential
+     to this harvest's own remit (schema-leg discipline: `engine/ledger/
+     compile.py`, `trade.py`, `blocks.py`) but flagged here since it is a
+     live landmine for the exact idiom a marginal-bracket tax needs.
+
+  2. This gold's own shape — a DISCONTINUOUS class/step table — is NOT the
+     same mathematical object, and min/max cannot build a step (min/max only
+     compose continuous piecewise-LINEAR functions). The only way to express
+     it today is to drop into a raw Python ternary chain inside a driver's
+     `expr` (`0 if turnover<=500000 else 20000 if ... else ...`), which DOES
+     compute the exactly correct number — empirically confirmed: a hand-built
+     template with this file's own class table, fed turnover=2,500,000,
+     produced igs_annual_amount_xaf=75000 to the franc — but this is an
+     ESCAPE HATCH, not a first-class capability, and it costs the two
+     guarantees every other verb in this grammar carries:
+       - UNCHECKED DIMENSIONS: `engine/ledger/units.py:dimension()` tries to
+         evaluate the ternary's comparisons (`turnover<=500000`) as Unit
+         objects, which raises TypeError (Unit defines no `<=`); that
+         exception is swallowed by `dimension()`'s own blanket
+         `except Exception: return UNKNOWN`. So a driver declaring
+         `unit: XAF` on such an expression is NEVER actually verified against
+         what the expression computes — `trade.py`'s own cross-check
+         (`normalize_drivers`'s `asserted` list) only fires `if inferred is
+         not UNKNOWN`, and inferred is always UNKNOWN here. Empirically
+         confirmed: the SAME template with `unit: XAF` declared produced
+         ZERO complaints from `trade.contract()`; with the unit removed, one
+         complaint fired ("types as UNKNOWN"). This is CLAUDE.md's own
+         named hole (F-182/F-194: "a form that is lossy but legal never
+         fails... where the schema accepts a weaker declaration, no creak is
+         drawn") — confirmed here to apply, concretely, to the single most
+         common small-business tax shape in this repo's own target
+         jurisdictions.
+       - NO PER-NUMBER PROVENANCE: `trade.py`'s provenance rule (a bare
+         numeric literal needs an author) is satisfied once for the WHOLE
+         ternary string by a single `source:` tag on the driver — the twelve
+         separate class amounts (0, 20000, 40000, 75000, ...) each get zero
+         independent citation-checking; a wrong or transposed digit in class
+         7 would pass exactly as cleanly as a correct one.
+     WHAT WOULD CLOSE THIS: a first-class BAND/BRACKET construct in the
+     compiler grammar — an ordered list of {ceiling, amount-or-rate} pairs
+     that the compiler itself resolves and TYPE-CHECKS per row, the same way
+     `recipes[].losses` is a small closed vocabulary rather than a bare
+     `expr`. `engine/layers/tax/run.py` (the OLDER, separate physics engine
+     — NOT engine/ledger) already names `RATE_KINDS = {"flat", "bands"}` as
+     a first-class distinction; engine/ledger's trade grammar has no
+     equivalent today.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:`
+  block, and it SHOULD. What Article C39 publishes is a TWELVE-ROW LOOKUP
+  TABLE and nothing else: turnover ceilings from 500,000 to 50,000,000 XAF
+  paired with a flat annual IGS amount for each band (0 exonéré, then
+  20,000 / 40,000 / 75,000 / 125,000 / 200,000 / 300,000 / 500,000 /
+  700,000 / 1,000,000 / 1,500,000 / 2,000,000 XAF), a scope note naming the
+  activities the band applies to, and the list of taxes the IGS discharges
+  (patente, TVA at 19.25%, IRPP on BIC/BA/BNC). The single tested point,
+  turnover of 2,500,000 XAF, is a TURNOVER — a revenue figure — and it is
+  an input to the lookup, not a trading account.
+  The source publishes no expense at all: not a cost line, not a cost
+  total, not a margin, not a profit. That is not an omission — it is the
+  entire design of the regime. A synthetic turnover tax exists PRECISELY so
+  that a small trader need not keep a cost ledger; the taxable base is
+  gross receipts and the liability is read off a table. A `costs:` block
+  here would have to invent the very cost structure the mechanism was
+  written to make unnecessary, and there is no published cost total in the
+  Finance Law to bind `cost_of_sales` to. Unrunnable is correct.

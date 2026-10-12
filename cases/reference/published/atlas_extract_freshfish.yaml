@@ -1,0 +1,90 @@
+meta:
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur les Métiers Rentables — Région du Nord\", p.48, https://trust-fund-for-africa.europa.eu/system/files/2019-05/t05-eutf-sah-cm-02-01_giz_parse_nord.pdf"
+  registry_index: 15
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: extract
+  jurisdiction: CM
+  currency: XAF
+  trade: "Poisson frais (freshwater catch & sale, Lagdo barrage) — one fisher operation, Lagdo commune, Nord region"
+  isic_class: "0312 — Freshwater fishing"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: the source's own notes say the 364,000/month figure is "a single
+  # reported aggregate, not built up from a rate × frequency" — so revenue
+  # is read directly (the annual figure, matching the annual grid below),
+  # never multiplied up from a quantity.
+  resolution: L2
+  basis: per year, one fisher operation (Lagdo barrage)
+  periods: 1
+
+# One of only 3 `extract` entries in the 139-entry registry (all fishing/quarrying); this is
+# the richest and cleanest of the three (the other two — stone breaker, sand extractor — print
+# a `benefice` that equals raw revenue with the minor costs silently unsubtracted; this one's
+# marge properly nets every cited cost against revenue).
+
+inputs:
+  # mirrors generators.recette_annuelle below (the annual figure the
+  # source's own verified marge uses, not recette_mensuelle x 12 restated)
+  revenue: 4368000
+  # the FIVE individual lines that `investissement_initial` (800,000) rolls
+  # up as its own printed "Total des charges" — see notes, that composition
+  # annotation names all five explicitly. `investissement_initial` itself
+  # is EXCLUDED (a total, not a sixth line — would double-count). The three
+  # equipment stocks (pirogue/filet/moteur) ARE included: the source's own
+  # verified marge nets the full 800,000 in year one, with no depreciation
+  # schedule — see notes, "the engine should NOT re-amortize this."
+  costs:
+    pirogue: 300000
+    filet: 50000
+    moteur: 200000
+    impots_et_taxes: 50000
+    carburant_et_lubrifiant: 200000
+  stocks:
+    pirogue: {value: 300000, unit: "FCFA", note: "canoe, equipment"}
+    filet: {value: 50000, unit: "FCFA", note: "net, fishing gear"}
+    moteur: {value: 200000, unit: "FCFA", note: "outboard motor, equipment"}
+  generators:
+    recette_mensuelle: {value: 364000, unit: "FCFA / mois", composition: "prises × prix moyen (not itemized by the source)"}
+    recette_annuelle: {value: 4368000, unit: "FCFA / an", composition: "recette_mensuelle × 12 (source's own ×12 column)"}
+  movements:
+    impots_et_taxes: {value: 50000, unit: "FCFA / an", direction: out, kind: opex}
+    carburant_et_lubrifiant: {value: 200000, unit: "FCFA / an", direction: out, kind: opex}
+    investissement_initial: {value: 800000, unit: "FCFA", direction: out, kind: capex,
+      composition: "\"Total des charges\" = équipement 550,000 (pirogue+filet+moteur) + charges fixes 250,000 (impôts + carburant)"}
+  gates: [acces_plan_eau, engins_peche]
+  grid: {period: monthly, operating_days: null, annualization: 12}
+
+expected:
+  marge_beneficiaire_annuelle: {value: 3568000, unit: "FCFA / an", provenance: cited,
+    composition: "recette_annuelle (4,368,000) − investissement_initial (800,000) = 3,568,000 — verified exact"}
+
+mapping:
+  marge_beneficiaire_annuelle: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints whole francs and its own notes verify the arithmetic
+    exactly (4,368,000 − 800,000 = 3,568,000); any gap is real
+
+notes: |
+  Clean arithmetic, no source error here: 4,368,000 − 800,000 = 3,568,000 exactly.
+
+  Ambiguities the source leaves open (both explicit in the registry's `gaps:`, both genuine
+  gaps in the CEP, not slips of this transcription):
+  - No `fonds_roulement` (working-capital) line, unlike every other Nord-volume CEP — fuel
+    and ice working capital is folded into the flat 200,000/yr `carburant_et_lubrifiant` line
+    rather than tracked separately.
+  - The source's own prose documents a fishery-wide productivity collapse on the Lagdo
+    reservoir (catch fell from ~20,000 t in 1986 to <3,000 t in 2013) but the CEP's
+    364,000 FCFA/month revenue figure is presented as a flat, unchanging number — the
+    representative-enterprise convention silently assumes the collapse doesn't apply to
+    this operator. A trade file promoted from this entry should flag that tension rather
+    than inherit it silently.
+  - No per-trip catch data (kg/trip, trips/week) underlies the 364,000/month figure — it is
+    a single reported aggregate, not built up from a rate × frequency the way the crop CEPs
+    build `valeur_produit` from sacks × price.
+  - No depreciation schedule on pirogue/moteur (both capitalized once, at the "Total des
+    charges" first-year-cumulative convention shared by every Nord-volume monthly CEP — the
+    engine should NOT re-amortize this over an asset life; the source's own margin already
+    subtracts the full 800,000 in year one).

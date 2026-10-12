@@ -1,0 +1,140 @@
+# CO-PRODUCT HARVEST (F-210) — one input, two priced outputs, one processing
+# loss. Re-derived, not re-researched: `cases/golds/fao_bl811e_beta_ltd_oilmill.yaml`
+# already carries this split (it was transcribed 2026-08-12 for a different
+# purpose — the multi-year FRR/financing model — and marked UNRUNNABLE at L4:
+# "no converter for L4 yet" and every `expected` figure there is a per-year
+# ARRAY, which `_num()` cannot read). This file lifts ONE column — Year 3
+# (1992), the first year at 100% capacity utilisation, i.e. STEADY STATE, so
+# there is no ramp-up ambiguity — and restates it as a single-period L2 gold:
+# itemised costs, a stated combined revenue, and the yield split spelled out
+# explicitly. Every number below is transcribed from that sibling gold's own
+# ALREADY-HAND-VERIFIED Year-3 figures (its own header: "every arithmetic
+# relationship... was independently recomputed... and matched the source to
+# the cent"); nothing here is a fresh read of the PDF, and nothing is
+# invented — see notes for the exact column pulled and the re-addition that
+# confirms it.
+
+meta:
+  source: >
+    FAO, "Financial analysis in agricultural project preparation" (FAO
+    Agricultural Services Bulletin, ISBN 92-5-103086-3, Rome, 1991),
+    "Comprehensive Illustration" — Beta Ltd. (vegetable oil milling company),
+    Schedules 2, 3 and 5, Year 3 (1992) column, pp.38-44.
+    http://www.fao.org/3/a-bl811e.pdf
+    (cross-checked against this repo's own
+    cases/golds/fao_bl811e_beta_ltd_oilmill.yaml, which transcribes the full
+    6-year table and independently verified every relationship used here)
+  accessed: "2026-08-12"
+  licence: >
+    (c) FAO 1991. No open licence found in the document (predates Creative
+    Commons); publicly hosted by FAO. Transcribed here, with full citation,
+    for engine-verification/research use only.
+  kind: trade_case
+  resolution: L2
+  # L2, not L3: L3's `sale:` block (engine/golds.py:to_template) is ONE
+  # {quantity, unit, price} triple — a single output. This case has TWO
+  # priced outputs (oil, meal), so the auto-converter has nowhere to put a
+  # second sale line; the combined total is stated directly as `revenue`
+  # instead (see `inputs.revenue` below), and the disaggregated split is kept
+  # in full alongside it for the co-product analysis this file exists for.
+  basis: >
+    Beta Ltd (vegetable oil milling company), Year 3 (1992) of the 6-year
+    projection — the first year at 100% capacity utilisation (Year 2 = 90%
+    ramp-up; Years 3-6 = 100%, identical in physical terms) — Schedules 2, 3, 5
+  periods: 1
+  mechanism: separate
+  # THE FINDING, in one field: `engine/ledger/mechanisms.py:MECHANISMS` has
+  # no `separate` tag (F-210). `to_template` (engine/golds.py) reads this
+  # field with a bare `.get("mechanism", "buy_resell")` and never validates
+  # it against the vocabulary — so this flat gold RUNS regardless (see
+  # notes). It is `trade.contract()`, called only on the FULL-GRAMMAR
+  # template (cases/golds/templates/sep_oilmill_bl811e.yaml), that refuses
+  # this tag outright: confirmed empirically, see that file's header.
+  jurisdiction: null   # generic FAO teaching illustration; no country named
+  currency: USD
+
+inputs:
+  # ── the yield split, stated explicitly ────────────────────────────────────
+  oilseed_processed_tons: 5000
+  oil_yield_pct_of_oilseed: 15
+  meal_yield_pct_of_oilseed: 80
+  processing_loss_pct: 5        # 15 + 80 + 5 = 100 -- the source's own split
+  oil_produced_tons: 750        # 5000 x 15%
+  meal_produced_tons: 4000      # 5000 x 80%
+  processing_loss_tons: 250     # 5000 x 5% -- unrecovered, no output stock
+  raw_material_price_oilseed_usd_per_ton: 200
+  sale_price_oil_usd_per_ton: 500
+  sale_price_meal_usd_per_ton: 300
+  oil_revenue_usd: 375000       # 750 x 500
+  meal_revenue_usd: 1200000     # 4000 x 300
+  # the auto-converter (`to_template`, L2 path) reads ONE combined `revenue`
+  # figure — the source's own Schedule 2 total, oil + meal:
+  revenue: 1575000              # 375,000 + 1,200,000
+  costs:
+    raw_material_oilseed: 1000000    # 5000t x $200/t (Schedule 3)
+    packing_material: 38000          # Schedule 3, Year 3
+    labour: 100000                   # Schedule 3, Year 3 ("full wages" from Yr2)
+    fuel: 150000                     # Schedule 3, Year 3
+    depreciation: 56000              # Schedule 1 total (buildings 6 + plant 50)
+    # admin/marketing overheads ($20,000, Schedule 5) are EXCLUDED here: the
+    # source's own "gross profit" line sits ABOVE that deduction — Schedule 5
+    # subtracts admin/marketing only AFTER gross profit, to reach "profit
+    # before interest". Including it here would mismatch the mapped figure
+    # below (cost_of_sales_incl_depreciation_usd, which excludes it too).
+
+expected:
+  oil_produced_tons: 750
+  meal_produced_tons: 4000
+  oil_sales_revenue_usd: 375000
+  meal_sales_revenue_usd: 1200000
+  total_revenue_usd: 1575000
+  cost_of_sales_before_depreciation_usd: 1288000   # 1,000,000+38,000+100,000+150,000
+  cost_of_sales_incl_depreciation_usd: 1344000     # + 56,000 depreciation
+  gross_profit_usd: 231000                         # 1,575,000 - 1,344,000
+
+mapping:
+  total_revenue_usd: revenue
+  cost_of_sales_incl_depreciation_usd: cost_of_sales
+  gross_profit_usd: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    every figure in the sibling gold's own Year-3 column reconciled to the
+    dollar on independent hand re-derivation (see that file's header note:
+    "No arithmetic error was found in this example... every one of the ~40
+    individual relationships we checked by hand... reconciled exactly to the
+    source, to the dollar"); kept at $1 for consistency with that file rather
+    than because any gap is expected here
+
+notes: |
+  RE-ADDITION, done again here rather than trusted from the sibling file:
+    750 + 4000 + 250 = 5000                                    (yield split)
+    750 x 500 = 375,000; 4000 x 300 = 1,200,000; sum = 1,575,000 (revenue)
+    5000 x 200 = 1,000,000 (raw material)
+    1,000,000 + 38,000 + 100,000 + 150,000 = 1,288,000     (cost before dep.)
+    1,288,000 + 56,000 = 1,344,000                          (cost incl. dep.)
+    1,575,000 - 1,344,000 = 231,000                            (gross profit)
+  All five identities hold exactly — no rounding gap anywhere in this
+  column, matching the sibling gold's own finding for the full 6-year table.
+
+  WHY THIS IS THE CENTREPIECE CASE FOR THE F-210 FINDING. Beta Ltd's own
+  Schedule 3 does NOT allocate the $1,000,000 raw-material cost between oil
+  and meal at all — it is booked as ONE lump against the COMBINED revenue of
+  both products (Schedule 5's "cost of sales" and "gross profit" are both
+  whole-mill figures; there is no per-product cost line anywhere in the
+  source). This is itself a finding: even FAO's own detailed 6-schedule
+  worked example sidesteps the joint-cost-allocation question entirely by
+  never asking "what did the oil cost, separately from the meal" — see the
+  companion template (cases/golds/templates/sep_oilmill_bl811e.yaml), which
+  DOES need an answer to that question the moment oil and meal are modelled
+  as separate weighted-average inventories (IAS 2), and documents exactly
+  where the engine will and will not accept one.
+
+  A FAINT L3 TEEmptation, resisted: the two "quantity x price" pairs above
+  (750t x $500 and 4000t x $300) look exactly like `engine/golds.py`'s L3
+  `sale:` shape, but that block is declared singular in the schema and the
+  converter — one output, not several — so promoting this gold to L3 is not
+  possible without inventing a converter change, which this harvest brief
+  explicitly rules out ("NEVER EDIT ANYTHING UNDER engine/"). L2 with a
+  stated combined `revenue` is the honest fit today.

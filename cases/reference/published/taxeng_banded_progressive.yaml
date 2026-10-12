@@ -1,0 +1,85 @@
+id: taxeng_banded_progressive
+title: "OLD tax engine self-test — progressive (marginal) bands on a profit base"
+
+meta:
+  source:
+    - "This repository's OWN old tax engine — engine/layers/tax/run.py (521 lines), function `_apply_rate()` (marginal band walk, lines 59-69) via `run()`."
+    - "engine/tests/test_tax.py, class TestRateStructures, test_progressive_bands_are_marginal (lines 50-56) — the worked assertion this gold transcribes verbatim, id 'ibica' (the docstring's own shorthand for a WAEMU-shaped industrial/commercial profits tax; the bands and rates below are the test's own illustrative numbers, not a cited statute)."
+  licence: "Internal — this repository's own code and test suite, not an external publication. No third-party licence applies."
+  kind: engine_oracle
+  self_graded: true   # see taxeng_flat_profit.yaml for the full caveat this repeats:
+  #                      our own engine both poses the question and grades the answer.
+  resolution: L4       # physics — a marginal-band walk over the base, per engine/golds.py's ladder
+  basis: "per period, 3 independent periods (not an assessment window — each period's band walk is self-contained), annual grid"
+  periods: 3
+  mechanism: "not applicable — a fiscal overlay, not a trade mechanism (see taxeng_flat_profit.yaml's note on engine/ledger/mechanisms.py's 16-cell grid)"
+  jurisdiction: "none — synthetic fixture; 'ibica' gestures at Cote d'Ivoire's IBICA (impot sur les benefices industriels et commerciaux et agricoles) by name only. The band thresholds (100, 300) and rates (0%, 10%, 25%) are the test author's own illustrative numbers, not transcribed from a published CGI rate table."
+  currency: "unspecified in the source — abstract currency units"
+
+inputs:
+  tax_declaration:
+    grid: {periods: 3}
+    bases:
+      profit_before_allowances: [50.0, 200.0, 500.0]
+      turnover: [0.0, 0.0, 0.0]
+    taxes:
+      - id: ibica
+        base: profit
+        rate:
+          kind: bands
+          bands:
+            - {upto: 100, rate: 0.0}     # first 100 of profit: exempt
+            - {upto: 300, rate: 0.10}    # the NEXT 200 (100 to 300): 10%
+            - {rate: 0.25}               # everything above 300: 25% (open band, must be declared last)
+
+expected:
+  cash_tax:
+    value: [0.0, 10.0, 70.0]
+    engine_field: "out['cash_tax']"
+    composition: >
+      t=0, profit 50: entirely inside the 0-100 exempt band -> 50x0% = 0.
+      t=1, profit 200: 100 exempt + the next 100 (100->200) at 10% = 10.
+      t=2, profit 500: 100 exempt + 200 (100->300) at 10% = 20, + 200 (300->500) at 25% = 50;
+      total 20+50 = 70. Each band taxes only ITS OWN slice — MARGINAL, not the whole base at
+      whichever band it lands in (that would give 500x25%=125 at t=2, which is not what a
+      progressive schedule means).
+  taxes_ibica_base_amount:
+    value: [50.0, 200.0, 500.0]
+    engine_field: "out['taxes']['ibica']['base_amount']"
+    composition: "raw profit_before_allowances, unchanged — no allowances/adjustments/losses declared in this tax"
+
+mapping:
+  cash_tax: tax_cash_paid_this_period
+  taxes_ibica_base_amount: taxable_base
+
+tolerance:
+  abs: 1.0e-9
+  why: >
+    Exact deterministic floating-point band arithmetic, re-run directly from the cited test (see
+    notes for the exact reproduction command). No display rounding to forgive.
+
+notes: |
+  Reproduce with:
+    python3 -c "from engine.layers.tax.run import run; \
+    print(run({'grid': {'periods': 3}, \
+               'bases': {'profit_before_allowances': [50.0, 200.0, 500.0], 'turnover': [0.0]*3}, \
+               'taxes': [{'id': 'ibica', 'base': 'profit', 'rate': {'kind': 'bands', \
+                          'bands': [{'upto': 100, 'rate': 0.0}, {'upto': 300, 'rate': 0.10}, \
+                                    {'rate': 0.25}]}}]})['cash_tax'])"
+  -> [0.0, 10.0, 70.0], matching `expected.cash_tax` exactly (run myself, not copied blind).
+
+  WHAT THIS SHAPE ADDS OVER taxeng_flat_profit.yaml: the rate is no longer a single number
+  multiplying the base — it is a SCHEDULE, walked marginally (engine/layers/tax/run.py's
+  `_apply_rate`, lines 59-69: `for upto, rate in val: top = min(amount, upto); tax += (top -
+  lower) * rate`). This is the shape TAXENG_VERDICT.md examines for whether a `size:` expression
+  can express `min`/`max` clamped tiers directly, since the compiler whitelists both
+  (`engine/ledger/compile.py::_SAFE`) and the unit checker type-checks them
+  (`engine/ledger/units.py::_minmax`).
+
+  NOT transcribed here (deliberately, to keep this gold to ONE shape): engine/tests/test_tax.py's
+  `TestAssessmentWindow` class layers an ANNUAL ASSESSMENT WINDOW on top of banded rates (IAS 34
+  B15 — a band walked once a year even when the grid runs quarterly/monthly). That is a SECOND,
+  orthogonal mechanism (state aggregated across periods before the band applies), closer in kind
+  to the loss-carryforward gold's cross-period memory than to this one's single-period band walk.
+  It is real and it is in the old engine (I14, `_windows`/`_allocate`, run.py lines 212-260), but
+  including it here would blur two shapes into one gold. Flagged for the record, not built.

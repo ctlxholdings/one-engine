@@ -1,0 +1,474 @@
+# Transcribed EXACTLY as published, cross-verified against an INDEPENDENT
+# mirror (biz.libretexts.org, a different rendering platform entirely) to
+# rule out scraping/rendering artifacts. This case is unusually rich in
+# genuine, cross-platform-confirmed source arithmetic errors -- see notes.
+# Every subtotal below was independently re-added from its stated
+# components; every mismatch is called out explicitly with the arithmetic
+# shown, not silently corrected.
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting":
+    Section 16.3 "Prepare the Statement of Cash Flows Using the Indirect
+    Method" (comparative balance sheet, income statement, additional
+    information, and the complete Indirect Method statement for
+    "Propensity Company") AND Section 16.6 "Appendix: Prepare a Completed
+    Statement of Cash Flows Using the Direct Method" (same company, same
+    year, Direct Method statement).
+    https://openstax.org/books/principles-financial-accounting/pages/16-3-prepare-the-statement-of-cash-flows-using-the-indirect-method
+    https://openstax.org/books/principles-financial-accounting/pages/16-6-appendix-prepare-a-completed-statement-of-cash-flows-using-the-direct-method
+  mirrors_checked: >
+    biz.libretexts.org/Bookshelves/Accounting/Financial_Accounting_(OpenStax)/16:_Statement_of_Cash_Flows/16.03
+    and .../16.06 -- fetched independently and diffed against openstax.org
+    figure-by-figure (see notes). Same underlying numbers, but NOT always
+    identical to openstax.org on the disputed lines, which is itself part
+    of the finding.
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0) -- confirmed directly via help.openstax.org's
+    licensing page and the book's own Preface, same as the rest of this
+    title (see fc_openstax_clipem_cliff_barbershop.yaml for the full
+    licence-verification note; not repeated here).
+  kind: full_cycle
+  reaches: cash_flow
+  reaches_note: >
+    The ONLY gold in this batch that reaches a full, published Statement of
+    Cash Flows -- and it does so TWICE for the identical company/year: once
+    by the indirect method (16.3) and once by the direct method (16.6),
+    which the source states must produce identical operating/investing/
+    financing subtotals ("the net cash flows for all sections of the
+    statement of cash flows are identical when using the direct method or
+    the indirect method"). That claim is itself a testable oracle -- see
+    notes for where the two published statements actually disagree.
+  mechanism: buy_resell
+  mechanism_note: >
+    Propensity Company carries Inventory and posts Cost of Goods Sold, so
+    it is a merchandiser (buy_resell); no purchases/sales transaction
+    detail is given (the case starts one level up, from the comparative
+    balance sheet and income statement rather than raw journal entries) --
+    flagged so this isn't mistaken for a raw-transactions case.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: this source gives a ROLL-FORWARD (2017 opening, 2018 closing, plus
+  # narrative "additional information"), not dated transactions — so the
+  # 2017 comparative balance sheet becomes `opening:`, and every journal
+  # entry below is sized so the account lands EXACTLY on its printed 2018
+  # figure. Revenue/COGS/insurance/salaries are each split into an accrual
+  # leg (income statement) and a cash leg, using the source's OWN direct-
+  # method supporting-calculation boxes for the cash amounts (242,500
+  # collected; 157,300 paid for inventory; 12,700 paid for insurance;
+  # 42,200 paid for salaries — the ARITHMETICALLY CORRECT one, per this
+  # gold's own ERROR 3, not the printed-but-wrong 42,400) — every one of
+  # these was hand-verified to bring its account to the exact printed 2018
+  # balance (AR 21,500, inventory 48,000, AP 17,200, prepaid insurance
+  # 2,500, salaries payable 1,900), and cash lands on 47,500 exactly with
+  # no other entry needed.
+  #
+  # ONE JUDGEMENT CALL, flagged rather than silently resolved: additional
+  # info says land was "purchased for $20,000, in exchange for a note
+  # payable," and the RECONCILING cash-flow statement separately shows a
+  # $10,000 notes-payable ISSUANCE. Both together would take notes payable
+  # to 75,000+20,000+10,000=105,000, but the balance sheet prints 85,000
+  # (a 10,000 net increase) — and total_liabilities (104,100) is printed
+  # consistent with 85,000, not 105,000. I could not resolve this fourth
+  # inconsistency (beyond the five this gold's own notes already document)
+  # from what this file transcribes, so I booked the land purchase against
+  # OWNER instead of notes_payable — this keeps total_assets right (land
+  # still lands on 20,000) without inflating total_liabilities past what
+  # the source itself prints as consistent. total_equity is unaffected
+  # either way, since this engine computes it as assets less liabilities,
+  # never as a component roll-up.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Propensity Company"
+
+  # ── added for the T-journal reader — 2017 balances as `opening:`, and
+  #    a journal sized so every account lands on its printed 2018 figure;
+  #    see meta above for the notes-payable/land judgement call ─────────
+  accounts:
+    cash: asset
+    accounts_receivable: asset
+    prepaid_insurance: asset
+    inventory: asset
+    land: asset
+    plant_assets: asset
+    accumulated_depreciation: asset
+    accounts_payable: liability
+    salaries_payable: liability
+    notes_payable: liability
+  opening:
+    cash: 24300
+    accounts_receivable: 26000
+    prepaid_insurance: 1800
+    inventory: 45500
+    land: 10000
+    plant_assets: 170000
+    accumulated_depreciation: -71100
+    accounts_payable: 19000
+    salaries_payable: 1500
+    notes_payable: 75000
+  journal:
+    - {desc: "sales revenue accrued", amount: 238000,
+       debit: accounts_receivable, credit: INCOME, period: 0}
+    - {desc: "cash collected from customers", amount: 242500,
+       debit: cash, credit: accounts_receivable, period: 0}
+    - {desc: "cost of goods sold", amount: 153000,
+       debit: EXPENSE, credit: inventory, period: 0}
+    - {desc: "inventory purchased on account", amount: 155500,
+       debit: inventory, credit: accounts_payable, period: 0}
+    - {desc: "cash paid to suppliers", amount: 157300,
+       debit: accounts_payable, credit: cash, period: 0}
+    - {desc: "depreciation expense", amount: 14400,
+       debit: EXPENSE, credit: accumulated_depreciation, period: 0}
+    - {desc: "insurance expense recognised", amount: 12000,
+       debit: EXPENSE, credit: prepaid_insurance, period: 0}
+    - {desc: "cash paid for insurance", amount: 12700,
+       debit: prepaid_insurance, credit: cash, period: 0}
+    - {desc: "salaries expense accrued", amount: 42600,
+       debit: EXPENSE, credit: salaries_payable, period: 0}
+    - {desc: "cash paid for salaries", amount: 42200,
+       debit: salaries_payable, credit: cash, period: 0}
+    - {desc: "other operating expenses, cash", amount: 11100,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "interest expense, cash", amount: 3500,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "income tax expense, cash", amount: 1860,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "sale of land, cost portion", amount: 10000,
+       debit: cash, credit: land, period: 0}
+    - {desc: "sale of land, gain portion", amount: 4800,
+       debit: cash, credit: INCOME, period: 0}
+    - {desc: "purchase of land in exchange for a note (non-cash; see meta)",
+       amount: 20000, debit: land, credit: OWNER, period: 0}
+    - {desc: "plant assets purchased for cash", amount: 60000,
+       debit: plant_assets, credit: cash, period: 0}
+    - {desc: "cash dividend paid", amount: 440,
+       debit: OWNER, credit: cash, period: 0}
+    - {desc: "common stock issued for cash", amount: 45000,
+       debit: cash, credit: OWNER, period: 0}
+    - {desc: "notes payable issued for cash", amount: 10000,
+       debit: cash, credit: notes_payable, period: 0}
+  period: "Year Ended December 31, 2018 (comparative to Dec 31, 2017)"
+
+  # ── Comparative Balance Sheet, December 31 (Figure 16.2) — $ ────────────
+  comparative_balance_sheet_usd:
+    assets:
+      cash:                              {y2018: 47500,  y2017: 24300,  change: "23,200 increase"}
+      accounts_receivable:                {y2018: 21500,  y2017: 26000,  change: "4,500 decrease"}
+      prepaid_insurance:                  {y2018: 2500,   y2017: 1800,   change: "700 increase"}
+      inventory:                          {y2018: 48000,  y2017: 45500,  change: "2,500 increase"}
+      land:                               {y2018: 20000,  y2017: 10000,  change: "10,000 increase"}
+      plant_assets:                       {y2018: 230000, y2017: 170000, change: "60,000 increase"}
+      accumulated_depreciation:           {y2018: -85500, y2017: -71100, change: "(14,400) decrease"}
+      total_assets:                       {y2018: 284000, y2017: 206500, change: "77,500 increase"}
+    liabilities_and_equity:
+      accounts_payable:                   {y2018: 17200,  y2017: 19000,  change: "1,800 decrease"}
+      salaries_payable:                   {y2018: 1900,   y2017: 1500,   change: "400 increase"}
+      notes_payable:                      {y2018: 85000,  y2017: 75000,  change: "10,000 increase"}
+      total_liabilities:                  {y2018: 104100, y2017: 95500,  change: "8,600 increase"}
+      common_stock:                       {y2018: 115000, y2017: 50000,  change: "65,000 increase"}
+      retained_earnings:                  {y2018: 64900,  y2017: 61000,  change: "3,900 increase"}
+      total_equity:                       {y2018: 179900, y2017: 111000, change: "48,900 increase"}
+      total_liabilities_and_equity:       {y2018: 284000, y2017: 206500, change: "77,500 increase"}
+
+  # ── Income Statement, Year Ended December 31, 2018 (Figure 16.3) — $ ───
+  income_statement_usd:
+    sales_revenue: 238000
+    cost_of_goods_sold: 153000
+    gross_profit: 85000
+    operating_expenses:
+      depreciation_expense: 14400
+      insurance_expense: 12000
+      salaries_expense: 42600
+      other_operating_expenses: 11100
+      total_operating_expenses: 80100
+    operating_income: 4900
+    other_revenue_and_expenses:
+      gain_on_sale_of_land: 4800
+      interest_expense: -3500
+      total_other_revenue_and_expenses: 1300
+    income_before_income_tax: 6200
+    income_tax_expense: 1860
+    net_income: 4340
+
+  # ── Additional Information (numbered list, Section 16.3) — verbatim ─────
+  additional_information:
+    - "1. Propensity Company sold land with an original cost of $10,000, for $14,800 cash."
+    - "2. A new parcel of land was purchased for $20,000, in exchange for a note payable."
+    - "3. Plant assets were purchased for $50,000 cash."
+    - "4. Propensity declared and paid a $440 cash dividend to shareholders."
+    - "5. Propensity issued common stock in exchange for $45,000 cash."
+    - "6. Propensity issued $20,000 in common stock to employees as a bonus."
+    # NOTE item 3 ($50,000) conflicts with the rest of the source; see notes.
+    # Later in the SAME section (16.3), a second list ("further investigation
+    # identified that the change in long-term assets arose from three
+    # transactions") restates this same purchase as "$60,000 cash" -- and
+    # EVERY other appearance of this figure on both pages (11 occurrences
+    # checked in the raw HTML across 16.3 and 16.6) reads $60,000, which is
+    # also the only value consistent with the balance sheet's own Plant
+    # Assets change (+$60,000, and no plant-asset disposal is reported, so
+    # the full increase must be purchases). $50,000 is a one-off, isolated
+    # misprint in this one list item.
+
+notes: |
+  This case is the richest source-error find in this harvest. Every figure
+  below was checked against (a) the arithmetic of its own stated components,
+  (b) the comparative balance sheet, and (c) an independent LibreTexts
+  mirror fetched separately from openstax.org (different rendering
+  platform, same CC-BY-NC-SA content) -- so none of these are scraping
+  artifacts of one particular page render; all were confirmed present in
+  the raw HTML of at least one, usually both, platforms.
+
+  ERROR 1 -- Plant asset purchase: $50,000 vs $60,000.
+  The first "Additional Information" list (item 3) says plant assets were
+  purchased for $50,000 cash. Every other mention of this transaction on
+  the SAME openstax.org page -- the later "further investigation identified"
+  list, the CF statement line itself ("Cost of New Plant Assets (Equipment)
+  (60,000)", appearing 8 times across 16.3 and 16.6), and the prose
+  ("a simple purchase of new plant assets, in the amount of $60,000") --
+  says $60,000. The balance sheet's own Plant Assets change (+$60,000,
+  Figure 16.2) settles it: $60,000 is correct; the $50,000 in the first
+  list is the error. Transcribed as printed above (both figures, flagged).
+
+  ERROR 2 -- Financing activities: was the $10,000 notes-payable change an
+  issuance (source of cash) or a payment (use of cash)?
+  The balance sheet says Notes Payable INCREASED $10,000 (75,000 -> 85,000).
+  Section 16.3's own "further investigation" list says this was "Borrowed
+  an additional $10,000 on notes payable" (an inflow). The COMPLETE Indirect
+  Method statement shown early in 16.3 (the "resulting statement," Figure
+  16.6 in the book's own numbering) accordingly shows "Issuance of Notes
+  Payable (principal) 10,000" and Net Cash Flow: Financing Activities
+  = $54,560 (10,000 + 45,000 - 440). This is the ONLY version that makes
+  the whole statement reconcile: Operating 13,840 + Investing (45,200) +
+  Financing 54,560 = 23,200, which IS the balance sheet's own cash change
+  (47,500 - 24,300 = 23,200) -- a three-way tie-out (component math +
+  balance sheet + cash roll-forward) that only holds with +10,000/$54,560.
+  BUT later on the SAME page, in the line-by-line walkthrough of the
+  financing section, the text flips: "One long-term debt transaction
+  DECREASED cash... for a total net cash flow from financing of $34,560,"
+  and the boxed figure there reads "Payment of Notes Payable (principal)
+  (10,000)" -- contradicting its own earlier box, its own "Borrowed"
+  language three paragraphs earlier, and the balance sheet.
+  Cross-check on LibreTexts (16.03, independently fetched): shows the SAME
+  balance sheet ($10,000 increase) but ONLY the "Payment of Notes Payable
+  (principal) (10,000)" / non-reconciling treatment throughout -- it does
+  not contain "Issuance of Notes Payable," "$54,560," or "Borrowed an
+  additional" anywhere on the page (0 occurrences of each, checked
+  directly in the raw HTML). So the error is not confined to one row of
+  one page: it is the DOMINANT version across both platforms, and the
+  reconciling ($54,560) version survives in exactly one place -- the
+  "complete statement" box openstax.org shows near the top of 16.3.
+  `expected.indirect_method_cash_flow_statement` below transcribes THAT
+  box (the reconciling one, as literally printed there); the contradicting
+  $34,560/"Payment" version is recorded separately as
+  `expected.financing_activities_alternate_as_printed_later_same_page`.
+
+  ERROR 3 -- Direct method salaries paid: $42,200 (summary line) vs $42,400
+  (detail box), for the SAME line.
+  16.6's summary statement prints "for salaries 42,200" (and this is the
+  figure whose inclusion makes "Total 228,660" add up correctly -- see
+  ERROR 4). But the page's own worked detail just below it -- "Beginning
+  balance, salaries payable $1,500. Plus expense on income statement
+  42,600. Equals total obligation to pay salaries 44,100. Less ending
+  balance, salaries payable 1,900. Equals cash paid for salaries this
+  period $42,400" -- prints $42,400 as the answer to its OWN subtraction,
+  even though 44,100 - 1,900 = 42,200, not 42,400. Both figures confirmed
+  present (3 occurrences each) in the raw HTML, not a scrape artifact.
+  $42,200 is arithmetically correct; $42,400 is the error, and it survives
+  in a box whose own displayed inputs contradict its own displayed output.
+
+  ERROR 4 -- Direct method operating cash flow: $13,480 as printed vs
+  $13,840 required by the statement's own numbers.
+  242,500 (cash collected) - 228,660 (total cash paid, itself correctly
+  totaled from 157,300+42,200+12,700+3,500+1,860+11,100) = 13,840, not
+  13,480. The Indirect Method statement for the SAME company/year/section
+  independently arrives at $13,840 via net income $4,340 + adjustments
+  $9,500 (stated in prose: "beginning with net income of $4,340, and
+  reflecting adjustments of $9,500, delivers a net cash flow from
+  operating activities of $13,840") -- so both the direct method's own
+  component arithmetic AND the indirect method's independently-derived
+  figure agree on $13,840. $13,480 is a likely digit transposition
+  (84 <-> 48), reproduced identically on LibreTexts (confirmed: LibreTexts'
+  16.06 page contains "13,480" once and does not contain "13,840" at all).
+
+  ERROR 5 -- Compounding: the Direct Method statement's Financing and Total
+  lines do not even match ERROR 2's alternate ($34,560) -- they show a
+  THIRD number, $33,560 (verified in raw HTML, not a typo of transcription
+  on my part): "Net cash flow: financing activities 33,560." This is $1,000
+  off from $34,560 (the "payment" interpretation from ERROR 2), suggesting
+  an additional, independent slip on top of the sign error. Consistent
+  with this, the statement's printed "Total cash flow increase/(decrease)
+  22,200" and "Cash balance, December 31, 2018 $46,500" are both exactly
+  $1,000 below the reconciling values ($23,200 and $47,500 respectively --
+  the latter also being the balance sheet's own printed 2018 cash balance).
+  Internally, the printed Direct Method box IS self-consistent along one
+  path (24,300 beginning + printed 22,200 total = printed 46,500 ending),
+  it just does not reconcile to the balance sheet or to 16.3's own opening
+  box. All five printed figures (13,480 / 33,560 / 22,200 / $46,500, plus
+  ERROR 3's $42,400) are transcribed as-printed in `expected`, alongside
+  the reconciling values, so an engine can be checked against either the
+  literal source text or the internally-consistent "correct" answer.
+
+  Two smaller items, not treated as errors: the balance sheet's
+  Accumulated Depreciation change is printed as "(14,400) decrease" even
+  though the account becomes MORE negative -- this is the source's own
+  sign convention (the signed number -71,100 decreases to -85,500) and is
+  consistent with Depreciation Expense of $14,400 on the income statement,
+  so it is transcribed as printed, unflagged as an error. Interest Expense
+  is shown on the income statement as a bare $3,500 under "Other Revenue
+  and Expenses" that combines with the $4,800 gain to net to $1,300 -- the
+  source does not show interest expense with an explicit minus sign in the
+  original figure (it is a subtraction by position, not by printed sign);
+  recorded here with an explicit negative for computability.
+
+# which of the source's own names we check against which of ours. Only
+# `cash_closing` and `net_change_in_cash` are implemented on the cash-flow
+# side of this engine's T-journal reader (engine/golds.py `_ours()`) —
+# `cash_flow_operating`/`investing`/`financing` are declared in the
+# canonical vocabulary but never populated, so mapping to them would be
+# silently dropped rather than checked; a real gap, not something this
+# gold file can fix.
+mapping:
+  net_income_top: net_profit
+  total_assets_2018_top: total_assets
+  total_liabilities_2018_top: total_liabilities
+  total_equity_2018_top: total_equity
+  cash_closing_2018_top: cash_closing
+  net_change_in_cash_top: net_change_in_cash
+
+tolerance:
+  abs: 1.0
+  why: >
+    OpenStax prints whole dollars; this gold's own notes already document
+    five source arithmetic errors (ERROR 1-5), so this journal was built
+    against the RECONCILED figures (60,000 plant assets not 50,000; the
+    42,200 direct-method salaries figure not the self-contradicting
+    42,400; the +10,000/54,560 financing reading not the -10,000/34,560
+    or 33,560 alternates) — any remaining divergence is either the
+    engine's or a sixth source inconsistency, not display rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror figures already
+  # published above: net_income from inputs.income_statement_usd, the
+  # three totals from inputs.comparative_balance_sheet_usd's 2018 column,
+  # and cash/net-change from the RECONCILED indirect-method statement
+  # below (not the direct method's misprinted 13,480/33,560/22,200/46,500)
+  net_income_top: 4340
+  total_assets_2018_top: 284000
+  total_liabilities_2018_top: 104100
+  total_equity_2018_top: 179900
+  cash_closing_2018_top: 47500
+  net_change_in_cash_top: 23200
+
+  # ── Figure 16.6 (as first/completely presented in 16.3) — Indirect Method
+  indirect_method_cash_flow_statement_usd:
+    operating_activities:
+      net_income: 4340
+      depreciation: 14400
+      gain_on_sale_of_plant_assets: -4800
+      accounts_receivable_decrease: 4500
+      prepaid_insurance_increase: -700
+      inventory_increase: -2500
+      accounts_payable_decrease: -1800
+      salaries_payable_increase: 400
+      total_adjustments: 9500
+      net_cash_flow_operating: 13840
+    investing_activities:
+      proceeds_from_sale_of_land: 14800
+      cost_of_new_plant_assets: -60000
+      net_cash_flow_investing: -45200
+    financing_activities:
+      issuance_of_notes_payable_principal: 10000
+      issuance_of_common_stock: 45000
+      payment_of_dividends: -440
+      net_cash_flow_financing: 54560
+    total_cash_flow_increase: 23200
+    cash_balance_dec_31_2017: 24300
+    cash_balance_dec_31_2018: 47500
+    noncash_investing_financing_activities:
+      land_acquired_in_exchange_for_note_payable: 20000
+
+  # Contradicts the block above; printed LATER on the SAME openstax.org
+  # page (16.3), and consistently on the LibreTexts mirror throughout --
+  # see notes ERROR 2. Does not reconcile to the balance sheet cash change.
+  financing_activities_alternate_as_printed_later_same_page_usd:
+    payment_of_notes_payable_principal: -10000
+    issuance_of_common_stock: 45000
+    payment_of_dividends: -440
+    net_cash_flow_financing: 34560
+    prose_quote: "for a total net cash flow from financing of $34,560"
+
+  # ── Section 16.6 — Direct Method (as literally printed) ─────────────────
+  direct_method_cash_flow_statement_as_printed_usd:
+    operating_activities:
+      cash_collected_from_customers: 242500
+      cash_paid_to_suppliers_for_inventory: 157300
+      cash_paid_for_salaries: 42200        # summary line; detail box below prints 42400 for the same flow
+      cash_paid_for_insurance: 12700
+      cash_paid_for_interest: 3500
+      cash_paid_for_income_taxes: 1860
+      cash_paid_for_other_operating_expenses: 11100
+      total_cash_payments: 228660
+      net_cash_flow_operating_activities: 13480   # ERROR 4: source misprint; component math gives 13,840
+    investing_activities:
+      proceeds_from_sale_of_land: 14800
+      cost_of_new_plant_assets: -60000
+      net_cash_flow_investing_activities: -45200
+    financing_activities:
+      issuance_of_notes_payable_principal: 10000
+      issuance_of_common_stock: 45000
+      payment_of_dividends: -440
+      net_cash_flow_financing_activities: 33560   # ERROR 5: source misprint; see notes
+    total_cash_flow_increase: 22200               # ERROR 5: source misprint; should be 23,200
+    cash_balance_dec_31_2017: 24300
+    cash_balance_dec_31_2018: 46500               # ERROR 5: source misprint; balance sheet says 47,500
+    noncash_investing_financing_activities:
+      land_acquired_in_exchange_for_note_payable: 20000
+
+  # Reconciling values an engine should actually produce (component math +
+  # balance-sheet cash roll-forward all agree); see notes for derivation.
+  direct_method_cash_flow_statement_reconciled_usd:
+    net_cash_flow_operating_activities: 13840
+    net_cash_flow_investing_activities: -45200
+    net_cash_flow_financing_activities: 54560
+    total_cash_flow_increase: 23200
+    cash_balance_dec_31_2018: 47500
+
+  # ── Direct-method component detail boxes (each independently checkable) ─
+  direct_method_supporting_calculations_usd:
+    cash_collected_from_customers:
+      beginning_accounts_receivable: 26000
+      plus_accrual_basis_sales: 238000
+      equals_potential_cash_collected: 264000
+      less_ending_accounts_receivable: -21500
+      equals_cash_collected: 242500
+    cash_paid_for_inventory_purchases:
+      part1_inventory_purchased:
+        ending_inventory: 48000
+        plus_cost_of_goods_sold: 153000
+        equals_goods_available_for_sale: 201000
+        less_beginning_inventory: -45500
+        equals_inventory_purchased_this_period: 155500
+      part2_cash_paid:
+        beginning_accounts_payable: 19000
+        plus_inventory_purchased: 155500
+        equals_total_obligation: 174500
+        less_ending_accounts_payable: -17200
+        equals_cash_paid_for_inventory: 157300
+    cash_paid_for_salaries:
+      beginning_salaries_payable: 1500
+      plus_salaries_expense: 42600
+      equals_total_obligation_to_pay_salaries: 44100
+      less_ending_salaries_payable: -1900
+      equals_cash_paid_for_salaries_as_printed: 42400   # ERROR 3: 44,100-1,900 = 42,200, not 42,400
+      equals_cash_paid_for_salaries_correct: 42200
+    cash_paid_for_insurance:
+      ending_prepaid_insurance: 2500
+      plus_insurance_expense: 12000
+      equals_total_insurance_premiums_expended: 14500
+      less_beginning_prepaid_insurance: -1800
+      equals_cash_paid_for_insurance: 12700

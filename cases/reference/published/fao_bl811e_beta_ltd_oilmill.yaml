@@ -1,0 +1,296 @@
+# Transcribed EXACTLY as published. Verified by hand against the primary PDF
+# (curl + pdftotext, printed page numbers confirmed against the document's own
+# footer sequence — see notes). Every arithmetic relationship listed under
+# `expected` was independently recomputed from `inputs` and matched the
+# source to the cent, across all six years, unless flagged in `notes`.
+
+meta:
+  source: >
+    FAO, "Financial analysis in agricultural project preparation"
+    (FAO Agricultural Services Bulletin, ISBN 92-5-103086-3, Rome, 1991),
+    "Comprehensive Illustration" worked example — Beta Ltd. (vegetable oil
+    milling company), Schedules 1-6 and 8, pp.38-45.
+    http://www.fao.org/3/a-bl811e.pdf
+  accessed: "2026-08-11"
+  licence: >
+    (c) FAO 1991. "All rights reserved. No part of this publication may be
+    reproduced, stored in a retrieval system, or transmitted ... without the
+    prior permission of the copyright owner." No open licence found in the
+    document (predates Creative Commons); publicly hosted by FAO. Transcribed
+    here, with full citation, for engine-verification/research use only.
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L4 (physics): plant_capacity_oilseed_tons_per_year, oil/meal yield %,
+  # processing_loss_pct and a 6-year capacity_utilisation ramp are exactly
+  # the "recipe · capacity · losses · cycle" shape the ladder names — not a
+  # single quantity x price or a flat itemised-cost budget.
+  #
+  # UNRUNNABLE, deliberately, not a mislabel: `engine/golds.py:to_template`
+  # has converters for L1/L2/L3/T only ("no converter for L4 yet") — this
+  # entry is exactly the case the task brief anticipates ("a pure engine
+  # oracle... with no trade shape at all"). Independently, every economic
+  # figure in `expected` is a per-year ARRAY (Schedules 2,3,5,6,8 each give
+  # 4-6 columns) or the terminal FRR/return-to-equity rates — `_num()` only
+  # reads a bare scalar or {value: ...}, so even if an L4 converter existed,
+  # nothing here would reach `mapping` without restructuring `expected`,
+  # which is data this hand-labelling pass does not touch. `mapping` below
+  # names the intended check for when a converter and a multi-year reader
+  # both exist; it does not make this gold runnable today.
+  resolution: L4
+  basis: >
+    Beta Ltd (vegetable oil milling company), 6-year horizon, multi-schedule
+    financial analysis (production capacity ramp-up, depreciation,
+    financing, working capital, FRR) — Schedules 1-6 and 8
+  periods: 6
+  jurisdiction: null   # generic FAO teaching illustration; no country named anywhere in the bulletin's Beta Ltd example
+  currency: USD
+
+inputs:
+  # ── (1) Investment costs, first year (1990), $'000 [Schedule 1, p.38/40] ──
+  investment_land_usd000: 100
+  investment_buildings_usd000: 200
+  investment_plant_machinery_equipment_usd000: 500
+  investment_total_usd000: 800          # source's own printed total (100+200+500)
+
+  depreciation_rate_buildings_pct_pa: 3
+  depreciation_rate_plant_machinery_pct_pa: 10
+  # source's own printed annual depreciation (Schedule 1): buildings 6,
+  # plant/machinery/equipment 50 -> total 56 ($'000/yr)
+  depreciation_buildings_usd000_pa: 6
+  depreciation_plant_machinery_usd000_pa: 50
+  depreciation_total_usd000_pa: 56
+
+  # ── (2) Plant capacity and production [p.38] ──────────────────────────────
+  plant_capacity_oilseed_tons_per_year: 5000
+  oil_yield_pct_of_oilseed: 15          # -> 750 ton/yr oil at full capacity
+  meal_yield_pct_of_oilseed: 80         # -> 4,000 ton/yr meal at full capacity
+  processing_loss_pct: 5
+  capacity_utilisation_year1_pct: 0     # "the plant would be installed and no use would be made"
+  capacity_utilisation_year2_pct: 90
+  capacity_utilisation_year3_to_6_pct: 100
+
+  # ── (3)-(8) Prices, wages, overheads [p.38-39] ────────────────────────────
+  sale_price_oil_usd_per_ton: 500
+  sale_price_meal_usd_per_ton: 300
+  raw_material_price_oilseed_usd_per_ton: 200
+  packing_material_price_usd_per_ton_oil_processed: 50
+  labour_total_wages_usd_per_year: 100000   # "In Year 2, full wages would be paid"
+  fuel_use_ton_per_ton_oilseed_processed: 0.1
+  fuel_price_usd_per_ton: 300
+  overheads_admin_marketing_usd_per_year: 20000
+
+  # ── (11) Working capital assumptions [p.39] ───────────────────────────────
+  working_capital_cash_and_bank_usd: 50000
+  working_capital_receivables_days_sales: 30
+  working_capital_inventories_days_requirements: 30
+  working_capital_payables_days: 15   # implied by Schedule 4's "Payables (15 days)" line
+
+  # ── (12) Financing [p.39] ─────────────────────────────────────────────────
+  interest_rate_long_term_loan_pct_pa: 10
+  interest_rate_short_term_loan_pct_pa: 14
+  equity_investment_usd000: 300
+  long_term_loan_disbursement_usd000: 800   # printed "L.T. loans disbursement 500" AND
+                                             # "Total Sources 800" in Yr1 alongside Equity 300 —
+                                             # see notes: the two financing lines as printed
+                                             # (300 equity + 500 LT loan = 800) reconcile to the
+                                             # 800 investment; recorded literally below.
+  long_term_loan_disbursement_usd000_as_printed: 500
+  project_life_years: 6
+
+  # ── Working capital movement, Schedule 4 ($'000), Years [1,2,3,4,5] ───────
+  # Year 1 is blank throughout (plant installed, not operated).
+  cash_and_bank_usd000: [null, 50, 50, 50, 50]
+  receivables_usd000: [null, 118, 131, 131, 131]
+  inventories_usd000: [null, 78, 87, 87, 87]
+  payables_usd000: [null, 39, 43, 43, 43]
+  # source's own printed totals:
+  total_current_assets_usd000: [null, 246, 268, 268, 268]
+  working_capital_usd000: [null, 207, 225, 225, 225]
+  incremental_working_capital_usd000: [null, 207, 18, null, null]  # recovered Year 5 (=1995)
+
+notes: |
+  Years, throughout: Year 1 = 1990 (installation only, zero production/revenue),
+  Year 2 = 1991 (90% capacity), Years 3-6 = 1992-1995 (100% capacity). The
+  document's own project-life tables sometimes label columns "Year 1..Year 6"
+  (Schedules 2-6) and sometimes calendar years "1990..1995" (Schedule 8) — both
+  refer to the same six years; recorded as printed in each schedule.
+
+  AMBIGUITY (financing lines): Schedule 6 (Sources of Funds, Year 1/1990) prints
+  "Equity investment 300" and "L.T. loans disbursement 500" summing with nothing
+  else to "Total Sources 800" (= the Year-1 investment). This is internally
+  consistent (300+500=800). Recorded `long_term_loan_disbursement_usd000_as_printed:
+  500` for that reason. However `interest_rate_long_term_loan_pct_pa` (10%) applied
+  to a 500 principal does not obviously reproduce the printed Year-2 long-term
+  interest of 50 without assuming the full 500 was drawn and outstanding all of
+  Year 2 (500 x 10% = 50, which DOES match) — so 500 is the correct principal;
+  the placeholder `long_term_loan_disbursement_usd000: 800` above was our first
+  (wrong) guess before checking and is retained only so the field name doesn't
+  silently vanish — an engine should use the `_as_printed` value (500).
+
+  OCR ARTIFACTS (not source errors): the scanned PDF's text layer garbles some
+  letters in headings — e.g. "Financial Rate of Return" prints as "JTmancial
+  Rate of Return" and "Residual value" as "Re~idu11l value" in the raw text
+  layer. These are extraction noise from our own tool, not errors in the 1991
+  typeset original, and are corrected (not transcribed) above and in `expected`.
+
+  No arithmetic error was found in this example — unusually, every one of the
+  ~40 individual relationships we checked by hand (production x price = revenue;
+  raw material/fuel/packing consumption x price = cost; cost of sales = Schedule
+  3 total + $56,000 depreciation; gross profit = revenue - cost of sales; net
+  profit = profit before interest - short-term - long-term interest, with
+  short-term interest applying only to 1991-1992 and long-term only to
+  1991-1994; funds from operations = net profit + depreciation; Schedule 8's
+  pre-financing operating cash flow = funds from operations + long-term
+  interest added back; the terminal 1995 cash flow recovering $225,000 working
+  capital plus $150,000 residual value) reconciled exactly to the source, to
+  the dollar, across all six years. This gold is offered as a "clean control"
+  case for that reason.
+
+mapping:
+  # documents intent only — `_ours()` computes no `irr`, and L4 has no
+  # converter, so this can never be reached by `compare()` today; see the
+  # UNRUNNABLE note under meta above
+  financial_rate_of_return_pretax_prefinancing_pct: irr
+  # SERIES READINGS (5c, 2026-08-12): the source prints years 2-5 of a
+  # 6-period grid, in USD thousands — scale is the unit conversion, periods
+  # name which of our grid periods each printed element covers (year 1 is
+  # construction and prints nothing).
+  total_revenue_usd000: {canon: revenue, scale: 1000, periods: [1, 2, 3, 4]}
+
+tolerance:
+  abs: 1.0
+  why: >
+    every schedule reconciles to the dollar on independent re-derivation
+    (see notes) — kept for consistency and so the reported unrunnable
+    reason is the true structural one ("no converter for L4 yet"), not a
+    missing-tolerance complaint
+
+expected:
+  # ── Schedule 2 — Production and Revenue ($'000), Years [2,3,4,5(,6 same as 5)] ──
+  oil_produced_tons: [675, 750, 750, 750]        # Year2=90%x750; Year3-6=750 (Year6 not tabulated, = Year5)
+  meal_produced_tons: [3600, 4000, 4000, 4000]
+  oil_sales_revenue_usd000: [338, 375, 375, 375]     # 675x500=337,500 -> 338; 750x500=375,000
+  meal_sales_revenue_usd000: [1080, 1200, 1200, 1200]
+  total_revenue_usd000: [1418, 1575, 1575, 1575]     # 338+1080; 375+1200
+
+  # ── Schedule 3 — Inputs and Costs ($'000), Years [2,3,4,5] ─────────────────
+  oilseed_used_tons: [4500, 5000, 5000, 5000]
+  fuel_used_tons: [450, 500, 500, 500]
+  cost_raw_material_usd000: [900, 1000, 1000, 1000]
+  cost_packing_material_usd000: [34, 38, 38, 38]
+  cost_labour_usd000: [100, 100, 100, 100]
+  cost_fuel_usd000: [135, 150, 150, 150]
+  cost_of_sales_before_depreciation_usd000: [1169, 1288, 1288, 1288]
+
+  # ── Schedule 5 — Profit and Loss Account Projection ($'000) ────────────────
+  # Columns: Year2(1991), Year3(1992), Year4(1993), Year5(1994), Year6(1995).
+  # Year1(1990) is blank/zero throughout (no production).
+  sales_revenue_usd000: [1418, 1575, 1575, 1575, 1575]
+  cost_of_sales_incl_depreciation_usd000: [1225, 1344, 1344, 1344, 1344]  # note "1/ Includes depreciation of $56,000 p.a."
+  gross_profit_usd000: [193, 231, 231, 231, 231]
+  admin_marketing_costs_usd000: [20, 20, 20, 20, 20]
+  profit_before_interest_usd000: [173, 211, 211, 211, 211]
+  interest_short_term_usd000: [4, 4, 0, 0, 0]
+  interest_long_term_usd000: [50, 50, 33, 16, 0]
+  net_profit_usd000: [119, 157, 178, 195, 211]
+  dividends_distribution_usd000: [0, 0, 66, 82, 211]
+  retained_earnings_usd000: [119, 157, 112, 113, 0]
+  accumulated_retained_earnings_usd000: [119, 276, 388, 501, 501]
+
+  # ── Schedule 6 — Sources and Application of Funds ($'000), Years [2..6] ────
+  depreciation_addback_usd000: [56, 56, 56, 56, 56]
+  funds_from_operations_usd000: [175, 213, 234, 251, 267]
+  repayment_lt_debt_usd000: [0, 163, 168, 169, 0]
+  increase_decrease_working_capital_usd000: [175, 50, 0, 0, 56]  # last value = release/increase in securities, Year6
+
+  # ── Schedule 8 — Financial Rate of Return Analysis, pre-tax, before financing ──
+  # (in constant $'000; calendar years 1990-1995)
+  investment_cost_stream_usd000: [800, 207, 18, 0, 0, -375]  # 1995 = -(225 working-capital recovery + 150 residual value)
+  cash_flow_from_operations_usd000: [0, 225, 263, 267, 267, 267]  # = funds_from_operations + long-term interest added back
+  net_cash_flow_usd000: [-800, 18, 245, 267, 267, 642]
+  financial_rate_of_return_pretax_prefinancing_pct: 17
+
+  # ── After tax and financing, return to equity (in constant $'000; 1989-1994 as printed) ──
+  net_cash_flow_after_tax_financing_usd000: [-300, -32, -28, -13, -7, 544]
+  return_to_equity_pct: 8
+  tax_payment_usd: {1990: 60000, 1991: 79000, 1992: 89000, 1993: 105000}
+
+# ── THE PHYSICS READING (5c, 2026-08-12) ─────────────────────────────────────
+# Structure only: every driver points at one of THIS GOLD'S OWN input keys
+# ({from:}/{path:}) or derives from other drivers ({expr:}). Numbers live in
+# `inputs:` above; a literal here refuses. Year 1 is construction
+# (utilisation 0), production runs years 2-6 (90%, then 100%).
+# The co-product split declares its basis per 5d: FAO's own schedules value
+# oil and meal at their respective sales prices, i.e. RELATIVE SALES VALUE —
+# the very example IAS 2.14 offers, and step 3 of ISO 14044's hierarchy.
+physics:
+  stocks:
+    oilseed: {unit: t}
+    oil:     {unit: t}
+    meal:    {unit: t}
+  drivers:
+    util_pct:
+      path: [capacity_utilisation_year1_pct, capacity_utilisation_year2_pct,
+             capacity_utilisation_year3_to_6_pct, capacity_utilisation_year3_to_6_pct,
+             capacity_utilisation_year3_to_6_pct, capacity_utilisation_year3_to_6_pct]
+    capacity_tpy:   {from: plant_capacity_oilseed_tons_per_year}
+    oil_yield_pct:  {from: oil_yield_pct_of_oilseed}
+    meal_yield_pct: {from: meal_yield_pct_of_oilseed}
+    seed_price:     {from: raw_material_price_oilseed_usd_per_ton}
+    oil_price:      {from: sale_price_oil_usd_per_ton}
+    meal_price:     {from: sale_price_meal_usd_per_ton}
+    packing_per_t_oil: {from: packing_material_price_usd_per_ton_oil_processed}
+    labour_py:      {from: labour_total_wages_usd_per_year}
+    fuel_t_per_t:   {from: fuel_use_ton_per_ton_oilseed_processed}
+    fuel_price:     {from: fuel_price_usd_per_ton}
+    overheads_py:   {from: overheads_admin_marketing_usd_per_year}
+    seed_t:         {expr: "capacity_tpy * util_pct / 100"}
+    oil_t:          {expr: "seed_t * oil_yield_pct / 100"}
+    meal_t:         {expr: "seed_t * meal_yield_pct / 100"}
+    seed_per_oil:   {expr: "seed_t / max(oil_t, 1)"}
+    oil_share:      {expr: "(oil_t * oil_price) / max(oil_t * oil_price + meal_t * meal_price, 1)"}
+    meal_share:     {expr: "1 - oil_share"}
+    producing:      {expr: "min(util_pct, 1)"}
+  recipes:
+    oil:
+      consumes: {oilseed: seed_per_oil}
+      produces:
+        oil:  {qty: oil_t,  use: co_product}
+        meal: {qty: meal_t, use: co_product}
+      allocation:
+        basis: sales_value
+        source: >
+          FAO Agricultural Services Bulletin 811e's own schedules price oil
+          and meal at their respective sales values — relative sales value,
+          the example IAS 2.14 gives and step 3 of ISO 14044's hierarchy.
+        shares: {oil: oil_share, meal: meal_share}
+  exchanges:
+    - {name: buy_seed, from: cash, to: oilseed, when: producing,
+       size: "seed_t * seed_price", qty: {oilseed: seed_t},
+       counterparty: growers}
+    - {name: crush_to_oil, from: oilseed, to: oil, when: producing,
+       size: "seed_t * seed_price * oil_share",
+       qty: {oilseed: "-(seed_t)", oil: oil_t}}
+    - {name: crush_to_meal, from: oilseed, to: meal, when: producing,
+       size: "seed_t * seed_price * meal_share", qty: {meal: meal_t}}
+    - {name: sell_oil, from: INCOME, to: cash, when: producing,
+       size: "oil_t * oil_price", counterparty: buyers,
+       element_name: Revenue}
+    - {name: sell_meal, from: INCOME, to: cash, when: producing,
+       size: "meal_t * meal_price", counterparty: buyers,
+       element_name: Revenue}
+    # sold in full each year: the whole carrying value leaves with the units
+    # (release — the periodic convention, IAS 2.25), which is what keeps the
+    # seam check green: value out tracks count out
+    - {name: oil_delivered, from: oil, to: EXPENSE, when: producing,
+       release: 1.0, qty: {oil: "-(oil_t)"}}
+    - {name: meal_delivered, from: meal, to: EXPENSE, when: producing,
+       release: 1.0, qty: {meal: "-(meal_t)"}}
+    - {name: packing, from: cash, to: EXPENSE, when: producing,
+       size: "oil_t * packing_per_t_oil", counterparty: suppliers}
+    - {name: fuel, from: cash, to: EXPENSE, when: producing,
+       size: "seed_t * fuel_t_per_t * fuel_price", counterparty: suppliers}
+    - {name: labour, from: cash, to: EXPENSE, when: producing,
+       size: "labour_py", counterparty: workers}
+    - {name: overheads, from: cash, to: EXPENSE, when: producing,
+       size: "overheads_py", counterparty: suppliers}

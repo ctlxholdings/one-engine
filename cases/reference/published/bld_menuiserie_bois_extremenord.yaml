@@ -1,0 +1,133 @@
+id: bld_menuiserie_bois_extremenord
+title: "Menuiserie bois / woodworking atelier (jeune formé) — Bogo/Guidiguis/Yagoua, Extrême-Nord, Cameroon (GIZ AGR study)"
+
+meta:
+  source:
+    - "GIZ (PARSE-commissioned sibling AGR study, EUTF Sahel Cameroon), 'Étude sur la Catégorisation des Activités Génératrices de Revenus (AGR) les Plus Rentables du Domaine Agricole et des Petits Métiers de la Ville dans les Communes de Bogo, Guidiguis et Yagoua dans la Région de l'Extrême-Nord', author Abdourahmane Nassourou, Août 2017, p.30 (Tableaux 24, 25, 26 — capex, revenue mix, 3-year business plan). https://trust-fund-for-africa.europa.eu/document/download/e7b1bb60-6fa6-4042-b44a-d8b6ca0df2b8_en?filename=ETUDE%20AGR%20DANS%20LE%20DOMAINE%20AGRICOLE%20ET%20PETITS%20METIERS%20%28REGION%20EXTR%C3%8AME-NORD%29"
+    - "Already catalogued in this repo: docs/atlas/harvests/giz_parse_extreme_nord.yaml, isic_class '1622' entry — this file is a standalone transcription for the golds harvest; I did not edit the harvest file."
+  licence: "Publicly published PDF (europa.eu / EUTF Sahel Cameroon programme); no explicit reuse licence stated in the document or in the harvest file's source block."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, part of the construction/long-cycle harvest ──
+  resolution: L2
+  basis: "one representative atelier, Extrême-Nord Cameroon, annual, 2017, 3-year business plan — year-3 (mature/steady-state) figures checked"
+  periods: 1
+  mechanism: make_to_order   # create x physical, "assemble": the atelier
+  #  turns purchased tools + timber into furniture on order — the wood
+  #  counterpart to menuiserie_metallique.yaml's metal workshop, same cell
+  jurisdiction: CM
+  currency: XAF
+
+inputs:
+  # revenue mix by furniture category, Tableau 25 — a genuine, if not
+  # per-unit-materials, breakdown: what THIS atelier actually makes
+  revenue_mix_fcfa_per_an:
+    tables: 864000
+    chaises: 960000
+    armoires: 720000
+    buffets: 96000
+    lits: 1080000
+    salon: 300000
+  production_annuelle: 4020000   # = sum of the 6 lines above, exactly
+
+  # THE SOURCE CONFLICT, transcribed as flagged in the harvest file itself:
+  # the p.30 BODY TEXT states "cumul main d'oeuvre" (cumulative value of
+  # labour) of 5,280,000 -- a DIFFERENT figure from Tableau 25's own printed
+  # sum (4,020,000). The harvest file records status "partial" and notes
+  # the business plan (Tableaux 25-26) USES 4,020,000; this gold follows
+  # that same choice, transcribing the conflict rather than silently
+  # picking a side.
+  cout_main_oeuvre_annuel_body_text: 5280000
+
+  # recurring annual costs, Tableau 24 composition
+  costs:
+    location_atelier: 240000     # 12 x 20,000 FCFA/mois
+    electricite: 144000          # 12 x 12,000 FCFA/mois
+
+  # one-time installation capex, Tableau 24 — real, but excluded from the
+  # `costs:` used for cost_of_sales (see notes: it participates in
+  # "cout_total" as a separate, first-year-cumulative figure, not in the
+  # steady-state annual margin this gold checks)
+  charges_fixes_installation:
+    value: 251500
+    composition: "formation 75,000; mètre 500; marteau 5,000; tenaille 2,000; scie égoïne 3,000; rabot 10,000; scie à métaux 5,000; rappes 6,000; établi 40,000; arrache clous 3,000; abonnement élec 100,000; equerre 2,000"
+
+  cout_total_year1_cumulative: 635500   # = charges_fixes_installation (251,500) + charges_recurrentes (384,000)
+
+  amortissement_years: 2
+
+notes: |
+  RE-DERIVED THE ARITHMETIC BY HAND:
+    - production_annuelle = 864,000 (tables) + 960,000 (chaises) + 720,000
+      (armoires) + 96,000 (buffets) + 1,080,000 (lits) + 300,000 (salon) =
+      4,020,000 -- EXACT match to Tableau 25's own printed total.
+    - charges_recurrentes = location_atelier (240,000) + electricite
+      (144,000) = 384,000 -- EXACT match to the printed line, and its own
+      stated composition (12 x 20,000; 12 x 12,000) checks out exactly.
+    - cout_total (635,500) = charges_fixes_installation (251,500) +
+      charges_recurrentes (384,000) = 635,500 -- EXACT match. This is a
+      FIRST-YEAR-CUMULATIVE convention (one-time capex added to one year
+      of recurring opex), the same pattern this repo's own atlas registry
+      gap notes flag for the sibling Nord-region menuiserie métallique
+      entry ("marge = recette_annuelle − (capex + fonds de roulement + une
+      période de charges fixes) → first-year-cumulative convention, not
+      steady-state monthly margin") — recognised here rather than
+      re-derived, and excluded from `costs:` for exactly that reason: it
+      would double-count against the Year-3 steady-state figure below.
+    - revenu_net_annee_3 (3,636,000) = production_annuelle (4,020,000) -
+      charges_recurrentes (384,000) = 3,636,000 -- EXACT match to
+      Tableau 26's own printed Year-3 net figure. This is the STEADY-STATE
+      margin (capex already amortised/absorbed by year 3), which is why it
+      reconciles against revenue less RECURRING costs only, not against
+      cout_total.
+
+  A SECOND CONFIRMED "MATERIALS PASS-THROUGH" FINDING, the same shape as
+  this harvest's briqueterie gold: "bois d'œuvre cost not isolated (likely
+  client-supplied)" per the harvest file's own gap note. Like the block-
+  maker, this atelier's raw-material cost (timber) is not separately priced
+  or quantified anywhere in the source — the capex list (Tableau 24) is
+  TOOLS (établi, scie, rabot...), not a materials bill, and the revenue
+  mix above is a PRODUCT-CATEGORY breakdown (how much comes from tables vs
+  chairs vs wardrobes), not a per-item bill of materials (planks, nails,
+  varnish per chair). Two independent GIZ Cameroon artisan studies, from
+  two different regions, both leave the raw-material line unpriced — a
+  real pattern in this source family, not a gap specific to either trade.
+
+  TRANSFERABILITY: the mechanism (make-to-order carpentry, tools-only
+  capex, no separate labour wage since the artisan's own margin IS his
+  labour return) transfers to any small francophone-Sahel carpentry
+  workshop; the specific FCFA figures and the "jeune formé" (young,
+  trained) framing are Extrême-Nord-Cameroon-2017-specific. The SOURCE
+  ITSELF is a sibling AGR study, not the "métiers rentables" series proper
+  (see the harvest file's own SERIES MISMATCH WARNING) — same publisher,
+  same programme, same methodology, different series title.
+
+mapping:
+  production_annuelle: revenue
+  charges_recurrentes_total: cost_of_sales
+  revenu_net_annee_3: gross_margin
+
+tolerance:
+  abs: 0.5
+  why: >
+    every figure in this CEP is printed as a whole FCFA amount, so 0.5 is
+    exactly the display rounding; the hand re-derivation above reconciles
+    to zero gap at every step, so anything wider would hide a real
+    divergence
+
+expected:
+  production_annuelle:
+    value: 4020000
+    label_as_printed: "production_annuelle (Tableau 25 total)"
+    composition_as_printed: "tables (864,000) + chaises (960,000) + armoires (720,000) + buffets (96,000) + lits (1,080,000) + salon (300,000)"
+  charges_recurrentes_total:
+    value: 384000
+    label_as_printed: "charges_recurrentes"
+    composition_as_printed: "location_atelier (12 x 20,000) + electricite (12 x 12,000)"
+  revenu_net_annee_3:
+    value: 3636000
+    label_as_printed: "revenu_net_annee_3 (Tableau 26)"
+    composition_as_printed: "production_annuelle (4,020,000) - charges_recurrentes (384,000)"
+  cout_total_year1_cumulative:
+    value: 635500
+    label_as_printed: "cout_total"
+    composition_as_printed: "charges_fixes_installation (251,500) + charges_recurrentes (384,000) -- first-year-cumulative, NOT the steady-state figure"

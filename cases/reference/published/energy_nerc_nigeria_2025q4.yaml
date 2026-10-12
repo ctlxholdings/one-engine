@@ -1,0 +1,318 @@
+id: energy_nerc_nigeria_2025q4
+title: "NERC Nigeria Quarterly Report 2025/Q4 — 28 grid-connected power plants: installed vs available capacity, availability factor, load factor, generation, and the DisCo billing/collection chain"
+
+meta:
+  source:
+    - >
+      Nigerian Electricity Regulatory Commission (NERC), "Fourth Quarter 2025 — NERC Quarterly
+      Report", published April 2026.
+      https://nerc.gov.ng/wp-content/uploads/2026/04/2025_Q4-Report.pdf
+    - >
+      Figures cited below carry the report's OWN printed page numbers (footer) and table numbers.
+      Sections used: 2.1.1 Available generation capacity (p.14-15); 2.1.2 Plant availability
+      factor, equation (1) and Table 1 (p.16-17); 2.1.3 Quarterly generation, equation (2) and
+      Table 2 (p.17-19); 2.1.4 Generation load factor, equation (3) (p.20-21); Key Facts box
+      (p.11); 2.3.1 Energy offtake (p.31); 2.3.2 Energy accounting efficiency, equation (7) and
+      Table 5 (p.31-33); 2.3.3 Billing efficiency, equation (8) and Table 6 (p.33-34); 2.3.4
+      Revenue and collection efficiency, equation (9) and Table 8 (p.35-36); 2.3.5 ATC&C loss,
+      equation (10) (p.37-38).
+  accessed: "2026-08-12"
+  licence: >
+    Publication of a Nigerian federal statutory regulator (NERC), published free to the public on
+    the Commission's own website. No explicit reuse licence is stated in the document.
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────────
+  # WHY THIS IS THE STRONG SHAPE THE HARVEST BRIEF ASKS FOR. NERC does not
+  # print a bare "generated X GWh". It prints, separately and for TWO quarters:
+  #   installed capacity (MW)  ->  average available capacity (MW)
+  #     -> plant availability factor (%)          [ = available / installed ]
+  #   available capacity (MW) x 24h x days        ->  load factor (%)
+  #     -> average hourly generation (MWh/h)      -> total generation (GWh)
+  #   energy received by DisCos -> energy billed  -> energy accounting eff. (%)
+  #   naira value received -> naira value billed  -> billing efficiency (%)
+  #   amount billed -> revenue collected          -> collection efficiency (%)
+  #   billing eff. x collection eff.              -> ATC&C loss (%)
+  # Every arrow is a formula the regulator PRINTS AS AN EQUATION (its equations
+  # 1, 2, 3, 7, 8, 9, 10) and then applies to figures it also prints. That is
+  # six independent multiply/divide chains, each checkable, over 28 named
+  # plants and 11 named distribution companies, for two consecutive quarters.
+  resolution: L3   # a multi-stage chain (capacity -> availability -> dispatch
+  #                  -> energy -> naira -> collections) where the OUTPUT of one
+  #                  printed ratio is the INPUT of the next; deeper than L2's
+  #                  itemised money lines, shallower than mining_mt_todd's L4
+  #                  because there is no depleting stock and no tax waterfall.
+  basis: "the whole Nigerian Electricity Supply Industry (NESI) — 28 grid-connected generating plants and 11 distribution companies — for the calendar quarter 1 October to 31 December 2025 (92 days), with the immediately preceding quarter (2025/Q3, also 92 days) printed alongside"
+  periods: 2
+  # MECHANISM — same argument as energy_esmap_africa_minigrid_2019.yaml: the
+  # DisCo half of this gold is a METERED CONNECTION sold to a captive customer
+  # base off a fixed local network (capacity_service), while the GenCo half is
+  # a wholesale commodity sale into a merit-order dispatch pool. This gold
+  # spans both halves of the same national market in one document, which is
+  # itself the finding: the "right" cell changes at the trading point, not at
+  # the technology. Tagged capacity_service because the money side of the
+  # source (the only side with a tariff, a bill and a collection) is the DisCo
+  # side; the GenCo side carries physics only, no price.
+  mechanism: capacity_service
+  jurisdiction: NG
+  currency: NGN   # the naira figures are NGN; the MW/MWh/GWh figures carry no
+  #                 currency at all. No exchange rate is printed anywhere in
+  #                 the sections used, so no USD conversion is attempted here.
+
+inputs:
+  # ── GENERATION SIDE ────────────────────────────────────────────────────────
+  period_days:
+    q3_2025: 92
+    q4_2025: 92
+    source: "footnote 7, p.18 — 'the number of days in each of the quarters are the same (92/92 days)'"
+  installed_capacity_mw_total:
+    value: 13625
+    label_as_printed: "Total (installed capacity, MW), 28 grid-connected power plants"
+    source: "Table 1, p.17 — total row"
+  average_available_capacity_mw:
+    q3_2025: 5430.34
+    q4_2025: 5400.38
+    label_as_printed: "Average Available Capacity (MW)"
+    source: "Table 1, p.17 total row; Key Facts box p.11 repeats 5,400.38MW with the -29.96MW (-0.55%) quarter-on-quarter change"
+  average_hourly_generation_mwh_per_h:
+    q3_2025: 4179.15
+    q4_2025: 4452.71
+    source: "Table 2, p.19 total row; Key Facts box p.11"
+  # ── PER-PLANT TABLE, all 28 plants, as printed in Table 1 (p.17). Order is
+  #    the source's own (descending 2025/Q4 PAF). installed_mw / avail_q3 /
+  #    avail_q4 / paf_q3_pct / paf_q4_pct.
+  plants:
+    schema: [plant, installed_mw, avail_mw_q3_2025, avail_mw_q4_2025, paf_pct_q3_2025, paf_pct_q4_2025]
+    source: "Table 1, p.17"
+    rows:
+    - [Zungeru_1,        700,   686.20, 700.00,  98.03, 100.00]
+    - [Ikeja_1,          110,   109.16, 110.00,  99.24, 100.00]
+    - [Ihovbor_2,        461,   360.33, 441.68,  78.16,  95.81]
+    - [Jebba_1,          578,   484.08, 538.42,  83.75,  93.15]
+    - [Dadin-Kowa_1,      40,    34.02,  33.50,  85.05,  83.74]
+    - [Kainji_1,         760,   423.24, 572.70,  55.69,  75.36]
+    - [Shiroro_1,        600,   397.99, 382.58,  66.33,  63.76]
+    - [Okpai_1,          480,   327.00, 277.06,  68.12,  57.72]
+    - [Geregu_1,         435,   233.03, 225.24,  53.57,  51.78]
+    - [Delta_1,          900,   481.45, 435.76,  53.49,  48.42]
+    - [Egbin_1,         1320,   671.54, 631.11,  50.87,  47.81]
+    - [Igbafo_1,          45,    19.87,  19.24,  44.16,  42.75]
+    - [Rivers_1,         180,    17.71,  54.89,   9.84,  30.49]
+    - [Omotosho_1,       335,   123.75,  89.91,  36.94,  26.84]
+    - [Olorunsogo_1,     335,   111.05,  89.67,  33.15,  26.77]
+    - [Geregu_2,         435,   184.19, 106.34,  42.34,  24.45]
+    - [Odukpani_1,       625,   198.40, 142.39,  31.74,  22.78]
+    - [Omoku_1,          150,    37.01,  33.76,  24.67,  22.51]
+    - [Afam_2,           650,   200.97, 135.72,  30.92,  20.88]
+    - [Sapele_2,         500,    74.09,  99.92,  14.82,  19.98]
+    - [Afam_1,           726,    46.14, 110.68,   6.36,  15.24]
+    - [Olorunsogo_2,     750,    55.75,  64.00,   7.43,   8.53]
+    - [Omotosho_2,       500,    67.03,  41.11,  13.41,   8.22]
+    - [Ihovbor_1,        500,    51.37,  34.44,  10.27,   6.89]
+    - [Trans Amadi_1,    100,     6.62,   5.41,   6.62,   5.41]
+    - [Sapele Steam_1,   720,    19.14,  20.74,   2.66,   2.88]
+    - [Ibom power_1,     190,     9.21,   4.11,   4.85,   2.16]
+    - [Alaoji_1,         500,     0.00,   0.00,   0.00,   0.00]
+  # ── DISTRIBUTION SIDE ──────────────────────────────────────────────────────
+  energy_offtake_by_discos_mwh_per_h:
+    q3_2025: 3328.33
+    q4_2025: 3619.21
+    source: "Table 4, p.31 (All DisCos row) and Key Facts box p.11"
+  energy_offtake_gwh:
+    q3_2025: 7348.95
+    q4_2025: 7991.22
+    source: "Table 5, p.33, All DisCos row"
+  energy_billed_gwh:
+    q3_2025: 6158.54
+    q4_2025: 6614.57
+    source: "Table 5, p.33, All DisCos row; Key Facts box p.11"
+  naira_value_energy_received_bn:
+    q3_2025: 854.54    # Table 6 total row prints 854.54; the narrative p.33 prints 854.53
+    q4_2025: 969.19
+    source: "Table 6, p.34, All DisCos row; narrative p.33"
+  naira_value_energy_billed_bn:
+    q3_2025: 706.61
+    q4_2025: 795.06
+    source: "Table 6, p.34; Table 8, p.36 (Total Billings); narrative p.33 and p.35"
+  revenue_collected_bn:
+    q3_2025: 570.25
+    q4_2025: 630.93
+    source: "Table 8, p.36, All DisCos row; Key Facts box p.11"
+  # ── THE FORMULAE, AS THE REGULATOR PRINTS THEM ─────────────────────────────
+  formulae_as_printed:
+    eq1_plant_availability_factor: "PAF = average available capacity (MW) / installed capacity (MW) x 100    [p.16]"
+    eq2_total_generation: "Total generation = Ave. hourly generation (MWh/h) x 24hrs x number of days in the quarter    [p.18]"
+    eq3_load_factor: "Load Factor = Total Energy Generated (MWh) / [Ave. Available Capacity (MW) x 24hrs x period (in days)] x 100    [p.20]"
+    eq7_energy_accounting_efficiency: "EAE = Total energy billed to customers (GWh) / Total energy received by the network (GWh) x 100    [p.31]"
+    eq8_billing_efficiency: "BE = Total energy billed to customers (N) / [Total energy received by the network (kWh) x Average Allowed Tariff (N/kWh)] x 100    [p.33]"
+    eq9_collection_efficiency: "CE = Total Revenue Collected (N) / Total Billed Amount (N) x 100    [p.35]"
+    eq10_atcc_loss: "ATC&C Loss = [1 - (Billing Efficiency x Collection Efficiency)] x 100    [p.38]"
+
+expected:
+  plant_availability_factor_pct:
+    q3_2025: 39.86
+    q4_2025: 39.64
+    label_as_printed: "the average plant availability factor for all grid-connected plants was 39.64%, meaning that 60.36% of the total installed capacity across the twenty-eight (28) grid-connected power plants was unavailable for dispatch at any given time during the quarter"
+    source: "p.16 narrative and Table 1 total row, p.17"
+  total_generation_gwh:
+    q3_2025: 9227.57
+    q4_2025: 9831.58
+    source: "p.18 narrative; Key Facts box p.11"
+  load_factor_pct:
+    q3_2025: 76.96
+    q4_2025: 82.45
+    label_as_printed: "The overall load factor for all grid-connected power plants in 2025/Q4 was 82.45%, meaning that on average, at any point during the quarter, 17.55% of available capacity was not dispatched"
+    source: "p.20; Key Facts box p.11"
+  energy_accounting_efficiency_pct:
+    q3_2025: 83.80
+    q4_2025: 82.77
+    source: "p.32 narrative; Table 5, p.33"
+  billing_efficiency_pct:
+    q3_2025: 82.69
+    q4_2025: 82.03
+    source: "p.33 narrative; Table 6, p.34; Key Facts box p.11"
+  collection_efficiency_pct:
+    q3_2025: 80.70
+    q4_2025: 79.36
+    source: "p.36 narrative; Table 8, p.36; Key Facts box p.11"
+  atcc_loss_pct:
+    q3_2025: 33.27
+    q4_2025: 34.90
+    components_q4_2025:
+      technical_and_commercial_loss_pct: 17.97
+      collection_loss_pct: 20.64
+    allowed_target_pct_2025: 20.54
+    revenue_loss_bn: 139.193
+    label_as_printed: "The aggregate ATC&C loss recorded across all DisCos in 2025/Q4 was 34.90%, which comprised 17.97% in technical and commercial losses and 20.64% in collection loss"
+    source: "p.38; Key Facts box p.11"
+  billing_losses_bn_q4_2025:
+    value: 174.12
+    label_as_printed: "In 2025/Q4, DisCos cumulatively recorded billing losses of N174.12 billion"
+    source: "p.33"
+
+mapping: {}
+# No CANON binding. The naira lines here are a REGULATOR'S SECTOR AGGREGATE
+# across 11 separately-owned distribution companies, not one enterprise's
+# revenue: "revenue collected" (N630.93bn) is cash received by eleven firms,
+# "energy billed" (N795.06bn) is their combined invoicing, and no cost of
+# sales, opex or margin is published anywhere in the report. Binding a
+# sector total to `revenue` would assert a single trading entity that does
+# not exist — the same discipline svc_water_utility_wasreb_kenya.yaml applies
+# to WASREB's 95-utility aggregate.
+
+tolerance:
+  abs: 0.02
+  rel: 0.0005
+  why: >
+    NERC prints every capacity and energy figure to 2 decimal places (5,400.38 MW; 9,831.58 GWh;
+    4,452.71 MWh/h) and every ratio to 2 decimal places (39.64%; 82.45%; 34.90%) — a table of
+    computed values, not a narrative rounding. An absolute tolerance of 0.02 is exactly the last
+    printed digit on the ratios, and the relative 0.0005 covers the one place where the source's
+    own chain does not close to the last digit (equation 2 reproduces 9,227.56 GWh where the
+    report prints 9,227.57 — see notes). Tolerance is NOT stretched to absorb the two genuine
+    display inconsistencies recorded in notes; those are kept as findings.
+
+notes: |
+  EVERY ARITHMETIC CHAIN RE-DERIVED BY HAND, using only the regulator's own printed equations and
+  its own printed inputs. Nine checks; seven close exactly, two do not.
+
+  (1) EQUATION 1 — plant availability factor. Total row:
+        Q4: 5,400.38 / 13,625 = 39.635%  -> printed 39.64%   RECONCILES
+        Q3: 5,430.34 / 13,625 = 39.856%  -> printed 39.86%   RECONCILES
+      Per-plant spot checks against Table 1: Kainji_1 Q4 572.70/760 = 75.36% (printed 75.36);
+      Geregu_2 Q4 106.34/435 = 24.45% (printed 24.45); Egbin_1 Q4 631.11/1,320 = 47.81% (printed
+      47.81); Trans Amadi_1 Q4 5.41/100 = 5.41% (printed 5.41). RECONCILES.
+      Note the report's own gloss "60.36% ... was unavailable" is simply 100 - 39.64.
+
+  (2) EQUATION 2 — total generation from average hourly generation and days:
+        Q4: 4,452.71 MWh/h x 24 x 92 = 4,452.71 x 2,208 = 9,831,583.7 MWh = 9,831.58 GWh
+            -> printed 9,831.58 GWh   RECONCILES EXACTLY
+        Q3: 4,179.15 MWh/h x 2,208 = 9,227,563.2 MWh = 9,227.56 GWh
+            -> printed 9,227.57 GWh   OFF BY 0.01 GWh (10 MWh, 1.1 parts per million).
+      This is the only place the chain fails to close to the last printed digit, and it is a
+      rounding artefact of the 2-dp hourly figure, not a modelling difference: an unrounded
+      4,179.1545 MWh/h reproduces 9,227.57 exactly. Kept as a printed figure, not reconciled away.
+
+  (3) EQUATION 3 — load factor:
+        Q4: 9,831,580 MWh / (5,400.38 x 24 x 92 = 11,924,039 MWh) = 82.45%  -> printed 82.45%
+        Q3: 9,227,570 MWh / (5,430.34 x 2,208 = 11,990,191 MWh) = 76.96%   -> printed 76.96%
+      BOTH RECONCILE EXACTLY.
+
+  (4) THE COMPOSITION IDENTITY THE REPORT NEVER WRITES DOWN. Availability and load factor are
+      defined on different denominators (installed vs available), so their product is the plain
+      capacity factor of the whole fleet:
+        Q4: 0.3964 x 0.8245 = 32.68%; check directly 9,831,580 / (13,625 x 2,208) = 32.68%
+        Q3: 0.3986 x 0.7696 = 30.68%; check directly 9,227,570 / (13,625 x 2,208) = 30.68%
+      RECONCILES. This is the one number a plant-level model actually needs and the one number
+      NERC does not print — it publishes the two factors and never their product. Recorded because
+      it is exactly the "prints the factors separately, not just their product" property that makes
+      this a formula test rather than an outcome transcription.
+
+  (5) EQUATION 7 — energy accounting efficiency:
+        Q4: 6,614.57 / 7,991.22 = 82.77%  -> printed 82.77%   RECONCILES
+        Q3: 6,158.54 / 7,348.95 = 83.80%  -> printed 83.80%   RECONCILES
+      And the offtake in GWh reconciles to the offtake in MWh/h through the same 2,208 hours:
+        3,619.21 x 2,208 = 7,991,215 MWh = 7,991.22 GWh  RECONCILES EXACTLY
+        3,328.33 x 2,208 = 7,348,952.6 MWh = 7,348.95 GWh RECONCILES EXACTLY
+
+  (6) EQUATION 9 — collection efficiency:
+        Q4: 630.93 / 795.06 = 79.357%  -> printed 79.36%   RECONCILES
+        Q3: 570.25 / 706.61 = 80.702%  -> printed 80.70%   RECONCILES
+
+  (7) EQUATION 10 — ATC&C loss, the two-factor composition:
+        Q4: 1 - (0.8203 x 0.7936) = 1 - 0.65099 = 34.90%   -> printed 34.90%   RECONCILES EXACTLY
+        Q3: 1 - (0.8269 x 0.8070) = 1 - 0.66731 = 33.27%   -> printed 33.27%   RECONCILES EXACTLY
+      Components also close: 100 - 82.03 = 17.97 (printed 17.97 technical+commercial);
+      100 - 79.36 = 20.64 (printed 20.64 collection loss). Billing losses N174.12bn = 969.19 -
+      795.06 = 174.13 (printed 174.12, 0.01 rounding on the 2-dp inputs).
+
+  (8) TWO STATED CHANGES THAT DO NOT REPRODUCE FROM THE PRINTED FIGURES — kept, not fixed:
+      - p.36 says collection efficiency fell "1.35pp" between the quarters; 80.70 - 79.36 = 1.34pp,
+        and the Key Facts box on p.11 itself says "1.34pp decrease". The SAME report gives both
+        numbers for the same difference. Neither is a transcription error on my part; the report
+        contradicts itself by 0.01pp between p.11 and p.36.
+      - p.18 states total generation and average hourly generation both rose 6.55%; from the
+        printed figures 9,831.58/9,227.57 - 1 = 6.546% and 4,452.71/4,179.15 - 1 = 6.546%. Both
+        round to 6.55%, so this one holds — recorded only because footnote 7 makes the equal-days
+        argument explicitly and it is worth confirming the footnote is right.
+
+  (9) WHAT THIS SOURCE DOES NOT GIVE. No tariff per kWh is printed in the sections used — equation
+      8's "Average Allowed Tariff (N/kWh)" is named as an input and its VALUE is never printed, so
+      the naira-value-received line (N969.19bn) cannot be decomposed into kWh x tariff from this
+      document alone. Dividing gives an implied 969.19bn / 7,991.22 GWh = N121.28/kWh, but that is
+      MY division of two printed totals, not a rate the regulator publishes, and it is recorded
+      here rather than lifted into `inputs`. No generation-side cost, fuel price, capacity payment
+      or GenCo revenue appears anywhere: the money in this report starts at the DisCo trading
+      point. No plant-level load factors are tabulated either — only seven are narrated (p.21:
+      Trans Amadi_1 and Dadin-Kowa_1 at 100%, Afam_2 99.89%, Omoku_1 99.10%, Olorunsogo_1 99.08%,
+      Geregu_1 98.07%, Kainji_1 95.02%, Jebba_1 75.39%, Shiroro_1 73.66%, Zungeru_1 62.88%) with
+      the rest only in a bar chart.
+
+  WHY THE SEASONAL PHYSICS MATTERS FOR A MODEL. The five hydro plants (Zungeru_1, Kainji_1,
+  Jebba_1, Shiroro_1, Dadin-Kowa_1) move availability with the rains, not with maintenance: the
+  report attributes Kainji_1's +19.67pp availability swing to "the rainy season during the quarter
+  [leading] to higher water levels in the watersheds" and dates the inflow/flood season July to
+  October (p.15-16). Availability here is therefore a RESOURCE variable for part of the fleet and
+  a MECHANICAL one for the rest, in the same table, under the same column heading — a plant model
+  that treats "availability factor" as one kind of number will fit the thermal plants and mis-state
+  the hydro ones.
+
+  NO COST SIDE: this gold gets no `inputs.costs:` block. NERC's money chain is entirely a REVENUE
+  chain, and the report says so by what it prints: naira value of energy received (N969.19bn),
+  naira value of energy billed (N795.06bn), revenue collected (N630.93bn), and the two losses that
+  fall out of the gaps — billing losses N174.12bn and the N139.193bn ATC&C revenue loss. Every one
+  of those is an amount NOT EARNED or NOT COLLECTED on the sales side. A revenue shortfall is not
+  a cost incurred, and treating one as `cost_of_sales` would assert an expense the DisCos never
+  recorded.
+  On the generation side the report prints physics only: installed capacity, available capacity,
+  availability factor, hourly generation, total generation, load factor — for all 28 plants, two
+  quarters. Point (9) of the notes above already states the gap and it is worth restating as the
+  reason this gold cannot be made runnable: NO generation-side cost, fuel price, gas price,
+  capacity payment or GenCo revenue appears anywhere in the sections used. The money in this
+  report STARTS at the DisCo trading point. There is no cost of sales, no opex, no staff cost, no
+  network cost and no total operating cost for any of the 11 DisCos or any of the 28 GenCos.
+  Even the one rate that would let energy be re-priced is withheld: equation 8 names "Average
+  Allowed Tariff (N/kWh)" as an input and the report never prints its value. The implied
+  N121.28/kWh (969.19bn / 7,991.22 GWh) is MY division of two printed totals, is already recorded
+  in the notes above rather than lifted into `inputs`, and would in any case be a price, not a
+  cost. Nothing to bind to `cost_of_sales` under RULE 4; `mapping: {}` stands as the original
+  author set it.

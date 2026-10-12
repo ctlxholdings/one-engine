@@ -1,0 +1,94 @@
+meta:
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur la Catégorisation des AGR — Région de l'Extrême-Nord\", p.28 (Tableaux 20-22), https://trust-fund-for-africa.europa.eu/document/download/e7b1bb60-6fa6-4042-b44a-d8b6ca0df2b8_en?filename=ETUDE%20AGR%20DANS%20LE%20DOMAINE%20AGRICOLE%20ET%20PETITS%20METIERS%20%28REGION%20EXTR%C3%8AME-NORD%29"
+  registry_index: 69
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: make_to_order
+  jurisdiction: CM
+  currency: XAF
+  trade: "Menuiserie métallique / soudure atelier (jeune formé 5 ans) — Bogo/Guidiguis/Yagoua (régionale), Extrême-Nord region"
+  isic_class: "2511 — Manufacture of structural metal products"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: revenu_annuel_tableau_21 sums six DIFFERENT products (portails,
+  # portes, grilles, fenêtres...), each already an extended total — no
+  # single quantity x price the engine's `sale:` block can hold.
+  resolution: L2
+  basis: >
+    per year, year 3 of the business plan (post-amortization steady state;
+    capex fully recovered by year 2)
+  periods: 1
+
+# 1 of 13 make_to_order entries. Picked over the Nord-volume metalwork CEPs (entries #1-2,
+# same trade, different source volume) because this one carries a genuine, well-quantified
+# SOURCE CONFLICT plus a distinct amortization convention (net income only reaches its full
+# value in "year 3", after 2 years of capex recovery) not exercised by any of the other nine
+# transcribed golds.
+
+inputs:
+  # mirrors revenu_annuel_tableau_21 below — the Tableau 21 figure the
+  # source's own year-3 business-plan calc is actually built from, NOT
+  # production_annuelle_brute (the conflicting body-text figure, see
+  # notes: "the body-text 5,100,000 is never actually used downstream").
+  revenue: 4428000
+  # the ONE cost line year 3 carries. `charges_fixes_installation`
+  # (599,000, capex) is EXCLUDED — it is fully amortized within the
+  # printed 2-year window, so year 3 carries no capex charge at all (see
+  # notes). `cout_total` (923,000) is EXCLUDED too — it is the YEAR-1
+  # total (capex + recurrentes), a different year than the one this gold
+  # checks.
+  costs:
+    charges_recurrentes: 324000
+  generators:
+    production_annuelle_brute: {value: 5100000, unit: "FCFA / an", note: "printed in the source's BODY TEXT — see notes, conflicts with the Tableau total below"}
+    revenu_annuel_tableau_21: {value: 4428000, unit: "FCFA / an",
+      composition: "Tableau 21 sums six product lines: portails 1,800,000 + portes double battant 900,000 + portes 720,000 + portes iso-planes 420,000 + grilles antivol 252,000 + fenêtres 336,000"}
+  movements:
+    charges_fixes_installation: {value: 599000, unit: "FCFA", direction: out, kind: capex,
+      composition: "Tableau 20: formation 70,000 + poste à souder 150,000 + meule 80,000 + établi 50,000 + lunette 15,000 + scies à métaux 10,000 + marteaux 15,000 + brin 3,000 + étau 50,000 + abonnement élec 100,000 + câbles 20,000 + rallonge 30,000 + baguettes 6,000"}
+    charges_recurrentes: {value: 324000, unit: "FCFA / an", direction: out, kind: opex,
+      composition: "électricité 144,000 (12 × 12,000) + loyer 180,000 (12 × 15,000)"}
+    cout_total: {value: 923000, unit: "FCFA", direction: out,
+      composition: "charges_fixes_installation (599,000) + charges_recurrentes (324,000) = 923,000 — this is the YEAR-1 total, unamortized capex included in full"}
+  gates: [electricite_permanente]
+  grid: {period: annual, capex_amortissement_years: 2, annualization: 1}
+
+expected:
+  revenu_net_annee_3: {value: 4104000, unit: "FCFA / an", provenance: cited,
+    composition: "Tableau 22 (business-plan year 3): revenu_annuel_tableau_21 (4,428,000) − charges_recurrentes (324,000) = 4,104,000 — verified exact. Year 3 carries NO capex charge at all, because charges_fixes_installation is fully recovered within the stated 2-year amortization window (capex_amortissement_years: 2)."}
+
+mapping:
+  revenu_net_annee_3: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints whole francs and its own notes verify the arithmetic
+    exactly (4,428,000 − 324,000 = 4,104,000); any gap is real
+
+notes: |
+  Arithmetic verified: 4,428,000 − 324,000 = 4,104,000 exactly, confirming the "year 3 = no
+  remaining capex charge" convention.
+
+  **SOURCE CONFLICT, quoted from the registry's own `gaps:` and independently re-derived here:**
+  the source's BODY TEXT states annual production ("production brute") of 5,100,000 FCFA, but
+  its own Tableau 21 — the itemized six-product breakdown — sums to 4,428,000 FCFA, a gap of
+  672,000 FCFA (roughly 13% of the body-text figure) with no reconciling line anywhere in the
+  document. `expected.revenu_net_annee_3` uses the Tableau 21 figure (4,428,000) because that
+  is the number the source's own year-3 business-plan calculation (Tableau 22) is built from —
+  the body-text 5,100,000 is never actually used downstream by the source itself. Both numbers
+  are recorded here (`production_annuelle_brute` = 5,100,000; `revenu_annuel_tableau_21` =
+  4,428,000) so the conflict is visible to anyone extending this entry, not silently resolved.
+
+  **Distinct amortization convention worth flagging explicitly**, since it differs from every
+  Nord-volume monthly CEP transcribed elsewhere among these ten (which net the FULL capex
+  against revenue in a single first-year-cumulative margin): this Extrême-Nord AGR sibling
+  study instead spreads `charges_fixes_installation` over an explicit 2-year window
+  (`capex_amortissement_years: 2`) and reports net income at three checkpoints — this gold
+  captures only the year-3 figure (post-amortization steady state). A trade file promoted from
+  this entry needs to decide whether to also carry the (uncited, not reproduced here) year-1
+  and year-2 figures, which would show a lower net income while the 599,000 FCFA capex is
+  still being recovered.
+
+  A further, unrelated documented risk: the source flags "délestage" (grid load-shedding) as a
+  material operating risk for a welding workshop that depends on `electricite_permanente` —
+  named but not quantified or costed anywhere in the CEP.

@@ -1,0 +1,311 @@
+# Transcribed EXACTLY as published (image alt-text, verified against raw
+# HTML, not just the pandoc rendering). Every subtotal was independently
+# recomputed from its stated components and cross-footed against the
+# comparative balance sheet; three separate, precisely pinpointed source
+# inconsistencies were found this way -- see notes. None of the totals
+# below were "fixed" silently; both the as-printed and the reconciling
+# figures are recorded, labeled.
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting",
+    Section 16.4 "Prepare the Completed Statement of Cash Flows Using the
+    Indirect Method" -- "Review Problem: Preparing the Virtual Co.
+    Statement of Cash Flows" (comparative balance sheet, income statement,
+    additional information, and the fully solved Indirect Method
+    statement).
+    https://openstax.org/books/principles-financial-accounting/pages/16-4-prepare-the-completed-statement-of-cash-flows-using-the-indirect-method
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0) -- see fc_openstax_clipem_cliff_barbershop.yaml for
+    the full verification note (same title, same licence, not repeated).
+  kind: full_cycle
+  reaches: cash_flow
+  reaches_note: >
+    Full comparative balance sheet + income statement + a complete,
+    published Statement of Cash Flows (indirect method only -- Virtual Co.
+    does not get a direct-method appendix the way Propensity Company does).
+  mechanism: buy_resell
+  mechanism_note: >
+    Virtual Co. posts Cost of Goods Sold on its income statement ($289,000)
+    but its comparative balance sheet has NO Inventory line at all (Cash,
+    AR, Prepaid Insurance, Investments, Plant Assets, Accumulated
+    Depreciation only) -- flagged as a genuine peculiarity of this
+    illustrative case, not corrected (a company with material COGS and
+    literally zero inventory at both year-ends is possible but unusual;
+    recorded as an observation, not claimed as an error, since it cannot be
+    disproven from the data given). Tagged buy_resell on the strength of
+    the COGS line; case starts from balance-sheet/income-statement level,
+    not raw purchase/sale transactions.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: same roll-forward shape as the Propensity gold in this batch — 2017
+  # becomes `opening:`, and the journal is sized so every account lands on
+  # its printed 2018 figure. Two of this gold's own already-documented
+  # source errors are load-bearing for `opening:` itself: 2017 accumulated
+  # depreciation is printed as a bare positive 36,700 but this gold's own
+  # ERROR 1 proves it must be -36,700 for the 2017 total assets to
+  # cross-foot; 2017 notes payable is printed as 100,000 but ERROR 2
+  # proves it must be 185,000 for 2017 total liabilities to cross-foot. I
+  # used the CORRECTED figures for `opening:` (not the as-printed ones) —
+  # this is not changing a number already in the file, only choosing which
+  # of two figures the file itself already reconciles as correct to seed
+  # my own added journal with. Both choices independently paid off: the
+  # journal below lands 2018 accumulated depreciation on -65,700 and
+  # notes payable on 160,000 exactly, with no other fudge needed.
+  # COGS has no inventory account to move against (see mechanism_note
+  # above), so it is routed through accounts_payable instead, the same
+  # way Propensity's inventory purchases are — a modelling choice, since
+  # the source gives no purchases detail either way. There is no separate
+  # stock issuance in the "additional information" list, but the
+  # RECONCILED financing section requires one (issuance_of_common_stock:
+  # 30000) to make cash foot to 66,700 exactly, so it is included.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Virtual Co."
+  period: "Year Ended December 31, 2018 (comparative to Dec 31, 2017)"
+
+  accounts:
+    cash: asset
+    accounts_receivable: asset
+    prepaid_insurance: asset
+    investments: asset
+    plant_assets: asset
+    accumulated_depreciation: asset
+    accounts_payable: liability
+    notes_payable: liability
+  opening:
+    cash: 83250
+    accounts_receivable: 54220
+    prepaid_insurance: 3600
+    investments: 75000
+    plant_assets: 290000
+    accumulated_depreciation: -36700
+    accounts_payable: 47300
+    notes_payable: 185000
+  journal:
+    - {desc: "sales revenue accrued", amount: 433000,
+       debit: accounts_receivable, credit: INCOME, period: 0}
+    - {desc: "cash collected from customers", amount: 431820,
+       debit: cash, credit: accounts_receivable, period: 0}
+    - {desc: "cost of goods sold, routed through accounts payable, no inventory account (see meta)",
+       amount: 289000, debit: EXPENSE, credit: accounts_payable, period: 0}
+    - {desc: "cash paid for goods", amount: 288200,
+       debit: accounts_payable, credit: cash, period: 0}
+    - {desc: "insurance expense recognised", amount: 14400,
+       debit: EXPENSE, credit: prepaid_insurance, period: 0}
+    - {desc: "cash paid for insurance", amount: 13200,
+       debit: prepaid_insurance, credit: cash, period: 0}
+    - {desc: "other operating expenses, cash", amount: 57200,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "income tax expense, cash", amount: 18270,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "depreciation expense", amount: 29000,
+       debit: EXPENSE, credit: accumulated_depreciation, period: 0}
+    - {desc: "sale of investments, cost portion", amount: 30000,
+       debit: cash, credit: investments, period: 0}
+    - {desc: "sale of investments, gain portion, labelled land on the income statement (see notes)",
+       amount: 17500, debit: cash, credit: INCOME, period: 0}
+    - {desc: "investments purchased for cash", amount: 50000,
+       debit: investments, credit: cash, period: 0}
+    - {desc: "plant assets purchased for cash", amount: 66000,
+       debit: plant_assets, credit: cash, period: 0}
+    - {desc: "cash dividend paid", amount: 8000,
+       debit: OWNER, credit: cash, period: 0}
+    - {desc: "notes payable repaid", amount: 25000,
+       debit: notes_payable, credit: cash, period: 0}
+    - {desc: "common stock issued for cash, implied by the reconciled financing section (see meta)",
+       amount: 30000, debit: cash, credit: OWNER, period: 0}
+
+  # ── Comparative Balance Sheet, December 31 — $ ──────────────────────────
+  comparative_balance_sheet_usd:
+    assets:
+      cash:                      {y2018: 66700,  y2017: 83250,  change: "(16,550)"}
+      accounts_receivable:       {y2018: 55400,  y2017: 54220,  change: "1,180 increase"}
+      prepaid_insurance:         {y2018: 2400,   y2017: 3600,   change: "(1,200) decrease"}
+      investments:               {y2018: 95000,  y2017: 75000,  change: "20,000 increase"}
+      plant_assets:              {y2018: 356000, y2017: 290000, change: "66,000 increase"}
+      accumulated_depreciation:  {y2018: -65700, y2017: 36700,  change: "(29,000)"}
+      total_assets:              {y2018: 509800, y2017: 469370, change: "40,430"}
+    liabilities_and_equity:
+      accounts_payable:          {y2018: 48100,  y2017: 47300,  change: "800 increase"}
+      notes_payable:             {y2018: 160000, y2017: 100000, change: "(25,000)"}
+      total_liabilities:         {y2018: 208100, y2017: 232300, change: "(24,200)"}
+      common_stock:              {y2018: 130000, y2017: 100000, change: "30,000 increase"}
+      retained_earnings:         {y2018: 171700, y2017: 137070, change: "34,630"}
+      total_equity:              {y2018: 301700, y2017: 237070, change: "64,630"}
+      total_liabilities_and_equity: {y2018: 509800, y2017: 469370, change: "40,430"}
+    # NOTE two cells above are printed inconsistently with the statement's
+    # OWN cross-footing totals; both are transcribed exactly as printed
+    # (2017 accumulated depreciation as a bare positive 36,700; 2017 notes
+    # payable as 100,000) -- see notes for the proof that each must
+    # actually be a different figure for the source's own totals to work.
+
+  # ── Income Statement, Year Ended December 31, 2018 — $ ──────────────────
+  income_statement_usd:
+    sales_revenue: 433000
+    cost_of_goods_sold: 289000
+    gross_profit: 144000
+    operating_expenses:
+      depreciation_expense: 29000
+      insurance_expense: 14400
+      other_operating_expenses: 57200
+      total_operating_expenses: 100600
+    operating_income: 43400
+    other_revenue_and_expenses:
+      gain_on_sale_of_land_as_labeled: 17500   # label as printed; see notes -- this is really a gain on INVESTMENTS
+      total_other_revenue_and_expenses: 17500
+    income_before_income_tax: 60900
+    income_tax_expense: 18270
+    net_income: 42630
+
+  # ── Additional Information (numbered list) — verbatim ────────────────────
+  additional_information:
+    - "1. Investments that originally cost $30,000 were sold for $47,500 cash."
+    - "2. Investments were purchased for $50,000 cash."
+    - "3. Plant assets were purchased for $66,000 cash."
+    - "4. Cash dividends were declared and paid to shareholders in the amount of $8,000."
+
+notes: |
+  Three distinct inconsistencies found, each proven by cross-footing the
+  source's own numbers against each other (not assumed from outside
+  knowledge):
+
+  ERROR 1 -- 2017 Accumulated Depreciation printed as a bare positive
+  36,700 (no minus sign/parens), but Total Assets 2017 ($469,370, also
+  printed) only cross-foots if it is -36,700:
+  83,250+54,220+3,600+75,000+290,000 = 506,070; 506,070 + X = 469,370
+  requires X = -36,700. A positive +36,700 would instead require Total
+  Assets 2017 of 542,770, which is not what is printed. (2018's
+  Accumulated Depreciation, -65,700, IS printed with its negative sign and
+  DOES cross-foot: 66,700+55,400+2,400+95,000+356,000-65,700 = 509,800,
+  matching the printed 2018 Total Assets exactly.) The printed change row,
+  "(29,000)," is itself only consistent with 2017 = -36,700 (i.e.
+  -65,700 - (-36,700) = -29,000) -- and -29,000 also equals the income
+  statement's own Depreciation Expense of $29,000 for the year, which is
+  the expected relationship. So the change column and the 2018 figure both
+  imply -36,700 for 2017; only the literal 2017 cell as printed omits the
+  negative sign. Transcribed exactly as printed above, flagged here.
+
+  ERROR 2 -- 2017 Notes Payable printed as 100,000, but Total Liabilities
+  2017 ($232,300, also printed) only cross-foots if Notes Payable 2017 is
+  185,000: 47,300 (AP 2017) + X = 232,300 requires X = 185,000. A literal
+  100,000 would instead require Total Liabilities 2017 of 147,300, not
+  what is printed. This is also the only value consistent with the CF
+  statement's own treatment of this line -- "Payment of notes payable
+  (principal) (25,000)" -- since 185,000 - 25,000 = 160,000, matching the
+  printed 2018 Notes Payable exactly (100,000 - 25,000 = 75,000 would NOT
+  match 2018's printed 160,000). Transcribed exactly as printed above
+  (100,000), flagged here; 185,000 is the value an engine should actually
+  reconcile to.
+
+  ERROR 3 -- Accounts Receivable is labeled "decrease" on the CF statement
+  even though the balance sheet's own change column shows AR INCREASED by
+  $1,180 (54,220 -> 55,400). The printed operating-activities total,
+  $54,950, is only reachable by treating the $1,180 as a SUBTRACTION (the
+  correct indirect-method treatment for an increase in a current asset):
+  42,630 (net income) + 29,000 (depreciation) - 17,500 (gain reversal) -
+  1,180 (AR, treated as an increase) + 1,200 (prepaid insurance decrease,
+  addback) + 800 (AP increase, addback) = 54,950, matching the printed
+  total exactly. Using +1,180 (as the "decrease" label implies) gives
+  57,310 instead, which does NOT match. So the LABEL is wrong (should read
+  "Accounts Receivable increase (1,180)"); the NUMBER used in the total is
+  correct. Both the as-printed label and the reconciling treatment are
+  recorded in `expected` below.
+
+  Also noted (not scored as an "error" -- a labeling curiosity, precisely
+  triple-inconsistent): the $17,500 gain is called "Gain on Sale of Land"
+  on the income statement, but Virtual Co.'s balance sheet has no Land
+  account at all; the additional-information list explains the gain came
+  from selling $30,000-cost INVESTMENTS for $47,500 (47,500-30,000=17,500,
+  which matches exactly, and the Investments balance-sheet change nets out
+  correctly against items 1+2: -30,000+50,000=+20,000, matching the
+  printed change row). The CF statement then calls the SAME $17,500 line
+  "Gain on sale of PLANT ASSETS" in its adjustments section. Three
+  different asset labels (Land / Plant Assets / actually Investments) for
+  one gain -- reads like unedited boilerplate carried over from a
+  different worked example (Propensity Company's OWN gain, in the
+  preceding section 16.3, genuinely is a gain on sale of land). Recorded
+  under `gain_on_sale_of_land_as_labeled` deliberately to preserve the
+  source's own (wrong) label.
+
+  All three items independently verified end-to-end: with AR correctly
+  treated as an increase and the printed dollar total used throughout,
+  Operating 54,950 + Investing (68,500) + Financing (3,000) = -16,550,
+  which equals both the printed "Total cash flow decrease 16,550" AND the
+  balance sheet's own cash change (66,700 - 83,250 = -16,550). Full
+  reconciliation holds; only the three items above are inconsistent within
+  the source, not the overall statement.
+
+# which of the source's own names we check against which of ours. As with
+# the Propensity gold in this batch, only `cash_closing` and
+# `net_change_in_cash` are implemented on the cash-flow side of this
+# engine's T-journal reader — `cash_flow_operating`/`investing`/
+# `financing` are declared in the canonical vocabulary but never
+# populated (engine/golds.py `_ours()`), so they are not mapped here.
+mapping:
+  net_income_top: net_profit
+  total_assets_2018_top: total_assets
+  total_liabilities_2018_top: total_liabilities
+  total_equity_2018_top: total_equity
+  cash_closing_2018_top: cash_closing
+  net_change_in_cash_top: net_change_in_cash
+
+tolerance:
+  abs: 1.0
+  why: >
+    OpenStax prints whole dollars; this gold's own notes document three
+    source inconsistencies (2017 accumulated depreciation missing its
+    negative sign, 2017 notes payable printed 85,000 short, and the AR
+    "decrease" mislabel), and this journal was built against the
+    RECONCILED figures for all three — any remaining divergence is either
+    the engine's or a fourth source inconsistency, not display rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror figures already
+  # published above: net_income from inputs.income_statement_usd, the
+  # three totals from inputs.comparative_balance_sheet_usd's 2018 column,
+  # and cash/net-change from the indirect method statement below
+  net_income_top: 42630
+  total_assets_2018_top: 509800
+  total_liabilities_2018_top: 208100
+  total_equity_2018_top: 301700
+  cash_closing_2018_top: 66700
+  net_change_in_cash_top: -16550
+
+  indirect_method_cash_flow_statement_usd:
+    operating_activities:
+      net_income: 42630
+      depreciation: 29000
+      gain_on_sale_of_plant_assets_as_labeled: -17500   # source's CF-statement label; income statement calls it "Land"; true source per additional info is Investments
+      accounts_receivable_change_as_labeled: 1180        # printed "decrease"; see notes ERROR 3 -- must be applied as -1,180 to reconcile
+      accounts_receivable_change_sign_as_printed: "decrease (label) but arithmetically must act as an increase/subtraction to reach the printed total"
+      prepaid_insurance_decrease: 1200
+      accounts_payable_increase: 800
+      net_cash_flow_operating_activities: 54950
+    investing_activities:
+      proceeds_from_sale_of_investments: 47500
+      cost_of_investments_purchased: -50000
+      cost_of_new_plant_assets: -66000
+      net_cash_flow_investing_activities: -68500
+    financing_activities:
+      payment_of_notes_payable_principal: -25000
+      issuance_of_common_stock: 30000
+      payment_of_dividends: -8000
+      net_cash_flow_financing_activities: -3000
+    total_cash_flow_decrease: -16550
+    cash_balance_dec_31_2017: 83250
+    cash_balance_dec_31_2018: 66700
+
+  operating_activities_reconciled_usd:
+    net_income: 42630
+    depreciation: 29000
+    gain_on_sale_reversal: -17500
+    accounts_receivable_increase: -1180   # applied as a subtraction, consistent with the balance sheet's own "1,180 increase"
+    prepaid_insurance_decrease: 1200
+    accounts_payable_increase: 800
+    net_cash_flow_operating_activities: 54950

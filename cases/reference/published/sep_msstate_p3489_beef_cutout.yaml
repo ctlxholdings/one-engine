@@ -1,0 +1,213 @@
+# YIELD / MASS-BALANCE HARVEST — a beef carcass cut-out: ONE input (a steer),
+# THREE sequential yield stages (dressing, cooler shrink, fat-and-bone trim)
+# and then a TEN-WAY split of what survives, with every percentage and every
+# poundage printed separately and the ten percentages summing to exactly 100.
+#
+# This is a PURE MASS-BALANCE gold. It carries no prices at all -- the
+# publication is about how much meat comes home, not what it is worth -- and it
+# is included because the brief names abattoir dressing percentage as a target
+# and because a ten-way physical split whose parts add up exactly is the
+# sharpest available test of whether a conversion is modelled as a set of
+# proportions of one thing or as ten independent things.
+#
+# It also prints a rule of thumb that contradicts its own worked example. See
+# notes.
+
+meta:
+  source: >
+    Mississippi State University Extension Service, Publication P3489 (POD-08-24),
+    "How Much Meat to Expect from a Beef Animal: Farm-Direct Beef", by Brandi
+    Karisch, PhD (Associate Extension/Research Professor, Animal and Dairy
+    Sciences), Madeline Poss and Cobie Rutherford. Sections "Dressing
+    Percentage", "Carcass Chill" and "Example Retail Yield"; Table 1 (hindquarter)
+    and Table 2 (front quarter).
+    https://extension.msstate.edu/publications/how-much-meat-expect-beef-animal-farm-direct-beef
+  accessed: "2026-08-12"
+  licence: >
+    Mississippi State University Extension Service publication, publicly hosted;
+    no explicit reuse licence stated on the page. Transcribed here, with full
+    citation, for engine-verification / research use only.
+  kind: trade_case
+  resolution: L2
+  basis: >
+    one 1,200-pound steer, custom-processed with mostly BONELESS cut choices;
+    a single animal, a single pass
+  periods: 1
+  mechanism: separate
+  # `separate` fits the ten-way split of the freezer-ready meat -- one physical
+  # stream divided into ten named parts by fixed proportions -- but note that
+  # NOTHING here is priced, so the co-product problem this corpus keeps hitting
+  # (how to allocate one input's cost across several outputs) cannot even be
+  # posed against this source. It gives the physics and stops.
+  jurisdiction: US          # Mississippi
+  currency: null            # no money anywhere in this publication
+
+inputs:
+  # ── stage 1: live -> hot carcass ──────────────────────────────────────────
+  live_weight_lb: 1200
+  dressing_percentage_pct: 63          # source: average range 60-64%
+  hot_carcass_weight_lb: 756           # 1,200 x 0.63
+  # the source states the formula itself:
+  #   (hot carcass weight / live animal weight) x 100
+
+  # ── stage 2: hot carcass -> chilled carcass (cooler shrink) ───────────────
+  cooler_shrink_pct: 4                 # source: typical range 2-5%, over 24h
+  chilled_carcass_weight_lb: 726       # 756 x 0.96 = 725.76, printed "about 726"
+
+  # ── stage 3: chilled carcass -> freezer-ready meat ────────────────────────
+  fat_trim_and_bone_loss_pct_range_low: 30    # "another 30-40 percent will be
+  fat_trim_and_bone_loss_pct_range_high: 40   #  lost as fat trim and bone"
+  freezer_ready_weight_lb: 470         # printed as "approximately 470 pounds"
+
+  # ── the ten-way split of the 470 lb (Tables 1 and 2) ──────────────────────
+  # hindquarter (Table 1)
+  flank_pct: 4
+  flank_lb: 18.8
+  sirloin_pct: 9
+  sirloin_lb: 42.3
+  short_loin_pct: 8
+  short_loin_lb: 37.6
+  round_pct: 24
+  round_lb: 112.8
+  # front quarter (Table 2)
+  rib_pct: 9
+  rib_lb: 42.3
+  chuck_pct: 25
+  chuck_lb: 117.5
+  brisket_pct: 6
+  brisket_lb: 28.2
+  short_plate_pct: 7
+  short_plate_lb: 32.9
+  suet_and_hanging_tender_pct: 4
+  suet_and_hanging_tender_lb: 18.8
+  shank_pct: 4                          # PRINTED IN THE SOURCE AS "shank 4$"
+  shank_lb: 18.8                        # -- a typo for 4%; see notes
+
+  # ── the source's two rules of thumb, printed as one sentence ──────────────
+  rule_of_thumb_takehome_pct_of_live_weight: 40
+  rule_of_thumb_takehome_pct_of_hot_carcass_weight: 75
+
+expected:
+  hot_carcass_weight_lb: 756
+  chilled_carcass_weight_lb: 726
+  freezer_ready_weight_lb: 470
+  flank_lb: 18.8
+  sirloin_lb: 42.3
+  short_loin_lb: 37.6
+  round_lb: 112.8
+  rib_lb: 42.3
+  chuck_lb: 117.5
+  brisket_lb: 28.2
+  short_plate_lb: 32.9
+  suet_and_hanging_tender_lb: 18.8
+  shank_lb: 18.8
+
+mapping: {}
+# Nothing to map: there is no revenue, no cost and no price in this source, so
+# the L2 converter's `revenue` / `costs` path has no input and this gold cannot
+# run through the money leg at all. That is the point of filing it -- it is a
+# QUANTITY-ONLY case, and the corpus currently has no path that consumes one.
+# Recorded as a finding rather than papered over with an invented price.
+
+tolerance:
+  abs: 0.05
+  why: >
+    the ten cut weights are printed to one decimal of a pound and all ten
+    reproduce exactly as (percent x 470); the only figure carrying real
+    imprecision is the chilled carcass weight, printed as "about 726" against
+    an exact 725.76. 0.05 lb is half the source's printing unit.
+
+notes: |
+  RE-DERIVED BY HAND (python):
+
+  THE THREE-STAGE CASCADE
+    1,200 x 63%           =  756.00 lb  -- printed 756                OK exact
+      756 x (1 - 4%)      =  725.76 lb  -- printed "about 726"        OK (0.24)
+      726 x (1 - 35.3%)   =  470    lb  -- printed "approximately 470"
+    The third stage is given as a RANGE, not a point: "another 30-40 percent
+    will be lost as fat trim and bone". 470 / 726 = 64.7% retained, i.e. a
+    35.3% loss, which sits inside the printed range. So the third stage is the
+    one place the source declines to fix a number, and the 470 lb is therefore
+    the source's own choice from inside its own band, not an arithmetic
+    consequence of it. Recorded as printed.
+
+  THE TEN-WAY SPLIT — EXACT, ALL TEN, AND THE PERCENTAGES SUM TO 100
+    hindquarter   4 + 9 + 8 + 24                    = 45%
+    front quarter 9 + 25 + 6 + 7 + 4 + 4            = 55%
+    total                                           = 100%          OK
+    470 x 4%  = 18.8   -- flank, suet/hanging tender, shank (three at 18.8) OK
+    470 x 9%  = 42.3   -- sirloin, rib                                      OK
+    470 x 8%  = 37.6   -- short loin                                        OK
+    470 x 24% = 112.8  -- round                                             OK
+    470 x 25% = 117.5  -- chuck                                             OK
+    470 x 6%  = 28.2   -- brisket                                           OK
+    470 x 7%  = 32.9   -- short plate                                       OK
+    sum of the ten printed poundages                = 470.0 lb              OK
+    Not a tenth of a pound of rounding drift across ten lines. This is the
+    cleanest closed mass balance in the whole harvest.
+
+  THE CONTRADICTION — the rule of thumb does not fit the worked example, and
+  its two halves do not fit each other.
+    Printed: "the take-home weight of packaged beef will be approximately 40
+    percent of the animal's live weight, or 75 percent of the hot carcass
+    weight."
+      40% of 1,200 lb live      = 480 lb   vs the example's 470 lb  -- close
+      75% of   756 lb carcass   = 567 lb   vs the example's 470 lb  -- 21% out
+    And the two halves imply each other only at a dressing percentage of
+    40/75 = 53.3%, whereas the example -- and the same publication's own stated
+    average band of 60-64% -- runs at 63%. At 63% dressing, take-home of 40% of
+    live weight is 63.5% of the hot carcass, not 75%. The "or" in that sentence
+    is false: the two rules cannot both hold for the same animal. The example's
+    own ratio, 470/756 = 62.2%, is the one consistent with everything else on
+    the page. All three figures are recorded above as printed; none is
+    corrected.
+
+  A TRANSCRIPTION NOTE, NOT AN ERROR OF MINE: Table 2's last row is printed
+  "shank 4$" in the published HTML, where every sibling row reads "<cut> N%".
+  It is read here as 4%, which is forced -- the accompanying poundage is 18.8,
+  and 18.8 / 470 = 4.0% exactly, the same as the other two 4% cuts. Flagged
+  rather than silently normalised.
+
+  WHAT THIS GOLD IS FOR. Three sequential proportional losses and then a
+  ten-way proportional split, all off one 1,200 lb animal, with no money
+  anywhere. If a conversion is modelled as "output = input x factor" chained
+  three deep and then fanned ten ways, this case passes trivially; if each of
+  the ten cuts has to be declared as an independent output with its own
+  quantity, the declaration is ten times longer than the fact being declared,
+  and a fourth stage cannot be inserted without restating all ten. The corpus
+  has no quantity-only consumer today, which is why `mapping` is empty --
+  filing the case is the point, and the missing path is the finding.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:`
+  block, and it SHOULD. P3489 publishes WEIGHTS AND PERCENTAGES ONLY. In
+  full: a 1,200 lb live steer; a dressing percentage of 63% (stated band
+  60-64%) and the formula for it; a hot carcass weight of 756 lb; a cooler
+  shrink of 4% (stated band 2-5%, over 24 hours) and a chilled carcass of
+  "about 726" lb; a fat-trim-and-bone loss stated only as a 30-40% RANGE
+  and a freezer-ready weight of "approximately 470" lb; then Table 1
+  (hindquarter: flank 4%/18.8 lb, sirloin 9%/42.3, short loin 8%/37.6,
+  round 24%/112.8) and Table 2 (front quarter: rib 9%/42.3, chuck
+  25%/117.5, brisket 6%/28.2, short plate 7%/32.9, suet and hanging tender
+  4%/18.8, shank 4%/18.8); and two rules of thumb (take-home is ~40% of
+  live weight, or 75% of hot carcass weight) which contradict each other,
+  as recorded above. `meta.currency` is `null` because the word "dollar"
+  does not appear: there is no processing fee, no kill fee, no cut-and-wrap
+  rate, no purchase price for the animal, no price per pound for any of the
+  ten cuts, and no total of any kind denominated in money.
+  A `costs:` block would therefore have to be built from percentages and
+  pounds, and there is no published cost total anywhere in the publication
+  to bind `cost_of_sales` to. Any figure I supplied would be a price I
+  chose — which is the exact failure the `mapping` comment above already
+  refuses ("papered over with an invented price").
+  AND NO QUANTITY MAPPING EITHER, deliberately, despite the vocabulary now
+  carrying `quantity_sold` / `quantity_produced` / `quantity_closing`. The
+  engine only counts units when the L2/L3 converter builds a counted stock,
+  and it only builds one from an L3 `sale:` block carrying both a quantity
+  and a PRICE (engine/golds.py, `to_template`). This source publishes no
+  price and no sale, so no template is built and the engine computes no
+  quantity to compare the 470 lb against; a `quantity_produced` mapping
+  here would name a figure nothing on our side produces, and would add a
+  `tolerance.quantities` entry guarding a comparison that never happens.
+  Nothing is added. Unrunnable, with the reason recorded, is the correct
+  and reportable state for a quantity-only source the corpus cannot yet
+  consume.

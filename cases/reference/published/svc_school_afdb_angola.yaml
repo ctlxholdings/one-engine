@@ -1,0 +1,187 @@
+id: svc_school_afdb_angola
+title: "AfDB Angola Basic Education and Job Skills Project (2001) — classroom capacity vs enrolment overshoot, and the project's itemised cost table"
+
+meta:
+  source:
+    - "African Development Bank, 'Angola: Basic Education and Job Skills Project — Appraisal Report' (ADF/BD/WP/2001/153), Section 3.1.7 (p.8) and Table 4.2 'Summary of Project Cost Estimates by Category of Expenditure' (p.21): https://www.afdb.org/fileadmin/uploads/afdb/Documents/Project-and-Operations/AO-2001-153-EN-ADF-BD-WP-ANGOLA-EDUCATION-AND-JOB-SKILLS-PROJECT-EDUCATION-II.PDF (afdb.org serves this PDF behind a bot challenge that blocked direct fetch; retrieved via the Wayback Machine's cached copy of the same URL, and cross-checked for consistency against the same PDF's own internal page numbering and cross-references)"
+  accessed: "2026-08-12"
+  licence: "AfDB publicly published project appraisal report; no explicit reuse licence stated in the document."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, HARVESTED FOR SERVICES-AT-SCALE ───────────
+  # L2: Table 4.2 itemises the project cost by category (7 lines, USD
+  # millions) plus two contingency lines -- not a printed quantity x price
+  # pair. COST-ONLY, CAPITAL PROJECT, NOT AN OPERATING BUDGET: this is a
+  # donor-financed SCHOOL CONSTRUCTION project (244 new + 122 rehabilitated
+  # classrooms, teacher training, job-skills centres), not a running
+  # school's fee/enrolment P&L -- Angola's public basic education is
+  # financed through the Ministry budget and provincial teacher-salary
+  # allocations (Section 3, this same report), not charged to pupils, so
+  # "fee collection rate" from the harvest brief genuinely does not apply
+  # to this source; recorded as a gap rather than invented (RULE 1).
+  # `periods: 1` = the WHOLE PROJECT lifetime cost (appraised August 2001,
+  # disbursed 2002-2006 per the source's own Table 4.5), the same
+  # single-period convention this project's own capex-heavy sheets already
+  # use for a lump-sum total.
+  resolution: L2
+  basis: "whole-of-project, one-time capital cost, appraised August 2001 (1 UA = 1.26 USD at that date)"
+  periods: 1
+  mechanism: capacity_service
+  jurisdiction: AO
+  currency: USD
+
+inputs:
+  # ── the physics this gold was harvested to test: CAPACITY vs DEMAND,
+  # and here the source gives an unusually STARK, explicit pair -- not a
+  # school with headroom, but the opposite: enrolment nearly 3.5x the
+  # physical design capacity. Quoted verbatim, Section 3.1.7 (p.8): "the
+  # typical situation of a school in Benguela (Barrio 71) with a capacity
+  # of 160 (40 students, two classrooms, two shifts), but its enrolment is
+  # 565 (in three shifts) and the majority of classes are outside the
+  # school building." Independently re-verified against the primary PDF in
+  # RAW (non-layout) reading order, not just the laid-out extraction.
+  classroom_design_norm_pupils: {value: 40, unit: "pupils/classroom",
+    label_as_printed: "rooms designed for the norm of 40 students",
+    source_section: "3.1.3, p.7"}
+  barrio_71_capacity: {value: 160, unit: pupils,
+    label_as_printed: "a capacity of 160 (40 students, two classrooms, two shifts)",
+    composition_as_printed: "40 pupils/classroom x 2 classrooms x 2 shifts",
+    source_section: "3.1.7, p.8"}
+  barrio_71_enrolment: {value: 565, unit: pupils,
+    label_as_printed: "its enrolment is 565 (in three shifts) and the majority of classes are outside the school building",
+    source_section: "3.1.7, p.8"}
+  barrio_71_capacity_utilisation_pct: {value: 353.1, unit: "%",
+    provenance: derived, composition: "565 / 160 x 100 = 353.1% -- MY OWN calculation; the source states both numbers but never divides them itself"}
+  benguela_province_students_surveyed: {value: 119337, unit: pupils,
+    label_as_printed: "in Benguela alone of a total of 119 337 students surveyed",
+    source_section: "3.1.3, p.7"}
+  benguela_province_students_in_facilities: {value: 75525, unit: pupils,
+    label_as_printed: "75 525 are studying in school facilities",
+    source_section: "3.1.3, p.7"}
+  benguela_province_students_outdoors: {value: 43812, unit: pupils,
+    label_as_printed: "up to 43 812 are studying in make-shift shaded areas or under trees",
+    source_section: "3.1.3, p.7"}
+  classrooms_new: {value: 244, unit: classrooms,
+    label_as_printed: "the establishment of 244 new classrooms where none exist at all"}
+  classrooms_rehabilitated: {value: 122, unit: classrooms,
+    label_as_printed: "the rehabilitation of 122 classrooms"}
+
+  # Table 4.2 (p.21), "Summary of Project Cost Estimates by Category of
+  # Expenditure" -- the USD(millions) Total column, all 9 lines. Verified
+  # by hand to sum EXACTLY to the source's own printed subtotals at every
+  # stage (Base Cost, Sub-Total, Total Cost) -- a clean table, no error.
+  costs:
+    professional_services: 1.14
+    civil_works: 11.99
+    furniture: 2.11
+    equipment: 1.45
+    training: 2.92
+    technical_assistance: 1.10
+    operating_costs: 0.90
+    physical_contingencies: 1.08
+    price_contingencies: 1.74
+
+expected:
+  base_cost_usd_m:
+    value: 21.61
+    label_as_printed: "Base Cost"
+    composition_as_printed: "sum of the 7 category lines (Professional Services through Operating Costs) -- verified exact by hand"
+  subtotal_usd_m:
+    value: 22.69
+    label_as_printed: "Sub-Total"
+    composition_as_printed: "Base Cost (21.61) + Physical Contingencies (1.08)"
+  total_cost_usd_m:
+    value: 24.43
+    label_as_printed: "Total Cost"
+    composition_as_printed: "Sub-Total (22.69) + Price Contingencies (1.74)"
+  total_cost_ua_m:
+    value: 19.39
+    label_as_printed: "TOTAL COST: UA 19.39 million"
+    composition_as_printed: "24.43 / 1.26 = 19.39, using the source's own stated exchange rate (1 UA = 1.26 USD)"
+  adf_loan_ua_m:
+    value: 8.73
+    label_as_printed: "ADF Loan"
+    pct_of_total: 45.0
+  opec_fund_ua_m:
+    value: 7.45
+    label_as_printed: "OPEC FUND"
+    pct_of_total: 38.4
+  government_contribution_ua_m:
+    value: 2.31
+    label_as_printed: "GOVERNMENT"
+    pct_of_total: 11.9
+  taf_grant_ua_m:
+    value: 0.90
+    label_as_printed: "TAF"
+
+mapping:
+  total_cost_usd_m: cost_of_sales
+
+# HALF A THOUSAND DOLLARS (0.005 USD million = 5,000 USD), deliberately
+# tight for a project-cost table -- every figure in Table 4.2 is printed
+# to two decimal places in USD millions, and the 9 lines this gold checks
+# sum to the printed Base Cost, Sub-Total and Total Cost EXACTLY by hand,
+# so 0.005 is that table's own display rounding and any larger gap is real
+tolerance:
+  abs: 0.005
+  why: >
+    Table 4.2 prints every line to two decimal places in USD millions
+    (i.e. the nearest USD 5,000), and my own hand-summation of the 9
+    category/contingency lines reproduces Base Cost (21.61), Sub-Total
+    (22.69) and Total Cost (24.43) with ZERO gap at that precision -- so
+    0.005 exists only to absorb floating-point noise, not to hide a real
+    divergence
+
+notes: |
+  ACCESS FINDING, worth recording on its own: afdb.org serves this specific PDF behind a Cloudflare
+  bot-challenge page rather than the document itself (confirmed by inspecting the returned bytes,
+  which are an HTML "Just a moment..." challenge page, not a PDF) -- a direct fetch of the
+  afdb.org URL above returns that challenge, not the report. The Wayback Machine holds a clean,
+  complete (63-page) archived copy of the SAME URL, which is what this gold was built from; every
+  figure below was independently re-verified against that archived PDF in both `-layout` and RAW
+  (non-layout) `pdftotext` reading order.
+
+  A CROSS-REFERENCE THAT DOES NOT RESOLVE, worth flagging as its own small finding: the source's
+  own narrative (Section 4.7.2, p.20) states "Detailed project costs are given in Annex VI, which
+  also shows the unit costs used for construction and the cost per place used for furniture and
+  equipment" -- promising exactly the per-classroom / per-pupil-place unit costs this harvest was
+  looking for. But the document's own "ANNEX VI" (as printed, p.55 of the archived copy) is
+  actually the "ENVIRONMENTAL AND SOCIAL MANAGEMENT PLAN SUMMARY", not a cost annex at all -- the
+  in-body cross-reference points at content that, as assembled in the PDF, is not there (either a
+  renumbering slip between drafts, or an annex genuinely dropped before publication). I could not
+  locate the promised per-classroom/per-place unit costs anywhere else in the 63-page document, so
+  this gold's cost check works at the CATEGORY level (Table 4.2) rather than the per-place level
+  the source's own text implies exists.
+
+  CAPACITY VS DEMAND -- the sharpest pairing in this whole harvest batch, and worth reading against
+  the other four golds: FAO's clinic gives demand with no capacity ceiling; GIZ's restaurant gives a
+  single figure that serves as both (capacity = demand exactly); this source gives BOTH numbers
+  independently, and they are wildly apart in the OTHER direction from what a "short side" story
+  usually means -- Barrio 71's design capacity (160 pupils: 40/classroom x 2 classrooms x 2 shifts,
+  the SAME 40-pupil norm the source states is standard nationally) is exceeded by its actual
+  enrolment (565 pupils) by a factor of 3.53x, achieved only by running a THIRD shift the building
+  was not designed for and by holding "the majority of classes... outside the school building." A
+  province-wide corroborating statistic from the SAME section: of 119,337 surveyed students in
+  Benguela, 75,525 (63.3%) study in school facilities at all, and 43,812 (36.7%) study in makeshift
+  outdoor shading or under trees.
+
+  This is a genuinely useful case for the engine's capacity-ceiling mechanics (`provides` /
+  `occupies` / a resource's `capacity:`) precisely BECAUSE it sits on the wrong side of the
+  ceiling: a template built with the REAL 565-vs-160 numbers on a `provides`+`occupies` classroom
+  resource would be expected to REFUSE at the flow-budget check (`_check_flow_budgets` in
+  `engine/ledger/compile.py`) rather than compile clean, since 565 pupils exceeds what 160 pupil-
+  places (count(classrooms) x provides x availability) can supply, and F-211 already establishes
+  that a non-storable, per-period "seat" service cannot use the short-side `min(demand, count())`
+  rationing pattern the way a storable good can. I did not build a full-grammar template on this
+  specific pairing for exactly that reason -- the RESTAURANT gold in this harvest batch (capacity
+  = demand exactly, no overshoot) was chosen instead as the one attempted in full grammar
+  (`templates/svc_restaurant.yaml`), so the attempted template would have a real chance at reaching
+  `contract: []` rather than a near-certain, if genuinely informative, refusal. Recorded here so the
+  next author does not have to rediscover this before trying it themselves -- a real
+  `provides`+`occupies` template built on Barrio 71's own numbers, LEFT to refuse rather than
+  patched to pass, would be a legitimate and sharp demonstration of the engine correctly refusing to
+  pretend a physical impossibility is representable, matching F-211/F-214's documented pattern.
+
+  Not checked in `expected`/`mapping` above (kept as descriptive `inputs` only, per this project's
+  convention of keeping rich source context beyond the flattened money check): the financing-source
+  breakdown (ADF/OPEC/TAF/Government shares) and the classroom counts, since none of them are what
+  `to_template`'s L2 adapter reads.

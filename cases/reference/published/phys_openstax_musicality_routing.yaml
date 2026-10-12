@@ -1,0 +1,229 @@
+id: phys_openstax_musicality_routing
+title: "OpenStax Managerial Accounting 6.1 — Musicality Manufacturing: three products, one shared labour-hour budget"
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 2: Managerial Accounting,"
+    Section 6.1 "Calculate Predetermined Overhead and Total Cost under the
+    Traditional Allocation Method" (Musicality Manufacturing: Solo, Band,
+    Orchestra), Figures 6.3-6.6.
+    https://openstax.org/books/principles-managerial-accounting/pages/6-1-calculate-predetermined-overhead-and-total-cost-under-the-traditional-allocation-method
+    https://biz.libretexts.org/Bookshelves/Accounting/Managerial_Accounting_(OpenStax)/06:_Activity-Based_Variable_and_Absorption_Costing/6.02:_Calculate_Predetermined_Overhead_and_Total_Cost_under_the_Traditional_Allocation_Method
+  accessed: "2026-08-12"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0) — same title as fc_openstax_dinosaur_vinyl_joborder.yaml
+    in this batch; see that gold's note for the full licence-confirmation
+    trail (help.openstax.org licensing page + book Preface), not repeated
+    here.
+  kind: trade_case
+  # L4: this is ROUTING physics (hours per unit, capacity in hours), not a
+  # quantity x price or an itemised cost line — the driver ladder in
+  # engine/golds.py has no converter above L3 yet, so this gold reports
+  # `unrunnable` through the flat run_golds.py pipeline BY DESIGN, exactly
+  # as fao_broiler's own flat companion would. The FULL-GRAMMAR TEMPLATE
+  # (cases/golds/templates/phys_openstax_musicality_routing.yaml) is what
+  # actually exercises and verifies this source — see that file for the
+  # engine run. This flat file is the faithful transcription record.
+  resolution: L4
+  basis: "one year, three concurrent product lines sharing one labour-hour budget"
+  periods: 1
+  mechanism: make_to_order
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  # the routing/capacity facts — units produced, hours by product, hours
+  # available (Fig 6.4) — verbatim
+  routing:
+    labour_hours_available: 1250000
+    products:
+      solo:      {direct_labour_hours: 350000, units_produced: 140000}
+      band:      {direct_labour_hours: 400000, units_produced: 100000}
+      orchestra: {direct_labour_hours: 500000, units_produced: 250000}
+
+  # the predetermined overhead rate (Fig 6.3/6.4 prose)
+  overhead:
+    estimated_total_overhead_usd: 2500000
+    estimated_total_labour_hours: 1250000
+    rate_usd_per_labour_hour: 2.00
+
+  # per-unit cost lines (Fig 6.3), and units SOLD (Fig 6.6, for the record
+  # only — see notes on why this gold does not compute a sold-basis margin)
+  costs:
+    solo:      {direct_materials_per_unit: 3.50,  direct_labour_per_unit: 10.00, units_sold: 150000, sales_price: 20.00}
+    band:      {direct_materials_per_unit: 6.00,  direct_labour_per_unit: 2.75,  units_sold: 110000, sales_price: 25.00}
+    orchestra: {direct_materials_per_unit: 11.70, direct_labour_per_unit: 4.30,  units_sold: 200000, sales_price: 30.00}
+
+expected:
+  # Fig 6.4: the routing arithmetic, per product and totalled
+  direct_labour_hours_per_product: {solo: 350000, band: 400000, orchestra: 500000, total: 1250000}
+  overhead_rate_per_direct_labour_hour: 2.00
+  overhead_assigned_per_product_usd: {solo: 700000, band: 800000, orchestra: 1000000, total: 2500000}
+  units_produced: {solo: 140000, band: 100000, orchestra: 250000, total: 490000}
+  overhead_per_unit_usd: {solo: 5.00, band: 8.00, orchestra: 4.00}
+
+  # Fig 6.5: total cost per unit (direct materials + direct labour + overhead)
+  total_cost_per_unit_usd: {solo: 18.50, band: 16.75, orchestra: 20.00}
+
+  # Fig 6.6, for the record — sold-basis, NOT engine-checked here (see notes)
+  gross_profit_by_product_sold_basis_usd:
+    solo: {sales: 3000000, cost_of_goods_sold: 2775000, gross_profit: 225000}
+    band: {sales: 2750000, cost_of_goods_sold: 1842500, gross_profit: 907500}
+    orchestra: {sales: 6000000, cost_of_goods_sold: 4000000, gross_profit: 2000000}
+    total: {sales: 11750000, cost_of_goods_sold: 8617500, gross_profit: 3132500}
+
+  # derived total production cost (DM+DL+OH x units produced) -- not itself
+  # a single printed line in the source, but the sum of six printed Fig 6.3
+  # figures each individually verified; used as the engine's cost_of_sales
+  # cross-check (see mapping) since no sale is modelled
+  total_production_cost_usd: 9265000
+
+mapping:
+  # "cost_of_sales" is CANON's closest slot to "cost of goods MANUFACTURED"
+  # (DM+DL+OH capitalised into the three products) -- an imperfect fit,
+  # flagged rather than silently reused, since nothing here is actually
+  # SOLD (see meta.blocks.SELL in the template). Physics figures (hours,
+  # capacity, per-unit routing coefficients) have no CANON slot at all,
+  # which is expected -- CANON is P&L vocabulary, not a physics one.
+  total_production_cost_usd: cost_of_sales
+
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole/near-whole dollars throughout Figures 6.3-6.6 and
+    every cross-check below reconciles EXACTLY (350000+400000+500000 =
+    1,250,000; 2.00x2.5=5.00 etc.; DM+DL+OH reproduces each printed total-
+    cost-per-unit on the cent) -- any gap beyond a cent is real, not display
+    rounding.
+
+notes: |
+  RE-DERIVED BY HAND BEFORE TRANSCRIPTION, all exact:
+    - hours/unit: solo 350,000/140,000=2.5; band 400,000/100,000=4.0;
+      orchestra 500,000/250,000=2.0.
+    - overhead/unit = rate(2.00) x hours/unit: 5.00, 8.00, 4.00 -- matches
+      Fig 6.4 exactly.
+    - overhead assigned = overhead/unit x units produced: 700,000 + 800,000
+      + 1,000,000 = 2,500,000 -- matches the estimated_total_overhead_usd
+      EXACTLY, i.e. the predetermined rate is fully absorbed at exactly the
+      volume produced, no over/under-applied overhead anywhere in this
+      source.
+    - total cost/unit = DM+DL+OH: 3.50+10.00+5.00=18.50; 6.00+2.75+8.00=
+      16.75; 11.70+4.30+4.00=20.00 -- matches Fig 6.5 exactly.
+    - THE CAPACITY SATURATES EXACTLY: 350,000+400,000+500,000=1,250,000,
+      the same figure the source states as the ESTIMATED total labour
+      hours at the start of the year. This is what makes the source a real
+      routing/capacity test rather than a slack one -- the full-grammar
+      template's occupies/provides budget check runs at exactly zero
+      headroom (verified: budget_report() returns budget=[1,250,000.0],
+      used=[1,250,000.0], and perturbing any one product's hours upward by
+      even a small margin makes the joint check refuse -- confirmed by
+      probe, not assumed).
+
+  WHY NO SALE/MARGIN IS ENGINE-CHECKED (kept here for the record only, per
+  costs.*.units_sold/sales_price above): Fig 6.6 prices UNITS SOLD, not
+  units produced. Solo (150,000 sold vs 140,000 made) and Band (110,000
+  sold vs 100,000 made) both sell MORE than they made in the SAME figure,
+  which needs a beginning finished-goods inventory this source never
+  states anywhere. Orchestra alone (200,000 sold vs 250,000 made) could be
+  modelled from a zero opening balance without inventing anything, but
+  building a sale for one of three products and not the other two would
+  misrepresent the shape of the source, not simplify it. Rather than
+  invent an opening inventory (rule #1: every number is the source's), this
+  gold and its template stop at the production/routing mechanism -- Fig
+  6.6's own totals are transcribed above for completeness and possible
+  future use, not claimed as reproduced.
+
+  A trade file promoted from this entry would need a stated finished-goods
+  policy (FIFO/weighted-average opening balances by product) from a
+  DIFFERENT source before Fig 6.6's own margin becomes checkable -- that
+  gap is real and belongs to capture, not to this gold.
+
+# ── THE PHYSICS READING (5c) ─────────────────────────────────────────────────
+# Structure only: every driver names one of THIS GOLD'S OWN input locations
+# ({from:}, dotted into the nested routing/overhead/costs tables) or derives
+# from other drivers ({expr:}). No number below is authored.
+#
+# WHAT THIS READING DERIVES RATHER THAN RESTATES. The mapped figure
+# (total_production_cost_usd, 9,265,000) is NOT pointed at — it is rebuilt
+# from the routing coefficients along the source's own chain:
+#     overhead rate   = estimated overhead / estimated hours      (= 2.00/h)
+#     hours per unit  = product hours / product units             (2.5/4.0/2.0)
+#     overhead/unit   = rate x hours per unit                     (5.00/8.00/4.00)
+#     cost per unit   = direct materials + direct labour + overhead/unit
+#     total           = sum over the three products of cost/unit x units
+# So a mistranscription of ANY of the eleven printed figures it walks through
+# surfaces as a divergence instead of being absorbed. That is the whole point
+# of reading at L4 rather than binding the published total.
+#
+# WHAT THIS READING CANNOT REACH, and it is an ADAPTER limit rather than a
+# grammar one: the ROUTING BUDGET. The capacity test this source is famous for
+# — three recipes competing for one 1,250,000-hour pool, saturated at exactly
+# zero headroom — needs `occupies:` on a recipe and `provides:` on the pool
+# resource. `engine/golds.py:_from_physics` builds every stock resource itself
+# and has no `provides:` key to declare one, so a provider cannot be expressed
+# from a gold at all. The full-grammar template next door
+# (cases/golds/templates/phys_openstax_musicality_routing.yaml) DOES fire that
+# budget and is where the routing law is exercised; this reading covers the
+# cost chain only. Filed rather than worked around.
+#
+# WHY THE PRODUCTS ARE RELEASED TO EXPENSE. The gold's own mapping note says
+# CANON's `cost_of_sales` is standing in for cost of goods MANUFACTURED, and
+# the engine reads that slot as the period's total expense. Nothing is sold in
+# this source (see the notes above), so the three products are made INTO their
+# stocks — carrying the counted quantity, which is the real capitalisation —
+# and then released at full carrying value so the manufactured cost is
+# recognised. No revenue is booked against it, deliberately: the source
+# publishes none on a produced basis.
+physics:
+  stocks:
+    solo:      {unit: unit}
+    band:      {unit: unit}
+    orchestra: {unit: unit}
+  drivers:
+    # ── the predetermined rate, derived as the source narrates it ──────────
+    oh_total:  {from: "overhead.estimated_total_overhead_usd"}
+    oh_hours:  {from: "overhead.estimated_total_labour_hours"}
+    oh_rate:   {expr: "oh_total / oh_hours"}            # = 2.00 per hour
+    # ── Solo ───────────────────────────────────────────────────────────────
+    solo_dlh:   {from: "routing.products.solo.direct_labour_hours"}
+    solo_units: {from: "routing.products.solo.units_produced"}
+    solo_dm:    {from: "costs.solo.direct_materials_per_unit"}
+    solo_dl:    {from: "costs.solo.direct_labour_per_unit"}
+    solo_hpu:   {expr: "solo_dlh / solo_units"}          # = 2.5 hours/unit
+    solo_ohpu:  {expr: "oh_rate * solo_hpu"}             # = 5.00
+    solo_cpu:   {expr: "solo_dm + solo_dl + solo_ohpu"}  # = 18.50, Fig 6.5
+    # ── Band ───────────────────────────────────────────────────────────────
+    band_dlh:   {from: "routing.products.band.direct_labour_hours"}
+    band_units: {from: "routing.products.band.units_produced"}
+    band_dm:    {from: "costs.band.direct_materials_per_unit"}
+    band_dl:    {from: "costs.band.direct_labour_per_unit"}
+    band_hpu:   {expr: "band_dlh / band_units"}          # = 4.0 hours/unit
+    band_ohpu:  {expr: "oh_rate * band_hpu"}             # = 8.00
+    band_cpu:   {expr: "band_dm + band_dl + band_ohpu"}  # = 16.75, Fig 6.5
+    # ── Orchestra ──────────────────────────────────────────────────────────
+    orch_dlh:   {from: "routing.products.orchestra.direct_labour_hours"}
+    orch_units: {from: "routing.products.orchestra.units_produced"}
+    orch_dm:    {from: "costs.orchestra.direct_materials_per_unit"}
+    orch_dl:    {from: "costs.orchestra.direct_labour_per_unit"}
+    orch_hpu:   {expr: "orch_dlh / orch_units"}          # = 2.0 hours/unit
+    orch_ohpu:  {expr: "oh_rate * orch_hpu"}             # = 4.00
+    orch_cpu:   {expr: "orch_dm + orch_dl + orch_ohpu"}  # = 20.00, Fig 6.5
+  exchanges:
+    - {name: make_solo, from: cash, to: solo,
+       size: "solo_cpu * solo_units", qty: {solo: solo_units},
+       counterparty: factory}
+    - {name: make_band, from: cash, to: band,
+       size: "band_cpu * band_units", qty: {band: band_units},
+       counterparty: factory}
+    - {name: make_orchestra, from: cash, to: orchestra,
+       size: "orch_cpu * orch_units", qty: {orchestra: orch_units},
+       counterparty: factory}
+    # cost of goods MANUFACTURED recognised — the whole carrying value leaves
+    # with the units it was capitalised against
+    - {name: solo_manufactured, from: solo, to: EXPENSE,
+       release: 1.0, qty: {solo: "-(solo_units)"}}
+    - {name: band_manufactured, from: band, to: EXPENSE,
+       release: 1.0, qty: {band: "-(band_units)"}}
+    - {name: orchestra_manufactured, from: orchestra, to: EXPENSE,
+       release: 1.0, qty: {orchestra: "-(orch_units)"}}

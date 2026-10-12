@@ -1,0 +1,392 @@
+id: mining_block14_sudan_2020_fs
+title: "Block 14 Gold Project, Republic of the Sudan — NI 43-101 Feasibility Study (6 Mtpa, 91.3% plant availability): 18-period mine, process and cash-flow model"
+
+meta:
+  source:
+    - >
+      Lycopodium Minerals Pty Ltd (Brisbane) with Orway Mineral Consultants, Kemix, Knight Piesold
+      and others, for Orca Gold Inc. (Vancouver), "Feasibility Study — NI 43-101 Technical Report,
+      Block 14 Gold Project, Republic of the Sudan", document 3209-000-GEREP-0001_1b. Report date
+      14 September 2020; effective date 31 August 2020.
+      https://minedocs.com/20/Block14_FS_08312020.pdf
+    - >
+      Page and table numbers below are the report's OWN printed ones (document footer). Sections
+      used: 1.15 Mine production schedule, Table 1.5 (p.11-12); 1.16 Recovery methods (p.12);
+      1.21 Economic analysis, Table 1.15 and Table 1.16 (p.20-21); 17 Recovery Methods, Table 17.1
+      Key Process Design Criteria (p.185); 18 Infrastructure (power, p.~240); 22 Economic Analysis,
+      Table 22.1 Model Inputs (p.273), Table 22.4 and Table 22.5 Financial Model (Operations)
+      (p.276-277), Table 22.6 Financial Model Summary (p.278), Table 22.7 Cash Cost and Unit Cost
+      Summary (p.279).
+  accessed: "2026-08-12"
+  licence: >
+    Public NI 43-101 technical report filed to satisfy Canadian securities disclosure rules (Orca
+    Gold Inc. traded on the TSX Venture Exchange). No explicit reuse licence is stated in the
+    document; retrieved from the minedocs.com public mirror of SEDAR filings.
+  kind: trade_case
+  mechanism: extract
+  # ── HAND-LABELLED 2026-08-12, same convention as mining_mt_todd_2024_fs ─────
+  # L4 for the same reason that gold is: this is not one number to check, it is
+  # a chain where each stage's output is the next stage's input, and the source
+  # prints BOTH ends of every stage for eighteen periods:
+  #   reserve -> annual ore tonnes + grade (Table 1.5 / 22.4)
+  #     -> mill feed split three ways by ore type (oxide / transition / fresh)
+  #     -> a DIFFERENT design recovery per ore type (90.5 / 85.5 / 83.7%)
+  #     -> recovered ounces -> gold + silver revenue at a fixed price
+  #     -> less selling costs -> less a 7% gross-revenue royalty
+  #     -> less mining, rehandle, fixed process, variable process, G&A
+  #     -> operating profit -> less sustaining capex -> pre-tax cash flow
+  #     -> less depreciation -> taxable profit -> 15% Sudan tax
+  #     -> after-tax cash flow -> NPV5% and IRR.
+  # The availability content the harvest brief asks for sits at the top of that
+  # chain and is printed as three separate numbers that must be composed:
+  # plant capacity 6,036,000 tpa, plant availability 91.3%, crushing plant
+  # UTILIZATION 85.0% — three different derating conventions in one table.
+  resolution: L4
+  basis: "whole project, life of mine, 100% equity (the report states explicitly: 'The financial assessment of the project is carried out on a 100% equity basis and the debt and equity sources of capital funds are ignored')"
+  periods: 18   # the financial model's own columns: -3, -2, -1, then 1 to 15
+  jurisdiction: SD   # Republic of the Sudan. Matters because the fiscal terms
+  #                    are Sudanese and are printed as such: a 7% royalty
+  #                    CHARGED AGAINST REVENUE (not against profit) plus a 15%
+  #                    income tax on profit after depreciation.
+  currency: USD   # "Unless otherwise stated, all currencies refer to US$";
+  #                 base date 3rd Quarter 2020, money terms August 2020, and
+  #                 "No provision has been made for the effects of inflation."
+
+inputs:
+  # ── PROCESS PHYSICS: THE AVAILABILITY BLOCK ────────────────────────────────
+  plant_design_criteria:
+    plant_capacity_tpa: 6036000
+    nominal_throughput_mtpa: 6.0
+    plant_availability_pct: 91.3
+    crushing_plant_utilization_pct: 85.0
+    design_gold_recovery_leach_pct: {oxide_and_wadi_doum: 90.5, transition: 85.5, fresh: 83.7}
+    design_silver_recovery_leach_pct: {oxide_and_wadi_doum: 37.2, transition: 45.3, fresh: 56.7}
+    gold_head_grade_max_g_t: {oxide_and_wadi_doum: 2.04, transition: 1.84, fresh: 1.62}
+    grind_size_p80_um: {oxide_and_wadi_doum: 53, transition: 75, fresh: 90}
+    leach_residence_time_h: 45
+    source: "Table 17.1 Key Process Design Criteria, p.185. Availability attributed to 'Lyco' (Lycopodium), crushing utilization to 'OMC' (Orway Mineral Consultants), recoveries to 'Testwork'."
+  plant_availability_as_hours:
+    stated_hours_per_year: 8000
+    label_as_printed: "overall plant availability of 8,000 hr/yr (power load list) and 'utilization, nominally 8,000 h/y'"
+    source: "Section 18 Project Infrastructure, power supply and load-list sections (p.~240 and p.~250)"
+  # ── ANNUAL MINE PRODUCTION SCHEDULE (Table 1.5, p.12; repeated in Table 22.4)
+  mine_schedule:
+    schema: [period, total_ore_kt, total_ore_au_g_t, total_waste_kt, strip_ratio_as_printed]
+    rows:
+      - [Year -1,    350.6, 1.38,    936.3, "2.67:1"]
+      - [Year 1,   7464.9, 1.10,  14252.3, "1.91:1"]
+      - [Year 2,   9835.4, 1.08,  14987.4, "1.52:1"]
+      - [Year 3,   9936.9, 1.13,  19256.4, "1.94:1"]
+      - [Year 4,  10327.2, 1.14,  24520.5, "2.37:1"]
+      - [Year 5,  12171.3, 1.15,  21650.7, "1.78:1"]
+      - [Year 6,  12176.5, 1.06,  14234.4, "1.17:1"]
+      - [Year 7,  13051.6, 1.08,   8088.1, "0.62:1"]
+      - [Year 8,   4628.8, 1.18,   1322.0, "0.29:1"]
+      - [Total,   79943.2, 1.11, 119248.1, "1.49:1"]
+    source: "Table 1.5 Mine Production Schedule, p.12. Four separate pits are scheduled (GSS Main, GSS East, GSS NEZ, Wadi Doum), each with its own tonnes and grade rows; only the totals are transcribed here."
+  # ── ANNUAL PROCESSING SCHEDULE (Table 22.4, p.276) ─────────────────────────
+  processing_schedule:
+    schema: [period, total_kt_processed, total_grade_au_g_t, total_grade_ag_g_t, stockpile_rehandle_kt]
+    rows:
+      - [Year 1,  4800.0, 1.43, 1.57,  533]
+      - [Year 2,  5800.0, 1.44, 1.79,  449]
+      - [Year 3,  6000.0, 1.45, 2.38,  375]
+      - [Year 4,  6000.0, 1.51, 2.43,  716]
+      - [Year 5,  6000.0, 1.64, 2.15,  392]
+      - [Year 6,  6000.0, 1.48, 1.72,  307]
+      - [Year 7,  6000.0, 1.49, 1.69,  578]
+      - [Year 8,  6000.0, 1.14, 1.39, 3457]
+      - [Year 9,  6000.0, 0.74, 0.87, 6000]
+      - [Year 10, 6000.0, 0.68, 0.95, 6000]
+      - [Year 11, 6000.0, 0.68, 0.95, 6000]
+      - [Year 12, 6000.0, 0.62, 0.72, 6000]
+      - [Year 13, 6000.0, 0.55, 0.69, 6000]
+      - [Year 14, 3343.1, 0.49, 0.59, 3343]
+      - [Total,  79943.2, 1.11, 1.44, 40148.6]
+    ore_type_split_kt: {oxide: 14782.8, transition: 18635.3, fresh: 46525.1}
+    ore_type_avg_grade_au_g_t: {oxide: 1.03, transition: 0.98, fresh: 1.19}
+    source: "Table 22.4 Financial Model (Operations), p.276. Column headings are the model's own period labels -3, -2, -1, 1..15."
+  # ── ECONOMIC ASSUMPTIONS (Table 22.1, p.273) ───────────────────────────────
+  economic_inputs:
+    gold_price_usd_per_oz: 1350
+    refinery_charges_and_shipping_usd_per_oz: 4
+    sudan_royalty_pct_of_revenue: 7
+    sudan_tax_rate_pct: 15
+    npv_discount_rate_pct: 5
+    base_currency: USD
+    base_date: "3rd Quarter 2020"
+    money_terms: "August 2020"
+    discounting_convention_as_printed: "Discounting has been applied from the first year of operation."
+    assumptions_as_printed:
+      - "Capex excludes Finance Charges & Fees"
+      - "Capex excludes Pre-production Investigations"
+      - "Capex Amortisation/Depreciation based on no salvage value"
+      - "Capex excludes Escalation"
+      - "Tax paid on an Annual basis"
+    source: "Table 22.1 Model Inputs and Assumptions, p.273; narrative p.20"
+    # GAP: no silver price is printed anywhere in Table 22.1 — see notes.
+  # ── ANNUAL FINANCIAL MODEL (Table 22.5, p.277), all figures US$'000 ────────
+  cash_flow_model:
+    schema: [period, revenue, selling_costs, royalties, opcost_mining, stockpile_rehandle, opcost_process_fixed, opcost_process_variable, opcost_ga, operating_profit, sustaining_capex, ncf_pre_tax, depreciation, other_sustaining, taxable_profit, taxes_payable, ncf_after_tax]
+    rows:
+      - [-3,            0,     0,      0,      0,     0,     0,      0,      0,       0,      0,  -12216,      0,     0,       0,      0,  -12216]
+      - [-2,            0,     0,      0,      0,     0,     0,      0,      0,       0,      0, -112333,      0,     0,       0,      0, -112333]
+      - [-1,            0,     0,      0,  -4938,     0,     0,      0,      0,       0,      0, -196673,      0,     0,       0,      0, -196673]
+      - [1,        259359,  -876, -18155, -55945,  -464, -9868, -27885, -10110,  136057,  18816,  117242, -33008,     0,  103050, -15457,  101784]
+      - [2,        308736, -1229, -21612, -63551,  -391, -9868, -35018, -10110,  166959,  22369,  144590, -41186, -3500,  122273, -18341,  126249]
+      - [3,        310610, -1404, -21743, -75030,  -326, -9868, -38425, -10110,  153705,  31761,  121944, -44706, -3500,  105498, -15825,  106119]
+      - [4,        318284, -1594, -22280, -95397,  -623, -9868, -38355, -10110,  140059,  22966,  117093, -48404, -3500,   88155, -13223,  103870]
+      - [5,        340432, -1677, -23830, -95560,  -341, -9868, -39485, -10110,  159561,  17611,  141951, -54228, -3500,  101834, -15275,  126676]
+      - [6,        307362, -1425, -21515, -73939,  -267, -9868, -39483, -10110,  150756,   6049,  144707, -49510, -3500,   97746, -14662,  130045]
+      - [7,        313711, -1425, -21960, -65577,  -503, -9868, -42035, -10110,  162235,   6827,  155408, -51345, -3500,  107390, -16109,  139299]
+      - [8,        236843, -1100, -16579, -19754, -3008, -9868, -43373, -10110,  133052,   3500,  129552, -38745, -3500,   90807, -13621,  115931]
+      - [9,        156834,  -705, -10978,     58, -5220, -9868, -44672, -10110,   75340,  21094,   54246, -29248, -3500,   42592,  -6389,   47857]
+      - [10,       147917,  -712, -10354,     58, -5220, -9868, -37666, -10110,   74045,   3500,   70545, -27542, -3500,   43004,  -6451,   64095]
+      - [11,       147806,  -708, -10346,     58, -5220, -9868, -38371, -10110,   73242,   7696,   65546, -28849, -3500,   40893,  -6134,   59412]
+      - [12,       135839,  -613,  -9509,     58, -5220, -9868, -39573, -10110,   61006,      0,   61006, -26549,     0,   34457,  -5168,   55838]
+      - [13,       120101,  -463,  -8407,     58, -5220, -9868, -35240, -10110,   50852,   3855,   46997, -26069,     0,   24783,  -3717,   43279]
+      - [14,        63420,  -213,  -4439,     32, -2909, -5498, -18665,  -5633,   26096,   9247,   16849, -13800, -9246,    3050,   -457,   16392]
+      - [15,            0,     0,      0,      0,     0,     0,      0,      0,       0,   3300,   -3300,      0, -3300,   -3300,      0,   -3300]
+      - [Total,   3167254, -14144, -221708, -549366, -34929, -133776, -518247, -137057, 1562965, 178590, 1063153, -513187, -47546, 1002231, -150830, 912324]
+    recovered_metal_koz:
+      gold:   {1: 193, 2: 229, 3: 230, 4: 235, 5: 251, 6: 227, 7: 232, 8: 175, 9: 116, 10: 109, 11: 109, 12: 100, 13: 89, 14: 47, total: 2341}
+      silver: {1: 26, 2: 79, 3: 122, 4: 164, 5: 168, 6: 129, 7: 124, 8: 100, 9: 60, 10: 69, 11: 68, 12: 53, 13: 27, 14: 6, total: 1195}
+      source: "Table 22.4, p.276, rows 'Total Recovered Au ozs' and 'Total Recovered Ag ozs' ('000 ozs)"
+    revenue_split:
+      gold_usd_000: {total: 3144436, 1: 258855, 2: 307236, 3: 308289, 4: 315155, 5: 337221, 6: 304895, 7: 311335, 8: 234933, 9: 155680, 10: 146601, 11: 146509, 12: 134831, 13: 119590, 14: 63305}
+      silver_usd_000: {total: 22818, 1: 503, 2: 1500, 3: 2321, 4: 3129, 5: 3210, 6: 2467, 7: 2376, 8: 1910, 9: 1154, 10: 1317, 11: 1296, 12: 1008, 13: 511, 14: 115}
+    capital:
+      pre_production_usd_000: 321222
+      pre_production_phasing_usd_000: {-3: 12216, -2: 112333, -1: 196673}
+      sustaining_total_usd_000: 178590
+      total_capital_usd_000: 499812
+    source: "Table 22.5 Financial Model (Operations), p.277"
+
+expected:
+  # ── the source's OWN computed answers ──────────────────────────────────────
+  npv_pre_tax_5pct_usd_000: 723008
+  npv_after_tax_5pct_usd_000: 606781
+  irr_pre_tax_pct: 38.5
+  irr_post_tax_pct: 33.3
+  headline_as_printed: "Based on a gold price of US$1,350 /oz, the Project has a pre-tax IRR of 38.5% and pre-tax NPV5% of US$723M. The Project has a post-tax IRR of 33.3% and a post-tax NPV6% of US$607M."
+  # NOTE the printed text says "post-tax NPV6%" while Table 22.1 states the
+  # discount rate is 5% and Table 22.5 labels the line "NPV After Tax" under a
+  # 5% assumption. Transcribed as printed; see notes.
+  financial_model_summary:
+    feed_tonnage_mt: 79.9
+    waste_rock_mt: 119.3
+    total_mined_mt: 199.2
+    stripping_ratio: "1.49:1"
+    feed_grade_processed_g_t: 1.11
+    gold_recovery_average_pct: 82.0
+    production_period_years: 13.6
+    gold_production_koz: 2341
+    annual_gold_production_yr1_7_koz_y: 228
+    annual_gold_production_average_koz_y: 167
+    silver_production_koz: 1195
+    pre_production_capital_usd_m: 321
+    sustaining_capital_usd_m: 179
+    total_capital_usd_m: 500
+    gross_revenue_usd_m: 3167
+    total_operating_costs_usd_m: 1604
+    operating_profit_usd_m: 1563
+    mining_cost_per_t_mined_usd: 2.67
+    process_cost_per_t_processed_usd: 8.16
+    cash_cost_per_oz_usd: 676
+    aisc_per_oz_usd: 751
+    source: "Table 1.15, p.20 and Table 22.6, p.278 (identical)"
+  cash_cost_buildup:
+    schema: [line, usd_per_oz, usd_per_t_processed]
+    rows:
+      - [Silver Credit,        -10, -0.29]
+      - [Mining,               233,  6.81]
+      - [SP Rehandle,           15,  0.44]
+      - [Processing,           279,  8.16]
+      - [G&A,                   59,  1.71]
+      - [Refining,               6,  0.18]
+      - [Royalties,             95,  2.77]
+      - [Total Cash Cost,      676, 19.78]
+      - [Sustaining Capital,    71,  2.08]
+      - [Closure,                4,  0.13]
+      - [All-in Sustaining,    751, 21.99]
+    source: "Table 22.7, p.279"
+  gold_price_sensitivity:
+    schema: [au_price_usd_oz, npv5_usd_m, irr_pct]
+    rows:
+      - [1250, 467, 27.5]
+      - [1350, 607, 33.3]
+      - [1410, 691, 36.8]
+      - [1750, 1166, 55.4]
+      - [1950, 1445, 66.0]
+    source: "Table 1.16, p.21 and Table 22.8, p.280. The 1,410 column is labelled '3Yr Trailing'; 1,950 is labelled 'Spot' as at 31 August 2020."
+  revenue_by_material_type_pct:
+    oxide: 19
+    transition: 21
+    fresh: 60
+    source: "narrative p.278, describing Figure 22.2"
+
+mapping:
+  revenue: expected.financial_model_summary.gross_revenue_usd_m
+  # US$3,167M gross revenue is a genuine sale line: recovered payable metal at
+  # a stated price, before selling costs and before the gross-revenue royalty.
+  cost_of_sales: expected.financial_model_summary.total_operating_costs_usd_m
+  gross_margin: expected.financial_model_summary.operating_profit_usd_m
+  # 3,167 - 1,604 = 1,563, which is exactly the printed operating profit. The
+  # binding is safe at the LOM level; it is NOT safe year by year, because the
+  # annual operating-profit row and the annual operating-cost rows do not close
+  # against each other in Year -1 — see notes, finding (5).
+
+tolerance:
+  abs: 2.0
+  rel: 0.001
+  why: >
+    The financial model is printed in US$'000 to the unit (259,359; 136,057; 723,008), so any
+    genuine agreement should land within a couple of thousand dollars on a hundred-million-dollar
+    line — 0.001 relative is the working band and abs 2.0 (US$2,000) is the floor for the small
+    lines. This is deliberately tighter than mining_mt_todd_2024_fs's US$3 million, because that
+    gold checks a schedule printed in millions and this one is printed in thousands. The band is
+    NOT wide enough to swallow the five reconciliation failures recorded in notes; those are the
+    point of the gold, not noise to be tuned away.
+
+notes: |
+  RE-DERIVED BY HAND, using only the report's own printed figures and its own printed rates.
+  Twenty checks. Fifteen close, five do not — and three of the five are provable internal
+  contradictions, not rounding.
+
+  ── THE AVAILABILITY CHAIN, which is why this gold was harvested ─────────────
+  (A) 6,036,000 tpa at 91.3% availability implies 8,760 x 0.913 = 7,997.9 operating hours and a
+      design instantaneous rate of 6,036,000 / 7,997.9 = 754.7 t/h. The report's power sections
+      independently state "overall plant availability of 8,000 hr/yr" and "utilization, nominally
+      8,000 h/y", which is 8,000/8,760 = 91.32%. THE THREE STATEMENTS AGREE. (Contrast
+      mining_spanish_mountain_2021_pfs.yaml in this same harvest, where the equivalent three
+      statements do not.)
+  (B) THE SCHEDULE NEVER RUNS AT THE DESIGN CAPACITY. Table 17.1's plant capacity is 6,036,000 tpa;
+      the financial model's steady-state years are all exactly 6,000.0 kt. The 36,000 t/yr gap
+      (0.6%) is never explained. It is small, and it is systematic across eleven consecutive years,
+      which is the signature of a rounded planning number rather than a physical derate.
+  (C) THREE DIFFERENT DERATING CONVENTIONS SIT IN ONE TABLE: plant availability 91.3% (a fraction
+      of calendar time), crushing plant UTILIZATION 85.0% (a fraction of available time, per OMC),
+      and design recoveries 90.5/85.5/83.7% (a fraction of contained metal). All three are
+      percentages, none is the same kind of thing, and Table 17.1 stacks them in adjacent rows.
+      A model that reads the column and multiplies is wrong; a model that reads the ROW LABELS is
+      right. That distinction is the whole content of this block.
+  (D) Production period: 4,800 + 5,800 = 10,600 kt in the two ramp years, leaving 69,343.2 kt at
+      6,000 kt/y = 11.56 years, plus 2 = 13.56 -> printed "Production Period 13.6 Years".
+      RECONCILES.
+
+  ── RECONCILES ──────────────────────────────────────────────────────────────
+  (1) Mine schedule column sums, to the last printed digit:
+        ore   350.6+7,464.9+9,835.4+9,936.9+10,327.2+12,171.3+12,176.5+13,051.6+4,628.8 = 79,943.2
+        waste 936.3+14,252.3+14,987.4+19,256.4+24,520.5+21,650.7+14,234.4+8,088.1+1,322.0 = 119,248.1
+      Strip ratios: 119,248.1/79,943.2 = 1.4917 -> "1.49:1"; Year 1 14,252.3/7,464.9 = 1.909 ->
+      "1.91:1"; Year -1 936.3/350.6 = 2.670 -> "2.67:1". Total mined 79.9+119.3 = 199.2 Mt.
+  (2) Processing schedule sums: 4,800 + 5,800 + (6,000 x 11) + 3,343.1 = 79,943.1 against a printed
+      79,943.2 (0.1 kt, i.e. 1.3 ppm). Ore-type split 14,782.8+18,635.3+46,525.1 = 79,943.2 EXACT.
+  (3) THE ROYALTY IS EXACTLY 7% OF REVENUE, EVERY YEAR, TO THE DOLLAR:
+        Y1 259,359 x 0.07 = 18,155.1 -> printed 18,155
+        Y2 308,736 x 0.07 = 21,611.5 -> printed 21,612
+        Y5 340,432 x 0.07 = 23,830.2 -> printed 23,830
+        LOM 3,167,254 x 0.07 = 221,707.8 -> printed 221,708
+      This is the cleanest single formula test in the file: a gross-revenue royalty, not a profit
+      royalty, applied before any cost.
+  (4) SELLING COSTS ARE US$4/oz ON GOLD PLUS SILVER OUNCES, NOT ON GOLD ALONE:
+        Y1 (193 + 26) koz x $4 = $876,000 -> printed 876. EXACT.
+        Y2 (229 + 79) x 4 = 1,232 -> printed 1,229 (the koz rows are rounded).
+      Table 22.1 calls this line "Refinery Charges & Shipping US$4 /oz" and never says which ounces;
+      the Y1 identity settles it.
+  (5) Operating profit, Year 1, from the printed lines:
+        259,359 - 876 - 18,155 - 55,945 - 464 - 9,868 - 27,885 - 10,110 = 136,056 -> printed 136,057
+      RECONCILES (1 unit rounding).
+  (6) Net cash flow before tax = operating profit less sustaining capex:
+        Y1 136,057 - 18,816 = 117,241 -> printed 117,242
+        LOM 1,562,965 - 321,222 - 178,590 = 1,063,153 -> printed 1,063,153. EXACT.
+  (7) Tax is exactly 15% of taxable profit:
+        Y1 103,050 x 0.15 = 15,457.5 -> printed 15,457
+        Y2 122,273 x 0.15 = 18,340.95 -> printed 18,341
+      And after-tax LOM 1,063,153 - 150,830 = 912,323 -> printed 912,324 (1 unit).
+  (8) THE TWO NPVs AND BOTH IRRs REPRODUCE EXACTLY, once the report's own discounting convention
+      ("Discounting has been applied from the first year of operation") is read as: the three
+      pre-production years are collapsed to a single US$321,222k outflow at t=0, and Years 1-15 are
+      discounted at t=1..15 at 5%:
+        pre-tax  NPV = 723,009  -> printed 723,008
+        post-tax NPV = 606,781  -> printed 606,781. EXACT to the dollar-thousand.
+        pre-tax  IRR = 38.48%   -> printed 38.5%
+        post-tax IRR = 33.32%   -> printed 33.3%
+      The IRR row of Table 22.5 shows exactly this collapse — it prints "(321,222)" in a single
+      cell to the left of Year 1 while the cash-flow row above it keeps the three-year phasing.
+  (9) Average annual production: (193+229+230+235+251+227+232)/7 = 228.1 -> printed 228 koz/y for
+      Years 1-7; 2,341/14 operating years = 167.2 -> printed 167 koz/y average. BOTH RECONCILE, and
+      they confirm the schedule has FOURTEEN operating years even though the summary says 13.6.
+  (10) LOM average recovery: 79,943.2 kt at 1.11 g/t contains 88,737 kg = 2,852,663 oz; recovered
+      2,341 koz is 82.06% -> printed 82.0%. RECONCILES.
+  (11) Cash-cost buildup in $/t processed sums exactly: -0.29+6.81+0.44+8.16+1.71+0.18+2.77 = 19.78
+      -> printed 19.78; +2.08+0.13 = 21.99 -> printed 21.99. And process cost 652,023/79,943.2 =
+      $8.156/t -> printed 8.16.
+  (12) Mining cost per tonne PROCESSED: (549,366 - 4,938)/79,943.2 = $6.81/t -> printed 6.81. Note
+      what this proves: the printed unit cost EXCLUDES the Year -1 mining spend, which the LOM
+      mining total INCLUDES. That is the same US$4,938k that breaks check (14).
+
+  ── DOES NOT RECONCILE ──────────────────────────────────────────────────────
+  (13) THE PRINTED RECOVERED OUNCES DO NOT PRODUCE THE PRINTED REVENUE AT THE PRINTED PRICE.
+        Y1: 193 koz x $1,350 = $260,550k, but printed gold revenue is $258,855k.
+            Implied ounces = 258,855/1,350 = 191.74 koz.
+        LOM: 2,341 koz x $1,350 = $3,160,350k against a printed $3,144,436k.
+            Implied ounces = 2,329.2 koz, i.e. 11.8 koz (0.50%) fewer than the schedule prints.
+      Two readings are possible and the report supports neither explicitly: an unstated payable
+      factor of ~99.5%, or a rounded ounces row sitting beside an unrounded revenue row. The
+      report's own Table 22.1 lists NO payable percentage — only a $4/oz refining charge, which is
+      already accounted for separately as Selling Costs (check 4). Recomputing Year 1 from the
+      ore-type split instead (oxide 3,778.5 kt @1.4 g/t x 90.5%, transition 878.5 @1.3 x 85.5%,
+      fresh 143.0 @1.7 x 83.7%) gives 191.9 koz — which matches the REVENUE line, not the ounces
+      line. So the revenue is right and the printed "Total Recovered Au ozs" row is the rounded one.
+  (14) THE LOM OPERATING PROFIT IS US$4,938k HIGHER THAN ITS OWN COST LINES ALLOW:
+        3,167,254 - 14,144 - 221,708 - 549,366 - 34,929 - 133,776 - 518,247 - 137,057 = 1,558,027
+        printed operating profit                                                       = 1,562,965
+        difference                                                                     =     4,938
+      That is exactly the Year -1 mining cost. The annual columns are internally consistent (Year 1
+      closes, check 5) because Year -1 has no operating-profit cell at all; the TOTAL column carries
+      the Year -1 cost into the cost row and not into the profit row. Provable, exact, and it means
+      the LOM `cost_of_sales` binding in `mapping` is 0.3% understated relative to the printed
+      operating profit. Kept as printed.
+  (15) THE DESIGN RECOVERIES DO NOT PRODUCE THE MODEL'S AVERAGE RECOVERY. Applying Table 17.1's
+      90.5 / 85.5 / 83.7% to the LOM ore-type tonnes and grades gives 75,735 kg = 2,435 koz, an
+      85.2% blended recovery — against the model's printed 82.0% and 2,341 koz. The economic model
+      is 3.2 percentage points more conservative than the process design criteria table, and neither
+      table cross-references the other. Table 17.1's grades are labelled "(max)", which is the only
+      hint; the recovery rows carry no such qualifier.
+  (16) MINING COST PER TONNE MINED: printed US$2.67/t. From the model, (549,366 - 4,938)/199,191.3 kt
+      = $2.73/t, and including Year -1, $2.76/t. Neither is 2.67. To reach 2.67 the mining spend
+      would have to be $531,841k, US$12.6M below the model's own line. UNRESOLVED.
+  (17) SUSTAINING CAPITAL IN THE AISC BUILDUP: US$71/oz x 2,341 koz = $166,211k against a printed
+      sustaining total of $178,590k (7% apart), and the Closure line ($4/oz = $9,364k) is not a
+      separate row anywhere in Table 22.5 — the nearest candidate is the $9,246-9,247k that appears
+      as "Other Sustaining" in Year 14. The AISC therefore cannot be rebuilt from the cash-flow
+      table without an unstated reallocation.
+  (18) THE DISCOUNT RATE IS STATED TWO WAYS. Table 22.1 says "NPV Discount Rate 5%"; Table 22.5
+      labels its lines "NPV Pre Tax" / "NPV After Tax"; the narrative on p.20 says "post-tax NPV6%
+      of US$607M". My reproduction (check 8) confirms 5% is the rate actually used — US$606,781k at
+      5% is the printed figure to the dollar-thousand, and 6% would give a materially smaller
+      number. The "NPV6%" in the text is an error in the text.
+
+  ── GAPS, STATED RATHER THAN FILLED ─────────────────────────────────────────
+  NO SILVER PRICE IS PRINTED. Table 22.1 lists a gold price and nothing else. The silver revenue
+  line implies 22,818/1,195 = US$19.09/oz LOM (Y1: 503/26 = $19.35; Y2: 1,500/79 = $18.99), which is
+  consistent with an assumed ~US$19/oz less payable/refining, but the number is MY division of two
+  printed totals and is deliberately kept out of `inputs`. Silver contributes 0.72% of gross revenue,
+  so the omission is immaterial to the NPV and material to the completeness of the input set.
+  NO DEGRADATION OR AVAILABILITY RAMP is modelled: the plant availability is a single flat 91.3% for
+  all fourteen operating years, exactly as IRENA treats its capacity factors
+  (energy_irena_solar_pv_2023.yaml records the same absence). The only ramp is in THROUGHPUT
+  (4,800 then 5,800 then 6,000 kt), which the report attributes to mine sequencing, not to the plant.
+
+  ── WHY THIS PROJECT, and what it costs the gold ────────────────────────────
+  Sudan is the point. The corpus holds an Australian mining gold (mining_mt_todd_2024_fs) and this
+  harvest adds a Canadian one (mining_spanish_mountain_2021_pfs); Block 14 is the AFRICAN case, and
+  its fiscal terms are structurally different from both — a 7% royalty charged against GROSS REVENUE
+  (before any cost, checked exactly in (3)) rather than the profit-based Northern Territory royalty
+  in the Mt Todd gold, and a flat 15% income tax. That combination — a top-line royalty plus a low
+  flat tax — is common across African mining codes and appears nowhere else in this corpus. The cost
+  is that the project was never built: Orca Gold was acquired by Perseus Mining in 2022 and Sudan
+  entered civil war in April 2023, so no actual-versus-forecast comparison will ever exist. This is a
+  FORECAST gold, like every feasibility study in the corpus, and the arithmetic it tests is the
+  model's internal consistency, not its predictive accuracy.

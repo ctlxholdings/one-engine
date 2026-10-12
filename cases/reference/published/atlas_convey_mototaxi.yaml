@@ -1,0 +1,87 @@
+meta:
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur les Métiers Rentables — Région de l'Adamaoua\", p.63, https://trust-fund-for-africa.europa.eu/document/download/0f7dde62-c3c3-4650-86de-d18aa361058e_en?filename=ETUDES%20SUR%20LES%20METIERS%20RENTABLES%20-%20ADAMAOUA"
+  registry_index: 49
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: convey
+  jurisdiction: CM
+  currency: XAF
+  trade: "Mototaxi / motorcycle taxi (propriétaire-conducteur) — régionale, Adamaoua region"
+  isic_class: "4922 — Other land transport (motorcycle taxi)"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: production_annuelle is a direct annual aggregate — no ride-count is
+  # printed to pair with tarif_homologue (100 FCFA/course), so it cannot be
+  # recomputed as quantity x price.
+  resolution: L2
+  basis: per year, owner-operator mototaxi (moto expensed year one; see notes on the printed 2-year amortissement_annees)
+  periods: 1
+
+# 1 of 5 `convey` entries in the registry, and the ONLY one of the five with a revenue side —
+# the other 4 are HDM-4 engineering VOC blocks, each explicitly flagged by its own source as
+# "NO REVENUE SIDE... margin cannot be computed from this entry alone" (see ATLAS_INVENTORY.md
+# #136-139). This is therefore the sole viable `convey` gold in the corpus today.
+
+inputs:
+  # mirrors generators.production_annuelle below
+  revenue: 1500000
+  # mirrors the three movements below. The moto (500,000, capex) is
+  # expensed in FULL here because the source's own verified `benefice`
+  # nets it against revenue once, in year one — see notes on the
+  # amortissement_annees: 2 tension this creates.
+  costs:
+    outils_production_moto: 500000
+    carburant_lubrifiant: 400000
+    autres_charges: 50000
+  stocks:
+    moto: {value: 1, unit: "engin"}
+  generators:
+    production_annuelle: {value: 1500000, unit: "FCFA / an"}
+    tarif_homologue: {value: 100, unit: "FCFA / course", note: "official/regulated per-ride tariff, source prose"}
+    jours_travail_par_semaine: {value: 6, unit: "jours", note: "source prose: 1 jour d'entretien (maintenance day) per week"}
+  movements:
+    outils_production_moto: {value: 500000, unit: "FCFA", direction: out, kind: capex}
+    carburant_lubrifiant: {value: 400000, unit: "FCFA / an", direction: out, kind: opex}
+    autres_charges: {value: 50000, unit: "FCFA / an", direction: out, kind: opex, composition: "impôts, assurance, vignette"}
+  gates: [proprietaire_engin]
+  grid: {period: annual, annualization: 1, amortissement_annees: 2}
+
+expected:
+  benefice_proprietaire: {value: 550000, unit: "FCFA / an", provenance: cited,
+    composition: "production_annuelle (1,500,000) − outils_production_moto (500,000) − carburant_lubrifiant (400,000) − autres_charges (50,000) = 550,000 — verified exact"}
+
+mapping:
+  benefice_proprietaire: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints whole francs and its own notes verify the arithmetic
+    exactly (1,500,000 − 500,000 − 400,000 − 50,000 = 550,000); any gap is real
+
+notes: |
+  Clean arithmetic, but with a real convention tension worth flagging explicitly: `grid.
+  amortissement_annees` is printed as **2** (the source's own prose: motos are often retired
+  by end of year 1, with serious breakdowns starting around month 8 — the 2-year figure is
+  the nominal accounting life). If the 500,000 FCFA moto purchase were amortized over that
+  2-year life, year-1 benefice would be 1,500,000 − 250,000 − 400,000 − 50,000 = 800,000 —
+  NOT the source's printed 550,000. **The 550,000 figure only reconciles if the full
+  500,000 FCFA capex is expensed entirely in year one** — the same "first-year-cumulative"
+  convention seen across every other monthly/annual CEP in this GIZ source family (capex
+  netted against revenue once, not spread over an asset life), even though this specific
+  entry is the only one that ALSO prints an explicit amortization-years field that appears
+  to contradict that convention. Both numbers (2-year life; full first-year expensing) are
+  cited from the same page; they were not reconciled by the source and are not reconciled
+  here — flagged for whoever promotes this to a trade file.
+
+  The source separately describes a second cost structure for a non-owner driver
+  (`versement_conducteur_non_proprio`: 20,000 FCFA paid to the owner; `revenu_
+  conducteur_non_proprio`: 2,250 FCFA/day, midpoint of a cited 1,500–3,000 range) — both
+  genuinely cited but with the settlement period for the 20,000 FCFA payment left ambiguous
+  (per trip? per week? per month? — the source prose does not say). That branch is NOT
+  included in `expected` above; this gold tests only the fully-reconciled
+  owner-operator branch. The two-structure duality itself is worth carrying into any trade
+  file built from this entry, since "who drives the vehicle" is a real fork in a moto-taxi's
+  economics, not an edge case.
+
+  Security risk (agression / robbery) is noted in the source prose as a real operating hazard
+  but is not quantified or costed anywhere in the CEP.

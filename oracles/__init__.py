@@ -299,4 +299,5 @@ def families() -> List[Family]:
     """Every family the harness knows. Imported lazily so the harness has no engine imports itself."""
     from one_engine.oracles.actus import ActusFamily
     from one_engine.oracles.golds import GoldFamily
-    return [ActusFamily(), GoldFamily()]
+    from one_engine.oracles.published import PublishedFamily
+    return [ActusFamily(), GoldFamily(), PublishedFamily()]

@@ -1,0 +1,164 @@
+# CO-PRODUCT HARVEST (F-210) — a US extension processing budget with a full
+# answer, exactly as the brief allows ("a US extension processing budget with
+# a full answer still beats a vague African reference"): ginning turns one
+# harvested crop into TWO separately priced outputs, lint and cottonseed,
+# every year, in every published US cotton enterprise budget — this is the
+# textbook joint-product case in cost accounting, not a contrived one.
+#
+# WHAT "ONE INPUT" MEANS HERE. The source (a per-acre farm budget) publishes
+# the two GINNED outputs' yields and prices directly; it does not separately
+# publish the unginned "seed cotton" tonnage the gin receives (that number
+# sits at the gin, not the farm, and this budget is written from the
+# farmer's side of the gate). The single input is therefore THE ACRE'S CROP
+# itself — the same framing this corpus's own bfap_maize/landbank gold shapes
+# already use ("per hectare" / "per cow" as the unpriced unit that yields a
+# priced output) — not an invented seed-cotton weight.
+
+meta:
+  source: >
+    Mississippi State University, Department of Agricultural Economics,
+    "Cotton 2024 Planning Budgets" (MSUCOT24), Tables 1.A and 1.B, "Cotton,
+    12R-38" solid, conservation tillage, B3XF variety, Delta Area,
+    Mississippi, 2024" (cost estimates based on 2023 input prices, per the
+    document's own note).
+    https://www.agecon.msstate.edu/whatwedo/budgets/docs/24/MSUCOT24.pdf
+  accessed: "2026-08-12"
+  licence: >
+    Mississippi State University Extension publication, publicly hosted PDF;
+    no explicit reuse licence stated in the document. Transcribed here, with
+    full citation, for engine-verification/research use only.
+  kind: trade_case
+  resolution: L2
+  basis: >
+    per acre, one season, Delta Area Mississippi, 2024 planning budget,
+    12-row 38-inch solid planting, conservation tillage, B3XF variety cotton
+  periods: 1
+  mechanism: separate
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  # ── the yield split, stated explicitly (Table 1.B, INCOME) ────────────────
+  lint_yield_lb_per_acre: 1200.0
+  lint_price_usd_per_lb: 0.80
+  cottonseed_yield_lb_per_acre: 1620.0
+  cottonseed_price_usd_per_lb: 0.11
+  cotton_lint_income_usd: 963.36     # source's own printed extension (see notes: != 1200x0.80)
+  cotton_seed_income_usd: 178.20     # = 1620 x 0.11 exactly
+  revenue: 1141.56                    # TOTAL INCOME, source's own printed total
+  # ginning is the PROCESSING STEP that performs the split, billed to the
+  # farmer as a per-lint-lb service fee (Table 1.A, GINNING: "Gin & Haul",
+  # $0.11/lb x 1200 lb lint = $132.00) -- included in `costs.ginning` below.
+  # `costs` below is TOTAL DIRECT EXPENSES ONLY (Table 1.B) -- fixed expenses
+  # are kept separate (see notes on why they are not mixed into `costs`).
+  costs:
+    custom_spray: 56.35
+    harvest_aids: 16.07
+    ginning: 132.00
+    fertilizers: 191.74
+    fungicides: 20.00
+    herbicides: 114.46
+    insecticides: 81.96
+    # the INPUT (planting) seed -- Cotton Seed B3XF variety, an EXPENSE, not
+    # to be confused with `cotton_seed_income_usd` above (the HARVESTED
+    # cottonseed sold as a co-product): two different things the source
+    # itself both calls "cotton seed", disambiguated here by field name.
+    seed_plants_b3xf_planting_seed: 117.00
+    growth_regulators: 3.36
+    adjuvants: 1.32
+    custom_fertilize: 7.50
+    eradication_fee: 1.00
+    custom_lime: 43.29
+    crop_consultant: 8.00
+    soil_test: 3.33
+    hand_labor: 2.82
+    operator_labor: 10.88
+    unallocated_labor: 8.70
+    diesel_fuel: 38.01
+    repair_maintenance: 41.22
+    interest_on_op_capital: 33.21
+  # kept OUT of `costs` (see notes) -- documentary only:
+  fixed_expenses_total_usd: 180.22
+
+expected:
+  cotton_lint_income_usd: 963.36
+  cotton_seed_income_usd: 178.20
+  total_income_usd: 1141.56
+  total_direct_expenses_usd: 932.22
+  returns_above_direct_expenses_usd: 209.34
+  total_fixed_expenses_usd: 180.22
+  total_specified_expenses_usd: 1112.44
+  returns_above_total_specified_expenses_usd: 29.12
+
+mapping:
+  total_income_usd: revenue
+  total_direct_expenses_usd: cost_of_sales
+  returns_above_direct_expenses_usd: gross_margin
+
+tolerance:
+  abs: 0.01
+  why: >
+    every figure in Table 1.B carries two decimals (cents) and the notes
+    below independently re-derive each one to the cent from the 21 published
+    line items; any gap beyond a cent is real
+
+notes: |
+  RE-DERIVED BY HAND (python, not trusted from the PDF's own subtotal
+  line alone):
+    - the 21 published TOTAL DIRECT EXPENSES line items (Table 1.A) sum to
+      EXACTLY 932.22 -- matches the printed "TOTAL DIRECT EXPENSES 932.22"
+      to the cent.
+    - 1620 x 0.11 = 178.20 exactly -- matches "Cotton Seed... 178.20" to the
+      cent.
+    - 1200 x 0.80 = 960.00, but the source prints "Cotton Lint... 963.36" --
+      a $3.36 gap. NOT a transcription error: the document's own methodology
+      section (p.6) explains its price is "the higher of a calculated
+      forward-contract price or the loan rate," derived from an average of
+      futures closing prices less a basis adjustment (Appendix Table 7) --
+      the displayed "0.80" is a rounded reference price, and 963.36/1200 =
+      0.8028 is the true effective price the extended total uses. Every
+      downstream total below is built from the SOURCE's own printed
+      963.36 + 178.20, not from a re-multiplication, for exactly this
+      reason.
+    - 963.36 + 178.20 = 1,141.56 -- matches "TOTAL INCOME 1141.56" exactly.
+    - 1,141.56 - 932.22 = 209.34 -- matches "RETURNS ABOVE DIRECT EXPENSES
+      209.34" exactly.
+    - 932.22 + 180.22 = 1,112.44 -- matches "TOTAL SPECIFIED EXPENSES
+      1112.44" exactly.
+    - 1,141.56 - 1,112.44 = 29.12 -- matches "RETURNS ABOVE TOTAL SPECIFIED
+      EXPENSES 29.12" exactly.
+  Every identity from the Cotton Lint/Cotton Seed income lines onward is
+  exact to the cent; only the raw yield x displayed-price multiplication for
+  lint carries the $3.36 basis-adjustment gap, and it is explained by the
+  source's own stated pricing methodology, not left as an unresolved
+  discrepancy.
+
+  WHY FIXED EXPENSES ARE KEPT OUT OF `costs` (and `total_fixed_expenses_usd`
+  / `total_specified_expenses_usd` / `returns_above_total_specified_expenses_usd`
+  are documentary, not mapped). `engine/golds.py:to_template` (L2 path)
+  pours every key of `inputs.costs` into ONE undifferentiated EXPENSE
+  bucket -- there is no direct/fixed split in the auto-converted template,
+  so `_ours()` would compute the SAME number for `cost_of_sales` as for
+  `operating_costs` (both equal the sum of everything in `costs`). Mapping
+  `total_direct_expenses_usd` AND `total_fixed_expenses_usd` into two
+  DIFFERENT canonical names would therefore manufacture a divergence that is
+  an artefact of the auto-converter's known cost-flattening (documented in
+  `engine/golds.py:_HEURISTICS_DO_NOT_WORK` and the general L2 shape), not a
+  finding about co-products -- exactly the "self-inflicted mismatch, not a
+  finding" reasoning `cases/golds/landbank_beef_cattle_18month.yaml` already
+  applies to its own two unmapped cost sub-block totals. Kept out for the
+  same reason, so the divergence signal this gold CAN produce stays about
+  the thing this harvest investigates.
+
+  THE CO-PRODUCT SPLIT ITSELF IS NOT ALLOCATION-TESTED HERE, UNLIKE THE
+  DAIRY GOLD. Ginning's $132.00 fee is a single per-acre line (Table 1.A),
+  not broken out as "cost attributable to lint" vs "cost attributable to
+  cottonseed" -- like Beta Ltd's oil mill (see sep_fao_bl811e_oilmill_
+  steadystate.yaml), this source ALSO sidesteps the joint-cost question
+  entirely, reporting lint and cottonseed as two independent revenue lines
+  against an undifferentiated cost stack. Three real, published sources in
+  this harvest (oil mill, cotton, and implicitly dairy Examples 1/2's "usual
+  procedure") all avoid allocating a shared input's cost between co-products
+  when they can — only the dairy manual, a teaching text rather than a
+  filed budget, engages with the question at all, and even it gives three
+  different answers depending on the business reason for asking.

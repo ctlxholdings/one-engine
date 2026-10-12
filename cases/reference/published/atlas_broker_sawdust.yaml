@@ -1,0 +1,83 @@
+meta:
+  author:
+    name: "Ali Adoudou"
+    author: asked
+    source: head
+    basis: "signed the pack, 2026-08-16"
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur les Métiers Rentables — Région de l'Adamaoua\", p.78, https://trust-fund-for-africa.europa.eu/document/download/0f7dde62-c3c3-4650-86de-d18aa361058e_en?filename=ETUDES%20SUR%20LES%20METIERS%20RENTABLES%20-%20ADAMAOUA"
+  registry_index: 61
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: broker
+  jurisdiction: CM
+  currency: XAF
+  trade: "Vente de sciure et copeaux de bois / sawdust & wood shavings retail — régionale, Adamaoua region, one representative activité (5 sacs/jour)"
+  isic_class: "3811 — Collection of non-hazardous waste (wood sawdust recycling)"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # resolution/basis/periods added so the runner can read this gold. `vente_
+  # sciures` is an ANNUAL AGGREGATE ("moyenne 5 sacs/jour x 500 FCFA/sac") —
+  # the source never prints an annual sacs-count, so this is L2, not L3
+  # (multiplying 5 x 500 would only give a DAILY figure, not the 900,000/yr
+  # the gold checks).
+  resolution: L2
+  basis: one representative sawdust/shavings retail activity, annual (5 sacs/day average)
+  periods: 1
+
+# THE ONLY `broker` entry in the entire 139-entry registry (registry header:
+# `'broker': 1`). Not a choice among alternatives — this is the sole instance the mechanism
+# taxonomy has to test against. The trader collects sawdust/shavings that scieries and
+# menuiseries treat as waste and resells it as a fuel/input to a different buyer — buying
+# nothing, holding no inventory of a purchased good, just intermediating a byproduct that
+# would otherwise be discarded. That is what distinguishes `broker` from `buy_resell` here:
+# there is no `achat_*` cost line anywhere in the source — only packaging/PPE capex and a
+# flat annual charge.
+
+inputs:
+  # revenue mirrors generators.vente_sciures below (same number, read directly
+  # since there is no annual quantity to multiply — see resolution note above)
+  revenue: 900000
+  # costs mirrors the two movements lines below. Both ARE netted in the
+  # source's own verified `benefice` (900,000 − 40,000 − 10,000 = 850,000),
+  # including the capex-tagged packaging/PPE line — the source expenses it
+  # in year one, it does not amortize it, so it belongs in costs here.
+  costs:
+    emballages_et_EPI: 40000
+    autres_charges: 10000
+  generators:
+    vente_sciures: {value: 900000, unit: "FCFA / an", composition: "moyenne 5 sacs/jour × 500 FCFA/sac"}
+  movements:
+    emballages_et_EPI: {value: 40000, unit: "FCFA", direction: out, kind: capex, note: "packaging + personal protective equipment"}
+    autres_charges: {value: 10000, unit: "FCFA / an", direction: out, kind: opex}
+  grid: {period: annual, annualization: 1}
+
+mapping:
+  benefice: gross_margin
+
+# whole FCFA, verified exact in notes below — no display rounding to absorb
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints whole francs and its own notes verify the arithmetic
+    exactly (900,000 − 40,000 − 10,000 = 850,000); any gap is real
+
+expected:
+  benefice: {value: 850000, unit: "FCFA / an", provenance: cited,
+    composition: "vente_sciures (900,000) − emballages_et_EPI (40,000) − autres_charges (10,000) = 850,000 — verified exact"}
+
+notes: |
+  Clean arithmetic: 900,000 − 40,000 − 10,000 = 850,000 exactly. This is the simplest driver
+  block of any of the ten transcribed here — deliberately, since it is the anchor case for a
+  mechanism the trio has otherwise never seen exercised.
+
+  Ambiguities the source leaves open:
+  - No `achat_*` (purchase cost) line exists anywhere — the sawdust/shavings are collected as
+    a byproduct from sawmills/carpentry shops (scieries/menuiseries), not bought. Whether that
+    means truly zero acquisition cost, or an unstated informal payment/favor to the source
+    workshop, the CEP does not say.
+  - Two demand-side risks are named in the source's own gaps/prose but not quantified: supply
+    depends entirely on the activity level of nearby scieries/menuiseries (a derived-demand
+    risk), and end-demand depends on local household/business fuel-consumption habits (an
+    adoption risk for sawdust as a cooking/heating fuel substitute). Neither is reflected in
+    the flat 900,000 FCFA/yr revenue figure.
+  - No working-capital timing is given — the 5-sacs/day cadence implies a collect-then-sell
+    cycle the source does not itemize.

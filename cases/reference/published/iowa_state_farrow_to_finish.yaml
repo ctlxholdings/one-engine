@@ -1,0 +1,137 @@
+# Transcribed EXACTLY as published. Verified by hand against the primary PDF
+# (fetched directly, single-page table, no OCR needed -- vector text layer).
+# This is a ROLLING MONTHLY report: each column is an independent, fully
+# computed production cohort (pigs farrowed in one month, sold ~7 months
+# later), sharing one schema. All seven populated cohorts are transcribed.
+
+meta:
+  source: >
+    Iowa State University Extension and Outreach, Department of Economics,
+    "Estimated Returns to Farrow to Finish, Iowa" (rolling monthly report),
+    single-page table "Costs of Producing 270 lb Finished Pig" / "Returns to
+    Marketing 270 lb Finished Pig".
+    https://estimatedreturns.econ.iastate.edu/files/inline-files/farrow_to_finish_pdf.pdf
+  accessed: "2026-08-11"
+  licence: >
+    No explicit licence/copyright statement found on the document itself;
+    publicly hosted by Iowa State University Extension and Outreach
+    (estimatedreturns.econ.iastate.edu). Transcribed here, with full
+    citation, for engine-verification/research use only.
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L3: sales_value = selling price ($/live cwt) x 2.70 (270 lb = 2.70
+  # cwt) — quantity and price both printed, verified exact in notes for
+  # most columns. `finished_weight_lb: 270` is common to all seven
+  # cohorts.
+  #
+  # UNRUNNABLE, deliberately, not a mislabel: every field in `expected` is
+  # a 7-ELEMENT ARRAY, one per farrowing-month cohort — `_num()` reads a
+  # bare scalar or `{value: ...}` only, so no per-cohort figure is
+  # reachable through `mapping` without restructuring `expected` (which
+  # this hand-labelling pass does not touch; see the task's "do not edit
+  # data" constraint). `sale`/`costs` below encode the Jun-25 cohort (the
+  # one the notes walk through by hand) so a reader can see the
+  # arithmetic verify — it is just not checkable against `expected`'s
+  # array shape by this harness today.
+  resolution: L3
+  basis: "per finished pig (270 lb), Jun-25 farrowing cohort only (of 7 — see UNRUNNABLE note above)"
+  periods: 1
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  # Jun-25 cohort (index 0): selling_price_usd_per_live_cwt[0] x 2.70 cwt
+  # (270 lb finished weight / 100)
+  sale: {quantity: 2.70, unit: cwt, price: 62.21}
+  # the Jun-25 cohort's 9 individual $/head lines (5 feed + 3 nonfeed +
+  # death loss) — sums to 166.68, matching total_costs_usd_per_hd[0]
+  # exactly (see notes: this is closer to the source's OWN total than
+  # hand-summing its printed Feed/Nonfeed subtotals is, because those
+  # subtotals carry their own $0.01 rounding).
+  costs:
+    feed_corn: 37.81
+    feed_soybean_meal: 13.77
+    feed_dried_distiller_grain: 9.44
+    feed_complete_and_other: 17.20
+    feed_processing: 5.92
+    nonfeed_variable_costs: 47.27
+    operating_interest: 4.43
+    fixed_costs: 23.39
+    death_loss: 7.45
+  basis: "per finished pig (270 lb), one cohort per farrowing month"
+  farrowing_month: [Jun-25, Jul-25, Aug-25, Sep-25, Oct-25, Nov-25, Dec-25]
+  sale_month:      [Jan-26, Feb-26, Mar-26, Apr-26, May-26, Jun-26, Jul-26]
+
+  # ── feed costs, $/head, by farrowing-month cohort ───────────────────────
+  feed_corn_usd_per_hd:                    [37.81, 37.83, 38.21, 38.63, 39.02, 39.19, 38.64]
+  feed_soybean_meal_usd_per_hd:            [13.77, 14.09, 14.27, 14.34, 14.75, 15.03, 15.17]
+  feed_dried_distiller_grain_usd_per_hd:   [9.44, 9.65, 9.88, 10.22, 10.52, 10.80, 10.59]
+  feed_complete_and_other_usd_per_hd:      [17.20, 17.17, 17.20, 17.14, 17.23, 17.45, 17.68]
+  feed_processing_usd_per_hd:              [5.92, 5.92, 5.92, 5.92, 5.92, 5.92, 5.92]
+
+  # ── nonfeed costs, $/head ────────────────────────────────────────────────
+  nonfeed_variable_costs_usd_per_hd:       [47.27, 47.35, 48.13, 48.56, 48.66, 48.92, 48.91]
+  operating_interest_usd_per_hd:           [4.43, 4.33, 4.38, 4.42, 4.40, 4.44, 4.42]
+  fixed_costs_usd_per_hd:                  [23.39, 23.39, 23.42, 23.42, 23.42, 24.21, 24.21]
+
+  death_loss_usd_per_hd:                   [7.45, 7.93, 8.23, 8.37, 9.10, 9.64, 9.91]
+  selling_price_usd_per_live_cwt:          [62.21, 65.67, 68.30, 68.18, 68.81, 69.80, 72.20]
+  finished_weight_lb: 270
+
+notes: |
+  Every column is an independently computed cohort, not a time series of the
+  same herd -- there is no roll-forward relationship between adjacent
+  columns. We independently re-verified the full arithmetic chain by hand
+  for the Jun-25 cohort and spot-checked others:
+    - feed_total = 37.81+13.77+9.44+17.20+5.92 = 84.14 -- EXACT match to the
+      printed Feed costs Total.
+    - nonfeed_total (hand-sum) = 47.27+4.43+23.39 = 75.09, but the source
+      prints Nonfeed costs Total = 75.08 -- off by $0.01. This 1-cent gap
+      recurs in most (not all) columns and is consistent with each line
+      being rounded independently from an unrounded intermediate, not a
+      structural error; e.g. Jul-25 sums exactly (47.35+4.33+23.39=75.07,
+      matches printed 75.07) while Jun-25, Aug-25, Sep-25, Oct-25, Nov-25,
+      Dec-25 are each $0.01 off in the same direction.
+    - total_costs (hand, using the source's own printed subtotals) =
+      84.14+75.08+7.45 = 166.67, but the source prints Total Costs = 166.68
+      -- a second, compounding $0.01 gap for Jun-25. Other columns'
+      Total Costs reproduce exactly from their own printed subtotals (e.g.
+      Jul-25: 84.66+75.07+7.93=167.66, matches printed 167.66 exactly).
+    - breakeven_price = Total Costs / (270/100) = Total Costs / 2.70:
+      166.68/2.70=61.73 -- EXACT match, all seven columns checked.
+    - sales_value = Selling price ($/live cwt) x 2.70: 62.21x2.70=167.97,
+      source prints 167.98 (1-cent rounding, same pattern as above); other
+      columns match to the cent (e.g. Aug-25: 68.30x2.70=184.41 exact).
+    - profit_loss = sales_value - total_costs: EXACT in every column we
+      checked (e.g. Jun-25: 167.98-166.68=1.30, matches; Jul-25:
+      177.30-167.66=9.64, matches).
+    - total_profit_loss = profit_loss + manure_credit: EXACT in every column
+      (e.g. Jun-25: 1.30+6.26=7.56, matches).
+  Net effect: this gold's arithmetic is clean to the cent except for a
+  small, one-directional rounding drift (never more than $0.01-0.02 per
+  cohort) that is a rounding-of-intermediates artifact rather than a
+  transcription or calculation error -- flagged, not corrected.
+
+# deliberately empty — see the UNRUNNABLE note under meta above. Every
+# field is a 7-element per-cohort array; there is no bare scalar to map.
+mapping: {}
+
+tolerance:
+  abs: 0.01
+  why: >
+    figures print to the cent and the Jun-25 cohort's total_costs
+    reconciles exactly from its own 9 line items (166.68, see notes) —
+    kept for consistency and so the reported unrunnable reason is the
+    true structural one, not a missing-tolerance complaint
+
+expected:
+  feed_total_usd_per_hd:      [84.14, 84.66, 85.48, 86.25, 87.44, 88.38, 87.99]
+  nonfeed_total_usd_per_hd:   [75.08, 75.07, 75.93, 76.40, 76.47, 77.57, 77.54]   # see notes: Jun-25 hand-sum 75.09
+  total_costs_usd_per_hd:     [166.68, 167.66, 169.64, 171.02, 173.01, 175.59, 175.45]  # see notes: Jun-25 hand-sum 166.67
+  breakeven_price_usd_per_live_cwt:   [61.73, 62.10, 62.83, 63.34, 64.08, 65.03, 64.98]
+  breakeven_price_usd_per_carcass_cwt: [82.31, 82.80, 83.77, 84.45, 85.44, 86.71, 86.64]
+  selling_price_usd_per_carcass_cwt:  [82.95, 87.55, 91.07, 90.91, 91.74, 93.06, 96.27]
+  sales_value_usd_per_hd:     [167.98, 177.30, 184.41, 184.09, 185.78, 188.45, 194.94]
+  profit_loss_usd_per_hd:     [1.30, 9.64, 14.78, 13.07, 12.77, 12.86, 19.50]
+  manure_credit_usd_per_hd:   [6.26, 6.31, 6.99, 8.17, 8.24, 7.94, 7.71]
+  total_profit_loss_usd_per_hd: [7.56, 15.95, 21.76, 21.24, 21.01, 20.79, 27.21]

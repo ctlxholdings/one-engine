@@ -1,0 +1,155 @@
+id: svc_water_utility_wasreb_kenya
+title: "WASREB IMPACT Report 17 — Kenya water services sector, 95 regulated WSPs aggregate, FY2023/24: production, non-revenue water, tariff, revenue"
+
+meta:
+  source:
+    - "Water Services Regulatory Board (WASREB), 'A Performance Report of Kenya's Water Services Sector — IMPACT, Issue No.: 17-2025', Table 3.8 (p.62, O+M Parameters), and narrative tariff/NRW figures pp.57-60 ('Comparison against Average Tariff and unit costs'): https://wasreb.go.ke/wp-content/uploads/2025/06/IMPACT-REPORT-17.pdf"
+  accessed: "2026-08-12"
+  licence: "Kenyan public regulator (WASREB), publicly published PDF; no explicit reuse licence stated in the document."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, HARVESTED FOR SERVICES-AT-SCALE ───────────
+  # L2: Table 3.8 prints five lines (Total Operating Revenue, Total
+  # Subsidies and Grants, Total Other Incomes, Total Revenue, Total O+M
+  # Expenditures) directly in Ksh millions -- not a printed quantity x
+  # price pair. SECTOR AGGREGATE, not a single utility: WASREB's own
+  # per-utility raw data table (Table 3.1, p.35) did not extract cleanly
+  # from the PDF -- its custom/subsetted font encoding renders as glyph
+  # garbage under `pdftotext` (both `-layout` and raw modes), and I could
+  # not locate a single named utility's own production/billed/tariff row
+  # in readable text anywhere else in the 118-page document. What DID
+  # extract cleanly is the NATIONAL aggregate across all 95 regulated Water
+  # Service Providers -- itself a real, dated, single-country, single-
+  # regulator-published figure, just not a single enterprise. Recorded as
+  # a genuine extraction gap (a "TOOL-LIED"-shaped finding: the source's
+  # OWN table exists and is real, the extraction tool simply cannot read
+  # it), not a source gap.
+  resolution: L2
+  basis: "national sector aggregate, 95 regulated Water Service Providers, Kenya, fiscal year 2023/24"
+  periods: 1
+  mechanism: capacity_service
+  jurisdiction: KE
+  currency: KES
+
+inputs:
+  # ── the physics this gold was harvested to test: NON-REVENUE WATER ──────
+  # This IS the "capacity vs demand, with a published percentage and the
+  # revenue consequence" shape the harvest brief asked for, just without an
+  # absolute production volume in cubic metres (see meta note above: the
+  # one WASREB table that would have given absolute m3 did not extract).
+  # What DOES survive as clean absolute national figures is the PER-M3
+  # UNIT ECONOMICS -- and the source itself narrates the revenue
+  # consequence of the NRW percentage explicitly (see below), which is
+  # exactly the tested relationship, just expressed per cubic metre rather
+  # than as a total volume.
+  average_tariff_ksh_per_m3: {value: 105, unit: "KES/m3",
+    label_as_printed: "the average tariff rose by Ksh.10 to Ksh. 105",
+    prior_year_ksh_per_m3: 95}
+  unit_cost_of_production_ksh_per_m3: {value: 64, unit: "KES/m3",
+    label_as_printed: "the unit cost of production declined by Ksh. 3 to Ksh. 64",
+    prior_year_ksh_per_m3: 67}
+  unit_cost_of_water_billed_ksh_per_m3: {value: 114, unit: "KES/m3",
+    label_as_printed: "the unit cost of water billed increased by Ksh. 6.2 to Ksh. 114",
+    prior_year_ksh_per_m3: 107.8}
+  non_revenue_water_pct: {value: 44, unit: "%",
+    label_as_printed: "the sector recorded a decline in NRW performance, rising from 43% to 44%",
+    prior_year_pct: 43,
+    note: "national average across the 95 WSPs; the source separately reports a much wider spread by size category and by county (28% to 75%) that this gold does not check"}
+  revenue_consequence_of_full_tariff_recovery_ksh_per_m3: {value: 21, unit: "KES/m3",
+    label_as_printed: "To achieve full cost recovery, the average tariff would need to rise by Kshs 21/m3, from the current Ksh 105/m3 to Ksh 126/m3"}
+  revenue_consequence_of_nrw_reduction_ksh_per_m3: {value: 19, unit: "KES/m3",
+    label_as_printed: "reducing Non-Revenue Water (NRW) from the current average of 44% to 37%, thus saving Ksh 19/m3"}
+  om_cost_coverage_ratio_pct: {value: 98, unit: "%",
+    label_as_printed: "Operation and Maintenance (O+M) cost coverage rose from 95% in FY 2022/23 to 98% in FY 2023/24",
+    prior_year_pct: 95}
+
+  # Table 3.8, "O+M Parameters in Kshs" -- the ONE cost line this gold
+  # checks (the source prints no further itemisation of O+M expenditure by
+  # category in this table)
+  revenue: 28850   # "Total Revenue", Ksh millions
+  costs:
+    total_om_expenditure: 29507   # "Total O+M Expenditures", Ksh millions
+
+expected:
+  total_operating_revenue_ksh_m:
+    value: 28250
+    label_as_printed: "Total Operating Revenue (including Billing plus other services)"
+  total_subsidies_and_grants_ksh_m:
+    value: 2480
+    label_as_printed: "Total Subsidies and Grants for O+M"
+  total_other_incomes_ksh_m:
+    value: 599
+    label_as_printed: "Total Other Incomes"
+  total_revenue_ksh_m:
+    value: 28850
+    label_as_printed: "Total Revenue"
+    composition_as_printed: "Total Operating Revenue (28,250) + Total Other Incomes (599) = 28,849, printed 28,850 -- a 1-unit rounding gap, see notes"
+  total_om_expenditure_ksh_m:
+    value: 29507
+    label_as_printed: "Total O+M Expenditures"
+
+mapping:
+  total_revenue_ksh_m: revenue
+  total_om_expenditure_ksh_m: cost_of_sales
+
+# ONE MILLION KSH, deliberately loose relative to the other golds in this
+# harvest -- Table 3.8 prints in whole Ksh MILLIONS (i.e. its own display
+# rounding is +/-0.5 million = 500,000 KES), so anything inside a million
+# is that table's own rounding, not a real gap
+tolerance:
+  abs: 1.0
+  why: >
+    Table 3.8 is printed to the nearest Ksh million with no further
+    decimal precision shown anywhere in the source, so 1.0 (one million
+    Ksh) is exactly that table's own display rounding; the checked figures
+    (28,850 and 29,507) are both taken verbatim from the table with no
+    arithmetic of mine in between, so any gap beyond the printed rounding
+    would be real
+
+notes: |
+  SECTOR AGGREGATE, NOT A SINGLE UTILITY -- read this before comparing to the other four golds in
+  this harvest batch. WASREB's own Table 3.1 ("General Data on WSPs 2023/24", p.35) is exactly the
+  per-utility production/billed/tariff table this harvest was looking for, and it is a REAL table in
+  a REAL, currently-published regulator report -- but it did not survive extraction. Both
+  `pdftotext -layout` and raw-mode extraction render that specific table as glyph-garbage (a
+  distinctive block of stray apostrophes and control characters), which is the signature of a
+  subsetted/custom font encoding the extractor cannot map back to characters -- a known PDF failure
+  mode, not a formatting quirk of THIS table alone (Table 3.4a and 3.9, also large multi-column
+  tables in this same document, show the identical pattern). I searched the rest of the 118-page
+  document for a single named utility's production/billed/NRW/tariff figures stated in READABLE
+  prose (as several OTHER WASREB findings are, e.g. the OCCR ranking table, Table 3.7, which DID
+  extract cleanly) and found none. What DID survive as clean, absolute, single-country numbers is
+  the NATIONAL per-m3 unit-economics narrative (section "l) Comparison against Average Tariff and
+  unit costs", pp.59-60) and the compact 5-line national P&L in Table 3.8 (p.62) -- both used above.
+
+  This is recorded as a "the tool lied" finding (per this project's own TOOL-LIED register class):
+  the source's underlying table is real and would answer the harvest brief's "production, NRW%,
+  billed, tariff, revenue" ask more precisely than what I could extract; what failed is the
+  extraction pipeline (`pdftotext` against this specific PDF's font encoding), not the source. A
+  follow-up worth doing outside this harvest: re-extract Table 3.1 with a font-aware OCR pass (e.g.
+  rasterise the page and run Tesseract) rather than `pdftotext`'s text-layer reader.
+
+  SELF-CONSISTENCY, checked by hand:
+    - Total Revenue (28,850) = Total Operating Revenue (28,250) + Total Other Incomes (599) =
+      28,849 exactly by my own addition -- a 1-unit (Ksh 1 million) gap against the printed 28,850,
+      inside this table's own whole-million rounding (see tolerance above), so not flagged as a
+      finding on its own.
+    - Total Revenue (28,850) vs Total O+M Expenditures (29,507): 28,850/29,507 = 97.77%, which
+      rounds to 98% -- matching EXACTLY the source's own separately-narrated O+M Cost Coverage
+      Ratio ("rose... to 98% in FY 2023/24"), independently corroborating that these are the correct
+      revenue/cost pair the OCCR is computed from, even though the source never prints the
+      resulting surplus/deficit (28,850 - 29,507 = -657 Ksh million) as its own labelled line. That
+      deficit figure is NOT included in `expected` above for exactly this reason -- it is MY
+      arithmetic, not the source's -- but `gross_margin`, which the engine computes from the SAME
+      two mapped figures, reproduces it as a byproduct of the revenue/cost_of_sales check.
+    - The two "revenue consequence" figures (Ksh 21/m3 from a tariff rise fully closing the O+M
+      gap; Ksh 19/m3 from an NRW cut from 44% to 37% closing MOST but not all of the same gap) are
+      themselves internally consistent with each other in direction (a 7-point NRW cut is worth
+      slightly less than the full tariff rise needed), though the source does not give enough
+      detail to re-derive the Ksh19 figure exactly from first principles (it would need the
+      absolute production volume Table 3.1 was meant to supply).
+
+  Kenya-specific institutional detail, for context: WASREB regulates 95 public and private Water
+  Service Providers; the sector-wide NRW benchmark WASREB itself targets is 25% (current national
+  average 44%, more than double target); county-level NRW in FY2023/24 ranged from 28% (Nyeri) to
+  75% (Marsabit) per the source's own separate breakdown (not itemised in `expected` above since it
+  is a range across counties, not a single checkable number).

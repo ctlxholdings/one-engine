@@ -1,0 +1,116 @@
+id: tax_fonoa_vat_output_input_credit
+title: "Fonoa — output VAT less input VAT nets to the amount payable to the tax authority"
+
+meta:
+  source:
+    - "Fonoa, 'Input VAT vs Output VAT: What's the Difference and How to Calculate Your VAT Liability': https://www.fonoa.com/resources/blog/input-vat-vs-output-vat (fetched 2026-08-12)."
+  licence: "Publicly published vendor educational blog post (Fonoa is a VAT-compliance software company); no explicit reuse licence stated. NOT an official tax-authority publication — flagged at the tier it is: a practitioner/vendor illustration, the same tier this repo already uses for CLEISS's social-charge figures."
+  kind: tax_case
+  resolution: L2
+  basis: "one sale and one purchase, both standard-rated, single period"
+  periods: 1
+  mechanism: "n/a — a VAT-mechanics illustration, not a business trade"
+  jurisdiction: "XX"   # EU-style VAT illustration; the source names no specific country
+  currency: EUR
+
+inputs:
+  sale_net: 100
+  purchase_net: 80
+  vat_rate: 0.20
+
+expected:
+  output_vat:
+    value: 20
+    composition_as_printed: "100 x 20% — VAT charged to the customer, owed to the tax authority"
+  input_vat:
+    value: 16
+    composition_as_printed: "80 x 20% — VAT paid to the supplier, recoverable from the tax authority"
+  net_vat_payable:
+    value: 4
+    label_as_printed: "VAT payable to the government"
+    composition_as_printed: "output VAT (20) - input VAT (16)"
+
+mapping: {}
+# no entry: engine/golds.py's CANON has no VAT/net-tax concept — see
+# TAX_INVENTORY.md.
+
+tolerance:
+  abs: 0
+  why: >
+    a clean illustrative example built from round numbers — any gap would be
+    a transcription error, not source rounding.
+
+notes: |
+  GRAMMAR FINDING (engine/ledger/compile.py, trade.py, kernel.py — empirically
+  probed against the live engine; template not committed anywhere in the
+  repo). THIS IS THE SHAPE THE TASK BRIEF PREDICTED WOULD REFUSE, and the
+  prediction is right in substance, though the REFUSAL is not where naive
+  reading would place it.
+
+  There is NO NATIVE VERB for "net two flows against each other." The five
+  verbs (SCHEDULE/SIZE/RECOGNIZE/SETTLE/RELEASE) all operate on an exchange
+  with exactly ONE `from` and ONE `to` end; SETTLE defers the cash leg of a
+  SINGLE exchange over time (a collection schedule), which is a different
+  question from netting TWO INDEPENDENT stocks against each other.
+
+  Empirically, a hand-rolled construction DOES compute the right answer:
+  declare `output_vat_payable` (liability) and `input_vat_receivable` (asset)
+  as two ordinary resources, accrue each ordinarily on the sale/purchase, then
+  write a NETTING exchange
+  `from: input_vat_receivable, to: output_vat_payable, size: min(close('output_vat_payable'), close('input_vat_receivable'))`
+  followed by a REMAINDER exchange
+  `from: cash, to: output_vat_payable, size: max(close('output_vat_payable') - close('input_vat_receivable'), 0)`.
+  Run against this gold's own numbers (output 20, input 16), this produced
+  EXACTLY the right result: both accounts closed to zero and cash fell by
+  exactly 4 — the correct net payable, to the cent.
+
+  WHAT IS MISSING, precisely, is not the arithmetic but the STRUCTURAL
+  GUARANTEE every other verb in this grammar carries:
+    - RELEASE is bounded and checked: a fraction outside [0,1] is a refusal
+      ("an oversell is a refusal, not a negative stock" — compile.py).
+    - SETTLE is validated: shares must sum to 1, exactly one monetary end is
+      required (IAS 21), enforced by trade.py/compile.py before anything
+      runs.
+    - This hand-rolled NET has NONE of that. Nothing requires the two
+      accrual exchanges and the two netting/remainder exchanges to be
+      consistent with each other; nothing stops a modeller from accruing
+      output_vat_payable and input_vat_receivable and simply NEVER writing
+      the netting pair, leaving two gross balances sitting on the balance
+      sheet forever un-netted (silently wrong, and nothing in `trade.contract()`
+      would flag it, because two ordinary, individually well-typed resources
+      and exchanges is all the grammar sees). The `min`/`max` composition
+      also inherits the SAME `max(0, X)`-vs-`max(X, 0)` argument-order
+      mistyping already flagged in tax_cameroon_igs_bands_2026.yaml's notes:
+      the remainder exchange above types as UNKNOWN with the literal written
+      first, and only types correctly with the literal written second — a
+      trap for exactly this construction.
+  WHAT WOULD CLOSE THIS: a first-class OFFSET/NET primitive — an exchange
+  shape that names TWO stocks and posts the min of their balances against
+  each other atomically, checked the way SETTLE's monetary-end rule is
+  checked — plus, more fundamentally, a way to declare that a SINGLE gross
+  cash flow (a sale invoice, a purchase invoice) splits AUTOMATICALLY into a
+  net-of-tax value and a tax component, rather than requiring the modeller to
+  write the split as two independently-sized exchanges with no structural
+  link between them (nothing today enforces that a sale's net-of-VAT leg and
+  its VAT-collection leg were derived from the SAME gross invoice at the SAME
+  rate).
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:`
+  block, and it SHOULD — even though, alone among the five tax golds in this
+  batch, it does carry a purchase figure. What Fonoa publishes is a
+  three-line VAT arithmetic: one standard-rated sale with a net of 100, one
+  standard-rated purchase with a net of 80, a 20% rate, and the three
+  answers — output VAT 20, input VAT 16, and 4 payable to the tax
+  authority. Nothing else. No period, no entity, no other purchases, no
+  operating costs, no cost total, no margin, no result.
+  The 80 is a VAT BASE, not a cost line. It exists in the illustration for
+  exactly one reason: to be multiplied by 20% to produce the 16 of
+  recoverable input VAT. Declaring `costs: {purchase: 80}` would promote an
+  input-tax base into a cost of sales, and would then have nothing
+  legitimate to bind: all three figures in `expected` (20, 16, 4) are VAT
+  amounts, so the only field available for `cost_of_sales` would be one I
+  invented by re-reading `inputs.purchase_net`, which is the gold checking
+  the engine against my own arithmetic rather than the source's. A
+  one-purchase VAT example is not a business with a cost structure, and the
+  gap this gold actually records — that there is no verb for netting two
+  stocks — is unaffected by whether the file runs. Unrunnable is correct.

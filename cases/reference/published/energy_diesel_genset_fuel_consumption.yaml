@@ -1,0 +1,146 @@
+id: energy_diesel_genset_fuel_consumption
+title: "Diesel generator fuel-consumption chart — a hard Leontief coefficient (litres per kWh) and its cost-per-kWh worked example"
+
+meta:
+  source:
+    - "ASO Genset, 'Diesel Generator Fuel Consumption Chart — Real-World Examples' (2026 edition): https://asogenset.com/diesel-generator-fuel-consumption-chart-real-world-examples/ — the chart itself is stated to be built on ISO 3046-1:2002 and manufacturer datasheets (Cummins, Caterpillar, Perkins, Volvo Penta, Mitsubishi), with a declared field variance of +/-10% for engine family, fuel grade, ambient temperature, altitude, generator age and load profile."
+  licence: "Publicly published web page; no explicit reuse licence stated. Compiled technical/commercial reference, NOT a primary OEM datasheet or standards body publication — flagged explicitly, see notes."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────
+  # This is a UNIT-PHYSICS gold: one row of a published fuel-consumption
+  # table, plus the source's own worked cost example built on the SAME
+  # row. The table's other rows (10-2000 kVA x 4 load points) are the
+  # material for the full-grammar template's `recipes.consumes`
+  # coefficient; this file transcribes the ONE row and ONE worked example
+  # a basic gold can check without inventing a scenario the source itself
+  # never worked through.
+  resolution: L3   # quantity (kW delivered) x price (diesel $/L via a
+  #                   stated L/hr burn rate) — the source's own worked
+  #                   example, not a restated total
+  basis: "500 kVA (400 kW) diesel generator running at 75% load, one hour"
+  periods: 1
+  # MECHANISM — create x physical (Manufacturer): a genset converts a
+  # purchased input (diesel) into a new physical good (electricity) via a
+  # metered Leontief recipe, and ownership of the electricity transfers
+  # to whoever the generator feeds. Of the three create x physical
+  # transformation kinds this is the CLEANEST fit of all four energy
+  # golds in this harvest: `assemble` names exactly "a recipe does the
+  # work" (mechanisms.py), and litres-of-diesel-per-kWh-of-output is a
+  # textbook Leontief a[i][r] coefficient — no ambiguity the way solar's
+  # empty-BOM case has (see energy_irena_solar_pv_2023.yaml's mechanism
+  # note) or hydro's borderline extract-vs-assemble case (see
+  # energy_irena_hydropower_2023.yaml's).
+  mechanism: make_to_order
+  jurisdiction: ASK_country   # the chart is a generic technical
+  #   reference (ISO standard + five global OEMs' datasheets), not tied
+  #   to one country; the diesel PRICE in the worked example ($1.50/L) is
+  #   the SOURCE's own illustrative figure, not a quoted market price for
+  #   any named place — an honest hole, not a guess
+  currency: USD
+
+inputs:
+  generator_rating:
+    kva: 500
+    kw: 400
+    power_factor_assumed: 0.8
+    source: "table row '500 kVA / 400 kW', ISO 3046-1:2002 + OEM datasheets"
+  load_point:
+    value: 0.75
+    unit: fraction
+    label_as_printed: "75% load"
+  fuel_burn_rate:
+    value: 76.0
+    unit: "L/hr"
+    label_as_printed: "76 L/hr at 75% load, 500 kVA row"
+    # the same row's other three load points, for the template:
+    #   25% load: 30.0 L/hr · 50% load: 52.0 L/hr · 100% load: 100.0 L/hr
+  diesel_price:
+    value: 1.50
+    unit: "USD/L"
+    label_as_printed: "the article's own illustrative diesel price for its worked example"
+  power_delivered:
+    value: 300
+    unit: kW
+    composition_as_printed: "400 kW rated x 75% load = 300 kW delivered"
+  baseline_full_load_rate:
+    value: 0.25
+    unit: "L/kWh"
+    label_as_printed: "0.25 L/kWh at full load — the article's stated baseline assumption, which the 500 kVA row's own 100%-load point corroborates exactly: 100.0 L/hr / 400 kW = 0.25 L/kWh"
+  field_variance:
+    value: 0.10
+    unit: fraction
+    label_as_printed: "+/-10%, depending on engine family, fuel grade, ambient temperature, altitude, generator age and load profile"
+  # the ONE cost line this gold needs to be RUNNABLE (engine/golds.py's
+  # `to_template` requires a non-empty `costs:` regardless of
+  # resolution level). A pure composition of two already-provenanced
+  # numbers above (76 x 1.50) — the trade contract's own rule that "a
+  # pure composition is derived and needs no [additional] mark" applies
+  # here exactly as it does inside a full-grammar template.
+  costs:
+    fuel_one_hour_at_75pct_load: 114.00   # 76 L/hr x $1.50/L
+
+expected:
+  fuel_cost_per_kwh_usd:
+    value: 0.38
+    label_as_printed: "$0.38/kWh"
+    composition_as_printed: "(76 L/hr x $1.50/L) / 300 kW = $0.38/kWh"
+  specific_consumption_at_75pct_l_per_kwh:
+    value: 0.2533
+    composition_as_printed: "76 L/hr / 300 kW = 0.2533 L/kWh (derived from the source's own two numbers, not separately printed by the source as a rate)"
+  typical_range_usd_per_kwh:
+    lo: 0.30
+    hi: 0.50
+    label_as_printed: "$0.30-$0.50/kWh, fuel alone, typical diesel generation cost"
+  total_fuel_cost_one_hour_usd:
+    value: 114.00
+    composition_as_printed: "76 L/hr x $1.50/L = $114.00 — the SAME product `fuel_cost_per_kwh_usd` above divides by 300 kW; printed here as a lump sum specifically so the engine has a `cost_of_sales`-shaped figure to check, per RULE 1 (never invent a coefficient — this is the source's own two numbers, multiplied, nothing added)"
+
+# the one CANON concept that DOES apply: this gold's single cost line,
+# run cost-side-only (no revenue published, per engine/golds.py's
+# `_find_revenue` — the same "cost side only" state the FAO broiler
+# gold reports), is exactly `cost_of_sales` for that one hour. Every
+# OTHER figure above (the per-kWh rate, the specific consumption, the
+# typical range) has no CANON equivalent and is held for the template.
+mapping:
+  total_fuel_cost_one_hour_usd: cost_of_sales
+
+tolerance:
+  abs: 0.005
+  why: >
+    the source's own arithmetic is exact to the cent (76 x 1.50 = 114.00;
+    114.00 / 300 = 0.38 exactly), so half a cent is display rounding and
+    a wider gap would be a re-derivation slip on my part, not theirs
+
+notes: |
+  RE-DERIVED BY HAND, exact: 76 L/hr x $1.50/L = $114.00/hr; $114.00/hr / 300 kW = $0.38000/kWh.
+  No rounding gap at all — the cleanest arithmetic chain of any gold in this energy batch.
+
+  CROSS-CHECK against the baseline: the article states "0.25 L/kWh at full load" as its own
+  headline assumption; the SAME table row's 100%-load point (100.0 L/hr at 400 kW) reproduces it
+  exactly (100.0/400 = 0.25), so the baseline sentence and the table are self-consistent — no
+  BFAP-style internal gap here. At 75% load the SPECIFIC consumption rises slightly to 0.2533
+  L/kWh (76/300), i.e. partial load is ~1.3% less fuel-efficient per kWh than full load on this
+  row — small, and the direction (partial-load derating) is the correct physical sign for a
+  diesel engine, whose best specific fuel consumption sits near rated load.
+
+  SOURCE-QUALITY FLAG, stated plainly per the task's instruction never to dress up a source's
+  standing: ASO Genset is a commercial technical-content site (a generator vendor's blog), not a
+  primary OEM datasheet or a standards body. It is USED here because (a) it explicitly cites its
+  basis (ISO 3046-1:2002 + five named OEM lines) rather than asserting a bare number, (b) its own
+  internal arithmetic is exact and self-consistent (checked above), and (c) an independent
+  cross-check against a DIFFERENT compiled source (a search-engine synthesis citing "modern diesel
+  engines: 0.21-0.26 L/kWh, from a specific fuel oil consumption of 200-215 g/kWh at ~0.84 kg/L
+  density") lands in the SAME band as this table's 0.2533 L/kWh at 75% load and 0.25 L/kWh at full
+  load — independent corroboration of the right order of magnitude from an unrelated compilation,
+  though neither is a single citable primary document with a table I can point to as "the"
+  authoritative genset fuel-consumption reference. A primary OEM spec sheet (e.g. a named Cummins
+  or Caterpillar model's published datasheet) would be a stronger single source and was searched
+  for but not located inside this harvest's time budget; recorded as an open improvement rather
+  than silently upgraded past what was actually found.
+
+  WHY THIS IS THE CLEANEST MECHANISM FIT of the four technologies in this harvest: see
+  meta.mechanism above. The Leontief BOM (`recipes.consumes` in the trade-ledger grammar,
+  `production.consumes` in the older physical-layer schema) exists PRECISELY for a coefficient
+  like this one — a priced input consumed in a fixed ratio per unit of physical output — unlike
+  solar (no priced input at all) or hydro (an unpriced, non-depleting-in-the-relevant-sense
+  natural flow).

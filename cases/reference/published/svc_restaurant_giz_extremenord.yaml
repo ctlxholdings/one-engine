@@ -1,0 +1,181 @@
+id: svc_restaurant_giz_extremenord
+title: "GIZ/PARSE Extreme-Nord AGR study — small restaurant (boules, bouillie, petit-déjeuner), 330 days/yr, three-year business plan, Cameroon"
+
+meta:
+  source:
+    - "GIZ / PARSE (EUTF Sahel Cameroon), 'Étude sur la Catégorisation des AGR dans le Domaine Agricole et Petits Métiers — Région de l'Extrême-Nord', pp.35-36, Tableaux 36-38: https://trust-fund-for-africa.europa.eu/document/download/e7b1bb60-6fa6-4042-b44a-d8b6ca0df2b8_en?filename=ETUDE%20AGR%20DANS%20LE%20DOMAINE%20AGRICOLE%20ET%20PETITS%20METIERS%20%28REGION%20EXTR%C3%8AME-NORD%29"
+    - "Already catalogued in this repo: docs/atlas/registry.yaml, isic_class '5610' entry 'Restauration / restaurant (2400 boules/mois, 1200 bouillies, 600 petits déj)' (this file is a standalone transcription for the golds harvest, independently re-fetched and re-verified page-by-page against the primary PDF; I did not edit registry.yaml)"
+  licence: "GIZ/BMZ development-cooperation study, publicly downloadable from the EU Trust Fund for Africa document library; no explicit reuse licence stated in the document."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, HARVESTED FOR SERVICES-AT-SCALE ───────────
+  # L2: Tableau 36's cost lines are already itemised money (unit x quantity
+  # x unit cost columns are the source's OWN working, not a single printed
+  # quantity/price pair this gold multiplies) -- 15 lines total (14 named +
+  # a rent/electricity split), verified to sum EXACTLY to both of the
+  # source's own printed subtotals (TOTAL 1 = 507,000; TOTAL 2 = 7,849,500),
+  # a clean corpus entry unlike several siblings in this same source family
+  # (see docs/atlas/registry.yaml's flagged 'cirage'/'onion' arithmetic
+  # errors elsewhere in the GIZ/PARSE study series -- this trade has none).
+  # `periods: 1`, YEAR 3 of the printed 3-year business plan (Tableau 38):
+  # by year 3 the 507,000 FCFA startup fixed-asset cost is FULLY deducted
+  # (250,000 in year 1 + 257,000 in year 2 = 507,000 exactly), so year 3 is
+  # the steady-state annual figure with no further depreciation-style
+  # deduction -- the cleanest single period to check, and the one this
+  # gold's companion full-grammar template (templates/svc_restaurant.yaml)
+  # models on a 12-month grid.
+  resolution: L2
+  basis: "per year, one restaurant, Year 3 of the printed business plan (steady state, startup cost fully deducted)"
+  periods: 1
+  mechanism: capacity_service
+  jurisdiction: CM
+  currency: XAF
+
+inputs:
+  # ── CAPACITY vs DEMAND: the source states ONE number that serves as BOTH.
+  # "Le restaurant pourra offrir mensuellement 2400 plats, 1200 bols de
+  # bouillies et 600 petits déjeunés" ("the restaurant WILL BE ABLE TO
+  # OFFER 2,400 meals, 1,200 bowls of porridge and 600 breakfasts a month")
+  # -- a stated PRODUCTION CAPABILITY, in the source's own words -- and the
+  # SAME figures are then sold at 100% (Tableau 37's revenue is built from
+  # these exact monthly quantities, with no lower actual-sold figure given
+  # anywhere). RULE: never invent a utilisation rate below what is
+  # published, so this gold and its template take capacity = demand =
+  # these figures, exactly as the source gives them -- a genuine "binds at
+  # 100%, no slack" case, not an invented one.
+  capacity_and_demand_boules_per_month: {value: 2400, unit: "meals/month",
+    label_as_printed: "Le restaurant pourra offrir mensuellement 2400 plats"}
+  capacity_and_demand_bouillie_per_month: {value: 1200, unit: "bowls/month",
+    label_as_printed: "1200 bols de bouillies"}
+  capacity_and_demand_petit_dejeuner_per_month: {value: 600, unit: "breakfasts/month",
+    label_as_printed: "600 petits déjeunés"}
+  jours_travail_par_an: {value: 330, unit: "days/yr",
+    label_as_printed: "330 qui sont le nombre annuel de jours probables de travail"}
+  servantes_person_months_per_year: {value: 24, unit: "person-months/yr",
+    label_as_printed: "Salaire servantes: mois=24", note: "2 servantes x 12 months"}
+
+  # DOCUMENTATION ONLY at this resolution (`to_template`'s L2 path does not
+  # read `sale:` -- only L3 does; kept here because the source DOES publish
+  # both a quantity and a price, and the full-grammar sibling template
+  # (templates/svc_restaurant.yaml) uses this exact composition). Revenue
+  # is quantity x price: 50,400 meals/yr = (2400+1200+600) x 12 months, the
+  # annual total of the three product lines; price is the BLENDED average
+  # (14,400,000 / 50,400) since the three products have different unit
+  # prices (300/100/600 FCFA respectively per Tableau 37) and the source
+  # itself reports only the COMBINED annual total in the business-plan
+  # section this gold checks (Tableau 38), never split back out by product.
+  sale: {quantity: 50400, unit: meal, price: 285.7142857142857}
+
+  # Year-3 recurring costs -- IDENTICAL to years 1 and 2 (only the
+  # depreciation-style deduction line changes across years; see notes)
+  costs:
+    charges_annuelles_recurrentes: 7849500
+    impot_liberatoire: 12000
+
+expected:
+  production_annuelle_brute_fcfa:
+    value: 14400000
+    label_as_printed: "revenus brut généré... 14 400 000 F CFA"
+    composition_as_printed: "boules 8,640,000 + bouillie 1,440,000 + petit déjeuner 4,320,000 (Tableau 37)"
+  charges_fixes_installation_fcfa:
+    value: 507000
+    label_as_printed: "TOTAL 1 (Tableau 36, INSTALLATION EN ATELIER)"
+    composition_as_printed: "sum of the 14 installation/equipment lines -- verified exact by hand"
+  charges_recurrentes_fcfa:
+    value: 7849500
+    label_as_printed: "TOTAL 2 (Tableau 36, CHARGES RECURRENTES)"
+    composition_as_printed: "salaire servantes 360,000 + transport 99,000 + légumes/condiments 330,000 + huile 363,000 + viande 2,737,500 + riz 3,600,000 + location 300,000 + électricité 60,000 -- verified exact by hand"
+  cout_total_fcfa:
+    value: 8356500
+    label_as_printed: "TOTAL (TOTAL 1+TOTAL 2)"
+    composition_as_printed: "507,000 + 7,849,500"
+  impot_liberatoire_fcfa:
+    value: 12000
+    label_as_printed: "Impôt libératoire (Tableau 38)"
+  # Tableau 38, the 3-year business plan -- all three years transcribed for
+  # completeness (mapping/tolerance check Year 3 only, see meta.basis)
+  net_annee_1_fcfa:
+    value: 6288500
+    label_as_printed: "TOTAL, Année 1 (Tableau 38)"
+    composition_as_printed: "14,400,000 - 12,000 - 250,000 (déduction partielle) - 7,849,500"
+  net_annee_2_fcfa:
+    value: 6281500
+    label_as_printed: "TOTAL, Année 2 (Tableau 38)"
+    composition_as_printed: "14,400,000 - 12,000 - 257,000 (déduction partielle) - 7,849,500"
+  net_annee_3_fcfa:
+    value: 6538500
+    label_as_printed: "TOTAL, Année 3 (Tableau 38)"
+    composition_as_printed: "14,400,000 - 12,000 - 0 (déduction partielle) - 7,849,500"
+
+mapping:
+  production_annuelle_brute_fcfa: revenue
+  net_annee_3_fcfa: gross_margin
+
+# HALF A FRANC, deliberately tight. Every figure in Tableaux 36-38 is
+# printed as a whole FCFA and every subtotal this gold checks reconciles
+# EXACTLY by hand (unlike several sibling entries in this same GIZ/PARSE
+# study series, which the registry already flags for genuine arithmetic
+# errors elsewhere) -- so any gap at all here is real, not display rounding
+tolerance:
+  abs: 0.5
+  why: >
+    every figure is printed as a whole FCFA and this specific trade's
+    tables reconcile exactly (installation lines sum to 507,000 exactly;
+    recurring lines sum to 7,849,500 exactly; 14,400,000 - 12,000 -
+    7,849,500 = 6,538,500 exactly) -- a real gap must surface as a
+    divergence rather than be absorbed
+
+notes: |
+  Re-derived every subtotal in Tableaux 36-38 by hand against the primary PDF (re-fetched directly).
+  Unlike several sibling entries in this GIZ/PARSE study series (the registry already flags a
+  cirage/shoe-polish line and an onion CEP with genuine printed arithmetic errors elsewhere in the
+  same document family), THIS trade's own tables are internally clean:
+
+    - TOTAL 1 (installation): the 14 printed lines (formation 50,000 + foyer amélioré 24,000 +
+      marmites 80,000 + termos 80,000 + plateaux 30,000 + assiettes 16,000 + gobelet 12,000 +
+      cuillère 4,000 + fourchette 4,000 + jarre 9,000 + bouilloir 18,000 + nattes 48,000 +
+      tables 20,000 + bancs 32,000 + abonnement électricité 80,000) sum to 507,000 exactly,
+      matching the printed "TOTAL 1" with zero gap.
+
+    - TOTAL 2 (recurring): the 8 printed lines (salaire servantes 360,000 + transport 99,000 +
+      légumes/condiments 330,000 + huile 363,000 + viande 2,737,500 + riz 3,600,000 + location
+      300,000 + électricité 60,000) sum to 7,849,500 exactly, matching the printed "TOTAL 2" with
+      zero gap. Note the source labels this line "viage" in the printed table -- read as "viande"
+      (meat), a plain typo (the accompanying unit "kg" and quantity "1825" make the intent
+      unambiguous, and 1825 kg/yr x 1,500 FCFA/kg = 2,737,500 exactly).
+
+    - Tableau 37's production/revenue table: boules 2400/month x 300 FCFA = 720,000/month x 12 =
+      8,640,000/yr; bouillie 1200 x 100 = 120,000/month x 12 = 1,440,000/yr; petit déjeuner 600 x
+      600 = 360,000/month x 12 = 4,320,000/yr. Sum = 14,400,000/yr exactly, matching the printed
+      total with zero gap. (The table's own column header for the per-unit price reads "Main
+      d'oeuvre" ("labour"), which is very likely a mislabelled column -- the values behave exactly
+      as a per-unit PRICE, not a labour cost, since quantity x this figure = the printed monthly
+      revenue for each product line; flagged here as a probable header error in the source, not
+      corrected in the transcription above since the underlying number is unambiguous.)
+
+    - Tableau 38's 3-year business plan: all three years' TOTAL lines reconcile exactly from
+      revenue (14,400,000, constant across all 3 years) less impôt libératoire (12,000, constant)
+      less "déduction partielle de charge fixe" (250,000 / 257,000 / 0 across years 1/2/3 -- these
+      two numbers sum to 507,000 exactly, i.e. TOTAL 1's installation cost fully depreciated over
+      the two years, an uneven split with no stated reason) less charges annuelles récurrentes
+      (7,849,500, constant across all 3 years). No error anywhere in this specific business plan.
+
+  MAPPING NOTE: `cost_of_sales` is deliberately left UNMAPPED. `inputs.costs` sums to 7,861,500
+  (charges_annuelles_recurrentes 7,849,500 + impot_liberatoire 12,000), which is a real number but
+  not one the source prints as a single labelled line anywhere (the closest printed totals are
+  7,849,500 alone, TOTAL 2, or 8,356,500, TOTAL 1+TOTAL 2, which also carries the installation cost
+  this Year-3 steady-state view deliberately excludes) -- mapping it to a figure that is not
+  actually what was printed would be checking my own arithmetic against itself, not the source.
+  `gross_margin` carries the real end-to-end check instead: it is produced from the SAME
+  `inputs.costs` total, and IS compared against a figure the source prints exactly (Tableau 38's
+  Year-3 TOTAL, 6,538,500) -- so an error in the cost total would still surface as a divergence
+  there.
+
+  CAPACITY VS DEMAND: this is the one gold in this harvest batch where the source states a
+  production CAPABILITY ("pourra offrir", "will be able to offer") that is then also the realised
+  sales figure -- capacity and demand coincide by the source's own construction, with zero
+  published slack. This is a genuine property of what GIZ published, not a simplification on my
+  part: there is no lower "actual sold" figure anywhere in the source to test a short side against.
+
+  Transferability: GIZ's own transferability note on this source series applies -- structurally
+  generic (labour + food-cost recipe + fixed installation cost), but riz/viande/huile input mix and
+  FCFA price level are specific to Extrême-Nord Cameroon, 2017.

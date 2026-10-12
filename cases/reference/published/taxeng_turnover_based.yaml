@@ -1,0 +1,80 @@
+id: taxeng_turnover_based
+title: "OLD tax engine self-test — a presumptive turnover tax, due whether or not the period made a profit"
+
+meta:
+  source:
+    - "This repository's OWN old tax engine — engine/layers/tax/run.py (521 lines), `BASE_ROW` dispatch (line 33) and the base-selection branch in `run()` (lines 344-355), which reads the `turnover` row instead of `profit_before_allowances` for this tax."
+    - "engine/tests/test_tax.py, class TestBases, test_turnover_base_is_not_profit (lines 31-36) — the worked assertion this gold transcribes verbatim. Docstring: 'attieke / attieke_biogaz: a presumptive turnover tax is due on a LOSS-making period.' (attieke is an Ivorian cassava-semolina staple; the mechanism named for it in the wider corpus is a real WAEMU-shaped presumptive-tax pattern — this specific test's numbers are the test author's own illustrative fixture, not a cited rate table)."
+  licence: "Internal — this repository's own code and test suite, not an external publication. No third-party licence applies."
+  kind: engine_oracle
+  self_graded: true   # see taxeng_flat_profit.yaml for the full caveat this repeats
+  resolution: L4       # physics — a flat rate on a DIFFERENT base row, the base-selection mechanism itself
+  basis: "per period, 2 periods, annual grid — turnover constant, profit swings from a loss to a gain, to isolate that the tax tracks turnover only"
+  periods: 2
+  mechanism: "not applicable — a fiscal overlay, not a trade mechanism (see taxeng_flat_profit.yaml)"
+  jurisdiction: "none as tested — synthetic fixture. 'attieke' in the source docstring names the WAEMU-shaped mechanism this test guards, not a specific transcribed statute; the 4% rate here is the test's own illustrative number."
+  currency: "unspecified in the source — abstract currency units"
+
+inputs:
+  tax_declaration:
+    grid: {periods: 2}
+    bases:
+      profit_before_allowances: [-50.0, 100.0]   # a LOSS in period 0, a gain in period 1
+      turnover: [1000.0, 1000.0]                  # turnover unchanged across both
+    taxes:
+      - id: tee
+        base: turnover
+        rate: {kind: flat, value: 0.04}
+
+expected:
+  cash_tax:
+    value: [40.0, 40.0]
+    engine_field: "out['cash_tax']"
+    composition: >
+      0.04 x 1000 = 40, IN BOTH PERIODS, including t=0 where the firm made a 50 LOSS on a profit
+      basis. The tax base never reads profit_before_allowances at all — it is dispatched straight
+      to the `turnover` row (run.py's `BASE_ROW = {'turnover': 'turnover', ...}`). This is the
+      entire point of the shape: a presumptive/minimum tax is a claim on ACTIVITY, not on the
+      residual the activity happened to leave — so a period that lost money still owes it.
+  taxes_tee_base_amount:
+    value: [1000.0, 1000.0]
+    engine_field: "out['taxes']['tee']['base_amount']"
+    composition: "the turnover row, unmodified — no allowances/losses/adjustments apply to a non-profit base (engine/tests/test_tax_adjustments.py::TestOnlyMeaningfulOnProfitBase confirms add_back/deduct are REFUSED outright on a turnover base, precisely because there is no book-tax difference to adjust on a quantity that is not a profit)"
+
+mapping:
+  cash_tax: tax_cash_paid_this_period
+  taxes_tee_base_amount: taxable_base
+
+tolerance:
+  abs: 1.0e-9
+  why: >
+    Exact deterministic floating-point arithmetic, re-run directly from the cited test (see notes
+    for the exact reproduction command). No display rounding to forgive.
+
+notes: |
+  Reproduce with:
+    python3 -c "from engine.layers.tax.run import run; \
+    print(run({'grid': {'periods': 2}, \
+               'bases': {'profit_before_allowances': [-50.0, 100.0], 'turnover': [1000.0, 1000.0]}, \
+               'taxes': [{'id': 'tee', 'base': 'turnover', 'rate': {'kind': 'flat', 'value': 0.04}}]}) \
+               ['cash_tax'])"
+  -> [40.0, 40.0], matching `expected.cash_tax` exactly (run myself, not copied blind from the
+  test file).
+
+  WHY THIS IS EXPECTED TO BE THE EASY SHAPE OF THE FIVE: unlike taxeng_flat_profit.yaml, this tax
+  never needs to know "profit" at all — its base is `turnover`, a quantity a trade template
+  already computes as an ordinary driver (a price x quantity expression feeding the revenue
+  exchange), not a residual assembled from many exchanges. TAXENG_VERDICT.md confirms this
+  directly against cases/external/templates/cattle.yaml, whose `impot_accrual` exchange
+  (`size: "0.03 * turnover"`, where `turnover` is a plain driver expression also read by the
+  `sell_lot` revenue exchange) is ALREADY this exact mechanism, live, in the new core, today — so
+  this gold's role is to CONFIRM an existing proof, not to test an open question.
+
+  A related, harder mechanism the old engine also has and this gold deliberately does NOT cover:
+  a turnover tax used as a MINIMUM-TAX FLOOR against a profit tax (`combine: "max(cit, imf)"`,
+  exercised in engine/layers/tax/example.yaml and engine/tests/test_tax.py::
+  TestFloorsCapsAndCombination.test_minimum_tax_floor_binds_at_low_margin). That composes THIS
+  shape with taxeng_flat_profit.yaml's shape through a nonlinear `combine:`, which is a sixth,
+  genuinely distinct mechanism (comparing two already-computed tax liabilities against each
+  other) — real, and outside this batch's five-shape budget. Flagged in TAXENG_VERDICT.md's
+  closing section rather than silently dropped.

@@ -1,0 +1,106 @@
+id: fao_ruralinvest_broiler_poultry
+title: "FAO RuralInvest Module 2 worked example — community broilers, 3 sheds x 1000 birds, 4 cycles/year (illustrative)"
+
+meta:
+  source:
+    - "FAO RuralInvest, 'Module 2 - Preparing and Using Project Profiles', p.26 (in-body cost table): https://www.fao.org/4/a1420e/a1420e00.pdf"
+    - "Already catalogued in this repo: docs/atlas/registry.yaml, isic_class '0146' entry 'Community broilers - 3 sheds x 1000 birds, 4 cycles/year' (this file is a standalone transcription for the golds harvest; I did not edit registry.yaml)"
+  licence: "FAO publicly published PDF; no explicit reuse licence stated in the document itself or in registry.yaml's source block."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L2: the four cost lines are already itemised money ("0.30/chick x 1050
+  # chicks" etc. are the SOURCE's composition notes, not a printed
+  # quantity/price pair this gold multiplies). `periods: 4` (= cycles_per_
+  # year) so the SAME per-cycle cost lines fold four times, reproducing the
+  # ANNUAL total the source itself prints and names — the target this gold
+  # exists to check (see notes: the source's own 4x product is a digit
+  # transposition, 10,780 true vs. 10,708 printed). No revenue is published
+  # — this is a cost-only budget, which `to_template` handles directly.
+  resolution: L2
+  basis: 1 poultry shed of 1000 birds, per year (4 cycles of 3 months each)
+  periods: 4
+  jurisdiction: null   # source self-flags as an illustrative pedagogical composite, no geography given
+  currency: "local$"   # source's own unit ("local$/cycle") — explicitly an abstract, non-real currency
+
+inputs:
+  unit_of_production: "1 poultry shed of 1000 birds"
+  sheds: 3
+  birds_per_shed_per_cycle: 1000
+  day_old_chicks_purchased_per_cycle: 1050   # "1.050 = 1000 + 5% mortality buffer" per source
+  cycle_length_months: 3    # "incl. cleanout + disinfection"
+  cycles_per_year: 4
+  currency: "abstract 'local money' units — source states no real country / price level"
+  cost_per_cycle:
+    day_old_chicks: {value: 315, unit: "local$/cycle", composition: "0.30/chick x 1050 chicks"}
+    feed: {value: 1140, unit: "local$/cycle", composition: "12.00/bag (25kg) x 95 bags"}
+    supplement: {value: 240, unit: "local$/cycle", composition: "20.00/bag (10kg) x 12 bags"}
+    labour: {value: 1000, unit: "local$/cycle", composition: "20.00/day x 50 days"}
+  # mirrors cost_per_cycle above, as plain scalars; folded x4 (periods: 4)
+  # to reach the annual total this gold checks
+  costs:
+    day_old_chicks: 315
+    feed: 1140
+    supplement: 240
+    labour: 1000
+
+# only the ANNUAL total maps — `total_cost_per_unit_per_cycle` (2695,
+# confirmed correct) and `total_cost_all_sheds_per_year` (32340, needs an
+# x3-sheds multiplier the engine has no concept of) are both left unmapped.
+mapping:
+  total_cost_per_unit_per_year: cost_of_sales
+
+# whole local$ units, and the source's own per-cycle sum (2695) is exact —
+# so the annual figure's gap (10,780 true vs 10,708 printed) is real, not
+# rounding
+tolerance:
+  abs: 1.0
+  why: >
+    the four per-cycle cost lines sum to 2695 exactly (315+1140+240+1000),
+    so any gap at the annual roll-up is the source's own arithmetic, not
+    display rounding
+
+expected:
+  total_cost_per_unit_per_cycle:
+    value: 2695
+    unit: "local$/cycle"
+    composition_as_printed: "315+1140+240+1000"
+  total_cost_per_unit_per_year:
+    value: 10708
+    unit: "local$/yr"
+    composition_as_printed: "2695 x 4 cycles"
+  total_cost_all_sheds_per_year:
+    value: 32340
+    unit: "local$/yr"
+    composition_as_printed: "10708 x 3 sheds"
+
+notes: |
+  SOURCE ARITHMETIC ERROR — transcribed EXACTLY as printed above, NOT corrected. This is the same
+  error already flagged in docs/atlas/registry.yaml for this entry; I independently re-verified it
+  digit-by-digit while transcribing, and found it is more specific than a simple "wrong product":
+
+    1. total_cost_per_unit_per_cycle = 2695 is CORRECT: 315+1140+240+1000 = 2695 exactly.
+
+    2. total_cost_per_unit_per_year is printed as 10,708 ("4 cycles x 2,695 = 10,708"), but the
+       true product is 2695 x 4 = 10,780. Printed 10,708 vs. true 10,780 is a digit
+       TRANSPOSITION of the last two digits (...8-0 became ...0-8) — almost certainly a typing
+       slip in the source narrative, not a conceptual error.
+
+    3. total_cost_all_sheds_per_year is printed as 32,340 ("10,708 x 3 sheds = 32,340"). Taken
+       literally, 10,708 x 3 = 32,124, NOT 32,340 — so the printed multiplication does not even
+       match the printed multiplicand it names. But 32,340 IS exactly what you get from the TRUE
+       annual figure: 10,780 x 3 = 32,340. In other words: the source's own FINAL total (32,340)
+       is quietly correct — it was evidently computed from the right underlying number (10,780) —
+       while the INTERMEDIATE annual figure shown in the narrative text (10,708) is the one that's
+       wrong, and the error does not propagate into the number that follows it. A reader (or an
+       engine check) that trusts the printed 10,708 and multiplies by 3 will get 32,124 and
+       "diverge" from the source's own printed 32,340 — even though 32,340 is the historically
+       correct answer. Flagging this precisely because a naive gold-checker could easily treat
+       10,708 -> 32,340 as one consistent (if wrong) chain, when it is actually a wrong number
+       sitting next to a right one.
+
+  Source explicitly self-flags as an ILLUSTRATIVE / pedagogical composite ("not a surveyed
+  enterprise"; currency is abstract "local money"; no geography given). No investment block (shed
+  construction, equipment, drinkers/feeders) or income block (sale price, sale weight, mortality
+  beyond the 5% purchase buffer) is given in the source, so this gold validates COST ROLL-UP
+  arithmetic only (cycle -> year -> all-sheds), not a full P&L — there is no revenue or profit
+  figure to check against.

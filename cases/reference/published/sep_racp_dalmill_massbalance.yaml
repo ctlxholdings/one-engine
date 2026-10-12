@@ -1,0 +1,178 @@
+# YIELD / MASS-BALANCE HARVEST — a pulse (dal) mill: one input, two priced
+# outputs (split dehusked dal, and the husk/broken/powder sold as cattle feed).
+# It is here for the OPPOSITE reason to the flour-mill gold beside it: the
+# revenue block reconciles to the rupee, and the MASS BALANCE IS IMPOSSIBLE.
+# The same section of the same report says the plant processes 3,060 MT of
+# pulses in Year 3 and sells 7,164 MT of product made from them -- 2.34 tonnes
+# out per tonne in. The brief is explicit that a source contradicting itself is
+# a valuable gold, not a rejected one, and this is the cleanest example of it
+# in the harvest: every individual arithmetic step inside each table is exact,
+# and the two tables cannot both be about the same plant.
+
+meta:
+  source: >
+    Government of Rajasthan, Rajasthan Agricultural Competitiveness Project
+    (RACP, World Bank-assisted), Agribusiness Promotion Facility, "Study Report
+    of Innovative Technology Based Business Models -- Technology DPR: Dal
+    Mill", prepared by Grant Thornton India LLP. Section 7.2 (the 20 MT/day
+    model): 7.2.6 Production Programme (p.58), 7.2.10 / 7.2.12 Revenue Schedule
+    (pp.59-61), 7.2.13 P&L Statement (p.61); background yield statements at
+    pp.10 and 35-36.
+    https://www.tourism.rajasthan.gov.in/content/dam/agriculture/Rajasthan%20Agricultural%20Competitiveness%20Project/ABPFTechDPR/RACP_ABPF_Tech%20DPR_Dal%20Mill.pdf
+  accessed: "2026-08-12"
+  licence: >
+    Government of Rajasthan / RACP (World Bank-assisted project) disclosure
+    document, publicly hosted PDF on a Government of Rajasthan domain; no
+    explicit reuse licence stated. Report authored by Grant Thornton India LLP
+    for the project. Transcribed here, with full citation, for
+    engine-verification / research use only.
+  kind: trade_case
+  resolution: L2
+  basis: >
+    one pigeon-pea (toor/arhar) dal mill, 20 MT/day installed, 8 hours/day,
+    180 operational days/year at 100% utilisation; 25% of throughput is job
+    work (milling the customer's own pulses) and 75% is milled and sold on own
+    account. YEAR 3 of the 5-year projection, at 85% capacity utilisation.
+  periods: 1
+  mechanism: separate
+  jurisdiction: IN          # Rajasthan, India
+  currency: INR
+
+inputs:
+  # ── Production Programme (7.2.6, p.58) ────────────────────────────────────
+  installed_capacity_mt_per_day: 20
+  hours_per_day: 8
+  operational_days_at_100pct: 180
+  capacity_utilisation_pct: 85                  # Year 3
+  operational_days_year3: 153                   # 180 x 85%
+  quantity_required_mt_year3: 3060              # 20 x 180 x 85%
+  job_work_mt_year3: 765                        # 25% of 3,060
+  quantity_for_sales_mt_year3: 2295             # 75% of 3,060
+
+  # ── Revenue Schedule (7.2.10 / 7.2.12) -- the SAME year, the SAME section ─
+  dal_production_mt_year3: 5436                 # "Pigeon Peas Split/Tur Dal"
+  dal_closing_stock_mt_year3: 272
+  dal_opening_stock_mt_year3: 238
+  dal_sold_mt_year3: 5402
+  cattle_feed_production_mt_year3: 1728         # the by-product: husk, broken
+                                                # grain and powder
+  cattle_feed_closing_stock_mt_year3: 86
+  cattle_feed_opening_stock_mt_year3: 76
+  cattle_feed_sold_mt_year3: 1718
+
+  # prices are NOT printed in a readable cell; both are exact quotients of the
+  # printed revenue by the printed quantity sold, to the rupee (see notes), and
+  # a stray "114,000.00" does appear in the document's text layer between the
+  # main-product and by-product blocks of 7.2.10:
+  implied_price_dal_inr_per_mt: 114000
+  implied_price_cattle_feed_inr_per_mt: 19000
+
+  dal_revenue_inr_year3: 615828000              # printed 6,158.28 lacs
+  cattle_feed_revenue_inr_year3: 32642000       # printed   326.42 lacs
+  revenue: 648470000                            # printed 6,484.70 lacs
+
+  costs:
+    raw_material_purchased: 612360000           # printed 6,123.60 lacs (P&L).
+                                                # NO quantity and NO price per
+                                                # MT is printed against it in
+                                                # section 7.2 -- see notes.
+
+expected:
+  # every figure below is PRINTED by the source
+  quantity_required_mt_year3: 3060
+  job_work_mt_year3: 765
+  quantity_for_sales_mt_year3: 2295
+  operational_days_year3: 153
+  dal_production_mt_year3: 5436
+  dal_sold_mt_year3: 5402
+  cattle_feed_production_mt_year3: 1728
+  cattle_feed_sold_mt_year3: 1718
+  dal_revenue_inr_year3: 615828000
+  cattle_feed_revenue_inr_year3: 32642000
+  total_sales_inr_year3: 648470000
+  raw_material_purchased_inr_year3: 612360000
+
+mapping:
+  total_sales_inr_year3: revenue
+  # cost_of_sales / gross_margin are NOT mapped: the only cost this scenario
+  # prints against Year 3 is the raw-material purchase line, which is a
+  # PURCHASE (before the stock movement the P&L then applies), not a cost of
+  # sales. Mapping it as one would test a translation this file invented.
+
+tolerance:
+  abs: 1000.0
+  why: >
+    the source prints money in LACS to two decimals, i.e. to Rs 1,000. Every
+    revenue extension below reconciles EXACTLY at that precision, so Rs 1,000
+    -- one printing unit -- is the tightest defensible threshold and already
+    looser than any gap observed.
+
+notes: |
+  RE-DERIVED BY HAND (python):
+
+  THE PRODUCTION PROGRAMME IS INTERNALLY EXACT
+    20 MT/day x 180 days                = 3,600 MT at 100%
+    3,600 x 85%                         = 3,060 MT    -- printed 3060   OK
+    180 x 85%                           =   153 days  -- printed 153    OK
+    3,060 x 25%                         =   765 MT job work             OK
+    3,060 x 75%                         = 2,295 MT for sales            OK
+
+  THE REVENUE SCHEDULE IS ALSO INTERNALLY EXACT
+    stock roll-forward, main product:
+      5,436 production - 272 closing + 238 opening = 5,402 sold         OK
+    stock roll-forward, by-product:
+      1,728 production -  86 closing +  76 opening = 1,718 sold         OK
+    5,402 MT x Rs 114,000/MT = Rs 615,828,000 = 6,158.28 lacs -- printed OK
+    1,718 MT x Rs  19,000/MT = Rs  32,642,000 =   326.42 lacs -- printed OK
+    sum                      = Rs 648,470,000 = 6,484.70 lacs -- printed OK
+    (Year 1 checks the same way: 3,873 x 114,000 = 4,415.22 lacs and
+     1,231 x 19,000 = 233.89 lacs, both printed exactly. The two prices are
+     therefore constant across all five years and are exact, not rounded.)
+    The P&L then reconciles to the paisa as well:
+      6,484.70 - 271.32 + 310.08 - 14.44 + 16.34 = 6,525.36  -- printed OK
+
+  AND THE TWO TABLES CANNOT BOTH BE TRUE
+    output claimed, Year 3:  5,436 (dal) + 1,728 (feed) = 7,164 MT
+    input allowed,  Year 3:  3,060 MT total throughput,
+                             of which only 2,295 MT is the mill's own pulses
+    7,164 / 3,060 = 2.34 tonnes of product per tonne of pulses put through the
+    plant; 7,164 / 2,295 = 3.12 tonnes per tonne the mill actually owns. A
+    dehusking-and-splitting operation removes mass; it cannot add it. The
+    document's own background section says so twice, in the same words on p.10
+    and p.36: "Yield of split & dehusked pulses in traditional mills are only
+    65 to 75% ... compared to 88 to 89% potential yield."
+    The revenue schedule's own internal split is in that band --
+      5,436 / 7,164 = 75.9% dal, 24.1% by-product
+    -- so the OUTPUT MIX is plausible and it is the INPUT SCALE that is wrong
+    by a factor of about 2.3. Nothing in section 7.2 reconciles them: there is
+    no second production line, no purchased semi-finished stock, no restatement
+    of capacity, and the Year-by-Year growth patterns of the two tables even
+    differ (throughput grows 75->95% of capacity across Y1-Y5, while dal
+    production grows 4,077 -> 5,776 MT, a different shape).
+
+  GAPS — recorded, never filled:
+    - NO RAW-MATERIAL QUANTITY OR PRICE in section 7.2. The P&L prints
+      Rs 6,123.60 lacs of purchases for Year 3 with no tonnage and no rate
+      behind it. Dividing it by the throughput the production programme allows
+      (3,060 MT) gives Rs 200,117/MT of raw pulses -- against a finished-dal
+      SELLING price of Rs 114,000/MT, i.e. raw material dearer than the
+      product by 75%. That quotient is stated here only to show the third
+      corner of the contradiction and is deliberately NOT recorded as a price:
+      the source prints no such figure.
+    - THE COMPANION SCENARIO 7.1 of the same report is not used here. It runs
+      four pulses (harbara, urad, tur, mung) and splits each into Grade A,
+      Grade B, broken, and husk-and-powder -- a fifteen-line revenue schedule
+      with a job-work line, which would be the richest co-product case in this
+      harvest. It was rejected because its raw-material block's "number of
+      units" and "unit cost" columns do not survive extraction unambiguously
+      (the printed money does not equal number x unit cost for any consistent
+      reading), and the brief forbids inferring a figure to fill a gap.
+
+  WHAT THIS GOLD IS FOR. It is not a plausible plant. It is a test of whether
+  anything in the pipeline notices that a conversion produced more mass than it
+  consumed -- a question no gold in this corpus currently asks, because every
+  other yield case in it (oil mill, cotton, dairy, rice, flour) balances or
+  under-balances. A published, government-hosted, World-Bank-project DPR that
+  fails it by 134% is the strongest evidence available that such a check is
+  worth having: this document was written, reviewed and disclosed with the
+  error in it.

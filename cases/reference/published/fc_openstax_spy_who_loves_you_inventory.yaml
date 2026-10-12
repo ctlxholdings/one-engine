@@ -1,0 +1,221 @@
+# Transcribed EXACTLY as published. All eight COGS/ending-inventory/gross-
+# margin combinations (4 costing methods x 2 systems) independently
+# re-derived from the same six-line transaction stream and cross-checked
+# against each printed subtotal; every one reconciles except the AVG
+# method's compounding-rounding cents, which the source itself discloses
+# (footnote, quoted in notes) -- not double-counted as a new finding.
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting":
+    Section 10.2 "Calculate the Cost of Goods Sold and Ending Inventory
+    Using the Periodic Method" AND Section 10.3 "...Using the Perpetual
+    Method" -- both sections work the SAME "The Spy Who Loves You
+    Corporation" transaction stream under all four cost-allocation methods
+    (Specific Identification, FIFO, LIFO, Weighted-Average), letting the
+    two systems be compared directly for the same company/period.
+    https://openstax.org/books/principles-financial-accounting/pages/10-2-calculate-the-cost-of-goods-sold-and-ending-inventory-using-the-periodic-method
+    https://openstax.org/books/principles-financial-accounting/pages/10-3-calculate-the-cost-of-goods-sold-and-ending-inventory-using-the-perpetual-method
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0); see fc_openstax_clipem_cliff_barbershop.yaml for the
+    full verification note (same title, not repeated here).
+  kind: full_cycle
+  reaches: p_and_l
+  reaches_note: >
+    Reaches Gross Margin (Sales - COGS) under all 4 methods x 2 systems (8
+    combinations); no balance sheet or cash flow statement given. The case
+    is scoped entirely to the inventory-costing mechanism.
+  mechanism: buy_resell
+  mechanism_note: >
+    GPS tracking device retailer. Full transaction-level drivers (unit
+    quantities, unit costs, unit selling prices, exact dates) are given --
+    this is the most granular "raw transactions" case in this batch,
+    genuinely below the trial-balance level rather than starting from
+    already-rolled-up statements.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: `_from_journal` (engine/golds.py) moves fixed dollar amounts only —
+  # it carries no `qty:`/`cost_formula` machinery, so it cannot itself
+  # RUN a costing method (FIFO/LIFO/specific-ID/weighted-average); it can
+  # only re-check that a method's ALREADY-COMPUTED dollar result flows
+  # correctly through to gross margin. Of the 8 published combinations (4
+  # methods x 2 systems), this file journals FIFO PERPETUAL only: FIFO is
+  # the one method whose result is IDENTICAL under both systems (a
+  # property the source itself proves, see notes below), so it carries no
+  # perpetual-vs-periodic ambiguity, and it needed no invented figure —
+  # every number below is copied from expected.perpetual_usd.fifo. This
+  # means the comparison ACROSS methods/systems — the actual point of
+  # this OpenStax section — is NOT exercised by this gold; only the
+  # bookkeeping arithmetic of one already-known-correct answer is.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "The Spy Who Loves You Corporation"
+  product: "Global Positioning System (GPS) Tracking Device"
+
+  # ── added for the T-journal reader — FIFO perpetual only (see meta);
+  #    beginning inventory is an `opening:`, the two purchases and two
+  #    sales/COGS pairs are journalled from the source's own FIFO figures
+  accounts:
+    cash: asset
+    inventory: asset
+  opening:
+    inventory: 3150
+  journal:
+    - {desc: "July 10 purchase, 225 units at $27", amount: 6075,
+       debit: inventory, credit: cash, period: 0}
+    - {desc: "July 25 purchase, 210 units at $33", amount: 6930,
+       debit: inventory, credit: cash, period: 0}
+    - {desc: "July 5 sale, 120 units at $36", amount: 4320,
+       debit: cash, credit: INCOME, period: 0}
+    - {desc: "July 5 sale COGS, FIFO", amount: 2520,
+       debit: EXPENSE, credit: inventory, period: 0}
+    - {desc: "July 15 sale, 180 units at $39", amount: 7020,
+       debit: cash, credit: INCOME, period: 0}
+    - {desc: "July 15 sale COGS, FIFO", amount: 4680,
+       debit: EXPENSE, credit: inventory, period: 0}
+  period: "July (single month; year not stated)"
+  cost_note: >
+    "For simplicity of demonstration, beginning inventory cost is assumed
+    to be $21 per unit for all cost assumption methods."
+
+  # ── the one transaction stream, shared by both systems and all 4 methods ──
+  transactions:
+    - {date: "July 1",  type: "beginning_inventory", units: 150, unit_cost_usd: 21}
+    - {date: "July 5",  type: "sale",     units: 120, unit_price_usd: 36}
+    - {date: "July 10", type: "purchase", units: 225, unit_cost_usd: 27}
+    - {date: "July 15", type: "sale",     units: 180, unit_price_usd: 39}
+    - {date: "July 25", type: "purchase", units: 210, unit_cost_usd: 33}
+    - {date: "July 31", type: "ending_inventory_count", units: 285}
+
+  derived_totals_usd:
+    total_units_available: 585            # 150+225+210
+    total_units_sold: 300                 # 120+180
+    sales_revenue: 11340                  # 120*36 + 180*39 = 4,320 + 7,020
+    beginning_inventory_value: 3150       # 150*21
+    total_purchases_value: 13005          # 225*27 + 210*33 = 6,075 + 6,930
+    goods_available_for_sale_value: 16155 # 3,150 + 13,005
+
+  specific_identification_lot_assumption:
+    july_5_sale: "120 units, all from Lot 1 (beginning inventory) @ $21"
+    july_15_sale: "180 units: 20 from Lot 1 (beginning inventory) @ $21; 160 from Lot 2 (July 10 purchase) @ $27"
+
+notes: |
+  This is a genuine, well-known accounting phenomenon rather than a source
+  error: FIFO and Specific Identification give IDENTICAL results whether
+  costed perpetually (at each sale date) or periodically (once, at period
+  end) -- because neither method's logic depends on transaction timing
+  within the period. LIFO and Weighted-Average DO differ between the two
+  systems, because both depend on which units are "in the pool" at the
+  moment of each sale. This makes the case a strong oracle test: an engine
+  that reuses one formula for both systems will silently pass the
+  Specific-ID and FIFO checks (4 of 8 numbers) while failing LIFO and AVG
+  (the other 4) -- exactly the kind of case that "breaks the trio" rather
+  than just re-confirming what a naive implementation already gets right.
+
+  AVG-method rounding: the source's own footnote (8) reads verbatim: "Note
+  that there is a $1 rounding difference due to the rounding of cents
+  inherent in the cost determination chain process." This is visible in
+  the perpetual AVG detail: prose states the July 15 sale cost "$4,732"
+  (180 x $26.29 = $4,732.20, rounds to $4,732), but the chart immediately
+  below states the same sale at "$4,733" and totals COGS to "$7,253" (only
+  consistent with using $4,733, not $4,732) -- both figures transcribed
+  below, source-disclosed rather than newly flagged as an error. The
+  perpetual AVG ending-inventory chart similarly states "285 units at
+  $31.24 equals $8,902" even though 285 x 31.24 = $8,903.40 -- again a
+  compounding-rounding artifact the source itself warns about, not
+  independently flagged.
+
+  Total revenue ($11,340), beginning inventory ($3,150), and total
+  purchases ($13,005) are identical across every method/system combination
+  -- only the COGS/ending-inventory split changes. Gross Margin = 11,340 -
+  COGS in all 8 cells below, verified by direct subtraction in every case.
+
+# which of the source's own names we check against which of ours
+mapping:
+  fifo_perpetual_sales_revenue: revenue
+  fifo_perpetual_cost_of_goods_sold: cost_of_sales
+  fifo_perpetual_gross_margin: net_profit
+
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and FIFO's own figures reconcile
+    exactly (11,340-7,200=4,140, no compounding rounding the way the AVG
+    method has — see notes), so any divergence here is real rather than
+    display rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror
+  # perpetual_usd.fifo below exactly (the only one of 8 published
+  # combinations this gold journals; see meta)
+  fifo_perpetual_sales_revenue: 11340
+  fifo_perpetual_cost_of_goods_sold: 7200
+  fifo_perpetual_gross_margin: 4140
+
+  perpetual_usd:
+    specific_identification:
+      cost_of_goods_sold: 7260
+      ending_inventory: 8895
+      gross_margin: 4080
+      ending_inventory_detail: {units_at_21: 10, units_at_27: 65, units_at_33: 210}
+      cogs_detail: {july_5_sale: 2520, july_15_sale: 4740}
+    fifo:
+      cost_of_goods_sold: 7200
+      ending_inventory: 8955
+      gross_margin: 4140
+      ending_inventory_detail: {units_at_27: 75, units_at_33: 210}
+      cogs_detail: {july_5_sale: 2520, july_15_sale: 4680}
+    lifo:
+      cost_of_goods_sold: 7380
+      ending_inventory: 8775
+      gross_margin: 3960
+      ending_inventory_detail: {units_at_21: 30, units_at_27: 45, units_at_33: 210}
+      cogs_detail: {july_5_sale: 2520, july_15_sale: 4860}
+    weighted_average:
+      cost_of_goods_sold: 7253
+      ending_inventory: 8902
+      gross_margin: 4087
+      recalculated_avg_after_july_10_purchase: 26.29
+      recalculated_avg_after_july_25_purchase: 31.24
+      cogs_detail_as_printed: {july_5_sale: 2520, july_15_sale_prose: 4732, july_15_sale_chart: 4733}
+      rounding_note: "source footnote 8 acknowledges a $1 rounding difference in this chain (see notes)"
+    comparison_table: {specific_identification: 4080, fifo: 4140, lifo: 3960, weighted_average: 4087}
+
+  periodic_usd:
+    specific_identification:
+      cost_of_goods_sold: 7260
+      ending_inventory: 8895
+      gross_margin: 4080
+      ending_inventory_detail: {units_at_21: 10, units_at_27: 65, units_at_33: 210}
+      basis: "beginning inventory 3,150 + purchases 13,005 = 16,155 goods available; minus ending inventory 8,895 = COGS 7,260"
+    fifo:
+      cost_of_goods_sold: 7200
+      ending_inventory: 8955
+      gross_margin: 4140
+      ending_inventory_detail: {units_at_27: 75, units_at_33: 210}
+      cogs_detail: {units_at_21: 150, units_at_27: 150}
+    lifo:
+      cost_of_goods_sold: 9360
+      ending_inventory: 6795
+      gross_margin: 1980
+      ending_inventory_detail: {units_at_21: 150, units_at_27: 135}
+      cogs_detail: {units_at_33: 210, units_at_27: 90}
+      differs_from_perpetual: true
+    weighted_average:
+      cost_of_goods_sold: 8283
+      ending_inventory: 7872
+      gross_margin: 3057
+      single_period_average_cost_per_unit: 27.62
+      average_cost_unrounded: 27.6154
+      differs_from_perpetual: true
+
+  method_system_divergence_summary:
+    specific_identification: "identical under both systems (7,260 / 8,895 / 4,080)"
+    fifo: "identical under both systems (7,200 / 8,955 / 4,140)"
+    lifo: "DIFFERS: perpetual COGS 7,380 vs periodic COGS 9,360 (gross margin 3,960 vs 1,980)"
+    weighted_average: "DIFFERS: perpetual COGS 7,253 vs periodic COGS 8,283 (gross margin 4,087 vs 3,057)"

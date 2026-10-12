@@ -1,0 +1,125 @@
+id: tax_acca_capital_allowances_book_depreciation
+title: "ACCA SBR technical article — tax capital allowances vs book (straight-line) depreciation, same asset"
+
+meta:
+  source:
+    - "ACCA Global, Strategic Business Reporting technical articles, 'Deferred tax': https://www.accaglobal.com/us/en/student/exam-support-resources/professional-exams-study-resources/strategic-business-reporting/technical-articles/deferred-tax.html — the capital-allowances schedule underlying the same worked example as tax_acca_ppe_deferred_tax.yaml (fetched 2026-08-12)."
+  licence: "Freely published ACCA student technical article; no explicit reuse licence stated on the page."
+  kind: tax_case
+  resolution: L2
+  basis: "one non-current asset, its full 4-year book depreciation schedule against its full 4-year tax capital-allowances schedule"
+  periods: 4
+  mechanism: "n/a — a depreciation-schedule illustration, not a business trade"
+  jurisdiction: "XX"
+  currency: CU
+
+inputs:
+  asset_cost: 2000
+  book_depreciation_schedule:            # straight-line, printed as a flat annual figure
+    year1: 500
+    year2: 500
+    year3: 500
+    year4: 500
+  tax_capital_allowances_schedule:       # the statute's own accelerated schedule, as printed
+    year1: 800
+    year2: 600
+    year3: 360
+    year4: 240
+
+expected:
+  year1_excess_of_tax_allowance_over_book_depreciation:
+    value: 300
+    composition_as_printed: "800 - 500 (this is the SAME 300 that tax_acca_ppe_deferred_tax.yaml reports as the Year-1 temporary difference — an internal cross-check between the two golds, both independently transcribed from the same source)"
+  year2_excess_of_tax_allowance_over_book_depreciation:
+    value: 100
+    composition_as_printed: "600 - 500"
+  year3_excess_of_book_depreciation_over_tax_allowance:
+    value: 140
+    composition_as_printed: "500 - 360 (the schedules cross over: tax depreciation is now SLOWER than book, the reversal phase)"
+  year4_excess_of_book_depreciation_over_tax_allowance:
+    value: 260
+    composition_as_printed: "500 - 240"
+  cumulative_book_depreciation_over_4_years:
+    value: 2000
+    composition_as_printed: "500 x 4 — the full asset cost, recovered on a flat schedule"
+  cumulative_tax_allowances_over_4_years:
+    value: 2000
+    composition_as_printed: "800 + 600 + 360 + 240 — the full asset cost, recovered on an ACCELERATED schedule"
+
+mapping: {}
+# no entry: engine/golds.py's CANON has a "depreciation" name, but only for
+# the period's OWN capital consumption on ONE schedule — it has no concept of
+# a SECOND, tax-basis schedule for the same asset to compare it against; see
+# TAX_INVENTORY.md.
+
+tolerance:
+  abs: 0
+  why: >
+    round textbook numbers, chosen so both schedules sum to exactly the
+    2,000 cost — any gap would be a transcription error.
+
+notes: |
+  WHY A SEPARATE GOLD FROM tax_acca_ppe_deferred_tax.yaml. That gold tests
+  the ROLLFORWARD TO A BALANCE (the deferred tax liability at two points in
+  time). This gold isolates the more primitive fact underneath it: TWO
+  DEPRECIATION SCHEDULES for the SAME asset, summing to the SAME total cost,
+  on DIFFERENT timing profiles — the fact a jurisdiction's tax code (capital
+  allowances, often declining-balance or an accelerated first-year schedule)
+  diverges from the entity's own book policy (usually straight-line) even
+  before anyone asks what that divergence does to a deferred tax balance.
+  This is useful on its own: it is exactly what a CASH TAX computation needs
+  (taxable profit = accounting profit + book depreciation - tax capital
+  allowance), with no deferred-tax bookkeeping required at all.
+
+  GRAMMAR FINDING — this shape, ALONE (without also demanding a booked DTL),
+  is cleanly expressible with NOTHING new, and more directly than the DTL
+  case:
+    - book straight-line (500/year here) is the ordinary flat-`size` EXPENSE
+      exchange cattle.yaml already uses for its own shed depreciation
+      (`depreciation: {expr: "1200000 / 10 / 12", ...}`) — a plain provenanced
+      driver, no verb trickery.
+    - DECLINING-BALANCE tax depreciation specifically is native, not an
+      analogy: compile.py's own docstring says so directly — "SIZE
+      expressions may call close('resource') — the PRIOR period's closing
+      balance... loan interest and declining-balance depreciation are
+      therefore expressions, not features" — and RELEASE's own definition
+      ("units out carry value out, on the period's closing base after
+      additions — the periodic convention") IS declining balance the moment
+      the release fraction is a constant rate. This gold's own schedule
+      (800/600/360/240) is a front-loaded accelerated schedule rather than a
+      pure constant-rate decline, so it would be declared as a hand-typed
+      PATH (like cattle.yaml's calendar drivers) rather than a `release:`
+      rate — still an ordinary, provenanced, checked driver, no escape
+      hatch needed.
+    - the two schedules can happily coexist as TWO independent drivers (or a
+      real book resource plus a bare tax-schedule path, as this probe used)
+      feeding a DERIVED `taxable_profit` expression — no dual-valuation
+      RESOURCE is needed for this narrower question, because nothing here
+      requires POSTING a balance-sheet DTL, only computing a P&L number.
+  The gap only opens, per tax_acca_ppe_deferred_tax.yaml's own finding, the
+  moment the two schedules must be reconciled into a BOOKED liability that
+  reverses on the SAME ledger as the real asset.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:`
+  block, and it SHOULD. What the source publishes, in full, is two
+  depreciation schedules for ONE asset: an asset cost of 2,000 CU, a
+  straight-line book charge of 500 CU in each of four years, and the
+  statute's own capital-allowances schedule of 800 / 600 / 360 / 240 CU —
+  both recovering exactly the same 2,000 CU on different timing profiles.
+  What it does NOT publish is anything a cost structure is made of: no
+  revenue, no expense lines, no operating costs, no cost total, no trading
+  result, no entity, no period turnover. There is no business in this
+  example — there is one asset, written down twice on two bases, which is
+  the whole point of the illustration.
+  A `costs:` block here would be an invention twice over. First, a single
+  asset's depreciation is not `cost_of_sales` (the engine's own CANON
+  separates the two: `depreciation` is "the period's capital consumption",
+  `cost_of_sales` is "what the sold thing cost", and nothing is sold here).
+  Second, the only 2,000 CU "totals" available to bind are
+  `cumulative_book_depreciation_over_4_years` and
+  `cumulative_tax_allowances_over_4_years` — and those are THIS GOLD's own
+  additions of the four printed years ("500 x 4", "800 + 600 + 360 + 240"),
+  not a total the article strikes anywhere as a cost. Binding either to
+  `cost_of_sales` would manufacture a cost of sales out of a capital
+  allowance schedule and then check the engine against a figure the source
+  never computed. Unrunnable is the correct, reportable state for this file.

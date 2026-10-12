@@ -1,0 +1,208 @@
+# CO-PRODUCT HARVEST (F-210) — a JOINT-COST ALLOCATION worked example, not a
+# P&L. FAO's own dairy-costing manual splits one input (whole milk) into two
+# priced outputs (standardized milk, cream) and shows, explicitly, TWO
+# different ways to divide the input's cost between them — landing on
+# MATERIALLY different answers. This is the richest source found for this
+# harvest specifically because the disagreement between conventions is
+# published, not inferred: the source states its "usual procedure" is one
+# rule, then immediately gives a second rule for when the first is
+# inappropriate, and does the arithmetic both times.
+#
+# WHY GROSS_MARGIN = 0 HERE, AND THAT IS THE POINT. This is not a trade with
+# a profit: it is a COST TRANSFER — the input's value is fully reallocated to
+# the two outputs, nothing is added or removed. `revenue` below is the
+# combined value ASSIGNED to the two outputs; `cost_of_sales` is the input's
+# own cost; by construction they must reconcile to (approximately) zero
+# margin, and checking that they do IS the test — exactly what the source
+# itself does in its own worked example ("Adding the prices of 975 litres of
+# standardized milk and 25 litres of cream, we do get the total of 100 000
+# which tallies with the price of 1 000 litres of whole milk").
+
+meta:
+  source: >
+    J.C. Belloin, "Milk and dairy products: production and processing costs"
+    (FAO Animal Production and Health Paper 62, Rome, 1988), ISBN
+    92-5-102503-7, section on milk content evaluation ("Examples 1 and 2":
+    milk/cream separation, and butter/buttermilk), chapter 5.
+    https://www.fao.org/4/x6931e/x6931e04.htm
+  accessed: "2026-08-12"
+  licence: >
+    FAO publication, publicly hosted; no open-reuse licence stated on the
+    page. Transcribed here, with full citation, for engine-verification/
+    research use only. Numeric transcription verified twice: once against the
+    page's own rendered HTML text, and a second time by downloading and
+    reading the two formula images the page embeds as GIFs
+    (X6931E41.gif: "100 x 52/100 x 1/38 = 1.36842"; X6931E46.gif:
+    "(526 950 - 28 985) / 420.3 = 1184.8") rather than trusting an
+    HTML-to-text pass that silently drops image-only formulas.
+  kind: trade_case
+  resolution: L2
+  # L2: this is a cost-allocation identity (input cost = sum of allocated
+  # output costs), not a "quantity x price -> revenue, minus itemised costs
+  # -> margin" trade. `inputs.revenue` below carries the ALLOCATED total
+  # value of the outputs; `inputs.costs` carries the single input cost they
+  # were allocated from.
+  basis: >
+    "Example 1": a dairy plant's cream separator splits 1,000 litres of whole
+    milk (38 g/l fat) into 975 l of standardized/pasteurized milk (30 g/l
+    fat) and 25 l of standardized cream (350 g/l fat), one period, abstract
+    cost-price units (the source states "an average cost price of 100" with
+    no currency named — a cost-accounting teaching figure, not a market
+    price). "Example 2" (documentary only, not mapped — see notes) continues
+    the same plant: 1,000 kg of that cream is separated again, into 420.3 kg
+    of butter and 579.7 kg of buttermilk.
+  periods: 1
+  mechanism: separate
+  jurisdiction: null   # abstract teaching illustration; no country or currency named
+  currency: XXX         # the source's own cost-price index, not a real currency
+
+inputs:
+  # ── Example 1: milk -> standardized milk + cream ──────────────────────────
+  whole_milk_input_l: 1000
+  whole_milk_fat_g_per_l: 38
+  whole_milk_cost_price_total: 100000     # "an average cost price of 100" (per litre, x1000l)
+  standardized_milk_output_l: 975
+  standardized_milk_fat_g_per_l: 30
+  cream_output_l: 25
+  cream_fat_g_per_l: 350
+  # the fat-mass balance that DERIVES the 975/25 split (source's own algebra,
+  # not re-solved here — see notes for the check):
+  #   1000 x 38 = 30x + 350(1000-x)  ->  x = 975
+  #
+  # TWO ALLOCATION CONVENTIONS, BOTH STATED BY THE SOURCE FOR THE SAME SPLIT:
+  #
+  # (a) "the USUAL PROCEDURE" -- by VOLUME: "If 1 000 litres of whole milk
+  #     produces 975 l of standardized milk and 25 l of cream, the usual
+  #     procedure is to invoice 2.5 percent of the above costs to cream and
+  #     97.5 percent for milk... costs are distributed according to the
+  #     volume of each of the phases obtained."
+  allocation_by_volume_pct:
+    standardized_milk: 97.5
+    cream: 2.5
+  # (b) the ALTERNATIVE the source gives for "a plant which skims off all
+  #     the cream for sale, considering the skim milk to be a by-product":
+  #     allocate by the VALUE OF FAT (a component/quality-based method).
+  #     Fat is assumed 52% of whole milk's total value here ("if... we
+  #     consider the value of fat to be 52 percent of the total price of the
+  #     milk"); the source's own printed formula-image result:
+  #       value per gram of fat = 100 x (52/100) x (1/38) = 1.36842
+  #     -> price per litre of standardized milk = 89.052
+  #     -> price per litre of cream            = 527
+  fat_value_per_gram: 1.36842
+  standardized_milk_price_per_l: 89.052
+  cream_price_per_l: 527
+  standardized_milk_value_total: 86825    # 975 x 89.052 = 86,825.7, source prints 86,825
+  cream_value_total: 13175                # 25 x 527 = 13,175 exactly
+  # the auto-converter's single combined-revenue slot (engine/golds.py
+  # to_template, L2 path): the source's own claimed reconciling total —
+  # "Adding the prices of 975 litres of standardized milk and 25 litres of
+  # cream, we do get the total of 100 000 which tallies with the price of
+  # 1 000 litres of whole milk"
+  revenue: 100000
+  costs:
+    whole_milk_input: 100000
+
+  # ── Example 2 (documentary — not mapped, see notes): cream -> butter + buttermilk ──
+  cream_input_kg: 1000
+  cream_fat_g_per_kg: 350
+  butter_output_kg: 420.3
+  butter_fat_g_per_kg: 830              # "16 percent water and 1 percent non-fat milk solids"
+  buttermilk_output_kg: 579.7
+  buttermilk_fat_g_per_kg: 2
+  # fat-mass balance: 1000 x 350 = 830x + 2(1000-x) -> x = 420.3
+  cream_value_total_kg_basis: 526950    # "one kilo of cream is worth 526.950" x 1000
+  buttermilk_price_per_kg: 50           # "if the plant resells its buttermilk at 50 per kg"
+  buttermilk_value_total: 28985         # 579.7 x 50 = 28,985 exactly
+  # (c) a THIRD allocation convention, distinct from both (a) and (b): the
+  #     "byproduct method" — the by-product (buttermilk) is priced at its own
+  #     known market value, and the MAIN product (butter) absorbs the ENTIRE
+  #     remaining joint cost, whatever that residual comes to:
+  butter_value_total: 497965            # 526,950 - 28,985 (source's own subtraction)
+  butter_price_per_kg: 1184.8           # 497,965 / 420.3, source's own printed result
+
+expected:
+  standardized_milk_value_total: 86825
+  cream_value_total: 13175
+  reconciled_total: 100000              # 86,825 + 13,175, source's own claimed tie-out
+  whole_milk_input_cost: 100000
+  gross_margin: 0                       # a cost-allocation identity, not a profit
+
+mapping:
+  reconciled_total: revenue
+  whole_milk_input_cost: cost_of_sales
+  gross_margin: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source itself carries a small internal rounding gap at this
+    precision (see notes: 975 x 89.052 = 86,825.7, printed as 86,825 — a
+    0.7-unit display-rounding, not a transcription slip); $1 absorbs that
+    display rounding without absorbing anything larger
+
+notes: |
+  SELF-CONSISTENCY, checked by hand (no engine involved), exactly as this
+  corpus's `self_consistency()` checks every other gold:
+    - 975 x 89.052 = 86,825.7 -- the source prints "86 825" (i.e. 86,825),
+      a 0.7-unit rounding-down against the exact product. Likely cause: the
+      displayed 89.052 (already 3 decimals) is itself a rounded readout of a
+      slightly more precise per-litre figure computed from 1.36842 x 30 +
+      (100 x 48/100) = 41.0526 + 48 = 89.0526 -- i.e. the TRUE figure is
+      89.0526.../l, printed at 89.052/l, three-decimal display rounding.
+    - 25 x 527 = 13,175 exactly -- no gap. (Reconstructing per the same
+      formula: 1.36842 x 350 + 48 = 478.947 + 48 = 526.947, which the source
+      rounds UP to 527 for display -- a different, larger display-rounding
+      than standardized milk's, and it happens to cancel most of the first
+      gap when the two are added: 86,825 + 13,175 = 100,000 exactly AS
+      PRINTED, even though the two unrounded components sum to 100,000.65
+      (86,825.7 + 13,174.9-ish). The source's own claim of an exact tie-out
+      is therefore itself a product of two offsetting roundings, not a
+      coincidence-free identity -- worth stating precisely rather than
+      either "correcting" the source's printed total or silently trusting
+      its own claim of exactness.
+    - Example 2 reconciles far more tightly: 579.7 x 50 = 28,985.0 exactly;
+      526,950 - 28,985 = 497,965 exactly; 497,965 / 420.3 = 1,184.858...,
+      which the source's own formula-image prints as "1184.8" — a genuine
+      (if small, ~0.06) rounding, read directly off the primary image, not
+      inferred.
+
+  WHY EXAMPLE 2 IS DOCUMENTARY ONLY (not mapped). Its own inputs (1,000 kg
+  cream) are not the SAME physical batch as Example 1's 25 l cream output —
+  the source explicitly re-normalises to a fresh 1,000 kg for the worked
+  arithmetic, carrying forward only the per-unit PRICE (526.95/kg, restated
+  from Example 1's 527/l). Mapping it into the SAME gold's revenue/
+  cost_of_sales pair as Example 1 would silently combine two unrelated
+  batches into one false total; keeping it fully transcribed but unmapped
+  preserves the numbers for the co-product analysis (a THIRD allocation
+  convention — see below) without fabricating a combined check the source
+  never states.
+
+  THREE ALLOCATION CONVENTIONS, ONE SOURCE, MATERIALLY DIFFERENT ANSWERS FOR
+  THE SAME PHYSICAL SPLIT. This is the headline finding this gold exists to
+  carry:
+    (a) BY VOLUME (the source's own "usual procedure"): cream (2.5% of
+        volume) absorbs 2.5% of cost.
+    (b) BY FAT VALUE (component-based, the source's stated alternative when
+        the by-product's per-unit value differs materially from the main
+        product's): cream absorbs 13.175% of cost -- 5.3x more than (a),
+        for the IDENTICAL 25 litres.
+    (c) BY-PRODUCT METHOD (Example 2): the by-product (buttermilk) is priced
+        at its own known market value; the main product (butter) absorbs
+        100% of whatever cost remains.
+  Method (b) is materially closer to how the two outputs actually sell here
+  (cream is worth ~21x standardized milk per litre by weight of fat, not
+  the ~1x a volume split would imply) -- which is exactly IAS 2.14's own
+  reasoning for allocating joint costs by relative sales value / net
+  realisable value rather than by physical measure. The source picks
+  whichever convention fits the business question, states so explicitly,
+  and does not claim one is "more correct" than the others.
+
+  See cases/golds/templates/sep_oilmill_bl811e.yaml for the engine-side
+  half of this finding: (a) compiles and satisfies the ledger's own
+  value-tracks-count seam check trivially (by construction — a volume split
+  makes value-share and quantity-share the same number); (b), the fat-value
+  method THIS SOURCE ITSELF PREFERS for a by-product whose value diverges
+  from the main product, is REFUSED by that same seam check the moment it
+  is run (empirically confirmed, quoted in that file) — the engine has
+  silently adopted convention (a) as the only legal one, without ever
+  having been told to prefer it over (b) or (c).

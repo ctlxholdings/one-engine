@@ -1,0 +1,108 @@
+id: taxeng_loss_carryforward_expiry
+title: "OLD tax engine self-test — vintaged loss carry-forward that EXPIRES, forfeiting relief"
+
+meta:
+  source:
+    - "This repository's OWN old tax engine — engine/layers/tax/run.py (521 lines), class `_LossPool` (lines 75-127), the vintaged FIFO relief ledger this gold exercises."
+    - "engine/tests/test_tax.py, class TestLossReliefWithVintage, test_expiry_forfeits_relief_permanently (lines 70-79) — the PRIMARY worked assertion (`capped`, a 2-year cap), transcribed verbatim."
+    - "Same test's `forever` run (carryforward_years: None, same income path) is transcribed as `expected.comparator_indefinite_cash_tax` below — the CONTRAST is the point: identical facts, only the cap differs, and cash owed changes from 0 to 12/12."
+  licence: "Internal — this repository's own code and test suite, not an external publication. No third-party licence applies."
+  kind: engine_oracle
+  self_graded: true   # see taxeng_flat_profit.yaml for the full caveat this repeats
+  resolution: L4       # physics — a stateful pool carried and expired across periods
+  basis: "per period, 5 periods, annual grid — one loss at t=0, two years of exact break-even, then two years of profit; a 2-year statutory carryforward cap"
+  periods: 5
+  mechanism: "not applicable — a fiscal overlay, not a trade mechanism (see taxeng_flat_profit.yaml)"
+  jurisdiction: "none — synthetic fixture in engine/tests/test_tax.py; the docstring motivates the mechanism generically ('a 5-year statutory cap' in example.yaml is the closest named analogue) but this specific test's 2-year cap and income path are the test author's own numbers"
+  currency: "unspecified in the source — abstract currency units"
+
+inputs:
+  tax_declaration:
+    grid: {periods: 5}
+    bases:
+      profit_before_allowances: [-100.0, 0.0, 0.0, 40.0, 40.0]
+      turnover: [0.0, 0.0, 0.0, 0.0, 0.0]
+    taxes:
+      - id: cit
+        base: profit
+        rate: {kind: flat, value: 0.30}
+        losses: {carryforward_years: 2}
+
+  # the comparator: SAME income path, SAME rate, only the cap removed
+  comparator_indefinite:
+    tax_declaration:
+      grid: {periods: 5}
+      bases:
+        profit_before_allowances: [-100.0, 0.0, 0.0, 40.0, 40.0]
+        turnover: [0.0, 0.0, 0.0, 0.0, 0.0]
+      taxes:
+        - id: cit
+          base: profit
+          rate: {kind: flat, value: 0.30}
+          losses: {carryforward_years: null}
+
+expected:
+  cash_tax:
+    value: [0.0, 0.0, 0.0, 12.0, 12.0]
+    engine_field: "out['cash_tax']  (capped, 2-year carryforward)"
+    composition: "a 100 loss at t=0 creates a 100-unit vintage. t=1,t=2 earn exactly 0 (nothing to relieve, nothing created). At t=2 the vintage is 2 YEARS old (t - vintage = 2 - 0 = 2 >= carryforward_years) and EXPIRES UNUSED, because no profit arose in t=1 or t=2 to draw against it. t=3 and t=4 each earn 40 with NO relief left (the pool is empty) -> 0.30x40 = 12 each."
+  losses_expired:
+    value: [0.0, 0.0, 100.0, 0.0, 0.0]
+    engine_field: "out['losses']['expired']"
+    composition: "the whole 100-unit vintage forfeits at t=2, in a single event, the period the 2-year clock runs out — not gradually and not at t=1"
+  losses_used:
+    value: [0.0, 0.0, 0.0, 0.0, 0.0]
+    engine_field: "out['losses']['used']"
+    composition: "ZERO relief is ever drawn — by the time profit returns (t=3), the vintage that could have sheltered it is already gone. This is what makes the shape a GENUINE forfeiture rather than a delayed benefit."
+  losses_relief_forgone_tax:
+    value: 30.0
+    engine_field: "out['losses']['relief_forgone_tax']"
+    composition: "100 (expired principal) x 0.30 (the loss-owning tax's own flat rate) = 30 — engine/layers/tax/run.py lines 509-512. The cash cost of the cap, in the same currency as cash_tax."
+  comparator_indefinite_cash_tax:
+    value: [0.0, 0.0, 0.0, 0.0, 0.0]
+    engine_field: "out['cash_tax']  (comparator_indefinite: carryforward_years: null)"
+    composition: >
+      SAME income path, SAME 30% flat rate, ONLY the cap removed. With no expiry the 100-unit
+      vintage survives to meet the profit at t=3/t=4 (40+40=80 of the 100 relieved, 20 left
+      standing at the horizon) and cash tax is 0 in EVERY period. The 24 total (12+12) the capped
+      run pays that this run does not is the forfeited relief, in cash rather than in the pool.
+
+mapping:
+  cash_tax: tax_cash_paid_this_period
+  losses_expired: loss_relief_forfeited_this_period
+  losses_used: loss_relief_drawn_this_period
+  losses_relief_forgone_tax: cash_cost_of_expiry
+  comparator_indefinite_cash_tax: tax_cash_paid_this_period_if_uncapped
+
+tolerance:
+  abs: 1.0e-9
+  why: >
+    Exact deterministic floating-point arithmetic, re-run directly from the cited test (see notes
+    for the exact reproduction command). No display rounding to forgive.
+
+notes: |
+  Reproduce with:
+    python3 -c "
+    from engine.layers.tax.run import run
+    inc = {'profit_before_allowances': [-100.0, 0.0, 0.0, 40.0, 40.0], 'turnover': [0.0]*5}
+    capped = run({'grid': {'periods': 5}, 'bases': inc,
+                  'taxes': [{'id': 'cit', 'base': 'profit', 'rate': {'kind': 'flat', 'value': 0.30},
+                             'losses': {'carryforward_years': 2}}]})
+    print(capped['cash_tax'], capped['losses']['expired'], capped['losses']['relief_forgone_tax'])"
+  -> [0.0, 0.0, 0.0, 12.0, 12.0] [0.0, 0.0, 100.0, 0.0, 0.0] 30.0 — matches `expected` exactly
+  (run myself, not copied blind from the test file).
+
+  WHY THIS IS THE SHARPEST OF THE FIVE SHAPES: per CLAUDE.md's own framing of this engine, "the
+  loss pool is a VECTOR by vintage, not a scalar. Expiry is not computable from a scalar." A
+  scalar running total (just "the pool balance") cannot know WHICH FRANC is about to turn 2 years
+  old — only a ledger keyed by vintage (period the loss arose) can. This is exactly the kind of
+  STATE the trade contract's compiler (engine/ledger/compile.py) does not have a verb for: `close()`
+  and `count()` read a resource's balance, not "the age structure of what makes up that balance."
+  TAXENG_VERDICT.md's analysis of this shape turns on whether a vintaged pool can be modelled as a
+  declared RESOURCE (one stock per vintage-cohort, or a synthetic ageing mechanism) rather than
+  needing a sixth verb — read that section for the answer, not this file.
+
+  The `comparator_indefinite` block is not a second gold — it is the SAME fact pattern with one
+  input changed, kept alongside the primary case for the same reason bfap.yaml cross-checks the
+  source's own three headline numbers: the forfeiture is only visible AS a forfeiture next to the
+  counterfactual where it does not happen.

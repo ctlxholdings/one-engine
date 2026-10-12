@@ -1,0 +1,111 @@
+meta:
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur les Métiers Rentables — Région du Nord\", p.29 (Guider) / p.51 (Lagdo, identical CEP), https://trust-fund-for-africa.europa.eu/system/files/2019-05/t05-eutf-sah-cm-02-01_giz_parse_nord.pdf"
+  registry_index: 17
+  accessed: 2026-08-11
+  kind: trade_case
+  resolution: L3          # 125 sacs x 15,000 — the source gives both
+  basis: one hectare, one irrigated off-season cycle
+  periods: 1
+  jurisdiction: CM
+  currency: XAF
+  mechanism: grow_then_sell
+  jurisdiction: CM
+  currency: XAF
+  trade: "Oignon / culture d'un hectare d'oignon (onion, 1 ha, contre-saison irriguée) — Guider/Lagdo communes, Nord region"
+  isic_class: "0113 — Growing of vegetables and melons, roots and tubers"
+
+# Picked deliberately for its TWO independent, verified source arithmetic errors (see notes) —
+# the flagship "arithmetic errors caught" case among the ten. grow_then_sell is 92 of 139
+# registry entries (66%), so it does not need mechanism-spread justification; this one earns
+# its slot on rigor value instead.
+
+inputs:
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # `sale` and `costs` are the runner's read of the SAME numbers already
+  # listed below; nothing is added or changed. NOTE what is deliberately
+  # EXCLUDED from `costs`: `charges_cycle` (709,000) is the source's own
+  # printed TOTAL, not a thirteenth line — including it would double-count,
+  # which is precisely the mistake an automatic sweep made here.
+  sale: {quantity: 125, unit: sac, price: 15000}
+  costs:
+    location_terrain: 40000
+    travaux_culturaux: 106000
+    carburant_arrosage: 224000
+    engrais_et_fumure: 150000
+    traitement_herbicide: 8400
+    main_oeuvre_epandage: 2000
+    recolte_et_transport: 30000
+  stocks:
+    surface: {value: 1, unit: "hectare"}
+    recolte_sacs: {value: 125, unit: "sacs"}
+  generators:
+    prix_par_sac: {value: 15000, unit: "FCFA / sac"}
+    valeur_produit: {value: 1875000, unit: "FCFA / cycle", composition: "125 sacs × 15,000 = 1,875,000 — verified exact"}
+  movements:
+    location_terrain: {value: 40000, unit: "FCFA / cycle", direction: out, kind: opex}
+    travaux_culturaux: {value: 106000, unit: "FCFA / cycle", direction: out, kind: opex,
+      composition: "défrichage 6,000 + labour 24,000 + semis 12,000 + sarclage 64,000"}
+    carburant_arrosage: {value: 224000, unit: "FCFA / cycle", direction: out, kind: opex}
+    engrais_et_fumure: {value: 150000, unit: "FCFA / cycle", direction: out, kind: opex,
+      composition: "NPK 80,000 + urée 54,000 + fongicide 16,000"}
+    traitement_herbicide: {value: 8400, unit: "FCFA / cycle", direction: out, kind: opex,
+      composition: "herbicide 6,400 + main d'œuvre 2,000"}
+    main_oeuvre_epandage: {value: 2000, unit: "FCFA / cycle", direction: out, kind: opex}
+    recolte_et_transport: {value: 30000, unit: "FCFA / cycle", direction: out, kind: opex,
+      composition: "récolte 20,000 + transport 10,000"}
+    charges_cycle: {value: 709000, unit: "FCFA / cycle", direction: out, kind: opex,
+      composition: "\"TOTAL DES CHARGES\" as printed by the source table — see notes, this does NOT sum from the line items above"}
+  gates: [acces_foncier, acces_intrants, acces_irrigation]
+  grid: {period: per_cycle, cycle_length: "saison (contre-saison irriguée)", annualization: 1}
+
+expected:
+  marge_cycle: {value: 1116000, unit: "FCFA / cycle", provenance: cited,
+    composition: "as printed in the source's own table, row 'MARGE BENEFICIAIRE' — see notes, this is NOT what the source's own numbers arithmetically produce"}
+  # the source's own two other printed totals, so all three can be checked
+  valeur_produit: {value: 1875000, unit: "FCFA / cycle"}
+  total_des_charges: {value: 709000, unit: "FCFA / cycle"}
+
+mapping:
+  valeur_produit: revenue
+  total_des_charges: cost_of_sales
+  marge_cycle: gross_margin
+
+# ONE FRANC. The source prints whole francs and its line items are round
+# thousands, so any gap at all is the source's own arithmetic, not display
+# rounding. Both known errors are six figures wide and must surface.
+tolerance:
+  abs: 1.0
+  why: >
+    every figure is printed in whole francs and the lines are round
+    thousands, so there is no display rounding to absorb — a gap of any size
+    is the source's own arithmetic
+
+notes: |
+  TWO independent, verified errors in the source's own printed numbers. Both are quoted here
+  and were independently re-derived (not just copied from the registry's `gaps:` note) before
+  transcription:
+
+  1. **The seven itemized cost lines above sum to 560,400 FCFA** (40,000 + 106,000 + 224,000 +
+     150,000 + 8,400 + 2,000 + 30,000 = 560,400) **but the source's own "TOTAL DES CHARGES"
+     row prints 709,000** — a 148,600 FCFA gap with no visible reconciling line anywhere in
+     the CEP. Either a cost line was omitted from the printed itemization, or the total itself
+     is wrong. `charges_cycle` is transcribed as the source's printed 709,000, not the
+     560,400 that the visible items add to.
+
+  2. **Given 709,000 as the charges figure, the CORRECT margin is
+     1,875,000 − 709,000 = 1,166,000 — which is exactly what the source's own PROSE text
+     states.** But the source's TABLE cell labeled "MARGE BENEFICIAIRE" prints **1,116,000**
+     — a transposed-digit typo (1,166,000 → 1,116,000) against its own prose two sentences
+     away in the same document.
+
+  `expected.marge_cycle` above is set to **1,116,000** — the table's printed figure — because
+  the task brief is explicit that `expected` should record "what the SOURCE computed,
+  verbatim," and the table is the driver-block source the rest of this entry is transcribed
+  from. Whichever of 1,116,000 / 1,166,000 a reviewer decides is the "right" oracle value, the
+  choice should be made deliberately, not by accident — a naive gold built by taking "whatever
+  number is nearest the total" would silently pick one without ever knowing there were two.
+
+  Other notes: yield fragility is discussed in the source's own prose ("un fort taux de
+  rendement par producteur peut occasionner une baisse des prix") but not quantified or
+  reflected in the 125-sac figure; this is a single-season budget with no inter-seasonal
+  storage economics.

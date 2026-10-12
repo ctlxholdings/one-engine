@@ -1,0 +1,134 @@
+# Transcribed EXACTLY as published. Verified by hand against the primary PDF
+# (curl + pdftotext). This is a cautionary, narrative worked example: a
+# PROMISED (planned) scenario and a REALIZED (actual) scenario for the same
+# 5ha tomato investment. The promised scenario is fully derivable from its
+# own stated inputs; the realized scenario's final loss figure is internally
+# consistent with itself but its intermediate loss-cascade is not fully
+# reconstructable from the prose alone (flagged below).
+
+meta:
+  source: >
+    FAO, RuralInvest Module 3 — "Detailed Project Formulation and Analysis"
+    (FAO Investment Centre, Oct 2007, 106pp), Chapter II, box "THE SEDUCTIVE
+    TOMATO", p.16.
+    https://www.fao.org/4/a1421e/a1421e00.pdf
+  accessed: "2026-08-11"
+  licence: >
+    (c) FAO 2007. "All rights reserved. Reproduction and dissemination of
+    material ... for educational or other non-commercial purposes are
+    authorized without any prior written permission from the copyright
+    holders provided the source is fully acknowledged. Reproduction ... for
+    resale or other commercial purposes is prohibited without written
+    permission." Transcribed here, with full citation, for
+    engine-verification/research use (non-commercial).
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L3: realized_income_per_ha's own note is explicit — "4 t/ha x $0.60/kg
+  # x 1000 kg/t = $2,400/ha" — quantity x price x a stated unit conversion.
+  # Price is restated below in USD/t (600 = 0.6 x 1,000) so the printed "4"
+  # multiplies out directly; this is the SAME REALIZED scenario as the
+  # sibling atlas_growsell_tomato_loss.yaml (same source, same numbers).
+  resolution: L3
+  basis: >
+    per hectare, one season — REALIZED scenario (post-loss yield x
+    post-transport price) against the PROMISED cost base (the same shared
+    cost figure the promised scenario also uses)
+  periods: 1
+  jurisdiction: null   # source states no geography — "illustrative... pedagogical composite" (same disclaimer as the atlas sibling)
+  currency: USD
+
+inputs:
+  # realized_saleable_yield_t_per_ha (4, as printed) x price restated in
+  # USD/t (600 = realized_avg_price_after_transport_usd_per_kg 0.60 x 1,000)
+  sale: {quantity: 4, unit: t, price: 600}
+  # the ONE cost line the source gives for either scenario — "lump cost, no
+  # labor breakdown given." `irrigation_investment_usd` (50,000) is
+  # EXCLUDED: it is a TOTAL across the full 5 ha, not a per-ha figure, and
+  # neither verified relationship below (promised or realized) references
+  # it.
+  costs:
+    promised_cost_per_ha_usd: 2750
+  planted_area_ha: 5
+  irrigation_investment_usd: 50000    # "irrigation system, a small building for
+                                       # selection and packing, and the equipment
+                                       # needed for cultivating 5 ha of land"
+
+  # ── promised (planned) scenario ─────────────────────────────────────────
+  promised_yield_t_per_ha: 6.5
+  promised_cost_per_ha_usd: 2750
+  promised_conservative_sale_price_usd_per_kg: 1.50   # "sometimes it got as
+                                                       # high as $2.50" but the
+                                                       # $1.50 figure is the one
+                                                       # used for the promised
+                                                       # income calculation
+
+  # ── realized (actual) scenario ──────────────────────────────────────────
+  realized_yield_t_per_ha: 6.25
+  loss_selection_packing_pct: 8
+  loss_transport_to_local_market_pct: 15
+  local_market_price_before_drop_usd_per_kg: 1.80
+  local_market_price_after_drop_usd_per_kg: 0.50
+  transport_cost_to_regional_market_usd_per_kg: 0.40
+  regional_market_gross_price_usd_per_kg: 1.20
+  loss_transport_to_regional_market_pct: 10   # "poor road condition"
+  final_local_regional_sale_price_after_transport_usd_per_kg: 0.60   # average, as stated
+
+notes: |
+  The PROMISED scenario is fully derivable and checks out exactly:
+    - promised_income_per_ha = 6.5 t/ha x $1.50/kg x 1000 kg/t = $9,750/ha --
+      matches the source's own "$9,750/ha" exactly.
+    - promised_profit_per_ha = 9,750 - 2,750 = $7,000/ha -- matches "$7,000
+      profit ... for every hectare" exactly.
+    - promised_first_year_profit = 7,000/ha x 5 ha = $35,000 -- matches "We
+      will make $35,000 in profits in the first year" exactly.
+
+  The REALIZED scenario's headline numbers are internally consistent with
+  EACH OTHER but we could NOT reconstruct the intermediate physical-loss
+  cascade from 6.25 t/ha down to the final "4 t/ha" using only the three
+  named loss rates (8% selection/packing, 15% local-market transport, 10%
+  regional-market transport) and the narrative alone -- the text does not
+  state what fraction of the harvest was sold locally (at the crashed $0.50
+  price) versus shipped to the regional market (net $1.20-$0.40=$0.80/kg
+  before its own 10% transport loss), so the exact blend that produces "an
+  average price of $0.60/kg" is not decomposable from what is printed.
+  FLAGGED as an ambiguity in the source, not corrected. What IS internally
+  exact:
+    - realized_income_per_ha = 4 t/ha x $0.60/kg x 1000 kg/t = $2,400/ha --
+      matches "Their total income from each hectare has fallen to $2,400"
+      exactly.
+    - realized_loss_per_ha = 2,400 - 2,750 = -$350/ha -- matches "They are
+      loosing $350 per every hectare planted" exactly.
+    - The regional-market NET price (gross $1.20/kg less $0.40/kg transport
+      = $0.80/kg) is stated in the prose but never explicitly labelled or
+      combined into a formula in the source; recorded above as two separate
+      inputs (`regional_market_gross_price_usd_per_kg`,
+      `transport_cost_to_regional_market_usd_per_kg`) rather than invented as
+      a combined field.
+
+# only the REALIZED-scenario figures map — `sale`/`costs` above encode
+# that one scenario, so the PROMISED-scenario figures (promised_income_
+# per_ha_usd, promised_profit_per_ha_usd, promised_first_year_profit_usd)
+# are left unmapped: they use a different quantity/price basis (6.5 t/ha at
+# $1.50/kg) that a single gold template cannot hold alongside the realized
+# one.
+mapping:
+  realized_income_per_ha_usd: revenue
+  realized_loss_per_ha_usd: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    every figure in this entry reconciles exactly on independent
+    re-derivation (see notes); USD values print as whole dollars once
+    yield and price are combined, so any gap is a labelling error, not
+    source rounding
+
+expected:
+  promised_income_per_ha_usd: 9750
+  promised_profit_per_ha_usd: 7000
+  promised_first_year_profit_usd: 35000
+
+  realized_saleable_yield_t_per_ha: 4    # "sell an average of only 4 tons/ha"
+  realized_avg_price_after_transport_usd_per_kg: 0.60
+  realized_income_per_ha_usd: 2400
+  realized_loss_per_ha_usd: -350

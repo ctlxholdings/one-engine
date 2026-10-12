@@ -1,0 +1,135 @@
+meta:
+  source: "BFAP / PRF (with GSA & regional collaborators), \"Summer Crop Income & Cost Budgets 2024/25\", Table 2.1, p.10, https://www.opot.co.za/imgs/income-cost-budgets/2024-2025/prf-bfap-summer-crop-budgets-icb-2024-2025.pdf"
+  registry_index: 90
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: grow_then_sell
+  jurisdiction: ZA
+  currency: ZAR
+  trade: "Maize (Dryland, Bloedrivier) — 1 ha, KwaZulu-Natal, 2024/25 summer crop production season"
+  isic_class: "0111 — Growing of cereals (except rice), leguminous crops and oil seeds"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # Same source/table as bfap_maize_bloedrivier_2024_25.yaml (the worked
+  # example) — L3, same shape: rendement (7.0 t/ha) x prix_net_porte_ferme
+  # (3,248 ZAR/t), both printed.
+  resolution: L3
+  basis: per hectare, one summer season
+  periods: 1
+
+# Chosen as the BFAP representative (of 29 near-identical maize/soybean/sunflower budgets,
+# 90-118 in the registry) specifically because the source computes an explicit BREAK-EVEN
+# price AND yield — a computed-answer category none of the other nine transcribed golds
+# exercise, and one the task brief names explicitly as a valid "computed result." Also the
+# only South-Africa/ZAR crop-budget pick among the ten (Land Bank livestock, entry #127,
+# supplies the other ZAR jurisdiction point).
+
+inputs:
+  # rendement x prix_net_porte_ferme, both printed (see generators below)
+  sale: {quantity: 7.0, unit: t, price: 3248}
+  # the 13 individual variable-cost lines. `total_depenses_variables`
+  # (15,401) is EXCLUDED — it is the source's own printed "TOTAL VARIABLE
+  # EXPENDITURE" row, and per notes below the 13 lines actually sum to
+  # 15,399, not 15,401 (a 2 ZAR rounding gap in the source itself).
+  costs:
+    contracting: 0
+    crop_insurance: 864
+    fertilizer: 5289
+    lime: 786
+    seed: 4015
+    fuel: 1421
+    herbicide: 1219
+    insecticide_fungicide: 703
+    marketing_costs: 0
+    repairs_maintenance: 767
+    casual_labour: 335
+    aerial_spray: 0
+    other_expenditure: 0
+  stocks:
+    superficie: {value: 1, unit: "ha"}
+  generators:
+    rendement: {value: 7.0, unit: "t/ha", note: "\"Yield: Deterministic\" — the source's target/normal-weather yield, not a stochastic mean"}
+    prix_safex_simule: {value: 3798, unit: "ZAR/t", note: "SAFEX simulated producer price, 2025"}
+    deductions_totales: {value: 550, unit: "ZAR/t", note: "transport + grade + handling & commission + seed breeding & technology levy, bundled by the source into one deductions figure"}
+    prix_net_porte_ferme: {value: 3248, unit: "ZAR/t", composition: "prix_safex_simule (3,798) − deductions_totales (550) = 3,248 — verified exact"}
+    revenu_brut: {value: 22738, unit: "ZAR/ha", composition: "rendement (7.0) × prix_net_porte_ferme (3,248) = 22,736 — see notes, 2 ZAR off the source's printed 22,738"}
+  movements:
+    contracting: {value: 0, unit: "ZAR/ha", direction: out, kind: opex}
+    crop_insurance: {value: 864, unit: "ZAR/ha", direction: out, kind: opex, note: "SA commercial hail cover — see notes"}
+    fertilizer: {value: 5289, unit: "ZAR/ha", direction: out, kind: opex}
+    lime: {value: 786, unit: "ZAR/ha", direction: out, kind: opex}
+    seed: {value: 4015, unit: "ZAR/ha", direction: out, kind: opex}
+    fuel: {value: 1421, unit: "ZAR/ha", direction: out, kind: opex}
+    herbicide: {value: 1219, unit: "ZAR/ha", direction: out, kind: opex}
+    insecticide_fungicide: {value: 703, unit: "ZAR/ha", direction: out, kind: opex}
+    marketing_costs: {value: 0, unit: "ZAR/ha", direction: out, kind: opex}
+    repairs_maintenance: {value: 767, unit: "ZAR/ha", direction: out, kind: opex}
+    casual_labour: {value: 335, unit: "ZAR/ha", direction: out, kind: opex}
+    aerial_spray: {value: 0, unit: "ZAR/ha", direction: out, kind: opex}
+    other_expenditure: {value: 0, unit: "ZAR/ha", direction: out, kind: opex}
+    total_depenses_variables: {value: 15401, unit: "ZAR/ha", direction: out, kind: opex,
+      composition: "\"TOTAL VARIABLE EXPENDITURE\" as printed — see notes, the 13 line items above sum to 15,399, not 15,401"}
+  grid:
+    period: per_cycle
+    cycles_per_year: 1
+    season: "2024/25 summer crop production season (Oct planting → Apr/May harvest, single annual cycle)"
+    break_even_yield_t_ha: 4.74
+    break_even_price_zar_t: 2200
+
+expected:
+  marge_brute: {value: 7338, unit: "ZAR/ha", provenance: cited,
+    composition: "\"3.1 GROSS MARGIN R/HA\" = revenu_brut (22,738) − total_depenses_variables (15,401) — printed as 7,338; arithmetic on the printed inputs gives 7,337, a 1 ZAR gap, see notes"}
+  marge_brute_par_tonne: {value: 1048, unit: "ZAR/t", provenance: cited, note: "\"3.2 GROSS MARGIN R/TON\" — printed directly, not independently re-derived here"}
+  total_depenses_variables_par_tonne: {value: 2200, unit: "ZAR/t", provenance: cited,
+    note: "labeled by the source itself as the break-even price — matches break_even_price_zar_t in the grid exactly"}
+
+# only the per-hectare headline maps — the two per-tonne figures are ratios
+# with no canonical equivalent
+mapping:
+  marge_brute: gross_margin
+
+# HALF A RAND, deliberately tight — matches bfap_maize_bloedrivier_2024_25.yaml
+# (same source/table). BFAP prints whole rand, so 0.5 is exactly the display
+# rounding; the notes below document a real 1 ZAR gap in the source's own
+# arithmetic (7.0x3,248 - sum-of-13-lines = 7,337, not the printed 7,338),
+# so a DIVERGE here is the source's own rounding chain, not a mislabel.
+tolerance:
+  abs: 0.5
+  why: >
+    every figure in Table 2.1 is printed as a whole rand, so 0.5 is exactly
+    the display rounding; a gap wider than that is BFAP's own arithmetic and
+    must surface as a divergence
+
+notes: |
+  THREE tiny (immaterial) rounding gaps found on independent re-derivation, all worth
+  recording even though none changes the economic story:
+  1. rendement (7.0 t/ha) × prix_net_porte_ferme (3,248 ZAR/t) = **22,736 ZAR/ha**, but the
+     source's own "GROSS INCOME" row prints **22,738** — a 2 ZAR/ha gap.
+  2. The 13 published variable-cost line items (0+864+5,289+786+4,015+1,421+1,219+703+0+767+
+     335+0+0) sum to **15,399 ZAR/ha**, but the source's own "TOTAL VARIABLE EXPENDITURE" row
+     prints **15,401** — a further 2 ZAR/ha gap.
+  3. revenu_brut (22,738) − total_depenses_variables (15,401) = **7,337**, but the source's own
+     "3.1 GROSS MARGIN R/HA" prints **7,338** — a further 1 ZAR/ha gap.
+  All three are consistent with the underlying BFAP model carrying sub-cent (or sub-Rand)
+  precision internally and rounding each displayed line independently before the next
+  multiplication or sum — not a transcription slip on any side, and small enough (≤0.03% of
+  the margin) to be immaterial to any decision this gold would support. Flagged because the
+  task asks for arithmetic issues to be caught, however
+  small, not because they matter economically. Worth checking whether this ~1-2 ZAR rounding
+  artifact recurs across the other 28 BFAP entries before assuming it is unique to this one.
+
+  Break-even fields: `total_depenses_variables_par_tonne` (2,200 ZAR/t) is explicitly labeled
+  by the source as the break-even price, and matches `break_even_price_zar_t` in the grid
+  exactly — the source computed the same number two different ways and printed it twice,
+  consistently. `break_even_yield_t_ha` (4.74) is the yield at which 7.0 t/ha × the actual
+  price would net to zero at the stated cost level — printed by the source, not re-derived
+  here.
+
+  Structural gaps common to the whole BFAP family (all cited in the registry's own `gaps:`,
+  not specific to this entry): overhead/fixed costs are EXPLICITLY EXCLUDED by source design
+  (only direct variable costs are carried — this is a deliberate scope choice by BFAP, stated
+  in the source, not an omission); no depreciation schedule (own-machinery assumed, no capex
+  stock or asset life given); no land tenure cost (source assumes a functioning rental market,
+  which does not describe most African smallholder contexts); crop insurance is South African
+  commercial hail cover, largely absent in West/African smallholder contexts; no financing
+  structure, no tax, no working-capital timing, no risk/coping behaviour under a yield or
+  price shock (the source gives a sensitivity grid, not a behavioural response).

@@ -1,0 +1,189 @@
+# YIELD HARVEST — an abattoir/dressing-percentage case, and the only one in
+# this harvest where the price is BUILT UP FROM COST rather than quoted: a
+# steer is converted twice (live -> carcass at a dressing percentage, carcass
+# -> packaged meat at a carcass yield), the processing fee is struck on the
+# INTERMEDIATE weight (carcass), and the final price per pound is the whole
+# stack divided by the FINAL weight. Every factor is printed separately: live
+# weight, dressing %, carcass weight, carcass price/lb, carcass yield %,
+# packaged weight, slaughter fee, processing rate/lb, total, final price/lb.
+#
+# It also contradicts itself once, in print, in the cell that shows its own
+# working -- see notes.
+
+meta:
+  source: >
+    Michigan State University Extension Beef Team (Jeannine Schweihofer, Kevin
+    Gould, Jerry Lindquist, Jason Rowntree), "Grass-Finished Freezer Beef
+    Pricing Worksheet", updated 3/2018, p.1 ("Beef Pricing Example" and
+    "Product Pricing Calculation" blocks).
+    https://www.canr.msu.edu/meat_marketing_processing/uploads/files/Grass%20Finished%20Freezer%20Beef%20Pricing%20Example%203-2018.pdf
+  accessed: "2026-08-12"
+  licence: >
+    Michigan State University Extension publication, publicly hosted PDF; no
+    explicit reuse licence stated in the document. Transcribed here, with full
+    citation, for engine-verification / research use only.
+  kind: trade_case
+  resolution: L2
+  basis: >
+    one grass-finished steer sold as freezer beef, February 2018 prices,
+    Michigan; a single animal, a single pass through slaughter and processing
+  periods: 1
+  mechanism: null
+  # DELIBERATELY NULL, and the brief permits it. This is not grow, assemble,
+  # extract, identity or separate:
+  #   * not `separate` -- there is ONE priced output (packaged beef). Hide,
+  #     offal and bone leave the process and are never priced or even named;
+  #     they are pure shrinkage in this document's accounting.
+  #   * not `extract` as this corpus uses it -- the price is not revenue less
+  #     cost. It is a COST-PLUS BUILD: carcass value PLUS slaughter fee PLUS
+  #     cutting fee equals "Total Packaged Carcass Value", which is then
+  #     divided by the final weight to quote a price. Adding the processing
+  #     cost to the value is the whole point of the worksheet.
+  #   * the conversion is TWO-STAGE with the fee struck on the middle stage:
+  #     the cutting-and-wrapping charge is per pound of CARCASS, not per pound
+  #     of the meat the customer takes home, so a yield change moves the
+  #     denominator without moving that cost.
+  # The right name for "a two-stage yield cascade whose per-unit charge is
+  # levied on the intermediate weight" does not exist in the vocabulary yet.
+  jurisdiction: US          # Michigan
+  currency: USD
+
+inputs:
+  # ── stage 1: live animal -> carcass ───────────────────────────────────────
+  live_weight_lb: 1075
+  dressing_percentage_pct: 54          # source: grass-finished 53-58%,
+                                       # grain-fed 62-64%
+  carcass_weight_lb: 580.5             # 1,075 x 0.54
+  carcass_price_usd_per_lb: 4.00       # "agreement between buyer/seller"
+  final_carcass_price_usd: 2322.00     # 580.5 x $4.00
+  live_weight_market_price_usd_per_lb: 2.16   # $2,322.00 / 1,075 lb
+
+  # ── stage 2: carcass -> packaged meat ─────────────────────────────────────
+  carcass_yield_pct: 72                # "see yield grades below": YG3 = 70-74%
+  final_packaged_weight_lb: 418        # 580.5 x 0.72, printed rounded
+  final_packaged_weight_lb_unrounded: 417.96   # the figure the source's own
+                                               # last line actually divides by
+
+  # ── the cost stack, and where each piece is struck ────────────────────────
+  slaughter_cost_usd: 90.00            # flat fee from packer -- per ANIMAL
+  processing_rate_usd_per_lb_carcass: 0.51     # per lb of CARCASS weight
+  processing_and_packaging_cost_usd: 296.06    # 580.5 x $0.51
+  total_packaged_carcass_value_usd: 2708.06    # 2,322 + 90 + 296.06
+  final_packaged_price_usd_per_lb: 6.48        # 2,708.06 / 417.96
+
+  # ── the market reference the worksheet opens with ─────────────────────────
+  avg_retail_price_grass_fed_usd_per_lb: 7.43  # 2/2018
+
+  # ── THE RUNNER'S COST LINES ───────────────────────────────────────────────
+  # The worksheet's OWN two out-of-pocket charges, each printed separately
+  # with its own basis, transcribed as LINES and not as any total. This is
+  # the only one of the nine files in this pass that carries a genuine
+  # published cost structure: real money, actually spent, named by the
+  # source, with the basis of each charge stated.
+  #   slaughter          $90.00   flat fee from the packer, per ANIMAL
+  #   cut and wrap      $296.06   580.5 lb CARCASS x $0.51/lb (prints 296.055,
+  #                               shown rounded to the cent in the source)
+  # HAND CHECK — the two lines re-add INTO the source's only printed total,
+  # which is a VALUE and not a cost total:
+  #   90.00 + 296.06                      =   386.06   (never printed anywhere)
+  #   2,322.00 carcass value + 386.06     = 2,708.06   = the printed
+  #                                                      "Total Packaged
+  #                                                      Carcass Value"  EXACT
+  # So the lines reconcile exactly against the one total the sheet strikes.
+  # No `cost_of_sales` mapping is added, and the reason is in `notes`.
+  costs:
+    slaughter_cost_usd: 90.00
+    processing_and_packaging_cost_usd: 296.06
+
+expected:
+  carcass_weight_lb: 580.5
+  final_carcass_price_usd: 2322.00
+  live_weight_market_price_usd_per_lb: 2.16
+  final_packaged_weight_lb: 418
+  processing_and_packaging_cost_usd: 296.06
+  total_packaged_carcass_value_usd: 2708.06
+  final_packaged_price_usd_per_lb: 6.48
+
+mapping: {}
+# NOTHING IS MAPPED, on purpose. `to_template`'s L2 path wants `revenue` and a
+# `costs` bag and computes revenue - costs. This worksheet computes
+# value + costs: the $90 slaughter fee and the $296.06 cutting fee are ADDED
+# to the $2,322 carcass value, not subtracted from it, because the worksheet is
+# working out what to CHARGE, not what was earned. Feeding it through the
+# revenue-minus-cost converter would produce $1,935.94 -- a number that appears
+# nowhere in the source and means nothing -- and would score as a divergence
+# about co-products when it is really a statement that the converter has one
+# sign and this document has the other. Kept unmapped so the divergence signal
+# stays honest; the yield cascade above is the part worth testing.
+
+tolerance:
+  abs: 0.01
+  why: >
+    the worksheet prints dollars to the cent and weights to one decimal, and
+    every extension re-multiplies to the cent (see notes). One cent is the
+    source's own printing precision.
+
+notes: |
+  RE-DERIVED BY HAND (python):
+    1,075 x 0.54          =   580.50    -- printed 580.5 lbs         OK exact
+    580.5 x 4.00          = 2,322.00    -- printed $2,322.00         OK exact
+    2,322.00 / 1,075      =     2.1600  -- printed $2.16/lb          OK exact
+    580.5 x 0.72          =   417.96    -- printed 418 lbs           OK rounded
+    580.5 x 0.51          =   296.055   -- printed $296.06           OK rounded
+    2,322 + 90 + 296.06   = 2,708.06    -- printed $2,708.06         OK exact
+    2,708.06 / 417.96     =     6.4792  -- printed $6.48/lb          OK rounded
+
+  THE CONTRADICTION, IN THE SOURCE'S OWN SHOWN WORKING. The carcass-weight row
+  reads:
+      Carcass Weight        580.5 lbs.        (1,200 lbs x 0.54)
+  but the live weight two rows above is 1,075 lbs, and 1,200 x 0.54 = 648, not
+  580.5. It is 1,075 x 0.54 that gives 580.5 exactly. The parenthetical is a
+  stale label carried over from the companion GRAIN-FINISHED worksheet, whose
+  example animal is a 1,200 lb steer -- the sheet shows its working and the
+  working shown is not the working done. Kept as printed. Everything else on
+  the page is consistent with 1,075 lbs, including the $2.16/lb live-weight
+  comparison, which only reproduces if the divisor is 1,075.
+
+  A SECOND, SMALLER ONE: the packaged weight is printed as "418 lbs." in the
+  yield row but the final price line divides by "417.96 lbs." Both are shown on
+  the same page. The unrounded figure is the one that produces the printed
+  $6.48; had 418 been used the answer would be $6.4787, which also rounds to
+  $6.48, so nothing downstream breaks -- but the sheet does print two different
+  values for the same weight, and both are recorded above.
+
+  WHAT IS NOT PRICED, AND WHY THAT MATTERS FOR CO-PRODUCTS. 1,075 lb of live
+  animal becomes 418 lb of saleable meat: 61% of the mass leaves the process.
+  Hide, head, offal, blood, bone and fat trim are all real, all separable, and
+  several are genuinely marketable at an abattoir -- and this worksheet prices
+  none of them, does not name them, and treats the entire 657 lb as shrinkage.
+  That is the honest position of a FARMER selling freezer beef, who never owns
+  the fifth quarter (the processor keeps it), and it is exactly the wrong
+  position for an abattoir, which lives on it. Two different businesses, the
+  same physical conversion, and a mass balance that is complete for one of them
+  and 61% missing for the other. The companion gold
+  sep_msstate_p3489_beef_cutout.yaml takes the same conversion from the
+  carcass side and splits the meat ten ways.
+
+  A COST SIDE — BUT NO PUBLISHED COST TOTAL. This file DOES have a genuine
+  cost structure, and it is the only one in its harvest batch that does, so
+  `inputs.costs:` is now declared above with the worksheet's own two lines:
+  the $90.00 flat slaughter fee (per animal) and the $296.06 cutting and
+  wrapping charge (580.5 lb of carcass at $0.51/lb). Both are real money
+  actually paid to a processor, both are printed separately by the source
+  with their own basis, and neither is a subtotal of the other. They re-add
+  exactly: 90.00 + 296.06 = 386.06, and 2,322.00 + 386.06 = 2,708.06, the
+  printed "Total Packaged Carcass Value", to the cent.
+
+  WHY NO `cost_of_sales` MAPPING, all the same. The sheet never strikes a
+  cost total. $386.06 appears nowhere on the page — the only total it
+  prints, $2,708.06, is a VALUE that contains the $2,322.00 carcass
+  agreement price alongside the two fees, and binding it to `cost_of_sales`
+  would tell the checker that a number three-quarters composed of the
+  animal's own agreed value is what the sold thing cost. That is the same
+  sign confusion the `mapping` comment above already refuses: this
+  worksheet ADDS its costs to a value to reach a price to CHARGE, where the
+  converter SUBTRACTS costs from revenue to reach what was earned. Declaring
+  the two lines is transcription; declaring a total the source never struck
+  would be authorship. Left unmapped, on purpose, so the two published
+  charges are on the record and the missing total is visible as the reason
+  the money leg still cannot close.

@@ -1,0 +1,168 @@
+id: svc_telecom_airtel_africa
+title: "Airtel Africa plc investor factsheet — FY2023 (year ended 31 March 2023): subscribers, ARPU, revenue, EBITDA"
+
+meta:
+  source:
+    - "Airtel Africa plc, 'Airtel Africa plc Factsheet — Transforming lives' (data as at 30 June 2023, headline results for the year ended 31 March 2023): https://www.airtel.africa/assets/pdf/H1-2023/Airtel-Africa-plc_Factsheet_1Aug2023.pdf"
+  accessed: "2026-08-12"
+  licence: "Publicly published investor-relations factsheet (Airtel Africa plc, London Stock Exchange: AAF / Nigerian Exchange: AIRTELAFRI); no explicit reuse licence stated in the document."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, HARVESTED FOR SERVICES-AT-SCALE ───────────
+  # L2: the factsheet's KPI table prints Revenue and Underlying EBITDA
+  # directly (both in USD millions) -- not a printed quantity x price pair
+  # this gold multiplies (ARPU x subscriber base is a SEPARATE, unrelated
+  # composition the source does NOT itself use to build Revenue -- see
+  # notes for the reconciliation gap this produces when checked by hand).
+  # PAN-AFRICAN GROUP, ONE JURISDICTION CODE STANDS IN FOR FOURTEEN:
+  # Airtel Africa plc operates in 14 African countries (Nigeria; Kenya,
+  # Malawi, Rwanda, Tanzania, Uganda, Zambia; Chad, DRC, Gabon, Madagascar,
+  # Niger, Republic of the Congo, Seychelles) as one consolidated group,
+  # reporting in USD, with a primary listing in London and a secondary
+  # listing on the Nigerian Exchange. This engine's `meta.jurisdiction`
+  # takes exactly one ISO 3166-1 alpha-2 code; NG is used because Nigeria
+  # is Airtel Africa's single largest market by revenue and its secondary
+  # listing venue -- NOT a claim that the figures below are Nigeria-only.
+  resolution: L2
+  basis: "whole Airtel Africa plc group, 14 African countries, fiscal year ended 31 March 2023"
+  periods: 1
+  mechanism: capacity_service
+  jurisdiction: NG
+  currency: USD
+
+inputs:
+  # ── the physics this gold was harvested to test: subscribers, ARPU,
+  # capacity utilisation. What the source gives, and what it does NOT:
+  # it publishes DEMAND-side KPIs (subscriber counts, ARPU, data usage)
+  # in rich detail, but NO capacity ceiling of any kind (no stated maximum
+  # network capacity, spectrum headroom, or site-tenancy limit against
+  # which "32,226 sites" could be read as over- or under-utilised) --
+  # recorded as a genuine gap in what this specific factsheet publishes,
+  # per RULE 1 (never invent a utilisation rate).
+  total_customer_base_million: {value: 140.0, unit: "million subscribers",
+    label_as_printed: "Total customer base", prior_year_million: 128.4,
+    reported_currency_change_pct: 9.0}
+  data_customer_base_million: {value: 54.6, unit: "million subscribers",
+    label_as_printed: "Data customer base", prior_year_million: 46.7,
+    reported_currency_change_pct: 16.9}
+  mobile_money_customer_base_million: {value: 31.5, unit: "million subscribers",
+    label_as_printed: "Mobile money customer base", prior_year_million: 26.2,
+    reported_currency_change_pct: 20.4}
+  arpu_usd_per_month: {value: 3.3, unit: "USD/month",
+    label_as_printed: "ARPU", prior_year_usd: 3.2,
+    reported_currency_change_pct: 1.8, constant_currency_change_pct: 7.4}
+  network_sites: {value: 32226, unit: sites,
+    label_as_printed: "32,226 sites (90.6% 4G)",
+    note: "90.6% is the SHARE OF SITES upgraded to 4G, not a capacity utilisation rate -- no site-capacity ceiling (max tenants/traffic per site) is published anywhere in this factsheet"}
+  fibre_km: {value: 71311, unit: km, label_as_printed: "71,311+ km of fibre"}
+  employees: {value: 4000, unit: people, label_as_printed: "over 4,000 dedicated employees"}
+
+  revenue: 5255   # USD millions, "Revenue", year ended 31 Mar 2023
+  # No itemised opex/COGS breakdown is published in this 2-page factsheet
+  # (it is a headline-KPI summary, not a full income statement) -- the ONE
+  # cost line below is DERIVED from two lines the source DOES print
+  # (Revenue and Underlying EBITDA), not itself a printed line; see notes
+  costs:
+    opex_below_ebitda: 2680   # = 5255 - 2575 (Revenue less Underlying EBITDA)
+
+expected:
+  revenue_usd_m:
+    value: 5255
+    label_as_printed: "Revenue"
+    prior_year_usd_m: 4714
+    reported_currency_change_pct: 11.5
+    constant_currency_change_pct: 17.6
+  underlying_ebitda_usd_m:
+    value: 2575
+    label_as_printed: "Underlying EBITDA"
+    prior_year_usd_m: 2311
+    reported_currency_change_pct: 11.4
+    constant_currency_change_pct: 17.3
+  underlying_ebitda_margin_pct:
+    value: 49.0
+    label_as_printed: "Underlying EBITDA margin"
+    prior_year_pct: 48.8
+  profit_before_tax_usd_m:
+    value: 1034
+    label_as_printed: "Profit before tax"
+    prior_year_usd_m: 1224
+    reported_currency_change_pct: -15.5
+  capex_usd_m:
+    value: 748
+    label_as_printed: "Capex"
+    prior_year_usd_m: 656
+    reported_currency_change_pct: 14.0
+  operating_free_cash_flow_usd_m:
+    value: 1827
+    label_as_printed: "Operating free cash flow"
+    prior_year_usd_m: 1655
+    reported_currency_change_pct: 10.4
+  net_debt_usd_m:
+    value: 3524
+    label_as_printed: "Net debt"
+    prior_year_usd_m: 2941
+  leverage_times:
+    value: 1.4
+    label_as_printed: "Leverage (net debt / underlying EBITDA)"
+    prior_year_times: 1.3
+
+mapping:
+  revenue_usd_m: revenue
+  underlying_ebitda_usd_m: gross_margin
+
+# HALF A MILLION DOLLARS, deliberately tight -- the factsheet prints every
+# headline figure to the nearest USD million with no further decimal shown
+# anywhere, and the ONE derived figure this gold introduces (opex_below_
+# ebitda) is exact arithmetic (5,255 - 2,575 = 2,680 with no rounding step
+# of my own), so any gap beyond that display rounding is real
+tolerance:
+  abs: 0.5
+  why: >
+    every headline KPI in the factsheet is printed to the nearest USD
+    million; the gross_margin check reproduces Underlying EBITDA (2,575)
+    by construction from Revenue (5,255) less the derived opex line
+    (2,680 = 5,255 - 2,575) -- a tautology by design (see notes for why),
+    so 0.5 exists to absorb floating-point noise and any real gap would
+    have to come from a transcription error, not the derivation itself
+
+notes: |
+  MAPPING NOTE, read before treating this as a strong divergence test: `gross_margin` is checked
+  against Underlying EBITDA (2,575), but the ONE cost line this gold declares (`opex_below_ebitda`,
+  2,680) is ITSELF derived as Revenue (5,255) minus Underlying EBITDA (2,575) -- so the engine's
+  computed gross_margin (5,255 - 2,680 = 2,575) matches the source's printed EBITDA BY
+  CONSTRUCTION, not as an independent check. This is deliberate and disclosed rather than hidden:
+  the factsheet is a 2-page headline-KPI summary with no itemised income statement (no COGS,
+  network opex, SG&A lines broken out anywhere), so there is no OTHER way to reach a checkable
+  cost_of_sales/gross_margin pair from what this specific document publishes. The genuinely
+  independent check this gold carries is narrower: that Revenue (5,255) and Underlying EBITDA
+  (2,575) are BOTH correctly transcribed and BOTH type as money through the compiler, which is a
+  smaller but real thing to get wrong (a transcription slip on either number would still surface as
+  a `diverge`, since the derivation for `opex_below_ebitda` is done ONCE at file-authoring time,
+  by hand, not recomputed from the engine's own output).
+
+  ARPU x SUBSCRIBERS DOES NOT RECONCILE TO REVENUE, checked by hand, and NOT used as this gold's
+  revenue figure for exactly this reason: ARPU ($3.3/month) x 12 months x total customer base at
+  year-end (140.0 million) = $5,544 million, against the printed Revenue of $5,255 million -- a
+  $289 million (5.5%) gap. This is a real property of how the two KPIs are defined, not a
+  transcription error: ARPU is computed by Airtel Africa over the AVERAGE subscriber base across
+  the period (which grew all year, from 128.4 million to 140.0 million), not the CLOSING balance,
+  and covers a narrower revenue base (predominantly mobile service revenue) than total Group
+  Revenue (which also includes other services). Flagged explicitly because a naive "quantity x
+  price" (L3) construction of this gold, using total_customer_base x arpu x 12, would have LOOKED
+  plausible and PRODUCED A WRONG revenue figure -- exactly why `resolution: L2` (revenue transcribed
+  directly, ARPU and subscriber counts kept as separate descriptive KPIs) was chosen over `L3`
+  here, even though both a quantity and a price ARE published.
+
+  CAPACITY UTILISATION: this factsheet publishes rich DEMAND-side KPIs (three separate subscriber
+  bases, ARPU, growth rates) but no capacity ceiling at all -- "32,226 sites (90.6% 4G)" states how
+  many of the sites are technologically upgraded to 4G, not how full any site is relative to a
+  maximum. No tenancy ratio, spectrum utilisation, or per-site subscriber ceiling is published
+  anywhere in this 2-page document. A richer capacity/utilisation story (e.g. a tower company's
+  colocation/tenancy ratio) would need a different published source than this one; recorded as a
+  genuine gap in what THIS document gives, not filled with an invented ceiling.
+
+  Airtel Africa's own scope statement, transcribed verbatim: "Airtel Africa is a leading operator
+  of affordable and innovative mobile services in 14 African countries: Nigeria; Kenya, Malawi,
+  Rwanda, Tanzania, Uganda and Zambia (together 'East Africa'); and Chad, Democratic Republic of the
+  Congo (DRC), Gabon, Madagascar, Niger, Republic of the Congo (Congo B) and the Seychelles
+  (together 'Francophone Africa'). We are the number 1 or number 2 mobile service provider by
+  customer market share in 13 out of 14 markets."

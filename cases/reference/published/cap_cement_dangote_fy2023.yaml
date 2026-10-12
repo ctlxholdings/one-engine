@@ -1,0 +1,308 @@
+id: cap_cement_dangote_fy2023
+title: "Dangote Cement Plc — FY2023 audited results: 52.0Mta nameplate cement capacity across ten countries vs 27.28Mt actually sold (52.5% of ceiling), with plant-by-plant capacity and country-by-country volume printed separately"
+
+# ── WHY THIS FILE EXISTS ────────────────────────────────────────────────
+# THE THROUGHPUT CEILING, PUBLISHED BY THE OPERATOR ITSELF. Almost every
+# capacity source in the wild prints one number: what was produced. This one
+# prints the CEILING and the ACTUAL as two independent figures, plant by
+# plant and country by country, in the same document — 52.0Mta of installed
+# cement capacity against 27.28Mt sold. The gap (24.7Mt, 47.5% of the
+# nameplate) is the short side made visible: `sold = min(demand, available)`
+# with demand binding, at continental scale and in an audited filing.
+#
+# It also contains a case the corpus has not had: Senegal, where sales
+# (1.6Mt) EXCEED the printed nameplate (1.5Mta) and the source itself calls
+# that "operating at full capacity" — proof that a published nameplate is a
+# rated figure, not a hard physical wall. See notes.
+
+meta:
+  source:
+    - "Dangote Cement Plc, 'FULL YEAR 2023 AUDITED RESULTS', 1st March 2024 (results statement to the Nigerian Exchange). p.2 (headline volumes), p.3 'About Dangote Cement' (the plant-by-plant nameplate capacity list: Obajana 16.25Mta, Ibese 12Mta, Gboko 4Mta, Okpella 3Mta, Nigeria total 35.25Mta, group total 52.0Mta, and the nine pan-African country capacities), p.4 'Summary Operating Review' (volumes / revenue / EBITDA table), pp.5-7 'Business Review' country-by-country commentary (each country's nameplate and its sales volume), pp.8-9 'Financial Review' (summary table, manufacturing and operating costs, profitability). https://cement.dangote.com/wp-content/uploads/2024/03/Dangote-Cement-FY2023-Results-Statement-Final.pdf"
+  accessed: "2026-08-12"
+  licence: >
+    Public regulatory disclosure by a Nigerian Exchange-listed company (NGX: DANGCEM), published on
+    the company's own investor-relations site for market dissemination. No explicit reuse licence is
+    stated in the document. Figures transcribed for verification/testing only, following this
+    corpus's established practice with other listed-company filings already in `cases/golds/`
+    (`agro_sugar_hippo_valley_zw_2020.yaml`, `svc_telecom_airtel_africa.yaml`,
+    `cell_mfi_asa_international_2022.yaml`).
+  kind: trade_case
+  # L2, not L3: the source does NOT print a quantity x price pair anywhere.
+  # It prints VOLUME (tonnes) and REVENUE (naira) as two separate rows and
+  # never a per-tonne price, so revenue cannot be re-derived from a printed
+  # price — only the volume ceiling arithmetic and the money subtotals can be
+  # checked. That is exactly what `expected` and `mapping` below check.
+  resolution: L2
+  basis: "Dangote Cement Plc consolidated group, one financial year (FY ended 31 December 2023), with the FY2022 comparative column from the same tables; capacity figures are the standing nameplate as at the reporting date"
+  periods: 1
+  mechanism: make_to_order
+  # TAG IS IMPERFECT AND SAID SO. The 16-cell grid (engine/ledger/mechanisms.py)
+  # places this at create x physical = "Manufacturer", which is right. But the
+  # corpus's create-x-physical TAGS are grow_then_sell / make_to_order /
+  # extract / separate, and cement is made to STOCK, not to order — it is
+  # produced continuously against a kiln's rated output and sold from a yard,
+  # which is precisely why a ceiling and an actual can diverge by 47% for a
+  # whole year without the business stopping. There is no `make_to_stock` tag;
+  # `make_to_order` is the nearest and is wrong in the one respect that
+  # matters to this gold. Flagged, not silently absorbed.
+  cell: "create x physical (Manufacturer)"
+  transformation: "assemble (limestone + additives -> clinker -> cement), preceded by extract (own quarries: 'a fully integrated quarry-to-customer producer', p.3). Two transformation kinds in one business, both from the allowed list."
+  jurisdiction: "NG (parent and 35.25Mta of the 52.0Mta); pan-African operations in CM, CG, GH, ET, SN, SL, ZA, TZ, ZM"
+  currency: NGN
+  trade: "integrated cement manufacture and sale, ten African countries"
+
+inputs:
+  # ══ THE CEILING ══ every figure below is printed, as its own number, in
+  # the 'About Dangote Cement' paragraph on p.3 or in the per-country
+  # commentary on pp.5-7. None is derived by me except where marked DERIVED.
+  nameplate_capacity:
+    group_total_mta:
+      value: 52.0
+      unit: "Mt/year"
+      label_as_printed: "Africa's leading cement producer with 52.0Mta capacity across Africa"
+    nigeria_total_mta:
+      value: 35.25
+      unit: "Mt/year"
+      label_as_printed: "a production capacity of 35.25Mta in our home market, Nigeria"
+    nigeria_plants:
+      obajana_kogi: {value: 16.25, unit: "Mt/year", label_as_printed: "the largest in Africa with 16.25Mta of capacity across five lines"}
+      ibese_ogun:   {value: 12.0,  unit: "Mt/year", label_as_printed: "four cement lines with a combined installed capacity of 12Mta"}
+      gboko_benue:  {value: 4.0,   unit: "Mt/year", label_as_printed: "our Gboko plant in Benue state has 4Mta"}
+      okpella_edo:  {value: 3.0,   unit: "Mt/year", label_as_printed: "our Okpella plant in Edo state has 3Mta"}
+    pan_african_plants:
+      cameroon:     {value: 1.5, unit: "Mt/year", label_as_printed: "Cameroon (1.5Mta clinker grinding)", site: "Douala"}
+      congo:        {value: 1.5, unit: "Mt/year", label_as_printed: "Congo (1.5Mta)", site: "Mfila", note: "p.6 calls it '1.5Mta integrated plant in Mfila'"}
+      ghana:        {value: 2.0, unit: "Mt/year", label_as_printed: "Ghana (2.0Mta import)", note: "an IMPORT terminal, not a kiln; a 0.45Mta grinding plant at Takoradi commenced operations in June 2023 (p.6) and it is NOT clear from the document whether the 2.0Mta figure already includes it — see notes"}
+      ethiopia:     {value: 2.5, unit: "Mt/year", label_as_printed: "Ethiopia (2.5Mta)", site: "Mugher"}
+      senegal:      {value: 1.5, unit: "Mt/year", label_as_printed: "Senegal (1.5Mta)", site: "Pout"}
+      sierra_leone: {value: 0.5, unit: "Mt/year", label_as_printed: "Sierra Leone (0.5Mta import)"}
+      south_africa: {value: 2.8, unit: "Mt/year", label_as_printed: "South Africa (2.8Mta)"}
+      tanzania:     {value: 3.0, unit: "Mt/year", label_as_printed: "Tanzania (3.0Mta)"}
+      zambia:       {value: 1.5, unit: "Mt/year", label_as_printed: "Zambia (1.5Mta)", site: "Ndola"}
+
+  # ══ THE ACTUAL ══ p.4 Summary Operating Review (segment rows) and pp.5-7
+  # (country rows). Note the segment rows are '000 tonnes; the country
+  # commentary is in Mt / Kt. Both are the source's own units, kept as
+  # printed.
+  volume_sold:
+    nigeria_kt:      {value: 16392, unit: "'000 tonnes", label_as_printed: "Nigeria volumes", prior_year: 17842, pct_change_as_printed: "(8.1%)"}
+    pan_africa_kt:   {value: 11252, unit: "'000 tonnes", label_as_printed: "Pan-Africa volumes", prior_year: 9981, pct_change_as_printed: "12.7%"}
+    intercompany_kt: {value: -364,  unit: "'000 tonnes", label_as_printed: "Inter-company sales", prior_year: -56}
+    group_kt:        {value: 27280, unit: "'000 tonnes", label_as_printed: "Group volumes**  (** Volumes include cement and clinker)", prior_year: 27767, pct_change_as_printed: "(1.8%)"}
+    by_country:
+      cameroon:     {value: 1300,   unit: "'000 tonnes", label_as_printed: "relatively flat at 1.3Mt for the FY 2023"}
+      congo:        {value: 807.7,  unit: "'000 tonnes", label_as_printed: "sold 807.7Kt (including exports), a 42.7% increase from the 566.2Kt", prior_year: 566.2}
+      ghana:        {value: 316.3,  unit: "'000 tonnes", label_as_printed: "Our sales volume was up 19.7% to 316.3Kt in 2023"}
+      ethiopia:     {value: 2500,   unit: "'000 tonnes", label_as_printed: "Sales at our 2.5Mta factory in Mugher were at 2.5Mt, up by 6.5% year on year"}
+      senegal:      {value: 1600,   unit: "'000 tonnes", label_as_printed: "Our 1.5Mta plant in Pout sold 1.6Mt in 2023, up a strong 54.3%"}
+      sierra_leone: {value: 44.2,   unit: "'000 tonnes", label_as_printed: "Dangote Cement Sierra Leone sold 44.2Kt of cement in the period"}
+      tanzania:     {value: 2000,   unit: "'000 tonnes", label_as_printed: "Sales volume from our Tanzania operation was 2.5% higher at 2.0Mt"}
+      zambia:       {value: 788.9,  unit: "'000 tonnes", label_as_printed: "Sales volume at our 1.5Mta Ndola factory was up 20.6% to 788.9Kt"}
+      south_africa:
+        value: null
+        unit: "'000 tonnes"
+        label_as_printed: "NO NUMBER PRINTED — p.7 says only 'In 2023, our sales volume experienced a year-on-year increase.' South Africa is the ONLY operating country whose volume the document withholds."
+        derived_residual: 1894.9
+        derived_how: "DERIVED, not printed: pan_africa 11,252 less the eight printed country volumes (1,300 + 807.7 + 316.3 + 2,500 + 1,600 + 44.2 + 2,000 + 788.9 = 9,357.1) = 1,894.9 Kt. Carries every rounding in the eight (Cameroon '1.3Mt', Ethiopia '2.5Mt', Senegal '1.6Mt', Tanzania '2.0Mt' are each printed to one decimal of a megatonne, i.e. +/-50Kt apiece), so the residual is good to roughly +/-200Kt only. Kept OUT of `expected` for that reason."
+
+  # ══ THE MONEY ══ p.4 / p.8. Nigerian naira, millions.
+  revenue:
+    nigeria:      {value: 1297639, unit: "NGN m", prior_year: 1205401, pct_change_as_printed: "7.7%"}
+    pan_africa:   {value: 925933,  unit: "NGN m", prior_year: 414830,  pct_change_as_printed: "123.2%"}
+    intercompany: {value: -15482,  unit: "NGN m", prior_year: -1908}
+  ebitda:
+    nigeria:                 {value: 650311,  unit: "NGN m", prior_year: 658774, note: "excluding central costs / eliminations, per the table's own footnote"}
+    pan_africa:              {value: 263736,  unit: "NGN m", prior_year: 64918}
+    central_and_elimination: {value: -27918,  unit: "NGN m", prior_year: -15454}
+  manufacturing_costs:
+    materials_consumed:                   {value: 278825, unit: "NGN m", prior_year: 196517}
+    fuel_and_power_consumed:              {value: 399205, unit: "NGN m", prior_year: 266486}
+    royalties:                            {value: 3672,   unit: "NGN m", prior_year: 2429}
+    salaries_and_related_staff_costs:     {value: 71096,  unit: "NGN m", prior_year: 45032}
+    depreciation_and_amortization:        {value: 122513, unit: "NGN m", prior_year: 90757}
+    plant_maintenance_costs:              {value: 83327,  unit: "NGN m", prior_year: 51351}
+    other_production_expenses:            {value: 59812,  unit: "NGN m", prior_year: 26376}
+    increase_in_fg_and_wip:               {value: -12172, unit: "NGN m", prior_year: -16058}
+  admin_and_selling_costs: {value: 491638, unit: "NGN m", prior_year: 375113, pct_change_as_printed: "31.1%"}
+  depreciation_amortization_impairment: {value: -151862, unit: "NGN m", prior_year: -122362}
+
+  # THE RUNNER'S COST LINES — the source's own eight manufacturing-cost
+  # components, transcribed line by line and NOT as the printed total (a
+  # total would double-count against its own parts). They re-add to the
+  # printed 1,006,278 exactly, which the `expected` block's hand_check
+  # records. Admin/selling and the depreciation line struck BELOW the
+  # manufacturing subtotal are deliberately EXCLUDED: this gold's
+  # `cost_of_sales` is the manufacturing total the source itself prints, and
+  # folding operating costs into it would compare a figure the source never
+  # published.
+  costs:
+    materials_consumed: 278825
+    fuel_and_power_consumed: 399205
+    royalties: 3672
+    salaries_and_related_staff_costs: 71096
+    depreciation_and_amortization: 122513
+    plant_maintenance_costs: 83327
+    other_production_expenses: 59812
+    increase_in_fg_and_wip: -12172
+
+expected:
+  # ── volumes ──
+  group_volume_kt:
+    value: 27280
+    unit: "'000 tonnes"
+    label_as_printed: "Group volumes**"
+    composition_as_printed: "Nigeria 16,392 + Pan-Africa 11,252 + inter-company (364)"
+    hand_check: "16,392 + 11,252 - 364 = 27,280 — EXACT"
+  # ── the ceiling arithmetic, DERIVED from the source's own printed factors ──
+  nigeria_capacity_utilisation_pct:
+    value: 46.5
+    unit: "%"
+    composition: "DERIVED, NOT PRINTED: volume sold 16,392Kt / nameplate 35,250Kt = 46.50%. Both factors are the source's own (p.3 and p.4); the source never divides them."
+  group_capacity_utilisation_pct:
+    value: 52.5
+    unit: "%"
+    composition: "DERIVED, NOT PRINTED: group volume 27,280Kt / group nameplate 52,000Kt = 52.46%."
+  # ── money ──
+  total_revenue:
+    value: 2208090
+    unit: "NGN m"
+    label_as_printed: "Total revenue"
+    composition_as_printed: "Nigeria 1,297,639 + Pan-Africa 925,933 + inter-company (15,482)"
+    hand_check: "1,297,639 + 925,933 - 15,482 = 2,208,090 — EXACT"
+    pct_change_as_printed: "36.4%"
+  total_ebitda:
+    value: 886129
+    unit: "NGN m"
+    label_as_printed: "Total EBITDA (p.4)"
+    composition_as_printed: "Nigeria 650,311 + Pan-Africa 263,736 + central costs & eliminations (27,918)"
+    hand_check: "650,311 + 263,736 - 27,918 = 886,129 — EXACT against p.4, but pp.8-9 print 886,128 for the SAME line. See notes: 886,129 is the correct one and the document proves it against itself."
+  total_manufacturing_costs:
+    value: 1006278
+    unit: "NGN m"
+    label_as_printed: "Total manufacturing costs"
+    hand_check: "278,825 + 399,205 + 3,672 + 71,096 + 122,513 + 83,327 + 59,812 - 12,172 = 1,006,278 — EXACT. FY2022 column re-added the same way: 196,517 + 266,486 + 2,429 + 45,032 + 90,757 + 51,351 + 26,376 - 16,058 = 662,890 — EXACT."
+    prior_year: 662890
+  operating_profit:
+    value: 734267
+    unit: "NGN m"
+    label_as_printed: "Operating profit"
+    hand_check: "886,129 - 151,862 = 734,267 — EXACT, but ONLY if EBITDA is 886,129 (p.4's figure). With pp.8-9's 886,128 it is 734,266, one naira-million short of the printed 734,267. This is the internal evidence that 886,128 is the typo."
+  group_ebitda_margin_pct:
+    value: 40.1
+    unit: "%"
+    label_as_printed: "Group EBITDA margins"
+    hand_check: "886,129 / 2,208,090 = 40.13% — EXACT to the printed 1 d.p."
+  profit_before_tax: {value: 553104, unit: "NGN m", prior_year: 524002, pct_change_as_printed: "5.6%"}
+  net_profit:        {value: 455583, unit: "NGN m", prior_year: 382311, pct_change_as_printed: "19.2%"}
+  earnings_per_share:
+    value: 26.47
+    unit: "NGN/share"
+    note: "p.4 prints the FY2022 comparative as 22.3, p.8 as 22.27, for the same line. The printed 18.8% change reconciles with 22.27 (26.47/22.27 = 1.1886), not with 22.3 (1.1870)."
+
+mapping:
+  total_revenue: revenue
+  total_manufacturing_costs: cost_of_sales
+  group_volume_kt: quantity_sold
+
+tolerance:
+  abs: 2
+  why: >
+    Every money figure is printed as a whole naira-million and every subtotal this gold checks
+    re-adds EXACTLY by hand (volumes, revenue, manufacturing costs both years, EBITDA against p.4) —
+    so the engine has no rounding chain to hide behind. The ONE genuine internal gap in the document
+    is 1 naira-million (EBITDA 886,129 on p.4 vs 886,128 on pp.8-9, with operating profit proving
+    p.4 right); 2 is set to clear that single-unit disagreement and nothing more. A divergence past
+    2 NGNm on a figure of 2.2 trillion is the engine's, not the source's.
+  quantities:
+    quantity_sold:
+      abs: 0
+      why: >
+        Volume is printed as a whole kilotonne (27,280 Kt group, and every country line likewise) —
+        an exact integer, not a rounded measurement, so any gap at all is a real disagreement. Zero
+        is the honest threshold here and it is deliberately NOT the money tolerance of 2: two
+        naira-million and two kilotonnes of cement are different claims about the world.
+
+notes: |
+  THE SHORT SIDE, worked from the source's own separately-printed factors. Nameplate capacity and
+  volume sold are published as two independent figures in the same document, plant by plant:
+
+    ceiling (p.3)          52.0Mta group  /  35.25Mta Nigeria  /  16.8Mta pan-Africa (summed by hand)
+    actual  (p.4)          27.28Mt group  /  16.39Mt Nigeria   /  11.25Mt pan-Africa
+    -> utilisation         52.5%          /  46.5%             /  67.0%
+
+  The company ran its Nigerian plants at UNDER HALF their rated output for a full audited year and
+  did not stop; Obajana alone (16.25Mta) is nominally capable of the entire Nigerian volume of
+  16.39Mt with 0.14Mt to spare, before Ibese, Gboko and Okpella. The binding term is demand, not the
+  kilns. Two independent explanations for the demand shortfall are given by the source itself (p.8):
+  "the cash crunch and election-related uncertainties in the first quarter" and "the sharp currency
+  devaluation and heightened transport costs resulting from the subsidy removal in the second
+  quarter". A model built on nameplate capacity would have overstated Nigerian volume by 115%.
+
+  SENEGAL BREAKS THE CEILING, AND THE SOURCE SAYS SO. p.7: "Our 1.5Mta plant in Pout sold 1.6Mt in
+  2023 ... Our operation in Senegal is operating at full capacity." Sold EXCEEDS nameplate by 6.7%.
+  Ethiopia does the same thing more quietly: 2.5Mta nameplate, 2.5Mt sold, and "we are at full
+  capacity in Senegal and Ethiopia" (p.5). THIS IS THE MOST USEFUL SINGLE FACT IN THE FILE for a
+  `sold = min(demand, available)` implementation: a published nameplate is a RATED figure at
+  reference conditions, not a hard wall — a plant run hard, with a short maintenance window and
+  favourable clinker chemistry, exceeds it. An engine that treats nameplate as an inviolable cap
+  would REFUSE a case its own operator reports as normal. (Volumes also "include cement and clinker"
+  per the p.4 footnote, and Congo's 807.7Kt is stated to include exports, so a sold-figure and a
+  capacity-figure are not measuring exactly the same physical thing either.)
+
+  ARITHMETIC VERIFIED BY HAND — what reconciles:
+    - volumes:              16,392 + 11,252 - 364 = 27,280 EXACT
+    - revenue:              1,297,639 + 925,933 - 15,482 = 2,208,090 EXACT
+    - manufacturing costs:  both years re-add EXACTLY (see expected.total_manufacturing_costs)
+    - Nigeria's plants:     16.25 + 12 + 4 + 3 = 35.25Mta EXACT against the printed Nigeria total
+    - EBITDA margins:       650,311/1,297,639 = 50.11% -> printed 50.1%; 263,736/925,933 = 28.48%
+                            -> printed 28.5%; 886,129/2,208,090 = 40.13% -> printed 40.1%. All three
+                            reconcile.
+    - every printed % change re-computes: (8.1%), 12.7%, (1.8%), 7.7%, 123.2%, 36.4%, 25.1%, 5.6%,
+      (31.2%), 19.2%, 18.8%, 49.8% (fuel & power), 51.8% (manufacturing), 31.1% (admin), 42.7%
+      (Congo, 807.7/566.2 = 1.4265). Checked one by one.
+
+  ARITHMETIC VERIFIED BY HAND — what DOES NOT reconcile. Four self-contradictions, kept as printed
+  rather than smoothed over, per this corpus's standing rule that a self-contradicting source is
+  valuable:
+
+    1. THE GROUP CAPACITY DOES NOT ADD UP. p.3 states 52.0Mta group. Summing p.3's own components:
+       Nigeria 35.25 + Cameroon 1.5 + Congo 1.5 + Ghana 2.0 + Ethiopia 2.5 + Senegal 1.5 + Sierra
+       Leone 0.5 + South Africa 2.8 + Tanzania 3.0 + Zambia 1.5 = 52.05Mta. A 0.05Mta (50Kt)
+       overhang, i.e. the headline is rounded DOWN to one decimal, or one component is stale. A
+       candidate explanation the document leaves open: the 0.45Mta Takoradi grinding plant
+       commissioned in June 2023 (p.6) may or may not sit inside the "Ghana (2.0Mta import)" figure —
+       if it is additive, group capacity is 52.5Mta and the headline is 0.5Mta stale. The document
+       never says. GAP RECORDED, NOT RESOLVED.
+
+    2. EBITDA IS PRINTED TWICE WITH DIFFERENT VALUES. p.4 "Total EBITDA 886,129"; p.8 "Group EBITDA*
+       886,128"; p.9 "EBITDA 886,128". The segment rows prove p.4 right (650,311 + 263,736 - 27,918
+       = 886,129 exactly) and so does p.9's own next line (886,129 - 151,862 = 734,267 = the printed
+       operating profit; 886,128 would give 734,266). One naira-million, in a 2.2-trillion-naira
+       statement — but it is a real disagreement between two tables in one filing, and it is the
+       reason this gold's tolerance is 2 and not 0.5.
+
+    3. A MARGIN CHANGE IS OUT BY A FACTOR OF TEN. p.4 prints pan-African EBITDA margin moving from
+       15.6% to 28.5% and labels the change "128bps". 28.48% - 15.65% = +12.83 percentage points =
+       +1,283bps, not 128bps. (The other two rows on the same line are right: Nigeria (450bps)
+       against a computed -454bps, group (360bps) against -363bps.) A dropped digit, and one that
+       understates the single best number in the results by 10x.
+
+    4. EPS COMPARATIVE PRINTED TWICE: 22.3 (p.4) vs 22.27 (p.8). The printed 18.8% change picks
+       22.27. Display rounding, recorded for completeness.
+
+  SOUTH AFRICA IS THE HOLE. It is the only operating country with no volume figure anywhere in the
+  document (p.7 gives GDP, thermal substitution rate 41.8%, and a qualitative "experienced a
+  year-on-year increase"). Its volume can only be backed out as the pan-African residual, 1,894.9Kt,
+  which inherits +/-50Kt of display rounding from each of four megatonne-rounded siblings. Recorded
+  in `inputs` as DERIVED and deliberately excluded from `expected` — a figure I computed is not a
+  figure the source computed, and only the latter can test an engine.
+
+  WHAT IS DELIBERATELY NOT TRANSCRIBED: the balance sheet (total assets NGN 3,938,725m, net debt
+  NGN 521,287m, p.8) and the tax charge composition. Both are printed and real, but neither bears on
+  the throughput ceiling this gold exists to test, and the results statement does not print enough of
+  the tax note to re-derive the (31.2%) movement independently.
+
+  NO PRICE IS PRINTED. This is the reason `resolution` is L2 and not L3: revenue and volume are
+  given, a price per tonne is not, anywhere. Dividing them (2,208,090m / 27,280Kt = NGN 80,942/t)
+  blends ten countries, ten currencies translated at ten rates, cement and clinker, and domestic and
+  export sales — it is not a price the company charges anyone, and it is not in this file.

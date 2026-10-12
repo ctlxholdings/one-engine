@@ -1,0 +1,210 @@
+# YIELD / CO-PRODUCT HARVEST — the widest co-product case in this harvest:
+# ONE raw material (wheat) split across TWO parallel mills in one plant, giving
+# SIX separately priced outputs. The roller mill turns wheat into maida, suji,
+# roller flour and bran; the chakki mill turns wheat into atta and bran. Every
+# output has its own tonnage, its own price per MT and its own revenue line
+# printed; the two mass balances close EXACTLY to the tonne; and each output's
+# packaging cost is struck on PRODUCTION while its revenue is struck on SALES,
+# with the difference held as finished-goods stock -- so production, stock and
+# sales are three separately printed quantities per product, not one.
+#
+# This is the STRONG shape: input tonnes, output tonnes, price/MT and revenue
+# are all printed for all six products, so the yield leg and the pricing leg
+# are independently testable.
+#
+# YEAR 3 (80% capacity utilisation) is taken as a single period.
+
+meta:
+  source: >
+    Government of Rajasthan, Rajasthan Agricultural Competitiveness Project
+    (RACP, World Bank-assisted), Agribusiness Promotion Facility, "Study Report
+    of Innovative Technology Based Business Models -- Detailed Project Report:
+    Wheat Flour Mill", prepared by Grant Thornton India LLP. Section 7.3
+    (the 150 MT/day roller flour mill + 30 MT/day chakki atta mill model):
+    7.3.4 Product Schedule (pp.82-83), 7.3.5 Purchase Schedule (p.83),
+    7.3.6 Consumables / packaging (p.83), 7.3.13 Sales Schedule (pp.87-88).
+    https://www.tourism.rajasthan.gov.in/content/dam/agriculture/Rajasthan%20Agricultural%20Competitiveness%20Project/ABPFTechDPR/RACP_ABPF_Tech%20DPR_Wheat%20flour%20Mill.pdf
+  accessed: "2026-08-12"
+  licence: >
+    Government of Rajasthan / RACP (World Bank-assisted project) disclosure
+    document, publicly hosted PDF on a Government of Rajasthan domain; no
+    explicit reuse licence stated. Report authored by Grant Thornton India LLP
+    for the project. Transcribed here, with full citation, for
+    engine-verification / research use only.
+  kind: trade_case
+  resolution: L2
+  # L2: six priced outputs, and the L3 `sale:` block is one triple.
+  basis: >
+    one integrated wheat milling plant -- a 150 MT/day roller flour mill plus a
+    30 MT/day chakki atta mill, 300 working days/year at 100% utilisation --
+    YEAR 3 of the 5-year projection, at 80% capacity utilisation (240 days of
+    operation, 180 tonnes processed per day)
+  periods: 1
+  mechanism: separate
+  jurisdiction: IN          # Rajasthan, India
+  currency: INR
+
+inputs:
+  # ── capacity and utilisation (7.3.4 Product Schedule, p.82) ───────────────
+  roller_mill_capacity_mt_per_day: 150
+  chakki_mill_capacity_mt_per_day: 30
+  working_days_per_year: 300
+  annual_wheat_requirement_roller_at_100pct_mt: 45000    # 150 x 300
+  annual_wheat_requirement_chakki_at_100pct_mt: 9000     #  30 x 300
+  capacity_utilisation_pct: 80                           # Year 3
+  wheat_input_roller_mt: 36000                           # 45,000 x 80%
+  wheat_input_chakki_mt: 7200                            #  9,000 x 80%
+  tonnes_processed_per_day: 180
+  days_of_operation: 240
+
+  # ── the yield split (output tonnages printed; the PERCENTAGES below are
+  # computed from them and are flagged as such -- see notes) ────────────────
+  maida_production_mt: 19800          # = 55.0% of the 36,000 roller input
+  suji_production_mt: 4320            # = 12.0%
+  roller_flour_production_mt: 2880    # =  8.0%
+  roller_bran_production_mt: 9000     # = 25.0%
+  chakki_atta_production_mt: 6840     # = 95.0% of the 7,200 chakki input
+  chakki_bran_production_mt: 360      # =  5.0%
+  # the source's own note in the table: "Normal loss (is 2%, but same is
+  # covered during moisture addition)" -- i.e. a 2% milling loss is declared
+  # and then declared to be offset by water taken up in conditioning, so the
+  # printed mass balance closes at exactly 100% on both mills.
+
+  # ── quantities SOLD (7.3.13 Sales Schedule) -- lower than production; the
+  # difference is finished-goods stock ──────────────────────────────────────
+  maida_sold_mt: 19779
+  suji_sold_mt: 4316
+  roller_flour_sold_mt: 2877
+  roller_bran_sold_mt: 8991
+  chakki_atta_sold_mt: 6833
+  chakki_bran_sold_mt: 360
+
+  # ── prices, Rs per MT (7.3.13) ────────────────────────────────────────────
+  price_maida_inr_per_mt: 23153
+  price_suji_inr_per_mt: 23704
+  price_roller_flour_inr_per_mt: 22050
+  price_roller_bran_inr_per_mt: 16538
+  price_chakki_atta_inr_per_mt: 24806
+  price_chakki_bran_inr_per_mt: 16538     # same price as roller bran
+  revenue: 947833737                      # the source's own Total Sales, Y3
+
+  costs:
+    raw_wheat_purchases: 811384470        # 43,290 MT x Rs 18,743/MT (7.3.5)
+    packaging_material: 16862400          # 7.3.6, Year 3 total
+    # NOTE: `costs` deliberately holds only the two cost blocks the source
+    # prints as a quantity x rate schedule for THIS year. Power, water,
+    # manpower, interest and depreciation are printed elsewhere in section 7.3
+    # and are NOT pooled in here, for the same reason the cotton gold keeps
+    # fixed expenses out: `to_template` flattens every key of `costs` into one
+    # bucket, so mixing schedules the source keeps apart would manufacture a
+    # divergence that is an artefact of the converter, not a finding.
+
+  # ── raw material, printed separately from the input tonnage (7.3.5) ───────
+  raw_wheat_purchased_mt: 43290
+  purchase_price_inr_per_mt: 18743
+  # 43,290 purchased vs 36,000 + 7,200 = 43,200 milled -- a 90 MT gap the
+  # source does not explain. See notes.
+
+expected:
+  # every figure below is PRINTED by the source
+  wheat_input_roller_mt: 36000
+  wheat_input_chakki_mt: 7200
+  maida_production_mt: 19800
+  suji_production_mt: 4320
+  roller_flour_production_mt: 2880
+  roller_bran_production_mt: 9000
+  chakki_atta_production_mt: 6840
+  chakki_bran_production_mt: 360
+  maida_sales_inr: 457943187
+  suji_sales_inr: 102306464
+  roller_flour_sales_inr: 63437850
+  roller_bran_sales_inr: 148693158
+  chakki_atta_sales_inr: 169499398
+  chakki_bran_sales_inr: 5953680
+  total_sales_inr: 947833737
+  total_purchases_inr: 811384470
+  packaging_material_inr: 16862400
+
+mapping:
+  total_sales_inr: revenue
+  # cost_of_sales / gross_margin are deliberately NOT mapped: the source never
+  # prints a cost-of-sales subtotal for this scenario, only the schedules that
+  # would feed one. Mapping a subtotal this file assembled itself would be
+  # testing my addition, not the source's.
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints every sales figure to the paisa (two decimals) and every
+    tonnage as a whole tonne, and all six quantity x price extensions and their
+    total reconcile EXACTLY to the rupee on independent re-multiplication (see
+    notes). One rupee is therefore already looser than the source's own
+    precision; any gap beyond it is real.
+
+notes: |
+  RE-DERIVED BY HAND (python), not trusted from the printed subtotals:
+
+  CAPACITY AND INPUT
+    150 x 300 = 45,000 MT roller wheat at 100%   -- printed 45000   OK
+     30 x 300 =  9,000 MT chakki wheat at 100%   -- printed 9000    OK
+    45,000 x 80% = 36,000 ; 9,000 x 80% = 7,200  -- printed both    OK
+    180 t/day x 240 days = 43,200 = 36,000 + 7,200                  OK
+
+  MASS BALANCE — CLOSES EXACTLY ON BOTH MILLS
+    roller: 19,800 + 4,320 + 2,880 + 9,000 = 36,000 = the input     OK
+    chakki:  6,840 + 360                   =  7,200 = the input     OK
+    Implied yields: maida 55%, suji 12%, roller flour 8%, roller bran 25%;
+    chakki atta 95%, chakki bran 5%. These PERCENTAGES ARE NOT PRINTED in the
+    model table -- only the tonnages are -- and they are recorded above as
+    computed, not read. The narrative section of the same document (p.32,
+    industry background) prints a DIFFERENT set as the industry norm:
+    "The average recovery from the roller flour mills is around 97%, in this
+    56-68% Maida, Semolina/Rawa and resultant Atta 7% each, 23-25% is recovered
+    as bran". The model's 55% maida sits just below that band and its 12% suji
+    is well above the quoted 7%; the document does not reconcile its own model
+    to its own stated industry norm.
+
+  SALES — SIX EXTENSIONS AND THE TOTAL, ALL EXACT
+    19,779 x 23,153 = 457,943,187   -- printed 457,943,187.00       OK
+     4,316 x 23,704 = 102,306,464   -- printed 102,306,464.00       OK
+     2,877 x 22,050 =  63,437,850   -- printed  63,437,850.00       OK
+     8,991 x 16,538 = 148,693,158   -- printed 148,693,158.00       OK
+     6,833 x 24,806 = 169,499,398   -- printed 169,499,398.00       OK
+       360 x 16,538 =   5,953,680   -- printed   5,953,680.00       OK
+    sum             = 947,833,737   -- printed 947,833,737.00       OK
+    Not one rupee of rounding anywhere in the revenue block.
+
+  PURCHASES
+    43,290 x 18,743 = 811,384,470   -- printed 811,384,470.00       OK
+
+  PACKAGING — the bag counts are struck on PRODUCTION, not on sales
+    maida        19,800 MT / 50 kg = 396,000 bags x Rs 18 =  7,128,000  OK
+    suji          4,320 MT / 50 kg =  86,400 bags x Rs 18 =  1,555,200  OK
+    roller flour  2,880 MT / 50 kg =  57,600 bags x Rs 18 =  1,036,800  OK
+    roller bran   9,000 MT /100 kg =  90,000 bags x Rs 50 =  4,500,000  OK
+    chakki atta   6,840 MT / 50 kg = 136,800 bags x Rs 18 =  2,462,400  OK
+    chakki bran     360 MT /100 kg =   3,600 bags x Rs 50 =    180,000  OK
+    sum                                                   = 16,862,400  OK
+    -- matches the printed Year-3 packaging total exactly. This is the one
+    place in the document where a cost is unambiguously attached to a SPECIFIC
+    co-product: packaging is the only per-product cost line in the model.
+
+  THE ONE GAP THAT DOES NOT RECONCILE
+    Wheat PURCHASED in Year 3 is 43,290 MT; wheat MILLED is 43,200 MT
+    (36,000 + 7,200). The 90 MT difference is never named -- there is no
+    raw-material stock movement line in the product schedule, and the
+    working-capital table holds raw-material stock in rupees only. Kept as
+    printed, both figures, unreconciled. (Year 1 is worse: 43,876 MT purchased
+    against 40,500 MT milled, a 3,376 MT gap; the purchase quantities do not
+    track the milling quantities in any consistent ratio across the five
+    years, so no single explanation such as "one month's stock build" fits.)
+
+  WHAT THIS CASE COSTS THE ENGINE, stated plainly. Six priced outputs from two
+  parallel conversions of ONE purchased raw material, where the raw material is
+  bought as a single undifferentiated stream and the document never allocates
+  its cost between maida, suji, flour, atta or bran. As with the FAO oil mill
+  and the MSU cotton budget already in this corpus, the source sidesteps the
+  joint-cost allocation question entirely: it prices six outputs and expenses
+  one input, and never asks what the bran cost to make. Three published sources
+  in three countries, three industries and three decades, all declining to
+  answer the same question, is itself the finding.

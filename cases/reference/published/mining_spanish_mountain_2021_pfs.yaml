@@ -1,0 +1,537 @@
+id: mining_spanish_mountain_2021_pfs
+title: "Spanish Mountain Gold Project, British Columbia — NI 43-101 Prefeasibility Study (20,000 t/d, 91.3% mill availability, 70% crusher availability): 17-period schedule and cash flow"
+
+meta:
+  source:
+    - >
+      Moose Mountain Technical Services, Ausenco Engineering Canada, Knight Piesold and others for
+      Spanish Mountain Gold Ltd., "Spanish Mountain Gold Project — Prefeasibility Study NI 43-101
+      Technical Report", effective 31 May 2021, 401 pages.
+      https://spanishmountaingold.com/site/assets/files/3475/spanish_mountain_gold_pfs_technical_report_20210531.pdf
+      (hosted on the issuer's own corporate site; SEDAR filing by Spanish Mountain Gold Ltd.)
+    - >
+      Page and table numbers below are the report's OWN printed ones ("Page N of 401" footer).
+      Sections used: 1.13 Recovery methods (p.~42); Table 1-3 Total Project Capital Cost Summary
+      and Table 1-4 Project LOM Operating Costs (p.46); Table 1-5 Closure Cost (p.46); 16.10 Mine
+      Production Schedule and Table 16-7 (p.265); 17 Recovery Methods, Table 17-1 Key Plant Process
+      Design Criteria (p.278) and 17.x Primary Crushing (p.~279); 22 Economic Analysis, Table 22-1
+      Inputs (p.355), Table 22-2 Summary (p.357), Figure 22-1 LOM Gold and Silver Production
+      (p.358), Figure 22-2 Net Receipts vs Operating Costs (p.359), Table 22-3 Cash Flow Summary
+      (p.360), Figure 22-3 Sensitivity (p.361).
+  accessed: "2026-08-12"
+  licence: >
+    Public NI 43-101 technical report filed to satisfy Canadian securities disclosure rules
+    (Spanish Mountain Gold Ltd. trades on the TSX Venture Exchange). No explicit reuse licence is
+    stated in the document; downloaded from the issuer's own public corporate URL.
+  kind: trade_case
+  mechanism: extract
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────────
+  # HARVESTED FOR ONE SPECIFIC REASON: this report states its plant availability
+  # THREE TIMES, in three places, and the three statements are not consistent
+  # with each other. The executive summary and Section 17 both say the plant
+  # will "treat 20,000 tonnes/day or 913 tonnes/hour based on an availability of
+  # 8,059 hours per annum or 92%", while Table 17-1 two pages later prints Mill
+  # Availability 91.3% and Crushing Plant Availability 70%. 8,059 h is 92.0% of
+  # a year and produces 905.8 t/h, not 913; 913 t/h is what 91.3% produces. The
+  # sentence pairs a throughput derived from ONE availability with an
+  # availability figure taken from ANOTHER. This is exactly the shape the
+  # harvest brief calls valuable — a source that prints its factors separately
+  # AND fails to re-add — and it is only detectable because the factors are
+  # printed separately at all.
+  resolution: L4   # same rung as mining_mt_todd_2024_fs and
+  #                  mining_block14_sudan_2020_fs: a multi-stage chain
+  #                  (reserve -> mined -> milled -> recovered -> payable ->
+  #                  net receipts -> operating profit -> tax -> NPV) with both
+  #                  ends of every stage printed, over seventeen periods.
+  basis: "whole project, life of mine, unlevered (the study reports pre-tax and post-tax results for the project; no debt structure is modelled)"
+  periods: 17   # Table 22-3's own columns: Y-2, Y-1, Y1..Y14, and a lumped
+  #               Y15-20 closure column
+  jurisdiction: CA   # British Columbia, Canada. Relevant because the currency
+  #                    is Canadian dollars while the per-ounce cost metrics are
+  #                    quoted in US dollars at a stated 0.76 exchange rate —
+  #                    see the arithmetic in notes, finding (9).
+  currency: CAD   # Table 22-3 and Tables 1-3/1-4/1-5 are in C$ (proved in
+  #                 notes, finding (9), by reproducing the printed US$/oz Total
+  #                 Cost from the C$ cost stack at the stated 0.76 rate). The
+  #                 metal prices and the three per-ounce cost metrics are US$.
+
+inputs:
+  # ── THE AVAILABILITY BLOCK — the reason this gold exists ───────────────────
+  plant_design_criteria:
+    plant_throughput_t_per_d: 20000
+    annual_mill_feed_target_t: 7300000
+    mill_availability_pct: 91.3
+    crushing_plant_availability_pct: 70
+    gold_head_grade_design_g_t: 0.92
+    silver_head_grade_design_g_t: 0.72
+    sag_mill_installed_power_mw: 10.5
+    ball_mill_installed_power_mw: 5.25
+    material_specific_gravity_t_m3: 2.68
+    source: "Table 17-1 Key Plant Process Design Criteria, p.278"
+  availability_statements_as_printed:
+    - text: "The processing facility will treat 20,000 tonnes/day (or 913 tonnes/hour) based on an availability of 8,059 hours per annum or 92%. The crusher plant section design is set at 70% availability. The plant will operate with two shifts per day, 365 days per year"
+      where: "Section 1.13 executive summary (p.~42) and Section 17 introduction, repeated verbatim"
+    - text: "throughput of 20.0 kt/d or 7.3 Mt/a; crushing availability of 70%; plant availability of 91.3% for grinding, flotation, leach, adsorption, desorption & cyanide reduction"
+      where: "Section 17 key process design criteria bullet list"
+    - text: "The crushing circuit is designed for an annual operating time of 6,132 h/a or 70% availability. Material is hauled from the open pit and fed to the primary crusher at 1,190 t/h ... The mill feed stockpile is equipped with apron feeders to regulate feed at 913 t/h into the SAG mill."
+      where: "Section 17, Primary Crushing & Stockpiling (p.~279)"
+  # ── MINE PRODUCTION SCHEDULE (Table 16-7, p.265) ───────────────────────────
+  mine_schedule:
+    schema: [period, pit_to_mill_kt, pit_to_stockpile_kt, stockpile_to_mill_kt, total_to_mill_kt, au_feed_grade_g_t, ag_feed_grade_g_t, waste_rock_kt, strip_ratio_as_printed, total_mined_kt, total_moved_kt]
+    rows:
+      - ["Y-2",     0,     0,    0,     0, null, null,    891, null,    891,    891]
+      - ["Y-1",     0,   162,    0,     0, null, null,  11845, 73.0,  12007,  12007]
+      - ["Y1",   6000,  2363,    0,  6000, 0.79, 0.82,  23185,  2.8,  31548,  31548]
+      - ["Y2",   7300,  2758,    0,  7300, 0.84, 0.70,  24349,  2.4,  34407,  34407]
+      - ["Y3",   7300,   949,    0,  7300, 0.93, 0.73,  24409,  3.0,  32658,  32658]
+      - ["Y4",   7300,   934,    0,  7300, 0.90, 0.66,  26713,  3.2,  34946,  34946]
+      - ["Y5",   7300,     0,    0,  7300, 0.83, 0.71,  27423,  3.8,  34723,  34723]
+      - ["Y6",   7300,     0,    0,  7300, 0.97, 0.74,  41795,  5.7,  49095,  49095]
+      - ["Y7",   7300,     0,    0,  7300, 0.65, 0.71,  40722,  5.6,  48022,  48022]
+      - ["Y8",   7300,     0,    0,  7300, 0.77, 0.70,  40700,  5.6,  48000,  48000]
+      - ["Y9",   6700,     0,  600,  7300, 0.63, 0.67,  41300,  6.2,  48000,  48600]
+      - ["Y10",  7300,     0,    0,  7300, 0.65, 0.71,  30665,  4.2,  37965,  37965]
+      - ["Y11",  7300,     0,    0,  7300, 0.72, 0.70,  31598,  4.3,  38899,  38899]
+      - ["Y12",  7300,     0,    0,  7300, 0.82, 0.69,  13611,  1.9,  20912,  20912]
+      - ["Y13",  3059,     0, 4241,  7300, 0.50, 0.69,   3702,  1.2,   6760,  11001]
+      - ["Y14",     0,     0, 2325,  2325, 0.34, 0.70,      0, null,      0,   2325]
+      - ["Total", 88760, 7166, 7166, 95927, 0.76, 0.71, 382907, 3.7, 478834, 486000]
+    scheduling_rules_as_printed:
+      - "Annual mill feed of 7,300,000 t is targeted based on an average of 20,000 tonnes/day milling."
+      - "Mill production will ramp up through Year 1, totalling 6,000,000 t."
+      - "Pit phase progression is limited to no more than nine benches each year. Average phase progression in any annual period is five 10 m benches."
+      - "An elevated gold cut-off grade of 0.40 g/t is employed during the early years of the open pit operations."
+      - "Material in the stockpiles is reclaimed to the mill after the pit is mined out in Year 13."
+    source: "Table 16-7 Mine Production Schedule, p.265; scheduling rules from Section 16.10 Production Scheduling, p.264"
+  # ── ECONOMIC INPUTS (Table 22-1, p.355) ────────────────────────────────────
+  economic_inputs:
+    gold_price_usd_per_oz: 1600
+    silver_price_usd_per_oz: 24
+    exchange_rate_cad_to_usd: 0.76
+    gold_payable_pct: 99.8
+    silver_payable_pct: 90.0
+    gold_refining_terms_usd_per_oz: 1.00
+    silver_refining_terms_usd_per_oz: 0.60
+    dore_transport_costs_usd_per_oz: 1.00
+    dore_insurance_costs_pct_of_net_value: 0.15
+    royalty_pct: 1.5
+    gold_process_recovery_pct: 90
+    silver_process_recovery_pct: 40
+    mining_cost_cad_per_t_mined: 2.22
+    mining_cost_cad_per_t_milled: 10.80
+    processing_costs_cad_per_t_milled: 6.58
+    ga_costs_cad_per_t_milled: 1.36
+    tmf_operating_costs_cad_per_t_milled: 0.17
+    water_treatment_operating_costs_cad_per_t_milled: 0.47
+    total_operating_costs_cad_per_t_milled: 19.38
+    royalty_note_as_printed: "It is anticipated that NSR obligations under the 'Wallster and McMillan' and 'R.E. Mickle' claims will be purchased by the owner in advance of commercial production, lowering the overall NSR commitment within the delineated resource to 1.5%. The cost of this purchase has not been included in the project cashflow."
+    mining_cost_note_as_printed: "Variable annual mining costs based on scheduled open pit production, LOM average of $2.22/t."
+    source: "Table 22-1 Inputs for Economic Analysis, p.355"
+  capital_costs_cad_000:
+    initial_by_area:
+      overall_site_development: 25600
+      mining: 73438
+      ore_handling: 33743
+      process: 125527
+      tailings_and_water_management: 40318
+      environmental: 1600
+      on_site_infrastructure: 41617
+      off_site_infrastructure: 64170
+      water_treatment_facilities: 10347
+      project_indirect_costs: 101964
+      owners_costs: 13654
+      contingency: 75225
+      total_printed: 607203
+    sustaining_total_printed: 290490
+    lom_total_printed: 897693
+    closure_total_printed: 159602
+    closure_net_of_salvage_printed_usd_m: 130
+    salvage_value_printed_usd_m: 30
+    source: "Table 1-3 (p.46), Table 1-5 (p.46), Table 22-2 (p.357)"
+  operating_costs_cad_per_t_milled:
+    mining: 10.80
+    processing_and_ga: 7.67
+    water_treatment: 0.47
+    tailings_and_water_management: 0.17
+    owners_ga: 0.27
+    total_printed: 19.38
+    source: "Table 1-4 Project LOM Operating Costs, p.46"
+
+expected:
+  # ── ANNUAL CASH FLOW (Table 22-3, p.360), all figures C$ millions ───────────
+  cash_flow_summary:
+    schema: [period, gold_koz, silver_koz, net_revenue, operating_costs, capital_costs, pre_tax_cash_flow, taxes, post_tax_cash_flow]
+    rows:
+      - ["Y-2",    0,   0,     0,     0,  304,  -304,    0,  -304]
+      - ["Y-1",    0,   0,     0,     0,  303,  -303,    0,  -303]
+      - ["Y1",   137,  64,   285,   124,   54,   107,    2,   105]
+      - ["Y2",   179,  67,   371,   132,   27,   212,    4,   207]
+      - ["Y3",   201,  72,   416,   143,   31,   243,    5,   238]
+      - ["Y4",   193,  64,   401,   138,   27,   236,   17,   219]
+      - ["Y5",   177,  68,   366,   137,   15,   214,   40,   174]
+      - ["Y6",   211,  73,   437,   160,   35,   242,   53,   189]
+      - ["Y7",   134,  65,   278,   176,   17,    85,    9,    76]
+      - ["Y8",   162,  66,   336,   163,   17,   156,   35,   120]
+      - ["Y9",   129,  61,   268,   169,   24,    75,   14,    61]
+      - ["Y10",  134,  65,   278,   148,   29,   101,   24,    77]
+      - ["Y11",  150,  65,   312,   141,   16,   155,   43,   111]
+      - ["Y12",  174,  66,   361,   111,   12,   238,   74,   164]
+      - ["Y13",   99,  60,   206,    91,   32,    83,   18,    65]
+      - ["Y14",   20,  18,    42,    25,   36,   -19,  -11,    -8]
+      - ["Y15-20", 0,   0,     0,     0,   48,   -48,  -17,   -31]
+      - ["LOM", 2100, 876,  4357,  1859, 1027,  1471,  313,  1159]
+    source: "Table 22-3 Cash Flow Summary, p.360. The gold and silver koz rows and the net-receipts/operating-cost rows are also printed as data labels on Figure 22-1 (p.358) and Figure 22-2 (p.359) respectively, and the two presentations agree value-for-value."
+  economic_analysis_summary:
+    mill_feed_mt: 95.9
+    au_grade_g_t: 0.76
+    au_produced_koz: 2100
+    ag_grade_g_t: 0.71
+    ag_produced_koz: 876
+    waste_mined_mt: 382.9
+    strip_ratio: 4.0
+    initial_capital_cad_m: 607
+    sustaining_capital_cad_m: 290
+    closure_capital_cad_m: 130
+    cash_costs_lom_usd_per_oz: 696
+    aisc_lom_usd_per_oz: 801
+    total_costs_lom_usd_per_oz: 1068
+    net_cash_flow_pre_tax_cad_m: 1471
+    pre_tax_npv5_cad_m: 848
+    pre_tax_irr_pct: 25
+    pre_tax_payback_years: 3.2
+    post_tax_npv5_cad_m: 655
+    post_tax_irr_pct: 22
+    post_tax_payback_years: 3.3
+    definitions_as_printed:
+      cash_costs: "include all operating costs associated with the production and sale of gold, including royalties"
+      aisc: "include Cash Costs as well as all sustaining capital costs related to the project"
+      total_costs: "include AISC as well as all initial capital and closure costs related to the project"
+    source: "Table 22-2 Summary of Economic Analysis, p.357"
+  post_tax_npv_sensitivity_cad_m:
+    parameter_variance_pct: [-20, -10, 0, 10, 20, 30, 40, 50]
+    gold_price:      [252, 465, 655, 841, 1026, 1211, 1396, 1580]
+    capital_costs:   [759, 707, 655, 603,  550,  498,  445,  393]
+    operating_costs: [812, 733, 655, 575,  495,  412,  322,  230]
+    source: "Figure 22-3 Sensitivity of Post Tax NPV (5% Discount Rate) to Project Inputs, p.361 — data table printed beneath the chart"
+
+# respelled into the corpus orientation 2026-08-13 ({source name: canon},
+# a dotted path into the nested table; row 17 is the printed LOM row) —
+# the SAME two figures the inverted form named, nothing re-claimed
+mapping:
+  cash_flow_summary.rows.17.3: {canon: revenue, scale: 1000000}
+  #   ^ LOM Net Revenue, printed in C$M (4,357); scale is the unit
+  #     conversion C$M -> CAD, part of the reading, not a number authored
+  cash_flow_summary.rows.17.4: {canon: cost_of_sales, scale: 1000000}
+  #   ^ LOM Operating Costs, C$M (1,859)
+  # No gross_margin binding. The report's "Pre-Tax Cash Flow" (C$1,471M) is
+  # revenue less operating costs LESS CAPITAL, which is a cash flow and not a
+  # gross margin; revenue less operating costs alone (4,357 - 1,859 = C$2,498M)
+  # is a figure the report never prints and never names. Binding an unnamed
+  # subtraction to CANON `gross_margin` would assert a line the source does not
+  # have — the same discipline energy_irena_solar_pv_2023.yaml applies to LCOE.
+
+tolerance:
+  abs: 1.0
+  rel: 0.005
+  why: >
+    Table 22-3 is printed in whole C$ millions (285, 124, 54, 107), so a one-million absolute band
+    is exactly the last printed digit and any true agreement must land inside it — which it does:
+    fourteen of the fifteen annual pre-tax cash flows reproduce to the unit from the printed rows,
+    and the two NPVs reproduce to C$0.2M against printed 848 and 655. The 0.5% relative band exists
+    for the two LOM column totals that miss their own row sums by one unit (operating costs, taxes)
+    and the silver total that misses by two. Tolerance is NOT set wide enough to hide the two hard
+    findings in notes (the availability sentence, and the strip ratio printed two ways).
+
+notes: |
+  RE-DERIVED BY HAND. Twenty-two checks. Seventeen close, five do not.
+
+  ── (1) THE AVAILABILITY CONTRADICTION — THE REASON THIS GOLD WAS HARVESTED ──
+  The report states, twice and verbatim: "treat 20,000 tonnes/day (or 913 tonnes/hour) based on an
+  availability of 8,059 hours per annum or 92%."
+      8,059 h / 8,760 h = 92.00%  -- so the two halves of that clause agree with each other
+      7,300,000 t/a / 8,059 h     = 905.8 t/h   -- NOT the 913 t/h printed in the same sentence
+      8,760 h x 0.913 (Table 17-1's Mill Availability) = 7,997.9 h
+      7,300,000 t/a / 7,997.9 h   = 912.7 t/h   -> 913 t/h   EXACTLY THE PRINTED FIGURE
+  So the 913 t/h is computed from the 91.3% mill availability in Table 17-1, and the "8,059 hours
+  per annum or 92%" in the same breath is a different number that does not produce it. The 0.7pp
+  difference is small in isolation and is a 7.3 t/h error in the equipment sizing basis — the
+  difference between specifying apron feeders and a SAG feed conveyor at 906 t/h or at 913 t/h.
+  Both figures are transcribed above as printed; neither is corrected.
+
+  ── (2) THE CRUSHING SIDE, BY CONTRAST, RECONCILES PERFECTLY ────────────────
+      6,132 h/a / 8,760 h = 70.00%          -> printed "6,132 h/a or 70% availability"
+      1,190 t/h x 6,132 h = 7,297,080 t/a   -> the 7,300,000 t/a target, to 0.04%
+  The crusher is sized on ITS OWN availability and its own feed rate and the two close. The
+  contradiction in (1) is confined to the mill statement. This is worth recording because it rules
+  out "the whole report uses one loose convention": the same engineers got the adjacent circuit
+  exactly right on the same page.
+
+  ── (3) THE MINE SCHEDULE COLUMNS ──────────────────────────────────────────
+    pit-to-stockpile   162+2,363+2,758+949+934                 =  7,166  -> printed 7,166  EXACT
+    stockpile-to-mill  600+4,241+2,325                          =  7,166  -> printed 7,166  EXACT
+      (the stockpile balances to the tonne over 14 years — a real conservation check, and it passes)
+    pit-to-mill        6,000 + 7,300x7 + 6,700 + 7,300x3 + 3,059 = 88,759 -> printed 88,760 (1 kt)
+    total-to-mill      6,000 + 7,300x12 + 2,325                  = 95,925 -> printed 95,927 (2 kt)
+    waste rock         column sum                                = 382,908 -> printed 382,907 (1 kt)
+    total mined        column sum                                = 478,833 -> printed 478,834 (1 kt)
+    total moved        478,834 + 7,166 (stockpile rehandle)      = 486,000 -> printed 486,000 EXACT
+  Annual strip ratios all reproduce: Y1 23,185/(6,000+2,363) = 2.77 -> 2.8; Y6 41,795/7,300 = 5.72
+  -> 5.7; Y13 3,702/3,059 = 1.21 -> 1.2; Y-1 11,845/162 = 73.1 -> 73.0.
+
+  ── (4) DOES NOT RECONCILE: THE TOTAL STRIP RATIO IS PRINTED TWO DIFFERENT WAYS
+      Table 16-7 total row:  3.7        Table 22-2 summary:  4.0
+      From the schedule:     382,907 / (88,760 + 7,166 = 95,926 kt of ore mined) = 3.99
+  Table 22-2's 4.0 is the correct one; Table 16-7's 3.7 does not follow from any pairing of that
+  table's own totals. Both are kept as printed.
+
+  ── (5) THE ANNUAL GOLD SERIES IS CONSISTENT WITH THE GRADES, AND WITH ITSELF
+  The koz series sums exactly to its printed LOM total:
+      137+179+201+193+177+211+134+162+129+134+150+174+99+20 = 2,100  -> printed 2,100  EXACT
+  It also tracks the grade sequence without a single inversion, which is what confirms the
+  year-by-year alignment: the two years sharing a 0.65 g/t grade (Y7 and Y10) BOTH print 134 koz,
+  and the ordering 0.34 < 0.50 < 0.63 < 0.65 < 0.72 < 0.77 < 0.82 < 0.83 < 0.84 < 0.90 < 0.93 <
+  0.97 maps monotonically onto 20 < 99 < 129 < 134 < 150 < 162 < 174 < 177 < 179 < 193 < 201 < 211.
+  (Y1 is the exception and it should be: 0.79 g/t but only 6,000 kt of ramp-up feed, giving 137.)
+  Silver misses: 64+67+72+64+68+73+65+66+61+65+65+66+60+18 = 874 against a printed 876 (2 koz, or
+  0.23% — inside the rounding budget of fourteen whole-koz addends, so recorded not flagged).
+
+  ── (6) THE FLAT 90% RECOVERY DOES NOT HOLD YEAR BY YEAR, ONLY IN AGGREGATE ──
+  Applying Table 22-1's flat 90% gold recovery to each year's own tonnes and grade:
+      Y1  6,000 kt x 0.79 g/t x 0.90 / 31.1035 = 137.2 koz   printed 137   agrees
+      Y2  7,300 x 0.84 x 0.90 / 31.1035        = 177.4       printed 179   1.0% low
+      Y3  7,300 x 0.93 x 0.90                  = 196.4       printed 201   2.3% low
+      Y6  7,300 x 0.97 x 0.90                  = 204.9       printed 211   2.9% low
+      Y7  7,300 x 0.65 x 0.90                  = 137.3       printed 134   2.5% HIGH
+      Y13 7,300 x 0.50 x 0.90                  = 105.6       printed  99   6.7% HIGH
+      LOM sum of the fourteen                  = 2,105.4     printed 2,100 0.26% high
+  The aggregate lands within a quarter of a percent while individual years miss by up to 6.7%, and
+  the sign of the miss tracks the grade: HIGH-grade years produce MORE than a flat 90% predicts,
+  low-grade years produce LESS. That is a grade-dependent recovery curve, and the report has one —
+  Figure 13-18 "Overall Gold Recovery as a Function of Head Grade" (p.178). Table 22-1 nevertheless
+  prints a single "Gold Process Recovery 90%" with no qualifier. The implied annual recoveries run
+  from ~87.8% (Y7/Y10, 0.65 g/t) to ~92.7% (Y6, 0.97 g/t). A model fed the printed 90% will match
+  the life-of-mine total and mis-time the cash flows.
+
+  ── (7) THE CASH FLOW TABLE RECONCILES ALMOST EVERYWHERE ────────────────────
+    Net revenue column   sums to 4,357  -> printed 4,357  EXACT
+    Capital costs column sums to 1,027  -> printed 1,027  EXACT
+      and 1,027 = 607 (initial) + 290 (sustaining) + 130 (closure net of salvage). Cross-checks
+      against Table 1-3 (607,203 + 290,490 = 897,693 C$'000) and Table 1-5 (closure 159,602 less
+      the stated 30,000 salvage = 129,602 -> 130). EXACT.
+      Y-2 304 + Y-1 303 = 607 -> exactly the printed Initial Capital. EXACT.
+    Operating costs column sums to 1,858 -> printed 1,859 (1 unit)
+    Pre-tax cash flow, every year, = net revenue - operating costs - capital:
+      Y1 285-124-54 = 107 (printed 107); Y5 366-137-15 = 214 (214); Y7 278-176-17 = 85 (85);
+      Y12 361-111-12 = 238 (238); Y14 42-25-36 = -19 (-19). Only Y3 misses (242 vs printed 243).
+      LOM 4,357 - 1,859 - 1,027 = 1,471 -> printed 1,471  EXACT
+    Post-tax = pre-tax less taxes, every year: eleven of fifteen exact, four off by one unit
+      (Y2, Y8, Y11, and the LOM total 1,471-313 = 1,158 against a printed 1,159).
+    Taxes column sums to 310 against a printed 313 (3 units, 1.0% — the largest column miss).
+
+  ── (8) BOTH NPVs AND BOTH IRRs REPRODUCE, ONCE THE DISCOUNTING CONVENTION IS FOUND
+  Discounting the seventeen printed cash flows at 5% with Y-2 at t=1 (i.e. end-of-first-period, not
+  t=0):
+      pre-tax  NPV = C$848.21M  -> printed 848   post-tax NPV = C$655.10M -> printed 655
+  Both land within C$0.21M of the printed figures. Placing Y-2 at t=0 instead gives 890.6 and 687.9
+  — 5% too high in both cases, which is exactly the one-period factor. So the study discounts from
+  the END of the first pre-production year, and that single convention choice is worth C$43M of NPV
+  on this project. The report never states it. IRRs: pre-tax 24.6% -> printed 25%; post-tax 21.9%
+  -> printed 22%. Payback 3.2 / 3.3 years is consistent with cumulative pre-tax cash flow crossing
+  zero during Y3 (107+212 = 319 against 607 of initial capital; +243 in Y3 clears it).
+
+  ── (9) THE CURRENCY IS CANADIAN AND THE PER-OUNCE METRICS ARE AMERICAN ─────
+  Table 22-3 carries no currency symbol beyond "$M", and Table 22-2 mixes "$M" rows with "US$/oz"
+  rows. The exchange rate settles it. Total Costs (LOM) as the report defines it — cash costs plus
+  sustaining plus initial plus closure:
+      (1,859 opex + ~66 royalty + 290 sustaining + 607 initial + 130 closure) C$M
+        = C$2,952M x 0.76 = US$2,244M / 2,100 koz = US$1,068/oz  -> printed 1,068  EXACT
+      AISC:  (1,859 + 66 + 290) x 0.76 / 2.1 = US$802/oz         -> printed 801
+      Cash:  (1,859 + 66)       x 0.76 / 2.1 = US$697/oz         -> printed 696
+  All three land, so the cost stack is C$ and the per-ounce metrics are US$ at 0.76. (The ~C$66M
+  royalty is my own 1.5% of gross value, since the cash-flow table prints revenue already net of it;
+  it moves the answers by US$24/oz and all three still land.)
+
+  ── (10) THE REVENUE CHAIN RECONCILES FROM FIRST PRINCIPLES ─────────────────
+  Year 2, built from Table 22-1's own terms:
+      gold   179 koz x US$1,600 x 99.8% payable            = US$285,928k
+      silver  67 koz x US$24    x 90.0% payable            = US$  1,447k
+      at 0.76                                              = C$377,862k
+      less refining+transport (179 x $2 + 67 x $1.60 = US$465k)  = C$   612k
+      less doré insurance 0.15% of net value                     = C$   566k
+      less 1.5% royalty                                          = C$ 5,652k
+      net receipts                                               = C$371,032k -> printed C$371M
+  RECONCILES to the printed million. Every one of the seven terms in that chain is a separately
+  printed input, which is precisely the property the harvest brief asks for.
+
+  ── (11) OPERATING COST RECONCILES BOTH WAYS ────────────────────────────────
+      Table 1-4:  10.80 + 7.67 + 0.47 + 0.17 + 0.27 = 19.38 C$/t milled  -> printed 19.38  EXACT
+      Table 22-1: 10.80 + 6.58 + 1.36 + 0.17 + 0.47 = 19.38              -> printed 19.38  EXACT
+      and the two splits agree once Owner's G&A is separated: 6.58 + 1.36 = 7.94 = 7.67 + 0.27.
+      LOM: 19.38 C$/t x 95,927 kt = C$1,859.1M -> printed operating costs C$1,859M  EXACT.
+  Mining cost cross-check: C$2.22/t mined x 478,834 kt = C$1,063M, but C$10.80/t milled x 95,927 kt
+  = C$1,036M. The two printed mining rates differ by C$27M (2.6%) on the same schedule; the
+  cash-flow table is consistent with neither in isolation because mining cost is stated as varying
+  annually ("LOM average of $2.22/t"). Recorded as a soft inconsistency, not a hard one.
+
+  ── WHAT THIS SOURCE DOES NOT GIVE ─────────────────────────────────────────
+  No annual availability or utilisation series: mill availability is a single flat 91.3% for all
+  fourteen operating years, with no ramp in Year 1 even though mill FEED ramps (6.0 Mt against the
+  7.3 Mt steady state). No maintenance schedule, no planned/unplanned outage split — nothing like
+  the PCLF/UCLF/OCLF decomposition that energy_eskom_csir_south_africa_2024.yaml carries for a power
+  fleet. The mining industry's technical reports state availability as a design constant; the power
+  industry's regulators state it as a measured, moving series. Both are in this harvest and the
+  contrast is the finding.
+
+# ── THE PHYSICS READING (5c, 2026-08-12) ─────────────────────────────────────
+# Structure only: every driver names one of THIS GOLD'S OWN input locations
+# ({from:}/{path:}) or derives from other drivers ({expr:}). No number below
+# is authored — 31.1035 g/ozt is the troy-ounce definition (a unit
+# conversion, like mapping's `scale`), and /100 turns printed percents into
+# fractions.
+#
+# ADDRESSING, DECLARED AHEAD OF THE ADAPTER: this gold's `inputs:` are
+# nested by source table (plant_design_criteria / mine_schedule /
+# economic_inputs / ...), and `engine/golds.py:_from_physics` resolves
+# {from:}/{path:} against TOP-LEVEL keys only — so every reference below
+# uses the natural dotted/indexed extension ("economic_inputs.<key>",
+# "mine_schedule.rows[<i>][<col>]", columns per mine_schedule.schema:
+# [4]=total_to_mill_kt, [5]=au_g_t, [6]=ag_g_t; rows[0..15]=Y-2..Y14,
+# rows[16]=the printed LOM total row). Under today's adapter this reading
+# does not resolve; the structure is verified against compile.py by a
+# resolver-equipped harness (see the drafting session's report).
+#
+# The 17-period grid is Table 22-3's own: Y-2, Y-1, Y1..Y14, lumped Y15-20.
+# Dead periods (Y-2, Y-1, Y15-20) point their mill feed at the table's own
+# printed zeros (rows[0][4], rows[1][4]) and their grades at the printed
+# LOM-total-row grades (rows[16][5]/[6]) — both multiply a zero feed, so no
+# invented tonnage or grade ever reaches the ledger.
+#
+# WHAT THIS READING REACHES: the operating chain only — milled tonnes ->
+# recovered Au/Ag (flat Table 22-1 recoveries; note (6) records that the
+# true recovery is grade-dependent, so annual metal will sit ~1-7% off the
+# printed years while LOM lands) -> payable -> refining/transport ->
+# insurance -> royalty -> net receipts (note (10)'s chain), and the
+# C$19.38/t milled operating cost stack. NOT reached, honestly: the annual
+# capital profile (Table 22-3's capital column is published in `expected`
+# only — inputs hold just the three LOM capital totals), taxes, NPV and IRR.
+physics:
+  stocks:
+    ore:    {unit: kt}
+    gold:   {unit: koz}
+    silver: {unit: koz}
+  drivers:
+    milled_kt:
+      unit: kt
+      path: ["mine_schedule.rows.0.4",  "mine_schedule.rows.1.4",
+             "mine_schedule.rows.2.4",  "mine_schedule.rows.3.4",
+             "mine_schedule.rows.4.4",  "mine_schedule.rows.5.4",
+             "mine_schedule.rows.6.4",  "mine_schedule.rows.7.4",
+             "mine_schedule.rows.8.4",  "mine_schedule.rows.9.4",
+             "mine_schedule.rows.10.4", "mine_schedule.rows.11.4",
+             "mine_schedule.rows.12.4", "mine_schedule.rows.13.4",
+             "mine_schedule.rows.14.4", "mine_schedule.rows.15.4",
+             "mine_schedule.rows.0.4"]   # Y15-20: closure, zero feed —
+             #                               the table's own printed 0
+    au_gt:
+      unit: g/t
+      path: ["mine_schedule.rows.16.5", "mine_schedule.rows.16.5",
+             "mine_schedule.rows.2.5",  "mine_schedule.rows.3.5",
+             "mine_schedule.rows.4.5",  "mine_schedule.rows.5.5",
+             "mine_schedule.rows.6.5",  "mine_schedule.rows.7.5",
+             "mine_schedule.rows.8.5",  "mine_schedule.rows.9.5",
+             "mine_schedule.rows.10.5", "mine_schedule.rows.11.5",
+             "mine_schedule.rows.12.5", "mine_schedule.rows.13.5",
+             "mine_schedule.rows.14.5", "mine_schedule.rows.15.5",
+             "mine_schedule.rows.16.5"]  # dead periods: LOM grade x 0 feed
+    ag_gt:
+      unit: g/t
+      path: ["mine_schedule.rows.16.6", "mine_schedule.rows.16.6",
+             "mine_schedule.rows.2.6",  "mine_schedule.rows.3.6",
+             "mine_schedule.rows.4.6",  "mine_schedule.rows.5.6",
+             "mine_schedule.rows.6.6",  "mine_schedule.rows.7.6",
+             "mine_schedule.rows.8.6",  "mine_schedule.rows.9.6",
+             "mine_schedule.rows.10.6", "mine_schedule.rows.11.6",
+             "mine_schedule.rows.12.6", "mine_schedule.rows.13.6",
+             "mine_schedule.rows.14.6", "mine_schedule.rows.15.6",
+             "mine_schedule.rows.16.6"]
+    au_rec_pct:       {from: "economic_inputs.gold_process_recovery_pct"}
+    ag_rec_pct:       {from: "economic_inputs.silver_process_recovery_pct"}
+    au_price_usd:     {from: "economic_inputs.gold_price_usd_per_oz", unit: USD/oz}
+    ag_price_usd:     {from: "economic_inputs.silver_price_usd_per_oz", unit: USD/oz}
+    fx_cad_usd:       {from: "economic_inputs.exchange_rate_cad_to_usd"}
+    au_payable_pct:   {from: "economic_inputs.gold_payable_pct"}
+    ag_payable_pct:   {from: "economic_inputs.silver_payable_pct"}
+    au_refine_usd_oz: {from: "economic_inputs.gold_refining_terms_usd_per_oz", unit: USD/oz}
+    ag_refine_usd_oz: {from: "economic_inputs.silver_refining_terms_usd_per_oz", unit: USD/oz}
+    transport_usd_oz: {from: "economic_inputs.dore_transport_costs_usd_per_oz", unit: USD/oz}
+    insurance_pct:    {from: "economic_inputs.dore_insurance_costs_pct_of_net_value"}
+    royalty_pct:      {from: "economic_inputs.royalty_pct"}
+    # the two C$/t-milled rates stay UNTYPED (no unit:), deliberately: the
+    # unit algebra (engine/ledger/units.py) carries no scalar conversion, so
+    # kt x 1000 still types as kt and a typed CAD/t rate would refuse the
+    # size expressions below. UNKNOWN propagates and never refuses — the
+    # same state every FAO oil-mill rate is in.
+    mining_cad_t:     {from: "economic_inputs.mining_cost_cad_per_t_milled"}
+    opex_cad_t:       {from: "economic_inputs.total_operating_costs_cad_per_t_milled"}
+    milled_t: {expr: "milled_kt * 1000"}   # kt -> t for the C$/t rates
+    # kt x g/t = kg of metal; /31.1035 g/ozt -> koz directly
+    au_koz:   {expr: "milled_kt * au_gt / 31.1035 * au_rec_pct / 100", unit: koz}
+    ag_koz:   {expr: "milled_kt * ag_gt / 31.1035 * ag_rec_pct / 100", unit: koz}
+    au_gross_usd: {expr: "au_koz * 1000 * au_price_usd * au_payable_pct / 100"}
+    ag_gross_usd: {expr: "ag_koz * 1000 * ag_price_usd * ag_payable_pct / 100"}
+    refine_usd:   {expr: "au_koz * 1000 * (au_refine_usd_oz + transport_usd_oz) + ag_koz * 1000 * (ag_refine_usd_oz + transport_usd_oz)"}
+    net1_usd:         {expr: "au_gross_usd + ag_gross_usd - refine_usd"}
+    insurance_usd:    {expr: "net1_usd * insurance_pct / 100"}
+    royalty_usd:      {expr: "(net1_usd - insurance_usd) * royalty_pct / 100"}
+    # notes (10): the whole chain reproduces Y2's printed C$371M to the million
+    net_receipts_cad: {expr: "(net1_usd - insurance_usd - royalty_usd) / fx_cad_usd"}
+    ore_per_au: {expr: "milled_kt / max(au_koz, 1)"}
+    au_share:   {expr: "au_gross_usd / max(au_gross_usd + ag_gross_usd, 1)"}
+    ag_share:   {expr: "1 - au_share"}
+    producing:  {expr: "min(milled_kt, 1)"}
+  recipes:
+    gold:
+      consumes: {ore: ore_per_au}
+      produces:
+        gold:   {qty: au_koz, use: co_product}
+        silver: {qty: ag_koz, use: co_product}
+      allocation:
+        basis: sales_value
+        source: >
+          Table 22-1 prices each metal at its own price and payability and
+          the study's net-receipts chain (reproduced in notes (10)) values
+          the dore by those prices — relative sales value, the example
+          IAS 2.14 gives and step 3 of ISO 14044's hierarchy.
+        shares: {gold: au_share, silver: ag_share}
+  exchanges:
+    # mining cost enters the ore stock at Table 22-1's C$10.80/t-milled rate;
+    # the study itself prints a second rate (C$2.22/t mined) and notes (11)
+    # records that the two disagree by C$27M over the LOM — 10.80 is the one
+    # the C$19.38/t stack is built from, so it is the one used here.
+    - {name: mine_ore, from: cash, to: ore, when: producing,
+       size: "milled_t * mining_cad_t", qty: {ore: milled_kt},
+       counterparty: mine_operations}
+    - {name: mill_to_gold, from: ore, to: gold, when: producing,
+       size: "milled_t * mining_cad_t * au_share",
+       qty: {ore: "-(milled_kt)", gold: au_koz}}
+    - {name: mill_to_silver, from: ore, to: silver, when: producing,
+       size: "milled_t * mining_cad_t * ag_share",
+       qty: {silver: ag_koz}}
+    # net receipts as one line, because Table 22-3's "Net Revenue" column is
+    # net of payability, refining, transport, insurance and royalty — booking
+    # gross and expensing the deductions would compare a different construct
+    - {name: sell_dore, from: INCOME, to: cash, when: producing,
+       size: "net_receipts_cad", counterparty: refinery,
+       element_name: Revenue}
+    # sold in full each period: release the whole carrying value with the
+    # ounces (the periodic convention, IAS 2.25)
+    - {name: gold_delivered, from: gold, to: EXPENSE, when: producing,
+       release: 1.0, qty: {gold: "-(au_koz)"}}
+    - {name: silver_delivered, from: silver, to: EXPENSE, when: producing,
+       release: 1.0, qty: {silver: "-(ag_koz)"}}
+    # the rest of the C$19.38/t stack (processing 6.58 + G&A 1.36 + TMF 0.17
+    # + water treatment 0.47), stated as total-less-mining so both printed
+    # rates stay the single source
+    - {name: process_opex, from: cash, to: EXPENSE, when: producing,
+       size: "milled_t * (opex_cad_t - mining_cad_t)",
+       counterparty: suppliers}

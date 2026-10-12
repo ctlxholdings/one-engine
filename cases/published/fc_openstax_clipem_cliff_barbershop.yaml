@@ -1,0 +1,217 @@
+# Published case "fc_openstax_clipem_cliff_barbershop": Clip'em Cliff, a barber shop and
+# consulting practice, its first month (August 2019) taken through the whole accounting cycle
+# (OpenStax, Principles of Accounting vol. 1, section 5.4;
+# cases/reference/published/fc_openstax_clipem_cliff_barbershop.yaml).
+#
+# The source prints the August transactions and the Aug 31 adjusting entries, and the library
+# transcribes them as a journal (inputs.journal: an amount, a debit and a credit each). Every
+# journal line is posted here as one move of a `transfer`, its amount the journal's own amount
+# (journal_<n>__amount), its accounts the journal's own debit and credit:
+#   * the eleven August transactions (journal 0 to 11) in period 0;
+#   * the five adjusting entries (journal 12 to 16) in period 1. The source strikes its
+#     unadjusted trial balance before the adjustments and its adjusted one after, both dated
+#     Aug 31; giving the adjustments their own period is what lets the books show both.
+# The journal's shorthand is spelled out: INCOME is service_revenue (interest_revenue for the
+# interest earned), EXPENSE the expense the source names, OWNER the dividends account (equity,
+# so a dividend lowers it; it shows as a debit on the trial balances).
+#
+# The books close nothing to retained earnings, so retained earnings is read as the dividends
+# account plus every income account less every expense account (`re` below). A debit balance on
+# a credit-natured account (dividends, retained earnings) and the credit balance of the contra
+# asset (accumulated depreciation) are read with sign -1 where the source prints them as
+# positive debits or credits. The closing entries move exactly the balances they close, so each
+# closing-entry figure is read as the balance it closes.
+published: fc_openstax_clipem_cliff_barbershop
+entity: cliff
+plant: journal_8__amount
+case:
+  case: published-clipem-cliff
+  periods: 2
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: published
+      values:
+        j0: journal_0__amount * (t == journal_0__period)
+        j1: journal_1__amount * (t == journal_1__period)
+        j2: journal_2__amount * (t == journal_2__period)
+        j3: journal_3__amount * (t == journal_3__period)
+        j4: journal_4__amount * (t == journal_4__period)
+        j5: journal_5__amount * (t == journal_5__period)
+        j6: journal_6__amount * (t == journal_6__period)
+        j7: journal_7__amount * (t == journal_7__period)
+        j8: journal_8__amount * (t == journal_8__period)
+        j9: journal_9__amount * (t == journal_9__period)
+        j10: journal_10__amount * (t == journal_10__period)
+        j11: journal_11__amount * (t == journal_11__period)
+        # the adjusting entries, struck after the unadjusted trial balance
+        j12: journal_12__amount * (t == journal_12__period + 1)
+        j13: journal_13__amount * (t == journal_13__period + 1)
+        j14: journal_14__amount * (t == journal_14__period + 1)
+        j15: journal_15__amount * (t == journal_15__period + 1)
+        j16: journal_16__amount * (t == journal_16__period + 1)
+  opening:
+    cliff:
+      cash: {nature: asset, value: 0}
+      common_stock: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: cliff
+      phase: post
+      declare:
+        accounts_receivable: asset
+        supplies: asset
+        equipment: asset
+        interest_receivable: asset
+        accumulated_depreciation_equipment: asset
+        accounts_payable: liability
+        unearned_revenue: liability
+        income_tax_payable: liability
+        dividends: equity
+        service_revenue: income
+        interest_revenue: income
+        utility_expense: expense
+        salaries_expense: expense
+        supplies_expense: expense
+        depreciation_expense_equipment: expense
+        income_tax_expense: expense
+      moves:
+        aug01_shares: {debit: cash, credit: common_stock, amount: {generator: src, output: j0}}
+        aug03_equipment_cash: {debit: equipment, credit: cash, amount: {generator: src, output: j1}}
+        aug03_equipment_account: {debit: equipment, credit: accounts_payable, amount: {generator: src, output: j2}}
+        aug06_supplies: {debit: supplies, credit: cash, amount: {generator: src, output: j3}}
+        aug10_billed: {debit: accounts_receivable, credit: service_revenue, amount: {generator: src, output: j4}}
+        aug13_utility: {debit: utility_expense, credit: cash, amount: {generator: src, output: j5}}
+        aug14_advance: {debit: cash, credit: unearned_revenue, amount: {generator: src, output: j6}}
+        aug16_dividend: {debit: dividends, credit: cash, amount: {generator: src, output: j7}}
+        aug17_cash_sale: {debit: cash, credit: service_revenue, amount: {generator: src, output: j8}}
+        aug19_pay_supplier: {debit: accounts_payable, credit: cash, amount: {generator: src, output: j9}}
+        aug22_salaries: {debit: salaries_expense, credit: cash, amount: {generator: src, output: j10}}
+        aug28_collect: {debit: cash, credit: accounts_receivable, amount: {generator: src, output: j11}}
+        adj_supplies_used: {debit: supplies_expense, credit: supplies, amount: {generator: src, output: j12}}
+        adj_depreciation: {debit: depreciation_expense_equipment, credit: accumulated_depreciation_equipment,
+                           amount: {generator: src, output: j13}}
+        adj_advance_earned: {debit: unearned_revenue, credit: service_revenue, amount: {generator: src, output: j14}}
+        adj_interest: {debit: interest_receivable, credit: interest_revenue, amount: {generator: src, output: j15}}
+        adj_income_tax: {debit: income_tax_expense, credit: income_tax_payable, amount: {generator: src, output: j16}}
+  schemes:
+    pnl:
+      service_revenue: revenue
+      interest_revenue: revenue
+      utility_expense: expense
+      salaries_expense: expense
+      supplies_expense: expense
+      depreciation_expense_equipment: expense
+      income_tax_expense: expense
+  cuts:
+    revenues: {kind: pnl, entity: cliff, scheme: pnl, include: [revenue]}
+    expenses: {kind: pnl, entity: cliff, scheme: pnl, include: [expense]}
+    net_income: {kind: pnl, entity: cliff, scheme: pnl, include: [revenue, expense]}
+  measures: {}
+figures:
+  net_income_top: {cut: net_income, total: true}
+  total_assets_top: {balance: &assets "cash + accounts_receivable + interest_receivable + supplies + equipment + accumulated_depreciation_equipment", at: 1}
+  total_liabilities_top: {balance: &liabilities "accounts_payable + unearned_revenue + income_tax_payable", at: 1}
+  total_equity_top: {balance: &equity "common_stock + dividends + service_revenue + interest_revenue - utility_expense - salaries_expense - supplies_expense - depreciation_expense_equipment - income_tax_expense", at: 1}
+  # unadjusted trial balance: period 0, before the adjusting entries
+  unadjusted_trial_balance_usd.cash.debit: {balance: cash, at: 0}
+  unadjusted_trial_balance_usd.accounts_receivable.debit: {balance: accounts_receivable, at: 0}
+  unadjusted_trial_balance_usd.supplies.debit: {balance: supplies, at: 0}
+  unadjusted_trial_balance_usd.equipment.debit: {balance: equipment, at: 0}
+  unadjusted_trial_balance_usd.accounts_payable.credit: {balance: accounts_payable, at: 0}
+  unadjusted_trial_balance_usd.unearned_revenue.credit: {balance: unearned_revenue, at: 0}
+  unadjusted_trial_balance_usd.common_stock.credit: {balance: common_stock, at: 0}
+  unadjusted_trial_balance_usd.dividends.debit: {balance: dividends, sign: -1, at: 0}
+  unadjusted_trial_balance_usd.service_revenue.credit: {balance: service_revenue, at: 0}
+  unadjusted_trial_balance_usd.salaries_expense.debit: {balance: salaries_expense, at: 0}
+  unadjusted_trial_balance_usd.utility_expense.debit: {balance: utility_expense, at: 0}
+  unadjusted_trial_balance_usd.total.debit: {balance: "cash + accounts_receivable + supplies + equipment - dividends + salaries_expense + utility_expense", at: 0}
+  unadjusted_trial_balance_usd.total.credit: {balance: "accounts_payable + unearned_revenue + common_stock + service_revenue", at: 0}
+  # adjusted trial balance: period 1
+  adjusted_trial_balance_usd.cash.debit: {balance: cash, at: 1}
+  adjusted_trial_balance_usd.accounts_receivable.debit: {balance: accounts_receivable, at: 1}
+  adjusted_trial_balance_usd.interest_receivable.debit: {balance: interest_receivable, at: 1}
+  adjusted_trial_balance_usd.supplies.debit: {balance: supplies, at: 1}
+  adjusted_trial_balance_usd.equipment.debit: {balance: equipment, at: 1}
+  adjusted_trial_balance_usd.accumulated_depreciation_equipment.credit: {balance: accumulated_depreciation_equipment, sign: -1, at: 1}
+  adjusted_trial_balance_usd.accounts_payable.credit: {balance: accounts_payable, at: 1}
+  adjusted_trial_balance_usd.unearned_revenue.credit: {balance: unearned_revenue, at: 1}
+  adjusted_trial_balance_usd.income_tax_payable.credit: {balance: income_tax_payable, at: 1}
+  adjusted_trial_balance_usd.common_stock.credit: {balance: common_stock, at: 1}
+  adjusted_trial_balance_usd.dividends.debit: {balance: dividends, sign: -1, at: 1}
+  adjusted_trial_balance_usd.interest_revenue.credit: {balance: interest_revenue, at: 1}
+  adjusted_trial_balance_usd.service_revenue.credit: {balance: service_revenue, at: 1}
+  adjusted_trial_balance_usd.supplies_expense.debit: {balance: supplies_expense, at: 1}
+  adjusted_trial_balance_usd.depreciation_expense_equipment.debit: {balance: depreciation_expense_equipment, at: 1}
+  adjusted_trial_balance_usd.income_tax_expense.debit: {balance: income_tax_expense, at: 1}
+  adjusted_trial_balance_usd.salaries_expense.debit: {balance: salaries_expense, at: 1}
+  adjusted_trial_balance_usd.utility_expense.debit: {balance: utility_expense, at: 1}
+  adjusted_trial_balance_usd.total.debit: {balance: "cash + accounts_receivable + interest_receivable + supplies + equipment - dividends + supplies_expense + depreciation_expense_equipment + income_tax_expense + salaries_expense + utility_expense", at: 1}
+  adjusted_trial_balance_usd.total.credit: {balance: "accounts_payable + unearned_revenue + income_tax_payable + common_stock + interest_revenue + service_revenue - accumulated_depreciation_equipment", at: 1}
+  # income statement for the month
+  income_statement_usd.revenues.interest_revenue: {balance: interest_revenue, at: 1}
+  income_statement_usd.revenues.service_revenue: {balance: service_revenue, at: 1}
+  income_statement_usd.revenues.total_revenues: {cut: revenues, total: true}
+  income_statement_usd.expenses.supplies_expense: {balance: supplies_expense, at: 1}
+  income_statement_usd.expenses.depreciation_expense_equipment: {balance: depreciation_expense_equipment, at: 1}
+  income_statement_usd.expenses.salaries_expense: {balance: salaries_expense, at: 1}
+  income_statement_usd.expenses.utilities_expense: {balance: utility_expense, at: 1}
+  income_statement_usd.expenses.income_tax_expense: {balance: income_tax_expense, at: 1}
+  income_statement_usd.expenses.total_expenses: {cut: expenses, sign: -1, total: true}
+  income_statement_usd.net_income: {cut: net_income, total: true}
+  # statement of retained earnings
+  statement_of_retained_earnings_usd.beginning_retained_earnings_aug_1: {opening: &re "dividends + service_revenue + interest_revenue - utility_expense - salaries_expense - supplies_expense - depreciation_expense_equipment - income_tax_expense", at: 0}
+  statement_of_retained_earnings_usd.plus_net_income: {cut: net_income, total: true}
+  statement_of_retained_earnings_usd.minus_dividends: {balance: dividends, at: 1}
+  statement_of_retained_earnings_usd.ending_retained_earnings_aug_31: {balance: *re, at: 1}
+  # balance sheet at Aug 31
+  balance_sheet_usd.assets.cash: {balance: cash, at: 1}
+  balance_sheet_usd.assets.accounts_receivable: {balance: accounts_receivable, at: 1}
+  balance_sheet_usd.assets.interest_receivable: {balance: interest_receivable, at: 1}
+  balance_sheet_usd.assets.supplies: {balance: supplies, at: 1}
+  balance_sheet_usd.assets.equipment_gross: {balance: equipment, at: 1}
+  balance_sheet_usd.assets.accumulated_depreciation_equipment: {balance: accumulated_depreciation_equipment, at: 1}
+  balance_sheet_usd.assets.equipment_net: {balance: "equipment + accumulated_depreciation_equipment", at: 1}
+  balance_sheet_usd.assets.total_assets: {balance: *assets, at: 1}
+  balance_sheet_usd.liabilities.accounts_payable: {balance: accounts_payable, at: 1}
+  balance_sheet_usd.liabilities.income_tax_payable: {balance: income_tax_payable, at: 1}
+  balance_sheet_usd.liabilities.unearned_revenue: {balance: unearned_revenue, at: 1}
+  balance_sheet_usd.liabilities.total_liabilities: {balance: *liabilities, at: 1}
+  balance_sheet_usd.stockholders_equity.common_stock: {balance: common_stock, at: 1}
+  balance_sheet_usd.stockholders_equity.ending_retained_earnings: {balance: *re, at: 1}
+  balance_sheet_usd.stockholders_equity.total_stockholders_equity: {balance: *equity, at: 1}
+  balance_sheet_usd.total_liabilities_and_equity: {balance: "accounts_payable + unearned_revenue + income_tax_payable + common_stock + dividends + service_revenue + interest_revenue - utility_expense - salaries_expense - supplies_expense - depreciation_expense_equipment - income_tax_expense", at: 1}
+  # closing entries: each moves the balance it closes
+  closing_entries_usd.close_revenues_to_income_summary.debit_service_revenue: {balance: service_revenue, at: 1}
+  closing_entries_usd.close_revenues_to_income_summary.debit_interest_revenue: {balance: interest_revenue, at: 1}
+  closing_entries_usd.close_revenues_to_income_summary.credit_income_summary: {cut: revenues, total: true}
+  closing_entries_usd.close_expenses_to_income_summary.credit_supplies_expense: {balance: supplies_expense, at: 1}
+  closing_entries_usd.close_expenses_to_income_summary.credit_depreciation_expense_equipment: {balance: depreciation_expense_equipment, at: 1}
+  closing_entries_usd.close_expenses_to_income_summary.credit_income_tax_expense: {balance: income_tax_expense, at: 1}
+  closing_entries_usd.close_expenses_to_income_summary.credit_salaries_expense: {balance: salaries_expense, at: 1}
+  closing_entries_usd.close_expenses_to_income_summary.credit_utility_expense: {balance: utility_expense, at: 1}
+  closing_entries_usd.close_expenses_to_income_summary.debit_income_summary: {cut: expenses, sign: -1, total: true}
+  closing_entries_usd.close_income_summary_to_retained_earnings.debit_income_summary: {cut: net_income, total: true}
+  closing_entries_usd.close_income_summary_to_retained_earnings.credit_retained_earnings: {cut: net_income, total: true}
+  closing_entries_usd.close_dividends_to_retained_earnings.debit_retained_earnings: {balance: dividends, sign: -1, at: 1}
+  closing_entries_usd.close_dividends_to_retained_earnings.credit_dividends: {balance: dividends, sign: -1, at: 1}
+  # post-closing trial balance
+  post_closing_trial_balance_usd.cash.debit: {balance: cash, at: 1}
+  post_closing_trial_balance_usd.accounts_receivable.debit: {balance: accounts_receivable, at: 1}
+  post_closing_trial_balance_usd.interest_receivable.debit: {balance: interest_receivable, at: 1}
+  post_closing_trial_balance_usd.supplies.debit: {balance: supplies, at: 1}
+  post_closing_trial_balance_usd.equipment.debit: {balance: equipment, at: 1}
+  post_closing_trial_balance_usd.accumulated_depreciation_equipment.credit: {balance: accumulated_depreciation_equipment, sign: -1, at: 1}
+  post_closing_trial_balance_usd.accounts_payable.credit: {balance: accounts_payable, at: 1}
+  post_closing_trial_balance_usd.unearned_revenue.credit: {balance: unearned_revenue, at: 1}
+  post_closing_trial_balance_usd.income_tax_payable.credit: {balance: income_tax_payable, at: 1}
+  post_closing_trial_balance_usd.common_stock.credit: {balance: common_stock, at: 1}
+  post_closing_trial_balance_usd.retained_earnings.debit: {balance: *re, sign: -1, at: 1}
+  post_closing_trial_balance_usd.total.debit: {balance: "cash + accounts_receivable + interest_receivable + supplies + equipment - dividends - service_revenue - interest_revenue + utility_expense + salaries_expense + supplies_expense + depreciation_expense_equipment + income_tax_expense", at: 1}
+  post_closing_trial_balance_usd.total.credit: {balance: "accounts_payable + unearned_revenue + income_tax_payable + common_stock - accumulated_depreciation_equipment", at: 1}

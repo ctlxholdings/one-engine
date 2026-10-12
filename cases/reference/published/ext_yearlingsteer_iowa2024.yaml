@@ -1,0 +1,137 @@
+id: ext_yearlingsteer_iowa2024
+title: "Iowa State Ag Decision Maker — Livestock Enterprise Budgets for Iowa 2024, Finishing Yearling Steers, One Head, Corn and Hay Ration (750 lb feeder to 1,350 lb slaughter)"
+
+meta:
+  source:
+    - "Iowa State University Extension and Outreach, 'Livestock Enterprise Budgets for Iowa — 2024', Ag Decision Maker File B1-21 / FM 1815 (Revised March 2024), p.11, table 'Finishing Yearling Steers — One Head', 'Corn and Hay Ration' column (prepared by Tim Christensen and Lee Schulz): https://www.extension.iastate.edu/agdm/livestock/pdf/b1-21.pdf"
+    - "Direct URL returns HTTP 403 to automated fetchers (Cloudflare bot check); content verified via the Wayback Machine mirror: https://web.archive.org/web/2025/https://www.extension.iastate.edu/agdm/livestock/pdf/b1-21.pdf"
+  accessed: 2026-08-11
+  licence: public/extension
+  kind: trade_case
+  unit_of_analysis: "per head (one yearling steer finished from 750 lb feeder to 1,350 lb slaughter weight, corn-and-hay ration)"
+  mechanism: grow_then_sell
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  resolution: L2          # the header leaves "Steer sales ($____/pound)"
+  #                          blank for the reader — no revenue is published
+  basis: "per head, one finishing cycle (750 lb to 1,350 lb)"
+  periods: 1
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  slaughter_weight_lbs: 1350
+  yearling_feeder_purchase: {weight_lbs: 750, price_usd_per_lb: 2.65, cost_usd: 1987.50}
+  interest_on_feeder:
+    rate_pct_annual: 8
+    months_financed: 6.5
+    cost_usd: 86.13
+  feed_costs_corn_and_hay_ration:
+    corn: {price_usd_per_bushel: 4.80, quantity_bushels: 60, cost_usd: 288.00}
+    fair_quality_hay: {price_usd_per_ton: 151.00, quantity_tons: 0.30, cost_usd: 45.30}
+    modified_distillers_grain: {price_usd_per_ton: 100.00, quantity_tons: 1.14, cost_usd: 114.00}
+    supplement_and_minerals: {price_usd_per_lb: 0.23, quantity_lbs: 95, cost_usd: 21.85}
+  veterinary_and_health_usd: 8.00
+  machinery_and_equipment_usd: 11.20
+  marketing_transport_miscellaneous_usd: 16.00
+  interest_on_other_variable_costs:
+    rate_pct_annual: 8
+    months_financed: 3.25
+    cost_usd: 10.93
+    note: "base = feed $469.15 + vet $8.00 + machinery $11.20 + marketing $16.00 = $504.35; 504.35 x 8% x 3.25/12 = 10.928 -> 10.93"
+  labor: {hours: 2.5, rate_usd_per_hour: 18.00, cost_usd: 45.00}
+  death_loss:
+    cost_usd: 23.54
+    basis: "footnote a/ — 1% of feeder purchase costs and 0.5% of all other variable costs"
+  fixed_costs_machinery_equipment_housing_usd: 22.40
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  # The 13 genuine cost lines, read verbatim from the `cost_usd` cells
+  # above (the four `feed_costs_corn_and_hay_ration` sub-items used
+  # individually, not the `total_feed_costs_usd` subtotal below).
+  costs:
+    yearling_feeder_purchase: 1987.50
+    interest_on_feeder: 86.13
+    corn: 288.00
+    fair_quality_hay: 45.30
+    modified_distillers_grain: 114.00
+    supplement_and_minerals: 21.85
+    veterinary_and_health: 8.00
+    machinery_and_equipment: 11.20
+    marketing_transport_miscellaneous: 16.00
+    interest_on_other_variable_costs: 10.93
+    labor: 45.00
+    death_loss: 23.54
+    fixed_costs_machinery_equipment_housing: 22.40
+
+expected:
+  total_feed_costs_usd: {value: 469.15, label_as_printed: "Total Feed Costs", composition_as_printed: "288.00+45.30+114.00+21.85 = 469.15"}
+  total_variable_costs_usd:
+    value: 2657.44
+    label_as_printed: "TOTAL VARIABLE COSTS"
+    composition_as_printed: "1987.50+86.13+469.15+8.00+11.20+16.00+10.93+45.00+23.54 = 2657.45 by hand; printed 2657.44 (1-cent rounding)"
+  total_fixed_costs_usd: {value: 22.40, label_as_printed: "FIXED COSTS — Machinery, equipment, housing"}
+  total_of_all_costs_usd: {value: 2679.84, label_as_printed: "TOTAL OF ALL COSTS", composition_as_printed: "2657.44 + 22.40 = 2679.84"}
+  breakeven_selling_price_variable_costs_usd_per_lb:
+    value: 1.97
+    label_as_printed: "Break-even selling price for variable costs per pound"
+    composition_as_printed: "2657.44 / 1350 lb = 1.9685 -> 1.97"
+  breakeven_selling_price_all_costs_usd_per_lb:
+    value: 1.99
+    label_as_printed: "Break-even selling price for all costs per pound"
+    composition_as_printed: "2679.84 / 1350 lb = 1.985 -> 1.99"
+  alternate_scenario_corn_and_silage_ration_same_source_same_page:
+    total_feed_costs_usd: 448.28
+    total_variable_costs_usd: 2636.01
+    total_of_all_costs_usd: 2658.41
+    breakeven_variable_usd_per_lb: 1.95
+    breakeven_all_costs_usd_per_lb: 1.97
+    note: "not the primary transcription for this gold (kept to one ration/one mechanism per GOLD_FORMAT convention); included only as a same-source cross-check value"
+
+# no revenue is published (the sale price is left blank for the reader), so
+# only the cost build-up is checked
+mapping:
+  total_of_all_costs_usd: cost_of_sales
+
+# HALF A CENT, deliberately tight. Expected to surface a real,
+# already-documented 1-cent gap: the 9 printed variable-cost lines sum to
+# $2,657.45 by hand but the source's own "TOTAL VARIABLE COSTS" prints
+# $2,657.44 (see notes below) — that 1-cent rounding propagates into the
+# all-costs total this gold checks.
+tolerance:
+  abs: 0.005
+  why: >
+    every figure is printed to the cent, so half a cent is exactly the
+    display rounding; the source's own 1-cent subtotal-rounding gap
+    (documented below) is wider than that and must surface as a
+    divergence, not be absorbed
+
+notes: |
+  Fully re-derived by hand, and this one required real work to crack the death-loss formula —
+  worth recording precisely since it reconciles EXACTLY once you find the right base:
+
+    - Footnote a/ states death loss = "1% of feeder purchase costs and 0.5% of all other variable
+      costs." First attempt — 1% x $1,987.50 (feeder alone) + 0.5% x (every other printed variable
+      line, interest-on-feeder INCLUDED in the "other" bucket) = 1%x1987.50 + 0.5%x646.41 =
+      19.875+3.232 = 23.107 -> $23.11. Close to the printed $23.54 but not exact (43-cent gap).
+    - The reconciliation that DOES hit $23.54 exactly: fold interest-on-feeder INTO the "feeder
+      purchase costs" base for the 1% portion (i.e. 1% x (1987.50+86.13) = 1% x $2,073.63), and
+      apply 0.5% to everything else (feed 469.15 + vet 8.00 + machinery 11.20 + marketing 16.00 +
+      interest-on-other 10.93 + labor 45.00 = $560.28): 20.7363 + 2.8014 = 23.5377 -> $23.54 EXACT.
+    - Cross-checked against the Corn-and-Silage-ration column on the same page (same feeder cost,
+      different feed mix): predicted death loss = 1%x2073.63 + 0.5%x(448.28+8+11.2+16+10.48+45=
+      538.96) = 20.7363+2.6948 = 23.431 -> $23.43, which matches the SILAGE column's printed death
+      loss of $23.43 exactly too. Two independent columns, one formula, both exact — high
+      confidence this is the real computation, not a coincidence.
+    - Every other line (feed sub-items, total feed costs, interest-on-feeder, interest-on-other,
+      total variable costs, total of all costs, both break-even prices) reproduces to the cent,
+      with one immaterial 1-cent rounding gap in the "TOTAL VARIABLE COSTS" line (hand-sum of the
+      nine printed line items = $2,657.45; the table prints $2,657.44).
+
+  Contrast with ext_feederpig_iowa2024 (same publication, swine table): that table's death-loss
+  line uses a DIFFERENT, simpler convention (flat 2% of purchase price, no blended 0.5%-of-other-
+  costs term, and no footnote citing a formula at all) — a genuine, documented difference in
+  methodology between the beef and swine tables of the SAME publication, not a transcription error
+  on my part in either gold.
+
+  Same "cost/breakeven only, no revenue line" pattern as the other Iowa State budgets in this
+  batch: the header shows "Steer sales ($_______/pound)" left blank for the reader to fill in, so
+  break-even price per pound is the computed answer this gold checks.

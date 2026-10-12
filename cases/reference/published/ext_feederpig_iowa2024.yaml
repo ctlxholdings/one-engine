@@ -1,0 +1,124 @@
+id: ext_feederpig_iowa2024
+title: "Iowa State Ag Decision Maker — Livestock Enterprise Budgets for Iowa 2024, Finishing Feeder Pigs (one pig, 40 lb to 260 lb market weight)"
+
+meta:
+  source:
+    - "Iowa State University Extension and Outreach, 'Livestock Enterprise Budgets for Iowa — 2024', Ag Decision Maker File B1-21 / FM 1815 (Revised March 2024), p.7, table 'Finishing Feeder Pigs — One Pig' (prepared by Tim Christensen and Lee Schulz): https://www.extension.iastate.edu/agdm/livestock/pdf/b1-21.pdf"
+    - "Direct URL returns HTTP 403 to automated fetchers (Cloudflare bot check); content verified via the Wayback Machine mirror: https://web.archive.org/web/2025/https://www.extension.iastate.edu/agdm/livestock/pdf/b1-21.pdf"
+  accessed: 2026-08-11
+  licence: public/extension
+  kind: trade_case
+  unit_of_analysis: "per pig (one feeder pig finished from 40 lb to 260 lb market weight)"
+  mechanism: grow_then_sell
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  resolution: L2          # the header leaves "Market hog price" blank for
+  #                          the reader to fill in — no revenue is published
+  basis: "per pig, one finishing cycle (40 lb to 260 lb)"
+  periods: 1
+  jurisdiction: US
+  currency: USD
+
+inputs:
+  market_hog_sale_weight_lbs: 260
+  feeder_pig_purchase: {weight_lbs: 40, price_usd_per_head: 63.00}
+  interest_on_feeder_pig:
+    rate_pct_annual: 8
+    months_financed: 5
+    cost_usd: 2.10
+  feed_costs:
+    corn: {price_usd_per_bushel: 4.80, quantity_bushels: 9, cost_usd: 43.20}
+    soybean_meal: {price_usd_per_lb: 0.18, quantity_lbs: 82, cost_usd: 14.76}
+    dried_distillers_grain: {price_usd_per_lb: 0.11, quantity_lbs: 32, cost_usd: 3.52, note: "substitutes for 0.6 bushels of corn and 5 lbs of soybean meal (source footnote a)"}
+    vitamin_and_minerals: {price_usd_per_lb: 0.50, quantity_lbs: 14.4, cost_usd: 7.20}
+    feed_processing_and_delivery: {price_usd_per_ton: 10, quantity_tons: 0.3, cost_usd: 3.00}
+    feed_additives_usd: 3.00
+  veterinary_and_medical_usd: 4.00
+  fuel_repairs_utilities_usd: 3.50
+  manure_application: {price_usd_per_gallon: 0.01, quantity_gallons: 190, cost_usd: 1.90}
+  interest_on_other_variable_costs:
+    rate_pct_annual: 8
+    months_financed: 2.5
+    cost_usd: 1.44
+    note: "base = feed costs + vet + fuel/repairs/utilities + marketing/misc = $86.18 (excludes the manure-application line even though manure is printed above this interest line in the table); 86.18 x 8% x 2.5/12 = 1.4363 -> 1.44"
+  marketing_miscellaneous_usd: 4.00
+  death_loss:
+    rate_pct: 2
+    cost_usd: 1.26
+    basis: "printed quantity is '0.02 head'; cost reconciles exactly as 2% x feeder-pig purchase price (0.02 x 63.00 = 1.26) — no separate footnote on this page (contrast ext_yearlingsteer_iowa2024, which uses a documented, different 1%/0.5%-blend formula)"
+  labor: {hours: 0.2, rate_usd_per_hour: 18.00, cost_usd: 3.60}
+  fixed_costs_machinery_facilities_usd: 13.00
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  # The 16 genuine cost lines, read verbatim from the `cost_usd` /
+  # `price_usd_per_head` cells above (the six `feed_costs` sub-items used
+  # individually, not the `total_feed_costs_usd` subtotal below).
+  costs:
+    feeder_pig_purchase: 63.00
+    interest_on_feeder_pig: 2.10
+    corn: 43.20
+    soybean_meal: 14.76
+    dried_distillers_grain: 3.52
+    vitamin_and_minerals: 7.20
+    feed_processing_and_delivery: 3.00
+    feed_additives: 3.00
+    veterinary_and_medical: 4.00
+    fuel_repairs_utilities: 3.50
+    manure_application: 1.90
+    interest_on_other_variable_costs: 1.44
+    marketing_miscellaneous: 4.00
+    death_loss: 1.26
+    labor: 3.60
+    fixed_costs_machinery_facilities: 13.00
+
+expected:
+  total_feed_costs_usd: {value: 74.68, label_as_printed: "Total Feed Costs", composition_as_printed: "43.20+14.76+3.52+7.20+3.00+3.00 = 74.68"}
+  total_variable_costs_usd:
+    value: 159.48
+    label_as_printed: "TOTAL VARIABLE COSTS"
+    composition_as_printed: "63.00+2.10+74.68+4.00+3.50+4.00+1.90+1.44+1.26+3.60 = 159.48"
+  total_fixed_costs_usd: {value: 13.00, label_as_printed: "TOTAL FIXED COSTS"}
+  total_of_all_costs_usd: {value: 172.48, label_as_printed: "TOTAL OF ALL COSTS", composition_as_printed: "159.48 + 13.00 = 172.48"}
+  breakeven_selling_price_variable_costs_usd_per_cwt:
+    value: 61.34
+    label_as_printed: "Break-even selling price for variable costs per cwt."
+    composition_as_printed: "159.48 / 260 lb x 100 = 61.338 -> 61.34"
+  breakeven_selling_price_all_costs_usd_per_cwt:
+    value: 66.34
+    label_as_printed: "Break-even selling price for all costs per cwt."
+    composition_as_printed: "172.48 / 260 lb x 100 = 66.338 -> 66.34"
+
+# no revenue is published (the sale price is left blank for the reader), so
+# only the cost build-up is checked
+mapping:
+  total_of_all_costs_usd: cost_of_sales
+
+# HALF A CENT, deliberately tight (every cost figure prints to the cent and
+# this source's own notes report zero rounding gaps anywhere).
+tolerance:
+  abs: 0.005
+  why: >
+    every figure is printed to the cent and reconciles EXACTLY per the
+    hand re-derivation below, so half a cent is exactly the display
+    rounding and any larger gap would be real
+
+notes: |
+  Fully re-derived by hand and every line reconciles EXACTLY to the cent:
+    - Death loss ($1.26): this page carries no explicit footnote formula (unlike the steer budget's
+      page, which spells out a documented 1%-of-feeder + 0.5%-of-other-costs blend — see
+      ext_yearlingsteer_iowa2024). Here the printed quantity "0.02 head" reconciles simply and
+      exactly as 2% of the feeder-pig purchase price alone: 0.02 x $63.00 = $1.26. The two Iowa
+      State livestock budgets in this batch therefore use two DIFFERENT death-loss conventions
+      (pig: flat 2% of purchase price; steer: a blended 1%/0.5% formula) — a genuine methodological
+      difference between species tables in the same publication, not an inconsistency to flag as an
+      error.
+    - Interest-on-feeder-pig ($2.10): 63.00 x 8% x 5/12 = 2.10 exact.
+    - Interest-on-other-variable-costs ($1.44): base = feed $74.68 + vet $4.00 + fuel $3.50 +
+      marketing $4.00 = $86.18 (EXCLUDING the manure line, even though manure is printed above this
+      interest line in the table); 86.18 x 8% x 2.5/12 = 1.4363 -> 1.44 exact.
+    - Total feed costs, total variable costs (all ten line items summed), total of all costs, and
+      both break-even prices all reproduce EXACTLY to the cent.
+
+  THIS SOURCE PUBLISHES A BLANK "INCOME" LINE: the header shows "Market hog (260 pounds x
+  $_______/pound)" with the price left for the reader to fill in, so there is no printed revenue or
+  net-income figure — the break-even selling prices ARE the computed "answer" this gold checks
+  (i.e. the source's own arithmetic converts a full cost build-up into a $/cwt figure). This mirrors
+  ext_corn_iowa2025 / ext_soybean_iowa2025 in being a cost-and-breakeven gold rather than a full P&L.

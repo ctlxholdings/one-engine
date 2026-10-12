@@ -1,0 +1,62 @@
+# Published case "atlas_broker_sawdust": a sawdust and wood-shavings seller in Adamaoua, Cameroon,
+# one representative year (GIZ / PARSE, Métiers Rentables Adamaoua, p.78;
+# cases/reference/published/atlas_broker_sawdust.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * vente_sciures, the year's sales (5 sacks a day at 500 FCFA, printed only as the annual
+#     900,000), sold for cash;
+#   * the packaging and protective equipment (costs.emballages_et_EPI) is spent and expensed in
+#     the year, as the source's own profit line nets it; it is not an asset;
+#   * the other charges (costs.autres_charges), paid in the year;
+#   * no tax: the source's benefice is before any tax.
+# The source's single figure, benefice (the library maps it to gross_margin), is the year's
+# profit: sales less both charges.
+published: atlas_broker_sawdust
+entity: trader
+plant: vente_sciures
+case:
+  case: published-atlas-broker-sawdust
+  periods: 1
+  phases: [operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        sacks_year: 1          # the source prints no annual sack count: the year's sales are one lot
+  opening:
+    trader:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: trader}
+      terms: {volume: {generator: src, output: sacks_year}, price: {generator: src, output: vente_sciures},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    packaging:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: {generator: src, output: costs__emballages_et_EPI}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    other:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: {generator: src, output: costs__autres_charges}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      packaging.expense: opex
+      other.expense: opex
+  cuts:
+    profit: {kind: pnl, entity: trader, scheme: pnl, include: [revenue, opex]}
+  measures: {}
+figures:
+  benefice: {cut: profit}

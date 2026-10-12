@@ -1,0 +1,149 @@
+id: bld_condominium_housing_ethiopia
+title: "IHDP subsidised condominium housing, Addis Ababa, Ethiopia — unit price and the subsidy-implied cost of production, 11th lottery round (2019)"
+
+meta:
+  source:
+    - "Agness, D. (UC Berkeley) & Getahun, T. (Policy Studies Institute), 'Housing and Human Capital: Condominiums in Ethiopia', working paper, 22 July 2024, p.9-10 (Section 2, 'Context'). https://dagness.github.io/assets/hhc_jmp.pdf"
+    - "Corroborating, qualitative only (down-payment structure, not merged numerically): Bishu, S.G., 'The Integrated Housing Development Program: Identifying Strengths and Gaps', UTAFITI SERA Policy Brief, PASGR, December 2017. https://www.pasgr.org/wp-content/uploads/2018/05/Integrated_housing_Ethiopia.pdf"
+  licence: "Working paper hosted on the author's personal GitHub Pages site (dagness.github.io); no explicit reuse licence stated. Policy brief published by PASGR under standard research-brief terms. Transcribed here, with full citation, for engine-verification/research use only."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, part of the construction/long-cycle harvest ──
+  # L1: the paper states a RATIO ("these prices represent, on average, a 40%
+  # subsidy relative to the cost of production per unit"), not the cost of
+  # production itself — this gold's `cost_of_sales` is therefore DERIVED
+  # from the stated ratio, never invented (the ladder's own L1 shape:
+  # "COGS is 60% of sales", here "price is 60% of cost").
+  #
+  # A HARNESS FINDING, recorded rather than worked around: run through
+  # `tools/run_golds.py`, this gold reports `unrunnable: "no cost lines
+  # could be read out of inputs"`. `engine/golds.py:to_template` calls
+  # `_flat_costs(inputs)` and refuses on an EMPTY result BEFORE it reaches
+  # the L1-specific branch that would build `costs` from `cost_ratio x
+  # revenue` — so a gold that is L1 in the ladder's own sense (a ratio,
+  # deliberately carrying NO itemised cost lines, "nothing invented behind
+  # it") cannot currently reach that branch at all. Grepping this repo's
+  # corpus (2026-08-12) found no OTHER gold that exercises the L1 path with
+  # a bare `cost_ratio` and no `costs:` dict, so this is likely the first
+  # gold to hit it. Per CLAUDE.md ("NEVER EDIT ANYTHING UNDER `engine/`"),
+  # this is reported, not patched — `engine/golds.py`'s guard order is the
+  # fix (check `cost_ratio` before refusing on empty `costs`), not this
+  # gold's own shape. `revenue`, `cost_of_sales` and `gross_margin` are
+  # still hand-verified below and stated in `expected` for a human reader.
+  resolution: L1
+  basis: "one 2-bedroom IHDP condominium unit, Addis Ababa, 11th lottery round, 2019 — the paper's own worked scheme is the 20/80 down-payment program (see notes)"
+  periods: 1
+  mechanism: make_to_order   # create x physical, "assemble": the Addis
+  #  Ababa Housing Development Agency builds standardised condominium
+  #  blocks (BOQ-assembled construction), then allocates finished units by
+  #  lottery — the transformation kind is "assemble" regardless of whether
+  #  a specific buyer is known before the concrete is poured, same cell as
+  #  this harvest's other two construction golds
+  jurisdiction: ET
+  currency: USD   # the paper itself quotes unit prices in USD directly
+
+inputs:
+  revenue: 8800   # 2-bedroom unit price, 11th lottery round, 2019
+  # the paper's own stated relationship: "the total condominium unit price
+  # was $6,400 for a one-bedroom, $8,800 for a two-bedroom, and $11,700 for
+  # a three-bedroom. These prices represent, ON AVERAGE, a 40% subsidy
+  # relative to the cost of production per unit." -- i.e. price = 0.60 x
+  # cost, so cost = price / 0.60. cost_ratio here is cost/revenue = 1/0.60.
+  cost_ratio: 1.666667   # = 1 / (1 - 0.40), 6dp; see tolerance for the
+  #                         residual rounding this truncation introduces
+
+  # the OTHER two unit sizes, same lottery round, SAME stated 40%-subsidy
+  # relationship (context only — not separately checked in `expected`,
+  # because the paper's own wording is "ON AVERAGE", so applying one exact
+  # ratio to unit sizes it did not itself compute cost-of-production for
+  # would overstate this transcription's precision):
+  unit_price_1bed_usd: 6400
+  unit_price_3bed_usd: 11700
+
+  # scale and financing structure, informational (no canon figure to check
+  # them against — this repo's CANON has no "units built" or "down payment
+  # %" concept — transcribed for the harvest brief's "units" ask):
+  units_completed_through_2022: 200000
+  units_completed_through_2023: 210000
+  lottery_rounds_through_2022: 14
+  down_payment_program: >
+    three programs exist (10/90, 20/80, 40/60 — the number is the
+    percentage of unit cost paid as down payment); the paper's own sampling
+    frame (all 2005-registration households) was entirely in the 20/80
+    program. The remainder is financed "via a low-interest mortgage" at
+    the Commercial Bank of Ethiopia, disbursed to the agency at transfer;
+    no interest rate or repayment term is stated in the pages read.
+
+notes: |
+  THE DERIVATION, SHOWN: implied_cost_of_production = revenue / 0.60 =
+  8,800 / 0.60 = 14,666.67 (repeating). implied_gross_margin = revenue -
+  cost_of_sales = 8,800 - 14,666.67 = -5,866.67 -- a NEGATIVE margin, and
+  that negative number IS the per-unit subsidy the paper describes: -
+  5,866.67 / 14,666.67 = 40.0% of cost, exactly the stated ratio. This is a
+  genuinely different kind of check from every other gold in this harvest
+  (and most of this repo's corpus): every other margin checked is a
+  PROFIT; this one is a modelled LOSS, by design, because the seller here
+  is a subsidising government agency, not a profit-seeking enterprise. If
+  the engine's gross_margin computation ever silently clamped a negative
+  result to zero, or reported an absolute value, this gold is built
+  specifically to catch it.
+
+  A `settle:` (RULE 4) CASE WAS CONSIDERED AND SET ASIDE, DELIBERATELY. The
+  down-payment structure (10/90, 20/80, 40/60) LOOKS like a `settle`
+  schedule at first read — a share paid now, a share paid later — but on
+  inspection it is not the same shape `settle` models. `settle` defers the
+  MONETARY leg of an ALREADY-RECOGNISED exchange (the effect happens now,
+  accrual-style, and only the cash arrives later — a receivable). Here, the
+  household saves the down payment INTO A TAGGED BANK ACCOUNT BEFORE
+  winning the lottery, and "only after making the entirety of the down
+  payment were households given the keys" (Agness & Getahun, p.10) — i.e.
+  no sale is recognised, and no receivable exists, until the down payment
+  is ALREADY complete; the mortgage-financed remainder then arrives at
+  transfer, essentially concurrently with the down payment's completion,
+  not on a later schedule relative to a recognised sale. Modelling this as
+  `settle` would misrepresent a pre-condition (eligibility gating) as a
+  post-recognition receivable. This harvest's OTHER `settle`-shaped finding
+  — the South Africa house BOQ's retention clause (bld_boq_house_
+  southafrica.yaml) — IS the right shape (a recognised progress payment,
+  with a genuinely deferred final share) but lacks a stated offset in
+  periods; that is the stronger candidate for a future gold that actually
+  gets `settle` to fire, if a fully-scheduled priced BOQ is found.
+
+  TRANSFERABILITY: the 40%-subsidy relationship and the three-tier down-
+  payment structure are IHDP-specific (Addis Ababa, Ethiopia), but the
+  underlying PATTERN — a government housing agency selling standardised
+  units below cost, the gap absorbed by land/infrastructure/administration
+  subsidy — recurs across African public-housing programmes (this repo's
+  own search for a comparable case touched South Africa's BNG/RDP subsidy
+  quantum, which moves with material-cost inflation and was not pinned to
+  a single citable worked figure within this harvest's research budget).
+
+mapping:
+  revenue: revenue
+  # cost_of_sales and gross_margin are DERIVED by to_template's L1 path
+  # from cost_ratio x revenue — see engine/golds.py's own L1 branch — so
+  # only `revenue` needs a source-name mapping; `expected` below still
+  # states the derived figures explicitly for a human reader.
+
+tolerance:
+  abs: 1.0
+  why: >
+    the two unit prices ($6,400/$8,800/$11,700) are printed as whole
+    dollars, but cost_of_sales here is DERIVED (revenue / 0.60, a
+    repeating decimal truncated to 6dp in cost_ratio), so a dollar of
+    slack absorbs that truncation's own rounding, not a real divergence —
+    tighter than a dollar would fail on my own arithmetic, not the source's
+
+expected:
+  revenue:
+    value: 8800
+    label_as_printed: "total condominium unit price ... $8,800 for a two-bedroom"
+  implied_cost_of_production_usd:
+    value: 14666.67
+    composition_as_printed: "revenue (8,800) / (1 - 0.40 stated subsidy)"
+  implied_gross_margin_usd:
+    value: -5866.67
+    composition_as_printed: "revenue (8,800) - implied_cost_of_production (14,666.67) — the negative per-unit subsidy"
+  # context only, same 40% ratio applied for illustration, NOT independently
+  # checked (see notes: the source says "on average", not per-size):
+  implied_cost_of_production_1bed_usd: 10666.67
+  implied_cost_of_production_3bed_usd: 19500.00

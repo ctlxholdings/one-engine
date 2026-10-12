@@ -1,0 +1,100 @@
+id: taxeng_flat_profit
+title: "OLD tax engine self-test — flat rate on a profit base, with assessment/payment timing lag"
+
+meta:
+  source:
+    - "This repository's OWN old tax engine — engine/layers/tax/run.py (521 lines), function `run()`, the arithmetic that produced the numbers below."
+    - "engine/tests/test_tax.py, class TestTiming, test_payment_may_lag_assessment (lines 182-186) — the worked assertion this gold transcribes verbatim."
+    - "Corroborating (not transcribed into `expected` — cited for the reader): TestBases.test_profit_base (lines 27-29) is the same rate shape with no timing lag: profit [100,100,100] @ flat 30% -> cash_tax [30,30,30]."
+  licence: "Internal — this repository's own code and test suite, not an external publication. No third-party licence applies."
+  kind: engine_oracle
+  # ── SELF-GRADED — read before trusting this file ────────────────────────
+  # The answer key is OUR OWN engine, not an outside source (a textbook, a
+  # regulator, a published budget). We wrote both the question and the
+  # arithmetic that answers it, so this file is evidence that engine/layers/
+  # tax/run.py is INTERNALLY CONSISTENT and that I transcribed it correctly —
+  # it is NOT independent evidence that the tax rule itself is correct. A
+  # bug shared by the engine and this gold would pass here and nowhere else.
+  self_graded: true
+  resolution: L4   # engine/golds.py's own ladder: "L4  physics  recipe ·
+  #                  capacity · losses · cycle" — this transcribes the tax
+  #                  layer's own computed MECHANISM (rate x base, then a
+  #                  timing shift), not a ratio, an itemised line list, or a
+  #                  quantity x price pair. The L1-L4 ladder was built for
+  #                  trade-case income statements; applied here by extension,
+  #                  flagged rather than silently forced.
+  basis: "per period, 3 periods, annual grid (default freq) — a single flat-rate tax on the profit base, assessed one period and PAID the next"
+  periods: 3
+  mechanism: "not applicable — a fiscal overlay on whatever trade generates the profit base, not a trade mechanism itself. engine/ledger/mechanisms.py's 16-cell grid (create/distribute/rent_use/match x physical/human/financial/intangible) has no fiscal axis; forcing tax into it would be a category error."
+  jurisdiction: "none — a synthetic fixture in engine/tests/test_tax.py, not transcribed from a named country's published rate schedule. (Contrast taxeng_holiday_partial_relief.yaml and taxeng_turnover_based.yaml, whose docstrings name real WAEMU-shaped mechanisms — cashew Zone B, attieke — but still use illustrative, not officially cited, numbers.)"
+  currency: "unspecified in the source — abstract currency units, consistent with the test's own bare floats"
+
+# The LITERAL dict `engine.layers.tax.run.run()` consumes — copy this into a
+# REPL with `from engine.layers.tax.run import run; run(<this dict>)` and it
+# reproduces `expected` below exactly. This is what makes a self-graded gold
+# checkable at all: the reproduction path is mechanical, not narrative.
+inputs:
+  tax_declaration:
+    grid: {periods: 3}
+    bases:
+      profit_before_allowances: [100.0, 200.0, 0.0]
+      turnover: [0.0, 0.0, 0.0]
+    taxes:
+      - id: cit
+        base: profit
+        rate: {kind: flat, value: 0.30}
+    timing: {paid_in: next_period}
+
+expected:
+  tax_assessed:
+    value: [30.0, 60.0, 0.0]
+    engine_field: "out['tax_assessed']"
+    composition: "flat 30% of that period's own profit_before_allowances — 0.30x100, 0.30x200, 0.30x0. This is the ACCRUAL: the statutory liability recognised in the period it arises (CF 1.17), before any payment timing is applied."
+  cash_tax:
+    value: [0.0, 30.0, 60.0]
+    engine_field: "out['cash_tax']"
+    composition: "tax_assessed shifted one period later — `timing: {paid_in: next_period}` — so period 0 pays nothing, period 1 pays what period 0 assessed (30), period 2 pays what period 1 assessed (60). Same three numbers as tax_assessed, same total (90), different dates."
+  taxes_cit_net:
+    value: [30.0, 60.0, 0.0]
+    engine_field: "out['taxes']['cit']['net']"
+    composition: "identical to tax_assessed here because there is only one tax and no combine: — the per-tax net IS the period's whole assessed liability."
+
+# The old engine has no canonical vocabulary of its own (CANON in
+# engine/golds.py has no tax fields at all — the new core computes no tax, so
+# nothing downstream reads a "cash_tax" name yet). This mapping is therefore
+# DECLARATIVE, not wired to a runner: it names what each engine field MEANS
+# in plain terms, the same service bfap's mapping performs for revenue/
+# cost_of_sales/gross_margin.
+mapping:
+  tax_assessed: tax_accrued_this_period
+  cash_tax: tax_cash_paid_this_period
+  taxes_cit_net: tax_liability_recognised
+
+tolerance:
+  abs: 1.0e-9
+  why: >
+    This is exact deterministic floating-point arithmetic, re-run directly from the cited test
+    (see notes for the exact command) rather than transcribed from a rounded published document.
+    Nothing here has display rounding to forgive, so the tolerance question is only "did I
+    reproduce the same code path" — a near-zero float epsilon, not a rounding allowance.
+
+notes: |
+  Reproduce with:
+    python3 -c "from engine.layers.tax.run import run; \
+    print(run({'grid': {'periods': 3}, \
+               'bases': {'profit_before_allowances': [100.0, 200.0, 0.0], 'turnover': [0.0]*3}, \
+               'taxes': [{'id': 'cit', 'base': 'profit', 'rate': {'kind': 'flat', 'value': 0.30}}], \
+               'timing': {'paid_in': 'next_period'}})['cash_tax'])"
+  -> [0.0, 30.0, 60.0], matching `expected.cash_tax` exactly (I ran this myself; it is not copied
+  blind from the test file).
+
+  WHY THIS SHAPE, AND WHY THE TIMING WRINKLE IS KEPT IN: a pure flat rate on profit is the
+  simplest tax shape the engine has (rate x base, nothing else), so it is the right baseline
+  against which the other four golds in this batch (banded, loss carryforward, holiday, turnover)
+  each add exactly one more mechanism. The payment-timing lag (`timing: {paid_in: next_period}`)
+  is kept rather than trimmed to the bare test_profit_base case because it is the one piece of
+  this shape that maps directly onto something the NEW core already has a verb for — TAXENG_
+  VERDICT.md's answer for this shape leans on that directly: assessed-now/paid-later is exactly
+  the accrual-exchange-plus-payment-exchange pattern cattle.yaml's `impot_accrual` / `impot_paid_
+  y1` pair already proves, so the interesting half of this gold (the timing) is ALREADY known
+  expressible; only the rate x profit half is the open question.

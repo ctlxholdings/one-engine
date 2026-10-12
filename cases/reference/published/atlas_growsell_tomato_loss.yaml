@@ -1,0 +1,106 @@
+meta:
+  source: "FAO RuralInvest, \"RuralInvest Module 3 — Detailed Project Formulation and Analysis\", p.16 (\"Seductive Tomato\" box), https://www.fao.org/4/a1421e/a1421e00.pdf"
+  registry_index: 132
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: grow_then_sell
+  jurisdiction: null
+  currency: USD
+  trade: "Tomato (fresh) — 5ha irrigation investment, realized loss (cautionary example)"
+  isic_class: "0113 — Growing of vegetables and melons, roots and tubers"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L3: realized_income_per_ha's own composition is "realized_saleable_per_ha
+  # (4) × realized_avg_price_after_transport (0.6) = 2,400" — quantity x
+  # price, both printed. The units as printed (t and USD/kg) don't multiply
+  # to 2,400 directly (4 x 0.6 = 2.4, not 2,400) — the source's own ×1,000
+  # (t→kg) is implicit in that composition line. Below, price is restated
+  # in USD/t (600 = 0.6 x 1,000, a fixed unit-conversion constant, not new
+  # data) so quantity (4, as printed) x price multiplies out correctly.
+  resolution: L3
+  basis: >
+    per hectare, one season — REALIZED scenario (post-loss yield x
+    post-transport price) against the PROMISED cost base
+  periods: 1
+
+# `jurisdiction: null` is deliberate, not an oversight — the source states outright that this
+# is "an ILLUSTRATIVE worked example — pedagogical composite; not a surveyed farm... No
+# geography stated," designed for FAO field technicians generically across developing
+# countries. Inventing a country to fill the template field would misrepresent the source;
+# the honest transcription is to leave it empty and say why. The only non-Cameroon,
+# non-South-Africa source family among the ten (FAO RuralInvest), and the only one built
+# explicitly as a cautionary tale rather than a representative-enterprise budget.
+
+inputs:
+  # realized_saleable_per_ha (4 t/ha, as printed) x price restated in
+  # USD/t (600 = realized_avg_price_after_transport 0.6 USD/kg x 1,000)
+  sale: {quantity: 4, unit: t, price: 600}
+  # the ONE cost line the source gives — "lump cost, no labor breakdown
+  # given." `irrigation_investment` (50,000) is EXCLUDED: it is a TOTAL
+  # across the full 5 ha (not a per-ha figure), and the source's own
+  # verified realized_loss_per_ha computation never references it — only
+  # realized_income_per_ha and promised_cost_per_ha enter that subtraction.
+  costs:
+    promised_cost_per_ha: 2750
+  stocks:
+    planted_area: {value: 5, unit: "ha"}
+  generators:
+    promised_yield: {value: 6.5, unit: "t/ha"}
+    promised_cost_per_ha: {value: 2750, unit: "USD/ha", note: "lump cost, no labor breakdown given"}
+    conservative_sale_price_promised: {value: 1.5, unit: "USD/kg"}
+    realized_yield: {value: 6.25, unit: "t/ha"}
+    loss_selection_packing: {value: 8, unit: "%"}
+    loss_transport_local: {value: 15, unit: "%"}
+    price_drop_local_market: {value: 1.8, unit: "USD/kg", composition: "local market price dropped FROM $1.80 TO $0.50 at harvest time (both figures cited; the drop itself, not just the starting price, is the point of the example)"}
+    transport_to_regional_market: {value: 0.4, unit: "USD/kg"}
+    loss_transport_regional: {value: 10, unit: "%", note: "attributed by the source to poor road condition"}
+  movements:
+    promised_income_per_ha: {value: 9750, unit: "USD/ha", direction: in, kind: revenue, composition: "promised_yield (6.5) × conservative_sale_price_promised (1.5) = 9,750 — verified exact"}
+    promised_profit_per_ha: {value: 7000, unit: "USD/ha", direction: in, kind: revenue, composition: "promised_income_per_ha (9,750) − promised_cost_per_ha (2,750) = 7,000 — verified exact"}
+    irrigation_investment: {value: 50000, unit: "USD", direction: out, kind: capex, composition: "irrigation system, packing building, and equipment for the full 5 ha"}
+    promised_first_year_profit: {value: 35000, unit: "USD", direction: in, kind: revenue, composition: "promised_profit_per_ha (7,000) × 5 ha = 35,000 — verified exact"}
+    realized_saleable_per_ha: {value: 4, unit: "t/ha", direction: in, kind: revenue, note: "after all losses (selection/packing + transport, both local and regional routes), averaged over local + regional sales"}
+    realized_avg_price_after_transport: {value: 0.6, unit: "USD/kg", direction: in, kind: revenue}
+    realized_income_per_ha: {value: 2400, unit: "USD/ha", direction: in, kind: revenue, composition: "realized_saleable_per_ha (4) × realized_avg_price_after_transport (0.6) = 2,400 — verified exact"}
+  gates: [acces_marche, qualite_produit]
+  grid: {period: per_cycle, cycle_length: "single season (few-week harvest window)", annualization: null}
+
+expected:
+  realized_loss_per_ha: {value: -350, unit: "USD/ha", provenance: cited,
+    composition: "realized_income_per_ha (2,400) − promised_cost_per_ha (2,750) = −350 — verified exact"}
+
+mapping:
+  realized_loss_per_ha: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    every figure in this entry reconciles exactly on independent
+    re-derivation (see notes); USD values print as whole dollars once
+    yield and price are combined, so any gap is a labelling error, not
+    source rounding
+
+notes: |
+  Every figure in this entry reconciles exactly on independent re-derivation — no source
+  arithmetic error found here; the value of the case is in what it represents, not an error
+  to catch. It pairs a PROMISED scenario (a $7,000/ha profit, or $35,000 across the 5 ha
+  investment, at the sale price and yield the promoter used to sell the $50,000 irrigation
+  investment) against a REALIZED scenario (an actual $350/ha LOSS) built from the same cost
+  base but hit by three compounding, cited real-world failure modes: post-harvest losses in
+  selection/packing (8%) and transport (15% local, 10% regional), and — the dominant factor —
+  a local market price COLLAPSE from $1.80/kg to $0.50/kg once the crop actually arrived
+  (average realized price after all channels and transport nets to $0.60/kg, well under the
+  promised $1.50/kg). FAO's own framing (Module 3, "Seductive Tomato") is explicitly
+  cautionary: this exists to teach that a promised per-hectare profit figure is not the same
+  thing as a bankable one.
+
+  This is a genuinely useful edge case for the trio distinct from the other nine transcribed
+  golds: it is the only entry among the ten where "the computed answer" is a PAIR of numbers
+  built from the SAME cost input under two different revenue scenarios (promised vs. realized),
+  rather than one margin computed once. Testing it well means testing that the engine can hold
+  both scenarios against one shared cost base and report a sign flip, not just reproduce a
+  single static number.
+
+  Gaps, all explicit in the source: no labor cost breakdown ($2,750/ha is a lump figure); no
+  working capital or financing structure for the $50,000 investment; illustrative only — a
+  pedagogical composite, not a surveyed farm, with no geography stated (hence `jurisdiction:
+  null` above, not an omission).

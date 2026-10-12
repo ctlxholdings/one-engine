@@ -1,0 +1,370 @@
+id: cap_sugarmill_ncdc_solapur_2500tcd
+title: "NCDC (Govt of India) sample Detailed Project Report — cooperative sugar mill, Solapur, Maharashtra: capacity 2,500 TCD x 160 crushing days x utilisation %, printed as four separate rows, with cane SUPPLY (not the mill) as the real bottleneck"
+
+# ── WHY THIS FILE EXISTS ────────────────────────────────────────────────
+# THE CEILING, PRINTED AS ITS OWN THREE FACTORS. Annexure II of this DPR
+# opens with four consecutive rows:
+#       1  Capacity      TCD          2500  2500  2500 ...
+#       2  Days          No.           150   160   160 ...
+#       3  Utilisation   %              90   100   100 ...
+#       4  Crushing      Lakh tonnes  3.38  4.00  4.00 ...
+# The ceiling and its multiplicands are separated, labelled, and multiplied
+# by the source itself — which almost nothing published does. A season's
+# crush is capacity x days x utilisation, and the source shows all four.
+#
+# AND THE BOTTLENECK IS SOMEWHERE ELSE. The same document's raw-material
+# section (p.12) prints a marketable cane surplus of 337,480 t — 16% SHORT
+# of the 400,000 t the mill crushes from year 2 onward. Year 1 crushes
+# 337,500 t, within 20 tonnes of that surplus. From year 2 the model steps
+# straight over the constraint it printed. That is the bottleneck case the
+# brief asked for, and here the SOURCE ITSELF violates it. See notes.
+
+meta:
+  source:
+    - "National Cooperative Development Corporation (NCDC), Government of India, 'Detailed Project Report (DPR) on Modernization cum Expansion of Sugar Plant from 2500 TCD to 5000 TCD' (sample DPR for cooperative sugar mills; the borrower is anonymised as 'XYZ Cooperative Sugar Mill', Dist. Solapur, Maharashtra). §1.2 and §7 (history: 1250 TCD in 1980-81, modernised to 2500 TCD in 1999-2000); §8.5, p.12 (Table: area under cane, yield, total production, present consumption/utilization, MARKETABLE SURPLUS, 2014-15 to 2016-17) and p.13 (area/yield/production projection 2017-18 to 2019-20); §11.3, p.21 (Design Parameters: 5000 TCD on 22 hrs basis = 230 TCH, bagasse 32.20% on cane, gross season 160 days, off-season 90 days); §19.1, p.38 (Salient features of the cash-flow projections: the 8-year summary table); ANNEXURE II, pp.43+ ('Profitability projections of XYZ Cooperative Sugar Mill', the 10-year line-by-line projection this gold checks). https://www.ncdc.in/documents/downloads/211508052025.Sample-DPR_Modernisation-and-expansionof-sugar-plant.pdf"
+  accessed: "2026-08-12"
+  licence: >
+    Publication of the National Cooperative Development Corporation, a statutory corporation under
+    the Ministry of Cooperation, Government of India, hosted on the Corporation's own domain
+    (ncdc.in) as a public sample document for cooperative borrowers. No explicit reuse licence is
+    stated. Figures transcribed here, with full citation, for engine-verification/research use only.
+  kind: trade_case
+  # L3: the source prints a QUANTITY (sugar, 4.90 lakh quintals) and a PRICE
+  # (Rs 3,500/quintal) as separate figures and multiplies them into an income
+  # line that re-computes EXACTLY -- and it does the same for molasses,
+  # season power and off-season power. Four priced output streams from one
+  # input, each with its own printed quantity and its own printed rate.
+  resolution: L3
+  basis: "one cooperative sugar mill, one crushing season — YEAR 2 of the printed 10-year projection, the first FULL-CAPACITY year (160 days, 100% utilisation) and the steady state repeated in years 2-10; year 1 (150 days, 90%) transcribed alongside because it is the only year that respects the cane constraint"
+  periods: 1
+  mechanism: separate
+  cell: "create x physical (Manufacturer)"
+  transformation: "separate — one input stream (cane) is split into FOUR separately priced outputs: sugar, molasses, in-season exported power and off-season exported power, the last two burnt from the bagasse the same cane yields (32.20% on cane, p.21). A textbook joint-product split with the joint costs (cane at Rs 2,670/MT, harvesting and transport at Rs 550/MT) charged wholly against tonnes of CANE, never allocated across the four outputs."
+  jurisdiction: IN
+  currency: INR
+  trade: "cooperative sugar mill with 25 MW bagasse cogeneration and a 30 KLPD distillery, Dist. Solapur, Maharashtra"
+
+inputs:
+  # ══ THE CEILING AND ITS FACTORS — Annexure II rows 1-4, each printed
+  # separately with its own unit column ══
+  capacity:
+    crushing_capacity_tcd:
+      value: 2500
+      unit: "TCD (tonnes cane per day)"
+      label_as_printed: "1  Capacity  TCD  2500  (the same value in all ten year-columns)"
+      note: "CONTRADICTS THE DPR'S OWN TITLE, which is an expansion from 2500 TCD to 5000 TCD. The viability annexure never crushes at the expanded capacity. See notes."
+    crushing_days:
+      year_1: {value: 150, unit: "days", label_as_printed: "2  Days  No.  150"}
+      year_2_to_10: {value: 160, unit: "days", label_as_printed: "160"}
+      corroborated_by: "§11.3 design parameter (iv), p.21: 'The gross season will be of 160 days'"
+    utilisation_pct:
+      year_1: {value: 90, unit: "%", label_as_printed: "3  Utilisation  %  90"}
+      year_2_to_10: {value: 100, unit: "%", label_as_printed: "100"}
+    season_ceiling_tonnes:
+      value: 400000
+      unit: "tonnes cane"
+      composition: "DERIVED: 2,500 TCD x 160 days x 100% = 400,000 t = 4.00 lakh tonnes — which is EXACTLY the printed Crushing row for years 2-10. All three factors are the source's own."
+  # ══ THE ACTUAL, and the SUPPLY that should bound it ══
+  crushing_lakh_tonnes:
+    year_1: {value: 3.38, unit: "lakh tonnes", label_as_printed: "4  Crushing  Lakh tonnes  3.38", true_underlying_value: 3.375, why: "2,500 x 150 x 0.90 = 337,500 t = 3.375 lakh t; the printed 3.38 is a 2-decimal display. The cane-cost line proves the underlying figure: Rs 2,670/MT x 337,500 t = Rs 901.125 lakh... = 9,011.25 lakh EXACTLY as printed, which 3.38 lakh t would not give."}
+    year_2_to_10: {value: 4.00, unit: "lakh tonnes"}
+  cane_supply_the_document_prints:
+    marketable_surplus_2014_15: {value: 189128, unit: "tonnes", cited: "§8.5 table, p.12"}
+    marketable_surplus_2015_16: {value: 201088, unit: "tonnes"}
+    marketable_surplus_2016_17: {value: 337480, unit: "tonnes"}
+    note: "the SAME table prints total production (922,500 / 942,400 / 975,000 t) and 'Present consumption/utilization' (733,372 / 741,312 / 637,520 t); surplus = production - consumption, re-added by hand and EXACT in all three years. The p.13 forward table gives production only (962,500 / 975,000 / 987,500 t) and NO surplus column — so the document never shows cane supply reaching the 400,000 t the mill crushes from year 2."
+  recovery_pct:
+    year_1: {value: 12.00, unit: "%", label_as_printed: "5  Recovery  %  12.00"}
+    year_2_to_10: {value: 12.25, unit: "%"}
+  co_product_rates:
+    molasses_pct_on_cane_as_stated: {value: 4.5, unit: "%", label_as_printed: "7  Mollases Prod.  Lakh tonnes  @ 4.5%"}
+    molasses_pct_on_cane_the_income_actually_uses: {value: 7.5, unit: "%", composition: "DERIVED from the printed income and rate — the two disagree. See notes."}
+    bagasse_pct_on_cane: {value: 32.20, unit: "%", cited: "§11.3 (ii), p.21"}
+  prices:
+    sugar: {value: 3500.00, unit: "INR/quintal", label_as_printed: "3500.00/qtl"}
+    molasses: {value: 3000, unit: "INR/MT", label_as_printed: "Rs.3000/MT"}
+    power_exported: {value: 5.00, unit: "INR/kWh", label_as_printed: "5.00/ unit", note: "same tariff in season and off-season; exported to the MSETCL 132 kV grid"}
+  cost_rates:
+    sugarcane: {value: 2670, unit: "INR/MT of cane", label_as_printed: "Rs.2670/MT"}
+    harvesting_and_transport: {value: 550, unit: "INR/MT of cane", label_as_printed: "Rs.550/MT"}
+    manufacturing_expense: {value: 60, unit: "INR/MT of cane", label_as_printed: "Rs.60/MT"}
+    packing_material: {value: 500, unit: "INR/MT of SUGAR", label_as_printed: "Rs.500/MT", note: "the unit is not stated in the table, but 245.00 lakh / 500 = 49,000 MT = the sugar tonnage, not the cane tonnage — so it is per MT of sugar. Independently confirms the sugar output."}
+  # engine convention: quantity x price, for the CHECKED year (year 2)
+  sale: {quantity: 490000, unit: quintal_of_sugar, price: 3500.00}
+
+  # THE RUNNER'S COST LINES — Annexure II's own EIGHT operating-expenditure
+  # rows for the checked year, transcribed line by line and NOT as the printed
+  # 15,625.00 total (a total would double-count against its own parts). Every
+  # figure is repeated verbatim from `expected.operating_expenditure_year_2`
+  # below; nothing new is read out of the source here.
+  #
+  # BASIS: INR LAKH, YEAR 2 of the ten-year projection — the first full-
+  # capacity year (160 days, 100% utilisation), which is the year `meta.basis`
+  # names and the same year and unit as the revenue this gold maps
+  # (total_income_year_2 = 22,884.00 INR lakh). The per-MT rate rows in
+  # `inputs.cost_rates` (Rs 2,670/MT cane, Rs 550/MT harvesting, Rs 60/MT
+  # manufacturing, Rs 500/MT sugar packing) are the FACTORS behind four of
+  # these eight lines, not lines themselves — including them alongside would
+  # charge the same cost twice, once as a rate and once extended.
+  #
+  # DELIBERATELY EXCLUDED: interest (1,888.71) and depreciation (2,415.43).
+  # The source strikes its own operating-expenditure subtotal at 15,625.00 and
+  # only then adds those two to reach Total Expenditure 19,929.14; the figure
+  # `mapping` binds to `cost_of_sales` is the operating subtotal, so the two
+  # below-the-line blocks stay out. (Both carry findings of their own — the
+  # fourth interest line is printed and then dropped, and the depreciation
+  # rate silently changes from 15% to 10% WDV at year 3 — see notes.)
+  #
+  # HAND CHECK: 10,680.00 + 2,200.00 + 240.00 + 750.00 + 245.00 + 1,260.00 +
+  # 100.00 + 150.00 = 15,625.00 — EXACT against the printed Total.
+  costs:
+    sugarcane: 10680.00
+    harvesting_and_transport: 2200.00
+    manufacturing_expense: 240.00
+    repair_and_maintenance: 750.00
+    packing_material: 245.00
+    salary_and_wages: 1260.00
+    power_and_fuel: 100.00
+    administration: 150.00
+
+expected:
+  # ── THE CHECKED YEAR: year 2, 160 days at 100% utilisation ──
+  crushing_year_2:
+    value: 400000
+    unit: "tonnes cane"
+    label_as_printed: "4.00 Lakh tonnes"
+    hand_check: "2,500 TCD x 160 days x 100% = 400,000 t — EXACT against the printed row"
+  sugar_production_year_2:
+    value: 4.90
+    unit: "lakh QUINTALS"
+    label_as_printed: "6  Sugar Prod.  Lakh tonnes  4.90"
+    unit_as_printed_is_wrong: true
+    hand_check: >
+      400,000 t cane x 12.25% recovery = 49,000 t sugar = 4.90 LAKH QUINTALS, not 4.90 lakh tonnes
+      (which would be 490,000 t, ten times the mill's entire cane intake). Two independent lines in
+      the same table prove the quintal reading: sugar income 4.90 x Rs 3,500/qtl = Rs 17,150 lakh
+      EXACTLY as printed, and packing material 49,000 MT x Rs 500/MT = Rs 245.00 lakh EXACTLY as
+      printed. The row's unit column is a transcription error; the value is right.
+  molasses_production_year_2:
+    value: 0.18
+    unit: "lakh tonnes"
+    label_as_printed: "7  Mollases Prod.  Lakh tonnes  @ 4.5%  0.18"
+    hand_check: "400,000 x 4.5% = 18,000 t = 0.18 lakh t — EXACT against the printed quantity, but IRRECONCILABLE with the printed molasses income. See notes."
+  income_year_2:
+    sugar: {value: 17150.00, unit: "INR lakh", hand_check: "4.90 lakh qtl x Rs 3,500 = 17,150.00 — EXACT"}
+    cogen_season: {value: 3024.00, unit: "INR lakh", hand_check: "604.80 lakh units x Rs 5.00 = 3,024.00 — EXACT"}
+    cogen_off_season: {value: 1710.00, unit: "INR lakh", hand_check: "342.00 lakh units x Rs 5.00 = 1,710.00 — EXACT against the printed units, but the printed units are themselves wrong. See notes."}
+    molasses: {value: 900.00, unit: "INR lakh", hand_check: "DOES NOT reconcile with 0.18 lakh t at Rs 3,000/MT (= 540.00). It reconciles exactly with 7.5% of cane at Rs 3,000/MT. See notes."}
+    other_income: {value: 100.00, unit: "INR lakh"}
+    total: {value: 22884.00, unit: "INR lakh", hand_check: "17,150.00 + 3,024.00 + 1,710.00 + 900.00 + 100.00 = 22,884.00 — EXACT"}
+  operating_expenditure_year_2:
+    sugarcane: {value: 10680.00, unit: "INR lakh", hand_check: "Rs 2,670/MT x 400,000 t = 10,680.00 — EXACT"}
+    harvesting_and_transport: {value: 2200.00, unit: "INR lakh", hand_check: "Rs 550 x 400,000 = 2,200.00 — EXACT"}
+    manufacturing_expense: {value: 240.00, unit: "INR lakh", hand_check: "Rs 60 x 400,000 = 240.00 — EXACT"}
+    repair_and_maintenance: {value: 750.00, unit: "INR lakh", note: "flat across all ten years — does not scale with throughput"}
+    packing_material: {value: 245.00, unit: "INR lakh", hand_check: "Rs 500 x 49,000 t sugar = 245.00 — EXACT"}
+    salary_and_wages: {value: 1260.00, unit: "INR lakh", note: "escalates 2.5%/yr from year 2; independent of throughput"}
+    power_and_fuel: {value: 100.00, unit: "INR lakh"}
+    administration: {value: 150.00, unit: "INR lakh"}
+    total: {value: 15625.00, unit: "INR lakh", hand_check: "10,680 + 2,200 + 240 + 750 + 245 + 1,260 + 100 + 150 = 15,625.00 — EXACT"}
+  # flat aliases of the two subtotals above, so `mapping` can name them
+  # without a dotted path (this corpus's mapping keys are top-level names)
+  total_income_year_2:
+    value: 22884.00
+    unit: "INR lakh"
+    label_as_printed: "Total (INCOME), Annexure II"
+    composition_as_printed: "17,150.00 + 3,024.00 + 1,710.00 + 900.00 + 100.00"
+  total_operating_expenditure_year_2:
+    value: 15625.00
+    unit: "INR lakh"
+    label_as_printed: "Total (EXPENDITURE, operating lines only), Annexure II"
+    composition_as_printed: "10,680 + 2,200 + 240 + 750 + 245 + 1,260 + 100 + 150"
+  total_interest_year_2:
+    value: 1888.71
+    unit: "INR lakh"
+    hand_check: "working capital 510.21 + NCDC term loan 1,214.98 + SDF loan for MCE 163.52 = 1,888.71 EXACT — which means the FOURTH printed interest line, SDF loan for Cogen 212.08, is simply left out. See notes."
+  total_depreciation_year_2:
+    value: 2415.43
+    unit: "INR lakh"
+    hand_check: "P&M 2,324.53 + civil 90.90 = 2,415.43 EXACT. P&M: 18,231.59 x 15% = 2,734.74 (yr 1), then 2,734.74 x 0.85 = 2,324.53 (yr 2) — both exact on a 15% written-down basis. From year 3 the schedule silently switches to 10% WDV; see notes. Civil: 1,010.00 x 10% = 101.00, then x0.9 each year — clean 10% WDV throughout."
+  total_expenditure_year_2:
+    value: 19929.14
+    unit: "INR lakh"
+    hand_check: "15,625.00 + 1,888.71 + 2,415.43 = 19,929.14 — EXACT"
+  profit_year_2:
+    value: 2954.86
+    unit: "INR lakh"
+    hand_check: "22,884.00 - 19,929.14 = 2,954.86 — EXACT"
+  # ── YEAR 1, the only year the cane constraint is respected ──
+  year_1:
+    crushing_tonnes: {value: 337500, hand_check: "2,500 x 150 x 0.90 = 337,500 t — and the printed marketable cane surplus for 2016-17 is 337,480 t, twenty tonnes away"}
+    total_income: {value: 19552.38, unit: "INR lakh", hand_check: "14,175.00 + 2,808.00 + 1,710.00 + 759.38 + 100.00 = 19,552.38 — EXACT"}
+    total_operating_expenditure: {value: 13472.50, unit: "INR lakh", hand_check: "9,011.25 + 1,856.25 + 202.50 + 750 + 202.50 + 1,200 + 100 + 150 = 13,472.50 — EXACT"}
+    total_expenditure: {value: 18108.44, unit: "INR lakh", hand_check: "13,472.50 + 1,800.21 + 2,835.74 = 18,108.45 — one paisa-lakh (Rs 1,000) above the printed 18,108.44"}
+    profit: {value: 1443.93, unit: "INR lakh", hand_check: "19,552.38 - 18,108.44 = 1,443.94 against a printed 1,443.93 — same 0.01 rounding"}
+  # ── HEADLINE RATIOS the source computes for itself (§19.1, p.38) ──
+  average_dscr:
+    value: 2.24
+    label_as_printed: "Average DSCR (8 yrs)  2.24"
+    hand_check: >
+      RECONCILES on the AGGREGATE definition: sum of 8 years' funds available for debt service
+      (52,209.92) / sum of 8 years' debt serviced (23,336.85) = 2.2372 -> 2.24 EXACT. It does NOT
+      reconcile on a simple mean of the eight printed DSCR ratios, which is 2.59. Recorded because
+      the two definitions differ by 0.35 and only one matches — an engine implementing "average
+      DSCR" must pick the aggregate.
+  annual_dscr: {values: [4.10, 4.90, 2.10, 1.69, 1.79, 1.90, 2.04, 2.19], hand_check: "each = funds available / debt serviced for that year; all eight re-compute to the printed 2 d.p."}
+  irr_as_printed:
+    value: 24.21
+    unit: "%"
+    label_as_printed: "IRR  24.21%"
+    hand_check: "DOES NOT REPRODUCE. Solving the annexure's own 'Cash availability' row as laid out (-21,891.59 at t0, then 5,658.17 / 6,748.79 / 6,717.29 / 6,685.00 / 6,651.91 / 6,617.98 / 6,583.21 / 6,547.57 / 6,511.04 / 6,473.60) gives 26.60%, 2.39 percentage points ABOVE the printed figure. Kept as printed; see notes."
+  payback_period: {value: "3 years 2 months", label_as_printed: "Pay Back Period  3 years 2 month"}
+
+mapping:
+  # both sides of the checked year, against figures the source prints itself
+  # (income total and expenditure total), so a cost error surfaces as well as
+  # a revenue error
+  # MIXED BASIS (2026-08-20). Revenue COMPUTES raw INR (lakh quintals x
+  # Rs/quintal), so it needs Annexure II's "INR lakh" scale declared; the
+  # cost lines were TRANSCRIBED at the printed lakh values and flow through
+  # unchanged, so their comparison is printed-vs-printed — scale would double
+  # convert. The scale is the source's own column header, not a judgement.
+  total_income_year_2: {canon: revenue, scale: 1.0e5}
+  total_operating_expenditure_year_2: cost_of_sales
+
+tolerance:
+  abs: 0.02
+  why: >
+    Rs 0.02 lakh = Rs 2,000, on an income line of Rs 22,884 lakh (Rs 2.29 billion) — 0.00009%. Every
+    figure in Annexure II is printed to two decimals of a lakh and every subtotal in the CHECKED
+    YEAR re-adds EXACTLY by hand: income 22,884.00, operating expenditure 15,625.00, interest
+    1,888.71, depreciation 2,415.43, total expenditure 19,929.14, profit 2,954.86. Year 1 carries a
+    single 0.01 gap (Rs 1,000) from display rounding of the 3.375-lakh-tonne crush; 0.02 clears that
+    and nothing more. The molasses income line and the off-season energy line are off by 360.00 and
+    18.00 lakh respectively — those are the source's own errors, are named in notes, and are
+    deliberately NOT absorbed by this threshold: they are meant to be visible.
+
+notes: |
+  THE BOTTLENECK, AND THE SOURCE WALKS THROUGH IT. This is the case the brief asked for — a
+  multi-stage operation where one stage binds the whole line — and the finding is that the DPR
+  prints the binding stage and then ignores it.
+
+    the MILL's ceiling      2,500 TCD x 160 days = 400,000 t of cane a season
+    the CANE's ceiling      337,480 t of marketable surplus in 2016-17, the latest year printed
+                            (§8.5 table, p.12: production 975,000 t less present consumption/
+                            utilization 637,520 t = 337,480 t, re-added by hand, exact)
+    what the model crushes  337,500 t in year 1  — the cane constraint, to within 20 tonnes
+                            400,000 t in years 2-10 — 18.5% MORE cane than the document ever
+                            shows existing
+
+  Year 1 is labelled "90% utilisation over 150 days", which is presented as a start-up ramp. It is
+  not: 2,500 x 150 x 0.90 = 337,500 t, and the marketable surplus is 337,480 t. The ramp is the
+  cane supply wearing a mill's clothes. From year 2 the model raises days to 160 and utilisation to
+  100% and never revisits supply — the p.13 forward table gives cane PRODUCTION out to 2019-20
+  (962,500 / 975,000 / 987,500 t) but drops the consumption and surplus columns entirely, so
+  nothing in the document demonstrates that 400,000 t is available. Every rupee of the eight-year
+  DSCR and the IRR rests on 62,500 t of cane a year that is asserted rather than shown. This is
+  exactly `sold = min(demand, available)` inverted — here it is the INPUT side, `crushed =
+  min(mill_capacity, cane_available)` — and the source computes the max, not the min.
+
+  THE DPR IS ABOUT AN EXPANSION IT NEVER MODELS. The title, §1.2, §7, §11.3 and §19 all describe
+  modernisation from 2,500 TCD to 5,000 TCD with a 25 MW cogeneration plant, and §11.3 (p.21) gives
+  the expanded plant's design parameters ("Actual crushing capacity of the sugar plant will be 5000
+  TCD on 22 hrs. basis (230 TCH)"). Annexure II — the only place the money is computed — holds
+  Capacity at 2,500 TCD in all ten year-columns and crushes 400,000 t, exactly half of what 5,000
+  TCD over 160 days would give (800,000 t). The Rs 21,891.59 lakh of capital expenditure is
+  justified by an IRR computed on the OLD plant's throughput. Either the annexure is the pre-
+  expansion base case mislabelled as the project case, or the capacity row was never updated. The
+  document does not say which. RECORDED AS AN OPEN CONTRADICTION, not resolved.
+  (Aside: 5,000 TCD / 22 hrs = 227.3 TCH, printed as 230 TCH — the design parameter's own two
+  factors are 1.2% apart.)
+
+  ARITHMETIC VERIFIED BY HAND — what reconciles EXACTLY. Everything driven by a printed rate times
+  a printed quantity:
+    - crush = capacity x days x utilisation, both years
+    - sugar = crush x recovery, both years (in QUINTALS — see the unit error below)
+    - sugar income = sugar x Rs 3,500/qtl, both years (17,150.00 / 14,175.00)
+    - cane cost = Rs 2,670/MT x crush, both years (10,680.00 / 9,011.25) — this is the line that
+      proves year 1's crush is 337,500 t and not the displayed 3.38 lakh
+    - harvesting Rs 550/MT, manufacturing Rs 60/MT, packing Rs 500/MT-of-sugar — all six cells exact
+    - season cogen income = printed units x Rs 5.00, both years
+    - income totals, operating-expenditure totals, total expenditure, profit — both years
+    - depreciation, both classes, year 1 and year 2
+    - all eight annual DSCRs, and the aggregate 8-year average of 2.24
+    - the ten-year molasses QUANTITY row against the stated 4.5% on cane
+
+  ARITHMETIC VERIFIED BY HAND — what does NOT reconcile. Six findings, all kept:
+
+    1. THE SUGAR ROW'S UNIT IS WRONG BY A FACTOR OF TEN. Row 6 reads "Sugar Prod. — Lakh tonnes —
+       4.90". 4.90 lakh tonnes is 490,000 t of sugar from 400,000 t of cane, i.e. a recovery of
+       122.5%. The value is in lakh QUINTALS (49,000 t). Proven twice over by the sugar income
+       (4.90 x Rs 3,500/qtl = 17,150.00 exactly) and by packing material (49,000 MT x Rs 500 =
+       245.00 exactly). The number is right; the label is not.
+
+    2. THE MOLASSES INCOME AND THE MOLASSES QUANTITY DISAGREE BY 67%. The quantity row is computed
+       at 4.5% on cane (0.18 lakh t = 18,000 t) and says so. The income row says Rs 3,000/MT.
+       18,000 x 3,000 = Rs 540 lakh. The printed income is Rs 900 lakh. Working backwards, Rs 900
+       lakh at Rs 3,000/MT needs 30,000 t = 7.5% on cane; year 1 confirms it independently
+       (337,500 x 7.5% x 3,000 = Rs 759.375 lakh, printed 759.38). So the income is built on 7.5%
+       and the quantity row on 4.5% — the model earns molasses revenue on tonnage it never shows
+       producing. Rs 360 lakh a year, 1.6% of total income, and it flows straight to profit.
+
+    3. THE OFF-SEASON POWER UNITS LOOK LIKE A DIGIT TRANSPOSITION. §11.3 (x), p.21, sets the
+       off-season at 90 days; the export is 15 MW. 15,000 kW x 90 days x 24 h = 32,400,000 kWh =
+       324.00 lakh units. The annexure prints 342.00 lakh units in every one of the ten years, and
+       bills all of it at Rs 5.00 (= Rs 1,710 lakh). Rs 90 lakh a year of revenue on 18 lakh units
+       that the stated 90-day off-season cannot generate.
+
+    4. THE SEASON POWER HOURS ARE NOT CONSTANT AND ARE NEVER STATED. 604.80 lakh units / 18,000 kW
+       / 160 days = 21.0 h/day exactly in years 2-10; year 1's 561.60 lakh units / 18,000 kW / 150
+       days = 20.8 h/day. Neither figure appears anywhere in the document, and the off-season line
+       implies 24 h/day for the same plant. A capacity model reading this DPR has to infer the
+       running hours from the energy, which is the wrong direction.
+
+    5. THE FOURTH INTEREST LINE IS PRINTED AND THEN DROPPED. Annexure II lists four interest rows —
+       working capital 10.50%, NCDC term loan 11.10%, SDF loan for MCE 4.25%, SDF loan for Cogen
+       4.25% — and the "Total Interest" line equals the first THREE in every one of the ten years
+       (year 2: 510.21 + 1,214.98 + 163.52 = 1,888.71 exactly; adding the cogen 212.08 would give
+       2,100.79). Total Expenditure then uses the understated total. Cumulative understatement over
+       years 2-6: Rs 530.20 lakh of interest that is disclosed but not charged. The debt-service
+       block does the same thing (the "Intt. on loans" row is NCDC + SDF-MCE only), so the DSCRs
+       inherit it too.
+
+    6. THE PRINTED IRR DOES NOT REPRODUCE. Solving the annexure's own Cash availability row
+       (-21,891.59 then the ten annual figures) gives 26.60%; the document prints 24.21%. A 2.39
+       percentage-point gap, in the FAVOURABLE direction for the printed figure being conservative,
+       so it does not look like an attempt to flatter the project. The cause is not visible in the
+       pages read — the most likely candidate is a two-year construction period spreading the
+       outflow (the DPR states a 2-year moratorium on principal), which the row as laid out does not
+       show. UNRESOLVED, and the reason `irr_as_printed` is transcribed with its check written in
+       rather than mapped.
+    (Also: the "Cumulative Cash Accruals" row nets debt service in year 1 and then stops doing so
+    from year 2 — 4,279.67 = 5,658.17 - 1,378.50, but 11,028.46 = 4,279.67 + 6,748.79 with no
+    deduction. Minor, and it feeds nothing this gold checks.)
+
+  THE DEPRECIATION RATE CHANGES AND THE ASSUMPTION COLUMN DOES NOT. Plant & machinery is stated at
+  15%. Years 1-2 follow it exactly (18,231.59 x 15% = 2,734.74; then x 0.85 = 2,324.53). From year
+  3 every step is x 0.90, i.e. a 10% written-down rate (2,324.53 x 0.9 = 2,092.08 against a printed
+  2,092.07, and so on to year 10). Civil works, stated at 10%, follows 10% throughout. Recorded
+  because an engine reading the assumption column would compute a different tax shield from year 3
+  onward than the document does.
+
+  WHAT IS DELIBERATELY NOT TRANSCRIBED: §11.3's full cogeneration heat-and-mass balance (boiler 130
+  TPH at 87 ata / 515 C, steam-to-bagasse 2.45, actual steam rates per turbine stage, captive loads
+  of 7,943 kW in season / 2,159 kW off-season). It is printed and internally detailed, but checking
+  it requires a steam-cycle model this corpus does not have, and none of it feeds the throughput
+  ceiling this gold exists to test. The distillery (30 KLPD) is likewise mentioned in the design
+  parameters and generates no line in Annexure II at all.
+
+  BASIS FINDING, surfaced when the cost lines were added (2026-08-12), and it is TWO problems
+  stacked, neither of them the engine's. Everything in `expected` — and now everything in
+  `inputs.costs` — is in INR LAKH, because that is the unit of Annexure II. `inputs.sale` is not:
+  it is 490,000 quintals at Rs 3,500.00 per quintal, i.e. ABSOLUTE RUPEES, and multiplies out to
+  1,715,000,000, not 17,150. So (a) an L3 runner deriving revenue from `sale` produces a figure
+  100,000x the one `mapping` checks it against, purely a lakh-versus-rupee seam; and (b) even once
+  that is scaled, 17,150 lakh is the SUGAR STREAM ALONE, while the mapped `total_income_year_2` is
+  22,884 lakh — the sum of FOUR separately priced outputs (sugar 17,150, season power 3,024,
+  off-season power 1,710, molasses 900, plus other income 100). A one-line `sale:` block cannot
+  express a four-output `separate`; that is a schema observation, not an arithmetic one, and it is
+  the reason the revenue side of this gold diverges while the cost side reconciles exactly. NOTHING
+  IS CHANGED HERE TO HIDE EITHER: no figure in `sale`, `expected` or `costs` has been touched.

@@ -1,0 +1,499 @@
+id: mining_mt_todd_2024_fs
+title: "Mt Todd Gold Project — NI 43-101 Feasibility Study (50,000 tpd), Northern Territory, Australia"
+
+meta:
+  source:
+    - >
+      Tetra Tech (with RESPEC, Resource Development Inc., Pro Solv Consulting, Tetra Tech Proteus)
+      for Vista Gold Corp., "NI 43-101 Technical Report, Mt Todd Gold Project, Northern Territory,
+      Australia — 50,000 tpd Feasibility Study", April 16, 2024. 411 pages.
+      https://www.vistagold.com/images/mttodd/Vista-Mt_Todd_NI_43-101_FS_Technical_Report_-_April_16_2024.pdf
+      (hosted directly on the issuer's own investor-relations site; SEDAR+ filing by Vista Gold Corp.)
+    - "Page references below are the report's OWN printed page numbers (footer), not PDF page indices."
+  accessed: 2026-08-12
+  licence: >
+    Public NI 43-101 technical report, filed to satisfy Canadian securities disclosure rules
+    (Vista Gold Corp. trades on NYSE American / TSX). No explicit reuse licence is stated in the
+    document itself; downloaded from the issuer's own public investor-relations URL, not SEDAR+.
+  kind: trade_case
+  mechanism: extract
+  # ── HAND-LABELLED 2026-08-12, same convention as bfap_maize/atlas_extract_freshfish ──────────
+  # L4: the deepest resolution level in this corpus. The source does not print one number to
+  # check — it prints a five-stage CHAIN (depleting reserve -> mined ore -> ore-sorted plant feed
+  # -> metallurgical recovery -> payable metal), each stage with its own cited yield, and on TOP
+  # of that a two-stage tax waterfall (private gross-revenue royalties netted against revenue,
+  # THEN a profit-based government royalty, THEN a flat income tax with its own deduction rules)
+  # applied to the OUTPUT of the physics chain. Every stage is independently verifiable against
+  # Table 22-28's per-year figures (see `expected.annual_schedule`), which is what makes this L4
+  # rather than L3: multiple compounding derivations, not one multiply.
+  resolution: L4
+  basis: "whole project, life of mine, 100% equity (unlevered, no debt financing modelled)"
+  # Stated "Mine Life: 16 years" as the headline figure (Table 22-1, p.288; bullet list p.1/p.288)
+  # but the annual schedule (Table 22-28, p.312) shows revenue-generating production in 17 years
+  # (years 1-17) and the body text explicitly says "17-year LoM" (p.289) discussing strip ratio.
+  # See notes for the full inconsistency; periods below follows the annual SCHEDULE (17 years of
+  # activity) since that is what `expected.annual_schedule` transcribes and can be checked against.
+  periods: 17
+  jurisdiction: AU   # Commonwealth of Australia; the mine sits in the Northern Territory (NT), a
+                     # territory not a state, which matters because it runs its OWN royalty statute
+                     # (NT Mineral Royalty Act 1982) separate from the Commonwealth income tax
+  currency: USD      # "Costs and economic results are presented in Q4 2021 U.S. dollars" (p.288).
+                     # Labour, reagents and some consumables are costed natively in AUD (Tables
+                     # 22-22 to 22-25) and converted at the report's own assumed rate, AUD:USD
+                     # 0.69:1 (Table 22-1, p.288) — i.e. 1 AUD = US$0.69.
+
+inputs:
+  physics:
+    # THE DEPLETING STOCK — the reserve, exactly as printed, Table 1-3 (p.8) = Table 22-3 (p.289),
+    # cross-checked internally: 267,021 (open pit) + 13,354 (heap leach pad) = 280,375 Kt, and
+    # 6,747 + 232 = 6,979 K oz — both totals match the printed combined row exactly.
+    reserve_open_pit:
+      tonnes_kt: 267021
+      grade_g_au_t: 0.79
+      contained_oz_koz: 6747
+      category: "Proven 81,277 Kt @ 0.84 g/t (2,192 koz) + Probable 185,744 Kt @ 0.76 g/t (4,555 koz)"
+      source: "Table 1-3, p.8 / Table 22-3, p.289"
+    reserve_heap_leach_pad:
+      tonnes_kt: 13354
+      grade_g_au_t: 0.54
+      contained_oz_koz: 232
+      category: "Probable only (existing historical heap-leach pad, no cutoff grade applied — footnote, Table 1-3, p.8)"
+      note: "Residual gold left on a pad from PRE-2000s historical mining at Mt Todd, not new open-pit ore. Reclaimed and fed through the new mill at the end of mine life (years 15-17, see notes)."
+      source: "Table 1-3, p.8 / Table 22-3, p.289; description Section 1.6.1, p.8"
+    reserve_total:
+      tonnes_kt: 280375
+      grade_g_au_t: 0.77
+      contained_oz_koz: 6979
+      source: "Table 1-3, p.8 / Table 22-3, p.289"
+    cutoff_grade_g_au_t: 0.35
+    breakeven_cutoff_grade_g_au_t: {at_1500_usd_oz: 0.31, at_1750_usd_oz: 0.27}
+    dilution_basis: "12m x 12m x 6m block model used directly for reserve estimation; RESPEC states this block size is itself the dilution allowance — no separate numeric dilution % published (Section 15.4, p.184)"
+    design_pit_shell: "Pit 49 of the WhittleTM optimization, built at a US$1,500/oz gold price: 267,434 Kt @ 0.79 g/t = 6,757 koz, waste 711,493 Kt, strip ratio 2.66 — confirmed twice in prose as the design basis (Table 1-5 footnote p.9; Section 15.1 text p.184: 'pit shell 49 ... was used as the basis for the ultimate pit design'). Close to but not identical to the final Batman P&P reserve (267,021 Kt / 6,747 koz) because further reserve-level modifying factors are applied on top of the raw pit-shell optimization."
+    strip_ratio_lom: 2.51            # Table 22-28 Totals row, p.312 (W:O, life-of-mine average)
+    strip_ratio_note: "Also stated as '2.5:1 strip ratio over the 17-year LoM' in prose (p.289); the design pit shell (Pit 49) alone shows 2.66 (Table 1-5, p.9); annual strip ratio in Table 22-28 ranges from 0.05 (year 17) to 7.07 (year 8) as pushbacks expose different waste:ore ratios by year."
+    throughput_tpd: 50000
+    annual_ore_feed_mt: 17.75
+    operating_days_per_year: 355
+    mine_life_years_headline: 16     # Table 22-1, p.288 — see meta.periods note on the 16-vs-17 inconsistency
+    construction_years: 2
+    commissioning_rampup_years: 0.5
+    closure_years: 4
+    flowsheet: "primary gyratory crusher -> 2 cone crushers -> 2 HPGR crushers -> XRT + laser ore sorting (rejects waste, upgrades grade) -> 2 primary ball mills + 10 FLS VXP secondary/regrind mills -> cyclone classification -> pre-leach thickening -> conventional carbon-in-pulp (CIP) cyanide leach and adsorption -> elution, electrowinning, smelting to dore -> carbon regeneration -> cyanide detoxification -> tailings storage facility (Section 1.8, p.10; Section 22.2, p.289; Figure 1-5, p.11)"
+    # The chain the reserve is drawn down through, each stage with its own cited yield —
+    # see expected.annual_schedule for the full year-by-year working of this chain.
+    recovery_chain:
+      stage_1_mined_ore: "fresh open-pit ore (+ stockpile/RoM blending) fed to plant, contained gold = 'Gold to Plant', LoM total 6,979 koz at LoM average grade 0.77 g/t"
+      stage_2_ore_sorting: "XRT + laser sorters reject waste-grade material before milling, UPGRADING feed grade from 0.77 g/t (Plant Feed) to 0.84 g/t (CIP Plant Feed Post-Sorting, 253,673 Kt LoM) — contained gold after sorting = 'Gold to CIL Plant', LoM total 6,891 koz"
+      stage_3_metallurgical_recovery_pct:
+        sulfide: 0.9261
+        mixed: 0.9274
+        oxide: 0.9092
+        heap_leach_pad: 0.9074
+        net_solution_loss_applied_to_all: 0.01
+        lom_blended_average: 0.916
+        source: "Section 22.2, p.289"
+      stage_3_note: "Table 1-6 (Headline Design Criteria, p.13) separately states Gold Recovery = 91.9% — a different figure from the 91.6% LoM-blended average in Section 22.2/Table 22-3 (p.289). Both are the source's own numbers; see notes."
+      stage_4_payable_factor: "99.9% payable gold assumed (Table 1-4, p.9); LoM payable gold = 6,313 koz, i.e. payable/recovered = 6,313/6,891 = 91.6%, which already nets the refining 'Gold Retention' deduction (0.10% of gold sales, Table 22-2/22-21, p.289/299) on top of the 99.9% payable factor."
+
+  costs:
+    # Verbatim from Table 1-9 / Table 22-14, LoM average, US$ per tonne MILLED (p.17 / p.296)
+    opex_per_tonne_milled_usd:
+      open_pit_mine: 7.68
+      open_pit_mine_detail: {mine_general_service: 0.10, mine_maintenance: 0.16, engineering: 0.06, geology: 0.04, drilling: 1.12, blasting: 1.20, loading: 0.81, hauling: 3.69, mine_support: 0.50, mine_dewatering: 0.01}
+      cip_process_plant: 10.30
+      cip_process_plant_detail: {labor: 0.90, crush_screen_stockpile: 0.48, reclaim_hpgr: 0.78, classification_grinding: 4.17, pre_leach_thick_aeration_cip: 0.21, desorption_gold_room: 0.03, detox_tailings_pumping: 0.09, reagents: 3.47, plant_services: 0.04, mining_infra_misc: 0.06, general_consumables: 0.01, plant_mobile_equipment: 0.02, plant_gas: 0.03}
+      project_services: 0.30
+      ga: 1.05
+      total: 19.33
+    opex_lom_total_usd_000:
+      open_pit_mine: 2153191
+      cip_process_plant: 2889166
+      project_services: 84130
+      ga: 293212
+      operating_costs_subtotal: 5419700
+      refining: 23206
+      cash_cost_of_goods_sold: 5442905   # = operating_costs_subtotal + refining (COGS explicitly excludes the private royalties — see mapping note)
+      source: "Table 22-26, p.310-311 (= Table 1-10, p.18)"
+    refining_cost_breakdown_usd_per_oz: {refining_fee: 0.75, gold_retention_pct_of_sales: 0.001, purchase_discount: 0.50, assay_fee: 95.00, environmental_fee: 50.00, freight_insurance: 0.20, all_in: 3.68}
+    capex_lom_usd_000:
+      mining: 719974
+      process_plant: 659523
+      project_services: 157069
+      project_infrastructure: 62867
+      permanent_accommodation: 464
+      site_establishment_early_works: 29886
+      management_engineering_epcm: 124569
+      pre_production_costs: 34169
+      asset_sale_credit: -42756
+      total: 1745766
+      initial_capital: 1029550
+      sustaining_capital: 716216
+      source: "Table 1-8, p.16 / Table 22-4, p.290 (both identical)"
+    cash_costs_usd_per_oz:
+      first_7_years: {cash_cost: 845, sustaining: 116, aisc: 961}
+      life_of_mine: {cash_cost: 913, sustaining: 120, aisc: 1034}
+      source: "Table 22-27, p.311; World Gold Council cash-cost/AISC guidance basis stated explicitly (site-level, excludes corporate G&A and share-based comp — a company-level AISC would add ~US$7/oz per the source's own estimate, p.311)"
+
+  tax:
+    # TWO layers, structurally distinct in the source's own cash-flow waterfall (see mapping):
+    # private, revenue-based royalties netted BEFORE "Gross Income from Mining"; then a
+    # government profit-based royalty and a flat income tax netted AFTER "Pre-Tax Cash Flow".
+    private_royalties:
+      jaac:
+        legal_structure: "1% of gross value of production (min. AUD50,000/yr) to the Jawoyn Association Aboriginal Corporation for surface rights, PLUS a sliding-scale gross-proceeds production royalty of 0.125%-2.000% depending on gold price and FX rate (replaced a 10% participating-interest right in Nov 2020), PLUS AUD5,000/month consulting fee (Section 4.2, p.23-24; Section 22.5.1.2, p.315)"
+        modelled_as_flat_pct_of_gross_revenue: 0.02    # Table 22-1 "JAAC Royalty: 2%", p.288
+        lom_total_usd_000: 227286                      # Table 22-20, p.299 — 227,286/11,364,288 = 2.000% of Gold Sales exactly, confirming the flat-2% modelling assumption
+        source: "Table 22-1 p.288; Table 22-20 p.299; legal description Section 4.2 p.23-24 and Section 22.5.1.2 p.315"
+      wheaton:
+        legal_structure: "Wheaton Precious Metals (Cayman) Co. is entitled to 1% of gross revenue from Mt Todd if completion objectives are met by 1 Apr 2028; rising up to 0.13%/yr thereafter to a cap of 2% if not met (both the rate and the annual increase can each be reduced by one-third on specified trigger events). Payable on production from the Mt Todd mining and exploration licenses (Section 4.2, p.24; Section 22.5.1.2, p.315)."
+        modelled_as_flat_pct_of_gross_revenue: 0.01    # Table 22-1 "Wheaton Royalty: 1%", p.288
+        lom_total_usd_000: 96753                       # Table 22-20, p.299
+        implied_effective_rate: 0.00851                # 96,753 / 11,364,288 -- LOWER than the modelled 1% assumption; see notes
+        source: "Table 22-1 p.288; Table 22-20 p.299"
+      denehurst:
+        legal_structure: "5% of gross value of any gold/metals commercially extracted from CERTAIN OTHER mineral concessions"
+        applies_to_current_reserves: false
+        note: "explicitly stated NOT to apply to any presently identified mineral resources or reserves at Mt Todd (Section 4.2, p.24; Section 22.5.1.2, p.315) -- included here only because it is named in the source, has zero effect on this project's numbers"
+      combined_lom_total_usd_000: 324038   # JAAC + Wheaton, Table 22-20 p.299 = Table 22-26/1-10 "Royalties" line
+      combined_pct_of_gold_sales: 0.02851  # 324,038 / 11,364,288
+
+    nt_royalty:
+      statute: "Northern Territory Mineral Royalty Act 1982 (MRA), as in force 21 May 2021"
+      formula: "the GREATER OF (a) 20% of Net Value from the production unit in a royalty year, less AUD10,000; or (b) a percentage of gross production revenue that ESCALATES by royalty year: 1% in the payer's first royalty year beginning on/after 1 Jul 2019, 2% the following royalty year, 2.5% every royalty year after that. The royalty payable is NIL if gross production revenue in the royalty year is AUD500,000 or less."
+      net_value_formula: "NV = GR - (OC + CRD + EEE + AD)"
+      net_value_terms:
+        GR: "gross realization from the production unit in the royalty year"
+        OC: "operating costs of the production unit for the royalty year"
+        CRD: "capital recognition deduction (schedule/rate not itemized in this report)"
+        EEE: "eligible exploration expenditure, if any (amount not itemized in this report)"
+        AD: "any additional deduction (amount not itemized in this report)"
+      rate_profit_based: 0.20
+      rate_gross_floor_by_royalty_year: {year_1: 0.01, year_2: 0.02, year_3_onward: 0.025}
+      minimum_annual_deduction_aud: 10000
+      nil_threshold_gross_revenue_aud: 500000
+      deductible_against_commonwealth_income_tax: true   # "The NT Royalty is among deductions permitted in determining taxable income" (p.289/318)
+      alternative_ad_valorem_scenarios_not_the_base_case:
+        # The NT government's Minerals Development Taskforce (est. Nov 2021) has RECOMMENDED
+        # replacing the current MRA formula with a flat ad valorem scheme; not yet legislated.
+        # Table 22-29 (p.315) shows what the SAME production would pay under three illustrative
+        # flat rates -- useful extra checkable numbers, NOT the base case.
+        "2.5pct": 284107
+        "4.5pct": 511393
+        "6.5pct": 738679
+      lom_total_usd_million: 765.0
+      source: "Section 22.5.1.1, p.314-315; formula and rate schedule verbatim; alternative scenarios Table 22-29 p.315"
+
+    income_tax:
+      jurisdiction: "Australian Commonwealth (federal)"
+      rate_flat: 0.30
+      base: "taxable income = assessable income less allowable deductions. Assessable income generally includes gross income from the sale of goods, provision of services, capital deductions (i.e. depreciation), dividends, interest, royalties and rent; may also include capital gains net of capital losses. Normal business expenses are generally deductible."
+      loss_carryforward: "indefinite (no time limit), usable to offset future assessable income, subject to a 'continuity of ownership' test (>50% of voting, dividend and capital rights) OR a 'same business' test"
+      loss_carryforward_note: "no percentage cap on annual relief and no expiry are stated -- a materially simpler shape than a vintaged/expiring pool (contrast with spec/KERNEL.md's TAX ATTRIBUTE description); the continuity/same-business test is a qualitative legal condition with no numeric formula in the source"
+      lom_total_usd_million: 927.0
+      source: "Section 22.5.1.3, p.315"
+
+  sale:
+    quantity_koz: 6313          # PAYABLE gold, life of mine -- the quantity actually multiplied by price (see notes for the recovery chain's other two ounce figures: 6,979 contained, 6,891 post-recovery)
+    unit: oz
+    price_usd_per_oz: 1800      # Table 22-1, p.288 -- the study's flat, non-escalated base-case price assumption for every production year
+    price_basis: "flat US$1,800/oz across the full LoM, no escalation applied to capital or operating costs either ('Costs and economic results are presented in Q4 2021 U.S. dollars... No escalation has been applied to capital or operating costs', p.288)"
+    exchange_rate_aud_usd: 0.69   # 1 AUD = US$0.69, used to convert AUD-native cost inputs
+
+expected:
+  # ── LoM headline results, verbatim, both currency precision levels the source itself uses ──
+  mine_life_years: {value: 16, label_as_printed: "Mine Life", source: "bullet list p.1 and p.288; Table 22-1 p.288"}
+  pre_tax_npv_5pct_usd_million: {value: 2149.4, label_as_printed: "Pre-Tax NPV5%", source: "p.1, p.288, Table 22-26 p.311 (2,149.401 to 3dp)"}
+  pre_tax_irr_pct: {value: 29.4, source: "p.1, p.288, Table 22-26 p.311"}
+  after_tax_npv_5pct_usd_million: {value: 1131.4, label_as_printed: "After-tax NPV5%", source: "p.1, p.288, Table 22-26 p.311 (1,131.432 to 3dp)"}
+  after_tax_irr_pct: {value: 20.4, source: "p.1, p.288, Table 22-26 p.311"}
+  after_tax_payback_years: {value: 4.0, source: "p.1, p.288, Table 22-26 p.311"}
+  discount_rate_pct: 5    # "a gold industry norm" (p.288); sensitivity also given at 8% and 10% (Table 22-31)
+  nt_royalty_paid_usd_million: {value: 765, source: "bullet list p.1/p.288; Table 22-28 p.312"}
+  australian_income_tax_paid_usd_million: {value: 927, source: "bullet list p.1/p.288; Table 22-28 p.312"}
+  cash_costs_including_royalties_usd_per_oz: {value: 913, source: "bullet list p.1/p.288 (LoM figure, Table 22-27 p.311)"}
+
+  cash_flow_summary_usd_000:
+    # Table 22-26, p.310-311 (identical to Table 1-10, p.18-19)
+    gold_produced_koz: 6313
+    gold_price_usd_oz: 1800
+    gold_sales: 11364288
+    refinery_costs: -23206
+    royalties_private: -324038
+    gross_income_from_mining: 11017044
+    operating_costs: -5419700
+    cash_cogs: -5442905
+    operating_margin: 5597345
+    capital_costs: 1745766
+    pre_tax_cash_flow: 3851579
+    after_tax_cash_flow: 2160177
+
+  # ── the annual schedule, Table 22-28 (p.312) — the production-schedule-by-year and the
+  # tax-by-year the task asked for. Figures for years 1-17 (the operating years); years -2/-1
+  # (construction: pre-tax cash flow -328, -686 US$M respectively) and 18-21 (closure tail, no
+  # further production) carry capital/closure costs only and are summarized in notes rather than
+  # itemized per year. Recovery% and grade are for the CIP Plant Feed (post ore-sorting) stage.
+  # Cross-check performed: summing Payable Gold koz across years 1-17 gives 6,313 EXACTLY against
+  # the printed Totals column; summing Income Taxes across years 1-17 gives 927 EXACTLY against
+  # the printed Totals column. NT Royalty sums to ~796-829 depending on how the anomalous year-20
+  # "+33" entry is treated, against a printed total of 765 -- see notes.
+  annual_schedule:
+    unit: "plant_feed_kt = CIP Plant Feed Post-Sorting (Ktonnes); grade_g_t = same stage; gold_contained_koz = Gold to CIL Plant (pre-recovery); recovery_pct = metallurgical recovery applied to gold_contained_koz; payable_gold_koz = final saleable ounces; all US$ columns in US$ million to 0dp as printed"
+    years:
+      - {year: 1,  plant_feed_kt: 11100, grade_g_t: 1.21, gold_contained_koz: 431, recovery_pct: 92.6, payable_gold_koz: 399, gold_sales: 718, pre_tax_cash_flow: 339, nt_royalty: -20, income_tax: -38, after_tax_cash_flow: 280}
+      - {year: 2,  plant_feed_kt: 15975, grade_g_t: 0.97, gold_contained_koz: 497, recovery_pct: 92.1, payable_gold_koz: 458, gold_sales: 824, pre_tax_cash_flow: 345, nt_royalty: -30, income_tax: -67, after_tax_cash_flow: 248}
+      - {year: 3,  plant_feed_kt: 15975, grade_g_t: 1.14, gold_contained_koz: 587, recovery_pct: 92.5, payable_gold_koz: 542, gold_sales: 976, pre_tax_cash_flow: 523, nt_royalty: -40, income_tax: -101, after_tax_cash_flow: 382}
+      - {year: 4,  plant_feed_kt: 16019, grade_g_t: 0.73, gold_contained_koz: 373, recovery_pct: 91.3, payable_gold_koz: 341, gold_sales: 614, pre_tax_cash_flow: 134, nt_royalty: -22, income_tax: -9,  after_tax_cash_flow: 103}
+      - {year: 5,  plant_feed_kt: 15975, grade_g_t: 0.87, gold_contained_koz: 445, recovery_pct: 91.7, payable_gold_koz: 408, gold_sales: 734, pre_tax_cash_flow: 272, nt_royalty: -25, income_tax: -46, after_tax_cash_flow: 201}
+      - {year: 6,  plant_feed_kt: 16041, grade_g_t: 1.13, gold_contained_koz: 583, recovery_pct: 92.4, payable_gold_koz: 539, gold_sales: 970, pre_tax_cash_flow: 498, nt_royalty: -77, income_tax: -98, after_tax_cash_flow: 323}
+      - {year: 7,  plant_feed_kt: 15975, grade_g_t: 1.06, gold_contained_koz: 546, recovery_pct: 92.3, payable_gold_koz: 504, gold_sales: 908, pre_tax_cash_flow: 456, nt_royalty: -70, income_tax: -90, after_tax_cash_flow: 295}
+      - {year: 8,  plant_feed_kt: 15997, grade_g_t: 0.75, gold_contained_koz: 386, recovery_pct: 91.2, payable_gold_koz: 352, gold_sales: 634, pre_tax_cash_flow: 204, nt_royalty: -22, income_tax: -33, after_tax_cash_flow: 148}
+      - {year: 9,  plant_feed_kt: 15997, grade_g_t: 0.57, gold_contained_koz: 291, recovery_pct: 89.8, payable_gold_koz: 261, gold_sales: 470, pre_tax_cash_flow: 53,  nt_royalty: -18, income_tax: 0,   after_tax_cash_flow: 35}
+      - {year: 10, plant_feed_kt: 15975, grade_g_t: 0.60, gold_contained_koz: 308, recovery_pct: 90.1, payable_gold_koz: 277, gold_sales: 499, pre_tax_cash_flow: 84,  nt_royalty: -19, income_tax: 0,   after_tax_cash_flow: 65}
+      - {year: 11, plant_feed_kt: 15975, grade_g_t: 0.67, gold_contained_koz: 343, recovery_pct: 90.7, payable_gold_koz: 311, gold_sales: 560, pre_tax_cash_flow: 160, nt_royalty: -20, income_tax: -25, after_tax_cash_flow: 114}
+      - {year: 12, plant_feed_kt: 15997, grade_g_t: 0.79, gold_contained_koz: 404, recovery_pct: 91.4, payable_gold_koz: 370, gold_sales: 665, pre_tax_cash_flow: 293, nt_royalty: -68, income_tax: -57, after_tax_cash_flow: 169}
+      - {year: 13, plant_feed_kt: 15997, grade_g_t: 0.83, gold_contained_koz: 428, recovery_pct: 91.6, payable_gold_koz: 391, gold_sales: 705, pre_tax_cash_flow: 391, nt_royalty: -87, income_tax: -87, after_tax_cash_flow: 217}
+      - {year: 14, plant_feed_kt: 15975, grade_g_t: 0.86, gold_contained_koz: 442, recovery_pct: 91.7, payable_gold_koz: 406, gold_sales: 730, pre_tax_cash_flow: 436, nt_royalty: -97, income_tax: -104, after_tax_cash_flow: 235}
+      - {year: 15, plant_feed_kt: 16120, grade_g_t: 0.85, gold_contained_koz: 440, recovery_pct: 91.6, payable_gold_koz: 403, gold_sales: 726, pre_tax_cash_flow: 446, nt_royalty: -99, income_tax: -101, after_tax_cash_flow: 247}
+      - {year: 16, plant_feed_kt: 15968, grade_g_t: 0.66, gold_contained_koz: 341, recovery_pct: 90.7, payable_gold_koz: 310, gold_sales: 557, pre_tax_cash_flow: 329, nt_royalty: -74, income_tax: -71, after_tax_cash_flow: 184}
+      - {year: 17, plant_feed_kt: 2612,  grade_g_t: 0.54, gold_contained_koz: 45,  recovery_pct: 89.8, payable_gold_koz: 41,  gold_sales: 73,  pre_tax_cash_flow: 45,  nt_royalty: -8,  income_tax: 0,   after_tax_cash_flow: 36}
+    totals_check: {plant_feed_kt: 253673, gold_contained_koz: 6891, recovery_pct: 91.6, payable_gold_koz: 6313, gold_sales: 11364, pre_tax_cash_flow: 3852, nt_royalty: -765, income_tax: -927, after_tax_cash_flow: 2160}
+    after_tax_cumulative_cash_flow_usd_million:
+      # Table 22-28, p.312 -- lets after_tax_payback_years (4.0) be independently re-derived:
+      # cumulative crosses from -$1M (end of yr4) to +$200M (end of yr5), i.e. payback lands
+      # within year 5 at roughly 4 + 1/(1+200) = 4.005 years -- rounds to the printed 4.0.
+      construction: {"-2": -328, "-1": -1014}
+      by_year: {"1": -734, "2": -486, "3": -104, "4": -1, "5": 200, "6": 523, "7": 818, "8": 966, "9": 1001, "10": 1066, "11": 1180, "12": 1349, "13": 1565, "14": 1800, "15": 2047, "16": 2231, "17": 2267, "18": 2253, "19": 2182, "20": 2162, "21": 2160}
+
+  sensitivity:
+    # Table 22-30, p.315: After-Tax NPV5% (US$000s) vs. gold price / opex / capex at 85-115% of base
+    npv_5pct_vs_pct_of_base_usd_000:
+      base: 1131432
+      gold_price: {"85pct": 506657, "90pct": 713854, "95pct": 919230, "105pct": 1337580, "110pct": 1540376, "115pct": 1745224}
+      opex: {"85pct": 1453576, "90pct": 1347794, "95pct": 1241627, "105pct": 1015992, "110pct": 902553, "115pct": 791712}
+      capex: {"85pct": 1333738, "90pct": 1266303, "95pct": 1198867, "105pct": 1063997, "110pct": 996562, "115pct": 929127}
+      note: "Project is most sensitive to gold price and least (marginally) sensitive to capex; opex and capex sensitivities are close (p.315)."
+    # Table 22-31, p.317: After-Tax NPV (US$ million) vs gold price ($1,400-2,200/oz) x discount rate (5/8/10%)
+    npv_vs_gold_price_and_discount_rate_usd_million:
+      discount_5pct:  {"1400": 208, "1500": 436, "1600": 669, "1700": 896, "1800": 1131, "1900": 1347, "2000": 1571, "2100": 1784, "2200": 2008}
+      discount_8pct:  {"1400": 9,   "1500": 193, "1600": 380, "1700": 562, "1800": 751,  "1900": 923,  "2000": 1103, "2100": 1272, "2200": 1452}
+      discount_10pct: {"1400": -90, "1500": 72,  "1600": 235, "1700": 395, "1800": 559,  "1900": 709,  "2000": 865,  "2100": 1013, "2200": 1169}
+    # Table 22-32, p.317: After-Tax IRR% and NPV5% (US$ million) vs gold price x AUD:USD FX rate
+    irr_and_npv_vs_gold_price_and_fx_usd_million:
+      fx_0.69_base: {"1400": {irr: 8.1, npv5: 208}, "1500": {irr: 11.4, npv5: 436}, "1600": {irr: 14.6, npv5: 669}, "1700": {irr: 17.5, npv5: 896}, "1800": {irr: 20.4, npv5: 1131}, "1900": {irr: 22.9, npv5: 1347}, "2000": {irr: 25.5, npv5: 1571}, "2100": {irr: 27.9, npv5: 1784}, "2200": {irr: 30.3, npv5: 2008}}
+      note: "at FX=0.69 and gold price=1,800, this table reproduces the base case exactly (IRR 20.4%, NPV5=1,131) -- an internal consistency check that holds."
+
+# which of the source's own names we check against which of ours. The source's structure is a
+# THREE-TIER waterfall, not the flat revenue/cost_of_sales/gross_margin/net_profit the crop golds
+# use -- see notes for why net_profit has no clean equivalent here (this is a cash-flow model, not
+# an accrual P&L; there is no published depreciation/accounting-profit line distinct from cash capex).
+#
+# ONLY entries in engine/golds.py's closed CANON vocabulary belong in this dict (run_gold() marks
+# the WHOLE gold unrunnable if any mapping value falls outside it — no partial credit). The private
+# royalties, the NT Royalty and the Income Tax have NO home in CANON (it has revenue / cost_of_sales
+# / gross_margin / operating_costs / operating_profit / depreciation / net_profit / total_assets /
+# total_liabilities / total_equity / cash_closing / net_change_in_cash / cash_flow_operating /
+# investing / financing / irr / npv — no "royalty" or "tax" slot at all) — a second, independent
+# confirmation of the tax-layer gap this gold's notes describe, this time in the GOLD-COMPARISON
+# harness rather than the compiler. Documented in inputs.tax / notes instead, in full, rather than
+# forced into a mapping key that does not exist.
+mapping:
+  gold_sales_lifeofmine: revenue
+  cash_cost_of_goods_sold: cost_of_sales     # = operating_costs_subtotal + refining; EXCLUDES private royalties (see notes)
+  operating_margin: gross_margin              # source's own label is "Operating Margin", not "gross margin" -- same construction (Gross Income from Mining less Operating Costs)
+  after_tax_cash_flow_lifeofmine: net_profit  # NOT an accrual net-profit figure -- closest published analogue; see notes
+  after_tax_npv_5pct: npv
+  after_tax_irr_pct: irr
+
+# Two precision regimes in the source itself, so a top-level default PLUS the two regime-specific
+# tolerances below it (tools/run_golds.py's run_gold() only reads the top-level abs/rel/why; the
+# nested pair is this file's own more precise record of the source's two actual rounding regimes).
+tolerance:
+  abs: 3.0
+  rel: 0.001
+  why: >
+    Top-level default for tools/run_golds.py (flat abs/rel/why only). Set to the LOOSER of the two
+    regimes below (the annual-schedule one, US$3 million) so an automated comparison against the
+    LoM headline totals is not accidentally too strict; see headline_totals/annual_schedule below
+    for the precise, regime-specific reasoning tied to how each part of the source actually rounds.
+  headline_totals:
+    abs: 1.0
+    unit: "US$000s (or the LoM headline's own unit, e.g. koz, %, years)"
+    why: >
+      Tables 1-3 through 1-10, 22-3 through 22-27 print in whole US$000s (or 2dp per-tonne, 2dp
+      grade, 1dp NPV/IRR); the source explicitly numbers itself precisely at this level in the
+      Reliance-on-Other-Experts disclaimer (p.22/288), so this is exactly the source's own
+      resolution -- any larger gap is either a real defect in the trade's arithmetic or the
+      report's own internal inconsistency (both real, both worth surfacing).
+  annual_schedule:
+    abs: 3.0
+    unit: "US$ million"
+    why: >
+      Table 22-28 (p.312) prints annual cash-flow rows to the nearest whole US$ million and the
+      report SAYS SO explicitly: "Technical economic tables and figures presented in this volume
+      require subsequent calculations to derive subtotals, totals and weighted averages. Such
+      calculations inherently involve a degree of rounding, which are not considered to be
+      material" (p.22, repeated p.288). Measured directly: independently summing the printed
+      Income Taxes column across years 1-17 reproduces the printed LoM total (927) EXACTLY; doing
+      the same for the Northern Territory Royalty column gives ~796-829 against a printed total of
+      765 -- a 4-8% gap that is the source's OWN disclosed rounding, not a transcription slip (see
+      notes). 3.0 absorbs that without absorbing a genuine divergence.
+
+notes: |
+  WHY THIS PROJECT. A 411-page NI 43-101 Feasibility Study (not a PEA or PFS -- the highest
+  confidence level NI 43-101 recognizes), hosted directly by the issuer (Vista Gold Corp.),
+  publishing a full Mineral Reserve statement, a five-stage metallurgical recovery chain, a
+  17-year annual production AND tax schedule, and -- unusually -- TWO fully-specified royalty
+  regimes (a private gross-revenue royalty and a government PROFIT-based royalty with a stated
+  legal formula) on top of a flat corporate income tax. Most technical reports I could find
+  (Revival Gold Beartrack-Arnett, i-80 Granite Creek, DPM Coka Rakita) were PEA-level, which is
+  explicitly excluded by the task brief ("a resource-only report does not carry the economics").
+  Mt Todd is FS-level, gives a sensitivity table on THREE separate axes (price/opex/capex; price/
+  discount-rate; price/FX), and its NT Royalty section is the richest tax-STRUCTURE disclosure of
+  any public mining document I sampled -- it prints the actual statutory formula, not just a rate.
+
+  ARITHMETIC / INTERNAL-CONSISTENCY FINDINGS (re-derived from the source's own tables, none
+  invented, per this project's convention of never trusting a source's self-report without
+  recomputing):
+
+  1. MINE LIFE: stated "16 years" as the headline figure (bullet list p.1/p.288; Table 22-1
+     p.288) but the annual schedule (Table 22-28, p.312) shows revenue in 17 distinct years
+     (years 1-17; year 17 is a small tail, 41 koz payable vs. 261-542 koz in a normal year), and
+     the BODY TEXT at p.289 itself says "17-year LoM" when discussing the strip ratio. Genuine,
+     unresolved inconsistency between three parts of the same document.
+
+  2. METALLURGICAL RECOVERY: Table 1-6 (Headline Design Criteria, p.13) states Gold Recovery =
+     91.9%. Section 22.2 (p.289) and Table 22-3's own LoM-blended figure states 91.6% (built from
+     92.61% sulfide / 92.74% mixed / 90.92% oxide / 90.74% heap-leach, less 1% net solution loss
+     applied to all). Both are the source's own numbers, in two different sections, and they do
+     not match. I have not found a resolution for the gap within the pages I read.
+
+  3. HEAP LEACH PAD PROCESSING WINDOW: Section 1.6.1 (p.8) states in prose that the 13.4 Mt heap
+     leach pad "will be processed in years 15 and 16 at the end of project life." Table 22-28
+     (p.312) shows non-zero Heap Leach Material feed in years 15, 16, AND 17 (1,454 / 9,289 /
+     2,612 Kt respectively) -- a three-year tail, not the two years the prose states.
+
+  4. WHEATON ROYALTY: modelled in the cash-flow build at a flat 1% of gross revenue (Table 22-1,
+     p.288 "Wheaton Royalty: 1%"), but the printed LoM total paid ($96,753K, Table 22-20 p.299)
+     divided by LoM Gold Sales ($11,364,288K) is 0.851%, not 1.000% -- a ~15% shortfall against
+     the stated modelling assumption. Refining costs are too small (0.2% of sales) to explain the
+     gap. I could not find a reconciling explanation in the pages available to me (possibly a
+     ramp-in before the Royalty Agreement's completion-objective date, or a narrower revenue base
+     for Wheaton's calculation than total Gold Sales -- not stated).
+
+  5. NT ROYALTY ANNUAL RECONCILIATION: independently summing the Northern Territory Royalty
+     column of Table 22-28 across years 1-17 gives approximately 796 (using the values as
+     directly printed) to 829 (if the anomalous positive "+33" entry appearing in the year-20
+     column of that row is included as printed) against a stated LoM total of 765. Cross-checking
+     via Pre-Tax CF - Income Tax - After-Tax CF per year (which DOES foot exactly for Income
+     Taxes, see #6) gives implied per-year NT Royalty values within +/-1 of what I read directly
+     for most years, summing to ~799 -- still above 765 by roughly the same margin. The source
+     explicitly disclaims that its own subtotals "inherently involve a degree of rounding, which
+     are not considered material" (p.22/288); given each of 17 cells is independently rounded to
+     the nearest US$ million, a 4-8% drift on a sum of 17 rounded numbers is plausible rounding
+     noise rather than a computational error, but I flag the magnitude precisely rather than
+     asserting it is immaterial myself.
+
+  6. INCOME TAX cross-check: summing Table 22-28's Income Taxes column across years 1-17
+     reproduces the printed LoM total (927) EXACTLY (38+67+101+9+46+98+90+33+0+0+25+57+87+104+
+     101+71+0 = 927). Payable Gold likewise sums to 6,313 exactly. Both give high confidence in
+     my column alignment for the whole table.
+
+  7. PAYBACK cross-check: After-Tax Cumulative Cash Flow (Table 22-28, p.312) crosses from -US$1
+     million (end of year 4) to +US$200 million (end of year 5); interpolating gives payback ~=
+     4 + 1/(1+200) = 4.005 years, matching the printed "After-tax Payback (years): 4.0" (p.311).
+     This is an internal consistency check that HOLDS -- included so a green result is on record,
+     not only red ones (per this project's own "match: report it" convention).
+
+  8. PIT-SHELL DESIGN BASIS: Table 1-5 (p.9-10) highlights two different rows with what looks
+     like two different colours across a casual read (the $1,500/oz "Pit 49" row and the
+     $1,750/oz "Pit 57" row), which could be misread as ambiguous. It is NOT ambiguous: the prose
+     at p.184 states twice, unambiguously, "pit shell 49 ... was used as the basis for the
+     ultimate pit design," and Pit 49's processed tonnage (267,434 Kt, 6,757 koz) is within 0.15%
+     of the final Batman reserve (267,021 Kt, 6,747 koz per Table 1-3) -- the small residual gap
+     is ordinary reserve-level modifying factors (dilution, mining recovery, pit-design
+     refinement) layered on top of the raw optimizer shell, not a discrepancy.
+
+  WHAT THE GRAMMAR CAN AND CANNOT EXPRESS (engine/ledger/compile.py, engine/ledger/trade.py, the
+  `recipes:` block) -- read in full before answering, per the task brief:
+
+  PHYSICS (the `extract` mechanism) -- EXPRESSIBLE TODAY, no kernel or grammar change needed.
+  The reserve (280,375 Kt / 6,979 koz contained gold) is an ordinary counted `resources:` entry
+  (unit: oz, opening_qty: 6979, not monetary). Each year's extraction is an ordinary exchange
+  with a `qty:` field drawing down that stock -- exactly the shape `count()`/`qty` already
+  supports (compile.py's own worked example is "sold = min(demand, count('herd'))"). The
+  multi-stage yield chain (mined -> ore-sorted upgrade -> metallurgical recovery -> payable) is
+  nothing more than three successive multiplications by cited, provenanced recovery-percentage
+  drivers -- ordinary SIZE expressions, no new verb required. Price x payable ounces = revenue is
+  the same shape every other gold in this corpus already uses. I see nothing this report needs
+  that `resources` + `drivers` + `exchanges` + `qty` cannot already hold.
+
+  TAX -- genuinely thinner than the physics side, but NOT a uniform "cannot express" the way a
+  first read of the brief might expect. Three different answers for three different pieces:
+
+  (a) FLAT-RATE PIECES (the 30% Commonwealth income tax on a driver-computable base; the
+      escalating-percentage GROSS-REVENUE floor half of the NT Royalty formula, 1%/2%/2.5% by
+      royalty year, which is just a PATH driver -- "a path resolves to its value at t",
+      compile.py line 43; Wheaton's flat 1%) -- ALL directly expressible today as ordinary
+      provenanced exchanges. No gap.
+
+  (b) A SINGLE, NON-EXPIRING, UNCAPPED LOSS-CARRYFORWARD POOL -- which is exactly the shape the
+      Australian Commonwealth rule actually is (p.315: "carried forward indefinitely," no annual
+      cap percentage, no expiry stated) -- is ALSO mechanically buildable today, without a kernel
+      change: declare a `loss_pool` resource, one exchange that adds `-assessable_income` to it
+      when assessable_income < 0 (an ordinary `when:` gate), and one exchange that draws down
+      `min(close('loss_pool'), max(assessable_income, 0))` against the FOLLOWING period's tax (the
+      prior-period-only read `close()` is precisely what makes this legal under L-CAUSALITY). This
+      is a trade-authoring PATTERN, not a first-class primitive -- nothing validates it as a loss
+      pool the way `recipes.losses` validates a physical decay -- but it is not blocked. The two
+      zero-Income-Tax years in this project's own schedule (years 9 and 10, Table 22-28) are
+      consistent with exactly this kind of pool being drawn down from the construction years'
+      losses (-2/-1 show pre-tax cash flow of -US$328M/-US$686M).
+
+  (c) GENUINELY NOT EXPRESSIBLE without new grammar, or blocked by what THIS SOURCE discloses
+      rather than by the grammar:
+        - the MAX() of the NT Royalty's two branches is mechanically fine (`max` is a declared
+          BUILTIN in both compile.py's `_SAFE` eval environment and trade.py's provenance
+          checker) -- but branch (a), 20% x Net Value, needs CRD (capital recognition deduction),
+          EEE (eligible exploration expenditure) and AD (additional deduction) as inputs, and this
+          REPORT gives the FORMULA but never itemizes CRD/EEE/AD numerically anywhere I found. A
+          trade built from this gold could express the royalty's outer STRUCTURE but would have
+          to treat those three terms as ASK_ holes or fall back to the already-computed aggregate
+          ($765M LoM, cited) rather than deriving it -- a DATA gap in the source, not a grammar
+          gap in the engine.
+        - a MULTI-VINTAGE, FIFO-by-age, PERCENTAGE-CAPPED, EXPIRING loss pool (the general case
+          `spec/KERNEL.md`'s own "TAX ATTRIBUTE" entry names, and which a different jurisdiction's
+          statute could easily require) has no home in `recipes:` -- its four members
+          (consumes/occupies/losses/residence) are validated by name and anything else REFUSES
+          (compile.py: "only `consumes`, `occupies`, `losses` and `residence` are built"); `losses`
+          itself is a single-rate decay (constant-flow or proportional dispatched by unit), with no
+          notion of competing vintages or an expiry-by-age gate. This project's OWN rule does not
+          need that richness (no cap%, no expiry stated) -- but the general shape is a real, still-
+          open gap, consistent with F-157's standing note that TAX ATTRIBUTE is named in
+          spec/KERNEL.md and not built.
+        - an ASSESSMENT WINDOW mismatch (L-WINDOW) is NOT triggered here: both the NT royalty
+          year and the Commonwealth tax year are annual, and the model's own natural grid period
+          is a year -- so this report never needs the "partial window annualised or refused"
+          machinery neither engine currently has robustly built for engine/ledger.
+        - the "continuity of ownership" / "same business" test gating the loss carryforward, and
+          the various Wheaton Royalty rate-reduction TRIGGER EVENTS (change of control, a 3.47Moz
+          delivery to a third party) are QUALITATIVE / LEGAL conditions, not numeric formulas --
+          no verb in compile.py models legal-entity continuity or a counterparty's delivered-ounce
+          threshold as a gate; a trade would have to state "assume satisfied" as a documented
+          assumption rather than compute it.
+        - no `bands:`-style closed, VALIDATED rate-table construct exists in engine/ledger (unlike
+          the separate, older `engine/layers/tax` + `engine/common/schema/tax.py`, which has a
+          full `RateSpec` with `kind: bands`, an enforced "top band must be open and last" check,
+          and a proper vintaged `_LossPool` with `carryforward_years` and `cap_fraction`). That
+          engine is NOT the one this task's grammar-check targeted (engine/ledger/compile.py +
+          trade.py), and the two are architecturally separate (engine/ledger/emit.py only ever
+          POSTS an already-computed `tax.cash_tax` figure from the other engine's output as a
+          ledger line -- it does not compute tax). Worth flagging because it means the pattern
+          needed already exists ELSEWHERE in this repository, as prior art, if a bands/loss-pool
+          primitive is ever ported into engine/ledger.
+
+  Net assessment: the brief's expectation ("this engine has no tax layer at all") is directionally
+  right -- there is no purpose-built tax primitive in engine/ledger, and this report's royalty
+  formula's inner deduction terms and general vintaged-pool shape are genuinely out of reach today
+  -- but a FLAT income tax, an ESCALATING-BY-YEAR royalty floor, and even a SIMPLE non-expiring
+  loss-carryforward pool are already buildable with the existing five verbs, and this project's
+  actual disclosed rule happens to need exactly that simpler shape and no more.

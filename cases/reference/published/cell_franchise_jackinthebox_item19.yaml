@@ -1,0 +1,125 @@
+id: cell_franchise_jackinthebox_item19
+title: "Jack in the Box FY2025 FDD Item 19 — system-wide average unit volume and unit economics"
+
+meta:
+  source:
+    - "Jack in the Box Inc., 2026 Franchise Disclosure Document (dated 13 March 2026), Item 19 'Financial Performance Representations', Tables 1 and 3, for the 12 months ended 30 September 2025 (FY2025) — as summarised on the company's own official franchise-recruitment site: https://www.jackintheboxfranchising.com/blog/what-is-item-19-in-an-fdd-how-to-read-financial-performance-data-without-getting-misled (cost-percentage/EBITDAR breakdown) and https://www.jackintheboxfranchising.com/blog/average-unit-volume-auv-jack-in-the-box (AUV + thirds, cross-confirms the same headline figures) and https://www.jackintheboxfranchising.com/jack-in-the-box-franchise-costs-and-fees (royalty/marketing contractual rates)."
+  licence: >
+    Jack in the Box Inc.'s own official franchising domain (jackintheboxfranchising.com, confirmed
+    via its site footer and FDD-referencing legal disclaimer as the company's own authorised
+    franchise-sales channel); publicly published for prospective-franchisee use, no paywall
+    encountered. The underlying FDD itself is a regulatory disclosure document; the pages
+    transcribed here SUMMARISE (do not reproduce verbatim) Item 19's Tables 1 and 3 — see notes on
+    the transcription chain and its limits.
+  kind: trade_case
+  # L1: a ratio-over-a-base (cost lines and EBITDAR as % of AUV) plus the AUV figure itself — no
+  # itemised $ P&L line beyond AUV is published in the pages read.
+  resolution: L1
+  basis: "system-wide average, one franchisor's fiscal year (FY2025, 12 months ended 30 September 2025), 1,754 continental-US franchised units"
+  periods: 1
+  # NO TAG FITS — the franchisor never sells the brand: it sells the RIGHT TO USE the brand/
+  # business format for a royalty (5% of gross sales) plus a marketing-fund contribution (5%),
+  # retaining the intangible asset (trademark, recipes, operating system) itself. Weill & Malone's
+  # "Intellectual Landlord" (rent_use x intangible), verbatim. engine/ledger/mechanisms.py's two
+  # "rent_use" tags (convey, rent_asset) are both hardcoded to ("rent_use","physical"); none reaches
+  # ("rent_use","intangible"). See notes and CELLS_INVENTORY.md.
+  mechanism: null
+  cell: "rent_use x intangible (Intellectual Landlord)"
+  jurisdiction: US
+  currency: USD
+  trade: "Jack in the Box Inc. — quick-service-restaurant franchisor; system-wide franchisee unit economics, continental US"
+
+inputs:
+  auv:
+    value: 1913335
+    unit: "USD/unit/year"
+    label_as_printed: "System-wide average AUV (average unit volume / average gross sales)"
+  sample:
+    units: {value: 1754, unit: "continental US franchised units"}
+    closures_excluded: {value: 75, unit: units, note: "permanent closures excluded from the FY2025 sample"}
+  royalty_rate: {value: 5.0, unit: "% of gross sales", label_as_printed: "5% Royalty of Gross Sales (contractual rate, per the franchise agreement)"}
+  marketing_fee_rate: {value: 5.0, unit: "% of gross sales", label_as_printed: "5% Marketing Fee of Gross Sales (contractual rate)"}
+  # Item 19 Table 3's own realised percentages of AUV — NOT the same figure as the contractual
+  # rates above (5.2%/5.2% realised vs 5.0%/5.0% contractual; a small, plausible gap from blending
+  # across the unit mix). Percentages only; no $ cost lines were found in the pages read.
+  costs_pct_of_auv:
+    food_costs: 27.1
+    total_labor: 31.2
+    royalty_pct: 5.2
+    marketing_pct: 5.2
+    occupancy: 11.8
+    other: 8.6
+
+expected:
+  auv_thirds:
+    top_third: {value: 2632491, unit: "USD/unit/year"}
+    middle_third: {value: 1839539, unit: "USD/unit/year"}
+    bottom_third: {value: 1266871, unit: "USD/unit/year"}
+  units_above_system_average:
+    value: 40.8
+    unit: "%"
+    label_as_printed: "Only 40.8% of system units performed above the system average"
+  ebitdar_pct:
+    value: 17.7
+    unit: "%"
+    label_as_printed: "average EBITDAR of 17.7% for Fiscal Year 2025"
+  ebitdar_at_auv:
+    value: 338600
+    unit: "USD/unit/year"
+    composition_as_printed: "'a unit at the system AUV ($1.91M) generates approximately $338,600 in EBITDAR before debt service' — source's own stated figure; see notes for the reconciliation gap against costs_pct_of_auv"
+
+# which of the source's own names we check against which of ours
+mapping:
+  auv: revenue
+  ebitdar_at_auv: gross_margin
+
+tolerance:
+  abs: 5000
+  why: >
+    AUV and the three thirds are printed to the dollar and are internally consistent as a
+    distribution (top > system average > middle > bottom, all bracketing 1,913,335); 5,000 (0.26%
+    of AUV) covers ordinary transcription/display rounding on those. It does NOT certify the cost
+    percentages or EBITDAR — see notes: those do not reconcile against each other and are flagged,
+    not smoothed over.
+
+notes: |
+  WHY THIS IS "rent_use x intangible" WITH NO TAG: the franchisor never sells the brand — it sells
+  the RIGHT TO USE the brand/format for a royalty (5% of gross sales) plus a marketing-fund
+  contribution (5%), while keeping the intangible asset itself. This is Weill & Malone's
+  "Intellectual Landlord" definition verbatim ("sell the USE of an asset, keep the asset") applied
+  to an intangible rather than a physical asset. `engine/ledger/mechanisms.py`'s two "rent_use" tags
+  (`convey`, `rent_asset`) are both hardcoded to `("rent_use", "physical")`; none reaches
+  `("rent_use", "intangible")`. `mechanism:` is left null rather than forced, per this brief's own
+  instruction.
+
+  TRANSCRIPTION CHAIN, stated plainly: the actual FDD PDF was not read directly (state
+  franchise-registry portals were not checked in this pass); the figures come from Jack in the Box's
+  OWN official franchising site, confirmed via its footer/disclaimer as the company's authorised
+  channel (see `meta.licence`), across THREE separately-fetched pages that AGREE on the headline
+  numbers (AUV 1,913,335; thirds 2,632,491 / 1,839,539 / 1,266,871; 1,754 units; 75 closures
+  excluded; 40.8% above average — identical across the two pages that state them) plus a third page
+  independently confirming the 5%/5% royalty and marketing rates. This is a CORROBORATED SECONDARY
+  transcription of a primary regulatory document, not a primary read — flagged per this repo's
+  content-rigor standard.
+
+  A REAL, UNRESOLVED RECONCILIATION GAP, disclosed rather than smoothed: `costs_pct_of_auv`'s six
+  lines sum to 89.1% of AUV (27.1+31.2+5.2+5.2+11.8+8.6), which would leave 10.9% before debt
+  service — not the stated EBITDAR of 17.7% (a 6.8-percentage-point gap, roughly $130,000/unit/year
+  at system AUV). Re-derived independently from `ebitdar_at_auv` directly: 338,600 / 1,913,335 =
+  17.70%, so the DOLLAR figure and the PERCENTAGE figure agree with EACH OTHER exactly — the gap
+  sits specifically between (the six cost lines) and (EBITDAR), not inside the EBITDAR figure
+  itself. Three candidate explanations were considered, none confirmable from the pages fetched:
+    (a) EBITDAR excludes `occupancy` by definition (Earnings Before Interest, Tax, Depreciation,
+        Amortization AND RENT) — 100% - (27.1+31.2+5.2+5.2+8.6) = 22.7%, still 5 points above 17.7%,
+        so this alone does not close it either
+    (b) `other` (8.6%) may already net some income line the summary folded in without labelling it
+    (c) a G&A/corporate-overhead line the FDD's actual Table 3 carries may be missing from the
+        summary read here
+  Per this corpus's standing rule ("golds carry what the source printed, errors included"), all
+  figures are transcribed AS STATED rather than force-reconciled — this is a genuine OPEN finding,
+  not a resolved one, and is why `tolerance` explicitly does not extend to the cost/EBITDAR block.
+
+  AUV IS A SALES FIGURE, NOT A PROFIT FIGURE, and the source states this plainly: under the FTC
+  Franchise Rule a franchisor cannot promise earnings, and the FDD itself carries no assurance any
+  franchisee will earn a particular amount — the 40.8%-below-average split is the source's own
+  illustration of that spread, not a forecast.

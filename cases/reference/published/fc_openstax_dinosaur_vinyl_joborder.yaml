@@ -1,0 +1,316 @@
+# Transcribed EXACTLY as published. Every job-level and shop-level subtotal
+# independently re-added from its components; all cross-foot correctly
+# except where flagged in notes (all confirmed against raw HTML, not just
+# the summarized page text).
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 2: Managerial Accounting":
+    Section 4.5 "Compute the Cost of a Job Using Job Order Costing"
+    (Figures 4.19-4.21, the "Dinosaur Vinyl, Inc." running example) AND
+    Section 4.7 "Prepare Journal Entries for a Job Order Cost System"
+    (same company, journal entries for Job MAC001 through sale, and its
+    resulting one-job income statement).
+    https://openstax.org/books/principles-managerial-accounting/pages/4-5-compute-the-cost-of-a-job-using-job-order-costing
+    https://openstax.org/books/principles-managerial-accounting/pages/4-7-prepare-journal-entries-for-a-job-order-cost-system
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0) -- confirmed for this title's companion volume the
+    same way as Volume 1 (help.openstax.org licensing page + book Preface);
+    see fc_openstax_clipem_cliff_barbershop.yaml for the full note.
+  kind: full_cycle
+  reaches: p_and_l
+  reaches_note: >
+    Reaches a (single-sale) formal income statement for Job MAC001 (Sales
+    $2,000 - COGS $931 = Gross Profit $1,069, printed under the heading
+    "DINOSAUR VINYL, INC., Income Statement"). No balance sheet or cash
+    flow statement is given for the company as a whole; the case is
+    scoped to the job-costing mechanism (raw materials -> WIP -> finished
+    goods -> COGS) across four concurrent jobs, of which MAC001's full
+    revenue/COGS/gross-profit is the only one carried through to a
+    published income statement line.
+  mechanism: make_to_order
+  mechanism_note: >
+    Custom vinyl signage shop running four discrete, differently-staged
+    jobs simultaneously (job-order costing is the textbook definition of
+    make_to_order) -- direct materials, direct labor, and applied overhead
+    are each tracked per job, not pooled.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: inputs.journal_entries_mac001 (Section 4.7) already publishes the
+  # ten entries, but several carry TWO OR MORE debits or credits against
+  # one total -- e.g. entry 1 debits two raw-material accounts against one
+  # payable. Each such compound line is split into one entry per real
+  # debit/credit pair below (never re-judged: the split preserves exactly
+  # the source's own account names and amounts). No balance sheet is given
+  # for the company as a whole (`reaches: p_and_l`, MAC001's own income
+  # statement only), so the shop-wide accounts this journal also touches
+  # (raw materials, WIP, manufacturing overhead, ...) are declared but
+  # never mapped -- only Job MAC001's own sale (entry 10) and cost of sale
+  # (entry 9) feed the checked figures.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Dinosaur Vinyl, Inc."
+  period: "one unspecified month (internally called 'April' -- see notes on the date inconsistency)"
+
+  # ── added for the T-journal reader — splits each compound entry from
+  #    journal_entries_mac001 below into single debit/single credit pairs,
+  #    preserving the source's own account names and amounts exactly ────
+  accounts:
+    raw_materials_vinyl: asset
+    raw_materials_black_ink: asset
+    raw_materials_red_ink: asset
+    raw_materials_gold_ink: asset
+    raw_materials_grommets: asset
+    raw_materials_finishing_wood: asset
+    work_in_process_inventory: asset
+    manufacturing_overhead: asset
+    finished_goods_inventory: asset
+    supplies_inventory: asset
+    prepaid_insurance: asset
+    accumulated_depreciation: asset
+    accounts_receivable: asset
+    accounts_payable: liability
+    factory_wages_payable: liability
+    utilities_payable: liability
+    interest_payable: liability
+  journal:
+    - {desc: "purchase raw materials on account: vinyl", amount: 10000,
+       debit: raw_materials_vinyl, credit: accounts_payable, period: 0}
+    - {desc: "purchase raw materials on account: black ink", amount: 500,
+       debit: raw_materials_black_ink, credit: accounts_payable, period: 0}
+    - {desc: "requisition materials for MAC001: vinyl", amount: 300,
+       debit: work_in_process_inventory, credit: raw_materials_vinyl,
+       period: 0}
+    - {desc: "requisition materials for MAC001: black ink", amount: 100,
+       debit: work_in_process_inventory, credit: raw_materials_black_ink,
+       period: 0}
+    - {desc: "requisition materials for MAC001: red ink", amount: 60,
+       debit: work_in_process_inventory, credit: raw_materials_red_ink,
+       period: 0}
+    - {desc: "requisition materials for MAC001: gold ink", amount: 60,
+       debit: work_in_process_inventory, credit: raw_materials_gold_ink,
+       period: 0}
+    - {desc: "requisition materials for MAC001: grommets", amount: 120,
+       debit: work_in_process_inventory, credit: raw_materials_grommets,
+       period: 0}
+    - {desc: "requisition materials for MAC001: framing wood", amount: 60,
+       debit: work_in_process_inventory,
+       credit: raw_materials_finishing_wood, period: 0}
+    - {desc: "production-department labor for MAC001", amount: 30,
+       debit: work_in_process_inventory, credit: factory_wages_payable,
+       period: 0}
+    - {desc: "finishing/assembly-department labor for MAC001", amount: 36,
+       debit: work_in_process_inventory, credit: factory_wages_payable,
+       period: 0}
+    - {desc: "indirect labor for the period", amount: 4000,
+       debit: manufacturing_overhead, credit: factory_wages_payable,
+       period: 0}
+    - {desc: "actual overhead incurred: supplies", amount: 1500,
+       debit: manufacturing_overhead, credit: supplies_inventory,
+       period: 0}
+    - {desc: "actual overhead incurred: utilities", amount: 7000,
+       debit: manufacturing_overhead, credit: utilities_payable, period: 0}
+    - {desc: "actual overhead incurred: depreciation", amount: 7500,
+       debit: manufacturing_overhead, credit: accumulated_depreciation,
+       period: 0}
+    - {desc: "actual overhead incurred: insurance", amount: 2917,
+       debit: manufacturing_overhead, credit: prepaid_insurance, period: 0}
+    - {desc: "actual overhead incurred: interest", amount: 2083,
+       debit: manufacturing_overhead, credit: interest_payable, period: 0}
+    - {desc: "apply overhead to Job MAC001", amount: 165,
+       debit: work_in_process_inventory, credit: manufacturing_overhead,
+       period: 0}
+    - {desc: "transfer completed MAC001 to finished goods", amount: 931,
+       debit: finished_goods_inventory,
+       credit: work_in_process_inventory, period: 0}
+    - {desc: "record cost of sale of MAC001", amount: 931,
+       debit: EXPENSE, credit: finished_goods_inventory, period: 0}
+    - {desc: "record sale of MAC001", amount: 2000,
+       debit: accounts_receivable, credit: INCOME, period: 0}
+
+  raw_materials_rollforward_usd:
+    beginning_raw_materials_inventory: 2500
+    purchases: 10500
+    materials_available_for_use: 13000
+    ending_raw_materials_inventory: 11600
+    materials_used_in_production: 1400
+
+  # ── Figure 4.20 — Job Cost Sheet for Job MAC001 ─────────────────────────
+  job_cost_sheet_mac001:
+    job_no: 5416
+    customer: "Macs & Cheese"
+    units_ordered: 1
+    customer_no: 2501723
+    date_started: "Dec. 22, 2018"
+    date_completed: "Feb. 22, 2019"
+    direct_materials_usd:
+      - {item: "Vinyl", units: 1, cost_per_unit: 300, amount: 300}
+      - {item: "Black printing ink", units: 2, cost_per_unit: 50, amount: 100}
+      - {item: "Red printing ink", units: 1, cost_per_unit: 60, amount: 60}
+      - {item: "Gold printing ink", units: 1, cost_per_unit: 60, amount: 60}
+      - {item: "Grommets", units: 12, cost_per_unit: 10, amount: 120}
+      - {item: "Framing wood", units: 40, cost_per_unit: 1.50, amount: 60}
+      - {total_direct_materials: 700}
+    direct_labor_usd:
+      - {role: "Material Handler", hours_or_units: 1, rate: 15, amount: 15}
+      - {role: "Print Technician", hours_or_units: 1, rate: 15, amount: 15}
+      - {role: "Production Assistants", hours_or_units: 2, rate: 18, amount: 36}
+      - {total_direct_labor: 66}
+    manufacturing_overhead:
+      allocation_base: "Direct Labor Cost"
+      base_units: 66
+      rate_as_printed: 1.50
+      rate_note: "As printed on the job cost sheet; inconsistent with its own total (see notes) -- true rate is $2.50/direct-labor-$"
+      total_overhead_allocation: 165
+    total_job_cost: 931
+    total_revenue: 2000
+
+  # ── "Sample Cost Information for Dinosaur Vinyl" (narrative), 4 jobs ────
+  jobs_narrative:
+    POR143:
+      status_at_month_start: "only job in WIP at start of month: $1,000 direct materials, $0 direct labor already posted"
+      during_month: "additional direct materials $200, direct labor $150, overhead $375 (at $2.50/direct-labor-$: 150 x 2.5 = 375)"
+      outcome: "finished during the month, transferred to finished goods inventory; sale NOT finalized -- remains in finished goods inventory at month end"
+    MAC001:
+      status_at_month_start: "started and completed during the month; no beginning WIP balance"
+      during_month: "$700 direct materials, $66 direct labor, $165 overhead applied before transfer to finished goods"
+      outcome: "sale finalized during the month at $2,000; cost transferred from finished goods inventory to cost of goods sold"
+    TRJ441:
+      status_at_month_start: "started during the current month (no beginning WIP)"
+      during_month: "$500 direct materials, $150 direct labor, $375 applied overhead (150 x 2.5 = 375)"
+      outcome: "remains in work in process inventory awaiting assembly at month end"
+    SWM505:
+      status_at_month_start: "already completed and in finished goods inventory at a cost of $1,531 (this is a BEGINNING finished-goods balance, not beginning WIP)"
+      during_month: "no additional costs incurred"
+      outcome: "sold during the month for $3,500; cost transferred from finished goods inventory to cost of goods sold"
+
+  overhead_predetermined_rate: "$2.50 per direct labor dollar (stated explicitly for Job POR143; consistent with MAC001's 66 x 2.5 = 165 and TRJ441's 150 x 2.5 = 375)"
+
+  # ── Section 4.7 journal entries (Job MAC001 walkthrough) — verbatim ─────
+  journal_entries_mac001:
+    - {desc: "Purchase additional raw materials on account", debit: {raw_materials_vinyl: 10000, raw_materials_black_ink: 500}, credit: {accounts_payable: 10500}, memo: "To record purchase of vinyl and ink inventory"}
+    - {desc: "Requisition materials for MAC001 (production + finishing)", debit: {work_in_process_inventory: 700}, credit: {raw_materials_vinyl: 300, raw_materials_black_ink: 100, raw_materials_red_ink: 60, raw_materials_gold_ink: 60, raw_materials_grommets: 120, raw_materials_finishing_wood: 60}, memo: "To record requisition of vinyl and ink inventory"}
+    - {desc: "Production-department labor for MAC001, April 10", debit: {work_in_process_inventory_mac001: 30}, credit: {factory_wages_payable: 30}, memo: "To record labor for Job MAC001"}
+    - {desc: "Finishing/assembly-department labor for MAC001, 2 hours", debit: {work_in_process_inventory: 36}, credit: {factory_wages_payable: 36}, memo: "To record labor for Job MAC001"}
+    - {desc: "Indirect labor for the period", debit: {manufacturing_overhead: 4000}, credit: {factory_wages_payable: 4000}, memo: "To record indirect labor for WIP inventories"}
+    - {desc: "Actual overhead incurred for the month", debit: {manufacturing_overhead: 21000}, credit: {supplies_inventory: 1500, utilities_payable: 7000, accumulated_depreciation: 7500, prepaid_insurance: 2917, interest_payable: 2083}, memo: "To record April's overhead expenses"}
+    - {desc: "Apply overhead to Job MAC001", debit: {work_in_process_inventory: 165}, credit: {manufacturing_overhead: 165}, memo: "To apply overhead to Job MAC001"}
+    - {desc: "Transfer completed MAC001 to finished goods", debit: {finished_goods_inventory: 931}, credit: {work_in_process_inventory: 931}, memo: "To recognize completion of Job MAC001"}
+    - {desc: "Record cost of sale of MAC001", debit: {cost_of_goods_sold: 931}, credit: {finished_goods_inventory: 931}, memo: "To recognize sale of Job MAC001"}
+    - {desc: "Record sale of MAC001", debit: {accounts_receivable: 2000}, credit: {sales: 2000}, memo: "To recognize sale of Job MAC001"}
+
+notes: |
+  ERROR (Job Cost Sheet, Figure 4.20) -- the printed overhead RATE ($1.50)
+  contradicts the printed BASE (66) and printed TOTAL ($165) on the very
+  same job cost sheet: 66 x $1.50 = $99, not $165. The rate that actually
+  produces $165 from a base of 66 is $2.50 (66 x 2.50 = 165 exactly) --
+  which is also the exact predetermined overhead rate stated in prose
+  elsewhere on the page for Job POR143 ("$2.50 per direct labor dollar")
+  and is independently confirmed by TRJ441's own applied overhead
+  (150 x 2.50 = 375, matching its printed figure exactly). So the shop-wide
+  rate is unambiguously $2.50/direct-labor-$; the job cost sheet's printed
+  "$1.50" is a clean, isolated misprint. Confirmed directly in the raw
+  HTML alt-text (not a pandoc artifact). Transcribed as printed
+  (`rate_as_printed: 1.50`), flagged.
+
+  DATE INCONSISTENCY -- the job cost sheet header for MAC001 reads "Date
+  Started: Dec. 22, 2018, Date Completed: Feb. 22, 2019" (a two-month
+  span), yet the surrounding narrative repeatedly frames all four jobs as
+  happening within "the current month" (singular), and the journal-entry
+  walkthrough in Section 4.7 dates MAC001's production labor "April 10"
+  and its overhead accrual "April's overhead expenses." Three different
+  time signatures (Dec 2018-Feb 2019 on the job cost sheet; unspecified
+  "current month" in the cost narrative; "April" in the journal entries)
+  point at the same job and are not reconcilable from the text given.
+  Recorded as printed in each place; not resolved.
+
+  All job-level and shop-level totals below were independently re-added
+  and cross-foot exactly, EXCEPT the two items flagged above:
+  - Materials used by job (200+700+500=1,400) matches the shop-wide
+    materials-used total exactly.
+  - Total added during the month per job (POR143 725, MAC001 931, TRJ441
+    1,025) sums to 2,681, matching materials+labor+overhead totals
+    (1,400+366+915=2,681) exactly.
+  - Manufacturing costs incurred (beginning WIP + total added) sums to
+    3,681 (=1,000+2,681) across all four jobs.
+  - Cost of goods manufactured (mfg. costs incurred - ending WIP) sums to
+    2,656 (=3,681-1,025) across all four jobs.
+  - Cost of goods sold (beginning FG + COGM - ending FG) sums to 2,462
+    (=1,531+2,656-1,725) across all four jobs, and per-job: SWM505 1,531 +
+    POR143 0 + MAC001 931 + TRJ441 0 = 2,462, matching exactly.
+  - MAC001's income statement (Sales $2,000 - COGS $931 = Gross Profit
+    $1,069) matches 2,000-931=1,069 exactly.
+  The alt-text for Figure 4.21 (the shop-wide summary chart) describes its
+  own "Beginning Balance" row of $2,531 as "the Beginning WIP for the
+  company," but $2,531 is actually Beginning WIP ($1,000) PLUS Beginning
+  Finished Goods ($1,531) combined, not WIP alone -- likely a loose
+  accessibility-description label rather than a source-text error (it is
+  bracketed alt-text describing a chart, not a directly quoted sentence),
+  noted rather than scored as a numeric error.
+
+# which of the source's own names we check against which of ours: the
+# journal above carries only ONE income entry (MAC001's sale, entry 10)
+# and ONE expense entry (MAC001's cost of sale, entry 9) — every other
+# entry moves only real asset/liability accounts never mapped below — so
+# revenue/cost_of_sales/net_profit each read back exactly what MAC001's
+# own income statement prints, with no conflation risk from this engine's
+# coarser cost_of_sales==operating_costs bucketing (see notes in the CBS
+# gold in this batch for that limitation; it does not bite here because
+# there is exactly one expense line)
+mapping:
+  mac001_sales: revenue
+  mac001_cost_of_goods_sold: cost_of_sales
+  mac001_gross_profit: net_profit
+
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and 2,000-931=1,069 exactly, so any
+    divergence here is real rather than display rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror
+  # income_statement_mac001_usd below exactly
+  mac001_sales: 2000
+  mac001_cost_of_goods_sold: 931
+  mac001_gross_profit: 1069
+
+  # ── Figure 4.19/4.20 raw-materials-used-by-job, verified ────────────────
+  materials_used_by_job_usd: {POR143: 200, MAC001: 700, TRJ441: 500, total: 1400}
+  direct_labor_by_job_usd:   {POR143: 150, MAC001: 66,  TRJ441: 150, total: 366}
+  overhead_applied_by_job_usd: {POR143: 375, MAC001: 165, TRJ441: 375, total: 915}
+  total_added_during_month_by_job_usd: {POR143: 725, MAC001: 931, TRJ441: 1025, total: 2681}
+
+  # ── Figure 4.20/4.21 — Cost of Goods Manufactured by job ────────────────
+  cost_of_goods_manufactured_usd:
+    beginning_wip_by_job:            {POR143: 1000, MAC001: 0, TRJ441: 0, total: 1000}
+    manufacturing_costs_incurred_by_job: {POR143: 1725, MAC001: 931, TRJ441: 1025, total: 3681}
+    ending_wip_by_job:               {POR143: 0,    MAC001: 0, TRJ441: 1025, total: 1025}
+    cost_of_goods_manufactured_by_job: {POR143: 1725, MAC001: 931, TRJ441: 0, total: 2656}
+
+  # ── Cost of Goods Sold by job (includes SWM505, which had no WIP this month) ──
+  cost_of_goods_sold_usd:
+    beginning_finished_goods_by_job:  {SWM505: 1531, POR143: 0,    MAC001: 0,   TRJ441: 0, total: 1531}
+    plus_cost_of_goods_manufactured:  {SWM505: 0,    POR143: 1725, MAC001: 931, TRJ441: 0, total: 2656}
+    equals_goods_available_for_sale:  {SWM505: 1531, POR143: 1725, MAC001: 931, TRJ441: 0, total: 4187}
+    less_ending_finished_goods:       {SWM505: 0,    POR143: 1725, MAC001: 0,   TRJ441: 0, total: 1725}
+    equals_cost_of_goods_sold:        {SWM505: 1531, POR143: 0,    MAC001: 931, TRJ441: 0, total: 2462}
+
+  # ── Figure 4.21 — Shop-wide job summary ──────────────────────────────────
+  job_summary_usd:
+    SWM505:  {beginning_balance: 1531, direct_materials: 0,   direct_labor: 0,   overhead_applied: 0,   total_cost: 1531, status: "Sold",      final_location: "Cost of Goods Sold"}
+    POR143:  {beginning_balance: 1000, direct_materials: 200, direct_labor: 150, overhead_applied: 375, total_cost: 1725, status: "Finished",  final_location: "Finished Goods Inventory"}
+    MAC001:  {beginning_balance: 0,    direct_materials: 700, direct_labor: 66,  overhead_applied: 165, total_cost: 931,  status: "Sold",      final_location: "Cost of Goods Sold"}
+    TRJ441:  {beginning_balance: 0,    direct_materials: 500, direct_labor: 150, overhead_applied: 375, total_cost: 1025, status: "Unfinished", final_location: "WIP Inventory"}
+    total:   {beginning_balance: 2531, direct_materials: 1400, direct_labor: 366, overhead_applied: 915, total_cost: 5212}
+
+  # ── Section 4.7 — Dinosaur Vinyl, Inc. Income Statement (Job MAC001 only) ──
+  income_statement_mac001_usd:
+    sales: 2000
+    cost_of_goods_sold: 931
+    gross_profit: 1069

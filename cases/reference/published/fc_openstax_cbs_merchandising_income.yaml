@@ -1,0 +1,174 @@
+# Transcribed EXACTLY as published. Every subtotal independently re-added;
+# no arithmetic inconsistency found in this section (a clean control case,
+# unlike several others in this batch).
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting",
+    Section 6.6 "Describe and Prepare Multi-Step and Simple Income
+    Statements for Merchandising Companies" -- the "California Business
+    Solutions (CBS)" continuing example.
+    https://openstax.org/books/principles-financial-accounting/pages/6-6-describe-and-prepare-multi-step-and-simple-income-statements-for-merchandising-companies
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0); see fc_openstax_clipem_cliff_barbershop.yaml for the
+    full verification note (same title, not repeated here).
+  kind: full_cycle
+  reaches: p_and_l
+  reaches_note: >
+    Reaches a fully formatted income statement in BOTH multi-step and
+    simple (single-step) formats from the same adjusted-trial-balance
+    line items, plus a computed Gross Profit Margin Ratio. No balance
+    sheet or cash flow statement given in this section.
+  mechanism: buy_resell
+  mechanism_note: >
+    "CBS" sells (per the book's wider running example, not repeated here)
+    computer accessories; this section works from select adjusted-trial-
+    balance account balances rather than raw sales/purchase transactions,
+    explicitly noted as using "a perpetual inventory system."
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: this section works from ELEVEN already-netted trial-balance LINES,
+  # not dated transactions, so each line becomes exactly one journal entry
+  # against a single unchecked "cash" plug (see inputs.journal below). No
+  # balance sheet is given for CBS in this section, so only `net_profit` is
+  # checked — `cost_of_sales`/`gross_margin`/`operating_costs` are
+  # deliberately NOT mapped: this engine's T-journal reader sums ALL
+  # EXPENSE-classified legs into one bucket (engine/golds.py's `_ours()`
+  # gives cost_of_sales and operating_costs the identical value, and
+  # gross_margin/operating_profit/net_profit the identical value too), so
+  # mapping COGS (180,000) and Total Operating Expenses (59,050)
+  # separately would manufacture a divergence that is an artifact of the
+  # checker's coarseness, not a fact about this journal or the engine's
+  # kernel. net_profit is the one figure the checker computes exactly the
+  # way the source does (income less every expense), so it is the only
+  # honest check here.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "California Business Solutions (CBS)"
+  period: "Year Ended December 31, 2018"
+  inventory_system: "perpetual"
+
+  # ── added for the T-journal reader — a single unchecked "cash" plug;
+  #    nothing maps to it, so which real account each line actually
+  #    settled against (AR, inventory, accrued liabilities, ...) does not
+  #    matter for what this gold checks (net_profit only) ─────────────────
+  accounts:
+    cash: asset
+  journal:
+    - {desc: "sales", amount: 300000, debit: cash, credit: INCOME, period: 0}
+    - {desc: "sales discounts, contra-revenue", amount: 2000,
+       debit: INCOME, credit: cash, period: 0}
+    - {desc: "sales returns and allowances, contra-revenue", amount: 4500,
+       debit: INCOME, credit: cash, period: 0}
+    - {desc: "interest revenue", amount: 5650, debit: cash, credit: INCOME,
+       period: 0}
+    - {desc: "cost of goods sold", amount: 180000, debit: EXPENSE,
+       credit: cash, period: 0}
+    - {desc: "interest expense", amount: 8400, debit: EXPENSE, credit: cash,
+       period: 0}
+    - {desc: "advertising expense", amount: 6250, debit: EXPENSE,
+       credit: cash, period: 0}
+    - {desc: "sales salaries expense", amount: 40000, debit: EXPENSE,
+       credit: cash, period: 0}
+    - {desc: "depreciation expense, office equipment", amount: 4700,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "office supplies expense", amount: 1200, debit: EXPENSE,
+       credit: cash, period: 0}
+    - {desc: "insurance expense", amount: 6900, debit: EXPENSE,
+       credit: cash, period: 0}
+
+  # ── select adjusted trial balance accounts — verbatim ───────────────────
+  adjusted_trial_balance_selected_accounts_usd:
+    sales: {credit: 300000}
+    sales_discounts: {debit: 2000}
+    sales_returns_and_allowances: {debit: 4500}
+    interest_revenue: {credit: 5650}
+    cost_of_goods_sold: {debit: 180000}
+    interest_expense: {debit: 8400}
+    advertising_expense: {debit: 6250}
+    sales_salaries_expense: {debit: 40000}
+    depreciation_expense_office_equipment: {debit: 4700}
+    office_supplies_expense: {debit: 1200}
+    insurance_expense: {debit: 6900}
+
+notes: |
+  No arithmetic inconsistency found anywhere in this section; both income
+  statement formats and the ratio were independently re-derived from the
+  eleven trial-balance lines above and match the source exactly:
+  Net Sales = 300,000 - 2,000 - 4,500 = 293,500
+  Gross Margin = 293,500 - 180,000 = 113,500
+  Selling Expenses = 6,250 + 40,000 = 46,250
+  General & Administrative Expenses = 4,700 + 1,200 + 6,900 = 12,800
+  Total Operating Expenses = 46,250 + 12,800 = 59,050
+  Income from Operations = 113,500 - 59,050 = 54,450
+  Net Income = 54,450 + 5,650 (interest revenue) - 8,400 (interest expense) = 51,700
+  Gross Profit Margin Ratio = (293,500 - 180,000) / 293,500 = 0.3867... ,
+  which the source rounds to "0.39, or 39%" (its own stated rounding
+  convention is "to the nearest hundredth").
+
+# which of the source's own names we check against which of ours
+mapping:
+  net_income_top: net_profit
+
+# whole dollars printed throughout; the eleven lines re-add to 51,700 with
+# no rounding gap (see notes above), so any gap is a transcription or
+# engine defect, not display rounding
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and this section's own component lines
+    sum exactly to 51,700 with no rounding gap anywhere in the chain, so
+    any divergence here is real rather than display rounding
+
+expected:
+  # added top-level pointer for `mapping:` — expected: below is nested
+  # (multi_step_income_statement_usd.net_income /
+  # simple_income_statement_usd.net_income), and both already agree on
+  # 51700; this key duplicates neither number, just exposes the one both
+  # blocks already publish so the flat top-level mapping mechanism can
+  # reach it
+  net_income_top: 51700
+
+  multi_step_income_statement_usd:
+    sales: 300000
+    less_sales_discounts: -2000
+    less_sales_returns_and_allowances: -4500
+    net_sales: 293500
+    less_cost_of_goods_sold: -180000
+    gross_margin: 113500
+    operating_expenses:
+      selling_expenses:
+        advertising_expense: 6250
+        sales_salaries_expense: 40000
+        total_selling_expenses: 46250
+      general_and_administrative_expenses:
+        depreciation_expense_office_equipment: 4700
+        office_supplies_expense: 1200
+        insurance_expense: 6900
+        total_general_and_administrative_expenses: 12800
+    income_from_operations: 54450
+    interest_revenue: 5650
+    less_interest_expense: -8400
+    net_income: 51700
+
+  simple_income_statement_usd:
+    revenues:
+      net_sales: 293500
+      interest_revenue: 5650
+    expenses:
+      cost_of_goods_sold: 180000
+      total_selling_expenses: 46250
+      total_general_and_administrative_expenses: 12800
+      interest_expense: 8400
+    net_income: 51700
+
+  gross_profit_margin_ratio:
+    formula: "(Net Sales - Cost of Goods Sold) / Net Sales"
+    computation: "(293,500 - 180,000) / 293,500"
+    result_rounded_to_nearest_hundredth: 0.39
+    result_as_percent: "39%"

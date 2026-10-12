@@ -1,0 +1,270 @@
+# Transcribed EXACTLY as published. The source presents this as a 10-column
+# worksheet (unadjusted TB -> lettered adjustments -> adjusted TB -> income
+# statement / balance sheet columns) and DELIBERATELY stops before the
+# final "plug net income to balance" step -- its own instruction reads
+# "Total them when you are done. Do not panic when they do not balance.
+# They will not balance at this time." Everything below that point (the
+# balancing net-income figure and formatted statements) is a derivation,
+# clearly flagged, verified to tie out before inclusion.
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting",
+    Section 4.5 "Prepare Financial Statements Using the Adjusted Trial
+    Balance" -- two paired "Your Turn" boxes on the same company:
+    "Magnificent Adjusted Trial Balance" (categorization exercise, gives
+    the adjusted TB directly) and "Income Statement and Balance Sheet"
+    (gives the fuller unadjusted TB -> adjustments -> adjusted TB ->
+    IS/BS-columns worksheet).
+    https://openstax.org/books/principles-financial-accounting/pages/4-5-prepare-financial-statements-using-the-adjusted-trial-balance
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0); see fc_openstax_clipem_cliff_barbershop.yaml for the
+    full verification note (same title, not repeated here).
+  kind: full_cycle
+  reaches: balance_sheet
+  reaches_note: >
+    The source's own worksheet columns are LEFT DELIBERATELY UNBALANCED
+    (see above) -- it does not publish a net-income figure or formatted
+    statements for this company. `expected` below carries both the
+    unbalanced worksheet exactly as printed AND a derived, formatted set
+    of statements (`derived_not_literally_printed: true`), verified to
+    balance to the dollar, assuming beginning retained earnings = $0 (no
+    Retained Earnings account appears in either trial balance for this
+    company, consistent with -- but not explicitly stated as -- a new
+    business, the same situation Printing Plus is explicitly told to be
+    elsewhere in this chapter; flagged as an assumption, not a fact
+    stated for THIS company specifically).
+  mechanism: capacity_service
+  mechanism_note: >
+    Lawn-mowing / landscaping service company -- same mechanism family as
+    Clip'em Cliff, included for its much smaller scale and its unusual
+    adjusting entry (b) below, which reclassifies cost FROM Equipment
+    INTO Supplies Expense rather than accruing/deferring in the usual
+    directions.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: unlike Frank (a single snapshot with no adjustment detail), this
+  # source gives the UNADJUSTED trial balance plus five lettered
+  # adjustments (a-e) with their own real debit/credit pairs — so those
+  # are journalled as genuine entries rather than through the OWNER plug.
+  # Every asset/liability opening below is the UNADJUSTED figure; the two
+  # P&L lines already open in the unadjusted trial balance (lawn mowing
+  # revenue, gas + advertising expense) are journalled through INCOME/
+  # EXPENSE like any other transaction, and the five adjustments follow
+  # verbatim. Every closing balance below was hand-checked against the
+  # published ADJUSTED trial balance before being written (all nine lines
+  # match to the cent) — dividends ($1,000, unchanged by any adjustment)
+  # are not modelled, same reasoning as Frank and Clip'em Cliff: they
+  # touch none of the four figures this gold checks.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Magnificent Landscaping Service"
+
+  # ── added for the T-journal reader — openings are the UNADJUSTED trial
+  #    balance; the journal carries the unadjusted revenue/expense lines
+  #    plus the five lettered adjustments (a-e), verbatim ────────────────
+  accounts:
+    cash: asset
+    accounts_receivable: asset
+    office_supplies: asset
+    prepaid_insurance: asset
+    equipment: asset
+    accumulated_depreciation_equipment: asset
+    accounts_payable: liability
+    unearned_lawn_mowing_revenue: liability
+    salaries_payable: liability
+  opening:
+    cash: 2950
+    accounts_receivable: 575
+    office_supplies: 85
+    prepaid_insurance: 240
+    equipment: 2540
+    accumulated_depreciation_equipment: 0
+    accounts_payable: 28
+    unearned_lawn_mowing_revenue: 200
+    salaries_payable: 0
+  journal:
+    - {desc: "lawn mowing revenue (unadjusted)", amount: 2250,
+       debit: OWNER, credit: INCOME, period: 0}
+    - {desc: "gas expense (unadjusted)", amount: 53,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "advertising expense (unadjusted)", amount: 35,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "adjustment (a): monthly equipment depreciation", amount: 35,
+       debit: EXPENSE, credit: accumulated_depreciation_equipment,
+       period: 0}
+    - {desc: "adjustment (b): reclassify $40 from Equipment to Supplies Expense",
+       amount: 40, debit: EXPENSE, credit: equipment, period: 0}
+    - {desc: "adjustment (c): office supplies used during the period",
+       amount: 45, debit: EXPENSE, credit: office_supplies, period: 0}
+    - {desc: "adjustment (d): unearned revenue earned during the period",
+       amount: 100, debit: unearned_lawn_mowing_revenue, credit: INCOME,
+       period: 0}
+    - {desc: "adjustment (e): accrued, unpaid salaries", amount: 420,
+       debit: EXPENSE, credit: salaries_payable, period: 0}
+  period_end: "April 30, 2018"
+
+  # ── Unadjusted Trial Balance, April 30, 2018 — verbatim ─────────────────
+  unadjusted_trial_balance_usd:
+    debit:
+      cash: 2950
+      accounts_receivable: 575
+      office_supplies: 85
+      prepaid_insurance: 240
+      equipment: 2540
+      dividends: 1000
+      gas_expense: 53
+      advertising_expense: 35
+      total_debits: 7478
+    credit:
+      accounts_payable: 28
+      unearned_lawn_mowing_revenue: 200
+      common_stock: 5000
+      lawn_mowing_revenue: 2250
+      total_credits: 7478
+
+  # ── Adjustments (lettered a-e), as printed ───────────────────────────────
+  adjustments_usd:
+    a: {debit: {depreciation_expense_equipment: 35}, credit: {accumulated_depreciation_equipment: 35}, desc: "monthly equipment depreciation"}
+    b: {debit: {supplies_expense: 40}, credit: {equipment: 40}, desc: "reclassification: $40 originally posted to Equipment moved to Supplies Expense"}
+    c: {debit: {supplies_expense: 45}, credit: {office_supplies: 45}, desc: "office supplies used during the period"}
+    d: {debit: {unearned_lawn_mowing_revenue: 100}, credit: {lawn_mowing_revenue: 100}, desc: "unearned revenue earned during the period"}
+    e: {debit: {salaries_expense: 420}, credit: {salaries_payable: 420}, desc: "accrued, unpaid salaries"}
+    total_debit_adjustments: 640
+    total_credit_adjustments: 640
+
+notes: |
+  Adjustment (b) is unusual: it moves $40 FROM the Equipment asset account
+  INTO Supplies Expense (rather than a typical accrual/deferral), i.e. it
+  reads as a period-end correction of an original miscoding (some of what
+  was booked as equipment was actually supplies). Not flagged as a source
+  error -- it is fully consistent with the adjusted trial balance (Equipment
+  2,540 -> 2,500 net of the $40 credit; Supplies Expense ends at 85 = the
+  $40 from (b) plus $45 from (c)) -- just an unusual adjusting-entry shape
+  worth an engine being able to express (a reclassification, not an accrual
+  or a deferral).
+
+  Every figure below was independently re-added and cross-checked:
+  - Adjusted trial balance (both occurrences of this company in the source
+    give the SAME adjusted TB) ties to unadjusted + adjustments exactly,
+    account by account, and both its debit and credit columns total
+    $7,933.
+  - The source's own income-statement-columns total (628 debit / 2,350
+    credit) and balance-sheet-columns total (7,305 debit / 5,583 credit)
+    are BOTH printed unbalanced, exactly as the source's own instruction
+    warns ("They will not balance at this time"). The gap on each side is
+    identically $1,722 (2,350-628 = 7,305-5,583 = 1,722), which is the
+    period's net income -- confirmed by it closing both gaps
+    simultaneously, the expected worksheet mechanic.
+  - Derived formatted statements (assuming beginning retained earnings =
+    $0): Total Assets = Cash 2,950 + AR 575 + Office Supplies 40 + Prepaid
+    Insurance 240 + Equipment net (2,500-35=2,465) = $6,270. Total
+    Liabilities = AP 28 + Unearned Revenue 100 + Salaries Payable 420 =
+    $548. Total Equity = Common Stock 5,000 + Ending Retained Earnings
+    (0+1,722-1,000=722) = $5,722. Liabilities + Equity = 548+5,722 =
+    $6,270, matching Total Assets to the dollar.
+
+# which of the source's own names we check against which of ours
+mapping:
+  net_income_top: net_profit
+  total_assets_top: total_assets
+  total_liabilities_top: total_liabilities
+  total_equity_top: total_equity
+
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and this worksheet's derived statements
+    were independently verified to balance to the dollar before inclusion
+    (see notes), so any divergence here is real rather than display
+    rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror income_statement_usd
+  # .net_income and balance_sheet_usd's three totals below exactly
+  net_income_top: 1722
+  total_assets_top: 6270
+  total_liabilities_top: 548
+  total_equity_top: 5722
+
+  # ── Figure (adjusted trial balance, both source occurrences agree) ──────
+  adjusted_trial_balance_usd:
+    debit:
+      cash: 2950
+      accounts_receivable: 575
+      office_supplies: 40
+      prepaid_insurance: 240
+      equipment: 2500
+      dividends: 1000
+      gas_expense: 53
+      advertising_expense: 35
+      depreciation_expense_equipment: 35
+      supplies_expense: 85
+      salaries_expense: 420
+      total_debits: 7933
+    credit:
+      accumulated_depreciation_equipment: 35
+      accounts_payable: 28
+      salaries_payable: 420
+      unearned_lawn_mowing_revenue: 100
+      common_stock: 5000
+      lawn_mowing_revenue: 2350
+      total_credits: 7933
+
+  # ── as literally published: unbalanced worksheet columns ────────────────
+  worksheet_columns_as_printed_usd:
+    income_statement_columns:
+      debit: {gas_expense: 53, advertising_expense: 35, depreciation_expense_equipment: 35, supplies_expense: 85, salaries_expense: 420, total_debits: 628}
+      credit: {lawn_mowing_revenue: 2350, total_credits: 2350}
+      balanced_as_printed: false
+    balance_sheet_columns:
+      debit: {cash: 2950, accounts_receivable: 575, office_supplies: 40, prepaid_insurance: 240, equipment: 2500, dividends: 1000, total_debits: 7305}
+      credit: {accounts_payable: 28, unearned_lawn_mowing_revenue: 100, common_stock: 5000, accumulated_depreciation_equipment: 35, salaries_payable: 420, total_credits: 5583}
+      balanced_as_printed: false
+
+  # ── derived (not literally printed); see notes for the derivation ───────
+  derived_not_literally_printed: true
+  net_income_derived: 1722    # closes both worksheet gaps: 2,350-628 = 7,305-5,583 = 1,722
+
+  income_statement_usd:
+    lawn_mowing_revenue: 2350
+    expenses:
+      gas_expense: 53
+      advertising_expense: 35
+      depreciation_expense_equipment: 35
+      supplies_expense: 85
+      salaries_expense: 420
+      total_expenses: 628
+    net_income: 1722
+
+  statement_of_retained_earnings_usd:
+    beginning_retained_earnings_assumed: 0
+    plus_net_income: 1722
+    less_dividends: -1000
+    ending_retained_earnings: 722
+
+  balance_sheet_usd:
+    assets:
+      cash: 2950
+      accounts_receivable: 575
+      office_supplies: 40
+      prepaid_insurance: 240
+      equipment_gross: 2500
+      accumulated_depreciation_equipment: -35
+      equipment_net: 2465
+      total_assets: 6270
+    liabilities:
+      accounts_payable: 28
+      unearned_lawn_mowing_revenue: 100
+      salaries_payable: 420
+      total_liabilities: 548
+    stockholders_equity:
+      common_stock: 5000
+      ending_retained_earnings: 722
+      total_stockholders_equity: 5722
+    total_liabilities_and_equity: 6270

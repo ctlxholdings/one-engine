@@ -1,0 +1,93 @@
+id: tax_zra_zambia_wht_consultancy
+title: "Zambia Revenue Authority — withholding tax on a resident management/consultancy fee"
+
+meta:
+  source:
+    - "Zambia Revenue Authority, 'Withholding Tax' guide: https://www.zra.org.zm/wp-content/uploads/2021/08/Witholding-tax.pdf (also re-published, same figures, at https://www.zra.org.zm/wp-content/uploads/2023/06/Withholding-Taxes.pdf). Direct fetch of both PDFs failed in this pass with a TLS certificate-verification error (the tool could not establish a trusted connection to zra.org.zm); the worked figures below were confirmed instead through a search engine's own indexed extraction of the SAME two independently-dated ZRA documents, which agree with each other word-for-word on this example — corroboration across two document vintages, not a single unverified scrape. A direct primary-source re-fetch is a genuine next step, not something this pass could complete."
+  licence: "Official Zambia Revenue Authority public guidance document."
+  kind: tax_case
+  resolution: L2
+  basis: "one payment, resident management/consultancy fee, statutory 15% withholding rate"
+  periods: 2
+  mechanism: "n/a — a withholding-tax illustration, not a business trade"
+  jurisdiction: ZM
+  currency: ZMW
+
+inputs:
+  payment_type: "resident management/consultancy fee"
+  gross_fee: 100000
+  wht_rate: 0.15
+  wht_final: false     # NOT a final tax for a resident — the ZRA guide states the payee
+  #                       must still include the FULL gross 100,000 in their own annual
+  #                       return, crediting the 15,000 withheld against their own liability
+  remittance_deadline: "14th of the month following the payment"
+
+expected:
+  wht_withheld:
+    value: 15000
+    composition_as_printed: "100,000 x 15%"
+  net_paid_to_consultant:
+    value: 85000
+    composition_as_printed: "100,000 - 15,000"
+  consultant_declares_on_own_return:
+    value: 100000
+    composition_as_printed: "the FULL gross fee — the 15,000 WHT is a credit against the consultant's own final liability, not a substitute for declaring the income"
+
+mapping: {}
+# no entry: engine/golds.py's CANON has no withholding-tax or tax-liability
+# concept at all — see TAX_INVENTORY.md.
+
+tolerance:
+  abs: 0
+  why: >
+    a flat statutory rate applied once to a round gross figure — exact by
+    construction; any gap would be a transcription error, not source rounding.
+
+notes: |
+  GRAMMAR FINDING (engine/ledger/compile.py, trade.py — empirically probed
+  against the live engine, template not committed): this shape is CLEANLY
+  EXPRESSIBLE, with NOTHING missing, and the empirical test matched the
+  source's own numbers to the ngwee. The construction is the SAME
+  accrual-then-settle DECOMPOSITION cases/external/templates/cattle.yaml
+  already uses for the impôt synthétique (`impot_accrual` + `impot_paid_y1`/
+  `impot_paid_y2`), applied to a withholding split instead of a turnover
+  levy: a single gross obligation cannot be posted as ONE two-ended exchange
+  (RECOGNIZE is defined as exactly two ends), so it is decomposed into TWO
+  ordinary exchanges sharing the same `when` gate —
+    (1) `from: cash, to: EXPENSE, size: net_amount` — the net cash actually
+        paid to the consultant, counterparty consultant; and
+    (2) `from: wht_payable, to: EXPENSE, size: wht_amount` — the withheld
+        portion ACCRUED as a liability against the SAME expense line,
+        counterparty tax authority —
+  which together post the FULL gross fee to EXPENSE (net_amount + wht_amount
+  = gross_fee) while only moving `net_amount` in cash — and a THIRD exchange
+  later clears `wht_payable` in cash when actually remitted
+  (`from: cash, to: wht_payable`). Empirically confirmed exact: cash fell by
+  85,000 then a further 15,000 (100,000 total, matching the full gross fee),
+  `wht_payable` accrued to 15,000 then closed to 0 on remittance — the
+  identical shape and identical correctness cattle.yaml already relies on for
+  its own turnover levy. No new verb, no escape hatch, no unchecked
+  arithmetic: this is a genuine MATCH capability, not a refusal, and not a
+  workaround.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:`
+  block, and it SHOULD. The ZRA guide's worked example publishes exactly
+  one payment and its split: a resident management/consultancy fee with a
+  gross of 100,000 ZMW, the statutory 15% resident rate, 15,000 ZMW
+  withheld, 85,000 ZMW paid over to the consultant, the 100,000 ZMW the
+  consultant must still declare on their own annual return, and the
+  remittance deadline (the 14th of the following month). That is the whole
+  of it — the guide is about WHO REMITS WHAT TO WHOM out of one payment.
+  It publishes no accounting period, no revenue, no other expense, no cost
+  total, and no entity's results.
+  The tempting move is to read the 100,000 ZMW gross fee as a cost line
+  from the PAYER's side — it is, after all, a professional fee, and this
+  gold's own grammar finding above shows the full gross posting to EXPENSE.
+  But that reading supplies a payer the source never describes, with a
+  business, a period and a set of other costs none of which appear in the
+  guide; and it would have nothing to bind to `cost_of_sales`, because the
+  only totals printed (15,000 · 85,000 · 100,000) are a tax, a net
+  remittance and a declarable income, not a cost of sales. Manufacturing a
+  one-line cost structure to get this file running would test the engine
+  against a business that does not exist in the source. Unrunnable is the
+  honest state; the capability finding above is what this gold is for.

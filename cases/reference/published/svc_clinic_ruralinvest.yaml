@@ -1,0 +1,189 @@
+id: svc_clinic_ruralinvest
+title: "FAO RuralInvest Module 2 worked example — community health clinic, cost-per-beneficiary profile (illustrative)"
+
+meta:
+  source:
+    - "FAO RuralInvest, 'Module 2 - Preparing and Using Project Profiles', pp.29-30 (printed page numbers; PDF pages 34-35), Tables A & B: https://www.fao.org/4/a1420e/a1420e00.pdf"
+    - "Already catalogued in this repo: docs/atlas/registry.yaml, isic_class '8690' entry 'Community health clinic — nurse-run rural primary-care facility' (this file is a standalone transcription for the golds harvest, independently re-fetched and re-verified against the primary PDF page-by-page rather than copied from the registry; I did not edit registry.yaml)"
+  licence: "FAO publicly published PDF; no explicit reuse licence stated in the document itself or in registry.yaml's source block."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, HARVESTED FOR SERVICES-AT-SCALE ───────────
+  # L2: Table B's two cost lines (fixed, variable) are already itemised
+  # money, printed directly ("Fixed cost... $3,500/year", "Variable cost...
+  # $1,500/year") -- not a quantity x price pair this gold multiplies.
+  # COST-ONLY: the source publishes no realised revenue, only two SUGGESTED
+  # per-visit fees ($7.5 minimum, $10 "affordable") offered as policy
+  # options, never billed against an actual visit count -- exactly the same
+  # cost-only shape as this project's sibling gold from the SAME source,
+  # fao_ruralinvest_broiler_poultry.yaml ("no revenue published... this is
+  # a cost-only budget, which `to_template` handles directly").
+  resolution: L2
+  basis: "per year, one clinic, steady-state operation (post-construction)"
+  periods: 1
+  mechanism: capacity_service
+  jurisdiction: null   # source self-flags as an ILLUSTRATIVE pedagogical composite: "no geography stated" (same convention as fao_ruralinvest_broiler_poultry.yaml, the sibling gold from this module)
+  currency: USD
+
+inputs:
+  # ── the physics this gold was harvested to test: CAPACITY vs DEMAND ─────
+  # RULE: never invent a utilisation rate. This source gives only a DEMAND-
+  # side estimate (patients the clinic expects to serve) and NO distinct
+  # capacity ceiling (no stated exam-room count, bed count, or staffed
+  # hours/day a maximum throughput could be checked against). That is a
+  # genuine gap in what FAO published here, not an omission on my part --
+  # recorded explicitly rather than papered over with an invented number.
+  direct_beneficiaries_per_year: {value: 200, unit: "patients/yr",
+    label_as_printed: "d) Estimated number of direct beneficiaries (per year)"}
+  indirect_beneficiaries_per_year: {value: 1000, unit: "persons",
+    label_as_printed: "e) Estimated number of indirect beneficiaries",
+    note: "SOURCE'S OWN inconsistency: every 'per all beneficiaries' calculation in the SAME table divides by (200+800)=1000, not (200+1000)=1200 -- i.e. the calculations behave as if e=800, contradicting item (e)'s own printed value of 1000. See notes."}
+
+  total_investment_cost_usd: {value: 50000, label_as_printed: "a) Total investment cost for proposed clinic"}
+  community_resources_to_investment_usd: {value: 10000, label_as_printed: "b) Total value of community resources to investment"}
+  donation_required_usd: {value: 40000, label_as_printed: "c) Total donation required"}
+
+  # the TWO real cost lines (Table B) -- itemised, printed verbatim, and
+  # (unlike Table A) internally consistent: 3500 + 1500 = 5000 exactly,
+  # matching the source's own printed f) total below
+  costs:
+    fixed_cost_maintenance_overheads: 3500   # "the nurse, upkeep of the building etc."
+    variable_cost_patient_dependent: 1500    # "medicines, linen etc."
+
+expected:
+  total_estimated_cost_of_clinic_functioning_usd:
+    value: 5000
+    label_as_printed: "f) Total estimated cost of clinic functioning"
+    composition_as_printed: "g + h = 3,500 + 1,500"
+
+  # Table A per-beneficiary calculations, transcribed exactly as printed
+  total_investment_per_direct_beneficiary_usd:
+    value: 250
+    label_as_printed: "Total investment per direct beneficiary (a/d)"
+    composition_as_printed: "50,000/200"
+  total_investment_per_all_beneficiaries_usd:
+    value: 50
+    label_as_printed: "Total investment per all beneficiaries (a/d+e)"
+    composition_as_printed: "50,000/(200+800) -- note the 800, not the 1000 stated in item (e)"
+  investment_own_resources_per_direct_beneficiary_usd:
+    value: 40
+    label_as_printed: "Investment cost (own resources) per direct beneficiary (b/d)"
+    composition_as_printed: "10,000/250 -- SOURCE ERROR: divides by 250 (the DOLLAR result of a/d, one row above), not by d=200 as the '(b/d)' label states. 10,000/200 would be 50, not 40. See notes."
+  investment_donated_per_direct_beneficiary_usd:
+    value: 160
+    label_as_printed: "Investment cost (donated resources) per direct beneficiary (c/d)"
+    composition_as_printed: "40,000/250 -- same divisor error as the row above (40,000/200 would be 200, not 160). See notes."
+  investment_own_resources_per_all_beneficiaries_usd:
+    value: 10
+    label_as_printed: "Investment cost (own resources) per all beneficiaries (b/d+e)"
+    composition_as_printed: "10,000/(200+800)"
+  investment_donated_per_all_beneficiaries_usd:
+    value: 40
+    label_as_printed: "Investment cost (donation) per all beneficiaries (c/d+e)"
+    composition_as_printed: "40,000/(200+800)"
+
+  # Table B per-beneficiary calculations
+  annual_operating_cost_per_direct_beneficiary_usd:
+    value: 25
+    label_as_printed: "Annual operating cost per direct beneficiary (f/d)"
+    composition_as_printed: "5,000/200"
+  annual_operating_cost_per_all_beneficiaries_usd:
+    value: 6.25
+    label_as_printed: "Annual operating cost per all beneficiaries (f/d+e)"
+    composition_as_printed: "5,000/800 -- INTERNALLY INCONSISTENT with its own sibling rows below: g/(d+e) + h/(d+e) = 3.5+1.5 = 5.0, not 6.25. See notes."
+  fixed_cost_per_direct_beneficiary_usd:
+    value: 17.5
+    label_as_printed: "Fixed cost per direct beneficiary (g/d)"
+    composition_as_printed: "3,500/200"
+  variable_cost_per_direct_beneficiary_usd:
+    value: 7.5
+    label_as_printed: "Variable cost per direct beneficiary (h/d)"
+    composition_as_printed: "1,500/200"
+  fixed_cost_per_all_beneficiaries_usd:
+    value: 3.5
+    label_as_printed: "Fixed cost per all beneficiaries (g/d+e)"
+    composition_as_printed: "3,500/(200+800)"
+  variable_cost_per_all_beneficiaries_usd:
+    value: 1.5
+    label_as_printed: "Variable cost per all beneficiaries (h/d+e)"
+    composition_as_printed: "1,500/(200+800)"
+
+  suggested_user_fee_minimum_usd_per_visit:
+    value: 7.5
+    label_as_printed: "patients should pay at least $7.5 per visit, to cover these variable expenses"
+  suggested_user_fee_affordable_usd_per_visit:
+    value: 10
+    label_as_printed: "if they could afford more (say $10 per visit), this would reduce the amount the community or local government would need"
+
+# which of the source's own names we check against ours -- the ONE figure
+# this cost-only profile lets us check against an engine-computed total
+mapping:
+  total_estimated_cost_of_clinic_functioning_usd: cost_of_sales
+
+# a NICKEL, deliberately tight. FAO prints this table to the nearest whole
+# or half dollar (note the one exception, $17,5 rather than $17.50 -- a
+# European-style decimal comma in an English-language document, read as
+# $17.5); the ONE figure this gold actually runs through the engine
+# (f = g + h = 5,000) is exact arithmetic with no rounding anywhere in its
+# chain, so any gap at all would be real
+tolerance:
+  abs: 0.05
+  why: >
+    f (5,000) is printed as a round number and its two components (3,500
+    and 1,500) sum to it exactly -- there is no rounding anywhere in this
+    specific chain, so 0.05 exists only to absorb floating-point noise;
+    a real gap must surface as a divergence
+
+notes: |
+  Re-derived every calculation in both tables by hand against the primary PDF (re-fetched directly,
+  not taken from registry.yaml's prior summary), confirming the PDF's raw reading order matches its
+  laid-out column order (checked both ways with `pdftotext`, with and without `-layout`, since a
+  column-jumbled table is otherwise indistinguishable from a genuine source error). Three internal
+  inconsistencies found, independently re-verified digit-by-digit -- only the first of these three is
+  already flagged in registry.yaml's gaps list; the second and third are new findings from this pass:
+
+    1. ITEM (e) VS ITS OWN USE (registry already flags this one). Item (e) states "Estimated number
+       of indirect beneficiaries: 1000". Every "per all beneficiaries" calculation in BOTH tables
+       (a/d+e, b/d+e, c/d+e, g/d+e, h/d+e) instead divides by 200+800=1000 -- i.e. treats the
+       INCREMENTAL indirect count as 800, not the stated 1000. 200 (direct) + 800 = 1000 total is
+       numerically self-consistent across five of the six "all beneficiaries" rows, but item (e)'s
+       own printed value should then read 800, not 1000 -- or the six calculations should read
+       200+1000=1200 throughout. The source does not say which is the typo.
+
+    2. A NEW FINDING: Table A's (b/d) and (c/d) rows use the WRONG DIVISOR. The row immediately
+       above, "(a/d)", correctly computes 50,000/200 = $250. The next two rows are labelled "(b/d)"
+       and "(c/d)" -- meaning "divide by d", the SAME d=200 used one row above -- but their printed
+       arithmetic reads "(10,000/250)" and "(40,000/250)": both divide by 250 (the DOLLAR RESULT of
+       the row above) rather than by 200 (the beneficiary COUNT, item d). 10,000/200 would be $50,
+       not the printed $40; 40,000/200 would be $200, not the printed $160. This has the signature
+       of a spreadsheet cell reference pointing at the wrong cell (the $250 result instead of the
+       200 count) when FAO's original table was built, propagated into the printed PDF.
+
+    3. A NEW FINDING: Table B's (f/d+e) row does not agree with its own sibling rows. f = g + h
+       (5,000 = 3,500 + 1,500, confirmed exact). g/(d+e) is printed as $3.5 and h/(d+e) as $1.5,
+       summing to $5.0 -- so f/(d+e) should also print $5.0 if the SAME (d+e) denominator is used
+       throughout the table (as it visibly is for g/(d+e) and h/(d+e), both printed with the full
+       "200+800" shown). Instead f/(d+e) is printed as $6.25, which is 5,000/800 -- dropping the
+       "200+" entirely, unlike its two sibling rows in the very same table.
+
+  None of these three are transcription slips on my part: re-extracted the PDF page in RAW
+  (non-layout) mode specifically to rule out a column-jumbling artifact, and the raw reading order
+  reproduces the same numbers in the same association. They are the source's own arithmetic,
+  transcribed as printed, per this project's rule -- a source's error is a finding, never something
+  to quietly fix.
+
+  CAPACITY VS DEMAND (the reason this gold was harvested): this source publishes only a DEMAND-side
+  estimate (200 direct beneficiaries/year) with no corresponding CAPACITY ceiling -- no exam-room
+  count, no bed count, no stated nurse hours/day or clinic opening hours a maximum throughput could
+  be checked against. Unlike the restaurant and school golds harvested alongside this one, this
+  specific source gives no basis for a short-side (capacity-binds-before-demand) story; recorded
+  as a genuine gap in what FAO published here, not invented to fill the shape.
+
+  This is a COST-ONLY profile (per RULE 1, no revenue is invented): the two "suggested" per-visit
+  fees ($7.5 minimum, $10 "affordable") are POLICY OPTIONS the source discusses, never a billed
+  amount against an actual visit count, so there is no sale to construct a `sale: {quantity, unit,
+  price}` block from -- exactly the same shape as this project's sibling gold from the SAME module,
+  fao_ruralinvest_broiler_poultry.yaml.
+
+  Transferability: the shape (fixed vs variable cost, per-direct vs per-all-beneficiary allocation)
+  is completely generic across a rural clinic in any country; the DOLLAR figures are explicitly
+  pedagogical ("no geography stated") and should not be read as representative of any real facility.

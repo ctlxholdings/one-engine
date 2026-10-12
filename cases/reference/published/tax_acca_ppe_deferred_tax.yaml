@@ -1,0 +1,153 @@
+id: tax_acca_ppe_deferred_tax
+title: "ACCA SBR technical article — deferred tax liability on a PPE temporary difference (IAS 12)"
+
+meta:
+  source:
+    - "ACCA Global, Strategic Business Reporting technical articles, 'Deferred tax': https://www.accaglobal.com/us/en/student/exam-support-resources/professional-exams-study-resources/strategic-business-reporting/technical-articles/deferred-tax.html — the non-current-asset / capital-allowances worked example (fetched 2026-08-12)."
+  licence: "Freely published ACCA student technical article; no explicit reuse licence stated on the page."
+  kind: tax_case
+  # ── HAND-LABELLED 2026-08-12 ─────────────────────────────────────────
+  # A teaching illustration denominated in abstract "CU" (currency units),
+  # deliberately jurisdiction-neutral (ACCA's SBR syllabus is used across many
+  # national tax regimes) — jurisdiction and currency below are marked as such
+  # rather than forced to a real country/ISO code that the source never named.
+  resolution: L2
+  basis: "one non-current asset, straight-line book depreciation over 4 years vs a statutory capital-allowances schedule, snapshots at the end of Year 1 and Year 2"
+  periods: 2
+  mechanism: "n/a — an IAS 12 illustration, not a business trade"
+  jurisdiction: "XX"   # generic — the source names no real country
+  currency: CU          # "currency units", the source's own unit label
+
+inputs:
+  asset_cost: 2000
+  book_depreciation_method: straight_line
+  book_useful_life_years: 4
+  book_depreciation_per_year: 500        # 2000 / 4
+  tax_capital_allowances:                # the statute's own schedule, as printed
+    year1: 800
+    year2: 600
+    year3: 360
+    year4: 240
+  tax_rate: 0.25
+
+expected:
+  year1_carrying_amount:
+    value: 1500
+    composition_as_printed: "2000 - 500 (one year's book depreciation)"
+  year1_tax_base:
+    value: 1200
+    composition_as_printed: "2000 - 800 (one year's capital allowance)"
+  year1_temporary_difference:
+    value: 300
+    composition_as_printed: "1500 - 1200"
+  year1_deferred_tax_liability:
+    value: 75
+    label_as_printed: "deferred tax liability"
+    composition_as_printed: "300 x 25%"
+  year2_carrying_amount:
+    value: 1000
+    composition_as_printed: "2000 - 500 x 2"
+  year2_tax_base:
+    value: 600
+    composition_as_printed: "2000 - 800 - 600"
+  year2_temporary_difference:
+    value: 400
+    composition_as_printed: "1000 - 600"
+  year2_deferred_tax_liability:
+    value: 100
+    composition_as_printed: "400 x 25%"
+
+mapping: {}
+# no entry: engine/golds.py's CANON has no "deferred_tax_liability" (or any
+# tax) concept — see TAX_INVENTORY.md.
+
+tolerance:
+  abs: 0
+  why: >
+    a textbook illustration built from round numbers chosen to be exact
+    (800+600+360+240 = 2000, the full cost, by construction) — any gap here
+    would be my own transcription error, not source rounding.
+
+notes: |
+  WHY THIS SOURCE. ACCA's Strategic Business Reporting technical articles are
+  the profession's own worked illustrations of IAS 12, freely published and
+  widely used in accounting education — the IASB's own "IE" (illustrative
+  examples) supplement to IAS 12 is not freely reproducible here (copyright),
+  so this is the strongest openly-citable worked temporary-difference example
+  found in the time available. The article ALSO carries a Year-2-end
+  revaluation extension (asset revalued to 2,500 -> DTL 475, split 375 to OCI)
+  which is not transcribed here: it tests a SECOND mechanism (OCI-routed
+  deferred tax on a revaluation surplus, IAS 12.61A) on top of the base
+  temporary-difference question this gold isolates, and belongs in its own
+  gold rather than bundled into this one.
+
+  GRAMMAR FINDING (engine/ledger/compile.py, trade.py, kernel.py — empirically
+  probed against the live engine; the template below is NOT committed
+  anywhere, scratch-space only):
+
+  `engine/ledger/kernel.py`'s `Resource` dataclass carries exactly ONE
+  `opening`/carrying-value track per declared resource — there is no
+  "book value" and "tax value" pair for the SAME physical asset. IAS 12's
+  entire mechanic (compare two valuations of the one thing, tax the gap) has
+  nothing to attach to: a Resource is a single stock, full stop.
+
+  The ARITHMETIC PRIMITIVE, once you have book and tax valuations from
+  somewhere, IS expressible and was empirically proven EXACT: a `dtl`
+  liability resource whose SIZE expression is
+  `tax_rate * (book_nbv - tax_wdv) - close('dtl')` — a "true-up to a derived
+  target," the same close()-referencing effective-interest idiom
+  cattle.yaml's own docstring already names for declining-balance
+  depreciation and loan interest — produced dtl closing balances of
+  EXACTLY 75 then 100 against `book_nbv`/`tax_wdv` supplied as the source's
+  own per-period figures. The reversal direction is self-correcting too: a
+  SHRINKING temporary difference makes this SAME expression negative, which
+  the compiler accepts (no non-negativity check on an ordinary exchange's
+  `size`, unlike RELEASE's [0,1] guard) and posts as a deferred tax CREDIT —
+  the textbook-correct treatment of a reversing difference, for free.
+
+  WHAT IS MISSING, precisely: not the arithmetic, but the DUAL-VALUATION
+  RESOURCE it needs to read from in a REAL trade (as against this probe,
+  which fed book_nbv/tax_wdv as bare pre-computed paths). Wiring this to an
+  asset that is ALSO a real depreciating ledger resource forces a choice
+  between two costs the grammar makes you pay by hand:
+    (a) a second "shadow" resource carrying the tax WDV, whose own release/
+        depreciation must be diverted to some resource OTHER than EXPENSE
+        (routing it to EXPENSE would double-book a depreciation charge that
+        never happened in the real books) — and that shadow resource, plus
+        whatever it releases into, are real declared resources that enter
+        the auto-derived balance-sheet identity (assets - liabilities =
+        equity, engine/ledger/kernel.py's `equity()`/`closure()`), so an
+        imperfectly-offset pair silently distorts a balance sheet the engine
+        otherwise guarantees reconciles by construction; or
+    (b) duplicating the book depreciation FORMULA inline inside the DTL
+        exchange's own size expression, because `close()` only ever reads
+        the PRIOR period's posted balance (compile.py: "the fold has not
+        happened" for the current period) — so reading the book resource's
+        OWN true end-of-period value via close() is always one period
+        behind a same-period DTL true-up, and closing that gap means
+        writing the depreciation rule twice, once on the real resource and
+        once inside the tax exchange, with nothing to catch the two drifting
+        apart.
+  Neither (a) nor (b) is checked or bounded by anything in the grammar — both
+  are exactly the kind of hand-reconstruction the trade contract's per-leaf
+  provenance rule is otherwise built to make suspicious.
+
+  NO COST SIDE: this gold stays `unrunnable` for want of an `inputs.costs:`
+  block, and it SHOULD. The article's worked example publishes exactly six
+  quantities and nothing else: an asset cost of 2,000 CU, a four-year
+  straight-line book life (500 CU a year), the statutory capital-allowances
+  schedule 800 / 600 / 360 / 240 CU, a 25% tax rate, and — as the answer —
+  the Year-1 and Year-2 pairs of carrying amount (1,500 / 1,000), tax base
+  (1,200 / 600), temporary difference (300 / 400) and deferred tax
+  liability (75 / 100). There is no revenue figure, no expense line, no
+  operating cost, no cost total, no profit and no entity anywhere in the
+  example: IAS 12's mechanic compares two VALUATIONS of one asset, and
+  needs no trading account to do it.
+  A `costs:` block would therefore have to be assembled from the only
+  spend-shaped numbers present — the 2,000 CU purchase price of a
+  non-current asset (capital expenditure, not cost of sales) or the
+  depreciation and capital-allowance schedules (capital consumption on two
+  bases, which the engine's CANON names `depreciation`, deliberately not
+  `cost_of_sales`). Both readings would invent a trading business the ACCA
+  article never described, and neither could be bound to a published cost
+  total, because the article prints none. Unrunnable is correct here.

@@ -1,0 +1,130 @@
+id: cell_momo_agent_cgap_vincent
+title: "CGAP Agent Management Toolkit — Profit and Loss for M-PESA Agent Vincent (Kenya)"
+
+meta:
+  source:
+    - "CGAP (Consultative Group to Assist the Poor, World Bank Group), 'Agent Management Toolkit: Building a Viable Network of Branchless Banking Agents', Technical Guide, February 2011, Figure 6 'Profit and Loss for M-PESA Agent Vincent', p.12 (also Figure 7 'Profit and Loss for Banco do Brasil Agent João', p.14, and Table 2 'Agent Benchmarks in Five Branchless Banking Initiatives', p.xiv, both used for cross-reference in these notes). https://www.cgap.org/sites/default/files/CGAP-Technical-Guide-Agent-Management-Toolkit-Building-a-Viable-Network-of-Branchless-Banking-Agents-Feb-2011.pdf"
+  licence: >
+    CGAP (a World Bank Group multi-donor initiative) technical guide, publicly hosted on cgap.org
+    for open distribution; specific reuse-licence text was not located on the pages read. Figures
+    transcribed for verification/testing purposes only.
+  kind: trade_case
+  resolution: L2   # itemised revenue and cost lines, with the source's own subtotals and daily-profit total
+  basis: "per agent, one representative business day (Kenya, ~2010)"
+  periods: 1
+  # NO TAG FITS — the agent buys and sells the use of two forms of the SAME financial asset (cash
+  # <-> e-float) for a commission/spread: Weill & Malone's "Financial Trader" (distribute x
+  # financial), the mobile-money retail instance of a forex bureau. engine/ledger/mechanisms.py's
+  # only "distribute" tag, `buy_resell`, is hardcoded to ("distribute","physical"); none reaches
+  # ("distribute","financial"). See notes and CELLS_INVENTORY.md.
+  mechanism: null
+  cell: "distribute x financial (Financial Trader)"
+  jurisdiction: KE
+  currency: USD
+  trade: "M-PESA mobile-money agent, Kenya — cash-in/cash-out (deposit/withdrawal) and account-registration transactions"
+
+inputs:
+  generators:
+    transactions_per_day: {value: 40, unit: "transactions/day"}
+    commission_per_transaction: {value: 0.12, unit: "USD/transaction", label_as_printed: "commission / transaction"}
+    registrations_per_day: {value: 0.80, unit: "registrations/day"}
+    commission_per_registration: {value: 0.63, unit: "USD/registration", label_as_printed: "commission / registration"}
+  # engine convention: the transaction-commission line as quantity x price (the dominant of the
+  # two revenue lines; the smaller registration line is carried in `generators` above instead,
+  # since the engine's `sale:` block holds one quantity x price pair)
+  sale:
+    quantity: 40
+    unit: transactions
+    price: 0.12
+  costs:
+    transportation: 1.13
+    space_rent_utilities: 0
+    wages: 0
+    cost_of_capital: 0
+    insurance: 0
+
+expected:
+  transaction_commissions:
+    value: 4.73
+    unit: USD
+    label_as_printed: "Transaction commissions"
+    composition_as_printed: "transactions_per_day (40) x commission_per_transaction (0.12) = 4.80, seven cents above the printed 4.73 — see notes"
+  registration_commissions:
+    value: 0.51
+    unit: USD
+    label_as_printed: "Registration commissions"
+    composition_as_printed: "registrations_per_day (0.80) x commission_per_registration (0.63) = 0.504, a cent below the printed 0.51"
+  total_revenue:
+    value: 5.24
+    unit: USD
+    label_as_printed: "Total Revenue"
+    composition_as_printed: "transaction_commissions (4.73) + registration_commissions (0.51) + wage (0) = 5.24 — verified exact"
+  total_expenses:
+    value: 1.13
+    unit: USD
+    label_as_printed: "Total Expenses"
+    composition_as_printed: "transportation (1.13) + space (0) + wages (0) + cost_of_capital (0) + insurance (0) = 1.13 — verified exact"
+  daily_profit:
+    value: 4.11
+    unit: USD
+    label_as_printed: "DAILY PROFIT"
+    composition_as_printed: "total_revenue (5.24) - total_expenses (1.13) = 4.11 — verified exact"
+
+# which of the source's own names we check against which of ours
+mapping:
+  total_revenue: revenue
+  daily_profit: gross_margin
+
+tolerance:
+  abs: 0.10
+  why: >
+    the printed figures carry 2 decimals and the ADD/SUBTRACT steps close EXACTLY (4.73+0.51+0=
+    5.24; 5.24-1.13=4.11) — but the two MULTIPLY steps (rate x volume -> sub-revenue) do not:
+    40 x 0.12 = 4.80, 7 cents above the printed 4.73; 0.80 x 0.63 = 0.504, a cent below the printed
+    0.51. The larger 0.07 gap is the source's own display rounding of what are themselves period
+    averages (0.80 registrations/day cannot be a same-day count), so 0.10 is set to clear it; a
+    divergence past 0.10 is real.
+
+notes: |
+  WHY THIS IS "distribute x financial" WITH NO TAG: the agent does not create, rent out, or match —
+  he BUYS one form of a financial asset and SELLS it back in the other form (cash for e-float on a
+  deposit, e-float for cash on a withdrawal), pocketing a commission on the conversion — structurally
+  identical to a foreign-exchange bureau trading two currencies, which is exactly Weill & Malone's
+  "Financial Trader" definition ("buy an asset, sell the same asset on"). `engine/ledger/mechanisms.
+  py`'s only "distribute" tag, `buy_resell`, is hardcoded to `("distribute", "physical")` — using it
+  here would misclassify a money-trading business into the goods-reselling cell. `mechanism:` is
+  left null rather than forced, per this brief's own instruction ("a lender, for instance" — the
+  same reasoning applies one column over).
+
+  THE ARITHMETIC GAP IS THE SOURCE'S OWN, not a transcription slip: re-derived by hand straight from
+  the two numbers CGAP itself prints per line (rate, volume) against the sub-total CGAP itself
+  prints for that line (see `tolerance.why`). 40 transactions/day is very likely itself a
+  period-average rounded to a whole number for the figure (matching Figure 7's identical "40" for a
+  DIFFERENT agent, João in Brazil, p.14 — two different agents, two different countries, the same
+  round "40" is more consistent with a display convention than a coincidence), so the exact
+  underlying rate is closer to 4.73/40 = 0.1183 than the printed 0.12.
+
+  A SECOND worked instance sits two pages later in the SAME source (Figure 7, p.14): "João", a
+  Banco do Brasil correspondent-banking agent, same structure (40 transactions/day, USD 0.09/
+  transaction, USD 3.43 total revenue, USD 1.47 total expenses [USD 1.00 transportation + USD 0.47
+  insurance], USD 1.96 daily profit) — a non-mobile-money instance of the identical cell (a bank
+  agent trading cash for a ledger-recorded account balance rather than telecom e-float), kept here
+  as a reference rather than a second gold because the brief that produced this file asked for
+  mobile-money specifically. CGAP's own prose (p.xiv) states the wider pattern this pair sits
+  inside: "Brazilian, Indian, and Kenyan agents typically make profits of less than US$5 per day,"
+  and Table 2 (p.xiv) tabulates five providers (Banco do Brasil, Banco Postal, Eko, FINO Karnataka,
+  M-PESA) with commission/transaction from USD 0.06 (FINO) to USD 0.97 (Banco Postal) and daily
+  profit from USD 0.39 to USD 121.60 — useful range-of-the-world context if a second scenario at a
+  different scale is wanted later.
+
+  M-PESA's own required agent float (same source, p.xiv): USD 1,250 cash + e-float on hand, stated
+  as "1.5 times greater than the annual GDP per capita in Kenya" at the time of writing — the
+  capital-intensity side of this trade, not transcribed into `inputs` here because Figure 6's P&L is
+  a FLOW (daily commissions/costs), not the float STOCK itself.
+
+  A qualitative-only companion source was also read for this cell (MicroSave/Helix Institute,
+  "Agent Network Accelerator Research: Democratic Republic of the Congo Regional Report", December
+  2018) and found NOT gold-able: it documents commission structures, agent viability profiles and
+  compliance risk in rich narrative detail but publishes no worked $ P&L for any individual agent —
+  an answer without the arithmetic behind it, per the same "not a gold" standard this corpus already
+  applies elsewhere (see CELLS_INVENTORY.md).

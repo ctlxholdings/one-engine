@@ -1,0 +1,300 @@
+id: cap_corrugatedbox_dcmsme_hyderabad
+title: "DC-MSME (Govt of India) Detailed Project Report — corrugated paper board & boxes, Hyderabad: 60,000 MT/annum nameplate, 300 days x 3 shifts, ramped 50% -> 60% -> 70% -> 75% capacity utilisation over eight years (checked year: 2025-26, the first 75% steady-state year)"
+
+# ── WHY THIS FILE EXISTS ────────────────────────────────────────────────
+# THE CLEANEST THROUGHPUT-CEILING GRAMMAR IN THE HARVEST. This DPR prints,
+# as five separate lines, every factor a ceiling needs and almost no source
+# gives together:
+#     installed capacity (MT/annum) · working days (300) · shifts (3/day)
+#     · capacity utilisation (%, a different value each year) · price (Rs/MT)
+# and then a sales line that is EXACTLY capacity x utilisation x price. The
+# unit never touches its ceiling: it starts at 50% and stops rising at 75%,
+# so the short side is exercised in every one of the eight printed years.
+#
+# AND THE DOCUMENT CONTRADICTS ITSELF ABOUT ITS OWN CEILING — 6,000 MT in
+# three places, 60,000 MT in a fourth — with the arithmetic settling it. That
+# is the second reason this file exists; see notes.
+
+meta:
+  source:
+    - "Office of the Development Commissioner (MSME), Ministry of Micro, Small and Medium Enterprises, Government of India — Shri C.S.S. Rao, IEDS, Joint Director, MSME-Development Institute, Hyderabad: 'Action Plan for Reduction of Imports & Project Report for Manufacture of Corrugated Paper Board and Boxes'. p.7 (Executive Summary: 'Total Installed capacity of the proposed unit is 6000 MT per annum', total investment Rs.23 crore, BEP 43.19%, DSCR 1.90); p.16 (Market Potential: 'the installed capacity of the unit is proposed to be as 6,000 MT per annum'); p.35 (labour and salary tables); p.36 (utilities: the 200KW power line); p.37 (Source of Finance); p.38 ('E. Basis and Presumptions' — the 60000MT capacity, 300 days, three shifts, the year-by-year capacity-utilisation ramp, Rs.41,000/MT selling price, 14% interest, 25% income tax); p.39 ('Financial Analysis — Estimated Cost of Production and Profitability', the eight-year table this gold checks); p.40 (Cash Flow Statement); p.41 (DSCR Statement). https://dcmsme.gov.in/Corrugated%20Paper%20Board%20&%20Boxes%20by%20CSS%20Rao.pdf"
+  accessed: "2026-08-12"
+  licence: >
+    Publication of the Office of the Development Commissioner (MSME), Ministry of MSME, Government
+    of India, hosted on the Ministry's own domain (dcmsme.gov.in) as a public enterprise-promotion
+    document. No explicit reuse licence is stated in the document. Figures transcribed here, with
+    full citation, for engine-verification/research use only — the same treatment this corpus gives
+    other government/agency project profiles already in `cases/golds/` (FAO, IFAD, GIZ, Land Bank).
+  kind: trade_case
+  # L3: the source prints a QUANTITY (capacity x utilisation, in MT) and a
+  # PRICE (Rs 41,000/MT) as two separate figures and multiplies them into a
+  # Sales line, in each of eight years. That is the full quantity-x-price
+  # grammar, with a capacity ceiling stated strictly ABOVE the quantity in
+  # every year -- exactly the shape of cell_hotel_home2suites_graham.yaml,
+  # here in manufacturing rather than lodging.
+  resolution: L3
+  basis: "per unit, one operating year — YEAR 5 of the printed eight-year projection (FY 2025-26), the FIRST year at the terminal 75% capacity utilisation and therefore the steady state; all eight years transcribed below"
+  periods: 1
+  mechanism: make_to_order
+  cell: "create x physical (Manufacturer)"
+  transformation: "assemble — kraft paper reels are corrugated, pasted into board and slotted/stitched into boxes. The source's own wastage assumption is 1 to 1.5% (p.38, presumption 9), which is a yield loss on an assemble, not a separate."
+  jurisdiction: IN
+  currency: INR
+  trade: "semi-automatic corrugated paper board and box manufacturing unit, Hyderabad, Telangana; 500 sq.m leasehold land, 400 sq.m built-up; 100 direct + 50 indirect jobs"
+
+inputs:
+  # ══ THE CEILING, and every factor it is built from — all printed
+  # separately on p.38 ('E. Basis and Presumptions') ══
+  capacity:
+    installed_capacity_mt_per_annum:
+      value: 60000
+      unit: "MT/annum"
+      label_as_printed: "Installed capacity is estimated at 60000MT per annum"
+      cited: "p.38, Basis and Presumptions, item 1"
+      contradicted_by: "'6000 MT per annum' on p.7 (Executive Summary) and '6,000 MT per annum' on p.16 (Market Potential), and '6000MT' in row A of the p.39 table itself. THE ARITHMETIC SETTLES IT AT 60,000 — see notes. Kept as 60000 here because that is the number the source's own financial model demonstrably runs on."
+    working_days_per_year:
+      value: 300
+      unit: "days/yr"
+      label_as_printed: "The units presumed to work three shifts per day and 300 days in a year"
+      cited: "p.38, item 2"
+      corroborated_by: "the p.36 power line bills '25days per Month x 12 Months' = 300 days — the same figure reached independently"
+    shifts_per_day:
+      value: 3
+      unit: "shifts/day"
+      label_as_printed: "three shifts per day"
+      cited: "p.38, item 2"
+    implied_daily_rate:
+      value: 200
+      unit: "MT/day"
+      composition: "DERIVED: 60,000 MT/annum / 300 days = 200 MT/day = 66.67 MT/shift across three shifts. Not printed; both factors are the source's own."
+  # ══ THE UTILISATION RAMP — the short side, stated as a percentage, p.38 item 3 ══
+  capacity_utilisation_pct:
+    year_1_2021_22: {value: 50, unit: "%", note: "the p.38 ramp says 50% for year 1, but commercial production starts December 2021 (p.38, item 5) so only 4 of the 12 months of Indian FY2021-22 are worked — the p.39 Sales line proves the model applies 50% x 4/12. See notes."}
+    year_2_2022_23: {value: 50, unit: "%"}
+    year_3_2023_24: {value: 60, unit: "%"}
+    year_4_2024_25: {value: 70, unit: "%"}
+    year_5_onwards: {value: 75, unit: "%", label_as_printed: "4th year onwards - 75%"}
+  # ══ QUANTITY ACTUALLY MADE AND SOLD — DERIVED from the two printed
+  # factors above, and independently CONFIRMED by dividing each printed
+  # Sales figure by the printed price (see notes; all eight agree exactly) ══
+  quantity_mt:
+    year_1: {value: 10000, composition: "60,000 x 50% x 4/12 (Dec-Mar part year)"}
+    year_2: {value: 30000, composition: "60,000 x 50%"}
+    year_3: {value: 36000, composition: "60,000 x 60%"}
+    year_4: {value: 42000, composition: "60,000 x 70%"}
+    year_5_to_8: {value: 45000, composition: "60,000 x 75%"}
+  price:
+    selling_price_per_mt:
+      value: 41000
+      unit: "INR/MT"
+      label_as_printed: "Selling price calculated at Rs.41,000/MT"
+      cited: "p.38, item 16"
+  # engine convention: quantity x price, for the checked year (year 5, FY2025-26)
+  sale: {quantity: 45000, unit: MT, price: 41000}
+
+  # ══ YEAR-5 COST LINES, as printed on p.39 (Rs. in crore) ══
+  costs:
+    raw_material_and_consumables: 173.57
+    utilities: 0.675
+    wages_direct: 1.122
+    repair_and_maintenance: 0.045
+    salaries: 1.984
+    other_administrative_expenses: 0.405
+    selling_expenses: 0.00
+  finance_and_depreciation_year_5:
+    interest_on_term_loan: 0.14
+    interest_on_working_capital_loan: 2.60
+    depreciation: 0.213
+  tax_rate_pct: {value: 25, label_as_printed: "Income tax calculated at 25%", cited: "p.38, item 17"}
+
+expected:
+  # ── THE CHECKED YEAR: year 5 = FY2025-26, 75% utilisation ──
+  sales_year_5:
+    value: 184.50
+    unit: "INR crore"
+    label_as_printed: "H Sales, 2025-26 (p.39)"
+    composition: "45,000 MT (= 60,000 x 75%) x Rs 41,000/MT = Rs 1,845,000,000 = 184.50 crore — EXACT"
+  total_cost_of_production_year_5:
+    value: 177.801
+    unit: "INR crore"
+    label_as_printed: "G Total cost of Production, 2025-26"
+    composition_as_printed: "SUB TOTAL (D) 175.412 + SUB TOTAL (E) 2.389 + F Selling Expenses 0.00"
+    hand_check: "D: 173.57 + 0.675 + 1.122 + 0.045 = 175.412 EXACT; E: 1.984 + 0.405 = 2.389 EXACT; G = 177.801 EXACT"
+  gross_profit_before_tax_and_depreciation_year_5:
+    value: 6.699
+    unit: "INR crore"
+    label_as_printed: "I Gross Profit before Income Tax and Depreciation"
+    hand_check: "184.50 - 177.801 = 6.699 — EXACT"
+  operating_profit_year_5:
+    value: 3.746
+    unit: "INR crore"
+    label_as_printed: "M Operating Profit (I-J-K-L)"
+    hand_check: "6.699 - 0.14 - 2.60 - 0.213 = 3.746 — EXACT"
+  net_profit_after_tax_year_5:
+    value: 2.81
+    unit: "INR crore"
+    label_as_printed: "O Net Profit after Tax"
+    hand_check: "3.746 - 0.936 = 2.810 EXACT; and the tax 0.936 / 3.746 = 24.99%, matching the printed 25% presumption"
+
+  # ── ALL EIGHT YEARS, transcribed for completeness (Rs. in crore, p.39) ──
+  eight_year_table:
+    years: ["2021-22", "2022-23", "2023-24", "2024-25", "2025-26", "2026-27", "2027-28", "2028-29"]
+    capacity_utilisation_row_C: [50, 50, 60, 70, 75, 75, 75, 75]
+    sales_row_H:                [41.00, 123.00, 147.60, 172.20, 184.50, 184.50, 184.50, 184.50]
+    raw_material_row_Di:        [38.57, 115.711, 135.85, 158.492, 173.57, 173.57, 173.57, 173.57]
+    utilities_row_Dii:          [0.15, 0.45, 0.54, 0.630, 0.675, 0.675, 0.675, 0.675]
+    wages_direct_row_Diii:      [0.281, 0.842, 0.926, 1.020, 1.122, 1.234, 1.357, 1.493]
+    repair_row_Div:             [0.01, 0.03, 0.036, 0.042, 0.045, 0.045, 0.045, 0.045]
+    subtotal_D:                 [39.011, 117.033, 137.352, 160.184, 175.412, 175.524, 175.647, 175.783]
+    salaries_row_Ei:            [0.497, 1.49, 1.64, 1.804, 1.984, 2.14, 2.354, 2.589]
+    other_admin_row_Eii:        [0.090, 0.27, 0.324, 0.378, 0.405, 0.405, 0.405, 0.405]
+    subtotal_E:                 [0.587, 1.76, 1.85, 2.182, 2.389, 2.545, 2.759, 2.994]
+    total_cost_row_G:           [39.598, 118.79, 141.170, 162.366, 177.801, 178.069, 178.406, 178.777]
+    gross_profit_row_I:         [1.402, 4.21, 6.43, 9.834, 6.699, 6.431, 6.094, 5.723]
+    interest_term_loan_row_J:   [0.102, 0.309, 0.28, 0.21, 0.14, 0.07, 0.00, 0.00]
+    interest_wc_loan_row_K:     [0.500, 2.109, 2.29, 2.50, 2.60, 2.60, 2.60, 2.60]
+    depreciation_row_L:         [0.00, 0.30, 0.267, 0.239, 0.213, 0.190, 0.171, 0.154]
+    operating_profit_row_M:     [0.80, 1.502, 3.593, 6.885, 3.746, 3.59, 3.323, 2.969]
+    provision_for_tax_row_N:    [0.20, 0.375, 0.90, 1.72, 0.936, 0.89, 0.83, 0.641]
+    net_profit_row_O:           [0.60, 1.127, 2.693, 5.165, 2.81, 2.70, 2.493, 2.328]
+
+  # ── HEADLINE RATIOS the source computes for itself (p.7) ──
+  break_even_point_pct: {value: 43.19, unit: "%", label_as_printed: "Break Even Point (B.E.P) is 43.19%"}
+  dscr: {value: 1.90, label_as_printed: "Debt Service Coverage Ratio (DSCR) is 1.90"}
+  working_capital_one_cycle:
+    value: 19.81
+    unit: "INR crore"
+    composition_as_printed: "Raw Material (1 month) 9.64 + Work in Progress (1 week) 1.94 + Finished Goods (1 week) 1.98 + Bills Receivable (15 days) 6.25"
+    hand_check: "9.64 + 1.94 + 1.98 + 6.25 = 19.81 — EXACT"
+
+mapping:
+  # MIXED BASIS (2026-08-20). Revenue COMPUTES raw INR (MT x Rs.41,000/MT),
+  # so it needs p.39's column scale ("Rs. in crore") declared; the cost lines
+  # were TRANSCRIBED at the printed crore values and flow through unchanged,
+  # so their comparison is printed-vs-printed — scale would double convert.
+  # The scale is the source's own column header, not a judgement.
+  sales_year_5: {canon: revenue, scale: 1.0e7}
+  total_cost_of_production_year_5: cost_of_sales
+
+tolerance:
+  abs: 0.002
+  why: >
+    Rs 0.002 crore = Rs 20,000, i.e. 0.001% of the Rs 184.50 crore Sales line. Every figure in the
+    p.39 table is printed to three decimals of a crore, and EVERY subtotal in the CHECKED YEAR
+    (year 5) re-adds EXACTLY by hand — D = 175.412, E = 2.389, G = 177.801, I = 6.699, M = 3.746,
+    O = 2.810, and Sales = 45,000 MT x Rs 41,000 = 184.50 to the rupee. There is no display-rounding
+    chain to absorb in this year, so any gap at all must surface as a divergence. The threshold is
+    set at 0.002 rather than 0 only to absorb the third-decimal display (0.0005 crore per addend,
+    four addends). Years 3, 6 and 8 contain genuine printed arithmetic ERRORS (see notes) — they are
+    transcribed but deliberately NOT in `mapping`, because a gold must not ask the engine to
+    reproduce a mistake.
+
+notes: |
+  THE CEILING CONTRADICTION, AND HOW THE ARITHMETIC SETTLES IT. The document states its installed
+  capacity FOUR times and the numbers differ by a factor of ten:
+
+      p.7  Executive Summary   "Total Installed capacity of the proposed unit is 6000 MT per annum"
+      p.16 Market Potential    "the installed capacity of the unit is proposed to be as 6,000 MT
+                                per annum, which is very less as compared to the prevailing market
+                                demand"
+      p.38 Basis & Presumptions "Installed capacity is estimated at 60000MT per annum"
+      p.39 row A                "6000MT" in all eight year-columns
+
+  Three-to-one on the page count says 6,000. The arithmetic says 60,000, and says it without any
+  room for argument. Dividing each printed Sales figure by the printed price of Rs 41,000/MT gives
+  the tonnage the model actually sold, and every one lands on a clean multiple of 60,000:
+
+      2022-23  Rs 123.00 cr / 41,000  =  30,000 MT  =  60,000 x 50%   <- the printed 50% row
+      2023-24  Rs 147.60 cr / 41,000  =  36,000 MT  =  60,000 x 60%   <- the printed 60% row
+      2024-25  Rs 172.20 cr / 41,000  =  42,000 MT  =  60,000 x 70%   <- the printed 70% row
+      2025-26  Rs 184.50 cr / 41,000  =  45,000 MT  =  60,000 x 75%   <- the printed 75% row
+      2021-22  Rs  41.00 cr / 41,000  =  10,000 MT  =  60,000 x 50% x 4/12
+
+  At 6,000 MT the terminal-year Sales line could not exceed Rs 18.45 crore; it is printed as Rs
+  184.50 crore. The whole Rs 23 crore investment, the Rs 19.81 crore working capital and the 100-job
+  headcount are all sized for the larger plant. CONCLUSION RECORDED: 6,000 MT is a dropped zero,
+  repeated three times because the executive summary and market section were written from the same
+  wrong figure; 60,000 MT is what the model runs on. The 2021-22 column is the neatest single proof
+  of the whole reading — 10,000 MT is not a round percentage of anything, but it IS 50% of 60,000
+  prorated over the four months from the stated December 2021 start (p.38, item 5), to the tonne.
+
+  THE SHORT SIDE, exercised in all eight years. The unit NEVER reaches its ceiling:
+
+      ceiling      60,000 MT/yr  (200 MT/day x 300 days, three shifts)
+      best year    45,000 MT/yr  (75%, year 5 onwards) — 15,000 MT/yr of the plant stands idle
+      first year   10,000 MT/yr  (16.7% of the annual ceiling)
+
+  and the source gives no demand-side reason for stopping at 75% — p.16 says the opposite, that
+  capacity is "very less as compared to the prevailing market demand". So the 75% terminal ceiling
+  is an ENGINEERING derate (changeovers, maintenance, the stated 1-1.5% wastage), not a demand
+  shortfall: an availability haircut on the nameplate, distinct from `sold = min(demand, available)`
+  where demand binds. Worth separating in an engine — this case and
+  cell_hotel_home2suites_graham.yaml (where DEMAND binds at 74%) look identical in the arithmetic
+  and are different physics.
+
+  A SECOND, INDEPENDENT CEILING FACTOR THAT DOES NOT AGREE. The p.36 electricity line reads
+  "Power: 200KW x 24 hrs. x 50% utilization x 25days per Month x 12 Months = 720000 units", billed
+  at Rs 6.00 = Rs 43,20,000, plus water Rs 1,80,000 = Rs 45,00,000 total. Re-computed by hand:
+  200 x 24 x 0.50 x 25 x 12 = 720,000 kWh EXACT, x Rs 6 = Rs 43,20,000 EXACT, + Rs 1,80,000 =
+  Rs 45,00,000 EXACT. Three checks, all clean. And 25 days x 12 = 300 days, corroborating p.38's
+  working-day figure from an entirely different table. BUT: "24 hrs x 50% utilization" means the
+  plant draws power for 12 effective hours a day, which contradicts p.38's "three shifts per day"
+  (24 hours). The 50% here is the year-1/2 CAPACITY utilisation being applied to RUNNING HOURS —
+  two different quantities sharing a number. Confirmed by the p.39 utilities row: year 2 (50%)
+  prints 0.45 crore = exactly the Rs 45,00,000 of the p.36 table, and the row then scales strictly
+  with capacity utilisation (0.54 at 60%, 0.630 at 70%, 0.675 at 75%). So the model treats
+  electricity as fully variable with output, which is defensible, but the p.36 line's arithmetic
+  reads as an hours calculation and is not one.
+
+  ARITHMETIC VERIFIED BY HAND — what reconciles EXACTLY:
+    - Sales row H, all eight years, against capacity x utilisation x Rs 41,000 (see above)
+    - SUB TOTAL (D), all eight years: e.g. y5 173.57 + 0.675 + 1.122 + 0.045 = 175.412
+    - SUB TOTAL (E) in seven of eight years: e.g. y5 1.984 + 0.405 = 2.389
+    - Total cost G in seven of eight years: e.g. y5 175.412 + 2.389 + 0.00 = 177.801
+    - Gross profit I = H - G in all eight years
+    - Operating profit M = I - J - K - L in six of eight years
+    - Net profit O = M - N in all eight years
+    - Salary table p.35: 4 x 50,000 x 12 = 24,00,000; 20 x 25,000 x 12 = 60,00,000; 15 x 18,000 x 12
+      = 32,40,000; 10 x 8,000 x 12 = 9,60,000; 5 x 6,000 x 12 = 3,60,000; sum 1,29,60,000;
+      perquisites @15% = 19,44,000; total Rs 1,49,04,000 — EXACT, and equal to the p.39 year-2
+      salaries cell of 1.49 crore, and to 1/3 of that (0.497) in the four-month year 1
+    - Working capital: 9.64 + 1.94 + 1.98 + 6.25 = 19.81 EXACT
+    - The 10%-a-year salary/wage escalation of p.38 item 6 holds from year 2 in six of seven steps
+    - Direct wages and salaries do NOT scale with capacity utilisation — they are fixed from the
+      p.35 headcount, which is why the unit still clears a profit at 50% of nameplate
+
+  ARITHMETIC VERIFIED BY HAND — what does NOT reconcile. Five genuine printed errors, kept and
+  named rather than smoothed over:
+
+    1. YEAR 3 (2023-24), SUB TOTAL (E) IS WRONG: 1.64 + 0.324 = 1.964, printed 1.85 (short by
+       0.114 crore).
+    2. YEAR 3, TOTAL COST G IS WRONG BY MORE THAN THAT: 137.352 + 1.85 + 0.00 = 139.202 (or
+       139.316 using the corrected E), printed 141.170 — over by 1.968 crore. Both the E error and
+       the G error are in the same column, and they do not cancel; the printed Gross Profit (6.43)
+       is consistent with the WRONG G, so the mistake propagates all the way to net profit. Year 3
+       is transcribed and excluded from `mapping` for this reason.
+    3. YEARS 2 AND 6, OPERATING PROFIT M: y2 4.21 - 0.309 - 2.109 - 0.30 = 1.492, printed 1.502
+       (+0.010); y6 6.431 - 0.07 - 2.60 - 0.190 = 3.571, printed 3.59 (+0.019).
+    4. YEAR 8, TAX IS NOT 25%: 0.641 / 2.969 = 21.6%, against the stated 25% (which would be
+       0.742). Every other year is within 0.05pp of 25%.
+    5. THE RAW-MATERIAL UNIT RATE CHANGES FOR TWO YEARS AND CHANGES BACK. Dividing the raw-material
+       row by the tonnage: y1 Rs 38,570/MT, y2 Rs 38,570/MT, y3 Rs 37,736/MT, y4 Rs 37,736/MT,
+       y5-y8 Rs 38,571/MT. No stated reason; p.38 item 8 says only "Cost of raw materials is worked
+       out at prevailing market rates". Recorded because it silently inflates the year-3 and year-4
+       margins by ~Rs 3.0 and ~Rs 3.5 crore respectively — which is most of what makes year 4 the
+       most profitable year in the table (Gross Profit 9.834 crore against 6.699 in the higher-volume
+       year 5).
+    6. THE FIXED-CAPITAL TABLE (p.37) DOES NOT ADD. Components 0.10 + 2.95 + 0.105 + 0.06 + 19.81
+       = 23.025, against a printed Total of 22.855; the Bank column DOES add exactly (0.01 + 2.21 +
+       0.080 + 0.04 + 14.86 = 17.20) and the promoter column does not (its "Other Fixed Assets"
+       cell reads 0.25 against a total of 0.105 and a bank share of 0.080 — plainly 0.025 with a
+       lost decimal). The Executive Summary's "Rs.23 crore" agrees with the component sum, not with
+       the printed total. Excluded from `expected` entirely.
+
+  ONE STRUCTURAL OBSERVATION AN ENGINE SHOULD SEE. Raw material is Rs 38,570 per MT against a
+  selling price of Rs 41,000 per MT — 94.1% of revenue before a single rupee of labour, power,
+  interest or depreciation. The whole eight-year projection lives in the remaining 5.9%, which is
+  why the terminal-year net margin is 1.5% (2.81 / 184.50) and why the model needs Rs 19.81 crore of
+  working capital against Rs 3.02 crore of fixed capital — 87% of the investment is inventory and
+  receivables, not plant. A capacity-ceiling engine that models only the physical ceiling and not
+  the working-capital ceiling would size this business wrong by a factor of six.

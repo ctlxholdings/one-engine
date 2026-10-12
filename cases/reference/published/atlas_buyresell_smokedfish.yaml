@@ -1,0 +1,80 @@
+meta:
+  source: "GIZ / PARSE (EUTF Sahel Cameroon), \"Étude sur les Métiers Rentables — Région du Nord\", p.52, https://trust-fund-for-africa.europa.eu/system/files/2019-05/t05-eutf-sah-cm-02-01_giz_parse_nord.pdf"
+  registry_index: 16
+  accessed: 2026-08-11
+  kind: trade_case
+  mechanism: buy_resell
+  jurisdiction: CM
+  currency: XAF
+  trade: "Poisson fumé (smoked fish processing & wholesale) — Lagdo commune, Nord region, annual cycle, 48 cartons"
+  isic_class: "1020 — Processing and preserving of fish, crustaceans and molluscs"
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────────
+  # L3: vente_annuelle's own composition is "48 cartons × 75,000 FCFA" —
+  # both quantity and unit price are printed, unlike the friperie sibling.
+  resolution: L3
+  basis: one smoked-fish wholesaler, annual cycle (48 cartons, ~1 carton/week)
+  periods: 1
+
+# One of only 2 `buy_resell` entries in the 139-entry registry — this and atlas_buyresell_friperie
+# (entry #50) are the complete set. Both are transcribed for that reason.
+
+inputs:
+  # 48 cartons × 75,000 FCFA/carton, verbatim from vente_annuelle's own
+  # composition note below
+  sale: {quantity: 48, unit: carton, price: 75000}
+  # the THREE individual cost lines. `charges_annuelles` (2,500,000) is
+  # EXCLUDED — it is the source's own printed "Total des charges" row, a
+  # rollup of exactly these three lines, not a fourth line; including it
+  # would double-count. `achat_par_carton` (50,000/carton) and
+  # `vente_par_carton` (75,000/carton) are per-unit RATES, not cost lines —
+  # the latter is the revenue side, already used as `sale.price` above.
+  costs:
+    achat_poisson: 2400000
+    transports: 50000
+    impots_et_taxes: 50000
+  stocks: []   # source prints no capex/equipment line at all — see notes
+  generators:
+    vente_annuelle: {value: 3600000, unit: "FCFA / an", composition: "48 cartons × 75,000 FCFA"}
+    vente_par_carton: {value: 75000, unit: "FCFA / carton"}
+    achat_par_carton: {value: 50000, unit: "FCFA / carton", provenance: derived,
+      composition: "2,400,000 ÷ 48 cartons — this one figure is the registry's own division, not printed as a unit price by the source (the source's own NB gives the annual total, 2,400,000, directly)"}
+    cadence_vente: {value: 1, unit: "carton / semaine", note: "source NB: \"possibilité de vendre un carton par semaine\""}
+  movements:
+    achat_poisson: {value: 2400000, unit: "FCFA / an", direction: out, kind: opex, composition: "48 cartons × 50,000"}
+    transports: {value: 50000, unit: "FCFA / an", direction: out, kind: opex}
+    impots_et_taxes: {value: 50000, unit: "FCFA / an", direction: out, kind: opex}
+    charges_annuelles: {value: 2500000, unit: "FCFA / an", direction: out, kind: opex, composition: "\"Total des charges\" (source's own table total)"}
+  gates: [acces_matiere_premiere]
+  grid: {period: annual, cycle_length: "1 an", annualization: 1}
+
+expected:
+  marge_beneficiaire_annuelle: {value: 1100000, unit: "FCFA / an", provenance: cited,
+    composition: "vente_annuelle (3,600,000) − charges_annuelles (2,500,000) = 1,100,000 — verified exact"}
+
+mapping:
+  marge_beneficiaire_annuelle: gross_margin
+
+tolerance:
+  abs: 1.0
+  why: >
+    the source prints whole francs and its own notes verify the arithmetic
+    exactly (3,600,000 − 2,500,000 = 1,100,000); any gap is real
+
+notes: |
+  Clean arithmetic: 3,600,000 − 2,500,000 = 1,100,000 exactly, no error in this one.
+
+  The registry itself marks this entry `status: partial`, and rightly — the ambiguity is
+  structural, not arithmetic:
+  - There is NO equipment/capex line anywhere in the source table. A smoked-fish wholesaler
+    needs a smoking facility (oven/rack) at minimum; the source is silent on it. The registry's
+    `gaps:` calls this explicitly: "processing equipment implicit but uncosted." Whatever the
+    trio does with this case, it should not assume zero capex just because the source prints
+    none — that is very likely an omission, not a fact about the trade.
+  - No stock-at-a-point-in-time is given for the 48 cartons: the trade buys, smokes, and
+    sells weekly across 48 weeks, so a real working-capital calendar exists (cash tied up in
+    unsold smoked stock at any moment) but the source collapses it to one annual total.
+  - ISIC classification is a judgment call the registry made, not the source: 1020 (fish
+    processing) was chosen over 4630 (wholesale of food) because smoking is a transformation
+    step, not mere resale — but the mechanism tag (`buy_resell`) treats it as pure arbitrage
+    (buy fresh at the river, sell smoked at a markup) with the transformation cost folded
+    into `achat_poisson`. Both readings are defensible; flagging so a reviewer can pick.

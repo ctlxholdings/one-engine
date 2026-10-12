@@ -1,0 +1,235 @@
+# Transcribed EXACTLY as published (the source presents this as raw
+# 10-column-worksheet Income-Statement/Balance-Sheet columns, NOT as
+# formatted financial statements). The formatted statements in this file
+# are clearly marked as a derivation, not a direct quote -- verified to
+# balance (assets = liabilities + equity) before being included.
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting",
+    Section 4.5 "Prepare Financial Statements Using the Adjusted Trial
+    Balance" -- "Your Turn: Frank's Net Income and Loss" (worksheet
+    exercise + published solution).
+    https://openstax.org/books/principles-financial-accounting/pages/4-5-prepare-financial-statements-using-the-adjusted-trial-balance
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0); see fc_openstax_clipem_cliff_barbershop.yaml for the
+    full verification note (same title, not repeated here).
+  kind: full_cycle
+  reaches: balance_sheet
+  reaches_note: >
+    The SOURCE literally publishes only 10-column-worksheet Income
+    Statement and Balance Sheet COLUMNS (debit/credit, unformatted), not
+    formatted statements -- this is one level short of Clip'em Cliff's
+    presentation. Every number needed for a fully formatted income
+    statement, statement of retained earnings, and balance sheet is
+    present and unambiguous, so `expected` below includes BOTH the
+    worksheet columns exactly as printed AND a derived, formatted set of
+    three statements (marked `derived_not_literally_printed: true`),
+    independently verified to balance (total assets = total liabilities +
+    equity, to the dollar) before inclusion.
+  mechanism: capacity_service
+  mechanism_note: >
+    A professional/investment-advisory service firm (fee-for-time
+    capacity, like Clip'em Cliff's consulting side, but a standalone
+    company here) -- included specifically because it is a NET LOSS case
+    (expenses exceed revenue), a useful edge case none of this batch's
+    other capacity_service examples exercise.
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: this is a single POINT-IN-TIME worksheet, not dated transactions —
+  # there is no beginning trial balance to roll forward from, only the
+  # one snapshot. So every asset/liability line's `opening:` is pinned
+  # DIRECTLY to its printed worksheet figure (zero invented arithmetic),
+  # and the six income-statement lines are journalled through the OWNER
+  # shorthand rather than against cash/AR/etc.: those accounts are already
+  # pinned at their final balance, and crediting/debiting them again would
+  # double-count. OWNER is equity with a non-retained-earnings nature, so
+  # routing revenue and expense through it leaves total_assets/
+  # liabilities/equity (all computed here as asset and liability sums,
+  # never as a component roll-up) untouched while still landing correctly
+  # in net_profit. The $20,000 dividend is NOT modelled for the same
+  # reason as Clip'em Cliff's: it touches none of the four figures checked
+  # (cash is already pinned post-dividend), and OWNER cannot be its own
+  # counter-account (a debit and credit on the same name is unwritable).
+
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Frank Investment Advisers"
+  period_end: "December 31, 2016"
+
+  # ── added for the T-journal reader — every asset/liability pinned to
+  #    its printed worksheet figure via `opening:`; the six P&L lines
+  #    booked through OWNER (see meta above) ─────────────────────────────
+  accounts:
+    cash: asset
+    accounts_receivable: asset
+    office_supplies: asset
+    equipment: asset
+    accumulated_depreciation_equipment: asset
+    accounts_payable: liability
+    salaries_payable: liability
+    unearned_revenue: liability
+    notes_payable_long_term: liability
+  opening:
+    cash: 28000
+    accounts_receivable: 46000
+    office_supplies: 4000
+    equipment: 28000
+    accumulated_depreciation_equipment: -16800
+    accounts_payable: 16000
+    salaries_payable: 2000
+    unearned_revenue: 1900
+    notes_payable_long_term: 23000
+  journal:
+    - {desc: "service revenue for the year", amount: 55100,
+       debit: OWNER, credit: INCOME, period: 0}
+    - {desc: "insurance expense", amount: 3000,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "salaries expense", amount: 37000,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "supplies expense", amount: 1000,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "interest expense", amount: 4000,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "rent expense", amount: 8000,
+       debit: EXPENSE, credit: OWNER, period: 0}
+    - {desc: "depreciation expense, equipment", amount: 2800,
+       debit: EXPENSE, credit: OWNER, period: 0}
+
+  # ── "Your Turn" worksheet, as published (both the exercise prompt and
+  #    its solution present identical figures) — verbatim ─────────────────
+  worksheet_income_statement_columns_usd:
+    debit_column:
+      insurance_expense: 3000
+      salaries_expense: 37000
+      supplies_expense: 1000
+      interest_expense: 4000
+      rent_expense: 8000
+      depreciation_expense_equipment: 2800
+      total_debit_column: 55800
+    credit_column:
+      service_revenue: 55100
+      total_credit_column: 55100
+
+  worksheet_balance_sheet_columns_usd:
+    debit_column:
+      cash: 28000
+      accounts_receivable: 46000
+      office_supplies: 4000
+      equipment: 28000
+      dividends: 20000
+      total_debit_column: 126000
+    credit_column:
+      accumulated_depreciation_equipment: 16800
+      accounts_payable: 16000
+      salaries_payable: 2000
+      unearned_revenue: 1900
+      notes_payable_long_term: 23000
+      common_stock: 15000
+      retained_earnings: 52000
+      total_credit_column: 126700
+
+notes: |
+  No arithmetic inconsistency found. The worksheet resolves to a NET LOSS
+  of $700 (expenses $55,800 > revenue $55,100): on a 10-column worksheet, a
+  net loss is added to the CREDIT side of the income statement columns
+  (55,100 + 700 = 55,800, balancing against the 55,800 debit side) and to
+  the DEBIT side of the balance sheet columns (126,000 + 700 = 126,700,
+  balancing against the 126,700 credit side) -- the source's own published
+  solution shows exactly this ($700 appearing on both sides), independently
+  reconciled here.
+
+  The $52,000 "Retained earnings" figure on the worksheet's balance-sheet
+  credit column is the PRE-CLOSING (i.e. beginning-of-period) balance, by
+  10-column-worksheet convention -- the worksheet is prepared before
+  closing entries move net income/loss and dividends into retained
+  earnings. Combining it with the period's net loss and dividends gives
+  ending retained earnings of 52,000 - 700 - 20,000 = 31,300 (used in the
+  derived statement of retained earnings below); this combination is
+  standard mechanics, not a literal source quote, and is flagged as such.
+
+  Noteworthy (not an error): the company paid $20,000 in dividends in a
+  year it posted a net LOSS, roughly 38% of its beginning retained
+  earnings and nearly 29x the size of the loss itself -- an aggressive
+  capital-return decision worth an engine treating as a legitimate,
+  if unusual, input rather than something to reject.
+
+  Every derived statement below was verified to balance before inclusion:
+  Total Assets $89,200 = Total Liabilities $42,900 + Total Equity $46,300,
+  to the dollar.
+
+# which of the source's own names we check against which of ours
+mapping:
+  net_income_top: net_profit
+  total_assets_top: total_assets
+  total_liabilities_top: total_liabilities
+  total_equity_top: total_equity
+
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and this worksheet was independently
+    verified to balance to the dollar before inclusion (see notes), so
+    any divergence here is real rather than display rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror income_statement_usd
+  # .net_loss and balance_sheet_usd's three totals below exactly (signed
+  # negative here, since this is a loss, matching what `net_profit` means)
+  net_income_top: -700
+  total_assets_top: 89200
+  total_liabilities_top: 42900
+  total_equity_top: 46300
+
+  # ── as literally published: worksheet columns only ──────────────────────
+  worksheet_result_as_printed:
+    net_loss_usd: 700
+    income_statement_total_both_columns_usd: 55800
+    balance_sheet_total_both_columns_usd: 126700
+
+  # ── derived (not literally printed); see notes for the combination logic ─
+  derived_not_literally_printed: true
+
+  income_statement_usd:
+    service_revenue: 55100
+    expenses:
+      insurance_expense: 3000
+      salaries_expense: 37000
+      supplies_expense: 1000
+      interest_expense: 4000
+      rent_expense: 8000
+      depreciation_expense_equipment: 2800
+      total_expenses: 55800
+    net_loss: -700
+
+  statement_of_retained_earnings_usd:
+    beginning_retained_earnings: 52000
+    less_net_loss: -700
+    less_dividends: -20000
+    ending_retained_earnings: 31300
+
+  balance_sheet_usd:
+    assets:
+      cash: 28000
+      accounts_receivable: 46000
+      office_supplies: 4000
+      equipment_gross: 28000
+      accumulated_depreciation_equipment: -16800
+      equipment_net: 11200
+      total_assets: 89200
+    liabilities:
+      accounts_payable: 16000
+      salaries_payable: 2000
+      unearned_revenue: 1900
+      notes_payable_long_term: 23000
+      total_liabilities: 42900
+    stockholders_equity:
+      common_stock: 15000
+      ending_retained_earnings: 31300
+      total_stockholders_equity: 46300
+    total_liabilities_and_equity: 89200

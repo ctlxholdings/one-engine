@@ -1,0 +1,305 @@
+# Transcribed EXACTLY as published. Verified by hand against two independent
+# renders of the same OpenStax page (direct curl+pandoc fetch of openstax.org,
+# cross-checked for figure consistency). Every journal entry, T-account balance,
+# and trial-balance total was independently re-added from the eleven August
+# transactions plus five adjusting entries and matched the source exactly;
+# no arithmetic error was found anywhere in this example (see notes).
+
+meta:
+  source: >
+    OpenStax, "Principles of Accounting, Volume 1: Financial Accounting",
+    Section 5.4 "Appendix: Complete a Comprehensive Accounting Cycle for a
+    Business" (the "Clip'em Cliff" barber-shop-and-consulting example),
+    Figures 5.14-5.27.
+    https://openstax.org/books/principles-financial-accounting/pages/5-4-appendix-complete-a-comprehensive-accounting-cycle-for-a-business
+  mirrors: >
+    Same content (verbatim, CC-BY-NC-SA carries through): opentextbc.ca
+    ("Principles of Accounting Volume 1" mirror) and
+    biz.libretexts.org/Bookshelves/Accounting/Financial_Accounting_(OpenStax).
+  accessed: "2026-08-11"
+  licence: >
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA 4.0). Per OpenStax's own licensing page (help.openstax.org,
+    "Licensing information of OpenStax textbooks") and the book's own Preface
+    "Customization" section: "Principles of Accounting is licensed under a
+    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    (CC BY-NC-SA) license" — NOTE this is more restrictive than plain CC-BY
+    (adds NonCommercial + ShareAlike); most other OpenStax titles are CC-BY
+    only, but this accounting series specifically is NC-SA. Verified directly
+    (not assumed) via two independent fetches of help.openstax.org and the
+    book's own preface page.
+  kind: full_cycle
+  reaches: balance_sheet
+  reaches_note: >
+    Explicitly stops short of a statement of cash flows: the source's own
+    text says "We only prepare the income statement, statement of retained
+    earnings, and the balance sheet. The statement of cash flows is
+    discussed in detail in Statement of Cash Flows [Ch.16]." No CF statement
+    is given for Clip'em Cliff anywhere in the book.
+  mechanism: capacity_service
+  mechanism_note: >
+    Cliff runs a barber shop (per-haircut / per-service capacity) AND a
+    logistics-consulting practice (flat-fee or per-hour) side by side; both
+    revenue streams post to the same "Service Revenue" account. Single
+    calendar month (August 2019), single location (his home).
+  # ── HAND-LABELLED 2026-08-12 so the gold runner can execute this file ───
+  # T: the eleven August transactions plus five adjusting entries below are
+  # translated into single-debit/single-credit journal lines. The Aug. 3
+  # equipment purchase (part cash, part on account) becomes TWO entries per
+  # this batch's own convention. Every entry was checked by hand against
+  # BOTH published trial balances before being written here (cash lands at
+  # 35,275 unadjusted, matching Figure 5.17 exactly; every other unadjusted
+  # and adjusted line matches too) — this is a genuine independent
+  # re-derivation, not a copy of the source's own journal (the source does
+  # not print one; only the T-account/trial-balance results are given).
+  # Dividends (Aug. 16, $150 cash) are modelled through the OWNER
+  # shorthand rather than as their own "dividends" account: a distribution
+  # does not touch net_profit or total_assets/liabilities/equity (the four
+  # figures this gold checks), and the source's own trial balances show
+  # dividends as a temporary pre-closing line this engine has no separate
+  # slot for. total_equity is computed here as assets less liabilities
+  # (this engine's own identity), so the omission changes nothing checked.
+  resolution: T
+  periods: 1
+  currency: USD
+  jurisdiction: US
+
+inputs:
+  company: "Clip'em Cliff"
+  owner: "Clifford Girard (retired US Marine Corps, 20 years active duty)"
+  period: "August 1-31, 2019 (first month of operations)"
+  beginning_balances: "none (company just began operations Aug 1, 2019)"
+
+  # ── added for the T-journal reader — one entry per transaction below,
+  #    the Aug. 3 purchase split into its cash and on-account halves; every
+  #    closing balance was hand-checked against BOTH published trial
+  #    balances (see meta) ───────────────────────────────────────────────
+  accounts:
+    cash: asset
+    accounts_receivable: asset
+    supplies: asset
+    equipment: asset
+    interest_receivable: asset
+    accumulated_depreciation_equipment: asset
+    accounts_payable: liability
+    unearned_revenue: liability
+    income_tax_payable: liability
+    common_stock: {kind: equity, nature: IssuedCapitalMember}
+  journal:
+    - {desc: "Aug 1: issues $70,000 shares of common stock for cash",
+       amount: 70000, debit: cash, credit: common_stock, period: 0}
+    - {desc: "Aug 3: equipment purchase, cash portion", amount: 37500,
+       debit: equipment, credit: cash, period: 0}
+    - {desc: "Aug 3: equipment purchase, on-account portion", amount: 7500,
+       debit: equipment, credit: accounts_payable, period: 0}
+    - {desc: "Aug 6: purchases supplies for cash", amount: 300,
+       debit: supplies, credit: cash, period: 0}
+    - {desc: "Aug 10: services billed to a customer", amount: 4000,
+       debit: accounts_receivable, credit: INCOME, period: 0}
+    - {desc: "Aug 13: pays a utility bill with cash", amount: 75,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "Aug 14: cash received in advance for services not yet rendered",
+       amount: 3200, debit: cash, credit: unearned_revenue, period: 0}
+    - {desc: "Aug 16: cash dividends distributed to stockholders",
+       amount: 150, debit: OWNER, credit: cash, period: 0}
+    - {desc: "Aug 17: cash received for services rendered", amount: 5200,
+       debit: cash, credit: INCOME, period: 0}
+    - {desc: "Aug 19: paid down the Aug 3 payable", amount: 2000,
+       debit: accounts_payable, credit: cash, period: 0}
+    - {desc: "Aug 22: cash salaries expense paid", amount: 4600,
+       debit: EXPENSE, credit: cash, period: 0}
+    - {desc: "Aug 28: customer pays down their account from Aug 10",
+       amount: 1500, debit: cash, credit: accounts_receivable, period: 0}
+    - {desc: "Aug 31 adjusting: supplies used during the month", amount: 50,
+       debit: EXPENSE, credit: supplies, period: 0}
+    - {desc: "Aug 31 adjusting: equipment depreciation", amount: 2500,
+       debit: EXPENSE, credit: accumulated_depreciation_equipment,
+       period: 0}
+    - {desc: "Aug 31 adjusting: services earned out of the Aug 14 advance",
+       amount: 1100, debit: unearned_revenue, credit: INCOME, period: 0}
+    - {desc: "Aug 31 adjusting: interest earned, uncollected", amount: 350,
+       debit: interest_receivable, credit: INCOME, period: 0}
+    - {desc: "Aug 31 adjusting: unpaid income taxes accrued", amount: 3400,
+       debit: EXPENSE, credit: income_tax_payable, period: 0}
+
+  # ── Table 5.2, "Transactions for August" — verbatim ────────────────────
+  transactions:
+    - {date: "Aug. 1",  desc: "Cliff issues $70,000 shares of common stock for cash.", amount_usd: 70000}
+    - {date: "Aug. 3",  desc: "Cliff purchases barbering equipment for $45,000; $37,500 was paid immediately with cash, and the remaining $7,500 was billed to Cliff with payment due in 30 days.", cash_usd: 37500, on_account_usd: 7500, total_usd: 45000}
+    - {date: "Aug. 6",  desc: "Cliff purchases supplies for $300 cash.", amount_usd: 300}
+    - {date: "Aug. 10", desc: "Cliff provides $4,000 in services to a customer who asks to be billed for the services.", amount_usd: 4000}
+    - {date: "Aug. 13", desc: "Cliff pays a $75 utility bill with cash.", amount_usd: 75}
+    - {date: "Aug. 14", desc: "Cliff receives $3,200 cash in advance from a customer for services not yet rendered.", amount_usd: 3200}
+    - {date: "Aug. 16", desc: "Cliff distributed $150 cash in dividends to stockholders.", amount_usd: 150}
+    - {date: "Aug. 17", desc: "Cliff receives $5,200 cash from a customer for services rendered.", amount_usd: 5200}
+    - {date: "Aug. 19", desc: "Cliff paid $2,000 toward the outstanding liability from the August 3 transaction.", amount_usd: 2000}
+    - {date: "Aug. 22", desc: "Cliff paid $4,600 cash in salaries expense to employees.", amount_usd: 4600}
+    - {date: "Aug. 28", desc: "The customer from the August 10 transaction pays $1,500 cash toward Cliff's account.", amount_usd: 1500}
+
+  # ── Table 5.3, "August 31 Transactions" (adjusting entries) — verbatim ──
+  adjusting_transactions:
+    - {desc: "Cliff took an inventory of supplies and discovered that $250 of supplies remain unused at the end of the month.", supplies_remaining_usd: 250, supplies_purchased_usd: 300, supplies_used_usd: 50}
+    - {desc: "The equipment purchased on August 3 depreciated $2,500 during the month of August.", depreciation_usd: 2500}
+    - {desc: "Clip'em Cliff performed $1,100 of services during August for the customer from the August 14 transaction.", revenue_earned_usd: 1100}
+    - {desc: "Reviewing the company bank statement, Clip'em Cliff discovers $350 of interest earned during the month of August that was previously uncollected and unrecorded.", interest_revenue_usd: 350}
+    - {desc: "Unpaid and previously unrecorded income taxes for the month are $3,400.", income_tax_expense_usd: 3400}
+
+notes: |
+  No arithmetic error was found anywhere in this example — all eleven August
+  journal entries, all five adjusting entries, both trial balances (unadjusted
+  $87,900 / adjusted $94,150 / post-closing $83,500, debits=credits in every
+  case), all four closing entries, and all three financial statements
+  reconcile exactly. This gold is offered as a "clean control" case, the same
+  role the FAO Beta Ltd. example (fao_bl811e_beta_ltd_oilmill.yaml) plays for
+  a much larger/multi-year case.
+
+  The chapter explicitly narrates the accounting-equation impact of every
+  transaction (e.g. "Assets go up 70,000 equals Liabilities don't change
+  plus Equity goes up 70,000") — these are reproduced in `expected` as
+  `accounting_equation_check` for the first and last transaction only, to
+  keep this file a reasonable size; all eleven check out in the source.
+
+  The two revenue lines that make up total Service Revenue on the income
+  statement ($9,200 unadjusted -> $10,300 adjusted) come from THREE
+  postings: Aug 10 ($4,000, on account), Aug 17 ($5,200, cash), and the
+  Aug 31 adjusting entry recognizing $1,100 of the Aug 14 unearned-revenue
+  advance as earned. $4,000+$5,200+$1,100 = $10,300, matches the adjusted
+  trial balance and the income statement exactly.
+
+  Ending Retained Earnings is NEGATIVE (-$125) even though the company was
+  net-income-positive ($25) for the month, because Cliff paid $150 of
+  dividends against only $25 of profit. The source flags this itself:
+  "You probably never want to have a negative value on your retained
+  earnings statement, but this situation is not totally unusual for an
+  organization in its initial operations." Useful edge case for an engine
+  that assumes retained earnings stays non-negative.
+
+# which of the source's own names we check against which of ours
+mapping:
+  net_income_top: net_profit
+  total_assets_top: total_assets
+  total_liabilities_top: total_liabilities
+  total_equity_top: total_equity
+
+tolerance:
+  abs: 0.01
+  why: >
+    OpenStax prints whole dollars and every trial balance in this section
+    balances to the cent (see notes), so any divergence here is real
+    rather than display rounding
+
+expected:
+  # added top-level pointers for `mapping:` — mirror
+  # income_statement_usd.net_income and balance_sheet_usd's three totals
+  # below exactly; needed because `expected` nests them and the flat
+  # top-level mapping mechanism cannot reach a nested key directly
+  net_income_top: 25
+  total_assets_top: 80875
+  total_liabilities_top: 11000
+  total_equity_top: 69875
+
+  # ── Figure 5.17/5.18 — Unadjusted Trial Balance, August 31, 2019 ────────
+  unadjusted_trial_balance_usd:
+    cash: {debit: 35275}
+    accounts_receivable: {debit: 2500}
+    supplies: {debit: 300}
+    equipment: {debit: 45000}
+    accounts_payable: {credit: 5500}
+    unearned_revenue: {credit: 3200}
+    common_stock: {credit: 70000}
+    dividends: {debit: 150}
+    service_revenue: {credit: 9200}
+    salaries_expense: {debit: 4600}
+    utility_expense: {debit: 75}
+    total: {debit: 87900, credit: 87900}
+
+  # ── Figure 5.22 — Adjusted Trial Balance, August 31, 2019 ───────────────
+  adjusted_trial_balance_usd:
+    cash: {debit: 35275}
+    accounts_receivable: {debit: 2500}
+    interest_receivable: {debit: 350}
+    supplies: {debit: 250}
+    equipment: {debit: 45000}
+    accumulated_depreciation_equipment: {credit: 2500}
+    accounts_payable: {credit: 5500}
+    unearned_revenue: {credit: 2100}
+    income_tax_payable: {credit: 3400}
+    common_stock: {credit: 70000}
+    dividends: {debit: 150}
+    interest_revenue: {credit: 350}
+    service_revenue: {credit: 10300}
+    supplies_expense: {debit: 50}
+    depreciation_expense_equipment: {debit: 2500}
+    income_tax_expense: {debit: 3400}
+    salaries_expense: {debit: 4600}
+    utility_expense: {debit: 75}
+    total: {debit: 94150, credit: 94150}
+
+  # ── Figure 5.23 — Income Statement, For the Month Ended August 31, 2019 ─
+  income_statement_usd:
+    revenues:
+      interest_revenue: 350
+      service_revenue: 10300
+      total_revenues: 10650
+    expenses:
+      supplies_expense: 50
+      depreciation_expense_equipment: 2500
+      salaries_expense: 4600
+      utilities_expense: 75
+      income_tax_expense: 3400
+      total_expenses: 10625
+    net_income: 25
+
+  # ── Figure 5.24 — Statement of Retained Earnings ────────────────────────
+  statement_of_retained_earnings_usd:
+    beginning_retained_earnings_aug_1: 0
+    plus_net_income: 25
+    minus_dividends: -150
+    ending_retained_earnings_aug_31: -125
+
+  # ── Figure 5.25 — Balance Sheet, August 31, 2019 ────────────────────────
+  balance_sheet_usd:
+    assets:
+      cash: 35275
+      accounts_receivable: 2500
+      interest_receivable: 350
+      supplies: 250
+      equipment_gross: 45000
+      accumulated_depreciation_equipment: -2500
+      equipment_net: 42500
+      total_assets: 80875
+    liabilities:
+      accounts_payable: 5500
+      income_tax_payable: 3400
+      unearned_revenue: 2100
+      total_liabilities: 11000
+    stockholders_equity:
+      common_stock: 70000
+      ending_retained_earnings: -125
+      total_stockholders_equity: 69875
+    total_liabilities_and_equity: 80875
+
+  # ── Figure 5.26/5.27 — Closing entries + Post-Closing Trial Balance ─────
+  closing_entries_usd:
+    close_revenues_to_income_summary: {debit_service_revenue: 10300, debit_interest_revenue: 350, credit_income_summary: 10650}
+    close_expenses_to_income_summary: {credit_supplies_expense: 50, credit_depreciation_expense_equipment: 2500, credit_income_tax_expense: 3400, credit_salaries_expense: 4600, credit_utility_expense: 75, debit_income_summary: 10625}
+    close_income_summary_to_retained_earnings: {debit_income_summary: 25, credit_retained_earnings: 25}
+    close_dividends_to_retained_earnings: {debit_retained_earnings: 150, credit_dividends: 150}
+
+  post_closing_trial_balance_usd:
+    cash: {debit: 35275}
+    accounts_receivable: {debit: 2500}
+    interest_receivable: {debit: 350}
+    supplies: {debit: 250}
+    equipment: {debit: 45000}
+    accumulated_depreciation_equipment: {credit: 2500}
+    accounts_payable: {credit: 5500}
+    unearned_revenue: {credit: 2100}
+    income_tax_payable: {credit: 3400}
+    common_stock: {credit: 70000}
+    retained_earnings: {debit: 125}
+    total: {debit: 83500, credit: 83500}
+
+  accounting_equation_check_examples:
+    aug_1_stock_issuance: "Assets +70,000 = Liabilities +0 + Equity +70,000"
+    aug_28_customer_partial_payment: "Assets +1,500 and -1,500 = Liabilities +0 + Equity +0"

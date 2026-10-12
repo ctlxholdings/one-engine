@@ -1,0 +1,156 @@
+id: bld_boq_house_southafrica
+title: "Priced Bill of Quantities — new residential house, 100 Erica Road, Heatherlands, George, Western Cape, South Africa"
+
+meta:
+  source:
+    - "'Sample of Bills of Quantities House Client.pdf', a Standard System of Measurement (SSM/JBCC-style) priced Bill of Quantities for a new house at 100 Erica Road, Heatherlands, George, Western Cape. Bills 1-17 (Preliminaries, Concrete/Formwork/Reinforcement, Brickwork, Roofing, Carpentry & Joinery, Plastering, Tiling, Plumbing & Drainage, Electrical, Painting, etc.), each with Item / Description / Quantity / Unit / Rate / Amount and a page-by-page 'carried to collection' / 'carried to summary' structure, closing on a single Summary page. https://pdfcoffee.com/sample-of-bills-of-quantities-house-clientpdf-pdf-free.html"
+  licence: "Publicly hosted document-sharing page (pdfcoffee.com); no explicit reuse licence stated on the page. Transcribed here, with full citation, for engine-verification/research use only."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12, part of the construction/long-cycle harvest ──
+  # TWO INDEPENDENT extractions of this document were cross-checked against
+  # each other before any number here was trusted (see notes): an LLM-read
+  # summary of the rendered page, and a raw curl + regex grep of the
+  # underlying HTML/table markup. Every figure below appears VERBATIM,
+  # digit-for-digit, in BOTH extractions.
+  resolution: L2   # a bill-of-quantities total IS a Leontief matrix (many
+  #  quantity x rate lines summing to a total), but the CHECKED figures here
+  #  are the source's own printed BILL SUBTOTALS (Preliminaries, Builder's
+  #  Works, Site Works, Budgetary Allowances -> Subtotal -> VAT -> Total),
+  #  not a single quantity x price -- L2, the same resolution landbank_beef's
+  #  gold uses for its own itemised-with-subtotals structure.
+  basis: "one new house, George, Western Cape, South Africa — full build contract, VAT-inclusive"
+  periods: 1
+  mechanism: make_to_order   # create x physical, "assemble" transformation:
+  #  a recipe (the bill itself) assembles priced materials and labour into
+  #  a specific client's house — the same cell menuiserie_metallique.yaml
+  #  occupies for a made-to-order metal workshop
+  jurisdiction: ZA
+  currency: ZAR
+
+inputs:
+  # the FOUR bill-level sections the Summary page totals, verbatim
+  costs:
+    preliminaries_and_general: 300202.00
+    builders_works: 1167157.41
+    site_works: 8797.32
+    budgetary_allowances: 199831.50
+  vat_rate: 0.14
+
+  # ── a Leontief-flavoured sample FROM WITHIN Builder's Works (Bill 4,
+  # BRICKWORK), transcribed because it is exactly what this harvest exists
+  # to find: a materials-and-labour RATE BUILD-UP for laying 1000 bricks,
+  # not merely a total. Read with more caution than the totals above (see
+  # notes: this is the harder of the two independent extractions to align
+  # cell-by-cell in a dense, rowspan-heavy source table) — quantities and
+  # rates are asserted only where BOTH extractions agree digit-for-digit;
+  # no amount is asserted unless it is independently computable from an
+  # agreed quantity x rate.
+  brickwork_resource_analysis:
+    walling_half_brick_incl_brickforce_m2: 571
+    walling_one_brick_incl_brickforce_m2: 102
+    walling_full_brick_m2: 482
+    cement_50kg_bags:
+      qty: 414
+      rate_zar_per_bag: 65.00
+    stock_bricks:
+      qty_thousands: 69          # i.e. 69,000 bricks
+      rate_zar_per_1000: 1029.00
+    brickwork_labour:
+      qty_thousands: 69
+      rate_zar_per_1000: 1200.00
+    brickforce_75mm:
+      qty_rolls: 21.04
+      rate_zar_per_roll: 29.00
+    # cement bags per 1000 bricks laid — a genuine, computed (not printed)
+    # Leontief coefficient from the two agreed quantities above:
+    #   414 bags / 69 (thousand bricks) = 6.0 bags per 1000 bricks laid
+    cement_bags_per_1000_bricks: 6.0
+
+notes: |
+  EXTRACTION METHOD, stated because this is a scraped/rendered HTML page,
+  not a clean PDF: the page was read twice, independently — once via an
+  LLM content-fetch that rendered a markdown table, once via `curl` to the
+  raw HTML followed by a plain regex tag-strip and grep for the exact
+  digit strings. The SUMMARY figures (below) and the brickwork qty/rate
+  pairs above appear character-for-character identical in both. Where the
+  two extractions could not be cross-confirmed (the exact quantity of
+  building sand in the brickwork build-up), the number is OMITTED rather
+  than asserted from a single, lower-confidence read — "never invent a
+  coefficient" extends to never asserting one this transcription cannot
+  independently confirm twice.
+
+  RE-DERIVED THE CHAIN BY HAND:
+    - Subtotal = 300,202.00 + 1,167,157.41 + 8,797.32 + 199,831.50 =
+      1,675,988.23 -- EXACT match to the printed Subtotal, and to the raw
+      HTML's own printed "1675988.23" appearing THREE separate times on
+      the Summary page (subtotal before VAT, and twice more in the VAT/
+      total rows below it).
+    - VAT = 1,675,988.23 x 14% = 234,638.35 (234,638.3522 rounds to the
+      printed cents) -- matches.
+    - Total Contract Sum = 1,675,988.23 + 234,638.35 = 1,910,626.58 --
+      EXACT match to the printed Total, confirmed against the raw HTML's
+      own printed "1910626.58".
+    - cement bags per 1000 bricks: 414 / 69 = 6.0 exactly -- a round
+      number, consistent with a real specified mix rate rather than a
+      transcription artefact (a rate build-up derived from an odd
+      quantity would rarely land on a clean 6.0).
+
+  A COST-ONLY GOLD, like FAO's broiler and RuralInvest's own worked
+  profiles: this is a private residential build with no separate resale
+  or rental revenue published anywhere in the document, so `cost_of_sales`
+  is the entire checked figure (the ex-VAT Subtotal) and there is no
+  `revenue` line to map — the client's payment IS the cost, seen from the
+  household's side of the transaction; VAT and the incl-VAT Total Contract
+  Sum are recorded in `expected` for completeness but are not part of the
+  checked `cost_of_sales` mapping (VAT is a REGIME pass-through, not a
+  build cost, and this gold does not attempt a REGIME check).
+
+  A `settle:` (RULE 4) CANDIDATE WAS FOUND, BUT COULD NOT BE PARAMETERISED.
+  The Preliminaries (Section A, clause 14.8, "Retention") state a genuine
+  staged-payment schedule: "The employer shall retain ten per cent (10%) of
+  the value of certificate up to a limit of five per cent (5%) of the
+  contract amount to the date of practical completion. Two and a half per
+  cent (2,5%) of such value after the date of practical completion to, but
+  not including, the date of issue of the final payment certificate." This
+  is EXACTLY `settle:`'s shape -- a share paid now, a share released at one
+  later date, a further share at a second later date -- and it is the first
+  real retention clause found in 50 golds. But `settle`'s `offset` is
+  measured in GRID PERIODS, and this document states the retention's SHARES
+  (10% -> capped 5% -> half released at practical completion, half at final
+  completion) without stating either date as a number of weeks or months:
+  the "Programme"/"Contract Period" schedule that would normally carry that
+  figure is either not filled in on this sample document or not captured by
+  either extraction. Generic JBCC-family defaults were searched for and
+  found to vary by edition and project rather than being a single citable
+  constant, so no offset is asserted here rather than inventing one. The
+  retention SHARES (a 5%-of-contract-amount cap, split 2.5/2.5 across two
+  dates) are recorded in this note as a genuine finding, worth returning to
+  if a fully-scheduled BOQ (with a stated contract period) is found.
+
+# a cost-only gold: cost_of_sales is the only canon figure this checks
+mapping:
+  subtotal_ex_vat_zar: cost_of_sales
+
+# every figure on the Summary page carries two decimals (cents) and the
+# hand re-derivation above reconciles EXACTLY (0 gap) at every step
+tolerance:
+  abs: 0.01
+  why: >
+    every figure on the Summary page is printed to the cent and the hand
+    re-derivation above reconciles exactly (0 gap) at every step, confirmed
+    against two independent extractions of the same source; any gap beyond
+    a cent is real
+
+expected:
+  subtotal_ex_vat_zar:
+    value: 1675988.23
+    label_as_printed: "SUB-TOTAL"
+    composition_as_printed: "preliminaries_and_general (300,202.00) + builders_works (1,167,157.41) + site_works (8,797.32) + budgetary_allowances (199,831.50)"
+  vat_zar:
+    value: 234638.35
+    label_as_printed: "VALUE ADDED TAX (14%)"
+    composition_as_printed: "subtotal_ex_vat_zar x 14%"
+  total_contract_sum_zar:
+    value: 1910626.58
+    label_as_printed: "TOTAL TO FORM OF TENDER"
+    composition_as_printed: "subtotal_ex_vat_zar + vat_zar"

@@ -1,0 +1,357 @@
+id: cap_driedtomato_unido_upperegypt
+title: "UNIDO pre-feasibility study, Upper Egypt — solar/hot-air tomato dehydration plant: 2,000 t/annum nameplate on 260 working days and a single shift, but the financial model runs 600 t/annum (30% of the ceiling), with the 11-kg-in / 1-kg-out conversion printed separately"
+
+# ── WHY THIS FILE EXISTS ────────────────────────────────────────────────
+# THE BIGGEST PUBLISHED GAP IN THIS HARVEST, and the source never remarks on
+# it. UNIDO proposes "a processing capacity of about 2,000 tons/annum on a
+# single shift with 260 working days basis" (p.122) and then builds five
+# years of accounts on 600 tons/annum (p.129). Nobody reconciles the two.
+# The plant is modelled at 30% of its own stated nameplate for its entire
+# projected life -- the short side, wide open, in an agency pre-feasibility.
+#
+# It also prints the CONVERSION as its own factor -- 11 kg of fresh tomato
+# per 1 kg of dried -- separately from both the capacity and the price. That
+# is a three-factor chain (ceiling -> input tonnage -> output tonnage ->
+# revenue) with every link published, which is rare.
+
+meta:
+  source:
+    - "United Nations Industrial Development Organization (UNIDO), 'Pre-Feasibility Studies for 5 Crops for Processing in Upper Egypt' (SALASEL programme), study 4 of 5: DRIED TOMATOES. p.122 ('Inputs / Proposed Capacity': the 11:1 conversion, the 15-20 day drying time, the 2,000 tons/annum single-shift 260-working-day capacity, and the Beni Suef governorate context with 627,837 t of 2009/2010 tomato production); p.127 (Total Investment); p.128 (Financing Structure; Depreciation Charges); p.129 ('Revenues & Costs' — the five-year table this gold checks); p.130 ('Projected Profit & Loss Statement'); p.131 (Statement of Change in Working Capital). Assumption text for administrative (3%), marketing (7%) and energy expenses, depreciation rates and the 20% Egyptian income tax appears in the same study's narrative. https://downloads.unido.org/ot/52/29/5229965/Pre-Feasibility%20Studies%20for%205%20Crops%20for%20Processing%20in%20Upper%20Egypt.pdf"
+  accessed: "2026-08-12"
+  licence: >
+    UNIDO technical-cooperation publication, publicly downloadable from UNIDO's own document
+    repository (downloads.unido.org). No explicit reuse licence is stated in the document. Figures
+    transcribed here, with full citation, for engine-verification/research use only — the same
+    treatment this corpus gives FAO, IFAD and GIZ studies already in `cases/golds/`.
+  kind: trade_case
+  # L3: the source prints a QUANTITY (dried tomatoes, ~55 t) and a PRICE
+  # (LE 22,000/t) as separate figures and multiplies them into a Revenue line
+  # that re-computes exactly, in each of five years with the price escalated
+  # 5% a year. A capacity ceiling is stated strictly above the quantity.
+  resolution: L3
+  basis: "one dehydration facility, one operating year — YEAR 1 of the printed five-year projection, chosen because it is the only year whose input tonnage, output tonnage and unit cost are all printed at base (unescalated) values; all five years transcribed"
+  periods: 1
+  mechanism: make_to_order
+  cell: "create x physical (Manufacturer)"
+  transformation: >
+    NOT CLEANLY ANY OF grow / assemble / extract / identity / separate — FLAGGED PER THE HARVEST
+    BRIEF. Dehydration removes 91% of the input MASS and sells the remaining 9%; nothing is added
+    (so not assemble), nothing is grown (not grow), nothing is taken from a stock or deposit (not
+    extract), and mass is emphatically not preserved (not identity). It is formally a `separate` —
+    water is separated from solids — but the classic separate case (this corpus's
+    sep_fao_bl811e_oilmill / sep_msucot24_cotton_ginning) exists to allocate joint cost across TWO
+    OR MORE PRICED co-products, and here the separated fraction is water: worthless, unsold,
+    vented. So the joint-cost machinery a `separate` triggers has nothing to allocate. PROPOSED
+    NAME FOR THE MISSING KIND: `concentrate` — one input, one priced output, a published yield
+    ratio strictly less than 1, and NO co-product. It behaves like a yield loss on an assemble but
+    it is the whole point of the process rather than a defect in it, and the ratio (11:1) is a
+    physical property of the crop, not an efficiency the operator can improve. Other cases that
+    would land here: sun-drying dates and figs (two of this same study's other four crops),
+    salt evaporation, juice concentrate, milk powder, cassava into gari.
+  jurisdiction: EG
+  currency: EGP
+  trade: "tomato dehydration facility, Beni Suef governorate, Upper Egypt"
+
+inputs:
+  # ══ THE CEILING — p.122, stated with both of its factors ══
+  capacity:
+    processing_capacity_t_per_annum:
+      value: 2000
+      unit: "tonnes/annum"
+      label_as_printed: "The facility is proposed to have a processing capacity of about 2,000 tons/annum on a single shift with 260 working days basis"
+      note: "the units are ambiguous in the source: 'processing capacity' most naturally reads as FRESH tomato throughput, which is the tonnage the plant physically handles. Read either way it dwarfs the 600 t the model uses — as fresh input, the model runs at 30% of nameplate; as dried output it would run at 2.7%."
+    working_days_per_year: {value: 260, unit: "days/yr", label_as_printed: "260working days basis"}
+    shifts_per_day: {value: 1, unit: "shifts/day", label_as_printed: "on a single shift"}
+    implied_daily_rate:
+      value: 7.69
+      unit: "tonnes/day"
+      composition: "DERIVED: 2,000 / 260 = 7.69 t/day on one shift. Not printed."
+  # ══ WHAT THE MODEL ACTUALLY RUNS — p.129, five year-columns ══
+  throughput:
+    fresh_tomatoes_t_per_annum:
+      value: 600
+      unit: "tonnes/annum"
+      label_as_printed: "Tomatoes: Quantity Ton  600  (the same value in all five year-columns)"
+      utilisation_vs_nameplate: "600 / 2,000 = 30.0% — DERIVED; the source never divides the two, and never mentions that its model does not fill its plant"
+  conversion:
+    fresh_per_dried_kg:
+      value: 11
+      unit: "kg fresh / kg dried"
+      label_as_printed: "in order to produce one kilogram of dried tomatoes, 11 kg of fresh tomatoes are needed"
+      cited: "p.122"
+    output_percentage_as_printed:
+      value: 9
+      unit: "%"
+      label_as_printed: "Output Percentage  9%  (all five year-columns, p.129)"
+      note: "1/11 = 9.0909%, displayed as 9%. The one-decimal-of-a-percent difference is what makes the printed output tonnage and the printed revenue disagree by 1 tonne — see notes."
+    drying_time: {value: "15-20 days", label_as_printed: "15-20 days are required for the drying process"}
+  prices:
+    dried_tomato_selling_price_per_ton:
+      values_by_year: [22000, 23100, 24255, 25468, 26741]
+      unit: "EGP/tonne"
+      label_as_printed: "Tomatoes Selling Price per Ton"
+      basis_as_printed: "estimated selling price at LE 22,000 per ton comparing to international price of US$ 4 per KG for the export quantity and LE 15 per KG in the local market. The price is calculated based on assumption of 75% export and 25% to be sold in the local market (p.125)"
+      escalation: "5% a year, stated in the study's assumptions and confirmed by hand: 22,000 x 1.05 = 23,100; x1.05 = 24,255; x1.05 = 25,468.25 -> 25,468; x1.05 = 26,741.66 -> 26,741"
+    fresh_tomato_cost_per_ton:
+      values_by_year: [1000, 1050, 1103, 1158, 1216]
+      unit: "EGP/tonne"
+      label_as_printed: "Cost Per Ton"
+      escalation: "5% a year: 1,000 / 1,050 / 1,102.5->1,103 / 1,157.6->1,158 / 1,215.5->1,216"
+  # engine convention: quantity x price, for the CHECKED year (year 1)
+  # quantity is the DRIED output — the priced good — not the fresh input
+  sale: {quantity: 54.5454545, unit: "tonnes dried", price: 22000}
+  # ── the DRIED TOMATOES chapter's own assumption text, pp.125-126 (NOT the
+  # neighbouring Frozen Vegetables chapter's, which states different rates
+  # for energy and administration — a trap this gold was re-checked against)
+  cost_rules_as_printed:
+    packaging_cost: "The cost of packaging for the output of Tomatoes is estimated at 15% of the fresh tomatoes cost"
+    transportation_cost: "The cost of transportation of the tomatoes to the processing facility is estimated at 15% of the fresh tomatoes cost"
+    administrative_expenses: "Administrative expenses are calculated at 3% of total revenue"
+    energy_and_utilities: "The total cost of energy and utilities is calculated to be 2% of total"
+    marketing_expenses: "Marketing expenses are calculated to be 7% of total sales revenue"
+    labor: "two operating cycle, each extend for a period of three months ... 12 daily workers at LE 25 per worker per day, in addition to a supervisor with a monthly pay of LE 1,500 ... escalated by 5% annually"
+    depreciation: "buildings 5%, equipment 20%, straight line"
+    amortization: "pre-opening expenses fully amortized in the first year of operation"
+    income_tax: "20% annually (Egyptian tax law)"
+
+  # THE RUNNER'S COST LINES — the three components the source itself prints
+  # under Total Cost on p.129, transcribed line by line and NOT as the printed
+  # 780 total (a total would double-count against its own parts). The figures
+  # are the same ones already carried in `expected.five_year_table` and in
+  # `expected.total_cost_year_1.composition_as_printed`; nothing new is read
+  # out of the source here.
+  #
+  # BASIS: EGP THOUSAND, YEAR 1 of the five-year projection — the year
+  # `meta.basis` names, and the same basis and year as the revenue this gold
+  # maps (total_revenue_year_1 = 1,200 EGP thousand). Years 2-5 are printed
+  # too and stay in `expected.five_year_table`; only the checked year belongs
+  # here, because a single-period template would otherwise be handed five
+  # years of cost against one year of revenue.
+  #
+  # DELIBERATELY EXCLUDED: the six OPERATING expense lines (labor 54,
+  # depreciation 66, administrative 36, marketing 84, land rent 13, energy &
+  # utilities 24 = 277) and the year-1 amortization of 116. The source strikes
+  # its own Gross Margin at 1,200 - 780, i.e. it treats only these three as
+  # the cost OF THE GOODS; folding the operating block in would compare a
+  # figure the source never published.
+  #
+  # HAND CHECK: 600 + 90 + 90 = 780 — EXACT against the printed Total Cost.
+  costs:
+    direct_cost: 600
+    packaging_cost: 90
+    transportation_cost: 90
+
+expected:
+  # ── THE CHECKED YEAR: year 1 ──
+  net_dried_tomato_quantity_year_1:
+    value: 55
+    unit: "tonnes"
+    label_as_printed: "Net Tomatoes Quantity (Ton)  55"
+    hand_check: >
+      600 / 11 = 54.545 t, which displays as 55. But the printed Output Percentage of 9% gives
+      600 x 0.09 = 54 t. The revenue line settles it at 54.545 (see below). The printed 55 is the
+      11:1 ratio rounded UP; the printed 9% is the same ratio rounded DOWN. Both are displays of
+      one underlying 54.5454..., and neither displayed figure reproduces the printed revenue.
+  total_revenue_year_1:
+    value: 1200
+    unit: "EGP thousand"
+    label_as_printed: "Tomatoes Revenue / Total Revenue  1,200"
+    hand_check: >
+      54.5454 t x LE 22,000/t = LE 1,200,000 = 1,200 thousand — EXACT. Using the printed 55 t gives
+      1,210; using the printed 9% (54 t) gives 1,188. Only the unrounded 600/11 reproduces the
+      printed revenue, in all five years (year 2: 54.5454 x 23,100 = 1,260.0 EXACT; year 3 x 24,255
+      = 1,323.0; year 4 x 25,468 = 1,389.2 -> 1,389; year 5 x 26,741 = 1,458.6 -> 1,459).
+  total_cost_year_1:
+    value: 780
+    unit: "EGP thousand"
+    label_as_printed: "Total Cost"
+    composition_as_printed: "Direct Cost 600 + Packaging Cost 90 + Transportation Cost 90"
+    hand_check: "direct 600 t x LE 1,000/t = 600 EXACT; packaging 15% x 600 = 90 EXACT; transport 15% x 600 = 90 EXACT; total 780 EXACT"
+  gross_margin_year_1:
+    value: 420
+    unit: "EGP thousand"
+    label_as_printed: "Gross Margin (p.129) / Gross Profit (p.130)"
+    hand_check: "1,200 - 780 = 420 — EXACT"
+  total_operating_expenses_year_1:
+    value: 277
+    unit: "EGP thousand"
+    label_as_printed: "Total Operating Expenses"
+    composition_as_printed: "Labor 54 + Depreciation 66 + Administrative 36 + Marketing 84 + Land Rent 13 + Energy & Utilities 24"
+    hand_check: "54 + 66 + 36 + 84 + 13 + 24 = 277 EXACT. Admin 3% x 1,200 = 36 EXACT; marketing 7% x 1,200 = 84 EXACT; energy & utilities 2% x 1,200 = 24 EXACT — all three rates re-derived from the chapter's own assumption text (pp.125-126) and all three land on the printed cell."
+  profit_before_interest_and_tax_year_1:
+    value: 143
+    unit: "EGP thousand"
+    hand_check: "420 - 277 = 143 — EXACT"
+  net_profit_before_tax_year_1:
+    value: 27
+    unit: "EGP thousand"
+    hand_check: "143 - amortization 116 = 27 — EXACT"
+  net_profit_year_1:
+    value: 21
+    unit: "EGP thousand"
+    hand_check: "27 - tax 5 = 22 against a printed 21. Tax at 20% of 27 = 5.4, displayed as 5; the underlying pre-tax figure is 26.x, so 21 is right and 27/5 are the rounded displays. A 1-thousand-LE display artefact, not an error."
+  total_depreciation_per_year:
+    value: 66
+    unit: "EGP thousand"
+    hand_check: "building 420 x 5.0% = 21 EXACT + equipment 226 x 20.0% = 45.2 -> 45; 21 + 45 = 66 EXACT"
+  total_investment:
+    value: 901
+    unit: "EGP thousand"
+    label_as_printed: "Total Investment  901"
+    hand_check: >
+      fixed assets: land 100 + building 420 + equipment 226 = 746 EXACT against the printed Total
+      Fixed Assets. Pre-opening: 10 + 50 + 50 + 6 + 0 = 116 EXACT. 746 + 116 + initial working
+      capital 40 = 902, against a printed 901. One LE-thousand short — display rounding of the
+      three components. Financing Structure (p.128) prints 901 as 100% paid-up capital, no debt,
+      which is why the P&L carries zero interest in all five years.
+  # ── ALL FIVE YEARS (EGP thousand, pp.129-130) ──
+  five_year_table:
+    fresh_tomatoes_ton:          [600, 600, 600, 600, 600]
+    cost_per_ton:                [1000, 1050, 1103, 1158, 1216]
+    output_percentage:           [9, 9, 9, 9, 9]
+    net_dried_quantity_ton:      [55, 55, 55, 55, 55]
+    selling_price_per_ton:       [22000, 23100, 24255, 25468, 26741]
+    total_revenue:               [1200, 1260, 1323, 1389, 1459]
+    direct_cost:                 [600, 630, 662, 695, 729]
+    packaging_cost:              [90, 95, 99, 104, 109]
+    transportation_cost:         [90, 95, 99, 104, 109]
+    total_cost:                  [780, 819, 860, 903, 948]
+    gross_profit:                [420, 441, 463, 486, 511]
+    labor_cost:                  [54, 57, 57, 57, 57]
+    depreciation:                [66, 66, 66, 66, 66]
+    administrative_expenses:     [36, 38, 40, 42, 44]
+    marketing_expenses:          [84, 88, 93, 97, 102]
+    land_rent:                   [13, 14, 14, 15, 16]
+    energy_and_utilities:        [24, 25, 26, 28, 29]
+    total_operating_expenses:    [277, 288, 296, 305, 314]
+    profit_before_interest_tax:  [143, 153, 167, 182, 197]
+    amortization:                [116, 0, 0, 0, 0]
+    net_profit_before_tax:       [27, 153, 167, 182, 197]
+    taxes:                       [5, 31, 33, 36, 39]
+    net_profit:                  [21, 123, 134, 145, 157]
+
+mapping:
+  # MIXED BASIS (2026-08-20). Revenue COMPUTES raw EGP (tonnes x EGP/tonne),
+  # so it needs the source's column scale ("EGP thousand") declared; the cost
+  # lines were TRANSCRIBED at the printed '000 values and flow through
+  # unchanged, so their comparison is printed-vs-printed — scale would double
+  # convert. The scale is the source's own column header, not a judgement.
+  total_revenue_year_1: {canon: revenue, scale: 1000}
+  total_cost_year_1: cost_of_sales
+
+tolerance:
+  abs: 1
+  why: >
+    The entire table is printed in LE THOUSAND with no decimals, so every cell already carries up to
+    LE 500 of display rounding and several visibly do (net profit 21 against a computed 22; total
+    investment 901 against a component sum of 902; equipment depreciation 45.2 shown as 45). One
+    LE-thousand is the smallest threshold that does not fail on the source's own display grid, and
+    it is 0.08% of the LE 1,200 thousand revenue line. Every figure this gold MAPS (revenue 1,200,
+    total cost 780) re-computes EXACTLY at that grid, so a real divergence still surfaces — the
+    slack absorbs the display, not an error.
+
+notes: |
+  THE SHORT SIDE, and this source's version of it is the widest in the harvest. The two figures sit
+  seven pages apart and are never compared:
+
+      p.122  "The facility is proposed to have a processing capacity of about 2,000 tons/annum
+              on a single shift with 260 working days basis"
+      p.129  "Tomatoes: Quantity Ton   600   600   600   600   600"
+
+  The model buys, dries and sells 600 tonnes of fresh tomato a year for all five projected years —
+  30.0% of the plant UNIDO proposes building. Nothing in the study explains the gap: it is not a
+  ramp (the tonnage is flat from year 1), not a demand ceiling (Beni Suef alone produced 627,837 t
+  of tomatoes in 2009/2010, per the same page — a thousand times the plant's intake), and not a
+  price effect (the price escalates 5% a year with no volume response). The plant sits idle 70% of
+  the time and the study returns a healthy profit anyway, which is the interesting part: the fixed
+  cost of the idle 1,400 tonnes of capacity — LE 66 thousand of depreciation on LE 646 thousand of
+  building and equipment — is small enough that the project clears without ever filling itself.
+  A capacity engine sizing this business from the nameplate would over-buy tomatoes by 233%.
+
+  p.122's own sentence invites the expansion and prices it: "Production is directly proportional to
+  size of the dehydrating unit and according to the increase of budget, facility, production
+  capacity and thus profits could be duplicated." The study asserts linear returns to scale and
+  then models a single point on the line, 30% of the way along.
+
+  THE CONVERSION IS PUBLISHED FIVE TIMES AND NO TWO AGREE. This is the corpus's cleanest small
+  example of a rounding chain, and it is worth the space:
+
+      as a RATIO      p.122  "11 kg of fresh tomatoes" per kg dried   ->  1/11 = 9.0909%
+      as a PERCENT    p.129  "Output Percentage  9%"                  ->  600 x 0.09 = 54.0 t
+      as a TONNAGE    p.129  "Net Tomatoes Quantity (Ton)  55"        ->  the same 54.545 rounded up
+      in PROSE        p.125  "available for sale is 56 tons"          ->  neither 54 nor 54.545
+      as REVENUE      p.129  "Tomatoes Revenue  1,200"                ->  1,200,000 / 22,000 = 54.545 t
+
+  Only the revenue preserves the true figure. An engine fed the printed 9% under-reports revenue by
+  LE 12 thousand (1.0%); fed the printed 55 t it over-reports by LE 10 thousand (0.8%). The source's
+  own spreadsheet plainly held 600/11 to full precision and displayed it two different wrong ways
+  in adjacent rows of one table. Same pattern as
+  cell_hotel_home2suites_graham.yaml's occupancy/ADR/REVPAR chain and
+  bfap_maize_bloedrivier_2024_25.yaml's 2-Rand gap; recorded here because the DIRECTION of the two
+  roundings is opposite, which is what makes it visible at all.
+
+  ARITHMETIC VERIFIED BY HAND — what reconciles EXACTLY (all five years unless noted):
+    - revenue = 600/11 tonnes x the printed price, every year
+    - direct cost = 600 t x the printed cost/tonne, every year
+    - packaging and transportation each = 15% of direct cost, every year (90/95/99/104/109 twice)
+    - total cost = direct + packaging + transport, every year
+    - gross profit = revenue - total cost, every year
+    - administrative = 3% of revenue and marketing = 7% of revenue, every year
+    - total operating expenses = the six components, every year
+    - PBIT = gross profit - operating expenses, every year
+    - net profit before tax = PBIT - amortization, every year
+    - depreciation = 420 x 5% + 226 x 20% = 66, every year
+    - both escalations (5% on price, 5% on input cost) reproduce to the printed whole number
+    - fixed assets 100 + 420 + 226 = 746; pre-opening 10 + 50 + 50 + 6 + 0 = 116
+
+  ARITHMETIC VERIFIED BY HAND — what does NOT:
+    1. THE NARRATIVE ADDS A FOURTH, DIFFERENT OUTPUT TONNAGE. p.125: "The total quantity of Dried
+       Tomatoes available for sale is 56 tons as a result of fresh Tomatoes quantity of 600 tons
+       based on output percentage of 9% of dried tomatoes." 600 x 9% is 54, not 56; 600/11 is
+       54.545, not 56. The sentence states its own inputs and then names a number neither of them
+       produces. Together with the table's 55 and the revenue's 54.545, ONE physical quantity is
+       published as 54, 54.545, 55 and 56 within seven pages.
+    2. TOTAL INVESTMENT IS 901, THE COMPONENTS SUM TO 902 (746 + 116 + 40). One LE-thousand of
+       display rounding across three subtotals.
+    3. NET PROFIT YEAR 1 IS 21, AND 27 - 5 = 22. Same cause: the underlying pre-tax profit is a
+       little under 27 and the tax a little over 5.
+    4. LABOR ESCALATES ONCE AND THEN STOPS, and it omits the supervisor. The stated basis is "two
+       operating cycle, each extend for a period of three months", 12 daily workers at LE 25/day
+       plus one supervisor at LE 1,500/month, "escalated by 5% annually". 12 x 25 x 180 days =
+       LE 54,000 — EXACTLY the printed year-1 figure, which means the supervisor's LE 9,000
+       (1,500 x 6 months) is left out of every year. And the printed row runs 54 / 57 / 57 / 57 /
+       57: one 5% step from year 1 to year 2 and none thereafter, against an explicit annual
+       escalation that would give 57 / 60 / 63 / 66. Understates year-5 labour by LE 9 thousand on
+       the escalation and LE 9 thousand on the supervisor.
+    (Note 4 is the only one of the four that compounds over the projection. Note that energy &
+    utilities, which the neighbouring Frozen Vegetables chapter of the same study sets at 3%, is
+    correctly stated at 2% in THIS chapter and correctly billed at 2% — checked because a
+    cross-chapter mix-up was the obvious hazard in a five-study document.)
+
+  WHAT IS DELIBERATELY NOT TRANSCRIBED: the study's IRR for THIS crop (the narrative gives a 45%
+  IRR for the study's FROZEN VEGETABLES project, a different one of the five, and this corpus does
+  not carry over a return figure from a neighbouring chapter), and the Statement of Change in
+  Working Capital (p.131), whose receivable/inventory/payable day-counts are stated but whose
+  closing balances I could not tie to the P&L from the pages read.
+
+  SIBLING CASES IN THE SAME DOCUMENT, not harvested here but available at the same URL and the same
+  quality: Pomegranate Processing (revenue 3,300 -> 4,011 LE'000 over five years, net profit 284 ->
+  500), Dates Drying (935 -> 1,136; 23 -> 148), and Frozen Vegetables (five vegetables at 1,000 t
+  of fresh input each, on "4 tons of fresh vegetables for each of the 5 selected items and based on
+  250 working days per year" = a ceiling that binds EXACTLY at 100%, with per-vegetable output
+  percentages of 70/90/85/90/85% — a five-line yield table that would make a good companion gold
+  for the `concentrate` transformation flagged in `meta.transformation`).
+
+  BASIS FINDING, surfaced when the cost lines were added (2026-08-12): THE TWO SIDES OF THIS GOLD
+  ARE PRINTED IN DIFFERENT UNITS AND THE FILE CARRIES BOTH. Everything in `expected` — and now
+  everything in `inputs.costs` — is in EGP THOUSAND, because that is the unit of the p.129 table
+  (revenue 1,200; total cost 780). But `inputs.sale` is in ABSOLUTE EGP: 54.5454545 tonnes at
+  LE 22,000 per tonne, which multiplies out to 1,200,000, not 1,200. An L3 runner that derives
+  revenue from `sale` therefore produces a revenue figure 1,000x the one `mapping` checks it
+  against, while the cost side agrees exactly. Both readings are the source's own — LE 22,000/ton
+  is printed in whole Egyptian pounds per tonne on p.129 and the revenue row beside it is printed
+  in LE thousand — so this is a unit seam in the transcription, not an arithmetic error, and
+  NOTHING IS CHANGED HERE TO HIDE IT: no figure in `sale`, `expected` or `costs` has been touched.
+  Recorded so the revenue divergence is read as what it is (a units seam) rather than as an engine
+  defect. The cost side, which is what this addition exists to make runnable, is on one basis with
+  the mapped cost total and reconciles to the LE-thousand.

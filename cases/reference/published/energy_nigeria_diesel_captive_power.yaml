@@ -1,0 +1,184 @@
+id: energy_nigeria_diesel_captive_power
+title: "World Bank/Triple E Systems, 'Diesel Power Generation: Inventories and Black Carbon Emissions in Nigeria' (2014) — telecommunications-sector self-generation, and the report's own fuel-to-energy equation"
+
+meta:
+  source:
+    - "Triple E Systems (Felix Dayo, lead author), for The World Bank, 'Diesel Power Generation: Inventories and Black Carbon Emissions in Nigeria' (c) 2014 International Bank for Reconstruction and Development / The World Bank. Table 3 p.10 (genset inventory), Table 4 p.11 (assumptions), Table 5 p.11 and Table 15 p.23 (generation, 2012), Annex 2(e) p.40 (fuel-to-energy equation and constants). https://documents1.worldbank.org/curated/en/853381501178909924/pdf/117772-WP-PUBLIC-52p-Report-DG-Set-Study-Nigeria.pdf"
+  licence: "World Bank public-disclosure document; 'may be reproduced, in whole or in part, for noncommercial purposes as long as full attribution... is given' (rights & permissions page)."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 — BONUS 5TH GOLD ───────────────────────
+  # A genuinely AFRICAN captive-power source (not a mini-grid — every
+  # site here is a business or tower running its OWN diesel genset
+  # because the national grid cannot be relied on, per p.1: "demand for
+  # electricity in Nigeria is currently estimated to range between
+  # 8,000-10,000 MW while available capacity on the national grid
+  # averages around 3,500 MW"), and a DIFFERENT physics angle from the
+  # other four golds: not a per-unit L/kWh spec sheet, but a NATIONAL
+  # ACCOUNTING exercise — site count x average monthly litres x an
+  # assumed genset efficiency, run through the report's OWN published
+  # fuel-to-energy formula, reproducing a published national total.
+  resolution: L3   # site count x monthly litres, run through the
+  #                   source's own published physics equation to a GWh
+  #                   total the source ALSO prints directly — genuinely
+  #                   L4-flavoured (a real conversion physics equation
+  #                   with named constants) transcribed at L3
+  #                   granularity, since the equation itself is carried
+  #                   in inputs rather than run by the engine
+  basis: "Nigeria's telecommunications sector, calendar year 2012 — 24,252 diesel-genset tower/base-station sites nationwide"
+  periods: 1
+  # MECHANISM — same argument as the diesel genset chart
+  # (energy_diesel_genset_fuel_consumption.yaml): create x physical,
+  # transformation "assemble" (a metered Leontief recipe: diesel in,
+  # electricity out). Every site here generates for ITS OWN consumption
+  # (self-generation/captive power, never sold on), so strictly no
+  # exchange of ownership occurs at all — the closer read is that each
+  # site is its own vertically-integrated generator-and-consumer, and
+  # `make_to_order` describes the PHYSICAL conversion each site performs
+  # on itself, not a market transaction. Tagged for consistency with the
+  # sibling diesel gold; the self-consumption point is the finding this
+  # gold adds to the vocabulary discussion (see notes).
+  mechanism: make_to_order
+  jurisdiction: NG
+  currency: USD
+
+inputs:
+  telecom_sector_2012:
+    on_grid_sites: {value: 12560, unit: sites}
+    off_grid_sites: {value: 11692, unit: sites}
+    total_sites: {value: 24252, unit: sites}
+    on_grid_diesel_l_per_month: {value: 1500, unit: "L/month/site"}
+    off_grid_diesel_l_per_month: {value: 1700, unit: "L/month/site"}
+    genset_fuel_efficiency: {value: 0.35, unit: fraction,
+      note: "assumed HIGHER than the 25% used for the manufacturing and residential sectors elsewhere in this report, 'given the fact that most of gensets in this sector are new'"}
+    genset_capacity_mix_pct: {kva_10_to_30: 80, kva_30_to_60: 15, kva_300_to_2000: 5}
+    source: "Table 3 p.10, Table 4 p.11"
+  # the report's OWN published conversion equation (Annex 2(e), p.40):
+  #   Energy (MWh) = Fuel density (kg/L) x Net Calorific Value (kJ/kg)
+  #                   x Genset Efficiency (%) / (1000 x 3600)
+  # — this yields the ENERGY PER LITRE constant; total energy = litres x
+  # this constant. Constants as printed, source cited by the report as
+  # IEA (2010) Oil Information 2010:
+  fuel_conversion_constants:
+    diesel_density_kg_per_l: {value: 0.844}
+    diesel_ncv_kj_per_kg: {value: 43380}
+    genset_efficiency_manufacturing_residential: {value: 0.25,
+      note: "'this efficiency accounts for the fact that many of the generators in Nigeria are old and poorly maintained' (Low-Carbon Development Opportunities for Nigeria, Cervigni/Rogers/Dvorak 2013, cited by this report)"}
+    source: "Annex 2(e), p.40"
+  diesel_pump_price_usd_per_l:
+    value: 1.0
+    label_as_printed: "at the current pump price of nearly $1 per liter of diesel, it costs about twice as much to run a diesel genset compared with the currently subsidized power from the grid"
+    source: "p.1"
+
+expected:
+  generation_on_grid_gwh_2012:
+    value: 852.22
+    label_as_printed: "Sites With Grid Connections — TOTAL"
+    source: "Table 5, p.11 (HP<600: 767.00 + HP>=600: 85.22)"
+  generation_off_grid_gwh_2012:
+    value: 793.32
+    label_as_printed: "Sites Not Connected to the Grid — TOTAL"
+    source: "Table 5, p.11 (HP<600: 713.99 + HP>=600: 79.33)"
+  generation_total_gwh_2012:
+    value: 1645.54
+    label_as_printed: "TOTAL, Table 5"
+    cross_check: "Table 15 (p.23) prints the same total sector figure independently rounded to 1,645.5 GWh/yr, split HP<600 1,481 / HP>=600 164.6 — the two tables agree to display rounding, unlike several other sources in this corpus (BFAP, GIZ onion) whose internal cross-checks do NOT reconcile"
+  bc_emissions_telecom_kt_per_yr:
+    value: 1.22
+    label_as_printed: "the telecommunications sector is a major source of BC emissions from the use of diesel gensets (1.22 kilotons per year based on 2012 estimates)"
+    source: "p.24 — printed for context; not itself re-derived here (emissions-factor physics, not the fuel/energy physics this gold checks)"
+
+mapping: {}
+# a national self-generation inventory, not a trade with a
+# buyer/seller — no CANON revenue/cost_of_sales/margin concept applies.
+
+tolerance:
+  abs: 0.5
+  why: >
+    the report's own two tables (5 and 15) agree with each other only to
+    the tenths place (852.22+793.32=1645.54 vs the independently-rounded
+    1,645.5), so half a GWh is the report's OWN internal display
+    rounding; my hand re-derivation below sits within 0.5% of the TOTAL
+    at that same tolerance band, but the ON-GRID/OFF-GRID split does NOT
+    reconcile at any tolerance — recorded as a real finding, not
+    papered over by loosening this number
+
+notes: |
+  RE-DERIVED BY HAND, using ONLY this report's own equation and own constants (Annex 2(e), p.40)
+  applied to its own site-count/consumption inputs (Table 3/4, p.10-11) — no external calorific-
+  value or efficiency figure imported from anywhere else:
+
+    energy per litre at 35% genset efficiency (the telecom-sector assumption)
+      = (0.844 kg/L x 43,380 kJ/kg x 0.35) / 3,600 kJ/kWh = 3.5596 kWh/L
+
+    on-grid litres/yr  = 12,560 sites x 1,500 L/month x 12 = 226,080,000 L
+    off-grid litres/yr = 11,692 sites x 1,700 L/month x 12 = 238,516,800 L
+    total litres/yr    = 464,596,800 L
+
+    on-grid GWh  = 226,080,000 x 3.5596 kWh/L / 1,000,000 = 804.75 GWh
+    off-grid GWh = 238,516,800 x 3.5596 kWh/L / 1,000,000 = 849.02 GWh
+    TOTAL        = 1,653.76 GWh
+
+  THE TOTAL REPRODUCES TO WITHIN 0.5% (1,653.76 vs the published 1,645.54) — the tightest
+  independent re-derivation in this whole energy batch, using nothing but numbers and an equation
+  the source itself prints. This corroborates the report's own physics chain (site count x
+  litres/month x published density/NCV/efficiency constants) end to end.
+
+  BUT THE SPLIT IS REVERSED, and this is the real finding, not the close total: my re-derivation
+  puts OFF-GRID generation (849.02 GWh) ABOVE on-grid (804.75 GWh) — off-grid sites burn more
+  litres per site (1,700 vs 1,500/month) and, applied uniformly, that pushes more GWh their way
+  despite there being fewer off-grid sites (11,692 vs 12,560). The PUBLISHED table shows the
+  opposite ranking: on-grid 852.22 GWh > off-grid 793.32 GWh. A single blended 35% efficiency
+  applied uniformly to both populations cannot produce the source's own printed ranking — the
+  report's actual Table 5 computation must be splitting each population further by the stated
+  genset-capacity mix (80% at 10-30 kVA, 15% at 30-60 kVA, 5% at 300-2,000 kVA, p.10) with a
+  DIFFERENT effective rate per size class, which Table 4's single printed "35%" figure does not by
+  itself disclose enough to reproduce. Recorded exactly as found: the published TOTAL is
+  reproducible from the published inputs and equation; the published SPLIT is not, from what this
+  report prints. This is the diesel-report analogue of the BFAP/GIZ small-gap findings elsewhere in
+  this corpus — a real, quantified, un-papered-over gap in a source's own internal reconciliation.
+
+  THE AGE/MAINTENANCE FINDING — the sharpest number in this gold. The SAME report uses TWO
+  different genset-efficiency assumptions for two different populations: 35% for telecom (newer
+  fleet) and 25% for manufacturing/residential ("many of the generators in Nigeria are old and
+  poorly maintained"). Run through the SAME published equation, 25% efficiency implies 0.3933
+  L/kWh against 35%'s 0.2809 L/kWh — an old/poorly-maintained genset burns 40% MORE diesel per kWh
+  than a newer one, by this report's own two stated assumptions. Cross-checked against the
+  diesel-genset chart gold in this same batch (energy_diesel_genset_fuel_consumption.yaml): that
+  source's OEM-datasheet-based 0.25 L/kWh full-load baseline implies a ~39.3% thermal efficiency —
+  matching this report's OWN 25%-efficiency figure almost exactly (39.3% vs 25%... NOTE: these are
+  NOT the same 25% — the coincidence is that ASO Genset's 0.25 L/kWh figure, read through THIS
+  report's density/NCV constants, backs out to a 39.3% engine efficiency, which is a MODERN
+  well-maintained unit's efficiency, not this report's "old and poorly maintained" 25% figure. The
+  two sources are therefore in AGREEMENT about the SHAPE of the story (old/poorly-maintained
+  African self-generation fleets run meaningfully less efficiently than an OEM spec sheet
+  promises) even though their specific numbers describe different populations of engine.
+
+  WHY A "CAPTIVE POWER" READING, not "mini-grid": every site in this report generates for its own
+  consumption — a factory, a cell tower, a household — with no onward sale to a third customer.
+  That is the textbook shape of captive/self-generation the harvest brief names as an acceptable
+  alternative to a mini-grid, and it is the reason `mapping: {}` above: there is no revenue side to
+  this business at all, by construction, which is itself worth stating plainly rather than treating
+  as a gap in the transcription.
+
+  NO COST SIDE: this gold gets no `inputs.costs:` block, and the contrast with its sibling
+  energy_diesel_genset_fuel_consumption.yaml is the whole argument. That gold IS runnable on a
+  single cost line (114.00 = 76 L/hr x $1.50/L) because the SOURCE ITSELF performs that
+  multiplication and prints the result — its $0.38/kWh is that same product divided by the source's
+  own 300 kW. Nothing was composed that the source had not already composed.
+  Here nothing of the kind exists. The report prints litres per site per month (1,500 / 1,700),
+  site counts (12,560 / 11,692) and a pump price of "nearly $1 per liter" — and never multiplies
+  any pair of them. To reach a fuel cost I would have to compose THREE times over: sites x
+  litres/month x 12 to get annual litres (my product, shown in the notes above as 464,596,800 L),
+  then x a price the report states only as an approximation inside a qualitative sentence ("nearly
+  $1", used to make the point that self-generation "costs about twice as much" as subsidised grid
+  power, p.1). That yields ~$464.6 million — a figure with no printed counterpart anywhere in the
+  document, so RULE 2's re-add check has nothing to verify it against and RULE 4 has no printed
+  cost-total field to bind to `cost_of_sales`.
+  What the report DOES publish is a fuel-and-energy inventory: site counts, litres per site,
+  density, net calorific value, two genset efficiency assumptions, and generation in GWh, with its
+  own conversion equation. What it does NOT publish is any cost or revenue for any site, sector or
+  year. The original `mapping: {}` comment already states the deeper reason, and it is the right
+  one: every site here generates for its OWN consumption, so there is no sale and no trade — the
+  absence of a cost of sales is a property of captive self-generation, not a gap in transcription.
+  (Note in passing, changing nothing: `meta.currency: USD` is declared while every figure this gold
+  actually carries is litres, GWh or kilotons. Left exactly as the author set it per RULE 6.)

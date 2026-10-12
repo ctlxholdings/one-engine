@@ -1,0 +1,211 @@
+id: energy_esmap_africa_minigrid_2019
+title: "World Bank ESMAP Global Facility on Mini Grids — 53-mini-grid cost database (16 in Africa) and one detailed HOMER-modelled case"
+
+meta:
+  source:
+    - "Chris Greacen (World Bank Treasury, Global Facility on Mini Grids), 'Mini Grid Costing and Innovation — Mini Grids for Half a Billion People', presentation to the World Bank ESMAP Learning Event, Accra, Ghana, 26 June 2019. Retrieved via mirror: https://observatoire-europe-afrique-2030.org/wp-content/uploads/2024/01/World-Bank-2020-capital-cost-electricity-price-.pdf (slide deck, PDF page numbers cited below = printed slide numbers 1-13)."
+  licence: "World Bank Group public presentation; no explicit reuse licence stated on the deck itself."
+  kind: trade_case
+  # ── HAND-LABELLED 2026-08-12 ────────────────────────────────────────
+  # A STATISTICS gold, not a single project's P&L: the headline figures
+  # (cost per firm kW, cost per customer, CAPEX composition, LCOE range)
+  # are cross-project weighted statistics over 53 real mini-grids (37
+  # Asia, 16 Africa; 38 of the 53 are PV-diesel HYBRIDS — this is the
+  # ONE gold in the harvest combining solar capacity/availability physics
+  # AND a diesel genset line item in the SAME cost stack). ONE specific
+  # case is narrated in enough detail (slide 13) to carry its own
+  # `sale:` block: 294 firm kW, 1,099 customers, a stated 22% load
+  # factor, and its own HOMER-modelled LCOE of $0.55/kWh.
+  resolution: L2
+  basis: "cross-project weighted statistics over 53 solar and solar-diesel mini-grids (16 in Africa), plus one detailed case (Firm kW 294, 1,099 customers)"
+  periods: 1
+  # MECHANISM — the one gold in this harvest where `capacity_service`
+  # (rent_use x HUMAN, per mechanisms.py's own cell definition) is worth
+  # weighing seriously against `make_to_order`, and the reason is
+  # CONTRACTUAL, not technological. A mini-grid does not sell a
+  # commodity into a competitive wholesale market the way a utility-scale
+  # IPP does (energy_irena_solar_pv_2023.yaml, energy_irena_hydropower_
+  # 2023.yaml): it sells a METERED CONNECTION to a CAPTIVE local customer
+  # base who cannot switch supplier, billed per kWh off a fixed local
+  # facility — structurally closer to the atlas_capacityservice_layers
+  # precedent in this corpus (a fixed-capacity facility, batch/period-
+  # costed) than to a commodity sale. Both readings are defensible; I
+  # tag `capacity_service` HERE specifically (and `make_to_order` for
+  # the wholesale-technology golds) to make the point explicit: the
+  # right cell depends on the OFFTAKE RELATIONSHIP (captive metered
+  # service vs wholesale commodity sale), not on the generation
+  # technology — the same physical plant could sit in either cell
+  # depending on who it sells to and how.
+  mechanism: capacity_service
+  jurisdiction: ASK_country   # the 53-project statistics span many
+  #   countries (37 Asia, 16 Africa) with no single jurisdiction; the one
+  #   detailed case (slide 13) does not name its country either
+  currency: USD
+
+inputs:
+  dataset:
+    total_minigrids: 53
+    asia: 37
+    africa: 16
+    pv_diesel_hybrids: 38
+    solar_only: 15
+    source: "slide 1"
+  cost_per_firm_kw_usd:
+    range_lo: 1400
+    range_hi: 22000
+    average: 6200
+    median: 3900
+    average_ex_outliers: 4300      # projects above $8,000/kW removed
+    median_ex_outliers: 3900
+    label_as_printed: "total cost of mini grids per kW(firm) as a function of firm power output"
+    firm_kw_definition: "the sum of the mini grid's battery inverter and diesel generator capacity"
+    source: "slides 2-3"
+  cost_per_customer_usd:
+    range_lo: 730
+    range_hi: 5000
+    average: 2000
+    median: 1600
+    average_ex_high_cluster: 1670
+    median_ex_high_cluster: 1430
+    source: "slide 4"
+  capex_composition_pct:
+    pv_module: 11
+    pv_racks: 3
+    pv_controller: 5
+    genset: 3
+    battery_inverter: 9
+    battery: 15
+    ems_and_monitoring: 1
+    power_house: 7
+    distribution_grid: 14
+    public_lighting: 1
+    meters_and_service_connections: 4
+    customer_systems: 3
+    logistics: 6
+    installation: 8
+    project_development: 9
+    source: "slide 5, 'portion of CAPEX costs' waterfall — biggest three: solar PV modules, batteries, distribution grid, averaging 11%, 15% and 14%"
+  homer_lcoe_range_usd_per_kwh:
+    lo: 0.55
+    hi: 0.85
+    mean: 0.66
+    n_projects_modelled: 9
+    label_as_printed: "HOMER modeling of LCOE: $0.55 to $0.85/kWh"
+    source: "slide 11 — 9 real mini-grids from the 53-project database, modelled in NREL's HOMER tool using each project's own investment costs, equipment lifetimes, GPS-located solar resource data, O&M costs and fuel costs"
+  detailed_case:
+    firm_kw: 294
+    customers: 1099
+    load_factor: 0.22
+    lcoe_usd_per_kwh: 0.55
+    label_as_printed: "this is a typical village residential profile ... using this load profile, which has a load factor of 22%, the LCOE is about $0.55/kWh"
+    source: "slides 12-13 — the lowest-LCOE project of the 9 HOMER-modelled cases"
+  # `sale:` — the ONE case in this harvest where a specific project's own
+  # capacity AND its own load factor AND its own LCOE (read here as the
+  # tariff a mini-grid operator must charge to break even, exactly as
+  # IRENA's LCOE is defined) are all published together, so a quantity x
+  # price chain can be built without inventing any of the three numbers.
+  # annual_kwh is DERIVED (294 kW x 0.22 x 8,760 h/yr), the same
+  # quantity-from-published-rate move the BFAP gold's yield x price
+  # already makes — not a new kind of inference.
+  sale:
+    quantity: 566981     # 294 x 0.22 x 8760, rounded to the kWh
+    unit: kWh
+    price: 0.55
+
+expected:
+  annual_revenue_at_lcoe_usd:
+    value: 311839.55
+    composition_as_printed: "566,981 kWh x $0.55/kWh = $311,839.55 (my own composition — the source narrates the LCOE and the load factor together but never multiplies them out into an annual figure itself)"
+  productive_use_lcoe_reduction_pct:
+    lo: 0.11
+    hi: 0.25
+    label_as_printed: "adding productive load to shift from a 22% to a 40% load factor reduces LCOE 11-25 percent through better asset utilization"
+    source: "slide 12"
+  nigeria_solar_module_benchmark_usd_per_kwp:
+    value: 402
+    label_as_printed: "an October 2018 study of Nigerian mini grids benchmarked solar modules at $402 per kWp"
+    source: "slide 6 — the one explicitly-named-country data point in the whole deck"
+
+mapping: {}
+# LCOE-as-tariff is a MODELLING READING of "the price a mini-grid must
+# charge to recover cost", not an observed market transaction the way
+# BFAP's SAFEX price is — so `annual_revenue_at_lcoe_usd` is not mapped
+# to CANON `revenue`. No cost breakdown exists for this SPECIFIC 294 kW
+# project (only cross-project capex-per-kW averages), so there is no
+# `cost_of_sales` to check it against either; a margin computed from the
+# cross-project average capex applied to THIS project's own kW would be
+# approximating one project with another population's statistics, which
+# is exactly the kind of substitution this corpus's own conventions
+# refuse to do silently (see energy_irena_hydropower_2023.yaml's Africa
+# LCOE note for the same discipline applied the other way).
+
+tolerance:
+  abs: 0.01
+  why: >
+    the deck's own numbers are read off slides to 2-3 significant
+    figures (294, 1099, 22%, $0.55) rather than a printed exact-cent
+    table, so a cent is the display rounding on the one figure this
+    gold computes from them; the DERIVED annual kWh and revenue figures
+    are mine, not the source's own printed totals, and are flagged as
+    such above rather than tolerance-padded to look like a transcription
+
+notes: |
+  RE-DERIVED BY HAND: 294 kW x 0.22 = 64.68 kW average load; 64.68 kW x 8,760 h/yr = 566,676.8
+  kWh/yr. Recomputing more precisely with the unrounded product (294 x 0.22 x 8760 = 566,980.8)
+  gives 566,981 kWh when rounded to the nearest whole kWh, the figure used above; at $0.55/kWh
+  that is $311,839.44 (a 11-cent difference from the value above depending on where the 566,980.8
+  fractional kWh is rounded — noted rather than silently reconciled, since neither figure is the
+  source's own printed total).
+
+  WHY THIS DECK, over the two candidate diesel-genset-adjacent African sources this harvest also
+  turned up: (1) a Nigeria diesel-genset national inventory study (World Bank/Triple E Systems,
+  2014, "Diesel Power Generation: Inventories and Black Carbon Emissions in Nigeria") has real
+  Nigerian numbers (telecom-sector genset fleet: 24,252 sites, 1,500-1,700 L diesel/month,
+  1,645.54 GWh/yr generated in 2012) but publishes NO tariff or capex — a pure fuel/emissions
+  inventory, cost-side-only in a different sense than the IRENA golds (no $/kW or $/kWh at all,
+  only litres and GWh). It is a strong SOURCE but a weaker GOLD for THIS harvest's brief (capacity,
+  availability, a worked cash comparison), so it was researched but not written up as a sixth
+  file; flagged here so the material is not lost. (2) this ESMAP deck instead gives capex, LCOE,
+  AND a load-factor-linked tariff together, for real mini-grids, 16 of them African, with one
+  Nigerian benchmark named explicitly (slide 6) — richer material for the brief's specific ask.
+
+  WHAT THIS SOURCE DOES NOT GIVE, stated plainly: no single project's full annual cash flow
+  (revenue, opex, debt service) — only cross-project capex/LCOE STATISTICS plus one project's
+  capacity/load-factor/LCOE triple. This is presentation material (a conference deck with speaker
+  notes, "(90 sec)" cues visible in the source text), not a peer-reviewed report or an audited
+  project account — a genuinely different evidentiary tier from the IRENA report's two golds in
+  this batch, and weaker than the diesel genset chart's own worked arithmetic. Used anyway because
+  it is the only source this harvest located that is BOTH explicitly Africa-inclusive (16/53
+  projects, one named Nigerian benchmark) AND publishes a tariff-shaped number (LCOE tied to a
+  specific project's own capacity and load factor) rather than a pure cost-side rate table.
+
+  THE HYBRID PHYSICS: 38 of the 53 mini-grids are PV-diesel hybrids, and the CAPEX composition
+  (slide 5) shows a real "genset" line at 3% of total cost sitting alongside "PV module" (11%),
+  "battery" (15%) and "battery inverter" (9%) — the only source in this harvest where solar
+  capacity/availability physics and a diesel Leontief fuel line would need to compose in ONE
+  template, if a full-grammar version were built (not attempted here — see the report's account of
+  why the two full-grammar templates chosen were diesel and solar standalone, not this composite).
+
+  NO COST SIDE: this gold gets no `inputs.costs:` block, and it is the one file of the seven where
+  that needs arguing rather than merely stating, because a cost breakdown DOES exist on slide 5.
+  Three separate reasons it cannot become `costs:`, any one of which is sufficient.
+  (a) WRONG UNIT. `capex_composition_pct` is expressed in PERCENT of capex, while the only revenue
+  in this gold (`sale:` 566,981 kWh x $0.55/kWh) is in USD. RULE 7 forbids mixing the two bases,
+  and there is no printed USD total for the composition to be a percentage OF.
+  (b) WRONG POPULATION. The composition is a cross-project average over the 53-mini-grid database
+  (37 Asia, 16 Africa). The `sale:` block belongs to ONE project — slide 13's 294 firm kW,
+  1,099-customer case. Turning the shares into USD would require multiplying by a per-kW capex
+  statistic ($6,200 average, $3,900 median, $4,300 ex-outliers, $22,000-$1,400 range: four
+  different candidate values, and choosing one would be MY choice) and then applying a different
+  population's average to this project's kW — the substitution the original author's `mapping: {}`
+  comment already refuses in as many words.
+  (c) WRONG KIND OF COST. Every one of the fifteen lines is CAPITAL expenditure (PV modules,
+  racks, battery, genset, power house, distribution grid, installation, project development), not
+  cost of sales. The deck publishes no operating cost at all for any project — no fuel bill, no
+  O&M, no staff, no debt service. Its own words: nine projects were run through HOMER using "O&M
+  costs and fuel costs", but those inputs are never printed, only the LCOE that came out of them.
+  ARITHMETIC CHECK ON THE ONE BREAKDOWN THAT DOES EXIST, since it was read anyway: the fifteen
+  capex shares are 11+3+5+3+9+15+1+7+14+1+4+3+6+8+9 = 99%, not 100%. One percentage point is
+  unaccounted for. Consistent with fifteen whole-number labels read off a waterfall chart, but it
+  is a real gap in the source's own arithmetic and is recorded here as printed rather than scaled
+  to 100 — the same discipline the notes above apply to the 566,980.8 kWh rounding.
