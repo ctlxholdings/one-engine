@@ -17,6 +17,8 @@ source, which differs at exactly the figures named in ``RECORD_FINDINGS``, and
 a deal whose every comparable figure is printed too coarsely for a 1% plant to
 show (``BLIND``: it agrees, but cannot count); the rest are blocked.
 """
+from fractions import Fraction
+
 import pytest
 
 from one_engine import oracles as O
@@ -96,6 +98,31 @@ def test_a_printed_date_or_month_range_is_read_as_its_year_month_and_day():
     assert (bfr["_from__year"], bfr["_from__month"], bfr["to__year"], bfr["to__month"]) == (2007, 4, 2016, 3)
     ehingen = esco_inputs(_case("ehingen_berufsschulzentrum"))
     assert (ehingen["_from__year"], ehingen["to__month"]) == (2010, 6)
+
+
+def test_a_text_with_several_numbers_gives_each_later_number_as_its_own_input():
+    # the first number keeps the name (the answer key's num reads it); the next are __2, __3, ...,
+    # read by the answer key's own number pattern; a file path or line reference in the text is not one
+    hungary = esco_inputs(_case("hungary_moe_school_espc_framework"))
+    # 'at least HUF 11.1 billion (US$50 million) per year between 2006 and 2010 (der-vpp/.../...-2010.txt:2259-2260)'
+    assert [hungary[k] for k in ("annual_goal", "annual_goal__2", "annual_goal__3", "annual_goal__4")] == \
+        [Fraction("11.1"), 50, 2006, 2010]
+    assert "annual_goal__5" not in hungary
+    carpinteria = esco_inputs(_case("carpinteria_siemens_lease_purchase"))
+    # '600 on the Effective Date; then 1,200 a year in arrears or 100 a month for a partial year (Escrow s.5.4)'
+    assert (carpinteria["escrow_fees_usd__2"], carpinteria["escrow_fees_usd__3"]) == (1200, 100)
+    assert "escrow_fees_usd__4" not in carpinteria                       # s.5.4 is a section
+    # '1400 to 2536 euro = £1260 to £2280, by property type (STN L2102-2104)': a source line is no figure
+    nottingham = esco_inputs(_case("nottingham_sneinton_energiesprong"))
+    assert [nottingham[f"owner_contribution{s}"] for s in ("", "__2", "__3", "__4")] == [1400, 2536, 1260, 2280]
+    assert "owner_contribution__5" not in nottingham
+    # '170 projects, 45,8 (M) BGN funded or guaranteed, total value 67,6M BGN (CITY)': decimal commas
+    eersf = esco_inputs(_case("eersf_aitos_hospital"))
+    assert (eersf["fund_book_end_2014__2"], eersf["fund_book_end_2014__3"]) == (Fraction("45.8"), Fraction("67.6"))
+    assert "fund_book_end_2014__4" not in eersf
+    # '15 is common (WB08:10543)', '11 (Table CS12.1, WB08:10628-10640)': report codes, not figures
+    iqara = esco_inputs(_case("iqara_energy_services_brazil"))
+    assert "contract_length_years__2" not in iqara and "projects_listed__2" not in iqara
 
 
 def test_a_citation_or_unit_is_not_an_input_even_when_it_holds_a_number():

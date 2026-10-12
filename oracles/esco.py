@@ -32,7 +32,12 @@ Inputs and figures
   value counts for its first number, read with the answer key's own ``num``
   (``'220 000 (source; ...)'`` is 220000), because the answer key reads it
   that way, except the text under a key that describes a number
-  (``source``, ``unit``, ``evidence``... ``DESCRIPTIONS``). A printed date or
+  (``source``, ``unit``, ``evidence``... ``DESCRIPTIONS``). The text's later
+  numbers are inputs too, ``<name>__2``, ``<name>__3``... in order
+  (``'HUF 11.1 billion (US$50 million)'`` gives ``annual_goal`` 11.1 and
+  ``annual_goal__2`` 50), with source references (a file path, a code
+  such as ``WB08:10543`` or ``AR18``, a section ``s.5.4``) cut out, a decimal comma read as one
+  (``45,8``) and a dash between numbers read as a range, not a sign. A printed date or
   month is its parts, as the answer key's
   ``date`` and ``phase_bounds`` read it: ``contract_signed: 2006-06-01`` gives
   ``contract_signed__year``, ``__month`` and ``__day``; a range ``01/2010 to
@@ -93,6 +98,17 @@ DESCRIPTIONS = frozenset({"assumptions", "cite", "citation", "currency", "cusip"
                           "scale_rule", "scale_status", "source", "unit"})
 
 
+#: references inside a text that are not printed figures: a file path or source line
+#: ('.../wb-public-procurement-2010.txt:2259-2260', 'WB08:10628-10640'), a code whose digits follow
+#: its letters ('L2102-2104', 'AR18', 'Table CS12.1', 'CO2e', 'CVWD17'), a section or page ('s.5.4', 'p. 30')
+_REFERENCE = re.compile(r"\S*[/\\]\S*|\S*\.(?:txt|pdf|md|ya?ml|html?|csv|xlsx?)\S*"
+                        r"|\b[A-Za-z]+\d[\w.]*(?::\d+)?(?:[-–][A-Za-z]*\d+)?"
+                        r"|\b(?:s|p|pp|para|art|sec)\.\s?\d[\d.\-–]*", re.IGNORECASE)
+#: a number after the first: the answer key's pattern, plus a decimal comma ('45,8') that the answer
+#: key's first-number reading does not know (it reads '15,5' as 15)
+_LATER = re.compile(r"-?\d+,\d{1,2}(?![\d])|-?\d{1,3}(?:[ ,]\d{3})+(?:\.\d+)?(?!\d)|-?\d+(?:\.\d+)?")
+
+
 @lru_cache(maxsize=None)
 def answer_key() -> Dict[str, Any]:
     """The answer key's namespace (its ``CHECKS`` and its ``num``), after checking its hash."""
@@ -132,7 +148,15 @@ def esco_inputs(case: Mapping[str, Any]) -> Dict[str, Any]:
         if isinstance(node, dt.date):
             return {"year": node.year, "month": node.month, "day": node.day}
         if isinstance(node, Mapping):
-            return {k: strip(v) for k, v in node.items() if not (k in DESCRIPTIONS and isinstance(v, str))}
+            out = {}
+            for k, v in node.items():
+                if k in DESCRIPTIONS and isinstance(v, str):
+                    continue
+                out[k] = strip(v)
+                if isinstance(v, str) and _is_number(out[k]):
+                    for i, later in enumerate(_later(v, out[k]), start=2):
+                        out[f"{k}__{i}"] = later
+            return out
         if isinstance(node, list):
             return [strip(v) for v in node]
         if isinstance(node, str):
@@ -146,6 +170,19 @@ def esco_inputs(case: Mapping[str, Any]) -> Dict[str, Any]:
             except (AttributeError, ValueError):
                 return node
         return node
+
+    def _later(text: str, first: Any) -> List[float]:
+        # every number after the first, with references cut out. A minus is a sign only after a
+        # space or bracket, not in a range ('2102-2104', '10-12m'). The first is the one ``num``
+        # reads, so it is skipped when the cleaned text opens with it
+        clean, found = _REFERENCE.sub(" ", text), []
+        for m in _LATER.finditer(clean):
+            g = m.group()
+            if g.startswith("-") and m.start() > 0 and clean[m.start() - 1].isalnum():
+                g = g[1:]
+            g = g.replace(" ", "")
+            found.append(float(g.replace(",", ".") if re.fullmatch(r"\d+,\d{1,2}", g) else g.replace(",", "")))
+        return found[1:] if found and found[0] == float(first) else found
 
     numbers = {k: v for k, v in (case.get("numbers") or {}).items() if k not in NOT_INPUTS}
     return published_inputs({"inputs": strip(numbers)})
