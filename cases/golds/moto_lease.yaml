@@ -1,0 +1,197 @@
+# Gold "moto_lease": a moto-taxi operator in Cotonou on a rented bike, five years
+# (cases/reference/golds/moto_lease.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * days worked: working_days_per_week x weeks_per_year; trips_per_day a day, split short /
+#     medium / long by share_short / share_medium / share_long, each tier its own fare, collected
+#     in cash the same day (three offtakes, one per tier);
+#   * kilometres: the paid distance of that mix (km_short, km_medium, km_long) times
+#     deadhead_factor; fuel at fuel_consumption_l_per_100km / 100 litres a km, at
+#     fuel_price_per_litre; consumables at maintenance_per_km; both on every km ridden;
+#   * the bike's rent, daily_rent per day worked, is an operating expense (no right-of-use asset:
+#     the lease is day to day, IFRS 16's short-term exemption); nothing is owned, so no capex and
+#     no depreciation;
+#   * the fuel in the tank, fuel_inventory_days of fuel, is carried in at nwc_opening and held at
+#     that level (volumes are flat), so working capital never moves;
+#   * tax at tax_rate on profit, paid within the year; the gold's "_informal" rows are the variant
+#     `informal`, at tax_rate_informal.
+# Physical rows (days, trips, kilometres, litres) are drivers. The break-even trips a day (the
+# day's rent over the contribution a trip) is a count of trips, computed in the generator from the
+# same inputs the books use, and read as a driver.
+gold: moto_lease
+entity: zem
+plant: fare_long
+variants:
+  informal: {values: {rate: tax_rate_informal}}
+case:
+  case: gold-moto-lease
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        days: working_days_per_week * weeks_per_year
+        short: trips_per_day * share_short * days
+        medium: trips_per_day * share_medium * days
+        long: trips_per_day * share_long * days
+        trips: short + medium + long
+        paid_km: short * km_short + medium * km_medium + long * km_long
+        total_km: paid_km * deadhead_factor
+        deadhead_km: total_km - paid_km
+        litres: total_km * fuel_consumption_l_per_100km / 100
+        fuel_per_km: fuel_consumption_l_per_100km / 100 * fuel_price_per_litre
+        cum_km: cumsum(total_km)
+        fuel_inventory: total_km / days * fuel_per_km * fuel_inventory_days
+        contribution: short * fare_short + medium * fare_medium + long * fare_long - total_km * (fuel_per_km + maintenance_per_km)
+        breakeven_trips: daily_rent / (contribution / trips)
+        rate: tax_rate
+  opening:
+    zem:
+      fuel_inventory: {nature: asset, value: {generator: gold, output: nwc_opening}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    fares_short: &fares
+      type: offtake
+      parties: {seller: zem}
+      terms: {volume: {generator: gold, output: short}, price: {generator: gold, output: fare_short},
+              payment_days: 0, days_per_year: {generator: gold, output: days}, periods_per_year: 1, end: 4}
+    fares_medium:
+      <<: *fares
+      terms: {volume: {generator: gold, output: medium}, price: {generator: gold, output: fare_medium},
+              payment_days: 0, days_per_year: {generator: gold, output: days}, periods_per_year: 1, end: 4}
+    fares_long:
+      <<: *fares
+      terms: {volume: {generator: gold, output: long}, price: {generator: gold, output: fare_long},
+              payment_days: 0, days_per_year: {generator: gold, output: days}, periods_per_year: 1, end: 4}
+    fuel: &cost
+      type: operating_cost
+      parties: {payer: zem}
+      terms: {annual: 0, unit_rate: {generator: gold, output: fuel_per_km}, volume: {generator: gold, output: total_km},
+              index: 1, periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days}}
+    consumables:
+      <<: *cost
+      terms: {annual: 0, unit_rate: {generator: gold, output: maintenance_per_km},
+              volume: {generator: gold, output: total_km}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: days}}
+    rent:
+      <<: *cost
+      terms: {annual: 0, unit_rate: {generator: gold, output: daily_rent}, volume: {generator: gold, output: days},
+              index: 1, periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days}}
+  rulebooks:
+    tank:
+      kind: held_balance
+      entity: zem
+      cash: cash
+      phase: operate
+      accounts:
+        fuel_inventory: {side: asset, target: {generator: gold, output: fuel_inventory}}
+    tax:
+      kind: income_tax
+      entity: zem
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        fares_short.revenue: taxable
+        fares_medium.revenue: taxable
+        fares_long.revenue: taxable
+        fuel.expense: taxable
+        consumables.expense: taxable
+        rent.expense: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: zem
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      fares_short.revenue: revenue_short
+      fares_medium.revenue: revenue_medium
+      fares_long.revenue: revenue_long
+      fuel.expense: fuel
+      consumables.expense: consumables
+      rent.expense: rent
+      tax_expense: tax
+    cash_flow:
+      fares_short.receivable: operating
+      fares_medium.receivable: operating
+      fares_long.receivable: operating
+      fuel.payable: operating
+      consumables.payable: operating
+      rent.payable: operating
+      fuel_inventory: operating
+      tax_payable: operating
+  cuts:
+    revenue_short: {kind: pnl, entity: zem, scheme: pnl, include: [revenue_short]}
+    revenue_medium: {kind: pnl, entity: zem, scheme: pnl, include: [revenue_medium]}
+    revenue_long: {kind: pnl, entity: zem, scheme: pnl, include: [revenue_long]}
+    revenue: {kind: pnl, entity: zem, scheme: pnl, include: [revenue_short, revenue_medium, revenue_long]}
+    fuel: {kind: pnl, entity: zem, scheme: pnl, include: [fuel]}
+    consumables: {kind: pnl, entity: zem, scheme: pnl, include: [consumables]}
+    rent: {kind: pnl, entity: zem, scheme: pnl, include: [rent]}
+    variable_cost: {kind: pnl, entity: zem, scheme: pnl, include: [fuel, consumables]}
+    contribution: {kind: pnl, entity: zem, scheme: pnl,
+                   include: [revenue_short, revenue_medium, revenue_long, fuel, consumables]}
+    operating_cost: {kind: pnl, entity: zem, scheme: pnl, include: [fuel, consumables, rent]}
+    ebitda: {kind: pnl, entity: zem, scheme: pnl,
+             include: [revenue_short, revenue_medium, revenue_long, fuel, consumables, rent]}
+    depreciation: {kind: pnl, entity: zem, scheme: pnl, include: []}     # nothing is owned
+    tax: {kind: pnl, entity: zem, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: zem, scheme: pnl,
+            include: [revenue_short, revenue_medium, revenue_long, fuel, consumables, rent, tax]}
+    cfo: {entity: zem, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: zem, account: cash, scheme: cash_flow, include: []}         # nothing is bought
+    fcff: {entity: zem, account: cash, scheme: cash_flow, include: [operating]}
+  measures: {}
+trace:
+  days_worked: {driver: gold.days}
+  trips_short: {driver: gold.short}
+  trips_medium: {driver: gold.medium}
+  trips_long: {driver: gold.long}
+  trips_total: {driver: gold.trips}
+  paid_km: {driver: gold.paid_km}
+  deadhead_km: {driver: gold.deadhead_km}
+  total_km: {driver: gold.total_km}
+  litres_fuel: {driver: gold.litres}
+  revenue_short: {cut: revenue_short}
+  revenue_medium: {cut: revenue_medium}
+  revenue_long: {cut: revenue_long}
+  revenue: {cut: revenue}
+  fuel_cost: {cut: fuel, sign: -1}
+  maintenance_cost: {cut: consumables, sign: -1}
+  rental_cost: {cut: rent, sign: -1}
+  total_operating_cost: {cut: operating_cost, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebitda}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  fuel_inventory: {balance: fuel_inventory}
+  nwc: {balance: fares_short.receivable + fares_medium.receivable + fares_long.receivable + fuel_inventory - fuel.payable - consumables.payable - rent.payable}
+  delta_nwc: {change: fares_short.receivable + fares_medium.receivable + fares_long.receivable + fuel_inventory - fuel.payable - consumables.payable - rent.payable}
+  capex: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  tax_informal: {variant: informal, cut: tax, sign: -1}
+  nopat_informal: {variant: informal, cut: nopat}
+  fcff_informal: {variant: informal, cut: fcff}
+  fuel_cost_per_km: {cut: fuel, sign: -1, per: gold.total_km}
+  variable_cost_per_km: {cut: variable_cost, sign: -1, per: gold.total_km}
+  avg_fare: {cut: revenue, per: gold.trips}
+  revenue_per_paid_km: {cut: revenue, per: gold.paid_km}
+  contribution_per_trip: {cut: contribution, per: gold.trips}
+  breakeven_trips_per_day: {driver: gold.breakeven_trips}
+  cum_total_km: {driver: gold.cum_km}
+  cum_fcff: {cumulative: fcff}
