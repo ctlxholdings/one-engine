@@ -1,0 +1,167 @@
+# Gold "attieke": a ten-woman attiéké workshop in Abobo, Abidjan, five steady years
+# (cases/reference/golds/attieke.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * batches: batches_per_week x operating_weeks demi-bâchées a year, each yield_per_batch kg of
+#     attiéké sold wholesale at price_attieke, collected on ar_days of a wc_day_basis year;
+#   * cassava at cassava_price a batch, bought on ap_days; wood at wood_price a batch, paid cash;
+#     other overhead (opex_other) is the gold's stated nil;
+#   * the ten women are owner-operators: no wage line (the gold's central judgment);
+#   * equipment: a steady-state pool of equipment_gross over equipment_life, replaced each year
+#     by its charge (capex = depreciation);
+#   * inventories held at cassava_inv_days of cassava and fg_inv_days of production cost (cassava
+#     and wood); with receivables and payables, built from nothing in year 0 and held after;
+#   * tax is the TEE: tax_rate on turnover, not on profit; every cost is non-deductible from that
+#     base. Paid within the year.
+gold: attieke
+entity: atelier
+plant: price_attieke
+case:
+  case: gold-attieke
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        batches: batches_per_week * operating_weeks
+        kg: batches * yield_per_batch
+        cassava_annual: batches * cassava_price
+        wood_annual: batches * wood_price
+        inv_cassava: cassava_inv_days / wc_day_basis * cassava_annual
+        inv_fg: fg_inv_days / wc_day_basis * (cassava_annual + wood_annual)
+        capex: {each_period: equipment_gross / equipment_life}
+  opening:
+    atelier:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    attieke:
+      type: offtake
+      parties: {seller: atelier}
+      terms: {volume: {generator: gold, output: kg}, price: {generator: gold, output: price_attieke},
+              payment_days: {generator: gold, output: ar_days},
+              days_per_year: {generator: gold, output: wc_day_basis}, periods_per_year: 1,
+              end: 5}                 # past the horizon: buyers still owe at its end (going concern)
+    cassava:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: {generator: gold, output: cassava_price},
+              volume: {generator: gold, output: batches}, index: 1, periods_per_year: 1, start: 0,
+              end: 5,                 # past the horizon: the supplier is still owed at its end
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: ap_days},
+              days_per_year: {generator: gold, output: wc_day_basis}}
+    wood:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: {generator: gold, output: wood_price},
+              volume: {generator: gold, output: batches}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: wc_day_basis}}
+    overhead:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: {generator: gold, output: opex_other}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: wc_day_basis}}
+    equipment:
+      type: capex
+      parties: {owner: atelier}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    inventory:
+      kind: held_balance
+      entity: atelier
+      cash: cash
+      phase: operate
+      accounts:
+        inv_cassava: {side: asset, target: {generator: gold, output: inv_cassava}}
+        inv_fg: {side: asset, target: {generator: gold, output: inv_fg}}
+    equipment_pool:
+      kind: asset_pool
+      entity: atelier
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      gross: {generator: gold, output: equipment_gross}
+      life_periods: {generator: gold, output: equipment_life}
+    tax:
+      kind: income_tax
+      entity: atelier
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:                       # the TEE is levied on turnover: no cost reduces its base
+        attieke.revenue: taxable
+        cassava.expense: non_deductible
+        wood.expense: non_deductible
+        overhead.expense: non_deductible
+        depreciation: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: atelier
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      attieke.revenue: revenue
+      cassava.expense: cassava
+      wood.expense: wood
+      overhead.expense: overhead
+      depreciation: depreciation
+      tax_expense: tax
+    cash_flow:
+      attieke.receivable: operating
+      cassava.payable: operating
+      wood.payable: operating
+      overhead.payable: operating
+      inv_cassava: operating
+      inv_fg: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue]}
+    cassava: {kind: pnl, entity: atelier, scheme: pnl, include: [cassava]}
+    wood: {kind: pnl, entity: atelier, scheme: pnl, include: [wood]}
+    overhead: {kind: pnl, entity: atelier, scheme: pnl, include: [overhead]}
+    ebitda: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue, cassava, wood, overhead]}
+    depreciation: {kind: pnl, entity: atelier, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue, cassava, wood, overhead, depreciation]}
+    tax: {kind: pnl, entity: atelier, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue, cassava, wood, overhead, depreciation, tax]}
+    cfo: {entity: atelier, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: atelier, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: atelier, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  demi_bachees: {driver: gold.batches}
+  attieke_kg: {driver: gold.kg}
+  revenue: {cut: revenue}
+  cassava_cost: {cut: cassava, sign: -1}
+  wood_cost: {cut: wood, sign: -1}
+  opex_other: {cut: overhead, sign: -1}
+  ebitda: {cut: ebitda}
+  dna: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  capex: {cut: cfi, sign: -1}
+  inv_cassava: {balance: inv_cassava}
+  inv_fg: {balance: inv_fg}
+  ar: {balance: attieke.receivable}
+  ap: {balance: cassava.payable + wood.payable + overhead.payable}
+  nwc: {balance: inv_cassava + inv_fg + attieke.receivable - cassava.payable - wood.payable - overhead.payable}
+  delta_nwc: {change: inv_cassava + inv_fg + attieke.receivable - cassava.payable - wood.payable - overhead.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

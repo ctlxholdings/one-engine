@@ -1,0 +1,132 @@
+# Gold "mango": a five-hectare mango orchard in Casamance, ten years from planting
+# (cases/reference/golds/mango.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * planted in period 0 at establishment_cost; the first real harvest comes in
+#     first_harvest_year (period first_harvest_year - 1); the yield ramps through
+#     ramp_fraction_y3 and ramp_fraction_y4 of mature_yield_t_per_ha to full bearing at
+#     maturity_index; tonnes x kg_per_tonne sold at price_per_kg, for cash;
+#   * annual_maintenance is spent every year; before the first harvest it brings the bearer plant
+#     to productive condition and is capitalised with the establishment cost (IAS 16), after it
+#     is an operating cost;
+#   * the orchard enters service at the first harvest and is depreciated straight-line over
+#     useful_life_years from then; tax at tax_rate on profit, paid in the year; no working capital.
+gold: mango
+entity: orchard
+plant: price_per_kg
+case:
+  case: gold-mango
+  periods: 10
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 10
+      inputs: gold
+      values:
+        harvest: first_harvest_year - 1
+        bearing: t >= harvest
+        yield_per_ha: >-
+          mature_yield_t_per_ha * (ramp_fraction_y3 if t == harvest
+          else ramp_fraction_y4 if t == harvest + 1 else (t >= maturity_index))
+        production_t: yield_per_ha * area
+        production_kg: production_t * kg_per_tonne
+        maintenance: annual_maintenance * bearing
+        capex: establishment_cost * (t == 0) + annual_maintenance * (1 - bearing)
+  opening:
+    orchard:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    mangoes:
+      type: offtake
+      parties: {seller: orchard}
+      terms: {volume: {generator: gold, output: production_kg}, price: {generator: gold, output: price_per_kg},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 9}
+    maintenance:
+      type: operating_cost
+      parties: {payer: orchard}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: maintenance}, index: 1, periods_per_year: 1,
+              start: 0, end: 9, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    planting:
+      type: capex
+      parties: {owner: orchard}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 9}
+  rulebooks:
+    orchard_asset:
+      kind: asset_register
+      entity: orchard
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: {generator: gold, output: harvest}
+      dispose_at: 10
+      life_periods: {generator: gold, output: useful_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: orchard
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        mangoes.revenue: taxable
+        maintenance.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: orchard
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      mangoes.revenue: revenue
+      maintenance.expense: opex
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      mangoes.receivable: operating
+      maintenance.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: orchard, scheme: pnl, include: [revenue]}
+    opex: {kind: pnl, entity: orchard, scheme: pnl, include: [opex]}
+    ebitda: {kind: pnl, entity: orchard, scheme: pnl, include: [revenue, opex]}
+    depreciation: {kind: pnl, entity: orchard, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: orchard, scheme: pnl, include: [revenue, opex, depreciation]}
+    tax: {kind: pnl, entity: orchard, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: orchard, scheme: pnl, include: [revenue, opex, depreciation, tax]}
+    cfo: {entity: orchard, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: orchard, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: orchard, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  yield_per_ha: {driver: gold.yield_per_ha}
+  production_t: {driver: gold.production_t}
+  production_kg: {driver: gold.production_kg}
+  revenue: {cut: revenue}
+  opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  capex: {cut: cfi, sign: -1}
+  depreciation: {cut: depreciation, sign: -1}
+  book_value: {balance: cwip + fixed_assets}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  nwc: {balance: mangoes.receivable - maintenance.payable}
+  delta_nwc: {change: mangoes.receivable - maintenance.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

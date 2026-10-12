@@ -95,6 +95,13 @@ Rulebooks
     the tax record's ``expired`` is what the period could use but the next
     cannot.
 
+    ``loss_relief: refund`` (default ``carry_forward``) relieves a loss in
+    the period it arises, at that period's rate: the charge is the rate
+    times the base, a negative base giving a tax credit (a refund, group
+    relief, or an annual tax accrued period by period, as the golds'
+    ``grain`` trader books it month by month). Nothing is carried, so the
+    loss pool stays empty; it cannot be combined with ``deferred``.
+
     The tax record also carries the loss pool's roll-forward (the golds
     library reports it): ``losses_opening``, ``loss_added``, ``loss_used``
     and the ``taxable`` amount left after losses (base mode only), with
@@ -506,6 +513,9 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     cf = None if cf is None else int(cf)
     rates = r.take("rate")                      # a rate, or one per period (a change of rate)
     losses_in = r.take_or_default("losses_in", "base", reason="losses are carried as amounts of the base").value
+    relief = r.take_or_default("loss_relief", "carry_forward", reason="a loss is carried to later profit").value
+    if relief not in ("carry_forward", "refund"):
+        raise InputError(f"income_tax: loss_relief is carry_forward or refund, not {relief!r}")
     from one_engine.packs.contracts import _at
     scheme = dict(r.take("scheme"))
     group.declare(entity, expense, Nature.EXPENSE, unit)
@@ -528,6 +538,8 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         dr.finish()
         if losses_in != "base":
             raise InputError("income_tax: deferred tax on losses carried as tax (losses_in: tax) is not built")
+        if relief == "refund":
+            raise InputError("income_tax: deferred tax with losses refunded (loss_relief: refund) is not built")
         if nil_base and timing_name is not None:
             raise InputError("income_tax: deferred.nil_tax_base measures movements and cannot be combined "
                              "with a 'timing' register")
@@ -550,13 +562,19 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                                  f"'{timing_name}' ({regs.expense}, {regs.disposal})")
             base -= regs.tax_moves.get(t, Fraction(0))
         opening = pool.available(t)
-        tax = policy.charge(t, base, pool)
-        if tax:
+        # a refunded loss is relieved now, at the rate: the pool is never fed, so it stays empty
+        tax = policy.rate * base if relief == "refund" else policy.charge(t, base, pool)
+        if tax > 0:
             g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"tax.charge:{t}"))
+        elif tax < 0:
+            # a credit: the expense falls, and the payable with it (below nil it is a refund due)
+            g.post(entity, Posting(t, phase, payable, expense, -tax, {payable: -1, expense: -1}, "tax",
+                                   f"tax.credit:{t}"))
         # what this period could still use but the next cannot: the vintages that expire at its end
         rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
         # the pool's roll-forward (the golds report it): opening + added - used = what this period can still use
-        added = max(Fraction(0), -base) if losses_in == "base" else max(Fraction(0), -policy.rate * base)
+        added = Fraction(0) if relief == "refund" else \
+            max(Fraction(0), -base) if losses_in == "base" else max(Fraction(0), -policy.rate * base)
         used = opening + added - pool.available(t)
         rec.update(losses_opening=opening, loss_added=added, loss_used=used,
                    taxable=max(Fraction(0), base - used) if losses_in == "base" else None)

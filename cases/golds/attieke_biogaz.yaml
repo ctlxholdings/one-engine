@@ -1,0 +1,185 @@
+# Gold "attieke_biogaz": the attiéké workshop after its biogas digester, five years
+# (cases/reference/golds/attieke_biogaz.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * volumes and revenue as the plain workshop: demi_bachees_per_week x weeks_per_year batches,
+#     each attieke_yield_kg_per_demi_bachee kg sold at wholesale_price_per_kg, all for cash;
+#   * cassava at its batch price; wood only as a top-up (wood_cost_per_demi_bachee_biogas);
+#     labour is the stated nil (the ten women are the atelier); no working capital;
+#   * the digester bought last year is carried in at cost less one year of its life, and
+#     depreciated over the years it has left; its replacement is bought when it is spent
+#     (period digester_remaining_life_years) and charged over a full life from that period,
+#     in its own account so the two vintages never mix;
+#   * tax is a turnover tax (turnover_tax_rate on revenue, no cost deductible), paid in the year.
+# Variants: zero_tax (the informal case, informal_tax_rate) and legacy_wood (the wood bill
+# before the digester, wood_cost_per_demi_bachee_legacy), from which the fuel saving is read.
+gold: attieke_biogaz
+entity: atelier
+plant: wholesale_price_per_kg
+case:
+  case: gold-attieke-biogaz
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        batches: demi_bachees_per_week * weeks_per_year
+        cassava_tonnes: batches * tonnes_per_demi_bachee
+        kg: batches * attieke_yield_kg_per_demi_bachee
+        wood_rate: wood_cost_per_demi_bachee_biogas
+        tax_rate: turnover_tax_rate
+        contribution_per_kg: >-
+          wholesale_price_per_kg - cassava_price_per_demi_bachee / attieke_yield_kg_per_demi_bachee
+          - wood_rate / attieke_yield_kg_per_demi_bachee
+        digester_carried: digester_cost - digester_cost / digester_life_years * digester_age_at_horizon_start_years
+        capex: digester_cost * (t == digester_remaining_life_years)
+  opening:
+    atelier:
+      digester: {nature: asset, value: {generator: gold, output: digester_carried}}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    attieke:
+      type: offtake
+      parties: {seller: atelier}
+      terms: {volume: {generator: gold, output: kg}, price: {generator: gold, output: wholesale_price_per_kg},
+              payment_days: 0, days_per_year: {generator: gold, output: weeks_per_year}, periods_per_year: 1, end: 4}
+    cassava:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: {generator: gold, output: cassava_price_per_demi_bachee},
+              volume: {generator: gold, output: batches}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: weeks_per_year}}
+    wood:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: {generator: gold, output: wood_rate},
+              volume: {generator: gold, output: batches}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: weeks_per_year}}
+    labour:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: {generator: gold, output: labour_cash_cost_per_year}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: weeks_per_year}}
+    replacement:
+      type: capex
+      parties: {owner: atelier}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    installed:                    # the digester carried in: its remaining life from the first period
+      kind: asset_register
+      entity: atelier
+      phase: close
+      from: cwip
+      to: digester
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 5
+      life_periods: {generator: gold, output: digester_remaining_life_years}
+      first_charge: in_service
+    replaced:                     # its replacement: a full life from the period it enters service
+      kind: asset_register
+      entity: atelier
+      phase: close
+      from: cwip
+      to: digester_new
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: {generator: gold, output: digester_remaining_life_years}
+      dispose_at: 5
+      life_periods: {generator: gold, output: digester_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: atelier
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:                     # a turnover tax: no cost reduces its base
+        attieke.revenue: taxable
+        cassava.expense: non_deductible
+        wood.expense: non_deductible
+        labour.expense: non_deductible
+        depreciation: non_deductible
+        disposal_loss: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: atelier
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      attieke.revenue: revenue
+      cassava.expense: cassava
+      wood.expense: wood
+      labour.expense: labour
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      attieke.receivable: operating
+      cassava.payable: operating
+      wood.payable: operating
+      labour.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue]}
+    cassava: {kind: pnl, entity: atelier, scheme: pnl, include: [cassava]}
+    wood: {kind: pnl, entity: atelier, scheme: pnl, include: [wood]}
+    labour: {kind: pnl, entity: atelier, scheme: pnl, include: [labour]}
+    cash_opex: {kind: pnl, entity: atelier, scheme: pnl, include: [cassava, wood, labour]}
+    ebitda: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue, cassava, wood, labour]}
+    depreciation: {kind: pnl, entity: atelier, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue, cassava, wood, labour, depreciation]}
+    tax: {kind: pnl, entity: atelier, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: atelier, scheme: pnl, include: [revenue, cassava, wood, labour, depreciation, tax]}
+    cfo: {entity: atelier, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: atelier, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: atelier, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+variants:
+  zero_tax: {values: {tax_rate: informal_tax_rate}}
+  legacy_wood: {values: {wood_rate: wood_cost_per_demi_bachee_legacy}}
+trace:
+  demi_bachees: {driver: gold.batches}
+  cassava_tonnes: {driver: gold.cassava_tonnes}
+  attieke_kg: {driver: gold.kg}
+  contribution_per_kg: {driver: gold.contribution_per_kg}
+  revenue: {cut: revenue}
+  cassava_cost: {cut: cassava, sign: -1}
+  wood_cost: {cut: wood, sign: -1}
+  labour_cash_cost: {cut: labour, sign: -1}
+  cash_operating_cost: {cut: cash_opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  nwc: {balance: attieke.receivable - cassava.payable - wood.payable - labour.payable}
+  delta_nwc: {change: attieke.receivable - cassava.payable - wood.payable - labour.payable}
+  capex: {cut: cfi, sign: -1}
+  nbv_opening: {opening: digester + digester_new}
+  nbv_closing: {balance: digester + digester_new}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  fcff_per_woman: {cut: fcff, per: gold.workers_count}
+  tax_zero_scenario: {cut: tax, sign: -1, variant: zero_tax}
+  nopat_zero_tax: {cut: nopat, variant: zero_tax}
+  fcff_zero_tax: {cut: fcff, variant: zero_tax}
+  wood_cost_counterfactual: {cut: wood, sign: -1, variant: legacy_wood}
+  fuel_saving: {sum: [{cut: wood, sign: -1, variant: legacy_wood}, {cut: wood}]}
+  cumulative_fuel_saving: {sum: [{cumulative: wood, sign: -1, variant: legacy_wood}, {cumulative: wood}]}

@@ -105,3 +105,27 @@ def test_formulas_refuse_an_unknown_name_and_a_reused_one():
         _gen({"a": "b * 2"}, {"c": 1})
     with pytest.raises(InputError, match="already an input"):
         _gen({"c": "c * 2"}, {"c": 1})
+
+
+# ── pieces the golds added, each shown to matter on a planted copy ─────────
+
+def test_a_loss_carried_forward_is_not_a_loss_refunded(tmp_path):
+    # the grain trader's loss months give a tax credit; carried forward instead, the tax row differs
+    fam = _planted_copy(tmp_path, "grain", "      loss_relief: refund\n", "")
+    r = O.receipt(fam, "grain", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] == "tax"
+
+
+def test_stock_lost_in_store_is_its_own_line(tmp_path):
+    # without the write-down the held balance books the loss as cost of sales
+    fam = _planted_copy(tmp_path, "grain_shrinkage", "      expense: shrinkage_loss\n      amount: {generator: gold, output: shrinkage}\n",
+                        "      expense: shrinkage_loss\n      amount: 0\n")
+    r = O.receipt(fam, "grain_shrinkage", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] in ("cogs", "shrinkage_loss")
+
+
+def test_a_row_per_head_divides_by_the_gold_input(tmp_path):
+    fam = _planted_copy(tmp_path, "attieke_biogaz", "fcff_per_woman: {cut: fcff, per: gold.workers_count}",
+                        "fcff_per_woman: {cut: fcff}")
+    r = O.receipt(fam, "attieke_biogaz", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] == "fcff_per_woman"

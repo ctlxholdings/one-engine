@@ -51,6 +51,10 @@ rate, an oven bought). ``variants`` (name -> ``{values: {name: formula}}``)
 replaces formulas the case already computes and runs the case again; it
 cannot add a piece the base run lacks.
 
+``per: gen.output`` divides any row by a value the ``formulas`` generator
+computed (a gold input by name): a row the gold states per head or per unit
+(FCFF per worker). The divisor is the gold's own input, so nothing is typed.
+
 Every trace row is compared; a row the translation does not map is a failed
 check ("not reported"), never a skip. One exception, listed in the receipt:
 ``labels`` (row -> reason) names a calendar row (``fiscal_year: [2026,
@@ -281,6 +285,8 @@ class GoldFamily(Family):
     def _read(results, entity: str, spec: Mapping[str, Any], n: int) -> List[Fraction]:
         sign = Fraction(spec.get("sign", 1))
         if "sum" in spec:
+            if "per" in spec:
+                raise ValueError("per divides one row; put it on a part of the sum")
             parts = [GoldFamily._read(results, entity, s, n) for s in spec["sum"]]
             return [sign * sum(col, Fraction(0)) for col in zip(*parts)]
         result = results[spec.get("variant")]
@@ -312,6 +318,10 @@ class GoldFamily(Family):
                 vals = [at(t, True) for t in range(n)]
             else:
                 vals = [at(t, False) - at(t, True) for t in range(n)]
+        if "per" in spec:
+            gen, _, out = spec["per"].rpartition(".")
+            per = result.generated[gen or next(iter(result.generated))][out]
+            vals = [Fraction(x) / Fraction(per[t] if isinstance(per, list) else per) for t, x in enumerate(vals)]
         return [sign * Fraction(x) for x in vals]
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:

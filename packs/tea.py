@@ -23,6 +23,8 @@ This pack adds only what the golds need and those packs do not have:
   deposit) held at a target each period, the change moving cash;
 * the rulebook ``settle``: payables paid in full in the period they arise
   (a small business's tax paid within its year);
+* the rulebook ``write_down``: a stated amount of an asset written off to
+  an expense each period (grain lost in store);
 * the rulebook ``asset_pool``: a pool of like assets in steady state,
   depreciated at its gross cost over its life each period, the vintage that
   retires replaced by the period's spend.
@@ -200,15 +202,44 @@ def settle(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     """Pay each listed payable in full at the end of ``phase``, every period.
 
     Case keys: ``entity``, ``cash``, ``phase``, ``accounts`` (liability
-    accounts another rulebook or contract declares and credits).
+    accounts another rulebook or contract declares and credits). A payable
+    below nil (a tax credit, ``income_tax`` with ``loss_relief: refund``)
+    is a refund due, and is received the same way.
     """
     entity, cash, phase, accounts = r.take("entity"), r.take("cash"), r.take("phase"), list(r.take("accounts"))
 
     def handler(g: Group, t: int) -> None:
         for acct in accounts:
             x = g.book(entity).balance(acct, t)
-            if x:
+            if x > 0:
                 g.post(entity, Posting(t, phase, acct, cash, x, {acct: -1, cash: -1}, "operating", f"{acct}.settle:{t}"))
+            elif x < 0:
+                g.post(entity, Posting(t, phase, cash, acct, -x, {cash: 1, acct: 1}, "operating", f"{acct}.settle:{t}"))
+
+    group.register(phase, handler)
+
+
+def write_down(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    """A stated amount of an asset written off to an expense each period.
+
+    Case keys: ``entity``, ``phase``, ``account`` (the asset, declared by
+    another rulebook or the opening balance sheet), ``expense`` (declared
+    here), ``amount`` (a number or a series).
+
+    Run before a ``held_balance`` on the same account (an earlier phase),
+    the held balance then moves only what the write-down did not: a store
+    that loses stock and sells stock reports the loss and the cost of sales
+    on separate lines.
+    """
+    entity, phase, acct, expense = r.take("entity"), r.take("phase"), r.take("account"), r.take("expense")
+    amount = r.take("amount")
+    group.declare(entity, expense, Nature.EXPENSE, ctx["currency"])
+
+    def handler(g: Group, t: int) -> None:
+        x = _at(amount, t)
+        if x:
+            g.post(entity, Posting(t, phase, expense, acct, x, {expense: 1, acct: -1}, "measurement",
+                                   f"{acct}.write_down:{t}"))
 
     group.register(phase, handler)
 
@@ -250,4 +281,4 @@ def asset_pool(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     return {"steady_state": lambda: unsteady}
 
 
-RULEBOOKS = {"held_balance": held_balance, "settle": settle, "asset_pool": asset_pool}
+RULEBOOKS = {"held_balance": held_balance, "settle": settle, "write_down": write_down, "asset_pool": asset_pool}
