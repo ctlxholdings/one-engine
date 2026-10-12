@@ -1,0 +1,85 @@
+# esco deal "eesl_ujala_onbill": EESL's UJALA LED programme, India, on-bill option (World Bank 2018, "Super
+# ESCOs: emerging possibilities", E16 L405-524; cases/reference/esco/ontology/miniature/cases/
+# eesl_ujala_onbill-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name, or a formula over them (generator `src`), in USD m
+# (bulbs in millions times a price per bulb in USD); one period:
+#   * EESL buys the programme's bulbs (led_bulbs_deployed_m) from manufacturers; the households buy
+#     LED bulbs at retail. The source prints each price at two dates and no quantity at either, so
+#     each is a pair of parallel worlds buying the same deployed quantity: EESL at the 2014 and at
+#     the 2017 procurement price (`eesl_2014`, `eesl_2017`), households at the retail price before
+#     and after (`households_before`, `households_after`), each paying in cash;
+#   * the on-bill instalments (amount and number not printed), EESL's margin and the avoided
+#     capacity are not booked; no tax.
+# Readings: a price drop is the later world's procurement (or retail) cost taken from the earlier
+# one's, per the earlier world's cost; the deployed quantity cancels, so the drop is per bulb.
+# Set aside: bulbs a year, the deployment over "four years", a word of the source's comment that no
+# input carries (the case's single period has no year count to divide by).
+esco: eesl_ujala_onbill
+entity: eesl_2014
+plant: _2014
+case:
+  case: esco-eesl-ujala-onbill
+  periods: 1
+  phases: [accrue]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        procured_2014: led_bulbs_deployed_m * _2014
+        procured_2017: led_bulbs_deployed_m * _2017
+        retail_before: led_bulbs_deployed_m * before
+        retail_after: led_bulbs_deployed_m * after
+  contracts: {}
+  rulebooks:
+    eesl_2014:
+      kind: transfer
+      entity: eesl_2014
+      phase: accrue
+      declare: {cash: asset, bulbs_procured: expense}
+      moves:
+        buy: {debit: bulbs_procured, credit: cash, amount: {generator: src, output: procured_2014}}
+    eesl_2017:
+      kind: transfer
+      entity: eesl_2017
+      phase: accrue
+      declare: {cash: asset, bulbs_procured: expense}
+      moves:
+        buy: {debit: bulbs_procured, credit: cash, amount: {generator: src, output: procured_2017}}
+    households_before:
+      kind: transfer
+      entity: households_before
+      phase: accrue
+      declare: {cash: asset, bulbs_bought: expense}
+      moves:
+        buy: {debit: bulbs_bought, credit: cash, amount: {generator: src, output: retail_before}}
+    households_after:
+      kind: transfer
+      entity: households_after
+      phase: accrue
+      declare: {cash: asset, bulbs_bought: expense}
+      moves:
+        buy: {debit: bulbs_bought, credit: cash, amount: {generator: src, output: retail_after}}
+  schemes:
+    pnl:
+      bulbs_procured: procurement
+      bulbs_bought: retail
+  cuts:
+    procurement_2014: {kind: pnl, entity: eesl_2014, scheme: pnl, include: [procurement]}
+    procurement_2017: {kind: pnl, entity: eesl_2017, scheme: pnl, include: [procurement]}
+    retail_before: {kind: pnl, entity: households_before, scheme: pnl, include: [retail]}
+    retail_after: {kind: pnl, entity: households_after, scheme: pnl, include: [retail]}
+  measures: {}
+figures:
+  eesl.procurement_price_drop_pct:
+    sum: [{cut: procurement_2014, sign: -1, per: src.procured_2014}, {cut: procurement_2017, per: src.procured_2014}]
+    scale: 0.01
+  eesl.retail_price_drop_pct:
+    sum: [{cut: retail_before, sign: -1, per: src.retail_before}, {cut: retail_after, per: src.retail_before}]
+    scale: 0.01
+not_compared:
+  eesl.bulbs_per_year_m: "the deployment's 'four years' is a word in the source's comment, not a number of the case; no input carries the year count"

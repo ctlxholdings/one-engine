@@ -1,0 +1,209 @@
+# esco deal "ficompass_example": the fi-compass EUR 2m schools EPC with forfaiting (fi-compass, ESIF in
+# Energy Performance Contracting, 2020, §4 numerical example, pp. 15-16; cases/reference/esco/
+# ontology/miniature/cases/ficompass_example-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name, or a formula over them (generator `src`):
+#   * the provider pays the works (capex_eur) in period 0 out of its own capital (the bridge loan the
+#     source mentions is unsized, so it is not booked) and sells the CAPEX-fee receivables to the
+#     forfeiter at completion for their present value at forfeiter_discount_rate_pct over term_years
+#     (the sale price the source states, "NPV at a discount rate of 1.5%"); the provider books the
+#     price as its works revenue and the works as a cost;
+#   * the forfeiter carries the receivables at that price and accretes them at the discount rate
+#     (effective interest: the balance is the present value of the fees still to come), collecting
+#     fee_capex_eur_per_y each year straight from the municipality (assignee-direct);
+#   * the municipality books its saving as avoided energy cost (baseline_energy_cost_eur_per_y x
+#     guaranteed_savings_pct) and pays the EPC fee (fee_capex + fee_opex + fee_interest) in years
+#     1..term_years, CAPEX leg to the forfeiter, OPEX and interest legs to the provider;
+#   * the source's three performance cases (achievement 100%, 90%, 75%) are three parallel worlds,
+#     one municipality and one provider each (`town`, `town_s90`, `town_s75`...): savings and the
+#     sum of the fees both fall to the achievement share (the source's proportional reduction), the
+#     fixed CAPEX leg is paid first and the provider takes what is left; at 75% the fees no longer
+#     cover the CAPEX leg and the ESIF guarantee instrument (`esif`) pays the forfeiter the shortfall.
+# Periods are years; 0 is completion. No tax (the source has none).
+# Readings: the NPV of the receivables is the `npv` measure of the municipality's CAPEX-fee
+# payments (sign -1), at the forfeiter's rate; the annuity factor is the forfaiting proceeds the
+# provider receives per unit of the annual CAPEX fee; savings/fees and interest-fee/capex are book
+# readings per an input amount.
+esco: ficompass_example
+entity: town
+plant: fee_capex_eur_per_y
+case:
+  case: esco-ficompass-example
+  periods: 11
+  phases: [accrue]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        r: forfeiter_discount_rate_pct / 100
+        live: (t >= 1) * (t <= term_years)
+        start: t == 0
+        guaranteed: baseline_energy_cost_eur_per_y * guaranteed_savings_pct / 100
+        fee_total: fee_capex_eur_per_y + fee_opex_eur_per_y + fee_interest_eur_per_y
+        capex_leg: live * fee_capex_eur_per_y
+        # the forfeiter's receivable after the year's collection: the present value of the fees to come
+        receivable: fee_capex_eur_per_y * (1 - (1 + r) ** (t - term_years)) / r * (t <= term_years)
+        price: receivable * start
+        accretion: r * lag(receivable, 1) * (t >= 1)
+        works: capex_eur * start
+        # the three performance cases
+        savings_100: live * s100__achievement_pct / 100 * guaranteed
+        fees_100: live * s100__achievement_pct / 100 * fee_total
+        forfeiter_100: min(fees_100, capex_leg)
+        interest_100: live * fee_interest_eur_per_y
+        opex_100: fees_100 - forfeiter_100 - interest_100
+        savings_90: live * s90__achievement_pct / 100 * guaranteed
+        fees_90: live * s90__achievement_pct / 100 * fee_total
+        forfeiter_90: min(fees_90, capex_leg)
+        provider_90: fees_90 - forfeiter_90
+        savings_75: live * s75__achievement_pct / 100 * guaranteed
+        fees_75: live * s75__achievement_pct / 100 * fee_total
+        forfeiter_75: min(fees_75, capex_leg)
+        provider_75: fees_75 - forfeiter_75
+        shortfall_75: capex_leg - forfeiter_75
+  contracts: {}
+  rulebooks:
+    town:
+      kind: transfer
+      entity: town
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income, capex_fee_expense: expense, service_fee_expense: expense}
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings_100}}
+        capex_fee: {debit: capex_fee_expense, credit: cash, amount: {generator: src, output: forfeiter_100}}
+        opex_fee: {debit: service_fee_expense, credit: cash, amount: {generator: src, output: opex_100}}
+        interest_fee: {debit: service_fee_expense, credit: cash, amount: {generator: src, output: interest_100}}
+    provider:
+      kind: transfer
+      entity: provider
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, works_cost: expense, works_revenue: income,
+                opex_fee_revenue: income, interest_fee_revenue: income}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: works}}
+        works: {debit: works_cost, credit: cash, amount: {generator: src, output: works}}
+        forfaiting: {debit: cash, credit: works_revenue, amount: {generator: src, output: price}}
+        opex_fee: {debit: cash, credit: opex_fee_revenue, amount: {generator: src, output: opex_100}}
+        interest_fee: {debit: cash, credit: interest_fee_revenue, amount: {generator: src, output: interest_100}}
+    forfeiter:
+      kind: transfer
+      entity: forfeiter
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, capex_receivables: asset, discount_income: income}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: price}}
+        purchase: {debit: capex_receivables, credit: cash, amount: {generator: src, output: price}}
+        accrete: {debit: capex_receivables, credit: discount_income, amount: {generator: src, output: accretion}}
+        collect: {debit: cash, credit: capex_receivables, amount: {generator: src, output: forfeiter_100}}
+    town_s90:
+      kind: transfer
+      entity: town_s90
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income, capex_fee_expense: expense, service_fee_expense: expense}
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings_90}}
+        capex_fee: {debit: capex_fee_expense, credit: cash, amount: {generator: src, output: forfeiter_90}}
+        service_fee: {debit: service_fee_expense, credit: cash, amount: {generator: src, output: provider_90}}
+    provider_s90:
+      kind: transfer
+      entity: provider_s90
+      phase: accrue
+      declare: {cash: asset, fee_revenue: income}
+      moves:
+        fee: {debit: cash, credit: fee_revenue, amount: {generator: src, output: provider_90}}
+    town_s75:
+      kind: transfer
+      entity: town_s75
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income, capex_fee_expense: expense, service_fee_expense: expense}
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings_75}}
+        capex_fee: {debit: capex_fee_expense, credit: cash, amount: {generator: src, output: forfeiter_75}}
+        service_fee: {debit: service_fee_expense, credit: cash, amount: {generator: src, output: provider_75}}
+    provider_s75:
+      kind: transfer
+      entity: provider_s75
+      phase: accrue
+      declare: {cash: asset, fee_revenue: income}
+      moves:
+        fee: {debit: cash, credit: fee_revenue, amount: {generator: src, output: provider_75}}
+    forfeiter_s75:
+      kind: transfer
+      entity: forfeiter_s75
+      phase: accrue
+      declare: {cash: asset, collections: income}
+      moves:
+        from_town: {debit: cash, credit: collections, amount: {generator: src, output: forfeiter_75}}
+        from_esif: {debit: cash, credit: collections, amount: {generator: src, output: shortfall_75}}
+    esif:
+      kind: transfer
+      entity: esif
+      phase: accrue
+      declare: {cash: asset, guarantee_calls: expense}
+      moves:
+        cover: {debit: guarantee_calls, credit: cash, amount: {generator: src, output: shortfall_75}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      capex_fee_expense: fees
+      service_fee_expense: fees
+      works_cost: works
+      works_revenue: proceeds
+      opex_fee_revenue: provider_fees
+      interest_fee_revenue: interest_fee
+      fee_revenue: provider_fees
+      discount_income: discount
+      collections: collections
+      guarantee_calls: guarantee
+    cash_flow:
+      avoided_energy_cost: operating
+      capex_fee_expense: capex_fee
+      service_fee_expense: service_fee
+      share_capital: financing
+      works_cost: investing
+      works_revenue: proceeds
+      opex_fee_revenue: operating
+      interest_fee_revenue: operating
+      fee_revenue: operating
+      capex_receivables: receivables
+      collections: operating
+      guarantee_calls: operating
+  cuts:
+    savings_100: {kind: pnl, entity: town, scheme: pnl, include: [savings]}
+    fees_100: {kind: pnl, entity: town, scheme: pnl, include: [fees]}
+    net_100: {kind: pnl, entity: town, scheme: pnl, include: [savings, fees]}
+    capex_fee_paid: {entity: town, account: cash, scheme: cash_flow, include: [capex_fee]}
+    provider_fees_100: {kind: pnl, entity: provider, scheme: pnl, include: [provider_fees, interest_fee]}
+    interest_fee_100: {kind: pnl, entity: provider, scheme: pnl, include: [interest_fee]}
+    proceeds: {entity: provider, account: cash, scheme: cash_flow, include: [proceeds]}
+    fees_90: {kind: pnl, entity: town_s90, scheme: pnl, include: [fees]}
+    net_90: {kind: pnl, entity: town_s90, scheme: pnl, include: [savings, fees]}
+    provider_90: {kind: pnl, entity: provider_s90, scheme: pnl, include: [provider_fees]}
+    savings_75: {kind: pnl, entity: town_s75, scheme: pnl, include: [savings]}
+    fees_75: {kind: pnl, entity: town_s75, scheme: pnl, include: [fees]}
+    net_75: {kind: pnl, entity: town_s75, scheme: pnl, include: [savings, fees]}
+    esif_cover: {kind: pnl, entity: esif, scheme: pnl, include: [guarantee]}
+  measures:
+    npv_capex_fees: {measure: npv, cut: capex_fee_paid, rate: {generator: src, output: r}}
+figures:
+  fi.guaranteed_savings: {cut: savings_100, at: 1}
+  fi.fee_sum: {cut: fees_100, at: 1, sign: -1}
+  fi.forfaiting_proceeds_eur_m: {cut: proceeds, at: 0, scale: 1000000}
+  fi.s100_client_net: {cut: net_100, at: 1}
+  fi.s100_to_provider: {cut: provider_fees_100, at: 1}
+  fi.s90_fees: {cut: fees_90, at: 1, sign: -1}
+  fi.s90_to_provider: {cut: provider_90, at: 1}
+  fi.s75_savings: {cut: savings_75, at: 1}
+  fi.s75_fees: {cut: fees_75, at: 1, sign: -1}
+  fi.s75_capex_shortfall: {cut: esif_cover, at: 1, sign: -1}
+  fi.annuity_factor: {cut: proceeds, at: 0, per: src.fee_capex_eur_per_y}
+  fi.npv_capex_receivables: {measure: npv_capex_fees, sign: -1}
+  fi.savings_over_fees: {cut: savings_100, at: 1, per: src.epc_fee_eur_per_y}
+  fi.interest_fee_over_capex_pct: {cut: interest_fee_100, at: 1, per: src.capex_eur, scale: 0.01}
+  fi.s90_client_net: {cut: net_90, at: 1}
+  fi.s75_client_net: {cut: net_75, at: 1}

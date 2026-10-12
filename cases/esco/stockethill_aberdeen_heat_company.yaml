@@ -1,0 +1,81 @@
+# esco deal "stockethill_aberdeen_heat_company": Aberdeen City Council's not-for-profit heat company and
+# its first project, CHP-fed communal heating for 289 council flats at Stockethill (UNEP, District
+# Energy in Cities, 2015, case study 3.11; cases/reference/esco/ontology/miniature/cases/
+# stockethill_aberdeen_heat_company-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * a commercial lender lends the company the capital loan (capital_loan, printed in GBP million) in
+#     period 0; the company spends it on the heating system the same period;
+#   * the Council pays the company the annual payment (annual_payment) each year of the term (term),
+#     from period 1: the company's revenue, the Council's expense, both paid in the year;
+#   * the loan's rate and tenor are not printed, so its repayment is not booked; the case file's
+#     "loan-only rate" is the return of the company's project cash flow (the loan spent on the system,
+#     then the payments), the rate at which the payments alone would serve the loan.
+# Periods are years; 0 is the investment year. No tax, no indexation (none printed).
+# The two dollar conversions (US$350,000, US$1.6 million) are printed in brackets, so they are not
+# inputs; their ratios are set aside.
+esco: stockethill_aberdeen_heat_company
+entity: company
+plant: annual_payment
+case:
+  case: esco-stockethill-aberdeen-heat-company
+  periods: 11
+  phases: [accrue, settle]
+  currency: GBP
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        loan: capital_loan * 1000 * 1000
+        drawn: {each_period: loan * (t == 0)}
+        payment: {each_period: annual_payment * (t >= 1) * (t <= term)}
+        flat_months: apartments * 12
+  contracts:
+    system:
+      type: one_off_purchase
+      parties: {buyer: company}
+      terms: {amount: {generator: src, output: loan}, period: 0}
+  rulebooks:
+    company_books:
+      kind: transfer
+      entity: company
+      phase: accrue
+      declare: {capital_loan: liability, heat_contract_revenue: income}
+      moves:
+        loan_drawn: {debit: cash, credit: capital_loan, amount: {generator: src, output: drawn}}
+        annual_payment: {debit: cash, credit: heat_contract_revenue, amount: {generator: src, output: payment}}
+    council_books:
+      kind: transfer
+      entity: council
+      phase: accrue
+      declare: {cash: asset, heat_contract_payment: expense}
+      moves:
+        annual_payment: {debit: heat_contract_payment, credit: cash, amount: {generator: src, output: payment}}
+  schemes:
+    pnl:
+      heat_contract_revenue: revenue
+      heat_contract_payment: fee
+    cash_flow:
+      capital_loan: financing
+      equipment: investing
+      heat_contract_revenue: operating
+      heat_contract_payment: operating
+  cuts:
+    company_revenue: {kind: pnl, entity: company, scheme: pnl, include: [revenue]}
+    project_cash_flow: {entity: company, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    irr: {measure: irr, cut: project_cash_flow}
+figures:
+  st.total_payments: {cut: company_revenue, total: true}
+  st.payments_over_loan: {cut: company_revenue, total: true, per: src.loan}
+  st.payment_per_flat: {cut: company_revenue, at: 1, per: src.apartments}
+  st.payment_per_flat_month: {cut: company_revenue, at: 1, per: src.flat_months}
+  st.loan_only_rate_pct: {measure: irr, scale: 0.01}
+not_compared:
+  st.fx_payment: "the US$350,000 is printed in brackets after the GBP 219,000, so it is not an input (a text counts
+    for its first number); the GBP/US$ rate is not a figure of the deal's money"
+  st.fx_loan: "the US$1.6 million is printed in brackets after the GBP 1 million, so it is not an input; the
+    GBP/US$ rate is not a figure of the deal's money"

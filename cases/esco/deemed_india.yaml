@@ -1,0 +1,59 @@
+# esco deal "deemed_india": the Indian deemed-savings EPC template (BEE model contract, Schedule G
+# formulas and blanks) with the World Bank Partial Risk Sharing Facility (PRSF) as its financing
+# backdrop, whose programme aggregates the case file records: 77 projects supported, US$94 million
+# of project cost, US$41 million of guarantees (cases/reference/esco/ontology/miniature/cases/
+# deemed_india-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py). Amounts in
+# US$ million.
+#
+# One period: the programme to date, as aggregates. Every amount is a number of the case by name
+# (generator `src`):
+#   * the ESCOs' supported projects (an aggregate entity, escos) cost total_project_cost_usd_m, paid
+#     and capitalised. Their funding (the lenders' loans) is not printed, so it is not booked;
+#   * the PRSF's partial guarantees on those loans (guarantees_usd_m) are contingent: held on the
+#     facility's books as a memo pair (the exposure guaranteed, asset, against the guarantees
+#     outstanding, liability). Nothing is called, so no cash moves.
+#   * The template's parameters (thresholds, days, the 120% termination payment) carry no amount
+#     for a project, and the facility's risk-sharing and technical-assistance budgets fund nothing
+#     the figures read, so none is booked.
+# Readings: the guarantee cover is the guarantees outstanding per the programme's project cost; the
+# average project cost is the projects' cash spend per project supported (projects_supported).
+esco: deemed_india
+entity: prsf
+plant: total_project_cost_usd_m
+case:
+  case: esco-deemed-india
+  periods: 1
+  phases: [settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values: {}
+  contracts: {}
+  rulebooks:
+    projects:
+      kind: transfer
+      entity: escos
+      phase: settle
+      declare: {cash: asset, projects: asset}
+      moves:
+        works: {debit: projects, credit: cash, amount: {generator: src, output: total_project_cost_usd_m}}
+    guarantees:
+      kind: transfer
+      entity: prsf
+      phase: settle
+      declare: {guaranteed_exposure: asset, guarantees_outstanding: liability}
+      moves:
+        issue: {debit: guaranteed_exposure, credit: guarantees_outstanding, amount: {generator: src, output: guarantees_usd_m}}
+  schemes:
+    cash_flow:
+      projects: investing
+  cuts:
+    project_spend: {entity: escos, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  deemed.guarantee_cover_pct: {balance: guarantees_outstanding, per: src.total_project_cost_usd_m, scale: 0.01}
+  deemed.average_project_cost: {cut: project_spend, sign: -1, per: src.projects_supported}

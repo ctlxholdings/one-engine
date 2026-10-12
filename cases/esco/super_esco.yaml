@@ -1,0 +1,50 @@
+# esco deal "super_esco": the state-capitalised super-ESCO, figures from Etihad ESCO (Dubai), the
+# super-ESCO that contracts building owners and hires private ESCOs (World Bank, "Super ESCOs: emerging
+# possibilities", 2018, Figure 10 and L612-672; cases/reference/esco/ontology/miniature/cases/
+# super_esco-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * the one figure is about Etihad's six retrofit projects: their building owners save
+#     six_projects_annual_savings_usd_m a year on their energy bills (USD m), booked as the owners'
+#     avoided energy cost (the with-versus-without view) for one year, period 0, received in cash;
+#   * six_projects_annual_savings_gwh is the energy those projects save in the year, a physical
+#     quantity no ledger holds: the figure is the savings read from the books per that energy
+#     (USD m per GWh is USD per kWh).
+# Tarshid's capitalisation and market share, Etihad's targets and the other numbers of the case feed
+# no figure of the answer key, so the case does not book them.
+esco: super_esco
+entity: building_owners
+plant: six_projects_annual_savings_usd_m
+case:
+  case: esco-super-esco
+  periods: 1
+  phases: [accrue]
+  currency: USD_m
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values: {}
+  contracts: {}
+  opening:
+    building_owners:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    energy_bill:
+      kind: transfer
+      entity: building_owners
+      phase: accrue
+      declare:
+        avoided_energy_cost: income
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: six_projects_annual_savings_usd_m}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+  cuts:
+    owners_savings: {kind: pnl, entity: building_owners, scheme: pnl, include: [savings]}
+  measures: {}
+figures:
+  super_esco.etihad_usd_per_kwh: {cut: owners_savings, per: src.six_projects_annual_savings_gwh}

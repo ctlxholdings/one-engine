@@ -1,0 +1,126 @@
+# esco deal "michigan_freeway_lighting_p3": the Michigan DOT freeway-lighting P3 (Detroit area, about
+# 15,000 lights): Freeway Lighting Partners designs, builds, finances, operates and maintains the
+# lights for 15 years against two completion milestones and quarterly availability payments (FHWA
+# project profile [FHWA]; Nossaman [NOSS]; cases/reference/esco/ontology/miniature/cases/
+# michigan_freeway_lighting_p3-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`), in USD (the deal prints USD m, times
+# 1000 x 1000); periods are contract years, 0 the year of commercial and financial close, so the
+# construction phase is periods 0 to construction_years - 1 and O&M the om_years after it:
+#   * FLP (book `flp`) raises the capital-market financing and its sponsors' equity at close and pays
+#     the design and construction cost, capitalised;
+#   * MDOT (book `mdot`) receives the federal funding at close and pays FLP the two completion
+#     milestones (each) in the last construction year and the quarterly service payment, four a year,
+#     in every O&M year; FLP books them as revenue, paid in the year;
+#   * no tax; the energy saving and the debt terms are not modelled (the answer key sets the energy
+#     figure aside).
+# Funding equal to capex and the debt share are FLP's balances (the debt per the capex). Total
+# payments are FLP's revenue over the term; how far they fall below Nossaman's ~$125m (in percent of
+# it) and FHWA's $172m life-cycle cost compares that revenue with the printed value, carried by the
+# generator (nossaman_usd, fhwa_usd). The federal share is MDOT's federal funding per the service-
+# payment stream the contract states (quarterly payment x 4 x om_years, the generator's
+# service_stream_usd). The phases summing to the term and the expiry year are time quantities: drivers
+# over the phase lengths and the close date (rule 4 allows them).
+esco: michigan_freeway_lighting_p3
+entity: flp
+plant: quarterly_service_payment_usd_m
+case:
+  case: esco-michigan-freeway-lighting
+  periods: 15
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 15
+      inputs: esco
+      values:
+        million: 1000 * 1000
+        capex_usd: design_and_construction_usd_m * million
+        bonds_usd: capital_market_financing_usd_m * million
+        equity_in_usd: equity_usd_m * million
+        federal_usd: federal_funding_usd_m * million
+        milestone: {each_period: "each * million * (t == construction_years - 1)"}
+        service: {each_period: "quarterly_service_payment_usd_m * million * 4 * (t >= construction_years) * (t < construction_years + om_years)"}
+        at_close: {each_period: "t == 0"}
+        service_stream_usd: quarterly_service_payment_usd_m * million * 4 * om_years
+        nossaman_usd: nossaman_approx * million
+        fhwa_usd: fhwa_life_cycle_cost * million
+        term: construction_years + om_years
+        expiry: commercial_and_financial_close__year + construction_years + om_years
+        bonds_at_close: {each_period: "bonds_usd * at_close"}
+        equity_at_close: {each_period: "equity_in_usd * at_close"}
+        capex_at_close: {each_period: "capex_usd * at_close"}
+        federal_at_close: {each_period: "federal_usd * at_close"}
+  opening:
+    flp:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    mdot:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    concessionaire:
+      kind: transfer
+      entity: flp
+      phase: operate
+      declare:
+        lighting_assets: asset
+        capital_market_debt: liability
+        sponsor_equity: equity
+        milestone_revenue: income
+        availability_revenue: income
+      moves:
+        issue_debt: {debit: cash, credit: capital_market_debt, amount: {generator: src, output: bonds_at_close}}
+        equity_in: {debit: cash, credit: sponsor_equity, amount: {generator: src, output: equity_at_close}}
+        build: {debit: lighting_assets, credit: cash, amount: {generator: src, output: capex_at_close}}
+        milestone_90: {debit: cash, credit: milestone_revenue, amount: {generator: src, output: milestone}}
+        milestone_100: {debit: cash, credit: milestone_revenue, amount: {generator: src, output: milestone}}
+        service_payments: {debit: cash, credit: availability_revenue, amount: {generator: src, output: service}}
+    authority:
+      kind: transfer
+      entity: mdot
+      phase: operate
+      declare:
+        federal_funding: income
+        milestone_payments: expense
+        availability_payments: expense
+      moves:
+        federal: {debit: cash, credit: federal_funding, amount: {generator: src, output: federal_at_close}}
+        milestone_90: {debit: milestone_payments, credit: cash, amount: {generator: src, output: milestone}}
+        milestone_100: {debit: milestone_payments, credit: cash, amount: {generator: src, output: milestone}}
+        service_payments: {debit: availability_payments, credit: cash, amount: {generator: src, output: service}}
+  schemes:
+    pnl:
+      milestone_revenue: milestones
+      availability_revenue: availability
+      federal_funding: federal
+      milestone_payments: milestones_paid
+      availability_payments: availability_paid
+  cuts:
+    flp_revenue: {kind: pnl, entity: flp, scheme: pnl, include: [milestones, availability]}
+    flp_milestones: {kind: pnl, entity: flp, scheme: pnl, include: [milestones]}
+    mdot_federal: {kind: pnl, entity: mdot, scheme: pnl, include: [federal]}
+  measures: {}
+figures:
+  michigan.funding_equals_capex: {balance: "capital_market_debt + sponsor_equity", scale: 1000000, at: 0}
+  michigan.debt_share_pct: {balance: capital_market_debt, per: src.capex_usd, scale: 0.01, at: 0}
+  michigan.milestones: {cut: flp_milestones, total: true, scale: 1000000}
+  michigan.phases_sum_to_term: {driver: src.term, at: 0}
+  michigan.expiry_year: {driver: src.expiry, at: 0}
+  michigan.total_payments: {cut: flp_revenue, total: true, scale: 1000000}
+  michigan.below_nossaman_pct:
+    sum:
+      - {driver: src.nossaman_usd, per: src.nossaman_usd}
+      - {cumulative: flp_revenue, sign: -1, per: src.nossaman_usd}
+    scale: 0.01
+    at: 14
+  michigan.below_fhwa_life_cycle:
+    sum:
+      - {driver: src.fhwa_usd}
+      - {cumulative: flp_revenue, sign: -1}
+    scale: 1000000
+    at: 14
+  michigan.federal_share_pct: {cut: mdot_federal, total: true, per: src.service_stream_usd, scale: 0.01}

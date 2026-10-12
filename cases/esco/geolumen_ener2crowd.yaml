@@ -1,0 +1,114 @@
+# esco deal "geolumen_ener2crowd": Geolumen S.r.l.'s LED relamping at a steel-components plant in the
+# Province of Chieti, crowd-lent on Ener2Crowd (project page, key-information sheet and loan contract
+# template, Dec 2020; cases/reference/esco/ontology/miniature/cases/geolumen_ener2crowd-lod0.yaml;
+# answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * periods are quarters: 0 is 31/12/2020 (amortisation_start), 1..12 the instalment dates from
+#     31/03/2021 to 31/12/2023 (instalments: `per_year` a year, `total` in all, no pre-amortisation);
+#   * Geolumen funds the plant, capex_eur, in period 0 with own_funds_eur of its own capital and the
+#     crowd loan, crowd_raise_eur, drawn in full in period 0;
+#   * the crowd loan is an annuity: interest at `rate` a year on what is owed, a quarter's worth each
+#     period (rate / per_year), repaid by equal instalments of interest and principal over the
+#     `total` quarters (the annuity loop sizes the principal so the loan is repaid exactly by the
+#     last); paid as due;
+#   * the plant's title passes to the client at once and the client pays Geolumen over
+#     client_deferred_payment_years, but the fee is not published: the plant is carried at its cost
+#     and the client's payments are not booked. No tax.
+# The figures:
+#   * geolumen.instalment: a quarter's debt service from the books (interest plus principal),
+#     4,512.92, printed 4,513;
+#   * geolumen.funding_stack: the money Geolumen raised in period 0 (loan and capital);
+#   * geolumen.crowd_share_pct: the crowd loan drawn, from the books, over the capex (the input), as a
+#     percent (45.45, printed 45);
+#   * geolumen.total_repaid: the debt service of the instalment quarters (the reading times the
+#     quarter flag, 1 from period 1, which leaves out the draw), summed. It DIFFERS by one euro,
+#     and the cause is the record's rounding, not the books': the case file multiplies the ROUNDED
+#     instalment, 12 x 4,513 = 54,156; the books pay 12 x 4,512.9156 = 54,154.99, which rounds to
+#     54,155 (the answer key itself marks the unrounded interest, 4,155.04, xfail as a record slip);
+#   * geolumen.platform_take: the platform's retention, platform_retention_on_interest of the interest
+#     the books charge over the life (4,154.99; the case file takes 4,155), 124.65, printed 125;
+#   * geolumen.co2_factor: kg of CO2 avoided per kWh saved, two physical quantities no ledger holds
+#     (a driver).
+esco: geolumen_ener2crowd
+entity: geolumen
+plant: crowd_raise_eur
+case:
+  case: esco-geolumen-ener-crowd
+  periods: 13
+  phases: [accrue, pay]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 13
+      inputs: esco
+      values:
+        draws: {each_period: crowd_raise_eur * (t == 0)}
+        quarter: {each_period: (t >= 1) * 1}    # 1 in each instalment quarter: a quarter's interest
+        co2_per_kwh: co2_avoided_kg_per_year / savings_kwh_per_year
+  loops:
+    crowd_annuity:
+      rule: {kind: annuity, loan: crowd_loan}
+      start: {repayment: 0}
+      tolerance: 0
+      max_iterations: 3
+  contracts:
+    own_funds:
+      type: equity_funding
+      parties: {issuer: geolumen}
+      terms: {amount: {generator: src, output: own_funds_eur}, period: 0}
+    plant:
+      type: one_off_purchase
+      parties: {buyer: geolumen}
+      terms: {amount: {generator: src, output: capex_eur}, period: 0}
+    crowd_loan:
+      type: loan
+      parties: {borrower: geolumen}
+      terms:
+        commitment: {generator: src, output: crowd_raise_eur}
+        draw_schedule: {generator: src, output: draws}
+        available_until: 0
+        rate: {generator: src, output: rate}
+        rate_from: 1
+        days_per_period: {generator: src, output: quarter}
+        day_count_basis: {generator: src, output: per_year}
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: 1
+        repay_periods: {generator: src, output: total}
+        sculpt_dscr: null
+        principal_schedule: {loop: crowd_annuity, output: repayment}
+        arrangement_fee: 0
+        fee_at: 0
+  rulebooks:
+    settle:
+      kind: pay_as_due
+      phase: pay
+      claims: [crowd_loan.draw, crowd_loan.interest, crowd_loan.principal]
+  schemes:
+    pnl:
+      crowd_loan.interest: interest
+      crowd_loan.fees: fees
+    cash_flow:
+      share_capital: equity
+      equipment: investing
+      crowd_loan.debt: crowd_loan
+      crowd_loan.interest_payable: crowd_loan
+      crowd_loan.fee_payable: crowd_loan
+      crowd_loan.capitalised_interest: crowd_loan
+      crowd_loan.deferred_fees: crowd_loan
+  cuts:
+    crowd_loan_cash: {entity: geolumen, account: cash, scheme: cash_flow, include: [crowd_loan]}
+    raised: {entity: geolumen, account: cash, scheme: cash_flow, include: [crowd_loan, equity]}
+    interest: {kind: pnl, entity: geolumen, scheme: pnl, include: [interest]}
+  measures: {}
+figures:
+  geolumen.instalment: {cut: crowd_loan_cash, at: 1, sign: -1}
+  geolumen.funding_stack: {cut: raised, at: 0}
+  geolumen.crowd_share_pct: {cut: crowd_loan_cash, at: 0, per: src.capex_eur, scale: 0.01}
+  geolumen.total_repaid: {cut: crowd_loan_cash, sign: -1, times: src.quarter, total: true}
+  geolumen.platform_take: {cut: interest, total: true, sign: -1, times: src.platform_retention_on_interest}
+  geolumen.co2_factor: {driver: src.co2_per_kwh, at: 0}

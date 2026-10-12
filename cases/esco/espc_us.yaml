@@ -1,0 +1,70 @@
+# esco deal "espc_us": the US energy savings performance contract of the Montezuma-Cortez School
+# District, Colorado (DOE / Better Buildings, "Energy Savings Performance Contracting for Small
+# Projects", 2021, p. 21, E12 L1349-1385; cases/reference/esco/ontology/miniature/cases/espc_us-lod0.yaml;
+# answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * the district buys the ESCO's fixed-cost project for project_cost_usd in period 0 (the
+#     equipment). The case box prints no financing line and the guide's third-party financing is
+#     generic, so the district's money comes in as its own capital; a loan would not change the
+#     project cash flow the figures read;
+#   * the ESCO guarantees guaranteed_annual_savings_usd a year, booked as the district's avoided
+#     energy cost (the with-versus-without view of its utility bill), received in cash each year
+#     from period 1 for financing_term_years (not stated for this district: the guide's generic 15,
+#     the low end of 15-25; the payback only needs the term to outlast it). No tax.
+# Periods are years; 0 is the installation year.
+#   * espc.simple_payback is the payback measure of the district's project cash flow;
+#   * espc.cost_per_sqft is the equipment the district booked, per floor_area_sqft (a physical
+#     quantity no ledger holds);
+#   * espc.savings_to_cost_pct is a year's savings from the books over the project cost (an input:
+#     `per` divides by a generator value only), printed as a percent.
+esco: espc_us
+entity: school_district
+plant: project_cost_usd
+case:
+  case: esco-espc-us
+  periods: 16
+  phases: [accrue, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 16
+      inputs: esco
+      values:
+        savings: {each_period: guaranteed_annual_savings_usd * (t >= 1) * (t <= financing_term_years)}
+  contracts:
+    budget:
+      type: equity_funding
+      parties: {issuer: school_district}
+      terms: {amount: {generator: src, output: project_cost_usd}, period: 0}
+    project:
+      type: one_off_purchase
+      parties: {buyer: school_district}
+      terms: {amount: {generator: src, output: project_cost_usd}, period: 0}
+  rulebooks:
+    energy_bill:
+      kind: transfer
+      entity: school_district
+      phase: accrue
+      declare:
+        avoided_energy_cost: income
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      avoided_energy_cost: operating
+  cuts:
+    district_savings: {kind: pnl, entity: school_district, scheme: pnl, include: [savings]}
+    project_cash_flow: {entity: school_district, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    payback: {measure: payback, cut: project_cash_flow}
+figures:
+  espc.simple_payback: {measure: payback}
+  espc.cost_per_sqft: {balance: equipment, at: 0, per: src.floor_area_sqft}
+  espc.savings_to_cost_pct: {cut: district_savings, at: 1, per: src.project_cost_usd, scale: 0.01}

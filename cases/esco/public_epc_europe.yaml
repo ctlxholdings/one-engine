@@ -1,0 +1,89 @@
+# esco deal "public_epc_europe": the public-sector EnPC model in the Czech Republic as the EU ESCO
+# market report describes it (typical public contract, market size 2020-21, savings and duration;
+# JRC/E02 ESCO market report and E07, E15; cases/reference/esco/ontology/miniature/cases/
+# public_epc_europe-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`), in EUR (the report prints EUR m,
+# times 1000 x 1000); periods are years, 0 the investment year:
+#   * the typical public contract: the ESCO (book `esco`) invests the typical contract size
+#     (typical_public_contract_eur_m) at period 0, funded by its own capital (the construction loan's
+#     terms are not printed), capitalised; the public client (book `client`) saves the typical annual
+#     savings (typical_savings_eur_m_per_year_public) in each year of the typical duration
+#     (typical_duration_years_public) from period 1, booked as avoided energy cost; the fee paid out
+#     of them is not printed, so no payment between them is modelled;
+#   * the market (book `market`): the public EnPC contracts signed in 2020-21, their total value
+#     (public_market_size_eur_m) booked as contract volume at period 0;
+#   * no tax.
+# The average public contract is the market's contract volume per the count of public contracts. The
+# typical size over the typical annual saving is the ESCO's investment per the client's annual saving
+# (a payback in years); the savings over the term are the client's savings summed.
+esco: public_epc_europe
+entity: esco
+plant: typical_savings_eur_m_per_year_public
+case:
+  case: esco-public-epc-europe
+  periods: 11
+  phases: [operate]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        million: 1000 * 1000
+        invest: {each_period: "typical_public_contract_eur_m * million * (t == 0)"}
+        annual_saving: typical_savings_eur_m_per_year_public * million
+        saving: {each_period: "annual_saving * (t >= 1) * (t <= typical_duration_years_public)"}
+        market: {each_period: "public_market_size_eur_m * million * (t == 0)"}
+  opening:
+    esco:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    client:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    market:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    typical_contract:
+      kind: transfer
+      entity: esco
+      phase: operate
+      declare:
+        efficiency_measures: asset
+        own_capital: equity
+      moves:
+        fund: {debit: cash, credit: own_capital, amount: {generator: src, output: invest}}
+        install: {debit: efficiency_measures, credit: cash, amount: {generator: src, output: invest}}
+    client_savings:
+      kind: transfer
+      entity: client
+      phase: operate
+      declare:
+        avoided_energy_cost: income
+      moves:
+        saving: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: saving}}
+    market_volume:
+      kind: transfer
+      entity: market
+      phase: operate
+      declare:
+        contracts_signed: income
+      moves:
+        signed: {debit: cash, credit: contracts_signed, amount: {generator: src, output: market}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      contracts_signed: volume
+  cuts:
+    client_savings: {kind: pnl, entity: client, scheme: pnl, include: [savings]}
+    market_volume: {kind: pnl, entity: market, scheme: pnl, include: [volume]}
+  measures: {}
+figures:
+  public_epc.average_contract: {cut: market_volume, per: src.public_contracts_2020_21, scale: 1000000, at: 0}
+  public_epc.size_over_savings: {balance: efficiency_measures, per: src.annual_saving, at: 0}
+  public_epc.savings_over_term: {cut: client_savings, total: true, scale: 1000000}

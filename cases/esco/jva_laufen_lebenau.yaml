@@ -1,0 +1,86 @@
+# esco deal "jva_laufen_lebenau": a guaranteed-savings energy-saving contract (Energiespar-
+# Contracting) between the JVA Laufen-Lebenau (a Bavarian prison) and Siemens, with a plant-oil
+# CHP, signed 01.07.2007, main phase 07/2007 to 06/2017 (dena project page;
+# cases/reference/esco/ontology/miniature/cases/jva_laufen_lebenau-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * Siemens (the partner) pays the investment (investment_eur) in period 0, funded by its own
+#     equity (the financing route is not printed; the Baukostenzuschuss is a flag without an
+#     amount, so nothing is booked for it). The page prints the main phase from the month of
+#     signature; at LOD 0 the works are period 0 and the ten phase years periods 1..10;
+#   * the phase runs from _from__year/_from__month to to__year/to__month; its length in months and
+#     years is a driver over those printed months (a time quantity, rule 4);
+#   * the prison's guaranteed saving on its energy bill (guaranteed_savings_eur_per_year) each
+#     phase year is booked as its avoided energy cost, and paid to Siemens as the contracting rate
+#     (no budget relief is printed, so the prison keeps nothing of the guarantee at LOD 0; the rate
+#     formula is not printed);
+#   * the guarantee as a share of the base is the guaranteed saving read from the books per
+#     baseline_energy_cost_eur_per_year; the simple payback is the equipment Siemens holds per the
+#     annual guarantee.
+# The *__printed inputs repeat the amounts in thousands as printed; the CHP sizes feed no figure.
+# No tax, no financing, no indexation (none printed).
+esco: jva_laufen_lebenau
+entity: siemens
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-jva-laufen-lebenau
+  periods: 11
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        phase_years: phase_months / 12
+        works: {each_period: (t == 0)}
+        in_phase: {each_period: (t >= 1) * (t <= phase_years)}
+        invested: works * investment_eur
+        guaranteed: in_phase * guaranteed_savings_eur_per_year
+  opening:
+    siemens:
+      cash: {nature: asset, value: 0}
+    jva:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    partner:
+      kind: transfer
+      entity: siemens
+      phase: accrue
+      declare:
+        share_capital: equity
+        equipment: asset
+        contracting_revenue: income
+      moves:
+        fund: {debit: cash, credit: share_capital, amount: {generator: src, output: invested}}
+        build: {debit: equipment, credit: cash, amount: {generator: src, output: invested}}
+        rate: {debit: cash, credit: contracting_revenue, amount: {generator: src, output: guaranteed}}
+    client:
+      kind: transfer
+      entity: jva
+      phase: settle
+      declare:
+        guaranteed_saving: income
+        contracting_rate: expense
+      moves:
+        guaranteed: {debit: cash, credit: guaranteed_saving, amount: {generator: src, output: guaranteed}}
+        rate: {debit: contracting_rate, credit: cash, amount: {generator: src, output: guaranteed}}
+  schemes:
+    pnl:
+      guaranteed_saving: guaranteed
+      contracting_rate: rate
+      contracting_revenue: revenue
+  cuts:
+    guaranteed: {kind: pnl, entity: jva, scheme: pnl, include: [guaranteed]}
+  measures: {}
+figures:
+  laufen.pct_closure: {cut: guaranteed, at: 1, per: src.baseline_energy_cost_eur_per_year, scale: 0.01}
+  laufen.phase_months: {driver: src.phase_months, at: 0}
+  laufen.guarantee_over_phase: {cut: guaranteed, total: true}
+  laufen.simple_payback: {balance: equipment, at: 0, per: src.guaranteed_savings_eur_per_year}

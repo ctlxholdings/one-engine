@@ -1,0 +1,82 @@
+# esco deal "bfr_berlin": a guaranteed-savings energy-saving contract (Energiespar-Contracting) for the
+# Bundesinstitut für Risikobewertung, Berlin (BBR as client, MVV Energiedienstleistungen as contractor;
+# dena project database entry; cases/reference/esco/ontology/miniature/cases/bfr_berlin-lod0.yaml;
+# answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * the contractor (esco) buys the measures (wood-chip boiler, energy management) for investment_eur
+#     in period 0, funded by its own equity (no financing is described);
+#   * the client's energy bill before the measures (base_energy_cost_eur_per_year) is its energy cost
+#     each year of the main performance phase (04/2007 to 03/2016, from period 1), and the guaranteed
+#     saving (guaranteed_savings_eur_per_year) accrues to it as avoided energy cost in the same years
+#     (the with-versus-without view of the bill);
+#   * the contractor's remuneration and the construction-cost subsidy are not published ("Baukostenzuschuss:
+#     ja", no amount), so neither is booked; the payback is the case file's "investment / annual guarantee,
+#     scale only": the plant read from the books per the annual guarantee.
+# Periods are years; 0 is signature and construction, 1-9 the phase. No tax.
+# Two drivers are time quantities from the printed dates (rule 4): the phase's months, both end months
+# counted, and the months from signature to the phase's first month; the phase's years set the term.
+#
+# The page's own percentage does not close (the case file's checks.savings_pct): 37,000 / 147,000 is
+# 25.17%, printed 25.0; the answer key compares it within its band of 0.25 points. The figure
+# bfr.printed_pct_of_base is the printed 25.0% applied to the base bill read from the books.
+esco: bfr_berlin
+entity: esco
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-bfr-berlin
+  periods: 10
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 10
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        signing_months: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        phase_years: phase_months / 12
+        in_phase: {each_period: (t >= 1) * (t <= phase_years)}
+        base_bill: base_energy_cost_eur_per_year * in_phase
+        savings: guaranteed_savings_eur_per_year * in_phase
+        printed_share: guaranteed_savings_pct_printed / 100
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+  rulebooks:
+    client:
+      kind: transfer
+      entity: client
+      phase: accrue
+      declare: {cash: asset, energy_cost: expense, avoided_energy_cost: income}
+      moves:
+        base_bill: {debit: energy_cost, credit: cash, amount: {generator: src, output: base_bill}}
+        guaranteed_saving: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    pnl:
+      energy_cost: energy
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      energy_cost: operating
+      avoided_energy_cost: operating
+  cuts:
+    client_savings: {kind: pnl, entity: client, scheme: pnl, include: [savings]}
+    client_base_bill: {kind: pnl, entity: client, scheme: pnl, include: [energy]}
+  measures: {}
+figures:
+  bfr.pct_band: {cut: client_savings, at: 1, per: src.base_energy_cost_eur_per_year, scale: 0.01}
+  bfr.phase_months: {driver: src.phase_months, at: 0}
+  bfr.guarantee_over_phase: {cut: client_savings, total: true}
+  bfr.simple_payback: {balance: equipment, at: 0, per: src.guaranteed_savings_eur_per_year}
+  bfr.signing_to_phase: {driver: src.signing_months, at: 0}
+  bfr.printed_pct_of_base: {cut: client_base_bill, at: 1, sign: -1, times: src.printed_share}

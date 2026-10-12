@@ -1,0 +1,80 @@
+# esco deal "austria_pharma_lease": the energy performance contract of an Austrian pharmaceutical plant,
+# financed by operate leasing (IEA DSM financing-options manual, E08 L2490-2601; cases/reference/esco/
+# ontology/miniature/cases/austria_pharma_lease-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * periods are years: 0 is the installation, 1..contract_term_years the contract term;
+#   * the investment is paid with 100% external capital by FIN, the lessor: the ESCO invoices FIN
+#     total_investment_eur_excl_vat and FIN holds the measures (title with the lessor). FIN's payment
+#     plan is not printed, so the whole investment is paid in period 0 (the case file's own default),
+#     from FIN's capital;
+#   * the client's energy bill before the contract, energy_cost_before_eur_per_year, is its energy
+#     cost each year of the term, paid in cash; the ESCO's guarantee, guaranteed_savings_eur_per_year,
+#     is its avoided energy cost each year of the term (the with-versus-without view of the bill);
+#   * the contracting rates the client pays FIN, and the bank guarantee's fee, are not printed, so
+#     they are not booked. Amounts excl. VAT; no tax.
+# The figures:
+#   * austria.savings_over_term: the client's savings summed over the term;
+#   * austria.savings_over_investment: the same over the investment (the input), nominal;
+#   * austria.simple_payback: FIN's investment from the books per the annual guarantee;
+#   * austria.savings_vs_prior_cost_pct: a year's savings over the energy cost before (the input), as
+#     a percent.
+# austria.payback_within_term is a yes/no, set aside by the oracle itself.
+esco: austria_pharma_lease
+entity: client
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-austria-pharma-lease
+  periods: 7
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 7
+      inputs: esco
+      values:
+        in_term: {each_period: (t >= 1) * (t <= contract_term_years)}
+        base_bill: energy_cost_before_eur_per_year * in_term
+        savings: guaranteed_savings_eur_per_year * in_term
+  contracts:
+    fin_capital:
+      type: equity_funding
+      parties: {issuer: fin}
+      terms: {amount: {generator: src, output: total_investment_eur_excl_vat}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: fin}
+      terms: {amount: {generator: src, output: total_investment_eur_excl_vat}, period: 0}
+  opening:
+    client:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    energy_bill:
+      kind: transfer
+      entity: client
+      phase: accrue
+      declare:
+        energy_cost: expense
+        avoided_energy_cost: income
+      moves:
+        bill: {debit: energy_cost, credit: cash, amount: {generator: src, output: base_bill}}
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    pnl:
+      energy_cost: energy
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+  cuts:
+    client_savings: {kind: pnl, entity: client, scheme: pnl, include: [savings]}
+    fin_investment: {entity: fin, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  austria.savings_over_term: {cut: client_savings, total: true}
+  austria.savings_over_investment: {cut: client_savings, total: true, per: src.total_investment_eur_excl_vat}
+  austria.simple_payback: {cut: fin_investment, at: 0, sign: -1, per: src.guaranteed_savings_eur_per_year}
+  austria.savings_vs_prior_cost_pct: {cut: client_savings, at: 1, per: src.energy_cost_before_eur_per_year, scale: 0.01}

@@ -1,0 +1,49 @@
+# esco deal "globaluz_ecrowd": a crowdlending loan raised on the eCrowd platform from 114 investors
+# to finance an energy-efficiency project (lighting and works saving 43,730 kWh a year), repaid in
+# 36 monthly instalments over the 36-month contract (eCrowd project page; cases/reference/esco/
+# ontology/miniature/cases/globaluz_ecrowd-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py). Amounts in EUR.
+#
+# One period: the loan's drawdown. Every amount is a number of the case by name (generator `src`):
+#   * the borrower draws the crowd loan (crowd_loan_eur) from the investors in cash, a liability.
+#     The interest rate and the start date are not published, so no interest or instalment is
+#     booked (the case file: "instalment: not computable").
+# Readings: the average ticket is the loan held per investor (investors, a count).
+# The implied baseline and post-works use (kWh) and the CO2 factor (kg per kWh, tonnes x 1000)
+# are `driver` formulas over the printed physical figures: quantities no ledger holds.
+# globaluz.term_match (instalments equal the term) is a yes/no the oracle itself sets aside.
+esco: globaluz_ecrowd
+entity: globaluz
+plant: crowd_loan_eur
+case:
+  case: esco-globaluz-ecrowd
+  periods: 1
+  phases: [settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        baseline_kwh: savings_kwh_per_year / savings_share_of_current_use
+        after_works_kwh: baseline_kwh - savings_kwh_per_year
+        co2_kg_per_kwh: co2_avoided_t_per_year * 1000 / savings_kwh_per_year
+  contracts: {}
+  rulebooks:
+    crowd_loan:
+      kind: transfer
+      entity: globaluz
+      phase: settle
+      declare: {cash: asset, crowd_loan: liability}
+      moves:
+        draw: {debit: cash, credit: crowd_loan, amount: {generator: src, output: crowd_loan_eur}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  globaluz.average_ticket: {balance: crowd_loan, per: src.investors}
+  globaluz.implied_baseline: {driver: src.baseline_kwh}
+  globaluz.after_works: {driver: src.after_works_kwh}
+  globaluz.co2_factor: {driver: src.co2_kg_per_kwh}

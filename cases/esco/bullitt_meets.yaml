@@ -1,0 +1,111 @@
+# esco deal "bullitt_meets": the Bullitt Center MEETS (Metered Energy Efficiency Transaction
+# Structure), Seattle, a three-party pay-for-performance agreement between the Bullitt Foundation
+# (owner), the master tenant and Seattle City Light, 20 years from 1 May 2015 (ACEEE Summer Study
+# 2016, Egnor et al., Tables 2 and 3; cases/reference/esco/ontology/miniature/cases/
+# bullitt_meets-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# One period: the Table 2/3 year (meter reads 4 Mar 2015 to 1 Feb 2016). Every amount is a
+# number of the case by name (generator `src`):
+#   * the tenant pays the utility its metered-energy-efficiency (MEE) charges as billed
+#     (tenant_mee_charges_usd, at monthly retail rates the paper does not print) and its actual
+#     meter charges for grid import (tenant_actual_meter_charges_usd), in cash in the year;
+#   * the utility pays the owner the contract rate on the certified savings
+#     (metered_energy_efficiency_kwh x contract_rate_usd_per_kwh) and the conservation incentive
+#     on the same kWh (x conservation_incentive_usd_per_kwh), in cash in the year;
+#   * each party books its own side: the owner's two incomes, the utility's MEE and retail income
+#     and its two payments as expenses, the tenant's two charges as expenses. No tax, no capex
+#     (the building's cost and the PV export price are not in the paper).
+# Physical figures (kWh, the energy level, the validation gap) are `driver` formulas over the
+# printed kWh: quantities no ledger holds.
+#
+# Set aside: bullitt.tenant_mee_at_average_rate prices the MEE kWh at the annual average retail
+# rate, a counterfactual the case file computes only to show that it does not reproduce the
+# billed 41,657 (rates vary by month); the deal bills monthly rates, and the books carry the bill.
+esco: bullitt_meets
+entity: bullitt
+plant: contract_rate_usd_per_kwh
+case:
+  case: esco-bullitt-meets
+  periods: 1
+  phases: [settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        mee: baseline_kwh - building_use_kwh
+        use: solar_used_on_site_kwh + grid_import_kwh
+        solar: solar_used_on_site_kwh + exported_to_scl_kwh
+        energy_level: building_use_kwh / baseline_kwh
+        billed_kwh: metered_energy_efficiency_kwh + grid_import_kwh
+        validation_gap: deltameter - energyplus
+        validation_gap_share: (deltameter - energyplus) / energyplus
+        contract_payment: metered_energy_efficiency_kwh * contract_rate_usd_per_kwh
+        incentive: metered_energy_efficiency_kwh * conservation_incentive_usd_per_kwh
+  contracts: {}
+  rulebooks:
+    tenant_side:
+      kind: transfer
+      entity: tenant
+      phase: settle
+      declare: {cash: asset, mee_charges: expense, meter_charges: expense}
+      moves:
+        mee: {debit: mee_charges, credit: cash, amount: {generator: src, output: tenant_mee_charges_usd}}
+        meter: {debit: meter_charges, credit: cash, amount: {generator: src, output: tenant_actual_meter_charges_usd}}
+    utility_side:
+      kind: transfer
+      entity: utility
+      phase: settle
+      declare: {cash: asset, mee_revenue: income, retail_revenue: income, contract_payments: expense,
+                incentive_payments: expense}
+      moves:
+        mee: {debit: cash, credit: mee_revenue, amount: {generator: src, output: tenant_mee_charges_usd}}
+        meter: {debit: cash, credit: retail_revenue, amount: {generator: src, output: tenant_actual_meter_charges_usd}}
+        contract: {debit: contract_payments, credit: cash, amount: {generator: src, output: contract_payment}}
+        incentive: {debit: incentive_payments, credit: cash, amount: {generator: src, output: incentive}}
+    owner_side:
+      kind: transfer
+      entity: bullitt
+      phase: settle
+      declare: {cash: asset, contract_revenue: income, incentive_revenue: income}
+      moves:
+        contract: {debit: cash, credit: contract_revenue, amount: {generator: src, output: contract_payment}}
+        incentive: {debit: cash, credit: incentive_revenue, amount: {generator: src, output: incentive}}
+  schemes:
+    pnl:
+      mee_charges: tenant_energy
+      meter_charges: tenant_energy
+      mee_revenue: utility_mee
+      retail_revenue: utility_retail
+      contract_payments: utility_contract
+      incentive_payments: utility_incentive
+      contract_revenue: owner_contract
+      incentive_revenue: owner_incentive
+  cuts:
+    owner_contract: {kind: pnl, entity: bullitt, scheme: pnl, include: [owner_contract]}
+    owner_incentive: {kind: pnl, entity: bullitt, scheme: pnl, include: [owner_incentive]}
+    owner_total: {kind: pnl, entity: bullitt, scheme: pnl, include: [owner_contract, owner_incentive]}
+    tenant_energy: {kind: pnl, entity: tenant, scheme: pnl, include: [tenant_energy]}
+    utility_spread: {kind: pnl, entity: utility, scheme: pnl, include: [utility_mee, utility_contract]}
+    utility_net_savings: {kind: pnl, entity: utility, scheme: pnl,
+                          include: [utility_mee, utility_contract, utility_incentive]}
+  measures: {}
+figures:
+  bullitt.mee: {driver: src.mee}
+  bullitt.use: {driver: src.use}
+  bullitt.solar: {driver: src.solar}
+  bullitt.energy_level_pct: {driver: src.energy_level, scale: 0.01}
+  bullitt.contract_payment: {cut: owner_contract}
+  bullitt.incentive: {cut: owner_incentive}
+  bullitt.bullitt_total: {cut: owner_total}
+  bullitt.tenant_total: {cut: tenant_energy, sign: -1}
+  bullitt.utility_spread: {cut: utility_spread}
+  bullitt.utility_net_year1: {cut: utility_net_savings}
+  bullitt.tenant_billed_kwh: {driver: src.billed_kwh}
+  bullitt.validation_gap_kwh: {driver: src.validation_gap}
+  bullitt.validation_gap_pct: {driver: src.validation_gap_share, scale: 0.01}
+not_compared:
+  bullitt.tenant_mee_at_average_rate: "a counterfactual: the MEE kWh priced at the annual average retail rate, which the case file computes only to show it does not reproduce the billed 41,657 (rates vary by month); the deal bills monthly rates, which the paper does not print, and the books carry the bill"

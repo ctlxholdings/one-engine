@@ -1,0 +1,83 @@
+# esco deal "ba_frankfurt_kundenzentrum_ost": the Bundesagentur fuer Arbeit Frankfurt, Kundenzentrum Ost, a
+# German guaranteed-savings energy-saving contract with Siemens, signed 01.04.2005 (dena project data
+# sheet; cases/reference/esco/ontology/miniature/cases/ba_frankfurt_kundenzentrum_ost-lod0.yaml; answer
+# key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name, or a formula over them (generator `src`), in EUR:
+#   * the contractor invests `investment` in period 0 (signing to the start of the phase), out of
+#     its own capital;
+#   * the main performance phase runs from its first to its last printed month; its length in
+#     months is a driver over those date inputs (a time quantity, both end months counted), and its
+#     years (months / 12) are periods 1.. of the case;
+#   * in each year of the phase the agency books the guaranteed saving (guaranteed_savings) as
+#     avoided energy cost, keeps the printed budget relief (budget_relief, nil here) and pays the
+#     rest to the contractor; the remuneration itself is not published;
+#   * no tax.
+# Readings: the savings share is the avoided energy cost per the base energy costs; the guarantee over
+# the phase is the avoided energy cost summed, and per the contractor's investment; the simple
+# payback is the contractor's investment per the annual guarantee (scale only, as the record says);
+# the months from signing to the phase are a driver over the date inputs (whole months from the
+# signing day to the first day of the phase).
+esco: ba_frankfurt_kundenzentrum_ost
+entity: agency
+plant: guaranteed_savings
+case:
+  case: esco-ba-frankfurt-kundenzentrum-ost
+  periods: 10
+  phases: [accrue]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 10
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        signing_to_phase: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month - (day > 1)
+        live: (t >= 1) * (t <= phase_months / 12)
+        savings: live * guaranteed_savings
+        relief: live * budget_relief
+        fee: savings - relief
+        works: investment * (t == 0)
+  contracts: {}
+  rulebooks:
+    agency:
+      kind: transfer
+      entity: agency
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income, contracting_fee: expense}
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+        fee: {debit: contracting_fee, credit: cash, amount: {generator: src, output: fee}}
+    contractor:
+      kind: transfer
+      entity: contractor
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, equipment: asset, contracting_revenue: income}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: works}}
+        works: {debit: equipment, credit: cash, amount: {generator: src, output: works}}
+        fee: {debit: cash, credit: contracting_revenue, amount: {generator: src, output: fee}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      contracting_fee: fee
+      contracting_revenue: revenue
+    cash_flow:
+      avoided_energy_cost: operating
+      contracting_fee: operating
+      contracting_revenue: operating
+      share_capital: financing
+      equipment: investing
+  cuts:
+    savings: {kind: pnl, entity: agency, scheme: pnl, include: [savings]}
+    investing: {entity: contractor, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  ba.pct_closure: {cut: savings, at: 1, per: src.base_energy_costs, scale: 0.01}
+  ba.phase_months: {driver: src.phase_months, at: 0}
+  ba.guarantee_over_phase: {cut: savings, total: true}
+  ba.simple_payback: {cut: investing, at: 0, sign: -1, per: src.guaranteed_savings}
+  ba.signing_to_phase: {driver: src.signing_to_phase, at: 0}
+  ba.guarantee_over_investment: {cut: savings, total: true, per: src.investment}

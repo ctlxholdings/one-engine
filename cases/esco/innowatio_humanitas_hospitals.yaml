@@ -1,0 +1,87 @@
+# esco deal "innowatio_humanitas_hospitals": Innowatio's shared-savings EPC for the Humanitas hospitals
+# (Milan and Bergamo), with White Certificates (IEA, Energy provider-delivered energy efficiency, 2013,
+# case study; cases/reference/esco/ontology/miniature/cases/innowatio_humanitas_hospitals-lod0.yaml;
+# answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * Innowatio finances and installs the measures: the project cost (project_cost, EUR million) in
+#     period 0, funded by its own equity (no lender is named);
+#   * in the first year (period 1) the project produces first_year_certificates White Certificates
+#     (one per toe saved), which Innowatio, the applicant, sells at the quoted 2011 value
+#     (certificate_value, EUR per toe), and pays half the revenue to Humanitas ("half of the White
+#     Certificates revenues", printed as a word, so the half is typed as 1/2);
+#   * the energy savings are printed in toe and as percentages of an unpublished bill, never in EUR,
+#     so the half of the monthly savings Humanitas pays Innowatio is not booked.
+# Periods are years; 0 is the investment, 1 the first year. No tax.
+# Readings: the project cost per toe of annual savings is the plant read from the books per the
+# printed annual_savings (a unit cost, rule 4); the year-one certificates against the full-run savings
+# are the year's certificate revenue per what 1,900 certificates a year would fetch at the same price.
+esco: innowatio_humanitas_hospitals
+entity: innowatio
+plant: first_year_certificates
+case:
+  case: esco-innowatio-humanitas-hospitals
+  periods: 2
+  phases: [accrue, operate, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: esco
+      values:
+        cost: project_cost * 1000 * 1000
+        certificates: {each_period: first_year_certificates * (t == 1)}
+        half_of_revenue: certificates * certificate_value * 1 / 2
+        full_run_value: annual_savings * certificate_value
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: innowatio}
+      terms: {amount: {generator: src, output: cost}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: innowatio}
+      terms: {amount: {generator: src, output: cost}, period: 0}
+    white_certificates:
+      type: offtake
+      parties: {seller: innowatio}
+      terms: {volume: {generator: src, output: certificates}, price: {generator: src, output: certificate_value},
+              payment_days: 0, days_per_year: 1, periods_per_year: 1, end: 1}
+  rulebooks:
+    innowatio_share_out:
+      kind: transfer
+      entity: innowatio
+      phase: settle
+      declare: {certificate_share_paid: expense}
+      moves:
+        half_to_humanitas: {debit: certificate_share_paid, credit: cash, amount: {generator: src, output: half_of_revenue}}
+    humanitas_books:
+      kind: transfer
+      entity: humanitas
+      phase: settle
+      declare: {cash: asset, certificate_share_income: income}
+      moves:
+        half_from_innowatio: {debit: cash, credit: certificate_share_income, amount: {generator: src, output: half_of_revenue}}
+  schemes:
+    pnl:
+      white_certificates.revenue: certificates
+      certificate_share_paid: certificate_share
+      certificate_share_income: certificate_share
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      white_certificates.receivable: operating
+      certificate_share_paid: operating
+      certificate_share_income: operating
+  cuts:
+    certificate_revenue: {kind: pnl, entity: innowatio, scheme: pnl, include: [certificates]}
+  measures: {}
+figures:
+  in.first_year_certificate_value: {cut: certificate_revenue, at: 1}
+  in.certificates_vs_annual_pct: {cut: certificate_revenue, at: 1, per: src.full_run_value, scale: 0.01}
+  in.cost_per_toe_year: {balance: equipment, at: 0, per: src.annual_savings}
+not_compared:
+  in.mwh_per_toe: "the 23 GWh is printed in brackets after the 1900 toe, so it is not an input (a text counts for
+    its first number); an energy conversion, not money"

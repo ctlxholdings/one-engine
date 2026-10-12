@@ -1,0 +1,57 @@
+# esco deal "carpinteria_siemens_lease_purchase": the Carpinteria Valley Water District's performance
+# contract with Siemens Industry, financed by a tax-exempt lease-purchase from Siemens Public, Inc.,
+# with an escrow at UMB Bank (draft closing documents #2, June 2017; cases/reference/esco/ontology/
+# miniature/cases/carpinteria_siemens_lease_purchase-lod0.yaml; answer key cases/reference/esco/
+# tests/test_lod0_numbers.py).
+#
+# The draft leaves the principal blank ('$[Principal Amount]'; the input principal_amount_usd is the
+# 17 of 'CVWD17', a document code, not an amount), so no lease payment can be computed and none is
+# booked. Every amount is a number of the deal by name (generator `src`). One period, the effective
+# date, in the district's books:
+#   * the district pays the escrow agent its fee due on the effective date (escrow_fees_usd,
+#     Escrow s.5.4), expensed;
+#   * the lease runs number_of_lease_payments payments, quarterly (Leasing Schedule s.4): the term
+#     in years is a driver over that count at four payments a year (a time quantity, rule 4).
+# Set aside: the first-year escrow fee and the monthly fee for a partial year need the annual fee
+# ($1,200 a year), the second number of the printed fee text; the inputs carry only its first ($600).
+# With the principal blank and the annual fee not an input, no compared figure is a money amount:
+# the plant (the payment count) moves the term by a fraction of a year that the printed whole years
+# do not show, so the planted run is not caught. No tax, no interest (no principal printed).
+esco: carpinteria_siemens_lease_purchase
+entity: district
+plant: number_of_lease_payments
+case:
+  case: esco-carpinteria-lease-purchase
+  periods: 1
+  phases: [settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        lease_term_years: number_of_lease_payments / 4
+  opening:
+    district:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    escrow:
+      kind: transfer
+      entity: district
+      phase: settle
+      declare:
+        escrow_fees: expense
+      moves:
+        initial_fee: {debit: escrow_fees, credit: cash, amount: {generator: src, output: escrow_fees_usd}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  carp.lease_term_years: {driver: src.lease_term_years}
+not_compared:
+  carp.escrow_fee_first_year: "needs the annual escrow fee ($1,200 a year), the second number of the printed fee text; the inputs carry only its first ($600 on the effective date)"
+  carp.escrow_monthly_vs_annual: "needs the annual escrow fee ($1,200 a year), the second number of the printed fee text; the inputs carry only its first ($600 on the effective date)"

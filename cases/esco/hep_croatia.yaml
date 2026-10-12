@@ -1,0 +1,72 @@
+# esco deal "hep_croatia": HEP ESCO, the Croatian power utility's ESCO subsidiary created in 2003
+# with World Bank and GEF support, as a programme to the end of 2008 (Limaye, 'The case for super
+# ESCOs', 2010, E09; World Bank Live Wire 2018/92, E16; cases/reference/esco/ontology/miniature/
+# cases/hep_croatia-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`), in USD million. One period, the
+# programme to date, in HEP ESCO's books:
+#   * HEP ESCO receives the GEF grant (gef_grant_usd_m), held as deferred grant income, and the
+#     World Bank loan (world_bank_loan_usd_m, made through HEP; terms not printed);
+#   * it implements its projects (projects_implemented of them, cumulative_investment_usd_m in
+#     all, E16), the rest of their cost funded by local commercial bank facilities (E09 names them;
+#     their amount is not printed, so they are the remainder);
+#   * the contracts it had signed by the end of 2008 (contracts_signed_by_end_2008_usd_m, E09) are
+#     an order book, a commitment pair outside cash: signed contracts against the obligation to
+#     deliver them. E09's contracts signed and E16's investment implemented are different measures
+#     from different sources and dates, so the gap is read as the difference of the two balances,
+#     not as a backlog left to deliver;
+#   * the grant and loan over the contracts signed, and the average investment per project, are
+#     balances read per those inputs;
+#   * the HRK amount E09 prints for the contracts (contracts_signed_by_end_2008_hrk_m) has no book
+#     here (the case keeps one currency): the implied exchange rate is a rate no ledger holds, a
+#     driver (rule 4).
+# No tax, no interest (no terms printed), no money over time.
+esco: hep_croatia
+entity: hep_esco
+plant: gef_grant_usd_m
+case:
+  case: esco-hep-croatia
+  periods: 1
+  phases: [accrue]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        bank_facilities: cumulative_investment_usd_m - gef_grant_usd_m - world_bank_loan_usd_m
+        implied_fx: contracts_signed_by_end_2008_hrk_m / contracts_signed_by_end_2008_usd_m
+  opening:
+    hep_esco:
+      cash: {nature: asset, value: 0}
+  contracts: {}
+  rulebooks:
+    programme:
+      kind: transfer
+      entity: hep_esco
+      phase: accrue
+      declare:
+        deferred_grant: liability
+        world_bank_loan: liability
+        bank_facilities: liability
+        projects_implemented: asset
+        contracts_signed: asset
+        delivery_obligation: liability
+      moves:
+        grant: {debit: cash, credit: deferred_grant, amount: {generator: src, output: gef_grant_usd_m}}
+        loan: {debit: cash, credit: world_bank_loan, amount: {generator: src, output: world_bank_loan_usd_m}}
+        banks: {debit: cash, credit: bank_facilities, amount: {generator: src, output: bank_facilities}}
+        invest: {debit: projects_implemented, credit: cash, amount: {generator: src, output: cumulative_investment_usd_m}}
+        sign: {debit: contracts_signed, credit: delivery_obligation, amount: {generator: src, output: contracts_signed_by_end_2008_usd_m}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  hep.implied_fx: {driver: src.implied_fx}
+  hep.grant_plus_loan: {balance: deferred_grant + world_bank_loan}
+  hep.grant_loan_vs_contracts_pct: {balance: deferred_grant + world_bank_loan, per: src.contracts_signed_by_end_2008_usd_m,
+                                    scale: 0.01}
+  hep.average_investment: {balance: projects_implemented, per: src.projects_implemented}
+  hep.gap_between_sources: {balance: contracts_signed - projects_implemented}

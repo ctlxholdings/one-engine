@@ -1,0 +1,58 @@
+# esco deal "hungary_moe_school_espc_framework": the Hungarian Ministry of Education's 20-year school ESPC
+# framework (Szemunk Fenye; consortium led by OTP Bank with Caminus; IFC partial credit guarantee),
+# launched 2006 (World Bank 2010, "Public Procurement of Energy Efficiency Services", Box 4.1;
+# cases/reference/esco/ontology/miniature/cases/hungary_moe_school_espc_framework-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`), in HUF bn:
+#   * the consortium finances the school projects it signs: the contracts signed by August 2008
+#     (contracts_signed_august_2008) are booked as its investment in one period, out of its own
+#     funds (the bank consortium's lending is not split out by the source);
+#   * the programme's annual goal (annual_goal, HUF 11.1 bn a year) is a target, not a payment, and
+#     is not booked; the IFC guarantee is a ceiling, never drawn; no savings or fees are printed.
+# Reading: signed against the goal is the consortium's investing cash flow per the annual goal.
+# Set aside: every figure built on the dollar side of a "HUF x bn (US$y m)" text, or on the goal's
+# end year (2010): those are later numbers of a text the harness reads by its first number only, so
+# no input carries them.
+# The planted error goes unseen: the one compared figure is printed to whole percent (45.045), and a
+# 1% change in either input it rests on (45.5 or 44.6) still rounds to 45.
+esco: hungary_moe_school_espc_framework
+entity: consortium
+plant: contracts_signed_august_2008
+case:
+  case: esco-hungary-moe-school-espc-framework
+  periods: 1
+  phases: [accrue]
+  currency: HUF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values: {}
+  contracts:
+    capital:
+      type: equity_funding
+      parties: {issuer: consortium}
+      terms: {amount: {generator: src, output: contracts_signed_august_2008}, period: 0}
+    school_projects:
+      type: one_off_purchase
+      parties: {buyer: consortium}
+      terms: {amount: {generator: src, output: contracts_signed_august_2008}, period: 0}
+  schemes:
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+  cuts:
+    investing: {entity: consortium, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  hu.signed_vs_goal_pct: {cut: investing, sign: -1, per: src.annual_goal, scale: 0.01}
+not_compared:
+  hu.goal_times_years_usd: "the goal's US$50 million and its end year 2010 are later numbers of the annual_goal text; no input carries them"
+  hu.goal_times_years_huf: "the goal runs 2006 to 2010; the end year is a later number of the annual_goal text, so no input counts the years"
+  hu.fx_total: "the programme's US$250 million is the second number of the total_expected_size text; no input carries it"
+  hu.fx_goal: "the goal's US$50 million is the second number of the annual_goal text; no input carries it"
+  hu.fx_signed: "the signed contracts' US$22 million is the second number of their text; no input carries it"
+  hu.guarantee_over_total: "the programme's US$250 million is the second number of the total_expected_size text; no input carries it"

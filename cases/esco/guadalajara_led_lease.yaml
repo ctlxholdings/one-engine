@@ -1,0 +1,98 @@
+# esco deal "guadalajara_led_lease": the Municipality of Guadalajara's lease (Arrendamiento Puro)
+# of LED street-lighting luminaires from SOLUCASH (lessor, financing) with ELECTROTEC installing,
+# signed 15.04.2015 (the lease contract and ESMAP's case note; cases/reference/esco/ontology/
+# miniature/cases/guadalajara_led_lease-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`). Periods are months: 0 is the
+# delivery, 1..114 the lease term (term_months, cl. SEXTA):
+#   * SOLUCASH pays for the luminaires in period 0 at the contract ceiling (ceiling_mxn_incl_vat,
+#     VAT included), funded by its own equity, and holds them as leased equipment;
+#   * the municipality pays the rent each month: rent_months_1_to_6_mxn in months 1 to 6, then
+#     rent_from_month_7_mxn to the end of the term (cl. CUARTA C)); an operating lease, expensed
+#     as paid;
+#   * the implied monthly rate is the IRR of SOLUCASH's cash flow (the ceiling out, the rents in),
+#     the case file's 'schedule discounted to the MXN 300m ceiling';
+#   * the performance bond is performance_bond_pct of the contract amount, read as SOLUCASH's
+#     equipment at the ceiling times that share (cl. TERCERA B); the bond is a surety's
+#     undertaking, so no cash moves for it);
+#   * the term in years is a driver over term_months (a time quantity, rule 4).
+# Set aside: the nominal and effective annual rates are the monthly IRR annualised (x 12, and
+# compounded); a figure reading may only scale a measure by a power of ten, so the engine cannot
+# report them (missing piece: an annualising reading of a per-period rate). The rent over the
+# ceiling is the rent the books sum (490,404,830.46) per the ceiling; the answer key divides ESMAP's
+# printed 490.4m (esmap_total_payments_mxn) instead, the same to the printed three decimals.
+# ESMAP's 6.7% rate, the 10-year cap, the installation weeks and the luminaire counts feed no
+# figure. No tax, no VAT split.
+esco: guadalajara_led_lease
+entity: solucash
+plant: rent_from_month_7_mxn
+case:
+  case: esco-guadalajara-led-lease
+  periods: 115
+  phases: [accrue, settle]
+  currency: MXN
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 115
+      inputs: esco
+      values:
+        term_years: term_months / 12
+        delivery: {each_period: (t == 0) * ceiling_mxn_incl_vat}
+        rent: >-
+          (t >= 1) * (t <= 6) * rent_months_1_to_6_mxn + (t >= 7) * (t <= term_months) * rent_from_month_7_mxn
+        bond_share: performance_bond_pct / 100
+  opening:
+    solucash:
+      cash: {nature: asset, value: 0}
+    guadalajara:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    lessor:
+      kind: transfer
+      entity: solucash
+      phase: accrue
+      declare:
+        share_capital: equity
+        leased_equipment: asset
+        lease_revenue: income
+      moves:
+        fund: {debit: cash, credit: share_capital, amount: {generator: src, output: delivery}}
+        buy: {debit: leased_equipment, credit: cash, amount: {generator: src, output: delivery}}
+        rent: {debit: cash, credit: lease_revenue, amount: {generator: src, output: rent}}
+    lessee:
+      kind: transfer
+      entity: guadalajara
+      phase: settle
+      declare:
+        lease_rent: expense
+      moves:
+        rent: {debit: lease_rent, credit: cash, amount: {generator: src, output: rent}}
+  schemes:
+    pnl:
+      lease_revenue: revenue
+      lease_rent: rent
+    cash_flow:
+      share_capital: financing
+      leased_equipment: investing
+      lease_revenue: operating
+  cuts:
+    rent_received: {kind: pnl, entity: solucash, scheme: pnl, include: [revenue]}
+    lessor_project_cash_flow: {entity: solucash, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    irr: {measure: irr, cut: lessor_project_cash_flow}
+figures:
+  guadalajara.total_rent: {cut: rent_received, total: true}
+  guadalajara.total_rent_esmap_m: {cut: rent_received, total: true, scale: 1000000}
+  guadalajara.term_years: {driver: src.term_years, at: 0}
+  guadalajara.rent_over_ceiling: {cut: rent_received, total: true, per: src.ceiling_mxn_incl_vat}
+  guadalajara.step_up: {cut: rent_received, at: 7, per: src.rent_months_1_to_6_mxn}
+  guadalajara.performance_bond_m: {balance: leased_equipment, at: 0, times: src.bond_share, scale: 1000000}
+  guadalajara.implied_monthly_rate_pct: {measure: irr, scale: 0.01}
+not_compared:
+  guadalajara.implied_nominal_pct: "missing engine piece: the monthly IRR x 12; a figure reading scales a measure only by a power of ten, and no measure annualises a per-period rate"
+  guadalajara.implied_effective_pct: "missing engine piece: the monthly IRR compounded over 12 months; a figure reading scales a measure only by a power of ten, and no measure annualises a per-period rate"

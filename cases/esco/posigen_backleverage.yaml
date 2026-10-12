@@ -1,0 +1,53 @@
+# esco deal "posigen_backleverage": PosiGen (US), Brookfield's backleverage loan to the "Backleverage
+# Entities" and the Connecticut Green Bank second lien, over a pool of residential solar leases held in
+# tax equity partnerships, as the 2025 bankruptcy filings describe it (bankruptcy court order of
+# 12 Nov 2025 and first-day declaration; cases/reference/esco/ontology/miniature/cases/
+# posigen_backleverage-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# One period: the Backleverage Entities' balance sheet at the petition, every amount a number of the
+# case by name or a formula over them (generator `src`), in USD m:
+#   * liabilities: the first-lien backleverage loan (backleverage_loan_usd) and the Green Bank's
+#     second lien (cgb_second_lien_usd), both as printed ("approximately");
+#   * cash: the unencumbered cash at the petition (unencumbered_cash_at_petition_usd), of which
+#     keybank_lease_account_usd sits in the KeyBank lease account and the rest elsewhere;
+#   * the interests in the tax equity partnerships take the amount that balances the sheet (the
+#     filings print no carrying value for them); no flows are booked (the case is a snapshot).
+# Readings: the debt stack is the two liens' balances; the second lien's share is its balance per
+# that stack (the two printed liens); the KeyBank share is that account's balance per the
+# unencumbered cash.
+# Set aside: the days from the interest default to the complaint: the default date is printed "on or
+# around 2025-08-04", a text the harness reads by its first number (2025), so no input carries the day.
+esco: posigen_backleverage
+entity: backleverage_entities
+plant: backleverage_loan_usd
+case:
+  case: esco-posigen-backleverage
+  periods: 1
+  phases: [accrue]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        liens: backleverage_loan_usd + cgb_second_lien_usd
+        other_cash: unencumbered_cash_at_petition_usd - keybank_lease_account_usd
+  opening:
+    backleverage_entities:
+      first_lien_loan: {nature: liability, value: {generator: src, output: backleverage_loan_usd}}
+      second_lien_loan: {nature: liability, value: {generator: src, output: cgb_second_lien_usd}}
+      keybank_lease_account: {nature: asset, value: {generator: src, output: keybank_lease_account_usd}}
+      other_unencumbered_cash: {nature: asset, value: {generator: src, output: other_cash}}
+      partnership_interests: {nature: asset, value: balancing}
+  contracts: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  posigen.debt_stack_m: {balance: first_lien_loan + second_lien_loan, at: 0}
+  posigen.second_lien_share_pct: {balance: second_lien_loan, at: 0, per: src.liens, scale: 0.01}
+  posigen.keybank_share_pct: {balance: keybank_lease_account, at: 0, per: src.unencumbered_cash_at_petition_usd, scale: 0.01}
+not_compared:
+  posigen.days_default_to_complaint: "the interest default date is printed 'on or around 2025-08-04', a text the harness reads by its first number (2025); no input carries its month and day"

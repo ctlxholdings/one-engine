@@ -1,0 +1,67 @@
+# esco deal "lig_retzhof_iec": the Integrated Energy Contracting (IEC) of Schloss Retzhof, a building
+# of the Landesimmobiliengesellschaft Steiermark (LIG): the ESCO supplies heat and renews the plant, the
+# user co-finances (IEA DSM Task 13 report, IEA13:1736-1917, Figure 11; cases/reference/esco/ontology/
+# miniature/cases/lig_retzhof_iec-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`); the ESCO's books, one period (the
+# investment):
+#   * the ESCO pays the investment (investment_eur), capitalised;
+#   * the user's co-financing (user_cofinancing_eur) is part of that investment (the case file's first
+#     reading, the one its net investment takes), received as a contribution to the works;
+#   * the ESCO funds what the co-financing leaves, so that its cash ends at nil (a held balance
+#     against its own funds): the net investment it recovers through the energy-supply payments, whose
+#     amounts are not printed (no payment stream, no tax modelled).
+# The co-financing share is the contribution per the investment. Energy use before the measures is a
+# physical quantity: a driver, the consumption indicator times the useful area (rule 4).
+#
+# Set aside: cofinancing_share_on_top is the case file's other reading (the co-financing on top of the
+# 110,000, total 148,000), an alternative to the one modelled; the case file claims neither.
+esco: lig_retzhof_iec
+entity: esco
+plant: investment_eur
+case:
+  case: esco-lig-retzhof-iec
+  periods: 1
+  phases: [invest, fund]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        energy_use_before: consumption_indicator_before_kwh_per_m2_a * useful_area_m2
+  opening:
+    esco:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    project:
+      kind: transfer
+      entity: esco
+      phase: invest
+      declare:
+        plant_works: asset
+        user_cofinancing: liability
+        own_funds: equity
+      moves:
+        cofinancing: {debit: cash, credit: user_cofinancing, amount: {generator: src, output: user_cofinancing_eur}}
+        works: {debit: plant_works, credit: cash, amount: {generator: src, output: investment_eur}}
+    own_funds:
+      kind: held_balance
+      entity: esco
+      cash: cash
+      phase: fund
+      accounts:
+        cash: {side: asset, target: 0, against: own_funds}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  lr.cofinancing_share_inside: {balance: user_cofinancing, per: src.investment_eur, scale: 0.01}
+  lr.net_investment: {balance: own_funds}
+  lr.energy_use_before: {driver: src.energy_use_before}
+not_compared:
+  lr.cofinancing_share_on_top: "the case file's alternative reading (co-financing on top of the 110,000); the translation models its other reading, the one its net investment takes, and the case file claims neither"

@@ -1,0 +1,64 @@
+# esco deal "sittard_cityhall": the Sittard city hall EPC, the installation financed by an ING finance lease,
+# Netherlands (source passage as cited in cases/reference/esco/ontology/miniature/cases/
+# sittard_cityhall-lod0.yaml, L2847-2955; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name, or a formula over them (generator `src`), in EUR;
+# one period, the installation (period 0):
+#   * the city takes the installation at its contract cost (contract_costs_eur, the "total
+#     investment" of Fig 23) from the ESCO, capitalised as equipment, financed by ING's finance
+#     lease for that full amount (lease liability; the lease rate and instalments over term_years
+#     are not printed, so no instalment is booked);
+#   * the government pays the city its subsidy (government_subsidy_eur) at the installation, a grant;
+#   * the ESCO books the contract cost as its revenue; its own costs are not printed;
+#   * the guaranteed heat and electricity savings are physical (MWh), not booked as money (the
+#     source prints no tariff); no tax.
+# Readings: the net cost after subsidy is the city's investing and grant cash flows; the subsidy
+# share is the grant per the contract cost; the guaranteed energy is a driver (MWh + MWh).
+esco: sittard_cityhall
+entity: city
+plant: government_subsidy_eur
+case:
+  case: esco-sittard-cityhall
+  periods: 1
+  phases: [accrue]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        guaranteed_energy_mwh: guaranteed_heat_mwh_per_year + guaranteed_electricity_mwh_per_year
+  contracts: {}
+  rulebooks:
+    city:
+      kind: transfer
+      entity: city
+      phase: accrue
+      declare: {cash: asset, equipment: asset, ing_lease: liability, subsidy_income: income}
+      moves:
+        lease: {debit: cash, credit: ing_lease, amount: {generator: src, output: contract_costs_eur}}
+        works: {debit: equipment, credit: cash, amount: {generator: src, output: contract_costs_eur}}
+        subsidy: {debit: cash, credit: subsidy_income, amount: {generator: src, output: government_subsidy_eur}}
+    esco:
+      kind: transfer
+      entity: esco
+      phase: accrue
+      declare: {cash: asset, contract_revenue: income}
+      moves:
+        works: {debit: cash, credit: contract_revenue, amount: {generator: src, output: contract_costs_eur}}
+  schemes:
+    cash_flow:
+      ing_lease: financing
+      equipment: investing
+      subsidy_income: grant
+      contract_revenue: operating
+  cuts:
+    net_cost: {entity: city, account: cash, scheme: cash_flow, include: [investing, grant]}
+    grant: {entity: city, account: cash, scheme: cash_flow, include: [grant]}
+  measures: {}
+figures:
+  sittard.guaranteed_energy_mwh: {driver: src.guaranteed_energy_mwh}
+  sittard.subsidy_share_pct: {cut: grant, per: src.contract_costs_eur, scale: 0.01}
+  sittard.net_of_subsidy: {cut: net_cost, sign: -1}

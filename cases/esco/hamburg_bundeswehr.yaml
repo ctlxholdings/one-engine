@@ -1,0 +1,70 @@
+# esco deal "hamburg_bundeswehr": a guaranteed-savings energy-saving contract for the Bundeswehr
+# Führungsakademie and two barracks in Hamburg, contractor Siemens (dena project database entry;
+# cases/reference/esco/ontology/miniature/cases/hamburg_bundeswehr-lod0.yaml, read through the viewer
+# with its sealed lines withheld; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * the contractor (esco) buys the measures for investment_eur in period 0, funded by its own equity
+#     (no financing is described);
+#   * the guaranteed saving (guaranteed_savings_eur_per_year) accrues to the client as avoided energy
+#     cost each year of the main performance phase (07/2006 to 06/2018), from period 1;
+#   * the contractor's remuneration is not published, so it is not booked; the payback is the case
+#     file's "investment / annual guarantee, scale only": the plant read from the books per the annual
+#     guarantee.
+# Periods are years; 0 is signature and construction, 1-12 the phase. No tax.
+# Two drivers are time quantities from the printed dates (rule 4): the phase's months, both end months
+# counted, and the months from signature to the phase's first month; the phase's years set the term.
+esco: hamburg_bundeswehr
+entity: esco
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-hamburg-bundeswehr
+  periods: 13
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 13
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        signing_months: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        phase_years: phase_months / 12
+        savings: {each_period: guaranteed_savings_eur_per_year * (t >= 1) * (t <= phase_years)}
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+  rulebooks:
+    client:
+      kind: transfer
+      entity: client
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income}
+      moves:
+        guaranteed_saving: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      avoided_energy_cost: operating
+  cuts:
+    client_savings: {kind: pnl, entity: client, scheme: pnl, include: [savings]}
+  measures: {}
+figures:
+  hamburg.phase_months: {driver: src.phase_months, at: 0}
+  hamburg.guarantee_over_phase: {cut: client_savings, total: true}
+  hamburg.simple_payback: {balance: equipment, at: 0, per: src.guaranteed_savings_eur_per_year}
+  hamburg.signing_to_phase: {driver: src.signing_months, at: 0}
+not_compared:
+  hamburg.pct_band_base: "the base implied by the printed '14,7 Prozent': that percentage is not an input (the text
+    counts for its first number, the 149.000), and the base itself is the input baseline_energy_cost_eur_per_year"

@@ -1,0 +1,143 @@
+# esco deal "odisha_113ulb_street_lighting": the Odisha street-lighting project for 113 urban local
+# bodies (ULBs) in five clusters, tendered by the state authority on 22.05.2018: an LED retrofit by
+# a selected bidder's SPV, 90% of the project cost a capital subsidy, then an annuity fee over seven
+# years from COD, paid 75% by the ULBs and 25% by the authority, with an escrow and an authority
+# backstop (the RFP and the draft SIOM agreement; cases/reference/esco/ontology/miniature/cases/
+# odisha_113ulb_street_lighting-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# The draft leaves the amounts blank (project cost not printed, 'Annuity Fee INR [●]'), so the case
+# runs on a hundred units of the project cost and a hundred units of a year's annuity: every amount
+# below reads as a percent of one of them. The bid security is printed and is booked in rupees.
+# Every other amount is a number of the deal by name (generator `src`). Periods: 0 the bid and the
+# works, 1 a year the annuity is paid as due, 2 the year of default the backstop clause describes:
+#   * the bidder lodges the bid security (bid_security_inr) with the authority in period 0;
+#   * the SPV builds the project at its cost, funded by the authority's capital subsidy
+#     (capital_subsidy_pct_of_project_cost) and the bidder's equity (bidder_equity_pct_of_project_cost);
+#   * in a paid year the ULBs pay annuity_split_pct__ulbs of the annuity and the authority releases
+#     the rest (authority), each the SPV's annuity revenue;
+#   * in the default year the ULBs pay nothing: the escrow pays the SPV the months of annuity it
+#     still holds when the backstop is triggered (authority_backstop_trigger_escrow_months_left of
+#     12), and the authority's backstop pays up to its cap (authority_backstop_cap_pct_of_annual_annuity);
+#     the unpaid rest is not booked (no recovery or default interest is modelled).
+# Other clauses (damages, guarantees, liability caps, set-off, escrow deposit months) feed no
+# figure. No tax, no O&M cost, no depreciation (no amounts printed).
+esco: odisha_113ulb_street_lighting
+entity: spv
+plant: capital_subsidy_pct_of_project_cost
+case:
+  case: esco-odisha-street-lighting
+  periods: 3
+  phases: [accrue, settle]
+  currency: INR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: esco
+      values:
+        project_cost: 100     # not printed: a hundred units of it
+        annuity: 100          # 'INR [●]': a hundred units of a year's annuity
+        works: {each_period: (t == 0)}
+        paid_year: {each_period: (t == 1)}
+        default_year: {each_period: (t == 2)}
+        bid_security: works * bid_security_inr
+        build: works * project_cost
+        subsidy: works * capital_subsidy_pct_of_project_cost / 100 * project_cost
+        equity: works * bidder_equity_pct_of_project_cost / 100 * project_cost
+        ulb_share: paid_year * annuity_split_pct__ulbs / 100 * annuity
+        authority_share: paid_year * authority / 100 * annuity
+        escrow_draw: default_year * authority_backstop_trigger_escrow_months_left / 12 * annuity
+        backstop: default_year * authority_backstop_cap_pct_of_annual_annuity / 100 * annuity
+  opening:
+    spv:
+      cash: {nature: asset, value: 0}
+    authority:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    ulbs:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    bidder:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    spv_books:
+      kind: transfer
+      entity: spv
+      phase: settle
+      declare:
+        capital_subsidy: equity
+        bidder_equity: equity
+        lighting_assets: asset
+        annuity_from_ulbs: income
+        annuity_from_authority: income
+        escrow_annuity: income
+        backstop_annuity: income
+      moves:
+        subsidy: {debit: cash, credit: capital_subsidy, amount: {generator: src, output: subsidy}}
+        equity: {debit: cash, credit: bidder_equity, amount: {generator: src, output: equity}}
+        build: {debit: lighting_assets, credit: cash, amount: {generator: src, output: build}}
+        ulbs: {debit: cash, credit: annuity_from_ulbs, amount: {generator: src, output: ulb_share}}
+        authority: {debit: cash, credit: annuity_from_authority, amount: {generator: src, output: authority_share}}
+        escrow: {debit: cash, credit: escrow_annuity, amount: {generator: src, output: escrow_draw}}
+        backstop: {debit: cash, credit: backstop_annuity, amount: {generator: src, output: backstop}}
+    authority_books:
+      kind: transfer
+      entity: authority
+      phase: settle
+      declare:
+        bid_security_held: liability
+        subsidy_granted: expense
+        annuity_paid: expense
+        backstop_paid: expense
+      moves:
+        security: {debit: cash, credit: bid_security_held, amount: {generator: src, output: bid_security}}
+        subsidy: {debit: subsidy_granted, credit: cash, amount: {generator: src, output: subsidy}}
+        annuity: {debit: annuity_paid, credit: cash, amount: {generator: src, output: authority_share}}
+        backstop: {debit: backstop_paid, credit: cash, amount: {generator: src, output: backstop}}
+    ulb_books:
+      kind: transfer
+      entity: ulbs
+      phase: settle
+      declare:
+        annuity_paid: expense
+        escrow_released: expense
+      moves:
+        annuity: {debit: annuity_paid, credit: cash, amount: {generator: src, output: ulb_share}}
+        escrow: {debit: escrow_released, credit: cash, amount: {generator: src, output: escrow_draw}}
+    bidder_books:
+      kind: transfer
+      entity: bidder
+      phase: settle
+      declare:
+        bid_security_lodged: asset
+        spv_shares: asset
+      moves:
+        security: {debit: bid_security_lodged, credit: cash, amount: {generator: src, output: bid_security}}
+        equity: {debit: spv_shares, credit: cash, amount: {generator: src, output: equity}}
+  schemes:
+    pnl:
+      annuity_from_ulbs: annuity
+      annuity_from_authority: annuity
+      escrow_annuity: escrow
+      backstop_annuity: backstop
+    cash_flow:
+      bid_security_held: security
+      subsidy_granted: subsidy
+      annuity_paid: annuity
+      backstop_paid: backstop
+  cuts:
+    annuity: {kind: pnl, entity: spv, scheme: pnl, include: [annuity]}
+    escrow: {kind: pnl, entity: spv, scheme: pnl, include: [escrow]}
+    default_cover: {kind: pnl, entity: spv, scheme: pnl, include: [escrow, backstop]}
+    security_received: {entity: authority, account: cash, scheme: cash_flow, include: [security]}
+  measures: {}
+figures:
+  odisha.funding_split: {balance: capital_subsidy + bidder_equity, at: 0, per: src.project_cost, scale: 0.01}
+  odisha.bid_security_lakh: {cut: security_received, at: 0, scale: 100000}
+  odisha.annuity_split: {cut: annuity, at: 1, per: src.annuity, scale: 0.01}
+  odisha.escrow_depth_pct_of_year: {cut: escrow, at: 2, per: src.annuity, scale: 0.01}
+  odisha.backstop_cover_pct_of_year: {cut: default_cover, at: 2, per: src.annuity, scale: 0.01}

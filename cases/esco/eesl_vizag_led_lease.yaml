@@ -1,0 +1,142 @@
+# esco deal "eesl_vizag_led_lease": EESL's LED street-lighting deal with the Greater Visakhapatnam
+# Municipal Corporation, an investment repaid by a fixed annual annuity (World Bank / ESMAP,
+# Proven Delivery Models for LED Public Lighting, 2017, Figure 2; cases/reference/esco/ontology/
+# miniature/cases/eesl_vizag_led_lease-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py). Amounts in INR million.
+#
+# Periods are years; 0 is the investment year, 1-7 the annuity years. The harness hands each text
+# its first number only, so the annuity's "for 7 years" enters as the case's horizon (8 periods,
+# a count of periods: rule 2). Every amount is a number of the case by name (generator `src`):
+#   * EESL (the ESCO) invests capital_investment in period 0 (equipment, capitalised), funded by a
+#     KfW loan of kfw_share percent of it and EESL equity of eesl_equity_share percent; the KfW
+#     loan's repayment terms are not printed, so it is carried and never repaid in the case;
+#   * the municipality pays EESL the annuity each year 1-7, in cash in the year (EESL's revenue);
+#   * the source says the annuity "reflects an annual interest rate of 10 percent". Those stated
+#     terms are booked apart, on an entity of their own (municipality_at_stated_rate): the
+#     investment financed at interest_rate_stated and repaid by a level annuity over the same
+#     seven years (a `loan` whose principal the `annuity` loop sets). Its year-1 debt service is
+#     the annuity those terms give; that it is not the printed 185 is the case file's finding.
+# Readings: the loan and equity are balances at period 0; their sum per capital_investment is the
+# shares' sum; the annuity total is EESL's revenue over the term; the implied rate is the IRR of
+# EESL's project cash flow (investment and annuity); the present value is the npv of the annuity
+# cash at the stated rate. installation_weeks is a driver (a time quantity, days over 7).
+#
+# Set aside (the inputs carry no number for them): the US$ amounts (9.8 and 2.8 million) and the
+# summary's 92,000 lights are the second numbers of their texts, which the harness does not hand
+# over, so the two exchange rates, the KfW loan in US$ and the lights gap cannot be derived.
+esco: eesl_vizag_led_lease
+entity: eesl
+plant: annuity
+case:
+  case: esco-eesl-vizag-led-lease
+  periods: 8
+  phases: [accrue, settle]
+  currency: INR
+  floors: {}
+  loops:
+    stated_annuity:
+      rule: {kind: annuity, loan: stated_terms}
+      start: {repayment: 0}
+      tolerance: 0
+      max_iterations: 3
+  generators:
+    src:
+      kind: formulas
+      periods: 8
+      inputs: esco
+      values:
+        kfw_loan: kfw_share / 100 * capital_investment
+        equity: eesl_equity_share / 100 * capital_investment
+        annuity_paid: {each_period: (t >= 1) * annuity}
+        stated_rate: interest_rate_stated / 100
+        stated_draw: {each_period: (t == 0) * capital_investment}
+        weeks: installation_time / 7
+  contracts:
+    equity:
+      type: equity_funding
+      parties: {issuer: eesl}
+      terms: {amount: {generator: src, output: equity}, period: 0}
+    luminaires:
+      type: one_off_purchase
+      parties: {buyer: eesl}
+      terms: {amount: {generator: src, output: capital_investment}, period: 0}
+    stated_terms:
+      type: loan
+      parties: {borrower: municipality_at_stated_rate}
+      terms:
+        commitment: {generator: src, output: capital_investment}
+        draw_schedule: {generator: src, output: stated_draw}
+        available_until: 0
+        rate: {generator: src, output: stated_rate}
+        rate_from: 0
+        days_per_period: 1
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: 1
+        repay_periods: 7
+        sculpt_dscr: null
+        principal_schedule: {loop: stated_annuity, output: repayment}
+        arrangement_fee: 0
+        fee_at: 0
+  rulebooks:
+    kfw:
+      kind: transfer
+      entity: eesl
+      phase: accrue
+      declare: {kfw_loan: liability}
+      moves:
+        draw: {debit: cash, credit: kfw_loan, amount: {generator: src, output: kfw_loan}}
+    annuity_received:
+      kind: transfer
+      entity: eesl
+      phase: settle
+      declare: {annuity_revenue: income}
+      moves:
+        annuity: {debit: cash, credit: annuity_revenue, amount: {generator: src, output: annuity_paid}}
+    annuity_paid:
+      kind: transfer
+      entity: municipality
+      phase: settle
+      declare: {cash: asset, annuity_expense: expense}
+      moves:
+        annuity: {debit: annuity_expense, credit: cash, amount: {generator: src, output: annuity_paid}}
+    stated_service:
+      kind: pay_as_due
+      phase: settle
+      claims: [stated_terms.draw, stated_terms.interest, stated_terms.principal]
+  schemes:
+    pnl:
+      annuity_revenue: annuity
+    cash_flow:
+      share_capital: financing
+      kfw_loan: financing
+      equipment: investing
+      annuity_revenue: operating
+      stated_terms.debt: stated_principal
+      stated_terms.interest_payable: stated_interest
+  cuts:
+    annuity: {kind: pnl, entity: eesl, scheme: pnl, include: [annuity]}
+    annuity_cash: {entity: eesl, account: cash, scheme: cash_flow, include: [operating]}
+    project_cash_flow: {entity: eesl, account: cash, scheme: cash_flow, include: [operating, investing]}
+    stated_debt_service: {entity: municipality_at_stated_rate, account: cash, scheme: cash_flow,
+                          include: [stated_principal, stated_interest]}
+  measures:
+    implied_rate: {measure: irr, cut: project_cash_flow}
+    pv_stated: {measure: npv, cut: annuity_cash, rate: {generator: src, output: stated_rate}}
+figures:
+  ev.kfw_loan_inr_m: {balance: kfw_loan, at: 0}
+  ev.equity_inr_m: {balance: share_capital, at: 0}
+  ev.shares_sum: {balance: "kfw_loan + share_capital", per: src.capital_investment, at: 0, scale: 0.01}
+  ev.total_annuity: {cut: annuity, total: true}
+  ev.total_over_investment: {cut: annuity, per: src.capital_investment, total: true}
+  ev.annuity_at_stated_rate: {cut: stated_debt_service, sign: -1, at: 1}
+  ev.implied_rate_pct: {measure: implied_rate, scale: 0.01}
+  ev.pv_at_stated_rate: {measure: pv_stated}
+  ev.installation_weeks: {driver: src.weeks, at: 0}
+not_compared:
+  ev.fx_investment: "needs the investment in US$ (9.8 million), the second number of its text, which the harness does not hand over: no input carries it"
+  ev.fx_annuity: "needs the annuity in US$ (2.8 million), the second number of its text, which the harness does not hand over: no input carries it"
+  ev.kfw_loan_usd_m: "needs the exchange rate from the US$ investment (9.8 million), which no input carries (second number of its text)"
+  ev.lights_gap_pct: "needs the summary's 92,000 lights, the second number of the luminaires text, which the harness does not hand over: no input carries it"

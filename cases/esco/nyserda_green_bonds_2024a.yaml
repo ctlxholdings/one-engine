@@ -1,0 +1,104 @@
+# esco deal "nyserda_green_bonds_2024a": NYSERDA's Residential Solar and Energy Efficiency Financing
+# Receivables Revenue Bonds, Series 2024A, secured by its GJGNY residential loans (Bond Sales Report
+# [BSR]; KBRA rating reports; NYSERDA board minutes; GJGNY annual report 2025;
+# cases/reference/esco/ontology/miniature/cases/nyserda_green_bonds_2024a-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`); NYSERDA's books, one period (the
+# issue, 18 July 2024):
+#   * the issue is two classes, the serial bonds (serial_bonds_usd) and the term bond
+#     (term_bond_usd), each a liability, sold to the underwriter, who owes their principal;
+#   * the underwriter settles at the minutes' limits: it pays the floor price
+#     (min_purchase_price_pct_of_principal of bonds_issued_usd) in cash and keeps the maximum
+#     compensation (max_underwriter_compensation_pct_of_principal of it), both expensed as issuance
+#     costs, and the rest of the discount to par is an original-issue discount. The actual price and
+#     compensation are not printed; the minutes state these bounds, which is what the figures are;
+#   * the loans, the reserve and the debt service are not modelled (no coupons per class, no pool);
+#     no tax.
+# The issue total is the two classes' balances. The serial bonds are what the underwriter paid for the
+# issue (cash, compensation and discount) less the term bond. The implied collateral is the bonds per
+# the share of collateral they are, one less the overall enhancement (overall_enhancement_pct), only if
+# KBRA measures the enhancement against collateral, as the case file says. The efficiency share of the
+# programme's loans is a count (loans, not money): a driver over the three printed loan counts.
+#
+# Set aside: Table 10's total needs its five items; expenditures_fy_jul2024_jun2025_usd carries only
+# the text's first number (origination, 2,391,497).
+esco: nyserda_green_bonds_2024a
+entity: nyserda
+plant: bonds_issued_usd
+case:
+  case: esco-nyserda-green-bonds
+  periods: 1
+  phases: [issue, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        floor_price: bonds_issued_usd * min_purchase_price_pct_of_principal / 100
+        compensation: bonds_issued_usd * max_underwriter_compensation_pct_of_principal / 100
+        discount: bonds_issued_usd - floor_price - compensation
+        bond_share_of_collateral: 1 - overall_enhancement_pct / 100
+        ee_share: programme_ee_loans / (programme_ee_loans + programme_solar_loans + programme_heat_pump_projects)
+  opening:
+    nyserda:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    issue:
+      kind: transfer
+      entity: nyserda
+      phase: issue
+      declare:
+        underwriter_receivable: asset
+        serial_bonds: liability
+        term_bond: liability
+      moves:
+        sell_serials: {debit: underwriter_receivable, credit: serial_bonds, amount: {generator: src, output: serial_bonds_usd}}
+        sell_term: {debit: underwriter_receivable, credit: term_bond, amount: {generator: src, output: term_bond_usd}}
+    settlement:
+      kind: transfer
+      entity: nyserda
+      phase: settle
+      declare:
+        underwriter_compensation: expense
+        original_issue_discount: expense
+      moves:
+        price: {debit: cash, credit: underwriter_receivable, amount: {generator: src, output: floor_price}}
+        compensation: {debit: underwriter_compensation, credit: underwriter_receivable, amount: {generator: src, output: compensation}}
+        discount: {debit: original_issue_discount, credit: underwriter_receivable, amount: {generator: src, output: discount}}
+  schemes:
+    pnl:
+      underwriter_compensation: compensation
+      original_issue_discount: discount
+    cash_flow:
+      underwriter_receivable: issue
+  cuts:
+    proceeds: {entity: nyserda, account: cash, scheme: cash_flow, include: [issue]}
+    compensation: {kind: pnl, entity: nyserda, scheme: pnl, include: [compensation]}
+    discount: {kind: pnl, entity: nyserda, scheme: pnl, include: [discount]}
+  measures: {}
+figures:
+  nyserda.serial_sum:
+    sum:
+      - {cut: proceeds}
+      - {cut: compensation, sign: -1}
+      - {cut: discount, sign: -1}
+      - {balance: term_bond, sign: -1}
+  nyserda.serial_field_matches_rows:
+    sum:
+      - {cut: proceeds}
+      - {cut: compensation, sign: -1}
+      - {cut: discount, sign: -1}
+      - {balance: term_bond, sign: -1}
+  nyserda.issue_total: {balance: "serial_bonds + term_bond"}
+  nyserda.underwriter_cap: {cut: compensation, sign: -1}
+  nyserda.purchase_floor: {cut: proceeds}
+  nyserda.implied_collateral_m: {balance: "serial_bonds + term_bond", per: src.bond_share_of_collateral, scale: 1000000}
+  nyserda.ee_share_of_loans_pct: {driver: src.ee_share, scale: 0.01}
+not_compared:
+  nyserda.table10_total: "needs Table 10's five expenditure items; expenditures_fy_jul2024_jun2025_usd carries only the text's first number (origination, 2,391,497)"

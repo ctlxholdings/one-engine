@@ -1,0 +1,88 @@
+# esco deal "jva_niederschoenenfeld": a guaranteed-savings energy performance contract for the
+# Niederschönenfeld prison (dena project database, Basisdaten and Weitere Daten; cases/reference/esco/
+# ontology/miniature/cases/jva_niederschoenenfeld-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * the contractor (esco) buys the measures (wood-chip plant, steam generators) for investment_eur
+#     in period 0; the client pays it a construction-cost contribution (construction_cost_contribution_eur)
+#     in period 0, booked inside the investment (the case file's net payback reads it so): the esco
+#     carries it as a contribution received against the plant, and funds the rest with its own equity;
+#   * the guaranteed saving (guaranteed_savings_eur_per_year) accrues to the client as avoided energy
+#     cost each year of the main performance phase (04/2007 to 03/2017), from period 1;
+#   * the contractor's remuneration is not published (the dena page prints the guarantee only), so it
+#     is not booked; the payback figures are the case file's "investment / annual guarantee, scale only":
+#     the plant (less the contribution, for the net figure) read from the books per the annual guarantee.
+# Periods are years; 0 is signature and construction, 1-10 the phase. No tax.
+# Two drivers are time quantities from the printed dates (rule 4): the phase's months, both end months
+# counted, and the months from signature to the phase's first month; the phase's years set the term.
+esco: jva_niederschoenenfeld
+entity: esco
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-jva-niederschoenenfeld
+  periods: 11
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        signing_months: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        phase_years: phase_months / 12
+        own_funds: investment_eur - construction_cost_contribution_eur
+        contribution: {each_period: construction_cost_contribution_eur * (t == 0)}
+        savings: {each_period: guaranteed_savings_eur_per_year * (t >= 1) * (t <= phase_years)}
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: own_funds}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+  rulebooks:
+    contribution_received:
+      kind: transfer
+      entity: esco
+      phase: accrue
+      declare: {construction_contribution: liability}
+      moves:
+        received: {debit: cash, credit: construction_contribution, amount: {generator: src, output: contribution}}
+    client:
+      kind: transfer
+      entity: client
+      phase: accrue
+      declare: {cash: asset, contribution_paid: asset, avoided_energy_cost: income}
+      moves:
+        contribution: {debit: contribution_paid, credit: cash, amount: {generator: src, output: contribution}}
+        guaranteed_saving: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      construction_contribution: investing
+      contribution_paid: investing
+      avoided_energy_cost: operating
+  cuts:
+    client_savings: {kind: pnl, entity: client, scheme: pnl, include: [savings]}
+  measures: {}
+figures:
+  nieder.pct_closure: {cut: client_savings, at: 1, per: src.baseline_energy_cost_eur_per_year, scale: 0.01}
+  nieder.phase_months: {driver: src.phase_months, at: 0}
+  nieder.guarantee_over_phase: {cut: client_savings, total: true}
+  nieder.simple_payback: {balance: equipment, at: 0, per: src.guaranteed_savings_eur_per_year}
+  nieder.signing_to_phase: {driver: src.signing_months, at: 0}
+  nieder.contribution_inside_pct: {balance: construction_contribution, at: 0, per: src.investment_eur, scale: 0.01}
+  nieder.payback_net_of_contribution: {balance: equipment - construction_contribution, at: 0,
+                                       per: src.guaranteed_savings_eur_per_year}
+not_compared:
+  nieder.contribution_on_top_pct: "the case file's alternative reading ('if on top' of the 1.5m): the deal is
+    booked with the contribution inside the investment, as its net payback reads it; the two readings cannot both hold"

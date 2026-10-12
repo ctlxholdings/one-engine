@@ -1,0 +1,68 @@
+# esco deal "sdcl_seit_rcf": SDCL Energy Efficiency Income Trust's holding-company revolving credit
+# facility (£240m after refinancing), its paydown in the managed wind-down, and the trust's share
+# register (SEIT Annual Report 2025 [AR25]; RNS June and September 2026;
+# cases/reference/esco/ontology/miniature/cases/sdcl_seit_rcf-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`); the holdco's books, three periods at
+# the printed balance dates: 0 = 31 March 2025, 1 = 31 March 2026, 2 = 30 September 2026:
+#   * the RCF is held at its printed drawn balance at each date (rcf_drawn_gbp_2025_03_31,
+#     rcf_drawn_gbp_2026_03_31, rcf_drawn_gbp_2026_09_30): a held balance whose change is the draw or
+#     the repayment, in cash;
+#   * the Kyotherm sale proceeds (kyotherm_proceeds_to_rcf_gbp) come in at period 2, when the facility
+#     falls; whether the RNS's £45m repayment is those proceeds is not stated, so they are not tied;
+#   * the trust's NAV, fees, the project debt below the holdco and tax are not modelled.
+# Utilisation is the drawn balance per the facility limit (rcf_facility_gbp); the reduction is the
+# fall in the drawn balance from March to September 2026. General Atlantic's stake is a count of
+# shares, not money: a driver over the two share counts (rule 4).
+#
+# Set aside: the fee record needs the fee tiers' NAV threshold (GBP 750m), which is printed only in the
+# input names (up_to_750m_nav, above_750m_nav), not as a number of the deal.
+esco: sdcl_seit_rcf
+entity: holdco
+plant: rcf_drawn_gbp_2025_03_31
+case:
+  case: esco-sdcl-seit-rcf
+  periods: 3
+  phases: [operate, finance]
+  currency: GBP
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: esco
+      values:
+        drawn: {each_period: "rcf_drawn_gbp_2025_03_31 * (t == 0) + rcf_drawn_gbp_2026_03_31 * (t == 1) + rcf_drawn_gbp_2026_09_30 * (t == 2)"}
+        kyotherm: {each_period: "kyotherm_proceeds_to_rcf_gbp * (t == 2)"}
+        ga_stake: general_atlantic_shares / shares_in_issue
+  opening:
+    holdco:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    disposals:
+      kind: transfer
+      entity: holdco
+      phase: operate
+      declare:
+        disposal_proceeds: income
+      moves:
+        kyotherm: {debit: cash, credit: disposal_proceeds, amount: {generator: src, output: kyotherm}}
+    rcf:
+      kind: held_balance
+      entity: holdco
+      cash: cash
+      phase: finance
+      accounts:
+        rcf: {side: liability, target: {generator: src, output: drawn}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  sdcl.general_atlantic_pct: {driver: src.ga_stake, scale: 0.01, at: 0}
+  sdcl.rcf_utilisation_pct: {balance: rcf, per: src.rcf_facility_gbp, scale: 0.01, at: 0}
+  sdcl.rcf_reduction_m: {change: rcf, sign: -1, scale: 1000000, at: 2}
+not_compared:
+  sdcl.fee_record_m: "needs the fee tiers' NAV threshold (GBP 750m), printed only in the input names up_to_750m_nav / above_750m_nav, not as a number of the deal"

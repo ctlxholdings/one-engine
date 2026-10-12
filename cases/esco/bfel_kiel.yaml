@@ -1,0 +1,71 @@
+# esco deal "bfel_kiel": a guaranteed-savings energy performance contract for the federal research
+# property in Kiel (seven buildings, a 140 kWel CHP among the measures), signed 1 August 2005,
+# main performance phase 04/2006 to 03/2015 (dena project page; cases/reference/esco/ontology/
+# miniature/cases/bfel_kiel-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py). Amounts in EUR.
+#
+# Periods: 0 is the construction from signing to the main phase, then one period per year of the
+# main phase (phase_years, the phase's months from its printed bounds over 12). Every amount is a
+# number of the case by name (generator `src`):
+#   * the ESCO invests investment_eur in period 0, funded by its own equity, capitalised;
+#   * the guaranteed savings (guaranteed_savings_eur_per_year) accrue to the client each phase
+#     year (one lot a year: the guarantee is stated in euros, not in kWh), and the client pays the
+#     ESCO all of them but the budget relief (budget_relief_eur_per_year), which it keeps: a
+#     shared_savings contract whose split is the ESCO's share. The remuneration is not published;
+#     reading the budget relief as the client's retained share is the case file's own "if"
+#     (numbers.checks.guarantee_less_relief) and an interpretation. No tax.
+# Readings: the savings share is the client's savings in a phase year per the base energy cost;
+# the guarantee over the phase is the client's savings summed over the term; the payback is the
+# investment held per the annual guarantee; the guarantee less relief is the ESCO's revenue in a
+# phase year. The phase's months and the months from signing to the phase are `driver` formulas
+# over the printed dates (time quantities).
+esco: bfel_kiel
+entity: esco
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-bfel-kiel
+  periods: 10
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 10
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        phase_years: phase_months / 12
+        signing_gap: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        esco_share: (guaranteed_savings_eur_per_year - budget_relief_eur_per_year) / guaranteed_savings_eur_per_year
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+    savings:
+      type: shared_savings
+      parties: {provider: esco, client: bfel}
+      terms: {kwh: 1, tariff: {generator: src, output: guaranteed_savings_eur_per_year}, performance: 1,
+              split: {generator: src, output: esco_share}, start: 1,
+              terms: {generator: src, output: phase_years}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      shared_savings_fee: fee
+      shared_savings_revenue: revenue
+  cuts:
+    client_savings: {kind: pnl, entity: bfel, scheme: pnl, include: [savings]}
+    esco_revenue: {kind: pnl, entity: esco, scheme: pnl, include: [revenue]}
+  measures: {}
+figures:
+  bfel.pct_closure: {cut: client_savings, per: src.base_energy_cost_eur_per_year, at: 1, scale: 0.01}
+  bfel.phase_months: {driver: src.phase_months, at: 0}
+  bfel.guarantee_over_phase: {cut: client_savings, total: true}
+  bfel.simple_payback: {balance: equipment, per: src.guaranteed_savings_eur_per_year, at: 0}
+  bfel.signing_to_phase: {driver: src.signing_gap, at: 0}
+  bfel.guarantee_less_relief: {cut: esco_revenue, at: 1}

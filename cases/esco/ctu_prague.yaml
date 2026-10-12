@@ -1,0 +1,66 @@
+# esco deal "ctu_prague": the EnPC for nine dormitories of the Czech Technical University in Prague,
+# with an Operational Programme Environment grant (fi-compass ERDF EPC factsheet, L305-330; E02 market
+# report for context; cases/reference/esco/ontology/miniature/cases/ctu_prague-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`), in EUR (the factsheet prints EUR m,
+# times 1000 x 1000); CTU's books, one period (the investment):
+#   * the works for the nine dormitories cost the project cost (project_cost_eur_m), capitalised;
+#   * the OP Environment grant (grant_eur_m) is received towards them, held as a grant received;
+#   * what the grant leaves is financed under the EnPC and repaid "in substantial part" from the
+#     savings over the term: a liability to the ESCO, the amount that keeps CTU's cash at nil (a held
+#     balance). The repayment schedule and the guaranteed savings in money are not printed, so no
+#     payment after the investment is modelled; no tax.
+# The grant share is the grant per the project cost; the non-grant cost is the EnPC financing. The
+# savings over the term are energy (GWh), not money: a driver, the expected annual savings times the
+# term (rule 4).
+esco: ctu_prague
+entity: ctu
+plant: grant_eur_m
+case:
+  case: esco-ctu-prague
+  periods: 1
+  phases: [invest, fund]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        million: 1000 * 1000
+        cost: project_cost_eur_m * million
+        grant: grant_eur_m * million
+        savings_over_term: expected_savings_gwh_per_year * term_years
+  opening:
+    ctu:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    project:
+      kind: transfer
+      entity: ctu
+      phase: invest
+      declare:
+        dormitory_works: asset
+        op_environment_grant: liability
+        enpc_financing: liability
+      moves:
+        grant: {debit: cash, credit: op_environment_grant, amount: {generator: src, output: grant}}
+        works: {debit: dormitory_works, credit: cash, amount: {generator: src, output: cost}}
+    enpc_financing:
+      kind: held_balance
+      entity: ctu
+      cash: cash
+      phase: fund
+      accounts:
+        cash: {side: asset, target: 0, against: enpc_financing}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ctu.grant_share: {balance: op_environment_grant, per: src.cost}
+  ctu.non_grant_cost: {balance: enpc_financing, scale: 1000000}
+  ctu.savings_over_term_gwh: {driver: src.savings_over_term}

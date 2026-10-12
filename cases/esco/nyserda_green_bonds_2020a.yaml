@@ -1,0 +1,424 @@
+# esco deal "nyserda_green_bonds_2020a": NYSERDA's Residential Solar and Energy Efficiency Financing Green Revenue
+# Bonds, Series 2020A, USD 16,690,000 delivered 14 Oct 2020, backed by the Loan Payments of 2,259 Program Loans (Official
+# Statement dated 1 Oct 2020; cases/reference/esco/ontology/miniature/cases/nyserda_green_bonds_2020a-lod0.yaml; answer
+# key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# The books are the Series 2020A trust estate's (the Authority pledges and assigns the Loan Payments to the Trustee).
+# Every amount is a number of the case by name (generator `src`), in USD:
+#   * periods are bond years: 0 is the Date of Issuance, 1 the first bond year (to 1 Oct 2021). The case holds the
+#     issue and the first year only: the redemptions after it depend on Excess Revenues the OS does not print;
+#   * the pledged pool comes in on the opening balance sheet at its Cutoff Date principal, by loan type
+#     (on_bill_recovery__balance_usd, smart_energy__balance_usd), against the Authority's interest in the trust
+#     estate (the balancing amount). Each type earns its weighted average coupon (__wa_coupon_pct) on its balance,
+#     a full year in period 1 (a deposit_account at that rate: the return is added to the pool, nothing collected);
+#   * the ten bonds are ten loans (nine serial, one term), each drawn at its par (series_i__par_usd) times the price
+#     (price_pct_of_par) at issue, interest at its coupon (series_i__coupon_pct) on the opening balance, a full year
+#     in period 1 (the first coupon period's stub from 14 Oct 2020 is not modelled: the figures read the rate), and
+#     principal bullet at its maturity (the bond year of series_i__maturity__year); paid as due;
+#   * the proceeds go to the Loan Fund, which reimburses the Authority's GJGNY revolving fund
+#     (loan_fund_reimbursement_of_gjgny_revolving_fund, taken out of the Authority's interest), to the Reserve
+#     Fund, held at its requirement (requirement percent of the bonds outstanding; the USD 50,000 floor is text,
+#     not an input, and does not bind at issue), and to the Costs of Issuance Fund (costs_of_issuance_fund_approx).
+#     The underwriting fee is not booked: the OS does not say whether it sits inside the costs of issuance. No tax.
+# The figures:
+#   * ny20.sources_and_uses: the three uses of the proceeds, from the books (cash out at issue);
+#   * ny20.serial_sum, ny20.serial_field_matches_rows: the nine serial bonds outstanding at issue (the second
+#     figure is the serial_par_usd field, an input; the books derive it from the nine rows, the other inputs);
+#   * ny20.issue_total: all ten bonds outstanding at issue;
+#   * ny20.reserve_2pct_of_par: the Reserve Fund at issue;
+#   * ny20.clean_up_threshold: the bonds at issue times the clean-up share (threshold_pct_of_original percent);
+#   * ny20.overcollateralisation_pct: the pool and the Reserve Fund at issue, from the books, over the bonds issued
+#     (the sum of the rows, a generator value: `per` divides by one only), as a percent;
+#   * ny20.bond_weighted_coupon_pct: the bonds' interest in the first bond year, from the books, over the bonds
+#     issued, as a percent;
+#   * ny20.pool_weighted_coupon_pct: the pool's interest in the first year, from the books, over the pool
+#     principal (portfolio_principal_usd), as a percent. The answer key weights the coupon table's rows, whose
+#     rates are their keys ('3.49'), not inputs; the books weight the two loan types' printed averages, which give
+#     the same 4.64;
+#   * ny20.coupon_table_total: the pool principal at the Cutoff Date, from the books (the two loan types' balances;
+#     every table of the pool sums to it, the case file's pool_balance_ties).
+esco: nyserda_green_bonds_2020a
+entity: trust_estate
+plant: series_9__par_usd
+case:
+  case: esco-nyserda-green-bonds
+  periods: 2
+  phases: [accrue, pay, hold]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: esco
+      values:
+        first_year: {each_period: (t == 1) * 1}
+        draw_0: {each_period: series_0__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_0: series_0__coupon_pct / 100
+        maturity_0: series_0__maturity__year - date_of_issuance__year
+        draw_1: {each_period: series_1__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_1: series_1__coupon_pct / 100
+        maturity_1: series_1__maturity__year - date_of_issuance__year
+        draw_2: {each_period: series_2__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_2: series_2__coupon_pct / 100
+        maturity_2: series_2__maturity__year - date_of_issuance__year
+        draw_3: {each_period: series_3__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_3: series_3__coupon_pct / 100
+        maturity_3: series_3__maturity__year - date_of_issuance__year
+        draw_4: {each_period: series_4__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_4: series_4__coupon_pct / 100
+        maturity_4: series_4__maturity__year - date_of_issuance__year
+        draw_5: {each_period: series_5__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_5: series_5__coupon_pct / 100
+        maturity_5: series_5__maturity__year - date_of_issuance__year
+        draw_6: {each_period: series_6__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_6: series_6__coupon_pct / 100
+        maturity_6: series_6__maturity__year - date_of_issuance__year
+        draw_7: {each_period: series_7__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_7: series_7__coupon_pct / 100
+        maturity_7: series_7__maturity__year - date_of_issuance__year
+        draw_8: {each_period: series_8__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_8: series_8__coupon_pct / 100
+        maturity_8: series_8__maturity__year - date_of_issuance__year
+        draw_9: {each_period: series_9__par_usd * price_pct_of_par / 100 * (t == 0)}
+        rate_9: series_9__coupon_pct / 100
+        maturity_9: series_9__maturity__year - date_of_issuance__year
+        bonds_par: series_0__par_usd + series_1__par_usd + series_2__par_usd + series_3__par_usd + series_4__par_usd + series_5__par_usd + series_6__par_usd + series_7__par_usd + series_8__par_usd + series_9__par_usd
+        reserve_target: requirement / 100 * bonds_par
+        clean_up_share: threshold_pct_of_original / 100
+        on_bill_rate: on_bill_recovery__wa_coupon_pct / 100
+        smart_energy_rate: smart_energy__wa_coupon_pct / 100
+  opening:
+    trust_estate:
+      cash: {nature: asset, value: 0}
+      on_bill_pool: {nature: asset, value: {generator: src, output: on_bill_recovery__balance_usd}}
+      smart_energy_pool: {nature: asset, value: {generator: src, output: smart_energy__balance_usd}}
+      authority_interest: {nature: equity, value: balancing}
+  contracts:
+    on_bill_pool:
+      type: deposit_account
+      parties: {holder: trust_estate}
+      terms: {schedule: 0, rate: {generator: src, output: on_bill_rate}, days_per_period: {generator: src, output: first_year},
+              day_count_basis: 1, close_at: 24}
+    smart_energy_pool:
+      type: deposit_account
+      parties: {holder: trust_estate}
+      terms: {schedule: 0, rate: {generator: src, output: smart_energy_rate}, days_per_period: {generator: src, output: first_year},
+              day_count_basis: 1, close_at: 24}
+    serial_1:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_0__par_usd}
+        draw_schedule: {generator: src, output: draw_0}
+        available_until: 0
+        rate: {generator: src, output: rate_0}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_0}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_2:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_1__par_usd}
+        draw_schedule: {generator: src, output: draw_1}
+        available_until: 0
+        rate: {generator: src, output: rate_1}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_1}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_3:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_2__par_usd}
+        draw_schedule: {generator: src, output: draw_2}
+        available_until: 0
+        rate: {generator: src, output: rate_2}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_2}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_4:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_3__par_usd}
+        draw_schedule: {generator: src, output: draw_3}
+        available_until: 0
+        rate: {generator: src, output: rate_3}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_3}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_5:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_4__par_usd}
+        draw_schedule: {generator: src, output: draw_4}
+        available_until: 0
+        rate: {generator: src, output: rate_4}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_4}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_6:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_5__par_usd}
+        draw_schedule: {generator: src, output: draw_5}
+        available_until: 0
+        rate: {generator: src, output: rate_5}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_5}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_7:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_6__par_usd}
+        draw_schedule: {generator: src, output: draw_6}
+        available_until: 0
+        rate: {generator: src, output: rate_6}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_6}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_8:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_7__par_usd}
+        draw_schedule: {generator: src, output: draw_7}
+        available_until: 0
+        rate: {generator: src, output: rate_7}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_7}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    serial_9:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_8__par_usd}
+        draw_schedule: {generator: src, output: draw_8}
+        available_until: 0
+        rate: {generator: src, output: rate_8}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_8}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+    term:
+      type: loan
+      parties: {borrower: trust_estate}
+      terms:
+        commitment: {generator: src, output: series_9__par_usd}
+        draw_schedule: {generator: src, output: draw_9}
+        available_until: 0
+        rate: {generator: src, output: rate_9}
+        rate_from: 1
+        days_per_period: {generator: src, output: first_year}
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: maturity_9}
+        repay_periods: 1
+        sculpt_dscr: null
+        principal_schedule: null
+        arrangement_fee: 0
+        fee_at: 0
+  rulebooks:
+    bonds:
+      kind: pay_as_due
+      phase: pay
+      claims: [serial_1.draw, serial_1.interest, serial_1.principal, serial_2.draw, serial_2.interest, serial_2.principal, serial_3.draw, serial_3.interest, serial_3.principal, serial_4.draw, serial_4.interest, serial_4.principal, serial_5.draw, serial_5.interest, serial_5.principal, serial_6.draw, serial_6.interest, serial_6.principal, serial_7.draw, serial_7.interest, serial_7.principal, serial_8.draw, serial_8.interest, serial_8.principal, serial_9.draw, serial_9.interest, serial_9.principal, term.draw, term.interest, term.principal]
+    proceeds:
+      kind: transfer
+      entity: trust_estate
+      phase: hold
+      declare:
+        costs_of_issuance_fund: asset
+      moves:
+        loan_fund: {debit: authority_interest, credit: cash, amount: {generator: src, output: loan_fund_reimbursement_of_gjgny_revolving_fund}}
+        costs_of_issuance: {debit: costs_of_issuance_fund, credit: cash, amount: {generator: src, output: costs_of_issuance_fund_approx}}
+    reserve:
+      kind: held_balance
+      entity: trust_estate
+      cash: cash
+      phase: hold
+      accounts:
+        reserve_fund: {side: asset, target: {generator: src, output: reserve_target}}
+  schemes:
+    pnl:
+      on_bill_pool.return: pool_interest
+      smart_energy_pool.return: pool_interest
+      serial_1.interest: bond_interest
+      serial_1.fees: bond_fees
+      serial_2.interest: bond_interest
+      serial_2.fees: bond_fees
+      serial_3.interest: bond_interest
+      serial_3.fees: bond_fees
+      serial_4.interest: bond_interest
+      serial_4.fees: bond_fees
+      serial_5.interest: bond_interest
+      serial_5.fees: bond_fees
+      serial_6.interest: bond_interest
+      serial_6.fees: bond_fees
+      serial_7.interest: bond_interest
+      serial_7.fees: bond_fees
+      serial_8.interest: bond_interest
+      serial_8.fees: bond_fees
+      serial_9.interest: bond_interest
+      serial_9.fees: bond_fees
+      term.interest: bond_interest
+      term.fees: bond_fees
+    cash_flow:
+      authority_interest: uses
+      costs_of_issuance_fund: uses
+      reserve_fund: uses
+      on_bill_pool: pool
+      smart_energy_pool: pool
+      serial_1.debt: bonds
+      serial_1.interest_payable: bonds
+      serial_1.fee_payable: bonds
+      serial_1.capitalised_interest: bonds
+      serial_1.deferred_fees: bonds
+      serial_2.debt: bonds
+      serial_2.interest_payable: bonds
+      serial_2.fee_payable: bonds
+      serial_2.capitalised_interest: bonds
+      serial_2.deferred_fees: bonds
+      serial_3.debt: bonds
+      serial_3.interest_payable: bonds
+      serial_3.fee_payable: bonds
+      serial_3.capitalised_interest: bonds
+      serial_3.deferred_fees: bonds
+      serial_4.debt: bonds
+      serial_4.interest_payable: bonds
+      serial_4.fee_payable: bonds
+      serial_4.capitalised_interest: bonds
+      serial_4.deferred_fees: bonds
+      serial_5.debt: bonds
+      serial_5.interest_payable: bonds
+      serial_5.fee_payable: bonds
+      serial_5.capitalised_interest: bonds
+      serial_5.deferred_fees: bonds
+      serial_6.debt: bonds
+      serial_6.interest_payable: bonds
+      serial_6.fee_payable: bonds
+      serial_6.capitalised_interest: bonds
+      serial_6.deferred_fees: bonds
+      serial_7.debt: bonds
+      serial_7.interest_payable: bonds
+      serial_7.fee_payable: bonds
+      serial_7.capitalised_interest: bonds
+      serial_7.deferred_fees: bonds
+      serial_8.debt: bonds
+      serial_8.interest_payable: bonds
+      serial_8.fee_payable: bonds
+      serial_8.capitalised_interest: bonds
+      serial_8.deferred_fees: bonds
+      serial_9.debt: bonds
+      serial_9.interest_payable: bonds
+      serial_9.fee_payable: bonds
+      serial_9.capitalised_interest: bonds
+      serial_9.deferred_fees: bonds
+      term.debt: bonds
+      term.interest_payable: bonds
+      term.fee_payable: bonds
+      term.capitalised_interest: bonds
+      term.deferred_fees: bonds
+  cuts:
+    uses_of_proceeds: {entity: trust_estate, account: cash, scheme: cash_flow, include: [uses]}
+    bond_interest: {kind: pnl, entity: trust_estate, scheme: pnl, include: [bond_interest]}
+    pool_interest: {kind: pnl, entity: trust_estate, scheme: pnl, include: [pool_interest]}
+  measures: {}
+figures:
+  ny20.sources_and_uses: {cut: uses_of_proceeds, at: 0, sign: -1}
+  ny20.serial_sum: {balance: "serial_1.debt + serial_2.debt + serial_3.debt + serial_4.debt + serial_5.debt + serial_6.debt + serial_7.debt + serial_8.debt + serial_9.debt", at: 0}
+  ny20.serial_field_matches_rows: {balance: "serial_1.debt + serial_2.debt + serial_3.debt + serial_4.debt + serial_5.debt + serial_6.debt + serial_7.debt + serial_8.debt + serial_9.debt", at: 0}
+  ny20.issue_total: {balance: "serial_1.debt + serial_2.debt + serial_3.debt + serial_4.debt + serial_5.debt + serial_6.debt + serial_7.debt + serial_8.debt + serial_9.debt + term.debt", at: 0}
+  ny20.reserve_2pct_of_par: {balance: reserve_fund, at: 0}
+  ny20.clean_up_threshold: {balance: "serial_1.debt + serial_2.debt + serial_3.debt + serial_4.debt + serial_5.debt + serial_6.debt + serial_7.debt + serial_8.debt + serial_9.debt + term.debt", at: 0, times: src.clean_up_share}
+  ny20.overcollateralisation_pct: {sum: [{balance: "on_bill_pool + smart_energy_pool + reserve_fund", per: src.bonds_par}], at: 0, scale: 0.01}
+  ny20.bond_weighted_coupon_pct: {cut: bond_interest, at: 1, sign: -1, per: src.bonds_par, scale: 0.01}
+  ny20.pool_weighted_coupon_pct: {cut: pool_interest, at: 1, per: src.portfolio_principal_usd, scale: 0.01}
+  ny20.coupon_table_total: {balance: "on_bill_pool + smart_energy_pool", at: 0}

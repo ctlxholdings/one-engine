@@ -1,0 +1,85 @@
+# esco deal "china_ecp_pilot_emcs": the China Energy Conservation Project's three pilot Energy Management
+# Companies (World Bank / GEF / EC, 1998-2006; ICR No. ICR0000701, 2007, and PAD No. 17030-CHA, 1998;
+# cases/reference/esco/ontology/miniature/cases/china_ecp_pilot_emcs-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`), in USD millions:
+#   * the three EMCs are one party, as in the case file; the GEF grant reaches each of them through
+#     the Ministry of Finance, gef_used_per_emc_usd_m each ("US$ 5 million for each EMCo", ICR Annex
+#     6), and they book it as 'GEF grant' in shareholders' funds, apart from paid-in capital (ICR
+#     Table 3.3): a non-repayable contribution received in cash, three of them (three EMCs: a count);
+#   * the case holds the programme's totals in one period: the receipts by year and the EMCs'
+#     514 EPCs are not inputs;
+#   * the IBRD loan and its on-lending, the EC grant, the EMCs' own funds and the host enterprises'
+#     shared savings feed no figure the inputs can reach (see below) and are not booked. No tax.
+# The figures:
+#   * china.gef_three_emcs: the GEF grant the EMCs received, from the books;
+#   * china.gef_share_pct: the same over the EMCs' EPC investment, epc_investment_three_emcs_usd_m
+#     (the input: `per` divides by a generator value only), as a percent.
+# The other figures need numbers the case's inputs do not carry. Each input is the first number of its
+# text, and the case file's tables (savings, investment by company and year, the IBRD draws, Table 3,
+# the EIRR sample) sit under numbers.derived, which is not an input. Several figures also equal an
+# input outright (63, 22, 150.8, 194.8, 5.92, 180.84, 12,380) and the inputs hold nothing else they
+# are computed from. They are set aside below.
+esco: china_ecp_pilot_emcs
+entity: emcs
+plant: gef_used_per_emc_usd_m
+case:
+  case: esco-china-ecp-pilot-emcs
+  periods: 1
+  phases: [accrue]
+  currency: USD_m
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        gef_to_emcs: 3 * gef_used_per_emc_usd_m
+  contracts: {}
+  opening:
+    emcs:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    subsidiary_grants:
+      kind: transfer
+      entity: emcs
+      phase: accrue
+      declare:
+        gef_grant: equity
+      moves:
+        gef: {debit: cash, credit: gef_grant, amount: {generator: src, output: gef_to_emcs}}
+  schemes:
+    cash_flow:
+      gef_grant: grants
+  cuts:
+    gef_received: {entity: emcs, account: cash, scheme: cash_flow, include: [grants]}
+  measures: {}
+figures:
+  china.gef_three_emcs: {cut: gef_received}
+  china.gef_share_pct: {cut: gef_received, per: src.epc_investment_three_emcs_usd_m, scale: 0.01}
+not_compared:
+  china.ibrd_pad_allocation: "the PAD's US$21.0m per EMC is not an input (ibrd_loan_usd_m is the text's first number, 63.0, the figure itself)"
+  china.gef_split_sum: "the 15.0 + 5.0 + 2.0 components are not inputs (gef_grant_usd_m is the text's first number, 22.0, the figure itself)"
+  china.component1_appraisal: "the EC grant in US$ (4.5) is not an input: ec_grant is the text's first number, ECU 4"
+  china.component1_actual: "the EC grant in US$ (4.5), the IBRD disbursement (60.5) and the actual own funds (100.8) are not inputs"
+  china.total_cost_appraisal_by_source: "the EC grant in US$ (4.5) is not an input (and total_project_cost_usd_m is the figure itself)"
+  china.total_cost_actual_by_source: "the EC grant in US$ (4.5), the IBRD disbursement (60.5) and the actual own funds (100.8) are not inputs"
+  china.emc_own_funds_residual: "the IBRD disbursement (60.5) and the EC grant in US$ (4.5) are not inputs"
+  china.external_share_pct: "the IBRD disbursement (60.5) and the EC grant in US$ (4.5) are not inputs"
+  china.savings_by_year: "ICR Table 2.1 by year sits in numbers.derived, not an input"
+  china.savings_by_company: "ICR Table 2.1 by company sits in numbers.derived, not an input"
+  china.savings_matches_headline: "ICR Table 2.1 sits in numbers.derived, not an input"
+  china.investment_by_company: "ICR Table 2.3 by company sits in numbers.derived, not an input"
+  china.investment_by_year: "ICR Table 2.3 by year sits in numbers.derived, not an input"
+  china.average_epc_usd_m: "the 514 EPCs are not an input (the text's first number is the 180.84 investment)"
+  china.savings_vs_revised_pct: "the revised target (5.22 Mtce) is not an input (energy_savings_mtce is the text's first number, 5.92)"
+  china.savings_vs_original_pct: "the original target (13.0 Mtce) is not an input"
+  china.co2_vs_revised_pct: "the revised CO2 target (3.77) is not an input (co2_mt_c is the text's first number, 5.06)"
+  china.table3_share_of_market: "ICR Table 3 sits in numbers.derived, not an input"
+  china.eirr_sample_sum: "ICR Tables 3.1-3.2 sit in numbers.derived, not an input"
+  china.ibrd_draws_vs_disbursed: "the IBRD draws by EMC (21, 21, 19.0827) sit in numbers.derived, not an input"
+  china.table3_vs_table23_2006: "ICR Tables 3 and 2.3 for 2006 sit in numbers.derived, not an input"
+  china.gef_receipts_vs_balance: "the GEF grant receipts by year (ICR Table 3.3) are not inputs: emc_books_rmb_10k is the text's first number, the 12,380 balance, the figure itself"
+  china.ec_receipts_vs_balance: "the EC grant receipts and the 2,737 balance (ICR Table 3.3) are not inputs"

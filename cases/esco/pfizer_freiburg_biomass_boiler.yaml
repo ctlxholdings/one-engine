@@ -1,0 +1,54 @@
+# esco deal "pfizer_freiburg_biomass_boiler": the wood-pellet boiler EC Bioenergie supplies Pfizer's
+# Freiburg facility under a ten-year heat contract (phase 1, 2008-2009), and the emission credits
+# the facility expects to sell (UNIDO working paper, 2011, s.4.1; cases/reference/esco/ontology/
+# miniature/cases/pfizer_freiburg_biomass_boiler-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`). One representative year, in the
+# facility's books:
+#   * the facility sells the Joint Implementation credits for the CO2 it avoids
+#     (co2_saved_t_per_year, 'in excess of 5,000') on the EU ETS at the going price
+#     (credit_price_eur_per_t, 'just under 15'): an offtake of tonnes at a price, collected in the
+#     year; the buyer is an anonymous market;
+#   * the heat contract's price (a cap at price_cap percent of the oil-equivalent cost), the boiler's
+#     cost and its financing are not published, so nothing else is booked.
+# Set aside: the heat the avoided CO2 implies if all displaced fuel were oil, or all gas, divides by
+# the oil (0.25) and gas (0.19) factors, the second and third numbers of the printed factor text;
+# the inputs carry only its first number (wood pellets, 0). No tax.
+esco: pfizer_freiburg_biomass_boiler
+entity: facility
+plant: credit_price_eur_per_t
+case:
+  case: esco-pfizer-freiburg-biomass-boiler
+  periods: 1
+  phases: [operate]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values: {}
+  opening:
+    facility:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    credits:
+      type: offtake
+      parties: {seller: facility}
+      terms: {volume: {generator: src, output: co2_saved_t_per_year}, price: {generator: src, output: credit_price_eur_per_t},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+  rulebooks: {}
+  schemes:
+    pnl:
+      credits.revenue: credit_revenue
+  cuts:
+    credit_revenue: {kind: pnl, entity: facility, scheme: pnl, include: [credit_revenue]}
+  measures: {}
+figures:
+  pf.credit_revenue: {cut: credit_revenue}
+not_compared:
+  pf.heat_if_oil_mwh: "divides by the oil factor 0.25, the second number of the printed factor text; the inputs carry only its first (wood pellets, 0)"
+  pf.heat_if_gas_mwh: "divides by the natural-gas factor 0.19, the third number of the printed factor text; the inputs carry only its first (wood pellets, 0)"

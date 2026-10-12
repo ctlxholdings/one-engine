@@ -1,0 +1,61 @@
+# esco deal "hotel_dieu_quebec_econoler": the Hotel-Dieu de Quebec hospital energy programme, carried
+# out by Econoler on a performance guarantee alone, 1982-1994 (IEPF / Econoler book on PPP financing of
+# energy efficiency, 2008, box 3, ECO L4919-4953; cases/reference/esco/ontology/miniature/cases/
+# hotel_dieu_quebec_econoler-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * the hospital finances the works itself (borrower none, the case file's reading of ECO L4870-4872):
+#     its own funds come in as capital and it pays Econoler project_total_cost_cad for the measures;
+#   * the savings are the hospital's avoided energy cost, savings_1981_1998_cad in all (the
+#     with-versus-without view of its energy bill), received in cash;
+#   * the source prints only the two totals: the works are period 0 and the savings, cumulated over
+#     1981-1998, period 1 (the cost is spread over 1982-1994 and nothing is discounted, so neither
+#     figure is a payback, as the case file says). No tax.
+# Both figures are the hospital's project cash flow: its net total (savings less cost) and its
+# multiple, what came back over what was paid (the moic measure).
+esco: hotel_dieu_quebec_econoler
+entity: hospital
+plant: savings_1981_1998_cad
+case:
+  case: esco-hotel-dieu-quebec-econoler
+  periods: 2
+  phases: [accrue, settle]
+  currency: CAD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: esco
+      values:
+        savings: {each_period: savings_1981_1998_cad * (t == 1)}
+  contracts:
+    own_funds:
+      type: equity_funding
+      parties: {issuer: hospital}
+      terms: {amount: {generator: src, output: project_total_cost_cad}, period: 0}
+    works:
+      type: one_off_purchase
+      parties: {buyer: hospital}
+      terms: {amount: {generator: src, output: project_total_cost_cad}, period: 0}
+  rulebooks:
+    energy_bill:
+      kind: transfer
+      entity: hospital
+      phase: accrue
+      declare:
+        avoided_energy_cost: income
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      avoided_energy_cost: operating
+  cuts:
+    project_cash_flow: {entity: hospital, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    savings_over_cost: {measure: moic, cut: project_cash_flow}
+figures:
+  hd.savings_over_cost: {measure: savings_over_cost}
+  hd.savings_less_cost: {cut: project_cash_flow, total: true}

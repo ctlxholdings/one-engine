@@ -1,0 +1,114 @@
+# esco deal "klinikum_bremerhaven": an energy-saving contract (Energiespar-Contracting) between the
+# Klinikum Bremerhaven-Reinkenheide and Siemens, guaranteed savings over a 12-year main phase (dena
+# project page; cases/reference/esco/ontology/miniature/cases/klinikum_bremerhaven-lod0.yaml; answer
+# key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * Siemens (the partner) pays the investment (investment_eur) in period 0, the works period,
+#     funded by its own equity (the financing route is not printed);
+#   * the performance phase runs from _from__year/_from__month to to__year/to__month; its length
+#     in months and years is a driver over those printed months (a time quantity, rule 4), as is
+#     the gap from signature (contract_signed__year/__month/day) to the phase's first month, the
+#     day of signature counted as a fraction of a month of 52 x 7 / 12 days, and the preparation
+#     time (that gap less works_months). Periods are years: 0 is the works year, 1..12 the phase;
+#   * the hospital's saving on its energy bill each phase year is the achieved share
+#     (achieved_energy_cost_saving_percent) of the base energy costs. The base is the one the
+#     printed guarantee share pins (guaranteed_savings_eur_per_year / guaranteed_savings_percent =
+#     2,063,492 EUR, which the page prints rounded as '2,1 Mio.'); the saving is booked in two
+#     income lines, the guaranteed saving (guaranteed_savings_eur_per_year) and the excess above it;
+#   * the budget relief (budget_relief_eur_per_year, 'Haushaltsentlastung', undefined on the page)
+#     is read as the hospital's retained share of the guaranteed saving: the contracting rate paid
+#     to Siemens each phase year is the guarantee less the relief (the case file's own reading for
+#     the sister dena pages; the rate formula itself is not printed). Who keeps the excess saving is
+#     not printed either (LOD 2): no excess-sharing payment is booked;
+#   * the investment over the annual guarantee is the simple payback, read as the equipment
+#     Siemens holds per the guarantee; the guarantee over the phase per the investment likewise.
+# No tax, no financing, no indexation (none printed).
+esco: klinikum_bremerhaven
+entity: siemens
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-klinikum-bremerhaven
+  periods: 13
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 13
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        phase_years: phase_months / 12
+        signing_to_phase: >-
+          (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+          - (day - 1) * 12 / (52 * 7)
+        preparation_months: signing_to_phase - works_months
+        works: {each_period: (t == 0)}
+        in_phase: {each_period: (t >= 1) * (t <= phase_years)}
+        guarantee_share: guaranteed_savings_percent / 100
+        implied_base: guaranteed_savings_eur_per_year / guarantee_share
+        achieved: implied_base * achieved_energy_cost_saving_percent / 100
+        invested: works * investment_eur
+        guaranteed: in_phase * guaranteed_savings_eur_per_year
+        excess: in_phase * (achieved - guaranteed_savings_eur_per_year)
+        rate: in_phase * (guaranteed_savings_eur_per_year - budget_relief_eur_per_year)
+        baseline_mwh: district_heat_mwh + district_steam_mwh + electricity_mwh
+  opening:
+    siemens:
+      cash: {nature: asset, value: 0}
+    klinikum:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    partner:
+      kind: transfer
+      entity: siemens
+      phase: accrue
+      declare:
+        share_capital: equity
+        equipment: asset
+        contracting_revenue: income
+      moves:
+        fund: {debit: cash, credit: share_capital, amount: {generator: src, output: invested}}
+        build: {debit: equipment, credit: cash, amount: {generator: src, output: invested}}
+        rate: {debit: cash, credit: contracting_revenue, amount: {generator: src, output: rate}}
+    client:
+      kind: transfer
+      entity: klinikum
+      phase: settle
+      declare:
+        guaranteed_saving: income
+        excess_saving: income
+        contracting_rate: expense
+      moves:
+        guaranteed: {debit: cash, credit: guaranteed_saving, amount: {generator: src, output: guaranteed}}
+        excess: {debit: cash, credit: excess_saving, amount: {generator: src, output: excess}}
+        rate: {debit: contracting_rate, credit: cash, amount: {generator: src, output: rate}}
+  schemes:
+    pnl:
+      guaranteed_saving: guaranteed
+      excess_saving: excess
+      contracting_rate: rate
+      contracting_revenue: revenue
+  cuts:
+    guaranteed: {kind: pnl, entity: klinikum, scheme: pnl, include: [guaranteed]}
+    excess: {kind: pnl, entity: klinikum, scheme: pnl, include: [excess]}
+    achieved: {kind: pnl, entity: klinikum, scheme: pnl, include: [guaranteed, excess]}
+    relief: {kind: pnl, entity: klinikum, scheme: pnl, include: [guaranteed, rate]}
+  measures: {}
+figures:
+  klinikum.pct_band_base: {cut: guaranteed, at: 1, per: src.guarantee_share, scale: 1000000}
+  klinikum.phase_months: {driver: src.phase_months, at: 0}
+  klinikum.guarantee_over_phase: {cut: guaranteed, total: true}
+  klinikum.simple_payback: {balance: equipment, at: 0, per: src.guaranteed_savings_eur_per_year}
+  klinikum.signing_to_phase: {driver: src.signing_to_phase, at: 0}
+  klinikum.guarantee_over_investment: {cut: guaranteed, total: true, per: src.investment_eur}
+  klinikum.achieved_saving_k: {cut: achieved, at: 1, scale: 1000}
+  klinikum.achieved_over_guarantee_k: {cut: excess, at: 1, scale: 1000}
+  klinikum.relief_over_guarantee_pct: {cut: relief, at: 1, per: src.guaranteed_savings_eur_per_year, scale: 0.01}
+  klinikum.relief_over_achieved_pct: {cut: relief, at: 1, per: src.achieved, scale: 0.01}
+  klinikum.baseline_mwh: {driver: src.baseline_mwh, at: 0}
+  klinikum.preparation_months: {driver: src.preparation_months, at: 0}

@@ -1,0 +1,87 @@
+# esco deal "eurostat_box7_subordinated": Box 7 of the EIB/Eurostat guide to the statistical treatment
+# of EPCs, a worked example: an EPC with capital cost EUR 10m, of which the government contributes
+# EUR 1m and lends EUR 0.5m on fully subordinated terms, weighted x2.5 (eib-eurostat-statistical-
+# treatment-epc.txt L5406-5431; cases/reference/esco/ontology/miniature/cases/eurostat_box7_
+# subordinated-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`), in EUR (the box prints EUR m, times
+# 1000 x 1000); the partner's books, one period (financial close):
+#   * the partner pays the capital cost (capital_cost_eur_m), capitalised;
+#   * the authority pays in its capital contribution (capital_contribution_eur_m), non-repayable, and
+#     lends the subordinated loan (subordinated_loan_eur_m);
+#   * the partner funds the rest from its own sources (the box does not say which): whatever the
+#     works leave unfunded, so that its cash ends at nil (a held balance against own sources): the
+#     remaining capital cost; no interest (not printed), no tax.
+# Government financing in the Eurostat sense is the contribution plus the loan weighted by the
+# subordinated multiplier (subordinated_multiplier, a rate no ledger holds, applied with `times`); its
+# share is that per the capital cost. The unweighted share is the two balances per the capital cost.
+# The loan at which the band turns VERY HIGH is the loan that takes the weighted financing to one
+# third of the capital cost (the guide's band edge, L5350-5353): one third of the works less the
+# contribution, per the multiplier. The importance band is a word (set aside by the oracle).
+esco: eurostat_box7_subordinated
+entity: partner
+plant: subordinated_loan_eur_m
+case:
+  case: esco-eurostat-box-subordinated
+  periods: 1
+  phases: [close, fund]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        million: 1000 * 1000
+        capital_cost: capital_cost_eur_m * million
+        contribution: capital_contribution_eur_m * million
+        sub_loan: subordinated_loan_eur_m * million
+        very_high_edge: 1 / 3
+  opening:
+    partner:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    close:
+      kind: transfer
+      entity: partner
+      phase: close
+      declare:
+        epc_works: asset
+        own_sources: equity
+        government_contribution: liability
+        subordinated_loan: liability
+      moves:
+        contribution: {debit: cash, credit: government_contribution, amount: {generator: src, output: contribution}}
+        sub_loan: {debit: cash, credit: subordinated_loan, amount: {generator: src, output: sub_loan}}
+        works: {debit: epc_works, credit: cash, amount: {generator: src, output: capital_cost}}
+    own_sources:
+      kind: held_balance
+      entity: partner
+      cash: cash
+      phase: fund
+      accounts:
+        cash: {side: asset, target: 0, against: own_sources}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  box7.government_financing:
+    sum:
+      - {balance: subordinated_loan, times: src.subordinated_multiplier}
+      - {balance: government_contribution}
+    scale: 1000000
+  box7.share_pct:
+    sum:
+      - {balance: subordinated_loan, times: src.subordinated_multiplier, per: src.capital_cost}
+      - {balance: government_contribution, per: src.capital_cost}
+    scale: 0.01
+  box7.unweighted_share_pct: {balance: "subordinated_loan + government_contribution", per: src.capital_cost, scale: 0.01}
+  box7.loan_to_very_high:
+    sum:
+      - {balance: epc_works, times: src.very_high_edge, per: src.subordinated_multiplier}
+      - {balance: government_contribution, sign: -1, per: src.subordinated_multiplier}
+    scale: 1000000
+  box7.remaining_capital_cost: {balance: own_sources, scale: 1000000}

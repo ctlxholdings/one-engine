@@ -1,0 +1,88 @@
+# esco deal "jva_moabit_pool20": the Berlin Energiesparpartnerschaft pool 20, a guaranteed-savings
+# energy performance contract for the JVA Moabit prison, signed 1 July 2006, main phase 01/2008 to
+# 12/2019 (dena project page, Basisdaten, Maßnahmen, Weitere Daten; cases/reference/esco/ontology/
+# miniature/cases/jva_moabit_pool20-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py). Amounts in EUR.
+#
+# Periods: 0 is the construction from signing to the main phase, 1 to 12 the main phase's years
+# (phase_years, the phase's months from its printed bounds over 12). Every amount is a number of
+# the case by name (generator `src`):
+#   * the ESCO invests investment_eur in period 0, funded by its own equity: the window works
+#     (window_works_eur) and the other measures (the rest of the investment) are capitalised to
+#     two accounts. That the windows are inside the investment is the case file's own reading
+#     (not stated by the source);
+#   * the guaranteed savings (guaranteed_savings_eur_per_year) accrue to the client each phase
+#     year (one lot a year: the guarantee is stated in euros, not in kWh), and the client pays the
+#     ESCO all of them but the budget relief (budget_relief_eur_per_year), which the client keeps:
+#     a shared_savings contract whose split is the ESCO's share. The source leaves the budget
+#     relief undefined; reading it as the client's retained share of the guarantee is the
+#     Energiesparpartnerschaft pattern and an interpretation (header note). No tax.
+# Readings: the guarantee over the phase is the client's savings summed over the term; the
+# guarantee less relief is the ESCO's revenue in a phase year; the relief share is the client's
+# net saving per the guarantee; the payback is the investment held per the annual guarantee; the
+# windows share is the windows account per the investment. The phase's months and the months
+# from signing to the phase are `driver` formulas over the printed dates (time quantities).
+#
+# Set aside: moabit.pct_band_base needs the printed 35,0 Prozent, the second number of the
+# guarantee's text, which the harness does not hand over: no input carries it.
+esco: jva_moabit_pool20
+entity: esco
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-jva-moabit-pool
+  periods: 13
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 13
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        phase_years: phase_months / 12
+        signing_gap: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        windows_spend: {each_period: (t == 0) * window_works_eur}
+        other_spend: {each_period: (t == 0) * (investment_eur - window_works_eur)}
+        esco_share: (guaranteed_savings_eur_per_year - budget_relief_eur_per_year) / guaranteed_savings_eur_per_year
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+    savings:
+      type: shared_savings
+      parties: {provider: esco, client: jva}
+      terms: {kwh: 1, tariff: {generator: src, output: guaranteed_savings_eur_per_year}, performance: 1,
+              split: {generator: src, output: esco_share}, start: 1,
+              terms: {generator: src, output: phase_years}}
+  rulebooks:
+    works:
+      kind: transfer
+      entity: esco
+      phase: accrue
+      declare: {windows: asset, other_measures: asset}
+      moves:
+        windows: {debit: windows, credit: cash, amount: {generator: src, output: windows_spend}}
+        other: {debit: other_measures, credit: cash, amount: {generator: src, output: other_spend}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      shared_savings_fee: fee
+      shared_savings_revenue: revenue
+  cuts:
+    client_savings: {kind: pnl, entity: jva, scheme: pnl, include: [savings]}
+    client_net: {kind: pnl, entity: jva, scheme: pnl, include: [savings, fee]}
+    esco_revenue: {kind: pnl, entity: esco, scheme: pnl, include: [revenue]}
+  measures: {}
+figures:
+  moabit.phase_months: {driver: src.phase_months, at: 0}
+  moabit.guarantee_over_phase: {cut: client_savings, total: true}
+  moabit.simple_payback: {balance: "windows + other_measures", per: src.guaranteed_savings_eur_per_year, at: 0}
+  moabit.signing_to_phase: {driver: src.signing_gap, at: 0}
+  moabit.relief_share_pct: {cut: client_net, per: src.guaranteed_savings_eur_per_year, at: 1, scale: 0.01}
+  moabit.guarantee_less_relief: {cut: esco_revenue, at: 1}
+  moabit.windows_share_pct: {balance: windows, per: src.investment_eur, at: 0, scale: 0.01}
+not_compared:
+  moabit.pct_band_base: "needs the printed 35,0 Prozent (the base implied by the guarantee), the second number of the guarantee's text, which the harness does not hand over: no input carries it"

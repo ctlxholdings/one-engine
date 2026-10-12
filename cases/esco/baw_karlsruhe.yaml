@@ -1,0 +1,91 @@
+# esco deal "baw_karlsruhe": the guaranteed-savings energy-saving contract (Energiespar-Contracting) of the
+# Bundesanstalt fuer Wasserbau, Karlsruhe, between the Staatliches Hochbauamt Baden-Baden and MVV
+# Energiedienstleistungen (dena data sheet; cases/reference/esco/ontology/miniature/cases/
+# baw_karlsruhe-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * periods are years: 0 is the time from signing (contract_signed) to the first month of the main
+#     performance phase, 1.. the phase's years. The phase's months and the months from signing to it
+#     are counts from the printed dates (time quantities, read as drivers); each phase year's share
+#     of a full year is its months over 12 (03/2006 to 02/2015 is nine full years);
+#   * MVV invests investment_eur in period 0 from its own capital (the measures: building controls,
+#     lighting);
+#   * the client's energy bill before the contract, base_energy_cost_eur_per_year, is its energy
+#     cost in each phase year, paid in cash; the guarantee, guaranteed_savings_eur_per_year, is its
+#     avoided energy cost in each phase year (the with-versus-without view of the bill);
+#   * the client's payments to MVV for the investment and the service are not printed ("the
+#     remuneration is not published"), so they are not booked. No tax.
+# The figures:
+#   * baw.pct_band: a phase year's savings over the base cost (the input), as a percent;
+#   * baw.printed_pct_of_base: the base energy bill from the books times the printed share
+#     (guaranteed_savings_pct_printed); 74,360, which is not the 75,000 guarantee: the page prints
+#     22.0% where 75,000 / 338,000 is 22.19% (the case file's own check);
+#   * baw.guarantee_over_phase: the savings summed over the phase, undiscounted;
+#   * baw.simple_payback: MVV's investment from the books per the annual guarantee (the case file's
+#     "scale only" payback; not a contract payback);
+#   * baw.phase_months, baw.signing_to_phase: the two month counts.
+esco: baw_karlsruhe
+entity: hochbauamt
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-baw-karlsruhe
+  periods: 10
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 10
+      inputs: esco
+      values:
+        # months from signing to the first month of the phase, and of the phase, both end months counted
+        signing_to_phase: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        # each phase year's share of a full year (the last may be part of one)
+        year_share: {each_period: "(t >= 1) * max(0, min(12, phase_months - 12 * (t - 1))) / 12"}
+        base_bill: base_energy_cost_eur_per_year * year_share
+        savings: guaranteed_savings_eur_per_year * year_share
+        printed_share: guaranteed_savings_pct_printed / 100
+  contracts:
+    mvv_capital:
+      type: equity_funding
+      parties: {issuer: mvv}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: mvv}
+      terms: {amount: {generator: src, output: investment_eur}, period: 0}
+  opening:
+    hochbauamt:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    energy_bill:
+      kind: transfer
+      entity: hochbauamt
+      phase: accrue
+      declare:
+        energy_cost: expense
+        avoided_energy_cost: income
+      moves:
+        bill: {debit: energy_cost, credit: cash, amount: {generator: src, output: base_bill}}
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+  schemes:
+    pnl:
+      energy_cost: energy
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+  cuts:
+    client_energy_cost: {kind: pnl, entity: hochbauamt, scheme: pnl, include: [energy]}
+    client_savings: {kind: pnl, entity: hochbauamt, scheme: pnl, include: [savings]}
+    mvv_investment: {entity: mvv, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  baw.pct_band: {cut: client_savings, at: 1, per: src.base_energy_cost_eur_per_year, scale: 0.01}
+  baw.printed_pct_of_base: {cut: client_energy_cost, at: 1, sign: -1, times: src.printed_share}
+  baw.guarantee_over_phase: {cut: client_savings, total: true}
+  baw.simple_payback: {cut: mvv_investment, at: 0, sign: -1, per: src.guaranteed_savings_eur_per_year}
+  baw.phase_months: {driver: src.phase_months, at: 0}
+  baw.signing_to_phase: {driver: src.signing_to_phase, at: 0}

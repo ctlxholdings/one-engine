@@ -1,0 +1,57 @@
+# esco deal "revolving_armenia": the Armenian R2E2 Fund's energy service agreements (ESAs), a revolving fund
+# that finances public-facility retrofits and is repaid from the savings, 2005-2016 (World Bank /
+# R2E2 programme documents as cited in cases/reference/esco/ontology/miniature/cases/
+# revolving_armenia-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`), in USD m:
+#   * period 0 is the fund's financing of the ESAs signed (esas_signed agreements worth
+#     esas_value_usd_m), out of its capital, carried as receivables from the facilities;
+#   * period 1 is the position at the project's end (2016): the facilities have repaid repaid_usd_m
+#     out of their savings (the source prints only the total to date, not the year of each payment,
+#     so the repayments are booked in one period);
+#   * the energy and GHG savings and their targets are physical statistics, not booked; no interest,
+#     fees or tax are printed.
+# Readings: the average ESA is the fund's lending per agreement signed; the repaid share is the
+# repayments per the ESAs' value; the savings against target are drivers (kWh over kWh, tCO2 over tCO2).
+esco: revolving_armenia
+entity: fund
+plant: esas_value_usd_m
+case:
+  case: esco-revolving-armenia
+  periods: 2
+  phases: [accrue]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: esco
+      values:
+        lent: esas_value_usd_m * (t == 0)
+        repaid: repaid_usd_m * (t == 1)
+        energy_vs_target: energy_savings_million_kwh / energy_savings_target_million_kwh
+        ghg_vs_target: ghg_savings_tco2 / ghg_savings_target_tco2
+  contracts: {}
+  rulebooks:
+    fund:
+      kind: transfer
+      entity: fund
+      phase: accrue
+      declare: {cash: asset, fund_capital: equity, esa_receivables: asset}
+      moves:
+        capital: {debit: cash, credit: fund_capital, amount: {generator: src, output: lent}}
+        finance: {debit: esa_receivables, credit: cash, amount: {generator: src, output: lent}}
+        repayment: {debit: cash, credit: esa_receivables, amount: {generator: src, output: repaid}}
+  schemes:
+    cash_flow:
+      fund_capital: financing
+      esa_receivables: lending
+  cuts:
+    lending: {entity: fund, account: cash, scheme: cash_flow, include: [lending]}
+  measures: {}
+figures:
+  armenia.average_esa: {cut: lending, at: 0, sign: -1, per: src.esas_signed}
+  armenia.repaid_share_pct: {cut: lending, at: 1, per: src.esas_value_usd_m, scale: 0.01}
+  armenia.energy_vs_target: {driver: src.energy_vs_target, at: 0}
+  armenia.ghg_vs_target: {driver: src.ghg_vs_target, at: 0}

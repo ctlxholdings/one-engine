@@ -1,0 +1,87 @@
+# esco deal "illuminated_cities_eeef_siram": Città Illuminate (Illuminated Cities), the street-
+# lighting joint venture of the European Energy Efficiency Fund (eeef, 80%) and Siram (Veolia,
+# 20%), Italy, financial close 27.09.2018 (eeef Annual Report 2018; cases/reference/esco/ontology/
+# miniature/cases/illuminated_cities_eeef_siram-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`). One period, the close:
+#   * the joint-venture holding raises the stated total project size (total_project_size_eur_m)
+#     at close: the eeef's junior funds (eeef_investment_size_eur_m, equity and shareholder loan
+#     together, the fund's own category) and the remainder, whose source the report does not name
+#     (it is not stated to be Siram's capital), each in its own equity account;
+#   * it spends the total on the lighting portfolio: the first project, Rozzano
+#     (rozzano_investment_volume_eur_m, 'circa'), and the rest of the portfolio, each its own asset;
+#   * the eeef's ownership and Rozzano's share are those balances read per the total project size;
+#   * the savings are physical (MWh of primary energy, t CO2e) and no ledger holds them: their
+#     ratios are drivers (rule 4). The p.63 cumulative line (cumulative_savings_table_p63, 11,190
+#     MWh) is half of one year's estimate; the cumulative carbon it implies is the annual carbon
+#     times that ratio (3,245 x 0.5 = 1,622.5, against the printed 1,623, inside the band); the
+#     savings over the loan's maturity are the annual estimate times maturity years.
+# Set aside (the inputs do not carry what the figure needs): the printed 1,623 t is the second
+# number of the p.63 text (the harness reads only its first, 11,190), so the two figures built on
+# it; the 166 'current total committed capital' is the second number of its text (the first,
+# 170.5, is the invested-since-inception total), so the pie share; the p.30 commitment lines
+# (senior, subordinated, junior) and the other Italian investments exist only in the case file's
+# derived block, so the six instrument figures and the Italy total. No tax, no money over time
+# (the report prints no payment to or from the municipality).
+esco: illuminated_cities_eeef_siram
+entity: citta_illuminate
+plant: eeef_investment_size_eur_m
+case:
+  case: esco-illuminated-cities
+  periods: 1
+  phases: [accrue]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        other_funds: total_project_size_eur_m - eeef_investment_size_eur_m
+        rest_of_portfolio: total_project_size_eur_m - rozzano_investment_volume_eur_m
+        cumulative_over_annual: cumulative_savings_table_p63 / estimated_primary_energy_savings_mwh_per_year
+        cumulative_co2: estimated_co2e_savings_t_per_year * cumulative_over_annual
+        maturity_mwh: estimated_primary_energy_savings_mwh_per_year * maturity
+        t_per_mwh: estimated_co2e_savings_t_per_year / estimated_primary_energy_savings_mwh_per_year
+  opening:
+    citta_illuminate:
+      cash: {nature: asset, value: 0}
+  contracts: {}
+  rulebooks:
+    close:
+      kind: transfer
+      entity: citta_illuminate
+      phase: accrue
+      declare:
+        eeef_junior_funds: equity
+        other_funds: equity
+        rozzano_works: asset
+        portfolio_works: asset
+      moves:
+        eeef: {debit: cash, credit: eeef_junior_funds, amount: {generator: src, output: eeef_investment_size_eur_m}}
+        other: {debit: cash, credit: other_funds, amount: {generator: src, output: other_funds}}
+        rozzano: {debit: rozzano_works, credit: cash, amount: {generator: src, output: rozzano_investment_volume_eur_m}}
+        portfolio: {debit: portfolio_works, credit: cash, amount: {generator: src, output: rest_of_portfolio}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ic.ownership_pct: {balance: eeef_junior_funds, per: src.total_project_size_eur_m, scale: 0.01}
+  ic.rozzano_share_pct: {balance: rozzano_works, per: src.total_project_size_eur_m, scale: 0.01}
+  ic.cumulative_over_annual_mwh: {driver: src.cumulative_over_annual}
+  ic.cumulative_co2_half_rounding: {driver: src.cumulative_co2}
+  ic.expected_cumulative_15y_mwh: {driver: src.maturity_mwh}
+  ic.t_per_mwh_annual: {driver: src.t_per_mwh}
+not_compared:
+  ic.italy_total: "the Italian total adds the other two Italian investments (31.8 and 7.0), which only the case file's derived block carries; the printed 54.8 is itself an input"
+  ic.pie_share_pct: "the denominator, 166 'current total committed capital', is the second number of its text; the inputs carry only the first, 170.5 (invested since inception)"
+  ic.cumulative_over_annual_co2: "needs the printed cumulative 1,623 t, the second number of the p.63 text; the inputs carry only its first, 11,190 MWh"
+  ic.t_per_mwh_cumulative: "needs the printed cumulative 1,623 t, the second number of the p.63 text; the inputs carry only its first, 11,190 MWh"
+  ic.instrument_senior_sum: "the p.30 commitment lines are only in the case file's derived block, not inputs"
+  ic.instrument_junior_sum: "the p.30 commitment lines are only in the case file's derived block, not inputs"
+  ic.instrument_total_vs_166: "the p.30 commitment lines are only in the case file's derived block, not inputs"
+  ic.share_senior_pct: "the p.30 commitment lines are only in the case file's derived block, not inputs"
+  ic.share_subordinated_pct: "the p.30 commitment lines are only in the case file's derived block, not inputs"
+  ic.share_equity_pct_band: "the p.30 commitment lines are only in the case file's derived block, not inputs"

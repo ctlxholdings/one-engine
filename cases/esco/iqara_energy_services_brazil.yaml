@@ -1,0 +1,57 @@
+# esco deal "iqara_energy_services_brazil": Iqara Energy Services (IES), Brazil, a 100%-financed natural-gas
+# cogeneration "chauffage" package sold to medium-size clients from January 2003 (World Bank 2008,
+# "Financing Energy Efficiency", case study 12; cases/reference/esco/ontology/miniature/cases/
+# iqara_energy_services_brazil-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`), in USD m:
+#   * IES finances and owns the plant at its clients' sites: the listed projects' investment
+#     (total_investment_usd_m, the first number of the source's "US$10-12 million" range) is spent
+#     in one period, period 0, out of IES's own capital, across the projects_listed projects;
+#   * the client's guaranteed cost reduction (cost_reduction_guaranteed_pct of a cost X the source
+#     never quantifies) and the service payments are not amounts, so nothing else is booked; no tax.
+# Reading: the investment per project is IES's investing cash flow per listed project (a count).
+# Set aside: the per-row figures of Table CS12.1 (row count, 0 kW rows, the peak plant, the
+# cogeneration total, the largest unit), the top of the investment range (12) and the programme
+# target's dollars (300): each is a later number of a text the harness reads by its first number
+# only, so no input carries it (and the row count would only repeat projects_listed).
+esco: iqara_energy_services_brazil
+entity: ies
+plant: total_investment_usd_m
+case:
+  case: esco-iqara-energy-services-brazil
+  periods: 1
+  phases: [accrue]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values: {}
+  contracts:
+    capital:
+      type: equity_funding
+      parties: {issuer: ies}
+      terms: {amount: {generator: src, output: total_investment_usd_m}, period: 0}
+    plants:
+      type: one_off_purchase
+      parties: {buyer: ies}
+      terms: {amount: {generator: src, output: total_investment_usd_m}, period: 0}
+  schemes:
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+  cuts:
+    investing: {entity: ies, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  iq.investment_per_project_low: {cut: investing, sign: -1, per: src.projects_listed}
+not_compared:
+  iq.rows_listed: "the rows of Table CS12.1 are one text the harness reads by its first number; the only count input, projects_listed, is this figure itself"
+  iq.zero_kw_rows: "the per-row capacities of Table CS12.1 are one text (capacity_kw_listed) the harness reads by its first number (395); no input carries the rows"
+  iq.peak_plant_rows: "the per-row capacities of Table CS12.1 are one text the harness reads by its first number; no input carries the rows"
+  iq.cogeneration_kw: "the per-row capacities of Table CS12.1 are one text the harness reads by its first number; no input carries the rows"
+  iq.largest_kw: "the per-row capacities of Table CS12.1 are one text the harness reads by its first number; no input carries the rows"
+  iq.investment_per_project_high: "the top of the US$10-12 million range is the second number of the total_investment_usd_m text; no input carries it"
+  iq.target_per_project: "the target's US$300 million is the second number of the target text; no input carries it"

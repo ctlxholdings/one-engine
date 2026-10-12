@@ -1,0 +1,107 @@
+# esco deal "auswaertiges_amt_berlin": a guaranteed-savings energy-saving contract
+# (Energiespar-Contracting) between the Auswärtiges Amt, Berlin (the federal foreign office) and
+# Caverion, signed 06.07.2010, main phase 09/2011 to 08/2021 (dena project page;
+# cases/reference/esco/ontology/miniature/cases/auswaertiges_amt_berlin-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * Caverion (the partner) pays the investment (investment) in period 0, the works period;
+#     the client pays it the construction-cost contribution (baukostenzuschuss) in the same period,
+#     and Caverion funds the rest with its own equity (the financing route is not printed). The
+#     contribution is the client's prepaid share of the measures (an asset in its books, deferred
+#     income in Caverion's);
+#   * the performance phase runs from _from__year/_from__month to to__year/to__month; its length
+#     in months and years is a driver over those printed months (a time quantity, rule 4), as is
+#     the gap from signature (contract_signed__year/__month/day) to the phase's first month, the
+#     day of signature counted as a fraction of a month of 52 x 7 / 12 days. Periods are years:
+#     0 is the works year, 1..10 the phase;
+#   * the ministry's guaranteed saving on its energy bill (guaranteed_savings) each phase year is
+#     booked as its avoided energy cost; the budget relief (budget_relief, 'Haushaltsentlastung',
+#     undefined on the page) is read as the ministry's retained share of it, so the contracting rate
+#     paid to Caverion is the guarantee less the relief (the case file's own reading, numbers.derived
+#     budget_relief_reading; the rate formula is not printed);
+#   * the base the printed guarantee share implies is the guaranteed saving read from the books per
+#     that share (guaranteed_savings_pct): 604,000 / 0.311 = 1,942,122 EUR, inside the rounding of
+#     the printed '1,9 Mio.' (the answer key's band); the guarantee over the phase per the
+#     investment, and the contribution per the investment, are book readings per that input.
+# The links_* inputs are esco's own wiring flags, not deal amounts; co2_saving and floor_area feed
+# no figure. No tax, no financing, no indexation (none printed).
+esco: auswaertiges_amt_berlin
+entity: ministry
+plant: guaranteed_savings
+case:
+  case: esco-auswaertiges-amt-berlin
+  periods: 11
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        phase_years: phase_months / 12
+        signing_to_phase: >-
+          (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+          - (day - 1) * 12 / (52 * 7)
+        works: {each_period: (t == 0)}
+        in_phase: {each_period: (t >= 1) * (t <= phase_years)}
+        guarantee_share: guaranteed_savings_pct / 100
+        invested: works * investment
+        contribution: works * baukostenzuschuss
+        own_funds: invested - contribution
+        guaranteed: in_phase * guaranteed_savings
+        rate: in_phase * (guaranteed_savings - budget_relief)
+  opening:
+    caverion:
+      cash: {nature: asset, value: 0}
+    ministry:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    partner:
+      kind: transfer
+      entity: caverion
+      phase: accrue
+      declare:
+        share_capital: equity
+        equipment: asset
+        client_contribution: liability
+        contracting_revenue: income
+      moves:
+        fund: {debit: cash, credit: share_capital, amount: {generator: src, output: own_funds}}
+        contribution: {debit: cash, credit: client_contribution, amount: {generator: src, output: contribution}}
+        build: {debit: equipment, credit: cash, amount: {generator: src, output: invested}}
+        rate: {debit: cash, credit: contracting_revenue, amount: {generator: src, output: rate}}
+    client:
+      kind: transfer
+      entity: ministry
+      phase: settle
+      declare:
+        construction_contribution: asset
+        guaranteed_saving: income
+        contracting_rate: expense
+      moves:
+        contribution: {debit: construction_contribution, credit: cash, amount: {generator: src, output: contribution}}
+        guaranteed: {debit: cash, credit: guaranteed_saving, amount: {generator: src, output: guaranteed}}
+        rate: {debit: contracting_rate, credit: cash, amount: {generator: src, output: rate}}
+  schemes:
+    pnl:
+      guaranteed_saving: guaranteed
+      contracting_rate: rate
+      contracting_revenue: revenue
+  cuts:
+    guaranteed: {kind: pnl, entity: ministry, scheme: pnl, include: [guaranteed]}
+    partner_revenue: {kind: pnl, entity: caverion, scheme: pnl, include: [revenue]}
+  measures: {}
+figures:
+  aa.pct_band_base: {cut: guaranteed, at: 1, per: src.guarantee_share, scale: 1000000}
+  aa.phase_months: {driver: src.phase_months, at: 0}
+  aa.guarantee_over_phase: {cut: guaranteed, total: true}
+  aa.signing_to_phase: {driver: src.signing_to_phase, at: 0}
+  aa.guarantee_over_investment: {cut: guaranteed, total: true, per: src.investment}
+  aa.contribution_share_pct: {balance: construction_contribution, at: 0, per: src.investment, scale: 0.01}
+  aa.guarantee_less_relief: {cut: partner_revenue, at: 1}

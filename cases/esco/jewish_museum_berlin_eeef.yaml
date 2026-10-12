@@ -1,0 +1,122 @@
+# esco deal "jewish_museum_berlin_eeef": the Jewish Museum Berlin Foundation's guaranteed-savings EPC
+# with Johnson Controls (JC), 70% of the ESCO's savings revenues bought by the European Energy
+# Efficiency Fund (eeef), financial close 20.03.2012 (eeef news item 2012; eeef Annual Report 2018
+# p.34; cases/reference/esco/ontology/miniature/cases/jewish_museum_berlin_eeef-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name, or a formula over them (generator `src`); EUR m
+# inputs are turned into EUR (x 1000 x 1000):
+#   * the museum's guaranteed saving (guaranteed_savings_eur_per_year) is booked as its avoided
+#     energy cost in each of term_years years from period 1 (period 0 is financial close, 2012);
+#   * as signed (news item, 2012): JC carries out works of the EPC volume (epc_volume_eur_m) in
+#     period 0 out of its own capital and sells the eeef's share of its savings revenues for the
+#     fund's initial investment (eeef_investment_eur_m, its first figure 1.7), which the fund pays
+#     out of its capital and carries as a receivable;
+#   * as revised in 2015 (AR18 p.34), a parallel world (`jc_revised`, `eeef_revised`): the project
+#     at its total project size (total_project_size_eur_m), the fund buying share_bought_pct of it;
+#   * the museum's payments to JC and the fund's collections are not stated (only the savings
+#     guarantee is), so they are not booked; no tax.
+# Readings: the ratios are book readings per an input amount or per the share bought; the CO2 ratio
+# is a physical statistic (tonnes over tonnes), a driver.
+# Set aside: the four figures built on the fund's investment after the 2015 revision (1.0) and on
+# the Munich line (0.6), and the implied baseline (on the 43.2%): those are second numbers of a
+# text the harness reads by its first number only, so no input carries them.
+esco: jewish_museum_berlin_eeef
+entity: museum
+plant: guaranteed_savings_eur_per_year
+case:
+  case: esco-jewish-museum-berlin-eeef
+  periods: 11
+  phases: [accrue]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        live: (t >= 1) * (t <= term_years)
+        start: t == 0
+        eur_m: 1000 * 1000
+        share: share_bought_pct / 100
+        volume_eur: epc_volume_eur_m * eur_m
+        savings: live * guaranteed_savings_eur_per_year
+        works_2012: start * volume_eur
+        purchase_2012: start * eeef_investment_eur_m * eur_m
+        works_2018: start * total_project_size_eur_m * eur_m
+        purchase_2018: share * works_2018
+        co2_ratio: actual_co2e_t_per_year / co2_forecast
+  contracts: {}
+  rulebooks:
+    museum:
+      kind: transfer
+      entity: museum
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income}
+      moves:
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+    jc:
+      kind: transfer
+      entity: jc
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, works_cost: expense, receivables_sold: income}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: works_2012}}
+        works: {debit: works_cost, credit: cash, amount: {generator: src, output: works_2012}}
+        sale: {debit: cash, credit: receivables_sold, amount: {generator: src, output: purchase_2012}}
+    eeef:
+      kind: transfer
+      entity: eeef
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, savings_receivables: asset}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: purchase_2012}}
+        purchase: {debit: savings_receivables, credit: cash, amount: {generator: src, output: purchase_2012}}
+    jc_revised:
+      kind: transfer
+      entity: jc_revised
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, works_cost: expense, receivables_sold: income}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: works_2018}}
+        works: {debit: works_cost, credit: cash, amount: {generator: src, output: works_2018}}
+        sale: {debit: cash, credit: receivables_sold, amount: {generator: src, output: purchase_2018}}
+    eeef_revised:
+      kind: transfer
+      entity: eeef_revised
+      phase: accrue
+      declare: {cash: asset, share_capital: equity, savings_receivables: asset}
+      moves:
+        capital: {debit: cash, credit: share_capital, amount: {generator: src, output: purchase_2018}}
+        purchase: {debit: savings_receivables, credit: cash, amount: {generator: src, output: purchase_2018}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      works_cost: works
+      receivables_sold: forfaiting
+    cash_flow:
+      avoided_energy_cost: operating
+      share_capital: financing
+      works_cost: investing
+      receivables_sold: forfaiting
+      savings_receivables: purchase
+  cuts:
+    savings: {kind: pnl, entity: museum, scheme: pnl, include: [savings]}
+    purchase_2012: {entity: eeef, account: cash, scheme: cash_flow, include: [purchase]}
+    works_2018: {entity: jc_revised, account: cash, scheme: cash_flow, include: [investing]}
+    purchase_2018: {entity: eeef_revised, account: cash, scheme: cash_flow, include: [purchase]}
+  measures: {}
+figures:
+  jmb.fund_share_2018: {cut: purchase_2018, at: 0, sign: -1, scale: 1000000}
+  jmb.fund_share_2012_implied_volume: {cut: purchase_2012, at: 0, sign: -1, per: src.share, scale: 1000000}
+  jmb.initial_over_epc_pct: {cut: purchase_2012, at: 0, sign: -1, per: src.volume_eur, scale: 0.01}
+  jmb.revision_project_size_pct: {cut: works_2018, at: 0, sign: -1, per: src.volume_eur, scale: 0.01}
+  jmb.guarantee_over_term: {cut: savings, total: true}
+  jmb.guarantee_over_volume_pct: {cut: savings, per: src.volume_eur, total: true, scale: 0.01}
+  jmb.co2_actual_over_forecast: {driver: src.co2_ratio, at: 0}
+not_compared:
+  jmb.revision_eeef_pct: "the fund's investment after the 2015 revision (1.0) is the second number of the eeef_investment_eur_m text; the harness reads its first (1.7), so no input carries it"
+  jmb.revision_eeef_cut_pct: "the fund's investment after the 2015 revision (1.0) is the second number of the eeef_investment_eur_m text; no input carries it"
+  jmb.implied_baseline_cost: "the 43.2% savings share is the second number of the guaranteed_savings_eur_per_year text; no input carries it"
+  jmb.germany_line: "the 1.0 (museum, after revision) and the 0.6 (Munich) are a second number of an input text and a derived block; no input carries either"

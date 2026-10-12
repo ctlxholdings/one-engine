@@ -1,0 +1,45 @@
+# esco deal "sunstrong_2018_1": SunStrong Capital's Solar Asset Backed Notes, Series 2018-1, US$400
+# million at a 5.68% fixed coupon, secured on more than 37,500 residential solar leases, announced
+# 28 November 2018, anticipated repayment date November 2028, rated final maturity November 2048
+# (press release, paras 1 and 4; cases/reference/esco/ontology/miniature/cases/
+# sunstrong_2018_1-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+# Amounts in US$ million.
+#
+# One period: the closing. Every amount is a number of the case by name (generator `src`):
+#   * the issuer receives the notes' proceeds (notes_usd) in cash against the notes, a liability.
+#     The coupon's dates and the amortisation are not printed (and the proceeds refinance
+#     existing debt, which is not described), so no interest or repayment is booked.
+# Both figures are time quantities: the years from the closing announcement to the anticipated
+# repayment date and to the rated final maturity, `driver` formulas over the printed dates.
+esco: sunstrong_2018_1
+entity: sunstrong
+plant: anticipated_repayment_date
+case:
+  case: esco-sunstrong-notes
+  periods: 1
+  phases: [settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        years_to_ard: anticipated_repayment_date - year
+        years_to_final: rated_final_maturity - year
+  contracts: {}
+  rulebooks:
+    notes:
+      kind: transfer
+      entity: sunstrong
+      phase: settle
+      declare: {cash: asset, notes: liability}
+      moves:
+        issue: {debit: cash, credit: notes, amount: {generator: src, output: notes_usd}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  sunstrong.years_to_ard: {driver: src.years_to_ard}
+  sunstrong.years_to_final_maturity: {driver: src.years_to_final}

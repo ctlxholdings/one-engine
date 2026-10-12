@@ -1,0 +1,68 @@
+# esco deal "ecosave_nygb_term_loan": NY Green Bank's term loan to Ecosave for energy-efficiency and
+# DER projects in New York, committed 27 June 2019 and increased by the amended and restated loan of
+# 4 June 2020 (NYGB Transaction Profile, Ecosave, pp.1 and 3; cases/reference/esco/ontology/
+# miniature/cases/ecosave_nygb_term_loan-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py). Amounts in US$ million.
+#
+# Periods are calendar years from the signing year: 0 is 2019, and the amendment falls in period
+# amended_and_restated__year - loan_signed__year (a count of years from the printed dates).
+# Every amount is a number of the case by name (generator `src`):
+#   * NYGB's commitment to lend is held on its books as a memo pair (an undrawn commitment, asset,
+#     against the commitment to lend, liability), at commitment_june_2019_usd from signing and at
+#     commitment_after_4_june_2020_usd from the amendment (the held_balance rulebook moves the
+#     difference). No draw, rate, tenor or fee is printed, so nothing is drawn, accrued or repaid.
+# The commitment step is the change in the commitment held in the amendment year.
+# The impact ratios (lifetime over first-year, high case over low case, for MWh, MMBtu and tonnes
+# of GHG) are `driver` formulas: physical quantities no ledger holds.
+esco: ecosave_nygb_term_loan
+entity: nygb
+plant: commitment_after_4_june_2020_usd
+case:
+  case: esco-ecosave-nygb-term-loan
+  periods: 2
+  phases: [settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: esco
+      values:
+        amendment_period: amended_and_restated__year - loan_signed__year
+        commitment: {each_period: commitment_after_4_june_2020_usd if t >= amendment_period else commitment_june_2019_usd}
+        electricity_low: electricity_mwh__lifetime_low / electricity_mwh__annual_low
+        electricity_high: electricity_mwh__lifetime_high / electricity_mwh__annual_high
+        electricity_spread: electricity_mwh__lifetime_high / electricity_mwh__lifetime_low
+        gas_low: natural_gas_mmbtu__lifetime_low / natural_gas_mmbtu__annual_low
+        gas_high: natural_gas_mmbtu__lifetime_high / natural_gas_mmbtu__annual_high
+        gas_spread: natural_gas_mmbtu__lifetime_high / natural_gas_mmbtu__lifetime_low
+        ghg_low: ghg_metric_tons__lifetime_low / ghg_metric_tons__annual_low
+        ghg_high: ghg_metric_tons__lifetime_high / ghg_metric_tons__annual_high
+        ghg_spread: ghg_metric_tons__lifetime_high / ghg_metric_tons__lifetime_low
+  opening:
+    nygb:
+      commitment_to_lend: {nature: liability, value: 0}
+  contracts: {}
+  rulebooks:
+    commitment:
+      kind: held_balance
+      entity: nygb
+      cash: commitment_to_lend
+      phase: settle
+      accounts:
+        undrawn_commitment: {side: asset, target: {generator: src, output: commitment}, against: commitment_to_lend}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ecosave.lifetime_over_annual.electricity_mwh.low: {driver: src.electricity_low, at: 0}
+  ecosave.lifetime_over_annual.electricity_mwh.high: {driver: src.electricity_high, at: 0}
+  ecosave.high_over_low.electricity_mwh: {driver: src.electricity_spread, at: 0}
+  ecosave.lifetime_over_annual.natural_gas_mmbtu.low: {driver: src.gas_low, at: 0}
+  ecosave.lifetime_over_annual.natural_gas_mmbtu.high: {driver: src.gas_high, at: 0}
+  ecosave.high_over_low.natural_gas_mmbtu: {driver: src.gas_spread, at: 0}
+  ecosave.lifetime_over_annual.ghg_metric_tons.low: {driver: src.ghg_low, at: 0}
+  ecosave.lifetime_over_annual.ghg_metric_tons.high: {driver: src.ghg_high, at: 0}
+  ecosave.high_over_low.ghg_metric_tons: {driver: src.ghg_spread, at: 0}
+  ecosave.commitment_step: {change: undrawn_commitment, at: 1}

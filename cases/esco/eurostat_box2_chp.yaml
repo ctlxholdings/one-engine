@@ -1,0 +1,92 @@
+# esco deal "eurostat_box2_chp": the EIB/Eurostat guide to the statistical treatment of energy
+# performance contracts, Box 2 (a CHP EPC: the authority pays the partner EUR 1 million a year for
+# 8 years, and the guide's revenue tests set the partner's and the authority's ceilings), with Box 3
+# (a PV EPC whose guaranteed annual savings are the sum of five lines) as the file's second
+# illustration (cases/reference/esco/ontology/miniature/cases/eurostat_box2_chp-lod0.yaml; answer
+# key cases/reference/esco/tests/test_lod0_numbers.py). Amounts in EUR (Box 2's millions x 1000 x
+# 1000).
+#
+# Periods are contract years, term_years of them. Every amount is a number of the case by name
+# (generator `src`):
+#   * Box 2: the authority pays the partner annual_payment_eur_m each contract year, in cash: the
+#     authority's service expense, the partner's revenue. The capex and the CHP's output are not
+#     printed, so neither is booked;
+#   * Box 3, on its own entity (box3_authority), one year: the guaranteed savings are booked as the
+#     authority's five benefit lines, in cash: avoided boiler, lighting and BMS energy cost, the
+#     environmental tax reduction, and the surplus energy sold to the grid (which, the guide says,
+#     is revenue for the government agency). The guarantee itself is not booked again.
+# Readings: the partner's ceiling is the partner's revenue over the term (EUR million, scale
+# 1000000); the authority's ceiling is the guide's test share of the same payments (the payments
+# times authority_test_share_pct, a percent: scale 100 x 1000000); Box 3's guarantee is the
+# authority's five lines in the year; the grid share is the surplus sale per the printed guarantee.
+# The plant is a Box 3 line: Box 2's ceilings are printed in whole millions, so a 1% error in the
+# annual payment (8.08 for 8) rounds away under the answer key's own rule.
+esco: eurostat_box2_chp
+entity: partner
+plant: boiler_saving_eur
+case:
+  case: esco-eurostat-box-chp
+  periods: 8
+  phases: [settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 8
+      inputs: esco
+      values:
+        payment: {each_period: (t < term_years) * annual_payment_eur_m * 1000 * 1000}
+        boiler: {each_period: (t == 0) * boiler_saving_eur}
+        lighting: {each_period: (t == 0) * lighting_saving_eur}
+        bms: {each_period: (t == 0) * bms_saving_eur}
+        tax: {each_period: (t == 0) * environmental_tax_reduction_eur}
+        surplus: {each_period: (t == 0) * surplus_energy_sale_eur}
+  contracts: {}
+  rulebooks:
+    partner_side:
+      kind: transfer
+      entity: partner
+      phase: settle
+      declare: {cash: asset, service_revenue: income}
+      moves:
+        payment: {debit: cash, credit: service_revenue, amount: {generator: src, output: payment}}
+    authority_side:
+      kind: transfer
+      entity: authority
+      phase: settle
+      declare: {cash: asset, service_payments: expense}
+      moves:
+        payment: {debit: service_payments, credit: cash, amount: {generator: src, output: payment}}
+    box_three:
+      kind: transfer
+      entity: box3_authority
+      phase: settle
+      declare: {cash: asset, avoided_boiler_cost: income, avoided_lighting_cost: income, avoided_bms_cost: income,
+                environmental_tax_reduction: income, surplus_energy_sales: income}
+      moves:
+        boiler: {debit: cash, credit: avoided_boiler_cost, amount: {generator: src, output: boiler}}
+        lighting: {debit: cash, credit: avoided_lighting_cost, amount: {generator: src, output: lighting}}
+        bms: {debit: cash, credit: avoided_bms_cost, amount: {generator: src, output: bms}}
+        tax: {debit: cash, credit: environmental_tax_reduction, amount: {generator: src, output: tax}}
+        surplus: {debit: cash, credit: surplus_energy_sales, amount: {generator: src, output: surplus}}
+  schemes:
+    pnl:
+      service_revenue: revenue
+      service_payments: service
+      avoided_boiler_cost: savings
+      avoided_lighting_cost: savings
+      avoided_bms_cost: savings
+      environmental_tax_reduction: tax_relief
+      surplus_energy_sales: grid_sales
+  cuts:
+    partner_revenue: {kind: pnl, entity: partner, scheme: pnl, include: [revenue]}
+    authority_payments: {kind: pnl, entity: authority, scheme: pnl, include: [service]}
+    box3_benefits: {kind: pnl, entity: box3_authority, scheme: pnl, include: [savings, tax_relief, grid_sales]}
+    box3_grid: {kind: pnl, entity: box3_authority, scheme: pnl, include: [grid_sales]}
+  measures: {}
+figures:
+  box2.partner_ceiling: {cut: partner_revenue, total: true, scale: 1000000}
+  box2.authority_ceiling: {cut: authority_payments, sign: -1, times: src.authority_test_share_pct, total: true, scale: 100000000}
+  box3.guarantee_sum: {cut: box3_benefits, at: 0}
+  box3.grid_share_pct: {cut: box3_grid, per: src.guaranteed_annual_savings_eur, at: 0, scale: 0.01}

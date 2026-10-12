@@ -1,0 +1,80 @@
+# esco deal "birmingham_pfi_amey": Birmingham's 25-year highways maintenance and street-lighting PFI contract
+# with Amey Plc, signed May 2010 (World Bank / ESMAP 2017, "Proven Delivery Models for LED Public Lighting",
+# case study 4; cases/reference/esco/ontology/miniature/cases/birmingham_pfi_amey-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`), in GBP millions:
+#   * the contract value, contract_value (GBP 2.7 billion, x 1000 to millions), is the Council's
+#     unitary payments to Amey over the term_years (the case file: "contract value is payments over 25
+#     years, not a financing total"); the profile is not published (a monthly payment stepping up 4%
+#     every six months through year 5, from an unstated base), so the case holds the contract's totals
+#     over its life in one period: the Council's expense and Amey's revenue, paid in cash;
+#   * the UK Government's PFI credits, pfi_credits_gbp_m (GBP 996m, the case-study text), are the
+#     Council's grant income over the same life, received in cash;
+#   * the funds' GBP 330m into Amey's SPV, the installation price and the certifier's fee feed no
+#     figure (or are not printed) and are not booked. No tax.
+# The figure bh.credits_vs_value_996 is the PFI credits the Council received, from the books, over the
+# contract value (a generator value: `per` divides by one only), as a percent.
+# The other figures need numbers the case's inputs do not carry: each input is the first number of its
+# text, so the US$ contract value (4,200) and lighting value (117), the 97,000 streetlights, the funds'
+# '$530M', the second credits figure (620) and value (2,600), and the six months and five years of the
+# payment step are description, not inputs. They are set aside below.
+esco: birmingham_pfi_amey
+entity: council
+plant: pfi_credits_gbp_m
+case:
+  case: esco-birmingham-pfi-amey
+  periods: 1
+  phases: [accrue, settle]
+  currency: GBP_m
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        contract_value_gbp_m: contract_value * 1000
+  contracts: {}
+  opening:
+    council:
+      cash: {nature: asset, value: 0}
+    amey:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    council_books:
+      kind: transfer
+      entity: council
+      phase: settle
+      declare:
+        unitary_payment: expense
+        pfi_credits: income
+      moves:
+        credits: {debit: cash, credit: pfi_credits, amount: {generator: src, output: pfi_credits_gbp_m}}
+        unitary: {debit: unitary_payment, credit: cash, amount: {generator: src, output: contract_value_gbp_m}}
+    amey_books:
+      kind: transfer
+      entity: amey
+      phase: settle
+      declare:
+        unitary_revenue: income
+      moves:
+        unitary: {debit: cash, credit: unitary_revenue, amount: {generator: src, output: contract_value_gbp_m}}
+  schemes:
+    pnl:
+      unitary_payment: unitary
+      pfi_credits: credits
+  cuts:
+    council_credits: {kind: pnl, entity: council, scheme: pnl, include: [credits]}
+  measures: {}
+figures:
+  bh.credits_vs_value_996: {cut: council_credits, per: src.contract_value_gbp_m, scale: 0.01}
+not_compared:
+  bh.lighting_share_pct: "the lighting value (US$117m) and the US$ contract value (4,200) are not inputs: the contract_value input is the text's first number, GBP 2.7bn"
+  bh.lighting_per_point: "the lighting value (US$117m) and the 97,000 streetlights are not inputs: the assets input is the text's first number, 2,500 km of roads"
+  bh.fx_contract: "the US$ contract value (4,200) is not an input, so no exchange rate can be derived"
+  bh.fx_funds: "the funds' '$530M' (Figure 4) is not an input: funds_gbp_m is the text's first number, 330"
+  bh.fx_gap_pct: "needs both implied exchange rates, neither of which the inputs carry"
+  bh.credits_gap_gbp_m: "the second PFI credits figure (620) is not an input: pfi_credits_gbp_m is the text's first number, 996"
+  bh.credits_vs_value_620: "the second credits figure (620) and contract value (2,600) are not inputs"
+  bh.escalation_compounded: "the step's six months and five years are not inputs (payment_step is the text's first number, 4), and the base and compounding are not stated"

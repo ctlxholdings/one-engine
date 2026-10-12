@@ -1,0 +1,72 @@
+# esco deal "hawaii_gems_on_bill": the Hawaii Green Infrastructure Authority's GEM$ on-bill financing
+# programme, capitalised by the Green Energy Market Securitization bond (HGIA quarterly report to the
+# legislature, 2022; cases/reference/esco/ontology/miniature/cases/hawaii_gems_on_bill-lod0.yaml;
+# answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# The figures compared are the case file's capital check, the use of the bond's capital since
+# inception, booked as one period at the report date (30 Sep 2022). Every amount is a number of the
+# deal by name (generator `src`), printed in USD or USD million:
+#   * the bond's net proceeds (bond_net_proceeds_usd, USD million) are paid into the Authority's loan
+#     fund: cash in, held as the fund's capital (a liability: the ratepayers' Green Infrastructure Fee,
+#     not the Authority, services the bond); the face amount and its issue costs sit outside the fund;
+#   * the Authority lends the GEMS loans funded since inception (gems_loans_funded_since_inception_usd)
+#     out of that cash: loans receivable;
+#   * the capital the report says is left to lend (gems_loan_capital_left_usd, USD million) is set
+#     apart as loan capital to lend;
+#   * what is left in cash is the capital the report does not account for (transfers to the PUC, direct
+#     and non-GEM$ uses: the case file's capital check, "not reconciled").
+# Revenues and costs since inception are not booked: the report does not split revenue into interest
+# and principal repaid, and the capital check leaves both out. No tax.
+#
+# Set aside: the counts of on-bill obligations, applications, projects and customers (physical
+# statistics). Only the first number of each printed list is an input (226 PV loans, 17 commercial
+# OBOs, 850 PV projects, 1,188 applications); the other counts the figures add are not inputs.
+esco: hawaii_gems_on_bill
+entity: hgia
+plant: gems_loans_funded_since_inception_usd
+case:
+  case: esco-hawaii-gems-on-bill
+  periods: 1
+  phases: [accrue, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        proceeds: bond_net_proceeds_usd * 1000 * 1000
+        capital_left: gems_loan_capital_left_usd * 1000 * 1000
+  contracts: {}
+  rulebooks:
+    loan_fund:
+      kind: transfer
+      entity: hgia
+      phase: accrue
+      declare: {cash: asset, bond_fund_capital: liability, gems_loans: asset, loan_capital_to_lend: asset}
+      moves:
+        bond_proceeds: {debit: cash, credit: bond_fund_capital, amount: {generator: src, output: proceeds}}
+        loans_funded: {debit: gems_loans, credit: cash, amount: {generator: src, output: gems_loans_funded_since_inception_usd}}
+        capital_left: {debit: loan_capital_to_lend, credit: cash, amount: {generator: src, output: capital_left}}
+  schemes:
+    cash_flow:
+      bond_fund_capital: financing
+      gems_loans: investing
+      loan_capital_to_lend: investing
+  cuts: {}
+  measures: {}
+figures:
+  hi.capital_accounted_usd_m: {balance: gems_loans + loan_capital_to_lend, scale: 1000000}
+  hi.capital_unaccounted_usd_m: {balance: cash, scale: 1000000}
+not_compared:
+  hi.obo_total: "a count of on-bill obligations (226 + 34 + 17): only the 226 is an input"
+  hi.obo_quarter: "a count of the quarter's on-bill obligations (25 + 1 + 0): not inputs"
+  hi.obo_owner_renter_split: "a count (225 owner-occupied + 1 renter): not inputs; the total is the input
+    residential_obo_counts"
+  hi.pv_share_pct: "a share of counts of on-bill obligations (226 + 34 of 277): the 34 and 277 are not inputs"
+  hi.swh_share_pct: "a share of counts (17 solar water heating of 277): neither is an input (the input
+    commercial_obo_counts is the 17 commercial PV obligations)"
+  hi.projects_total: "a count of projects financed by product: only the 850 PV projects is an input"
+  hi.income_tables_agree: "counts of customers by income band, printed only in the derived block"
+  hi.income_quarter_matches_obo: "counts of the quarter's customers by income band, printed only in the derived block"

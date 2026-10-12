@@ -1,0 +1,78 @@
+# esco deal "marche_grant": the Marche region's health-building EPCs, financed by an ERDF grant and an
+# interest-free loan of the regional Energy and Mobility Fund (fi-compass ERDF EPC factsheet, 2023;
+# cases/reference/esco/ontology/miniature/cases/marche_grant-lod0.yaml; answer key cases/reference/
+# esco/tests/test_lod0_numbers.py).
+#
+# The source prints the financing mix only, as shares of the project cost; no cost in EUR, savings,
+# fee or term is given. The case is therefore built on a cost of 100 (a unit: every figure is a share
+# of the cost, so the unit divides out). Every amount is that cost times a share of the deal by name
+# (generator `src`):
+#   * the region grants the health authority grant_pct_of_cost of the cost, which the authority passes
+#     to the ESCO as its payment for the works (Figure 2), all in period 0;
+#   * the fund lends the ESCO loan_pct_of_cost of the cost at loan_interest_rate_pct (nil): drawn in
+#     period 0; its repayment schedule is not given, so it is not booked;
+#   * the ESCO funds esco_own_funds_pct_of_cost of the cost from its own equity and buys the works for
+#     the cost. Its cash closes at nil only if the three shares make the whole cost.
+# The ESCO's own share is read as the works less the payment for works and the loan (the shares it
+# does not fund), so it is derived from the other two shares, not from its own input.
+# One period. No tax.
+esco: marche_grant
+entity: esco
+plant: loan_pct_of_cost
+case:
+  case: esco-marche-grant
+  periods: 1
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        cost: 100
+        grant: cost * grant_pct_of_cost / 100
+        loan: cost * loan_pct_of_cost / 100
+        own_funds: cost * esco_own_funds_pct_of_cost / 100
+        non_grant: cost - grant
+  contracts:
+    own_funds:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: own_funds}, period: 0}
+    works:
+      type: one_off_purchase
+      parties: {buyer: esco}
+      terms: {amount: {generator: src, output: cost}, period: 0}
+  rulebooks:
+    esco_books:
+      kind: transfer
+      entity: esco
+      phase: accrue
+      declare: {works_payment_received: liability, fund_loan: liability}
+      moves:
+        works_payment: {debit: cash, credit: works_payment_received, amount: {generator: src, output: grant}}
+        loan_drawn: {debit: cash, credit: fund_loan, amount: {generator: src, output: loan}}
+    authority_books:
+      kind: transfer
+      entity: health_authority
+      phase: accrue
+      declare: {cash: asset, erdf_grant: liability, works_paid: asset}
+      moves:
+        grant_received: {debit: cash, credit: erdf_grant, amount: {generator: src, output: grant}}
+        works_payment: {debit: works_paid, credit: cash, amount: {generator: src, output: grant}}
+  schemes:
+    cash_flow:
+      share_capital: financing
+      fund_loan: financing
+      equipment: investing
+      works_payment_received: investing
+      erdf_grant: financing
+      works_paid: investing
+  cuts: {}
+  measures: {}
+figures:
+  marche.esco_own_share: {balance: equipment - works_payment_received - fund_loan, per: src.cost, scale: 0.01}
+  marche.mix_sum: {balance: works_payment_received + fund_loan + share_capital, per: src.cost, scale: 0.01}
+  marche.debt_share_of_non_grant: {balance: fund_loan, per: src.non_grant, scale: 0.01}

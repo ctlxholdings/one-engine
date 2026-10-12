@@ -1,0 +1,130 @@
+# esco deal "seattle_eeas_ppa_template": Seattle City Light's Energy Efficiency as a Service pilot, its
+# Power Purchase Agreement template V1.4 (Jan 2020) and Program Manual V2.1 (Jan 2021)
+# (cases/reference/esco/ontology/miniature/cases/seattle_eeas_ppa_template-lod0.yaml, read through the
+# viewer with its sealed lines withheld; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# A programme template: no building's savings are published, and every price is per kWh of
+# Efficiency Energy. The case books one kWh of Efficiency Energy a year at each of the three price
+# locations, over the ordinance's 20-year cap (ordinance_cap max_years), so each per-kWh figure is the
+# books' amount per that kWh. Every price is a number of the deal by name (generator `src`):
+#   * the participant (building owner, outside the books) pays Seattle City Light the EE Service Fee,
+#     the 2021 EEaS charge per kWh (eeas_charge_2021_usd_per_kwh, by location): SCL's revenue;
+#   * SCL pays the EE developer the PPA Payment, the PPA price per kWh: the manual's rule, the EEaS
+#     charge times price_factor (the 2021 PPA prices are that product, printed rounded, so they are not
+#     used: they are the figures); SCL's cost, the developer's revenue;
+#   * both prices rise by escalator_pct_per_year each year after the first (the template's 2.0%
+#     escalator; the manual applies it to the charge too). The 2020 template prices are superseded by
+#     the 2021 ones and nothing reads them.
+# Periods are contract years; 0 is the first (2021 prices), 19 the twentieth. No tax.
+# The term's start date is a date (the oracle sets it aside); the performance floor and cure days are
+# operating rules no figure reads.
+esco: seattle_eeas_ppa_template
+entity: developer
+plant: price_factor
+case:
+  case: esco-seattle-eeas-ppa-template
+  periods: 20
+  phases: [accrue, operate, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 20
+      inputs: esco
+      values:
+        kwh: {each_period: (t < max_years) * 1}
+        escalation: {each_period: (1 + escalator_pct_per_year / 100) ** t}
+        ppa_nd: eeas_charge_2021_usd_per_kwh__retrofit_medium_non_downtown * price_factor
+        charge_nd: {each_period: eeas_charge_2021_usd_per_kwh__retrofit_medium_non_downtown * escalation}
+        ppa_price_nd: {each_period: ppa_nd * escalation}
+        ppa_dt: eeas_charge_2021_usd_per_kwh__retrofit_medium_downtown * price_factor
+        charge_dt: {each_period: eeas_charge_2021_usd_per_kwh__retrofit_medium_downtown * escalation}
+        ppa_price_dt: {each_period: ppa_dt * escalation}
+        ppa_sm: eeas_charge_2021_usd_per_kwh__retrofit_small * price_factor
+        charge_sm: {each_period: eeas_charge_2021_usd_per_kwh__retrofit_small * escalation}
+        ppa_price_sm: {each_period: ppa_sm * escalation}
+        charge_on_kwh_nd: charge_nd * kwh
+        first_year_ppa_nd: ppa_nd * kwh
+  contracts:
+    ee_service_fee_nd:
+      type: offtake
+      parties: {seller: scl}
+      terms: {volume: {generator: src, output: kwh}, price: {generator: src, output: charge_nd}, payment_days: 0,
+              days_per_year: 1, periods_per_year: 1, end: 19}
+    ppa_payment_nd:
+      type: operating_cost
+      parties: {payer: scl}
+      terms: {annual: 0, unit_rate: {generator: src, output: ppa_nd}, volume: {generator: src, output: kwh},
+              index: {generator: src, output: escalation}, periods_per_year: 1, start: 0, end: 19, vat_rate: 0,
+              vat_refund_lag: 0, payment_days: 0, days_per_year: 1}
+    ppa_sale_nd:
+      type: offtake
+      parties: {seller: developer}
+      terms: {volume: {generator: src, output: kwh}, price: {generator: src, output: ppa_price_nd}, payment_days: 0,
+              days_per_year: 1, periods_per_year: 1, end: 19}
+    ee_service_fee_dt:
+      type: offtake
+      parties: {seller: scl}
+      terms: {volume: {generator: src, output: kwh}, price: {generator: src, output: charge_dt}, payment_days: 0,
+              days_per_year: 1, periods_per_year: 1, end: 19}
+    ppa_payment_dt:
+      type: operating_cost
+      parties: {payer: scl}
+      terms: {annual: 0, unit_rate: {generator: src, output: ppa_dt}, volume: {generator: src, output: kwh},
+              index: {generator: src, output: escalation}, periods_per_year: 1, start: 0, end: 19, vat_rate: 0,
+              vat_refund_lag: 0, payment_days: 0, days_per_year: 1}
+    ppa_sale_dt:
+      type: offtake
+      parties: {seller: developer}
+      terms: {volume: {generator: src, output: kwh}, price: {generator: src, output: ppa_price_dt}, payment_days: 0,
+              days_per_year: 1, periods_per_year: 1, end: 19}
+    ee_service_fee_sm:
+      type: offtake
+      parties: {seller: scl}
+      terms: {volume: {generator: src, output: kwh}, price: {generator: src, output: charge_sm}, payment_days: 0,
+              days_per_year: 1, periods_per_year: 1, end: 19}
+    ppa_payment_sm:
+      type: operating_cost
+      parties: {payer: scl}
+      terms: {annual: 0, unit_rate: {generator: src, output: ppa_sm}, volume: {generator: src, output: kwh},
+              index: {generator: src, output: escalation}, periods_per_year: 1, start: 0, end: 19, vat_rate: 0,
+              vat_refund_lag: 0, payment_days: 0, days_per_year: 1}
+    ppa_sale_sm:
+      type: offtake
+      parties: {seller: developer}
+      terms: {volume: {generator: src, output: kwh}, price: {generator: src, output: ppa_price_sm}, payment_days: 0,
+              days_per_year: 1, periods_per_year: 1, end: 19}
+  schemes:
+    pnl:
+      ee_service_fee_nd.revenue: fee_nd
+      ppa_payment_nd.expense: ppa_cost_nd
+      ppa_sale_nd.revenue: ppa_nd
+      ee_service_fee_dt.revenue: fee_dt
+      ppa_payment_dt.expense: ppa_cost_dt
+      ppa_sale_dt.revenue: ppa_dt
+      ee_service_fee_sm.revenue: fee_sm
+      ppa_payment_sm.expense: ppa_cost_sm
+      ppa_sale_sm.revenue: ppa_sm
+    cash_flow:
+      ee_service_fee_nd.receivable: operating
+      ppa_payment_nd.payable: operating
+      ppa_sale_nd.receivable: operating
+      ee_service_fee_dt.receivable: operating
+      ppa_payment_dt.payable: operating
+      ppa_sale_dt.receivable: operating
+      ee_service_fee_sm.receivable: operating
+      ppa_payment_sm.payable: operating
+      ppa_sale_sm.receivable: operating
+  cuts:
+    developer_nd: {kind: pnl, entity: developer, scheme: pnl, include: [ppa_nd]}
+    developer_dt: {kind: pnl, entity: developer, scheme: pnl, include: [ppa_dt]}
+    developer_sm: {kind: pnl, entity: developer, scheme: pnl, include: [ppa_sm]}
+    scl_margin_nd: {kind: pnl, entity: scl, scheme: pnl, include: [fee_nd, ppa_cost_nd]}
+  measures: {}
+figures:
+  seattle.price_factor.retrofit_medium_non_downtown: {cut: developer_nd, at: 0, per: src.kwh}
+  seattle.price_factor.retrofit_medium_downtown: {cut: developer_dt, at: 0, per: src.kwh}
+  seattle.price_factor.retrofit_small: {cut: developer_sm, at: 0, per: src.kwh}
+  seattle.spread_pct_of_charge: {cut: scl_margin_nd, at: 0, per: src.charge_on_kwh_nd, scale: 0.01}
+  seattle.escalation_year_20: {cut: developer_nd, at: 19, per: src.first_year_ppa_nd}

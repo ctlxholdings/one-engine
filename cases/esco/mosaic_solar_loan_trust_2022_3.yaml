@@ -1,0 +1,100 @@
+# esco deal "mosaic_solar_loan_trust_2022_3": Mosaic Solar Loan Trust 2022-3, a residential solar loan ABS
+# at presale (Fitch presale report, 7 Dec 2022; cases/reference/esco/ontology/miniature/cases/
+# mosaic_solar_loan_trust_2022_3-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# The figures are the trust's capital structure at closing, so the case books the issuer trust's
+# closing balance sheet in one period. Every amount is a number of the deal by name (generator `src`),
+# the classes and the reserve printed in USD million:
+#   * the noteholders buy the rated notes, classes A to D (classes_usd_m A, B, C, D): cash in, each a
+#     liability of the trust; the class R holder buys the residual class R (R): the trust's equity;
+#   * the seller (Solar Mosaic) transfers the pool at its principal balance
+#     (aggregate_principal_balance_usd) and takes back in cash the pool's adjusted balance
+#     (aggregate_adjusted_balance_usd, the loans valued at the greater of their rate and the 7.7% YSOC
+#     discount rate), which the note proceeds pay; the principal it leaves in the trust is the yield
+#     supplement overcollateralisation (YSOC), its equity in the trust;
+#   * the reserve account is funded at closing with its initial amount (reserve_fund_usd_m initial);
+#     the presale does not say from what, and the note proceeds pay the loans, so it is booked as a
+#     deposit of the depositor (an equity contribution).
+# Credit enhancement of a class is the collateral plus the reserve less the notes ranking with or
+# ahead of it, over the collateral: on the adjusted balance (the pool less the YSOC) and on the
+# unadjusted one (the pool); both divide by the deal's own balance input. No tax, no coupons ("Fixed -
+# TBD"), no waterfall (below LOD 0).
+#
+# The trust's cash closes at -35,262: the classes are printed to 0.1 million, so their 218.4 million
+# falls that much short of the 218,435,262 they fund (the case file's derived total_with_r: "closes:
+# 218,435,262 rounded"). The record's rounding, not the books'.
+esco: mosaic_solar_loan_trust_2022_3
+entity: trust
+plant: aggregate_principal_balance_usd
+case:
+  case: esco-mosaic-solar-loan-trust
+  periods: 1
+  phases: [accrue, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        class_a: classes_usd_m__A * 1000 * 1000
+        class_b: classes_usd_m__B * 1000 * 1000
+        class_c: classes_usd_m__C * 1000 * 1000
+        class_d: classes_usd_m__D * 1000 * 1000
+        class_residual: R * 1000 * 1000
+        reserve: initial * 1000 * 1000
+  contracts: {}
+  rulebooks:
+    closing:
+      kind: transfer
+      entity: trust
+      phase: accrue
+      declare: {cash: asset, notes_a: liability, notes_b: liability, notes_c: liability, notes_d: liability,
+                class_r: equity, pool: asset, ysoc_overcollateral: equity, reserve_account: asset,
+                depositor_reserve_deposit: equity}
+      moves:
+        issue_a: {debit: cash, credit: notes_a, amount: {generator: src, output: class_a}}
+        issue_b: {debit: cash, credit: notes_b, amount: {generator: src, output: class_b}}
+        issue_c: {debit: cash, credit: notes_c, amount: {generator: src, output: class_c}}
+        issue_d: {debit: cash, credit: notes_d, amount: {generator: src, output: class_d}}
+        issue_r: {debit: cash, credit: class_r, amount: {generator: src, output: class_residual}}
+        pool_transferred: {debit: pool, credit: ysoc_overcollateral, amount: {generator: src, output: aggregate_principal_balance_usd}}
+        purchase_price: {debit: ysoc_overcollateral, credit: cash, amount: {generator: src, output: aggregate_adjusted_balance_usd}}
+        reserve_funded: {debit: reserve_account, credit: depositor_reserve_deposit, amount: {generator: src, output: reserve}}
+  schemes:
+    cash_flow:
+      notes_a: financing
+      notes_b: financing
+      notes_c: financing
+      notes_d: financing
+      class_r: financing
+      ysoc_overcollateral: investing
+  cuts: {}
+  measures: {}
+figures:
+  mosaic.rated_notes_sum: {balance: notes_a + notes_b + notes_c + notes_d, scale: 1000000}
+  mosaic.notes_fund_adjusted_balance: {balance: notes_a + notes_b + notes_c + notes_d + class_r, scale: 1000000}
+  mosaic.ysoc_m: {balance: ysoc_overcollateral, scale: 1000000}
+  mosaic.reserve_pct_unadjusted: {balance: reserve_account, per: src.aggregate_principal_balance_usd, scale: 0.01}
+  mosaic.reserve_pct_adjusted: {balance: reserve_account, per: src.aggregate_adjusted_balance_usd, scale: 0.01}
+  mosaic.ce_adjusted.A: {balance: pool - ysoc_overcollateral + reserve_account - notes_a,
+                         per: src.aggregate_adjusted_balance_usd, scale: 0.01}
+  mosaic.ce_adjusted.B: {balance: pool - ysoc_overcollateral + reserve_account - notes_a - notes_b,
+                         per: src.aggregate_adjusted_balance_usd, scale: 0.01}
+  mosaic.ce_adjusted.C: {balance: pool - ysoc_overcollateral + reserve_account - notes_a - notes_b - notes_c,
+                         per: src.aggregate_adjusted_balance_usd, scale: 0.01}
+  mosaic.ce_adjusted.D: {balance: pool - ysoc_overcollateral + reserve_account - notes_a - notes_b - notes_c - notes_d,
+                         per: src.aggregate_adjusted_balance_usd, scale: 0.01}
+  mosaic.ce_unadjusted.A: {balance: pool + reserve_account - notes_a, per: src.aggregate_principal_balance_usd, scale: 0.01}
+  mosaic.ce_unadjusted.B: {balance: pool + reserve_account - notes_a - notes_b,
+                           per: src.aggregate_principal_balance_usd, scale: 0.01}
+  mosaic.ce_unadjusted.C: {balance: pool + reserve_account - notes_a - notes_b - notes_c,
+                           per: src.aggregate_principal_balance_usd, scale: 0.01}
+  mosaic.ce_unadjusted.D: {balance: pool + reserve_account - notes_a - notes_b - notes_c - notes_d,
+                           per: src.aggregate_principal_balance_usd, scale: 0.01}
+  mosaic.average_balance_vs_printed_original: {balance: pool, per: src.number_of_loans}
+not_compared:
+  mosaic.reserve_floor_pct: "the reserve's floor (reserve_fund_usd_m floor) is the level the account may fall to as
+    the pool amortises; the case books the closing balance sheet, and the presale gives no amortisation
+    schedule that would bring the reserve to it"

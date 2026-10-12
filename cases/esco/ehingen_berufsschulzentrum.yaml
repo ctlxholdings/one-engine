@@ -1,0 +1,112 @@
+# esco deal "ehingen_berufsschulzentrum": the guaranteed-savings energy-saving contract (Energiespar-
+# Contracting) of the Berufsschulzentrum Ehingen, between the Alb-Donau-Kreis and Siemens (dena,
+# "Anwendungsbeispiele von Energiespar-Contracting"; cases/reference/esco/ontology/miniature/cases/
+# ehingen_berufsschulzentrum-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * periods are years: 0 is the time from signing (contract_signed) to the first month of the main
+#     performance phase, 1.. the phase's years. The phase's months and the months from signing to it
+#     are counts from the printed dates (time quantities, read as drivers); each phase year's share
+#     of a full year is its months over 12 (01/2010 to 06/2016 is six years and a half: the last
+#     period is half a year);
+#   * Siemens invests `investment` in period 0 from its own capital (wood-chip and oil boilers, heat
+#     line, solar thermal, lighting, controls);
+#   * the client pays Siemens the Baukostenzuschuss (`baukostenzuschuss`) in period 0, its upfront
+#     contribution to the construction cost (the case file's batch-5 ruling: the client's own
+#     payment to the contractor; payer and payee are not printed), booked by Siemens as a
+#     contribution received against its investment;
+#   * the client's energy bill before the contract, base_energy_costs, is its energy cost in each
+#     phase year, paid in cash; the guarantee, guaranteed_savings, is its avoided energy cost in each
+#     phase year (the with-versus-without view of the bill);
+#   * the client's payments to Siemens during the phase are not printed (amount and formula), so
+#     they are not booked. No tax.
+# The figures:
+#   * ehingen.pct_closure: a full phase year's savings over the base cost (the input), as a percent;
+#   * ehingen.guarantee_over_phase: the savings summed over the phase, undiscounted;
+#   * ehingen.contribution_share_pct: the contribution the client paid, from the books, over the
+#     investment (the input), as a percent;
+#   * ehingen.net_investment: Siemens's period-0 cash out, the investment less the contribution;
+#   * ehingen.guarantee_over_net_pct: the savings over the phase from the books, over the net
+#     investment (a generator value: `per` divides by one only), as a percent;
+#   * ehingen.phase_months, ehingen.signing_to_phase: the two month counts.
+esco: ehingen_berufsschulzentrum
+entity: alb_donau_kreis
+plant: guaranteed_savings
+case:
+  case: esco-ehingen-berufsschulzentrum
+  periods: 8
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 8
+      inputs: esco
+      values:
+        # months from signing to the first month of the phase, and of the phase, both end months counted
+        signing_to_phase: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        # each phase year's share of a full year (the last may be part of one)
+        year_share: {each_period: "(t >= 1) * max(0, min(12, phase_months - 12 * (t - 1))) / 12"}
+        base_bill: base_energy_costs * year_share
+        savings: guaranteed_savings * year_share
+        contribution: {each_period: baukostenzuschuss * (t == 0)}
+        net_investment: investment - baukostenzuschuss
+  contracts:
+    siemens_capital:
+      type: equity_funding
+      parties: {issuer: siemens}
+      terms: {amount: {generator: src, output: investment}, period: 0}
+    measures:
+      type: one_off_purchase
+      parties: {buyer: siemens}
+      terms: {amount: {generator: src, output: investment}, period: 0}
+  opening:
+    alb_donau_kreis:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    energy_bill:
+      kind: transfer
+      entity: alb_donau_kreis
+      phase: accrue
+      declare:
+        energy_cost: expense
+        avoided_energy_cost: income
+        construction_contribution: asset
+      moves:
+        bill: {debit: energy_cost, credit: cash, amount: {generator: src, output: base_bill}}
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+        contribution: {debit: construction_contribution, credit: cash, amount: {generator: src, output: contribution}}
+    contribution_received:
+      kind: transfer
+      entity: siemens
+      phase: accrue
+      declare:
+        contribution_received: liability
+      moves:
+        contribution: {debit: cash, credit: contribution_received, amount: {generator: src, output: contribution}}
+  schemes:
+    pnl:
+      energy_cost: energy
+      avoided_energy_cost: savings
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      contribution_received: investing
+      energy_cost: operating
+      avoided_energy_cost: operating
+      construction_contribution: contribution
+  cuts:
+    client_savings: {kind: pnl, entity: alb_donau_kreis, scheme: pnl, include: [savings]}
+    client_contribution: {entity: alb_donau_kreis, account: cash, scheme: cash_flow, include: [contribution]}
+    siemens_investment: {entity: siemens, account: cash, scheme: cash_flow, include: [investing]}
+  measures: {}
+figures:
+  ehingen.pct_closure: {cut: client_savings, at: 1, per: src.base_energy_costs, scale: 0.01}
+  ehingen.guarantee_over_phase: {cut: client_savings, total: true}
+  ehingen.contribution_share_pct: {cut: client_contribution, at: 0, sign: -1, per: src.investment, scale: 0.01}
+  ehingen.net_investment: {cut: siemens_investment, at: 0, sign: -1}
+  ehingen.guarantee_over_net_pct: {cut: client_savings, total: true, per: src.net_investment, scale: 0.01}
+  ehingen.phase_months: {driver: src.phase_months, at: 0}
+  ehingen.signing_to_phase: {driver: src.signing_to_phase, at: 0}

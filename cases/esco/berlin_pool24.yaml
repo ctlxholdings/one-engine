@@ -1,0 +1,90 @@
+# esco deal "berlin_pool24": Energiespar-Contracting "Pool 24" for 18 properties of the Berlin
+# Sondervermögen Immobilien (BIM), contractor SPIE, signed 25 June 2009, main performance phase
+# 01/2011 to 12/2020 (dena project page [DENA]; cases/reference/esco/ontology/miniature/cases/
+# berlin_pool24-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`); periods are years, 0 the year
+# before the performance phase (the investment), the phase's years after it:
+#   * the contractor (book `spie`) invests `investment` in the 18 properties at period 0, funded by
+#     its own capital (the financier is not printed), capitalised;
+#   * the client (book `berlin`) bears its base energy cost (base_energy_costs) every phase year and
+#     saves the guaranteed savings (guaranteed_savings) on it, booked as avoided energy cost (the
+#     with-versus-without view); the contractor's fee and the maintenance top-up are not printed, so
+#     no payment between them is modelled; no tax.
+# The phase's length in months and the months from signature to the phase are time quantities:
+# drivers over the printed dates (rule 4 allows them); the phase's years are its months / 12, so the
+# savings run exactly the printed phase. The savings share is the client's saving per its base cost;
+# the guarantee over the phase is the saving summed; the simple payback is the investment per the
+# annual guarantee; the guarantee over the investment is the saving summed per the investment.
+#
+# Two figures differ, and the cause is the source's: the page's "Haushaltsentlastung 20.820.000 Euro
+# pro Jahr" contradicts its own text ("keine Haushaltsentlastung möglich") and its base cost (the case
+# file marks it NOT USED). The books' yearly relief of the client's energy budget is the guaranteed
+# saving at most, so relief_over_guarantee reads 1.0 (printed 48.2) and relief_over_base 0.2 (9.9).
+esco: berlin_pool24
+entity: spie
+plant: guaranteed_savings
+case:
+  case: esco-berlin-pool
+  periods: 11
+  phases: [operate]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        phase_months: (to__year - _from__year) * 12 + to__month - _from__month + 1
+        lead_months: (_from__year - contract_signed__year) * 12 + _from__month - contract_signed__month
+        phase_years: phase_months / 12
+        in_phase: {each_period: "(t >= 1) * (t <= phase_years)"}
+        base_cost: {each_period: "base_energy_costs * in_phase"}
+        saving: {each_period: "guaranteed_savings * in_phase"}
+        invest: {each_period: "investment * (t == 0)"}
+  opening:
+    spie:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    berlin:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    contractor:
+      kind: transfer
+      entity: spie
+      phase: operate
+      declare:
+        energy_measures: asset
+        own_capital: equity
+      moves:
+        fund: {debit: cash, credit: own_capital, amount: {generator: src, output: invest}}
+        install: {debit: energy_measures, credit: cash, amount: {generator: src, output: invest}}
+    client:
+      kind: transfer
+      entity: berlin
+      phase: operate
+      declare:
+        energy_cost: expense
+        avoided_energy_cost: income
+      moves:
+        base_energy: {debit: energy_cost, credit: cash, amount: {generator: src, output: base_cost}}
+        saving: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: saving}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      energy_cost: energy
+  cuts:
+    client_savings: {kind: pnl, entity: berlin, scheme: pnl, include: [savings]}
+  measures: {}
+figures:
+  pool24.pct_closure: {cut: client_savings, per: src.base_energy_costs, scale: 0.01, at: 1}
+  pool24.phase_months: {driver: src.phase_months, at: 0}
+  pool24.guarantee_over_phase: {cut: client_savings, total: true}
+  pool24.simple_payback: {balance: energy_measures, per: src.guaranteed_savings, at: 0}
+  pool24.signing_to_phase: {driver: src.lead_months, at: 0}
+  pool24.guarantee_over_investment: {cut: client_savings, per: src.investment, total: true}
+  pool24.relief_over_guarantee: {cut: client_savings, per: src.guaranteed_savings, at: 1}
+  pool24.relief_over_base: {cut: client_savings, per: src.base_energy_costs, at: 1}

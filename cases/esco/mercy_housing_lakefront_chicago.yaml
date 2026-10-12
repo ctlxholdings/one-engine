@@ -1,0 +1,80 @@
+# esco deal "mercy_housing_lakefront_chicago": the energy retrofit of Mercy Housing Lakefront's
+# 314-unit affordable housing in Chicago, contracted November 2008, financed under the Chicago
+# multifamily pilot fund (five capital providers and a first-loss reserve) (ECEEE paper as cited by
+# the case file; cases/reference/esco/ontology/miniature/cases/mercy_housing_lakefront_chicago-
+# lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py). Amounts in US$ thousand.
+#
+# Periods are years: 0 is the retrofit year, 1 a year of savings. Every amount is a number of the
+# case by name (generator `src`):
+#   * Mercy Housing pays the project cost (project_cost_usd_thousand) in period 0, capitalised as
+#     the retrofit. Its loan from the pilot fund is not published (amount, rate, tenor), so the
+#     funding is not booked and Mercy's cash goes below nil by the cost (cash is not floored);
+#   * the annual savings (annual_savings_usd_thousand) are Mercy's avoided energy cost, in cash, in
+#     each year after the retrofit;
+#   * the pilot fund's capital: five providers each pay in pilot_fund (US$ million, x 1000 to the
+#     case's thousands). The five are five moves of the fund's book (the deal's structure, not a
+#     number), so the fund's size is read from its books.
+# Readings: the payback is the retrofit held per the annual savings; cost and savings per unit are
+# the retrofit and the year's savings per unit (units), in dollars (scale 0.001 of a thousand);
+# the fund size is the capital the providers paid into the fund, in US$ million (scale 1000).
+#
+# Set aside (the inputs carry no number for them; the harness hands each text its first number
+# only): the first-loss reserve of US$2.5 million (second number of the pilot-fund text, the
+# reserve ratio's numerator; the 'fifty percent' is a word and the ratio input reads the line
+# reference 349), and the completion month (May 2009: month names, second date of its text).
+esco: mercy_housing_lakefront_chicago
+entity: mercy
+plant: annual_savings_usd_thousand
+case:
+  case: esco-mercy-housing-lakefront-chicago
+  periods: 2
+  phases: [accrue, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: esco
+      values:
+        retrofit: {each_period: (t == 0) * project_cost_usd_thousand}
+        savings: {each_period: (t >= 1) * annual_savings_usd_thousand}
+        provider_commitment: {each_period: (t == 0) * pilot_fund * 1000}
+  contracts: {}
+  rulebooks:
+    retrofit:
+      kind: transfer
+      entity: mercy
+      phase: accrue
+      declare: {cash: asset, retrofit: asset, avoided_energy_cost: income}
+      moves:
+        works: {debit: retrofit, credit: cash, amount: {generator: src, output: retrofit}}
+        savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+    pilot_fund:
+      kind: transfer
+      entity: fund
+      phase: accrue
+      declare: {cash: asset, provider_capital: equity}
+      moves:
+        provider_a: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
+        provider_b: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
+        provider_c: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
+        provider_d: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
+        provider_e: {debit: cash, credit: provider_capital, amount: {generator: src, output: provider_commitment}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+    cash_flow:
+      provider_capital: capital
+  cuts:
+    savings: {kind: pnl, entity: mercy, scheme: pnl, include: [savings]}
+    fund_capital: {entity: fund, account: cash, scheme: cash_flow, include: [capital]}
+  measures: {}
+figures:
+  me.pilot_fund_size: {cut: fund_capital, at: 0, scale: 1000}
+  me.simple_payback: {balance: retrofit, per: src.annual_savings_usd_thousand, at: 0}
+  me.cost_per_unit: {balance: retrofit, per: src.units, at: 0, scale: 0.001}
+  me.savings_per_unit: {cut: savings, per: src.units, at: 1, scale: 0.001}
+not_compared:
+  me.reserve_ratio_pct: "needs the US$2.5 million first-loss reserve, the second number of the pilot-fund text, which the harness does not hand over (the 'fifty percent' is a word; the ratio's input reads the line reference 349): no input carries it"
+  me.contract_to_completion_months: "needs the contract and completion months (November 2008, May 2009), printed as month names in one text whose first number (2008) is all the harness hands over: no input carries the months"

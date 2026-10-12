@@ -1,0 +1,66 @@
+# esco deal "bytom_schools": a guaranteed-savings EPC for 17 schools of the City of Bytom, Poland
+# (fi-compass ERDF EPC factsheet, 2023; cases/reference/esco/ontology/miniature/cases/
+# bytom_schools-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`):
+#   * the City pays the ESCO the contract volume (contract_volume_eur_m, EUR million: capital
+#     expenditure plus energy-management fees) over the term (term_years), in level annual payments
+#     from period 1, paid in the year: the City's EPC fee, the ESCO's revenue;
+#   * the guaranteed savings (guaranteed_savings_value_eur_m, EUR million over the term) accrue to the
+#     City as avoided energy cost in level annual amounts over the same years;
+#   * the ESCO's capital expenditure and its financing (repaid conditional on the savings) are not
+#     printed apart from the volume, so neither is booked.
+# Periods are years; 0 is signature, 1-15 the term. No tax, no indexation (none printed).
+esco: bytom_schools
+entity: esco
+plant: contract_volume_eur_m
+case:
+  case: esco-bytom-schools
+  periods: 16
+  phases: [accrue, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 16
+      inputs: esco
+      values:
+        in_term: {each_period: (t >= 1) * (t <= term_years)}
+        fee: contract_volume_eur_m * 1000 * 1000 / term_years * in_term
+        savings: guaranteed_savings_value_eur_m * 1000 * 1000 / term_years * in_term
+        savings_over_term: guaranteed_savings_value_eur_m * 1000 * 1000
+  contracts: {}
+  rulebooks:
+    city_books:
+      kind: transfer
+      entity: city
+      phase: accrue
+      declare: {cash: asset, avoided_energy_cost: income, epc_fee: expense}
+      moves:
+        guaranteed_saving: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+        fee_paid: {debit: epc_fee, credit: cash, amount: {generator: src, output: fee}}
+    esco_books:
+      kind: transfer
+      entity: esco
+      phase: accrue
+      declare: {cash: asset, epc_revenue: income}
+      moves:
+        fee_received: {debit: cash, credit: epc_revenue, amount: {generator: src, output: fee}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      epc_fee: fee
+      epc_revenue: revenue
+    cash_flow:
+      avoided_energy_cost: operating
+      epc_fee: operating
+      epc_revenue: operating
+  cuts:
+    esco_revenue: {kind: pnl, entity: esco, scheme: pnl, include: [revenue]}
+    city_savings: {kind: pnl, entity: city, scheme: pnl, include: [savings]}
+  measures: {}
+figures:
+  bytom.volume_over_savings: {cut: esco_revenue, total: true, per: src.savings_over_term}
+  bytom.annual_payment: {cut: esco_revenue, at: 1, scale: 1000000}
+  bytom.annual_savings: {cut: city_savings, at: 1, scale: 1000000}

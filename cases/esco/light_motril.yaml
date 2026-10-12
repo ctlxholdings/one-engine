@@ -1,0 +1,81 @@
+# esco deal "light_motril": Motril City Hall's street-lighting renovation, planned by the Andalusian
+# Energy Agency (A.A.E.), installed by contracted firms, financed by an ICO-IDAE credit and subsidies
+# (IEA DSM financing options manual, L1640-1690; cases/reference/esco/ontology/miniature/cases/
+# light_motril-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`); the City Hall's books, periods are
+# years, 0 the investment year:
+#   * the City Hall pays the total investment (total_investment_eur) at period 0, capitalised;
+#   * it borrows figure11_label_pct of it (the case file's reading: only if Figure 11's "66% Project
+#     Amortization" is the credit share) and funds what the credit leaves (subsidy and/or own funds,
+#     not stated which) so that its cash holds at what its savings have brought in (a held balance
+#     against "other funding");
+#   * it saves economic_savings_eur on its bills each year from period 1, booked as avoided energy
+#     and maintenance cost (the case file's reading: only if the printed figure is per year); the
+#     credit's terms are not printed, so no interest or repayment is modelled; no tax.
+# The payback is the payback measure on the project's cash flow (investment and savings, not the
+# funding); the value of savings per kWh is the year's saving per the kWh saved (energy_savings_kwh,
+# a physical quantity, as the divisor).
+esco: light_motril
+entity: city_hall
+plant: total_investment_eur
+case:
+  case: esco-light-motril
+  periods: 7
+  phases: [invest, fund]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 7
+      inputs: esco
+      values:
+        invest: {each_period: "total_investment_eur * (t == 0)"}
+        credit: {each_period: "invest * figure11_label_pct / 100"}
+        saving: {each_period: "economic_savings_eur * (t >= 1)"}
+        cash_held: cumsum(saving)
+  opening:
+    city_hall:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    project:
+      kind: transfer
+      entity: city_hall
+      phase: invest
+      declare:
+        lighting_works: asset
+        ico_idae_credit: liability
+        other_funding: equity
+        avoided_cost: income
+      moves:
+        borrow: {debit: cash, credit: ico_idae_credit, amount: {generator: src, output: credit}}
+        works: {debit: lighting_works, credit: cash, amount: {generator: src, output: invest}}
+        saving: {debit: cash, credit: avoided_cost, amount: {generator: src, output: saving}}
+    other_funding:
+      kind: held_balance
+      entity: city_hall
+      cash: cash
+      phase: fund
+      accounts:
+        cash: {side: asset, target: {generator: src, output: cash_held}, against: other_funding}
+  schemes:
+    pnl:
+      avoided_cost: savings
+    cash_flow:
+      lighting_works: investing
+      avoided_cost: operating
+      ico_idae_credit: financing
+      other_funding: financing
+  cuts:
+    savings: {kind: pnl, entity: city_hall, scheme: pnl, include: [savings]}
+    project_cash_flow: {entity: city_hall, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    payback: {measure: payback, cut: project_cash_flow}
+figures:
+  motril.payback_if_annual: {measure: payback}
+  motril.savings_per_kwh: {cut: savings, per: src.energy_savings_kwh, at: 1}
+  motril.credit_if_66pct: {balance: ico_idae_credit, at: 0}
+  motril.remainder_if_66pct: {balance: other_funding, at: 0}

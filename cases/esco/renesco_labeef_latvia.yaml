@@ -1,0 +1,163 @@
+# esco deal "renesco_labeef_latvia": RenESCO's 20-year EPCs on Soviet-era apartment blocks in Latvia
+# (ERDF grant + bank debt + own equity) and the LABEEF forfaiting facility funded by the EBRD (IEA EBC
+# Annex 61 [A61], EEFIG toolkit [EUT], JRC ESCO reports, CITYnvest, EUKI fact sheet;
+# cases/reference/esco/ontology/miniature/cases/renesco_labeef_latvia-lod0.yaml; answer key
+# cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`); periods are years, 0 the investment
+# year, 21 periods so the EPC term (epc_term_years_value) runs from 1:
+#   * RenESCO (book `renesco`) pays the programme's renovation works (programme_capex_eur, 15
+#     buildings), capitalised; the cost is funded grant_pct_of_project by the ERDF programme grant
+#     (passed through, held as a grant received), and the rest (renesco_share_pct_of_project) by a
+#     Latvian bank loan (bank_debt_pct_of_renesco_share of it) and RenESCO's own equity
+#     (equity_pct_of_renesco_share of it), all at period 0;
+#   * LABEEF (book `labeef`) draws the EBRD's funding (ebrd_funding_eur) at period 0 and, of the owners'
+#     contracting rates it collects, keeps labeef_purchased_share_pct and passes esco_retained_share_pct
+#     to the ESCO. No rate amount is printed, so one collection of the deal's unit (project_cost_pct,
+#     the case file's own "100 = the whole") is posted: the shares do not depend on its size;
+#   * the value of a 1-point rate cut (Table A-1 "1% lower interest over 20 years"): a borrower (book
+#     `rate_cut`) draws the project cost in the deal's unit (project_cost_pct) and repays it by equal
+#     annual payments over epc_term_years_value at RenESCO's cost of capital less the cut
+#     (renesco_cost_of_capital_pct - interest_vs_subsidy); the draw and the payments valued at the
+#     cost of capital (npv measure) are the subsidy, in percent of the cost. The case file's 7.6 is
+#     this; Table A-1's printed 9% does not tie (the answer key sets it aside).
+#   * no tax, no savings flows (only percentage ranges are printed).
+# Shares of the cost are balances read per the programme capex; per-building costs are the works per
+# the building count (renesco_buildings_count for the CITYnvest average; renesco_blocks for EE22's
+# "over EUR 4m in 15 blocks", whose 4m is the same programme capex printed by CITYnvest, which the
+# case file's derived note says it equals). The EBRD share of the fund is LABEEF's EBRD draw per the
+# fund's design size (labeef_fund_size_eur_m, in EUR m, times 1000 x 1000).
+#
+# Set aside: the kWh savings shares need 240, 80 and 70 kWh/m2, which are not inputs
+# (specific_consumption_kwh_m2_year carries only the text's first number, 200).
+esco: renesco_labeef_latvia
+entity: renesco
+plant: programme_capex_eur
+case:
+  case: esco-renesco-labeef-latvia
+  periods: 21
+  phases: [invest, accrue, operate]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 21
+      inputs: esco
+      values:
+        grant: programme_capex_eur * grant_pct_of_project / 100
+        renesco_share: programme_capex_eur * renesco_share_pct_of_project / 100
+        bank_loan: renesco_share * bank_debt_pct_of_renesco_share / 100
+        own_equity: renesco_share * equity_pct_of_renesco_share / 100
+        fund_size_eur: labeef_fund_size_eur_m * 1000 * 1000
+        collected: project_cost_pct
+        labeef_keeps: collected * labeef_purchased_share_pct / 100
+        esco_gets: collected * esco_retained_share_pct / 100
+        draw: {each_period: "project_cost_pct * (t == 0)"}
+        cut_rate: (renesco_cost_of_capital_pct - interest_vs_subsidy) / 100
+        cost_of_capital: renesco_cost_of_capital_pct / 100
+  loops:
+    rate_cut_payment:
+      rule: {kind: annuity, loan: cheap_loan}
+      start: {repayment: 0}
+      tolerance: 0
+      max_iterations: 3
+  opening:
+    renesco:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    labeef:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    rate_cut:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    cheap_loan:
+      type: loan
+      parties: {borrower: rate_cut}
+      terms:
+        commitment: {generator: src, output: project_cost_pct}
+        draw_schedule: {generator: src, output: draw}
+        available_until: 0
+        rate: {generator: src, output: cut_rate}
+        rate_from: 0
+        days_per_period: 1
+        day_count_basis: 1
+        commitment_fee_rate: 0
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: 1
+        repay_periods: {generator: src, output: epc_term_years_value}
+        sculpt_dscr: null
+        principal_schedule: {loop: rate_cut_payment, output: repayment}
+        arrangement_fee: 0
+        fee_at: 0
+  rulebooks:
+    programme:
+      kind: transfer
+      entity: renesco
+      phase: invest
+      declare:
+        renovation_works: asset
+        erdf_grant: liability
+        bank_loan: liability
+        own_equity: equity
+      moves:
+        grant: {debit: cash, credit: erdf_grant, amount: {generator: src, output: grant}}
+        borrow: {debit: cash, credit: bank_loan, amount: {generator: src, output: bank_loan}}
+        contribute: {debit: cash, credit: own_equity, amount: {generator: src, output: own_equity}}
+        pay_works: {debit: renovation_works, credit: cash, amount: {generator: src, output: programme_capex_eur}}
+    facility:
+      kind: transfer
+      entity: labeef
+      phase: invest
+      declare:
+        ebrd_loan: liability
+        contracting_rates: income
+        esco_share_paid: expense
+      moves:
+        ebrd_draw: {debit: cash, credit: ebrd_loan, amount: {generator: src, output: ebrd_funding_eur}}
+        collect: {debit: cash, credit: contracting_rates, amount: {generator: src, output: collected}}
+        pass_on: {debit: esco_share_paid, credit: cash, amount: {generator: src, output: esco_gets}}
+    settle:
+      kind: pay_as_due
+      phase: operate
+      claims: [cheap_loan.draw, cheap_loan.interest, cheap_loan.principal]
+  schemes:
+    pnl:
+      contracting_rates: rates
+      esco_share_paid: esco_share
+    cash_flow:
+      ebrd_loan: ebrd
+      contracting_rates: rates
+      esco_share_paid: esco_share
+      cheap_loan.debt: cheap_loan
+      cheap_loan.interest_payable: cheap_loan
+      cheap_loan.fee_payable: cheap_loan
+      cheap_loan.capitalised_interest: cheap_loan
+      cheap_loan.deferred_fees: cheap_loan
+  cuts:
+    ebrd_draw: {entity: labeef, account: cash, scheme: cash_flow, include: [ebrd]}
+    labeef_kept: {entity: labeef, account: cash, scheme: cash_flow, include: [rates, esco_share]}
+    esco_share: {kind: pnl, entity: labeef, scheme: pnl, include: [esco_share]}
+    cheap_loan_flows: {entity: rate_cut, account: cash, scheme: cash_flow, include: [cheap_loan]}
+  measures:
+    rate_cut_value: {measure: npv, cut: cheap_loan_flows, rate: {generator: src, output: cost_of_capital}}
+figures:
+  labeef.bank_debt_pct_of_project: {balance: bank_loan, per: src.programme_capex_eur, scale: 0.01, at: 0}
+  labeef.equity_pct_of_project: {balance: own_equity, per: src.programme_capex_eur, scale: 0.01, at: 0}
+  labeef.funding_stack_sum_pct: {balance: "bank_loan + own_equity + erdf_grant", per: src.programme_capex_eur, scale: 0.01, at: 0}
+  labeef.investment_per_block_floor_eur_m: {balance: renovation_works, per: src.renesco_blocks, scale: 1000000, at: 0}
+  labeef.capex_per_block_avg_eur: {balance: renovation_works, per: src.renesco_buildings_count, at: 0}
+  labeef.ebrd_share_of_fund_pct: {cut: ebrd_draw, per: src.fund_size_eur, scale: 0.01, at: 0}
+  labeef.rate_cut_value_pct: {measure: rate_cut_value}
+  labeef.share_split_sums_to_100_pct:
+    sum:
+      - {cut: labeef_kept, per: src.collected}
+      - {cut: esco_share, sign: -1, per: src.collected}
+    scale: 0.01
+    at: 0
+not_compared:
+  labeef.savings_from_kwh_low_pct: "needs the 80 kWh/m2 after renovation; specific_consumption_kwh_m2_year carries only the text's first number (200)"
+  labeef.savings_from_kwh_high_pct: "needs 240 and 70 kWh/m2; specific_consumption_kwh_m2_year carries only the text's first number (200)"

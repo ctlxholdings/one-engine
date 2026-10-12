@@ -1,0 +1,67 @@
+# esco deal "kawarna_biomass": KaWarna's biomass heating contracts in Spain, financed by IDAE
+# (Euribor + 1%), under which the client pays for heat at least 10% less than its initial energy
+# cost for a 10-year term, after which the installation (25-year life) stays with the client
+# (case file sources L1482-L1582; cases/reference/esco/ontology/miniature/cases/
+# kawarna_biomass-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Periods are contract years: 0 the installation, 1 to contract_term_years the term. No project's
+# amounts are printed (only the range of project sizes), so the deal is booked per unit of the
+# client's initial annual energy cost (baseline_cost, one unit: the promise is a share of it).
+# Every other amount is a number of the case by name (generator `src`):
+#   * the client's guaranteed saving is guaranteed_cost_reduction_pct of its initial energy cost,
+#     and it pays KaWarna the rest for its heat each year of the term, in cash: the client's heat
+#     expense, KaWarna's revenue. The investment, its IDAE financing and the transfer of the
+#     installation at the end of the term carry no printed amount, so none is booked.
+# Readings: the client's payment against its initial cost is KaWarna's revenue in a term year
+# (per unit of initial cost). The term's share of the installation's life and the years left
+# with the client are `driver` formulas over the printed years (time quantities).
+# Planted error: every figure is printed to a coarse rounding (0.90 to two decimals, 40 and 15 to
+# whole numbers), so a 1% error in any input (10.1%, 10.1 or 25.25 years) rounds back to the
+# printed figure: no input can be planted so that a figure breaks. The receipt reports it blind.
+esco: kawarna_biomass
+entity: kawarna
+plant: guaranteed_cost_reduction_pct
+case:
+  case: esco-kawarna-biomass
+  periods: 11
+  phases: [settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: esco
+      values:
+        baseline_cost: 1
+        saving: baseline_cost * guaranteed_cost_reduction_pct / 100
+        heat_payment: {each_period: (t >= 1) * (t <= contract_term_years) * (baseline_cost - saving)}
+        term_share: contract_term_years / installation_lifetime_years
+        years_with_client: installation_lifetime_years - contract_term_years
+  contracts: {}
+  rulebooks:
+    kawarna_side:
+      kind: transfer
+      entity: kawarna
+      phase: settle
+      declare: {cash: asset, heat_revenue: income}
+      moves:
+        heat: {debit: cash, credit: heat_revenue, amount: {generator: src, output: heat_payment}}
+    client_side:
+      kind: transfer
+      entity: client
+      phase: settle
+      declare: {cash: asset, heat_expense: expense}
+      moves:
+        heat: {debit: heat_expense, credit: cash, amount: {generator: src, output: heat_payment}}
+  schemes:
+    pnl:
+      heat_revenue: revenue
+      heat_expense: heat
+  cuts:
+    revenue: {kind: pnl, entity: kawarna, scheme: pnl, include: [revenue]}
+  measures: {}
+figures:
+  kawarna.client_payment_vs_baseline: {cut: revenue, per: src.baseline_cost, at: 1}
+  kawarna.term_vs_lifetime_pct: {driver: src.term_share, at: 0, scale: 0.01}
+  kawarna.years_with_client: {driver: src.years_with_client, at: 0}

@@ -13,8 +13,9 @@ be caught:
 
 Then every deal gets its recorded verdict: those with a translation match with
 the planted error caught, except a deal whose record differs from its own
-source, which differs at exactly the figures named in ``RECORD_FINDINGS``; the
-rest are blocked.
+source, which differs at exactly the figures named in ``RECORD_FINDINGS``, and
+a deal whose every comparable figure is printed too coarsely for a 1% plant to
+show (``BLIND``: it agrees, but cannot count); the rest are blocked.
 """
 import pytest
 
@@ -32,9 +33,22 @@ HOLDOUT_WORDS = ("washington", "bundesliegenschaften", "jva_nuernberg", "tinker"
 RECORD_FINDINGS = {
     # the record takes 80% of the source's ROUNDED annual savings; the books take 80% of the exact ones
     "eria_hospital": {"eria.esco_share_record"},
+    # the printed contract value is 238.52 months of the winning bid, not the 240 of the term
+    "belo_horizonte_public_lighting_ppp": {"bh.value_over_investment"},
+    # the page's 20.82m a year of budget relief contradicts its own "keine Haushaltsentlastung möglich"
+    "berlin_pool24": {"pool24.relief_over_guarantee", "pool24.relief_over_base"},
+    # the record multiplies the ROUNDED instalment (12 x 4,513); the books pay the exact annuity
+    "geolumen_ener2crowd": {"geolumen.total_repaid"},
 }
 #: differing deals whose plant cannot be seen, with why
 UNPLANTABLE: dict = {}
+#: translated deals that agree but whose planted 1% change cannot show, because every figure they can
+#: compare is printed coarser than 1% of it; each translation's header says which figures and why
+BLIND = {
+    "carpinteria_siemens_lease_purchase",   # only the lease term in whole years (principal left blank)
+    "hungary_moe_school_espc_framework",    # one figure, a whole percent (45.045 printed 45)
+    "kawarna_biomass",                      # 0.90, 40 and 15: per-unit and year counts, coarsely rounded
+}
 
 
 def test_every_deal_and_the_answer_key_are_vendored_and_in_the_manifest():
@@ -92,11 +106,13 @@ def test_a_citation_or_unit_is_not_an_input_even_when_it_holds_a_number():
 @pytest.mark.parametrize("oid", ORACLES)
 def test_every_deal_gets_its_recorded_verdict(oid):
     r = O.receipt(FAMILY, oid, commit="test")
-    assert r.verdict != "blind", r.reason
+    assert r.verdict != "blind" or oid in BLIND, r.reason
     if oid in RECORD_FINDINGS:
         assert r.verdict == "differs", r.reason
         assert {c["name"] for c in r.checks if not c["ok"]} == RECORD_FINDINGS[oid]
         assert r.planted_caught or oid in UNPLANTABLE, "the plant broke none of the checks that agree"
+    elif oid in BLIND:
+        assert r.verdict == "blind" and r.n_failed == 0, r.reason
     elif oid in TRANSLATED:
         assert r.verdict == "matches", r.reason
         assert r.planted_caught and r.n_checks >= 3

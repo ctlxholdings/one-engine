@@ -1,0 +1,91 @@
+# esco deal "belo_horizonte_public_lighting_ppp": the public-lighting administrative concession (PPP) of the
+# Municipio de Belo Horizonte with BH Iluminacao Publica S.A., 20 years from 13 July 2016 (RADAR PPP
+# tracker, gazette extracts; BHIP news item; cases/reference/esco/ontology/miniature/cases/
+# belo_horizonte_public_lighting_ppp-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * periods are years: 0 is the signing year, when the concessionaire (the SPE) makes the estimated
+#     investment, estimated_investment_brl, from its shareholders' capital (the equity/debt split and
+#     the lenders are not stated, so all of it is capital);
+#   * the municipality pays the SPE the monthly contraprestacao, the winning bid
+#     (winning_bid_brl_per_month, the monthly maximum, computed with the performance measurement
+#     system), twelve months a year for term_years from period 1; the SPE's revenue, the
+#     municipality's expense, paid in the month;
+#   * the SPE's operating costs, the verifier contracts, the reimbursement of the studies and the
+#     2023 aporte feed no figure of the answer key and are not booked. No tax.
+# The figures:
+#   * bh.per_point_per_month: the municipality's payment in a year, from the books, per point-month
+#     (lighting_points x 12 months: a physical quantity no ledger holds);
+#   * bh.value_over_investment: the SPE's moic, what the contract pays over what it invested.
+#     It DIFFERS, and the cause is the case file's, not the books': the printed contract value,
+#     contract_value_brl 991,782,559.72, is not the winning bid times the 240 months of the term
+#     (997,938,240; 238.52 months' worth), a gap the case file records as unexplained and the answer
+#     key marks xfail for bh.contract_value_vs_bid_x_term. The books pay the bid for the term,
+#     997,938,240 over 495,940,000 = 2.012; the figure divides the printed value, 2.000.
+#   * bh.bid_gap_thousands is set aside: it compares the winning bid with the second bidder's, an
+#     offer the municipality never contracted (an alternative the books cannot hold; the esco family
+#     has no variant run).
+esco: belo_horizonte_public_lighting_ppp
+entity: municipality
+plant: winning_bid_brl_per_month
+case:
+  case: esco-belo-horizonte-public-lighting-ppp
+  periods: 21
+  phases: [accrue, settle]
+  currency: BRL
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 21
+      inputs: esco
+      values:
+        contraprestacao: {each_period: winning_bid_brl_per_month * 12 * (t >= 1) * (t <= term_years)}
+        point_months: lighting_points * 12
+  contracts:
+    shareholders:
+      type: equity_funding
+      parties: {issuer: spe}
+      terms: {amount: {generator: src, output: estimated_investment_brl}, period: 0}
+    network:
+      type: one_off_purchase
+      parties: {buyer: spe}
+      terms: {amount: {generator: src, output: estimated_investment_brl}, period: 0}
+  opening:
+    municipality:
+      cash: {nature: asset, value: 0}
+  rulebooks:
+    municipality_pays:
+      kind: transfer
+      entity: municipality
+      phase: settle
+      declare:
+        lighting_contraprestacao: expense
+      moves:
+        pay: {debit: lighting_contraprestacao, credit: cash, amount: {generator: src, output: contraprestacao}}
+    spe_receives:
+      kind: transfer
+      entity: spe
+      phase: settle
+      declare:
+        contraprestacao_revenue: income
+      moves:
+        receive: {debit: cash, credit: contraprestacao_revenue, amount: {generator: src, output: contraprestacao}}
+  schemes:
+    pnl:
+      lighting_contraprestacao: contraprestacao
+      contraprestacao_revenue: revenue
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      contraprestacao_revenue: operating
+  cuts:
+    municipality_payment: {kind: pnl, entity: municipality, scheme: pnl, include: [contraprestacao]}
+    spe_project_cash_flow: {entity: spe, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    value_over_investment: {measure: moic, cut: spe_project_cash_flow}
+figures:
+  bh.per_point_per_month: {cut: municipality_payment, at: 1, sign: -1, per: src.point_months}
+  bh.value_over_investment: {measure: value_over_investment}
+not_compared:
+  bh.bid_gap_thousands: "the gap between the winning bid and the second bidder's offer: the second offer was never contracted, so the books hold nothing it pays (an alternative; the esco family runs no variant)"

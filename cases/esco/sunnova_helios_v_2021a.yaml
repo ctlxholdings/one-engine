@@ -1,0 +1,79 @@
+# esco deal "sunnova_helios_v_2021a": Sunnova Helios V Issuer, LLC, Solar Loan Backed Notes, Series
+# 2021-A, a securitisation of residential solar loans (KBRA presale report; cases/reference/esco/
+# ontology/miniature/cases/sunnova_helios_v_2021a-lod0.yaml; answer key cases/reference/esco/tests/
+# test_lod0_numbers.py).
+#
+# Every amount is a number of the deal by name (generator `src`). One period, the closing date, in
+# the issuer's books:
+#   * the issuer sells the class A (class_a_usd) and class B (class_b_usd) notes;
+#   * it takes the collateral (total_collateral_usd_approx): the statistical pool of loans
+#     (statistical_pool_usd, loans_in_pool loans) and, for the rest, a prefunding account to buy
+#     loans after closing; it funds the reserve account at initial_reserve_pct of the collateral
+#     (KBRA's credit-enhancement arithmetic counts the reserve in points of the collateral);
+#   * Sunnova, the sponsor, keeps the residual interest: what the collateral and the reserve cost
+#     beyond the notes (equity in the issuer's books);
+#   * the prefunded share, the initial overcollateralisation and each class's credit enhancement
+#     are balances read per the collateral: the prefunding account; the collateral less the notes;
+#     the class B notes and the residual below class A; the residual below class B;
+#   * the average loan balance is the pool read per the number of loans;
+#   * the annual excess spread is KBRA's spread of three annual rates (the pool's weighted coupon
+#     less the notes' weighted coupon less the servicing and other fees, each a rate per annum on
+#     the collateral): no ledger holds a rate, so it is a driver (rule 4).
+# The collateral is printed 'approximately $208.4 million', so the OC and credit-enhancement figures
+# land within the answer key's bands, not on the printed 9.50 / 29.00 / 10.50. The loan terms,
+# FICO, loss range, ITC, production-guarantee and interest-account inputs feed no figure. No tax,
+# no cash flows after closing (the report prints no payment schedule).
+esco: sunnova_helios_v_2021a
+entity: helios_issuer
+plant: class_a_usd
+case:
+  case: esco-sunnova-helios-v
+  periods: 1
+  phases: [accrue]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: esco
+      values:
+        prefunded: total_collateral_usd_approx - statistical_pool_usd
+        reserve: total_collateral_usd_approx * initial_reserve_pct / 100
+        residual: total_collateral_usd_approx + reserve - class_a_usd - class_b_usd
+        excess_spread: wa_coupon_pct - wa_bond_coupon_pct - servicing_and_other_fees_pct
+  opening:
+    helios_issuer:
+      cash: {nature: asset, value: 0}
+  contracts: {}
+  rulebooks:
+    closing:
+      kind: transfer
+      entity: helios_issuer
+      phase: accrue
+      declare:
+        class_a_notes: liability
+        class_b_notes: liability
+        residual_interest: equity
+        pool_loans: asset
+        prefunding_account: asset
+        reserve_account: asset
+      moves:
+        class_a: {debit: cash, credit: class_a_notes, amount: {generator: src, output: class_a_usd}}
+        class_b: {debit: cash, credit: class_b_notes, amount: {generator: src, output: class_b_usd}}
+        sponsor: {debit: cash, credit: residual_interest, amount: {generator: src, output: residual}}
+        pool: {debit: pool_loans, credit: cash, amount: {generator: src, output: statistical_pool_usd}}
+        prefund: {debit: prefunding_account, credit: cash, amount: {generator: src, output: prefunded}}
+        reserve: {debit: reserve_account, credit: cash, amount: {generator: src, output: reserve}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  sunnova.notes_sum: {balance: class_a_notes + class_b_notes}
+  sunnova.prefunded_share_pct: {balance: prefunding_account, per: src.total_collateral_usd_approx, scale: 0.01}
+  sunnova.initial_oc_band: {balance: pool_loans + prefunding_account - class_a_notes - class_b_notes,
+                            per: src.total_collateral_usd_approx, scale: 0.01}
+  sunnova.class_a_ce_band: {balance: class_b_notes + residual_interest, per: src.total_collateral_usd_approx, scale: 0.01}
+  sunnova.class_b_ce_band: {balance: residual_interest, per: src.total_collateral_usd_approx, scale: 0.01}
+  sunnova.excess_spread: {driver: src.excess_spread}
+  sunnova.average_balance: {balance: pool_loans, per: src.loans_in_pool}
