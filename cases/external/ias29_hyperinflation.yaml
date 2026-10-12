@@ -1,0 +1,60 @@
+# External fixture "ias29_hyperinflation": an IAS 29 net monetary position worked example, entity Q,
+# one year in which the general price index rises from index_open to index_close
+# (cases/reference/external/ias29_hyperinflation.json).
+#
+# Every amount is a fixture input by name, or a formula over them (generator `src`):
+#   * the books open on the fixture's balance sheet: monetary assets (cash) and monetary liabilities
+#     (borrowings) at their stated amounts, the land (the only non-monetary item) at its historical
+#     cost; equity is what balances them;
+#   * at the year end the books are restated to the closing measuring unit (IAS 29.8): monetary items
+#     are already in it and are not restated (29.12); the land and the opening equity are restated by
+#     the index's rise (29.15, 29.24). Both restatements are posted against one P&L account,
+#     net_monetary_position: the land's restatement credits it, the equity's debits it, and what is
+#     left is the gain or loss on the net monetary position, derived as IAS 29.27 allows (from the
+#     restatement of non-monetary assets and owners' equity), not computed from the monetary items;
+#   * net_monetary_position is read from the books as cash less borrowings.
+external: ias29_hyperinflation
+entity: q
+plant: index_close
+case:
+  case: external-ias-hyperinflation
+  periods: 1
+  phases: [restate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: external
+      values:
+        rise: index_close / index_open - 1
+        land_restated: land * rise
+        equity_restated: (monetary_assets + land - monetary_liabilities) * rise
+  opening:
+    q:
+      cash: {nature: asset, value: {generator: src, output: monetary_assets}}
+      land: {nature: asset, value: {generator: src, output: land}}
+      borrowings: {nature: liability, value: {generator: src, output: monetary_liabilities}}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    restatement:
+      kind: transfer
+      entity: q
+      phase: restate
+      declare: {net_monetary_position: income, equity_restatement: equity}
+      moves:
+        land: {debit: land, credit: net_monetary_position, amount: {generator: src, output: land_restated}}
+        equity: {debit: net_monetary_position, credit: equity_restatement,
+                 amount: {generator: src, output: equity_restated}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  net_monetary_position: {balance: cash - borrowings}
+  monetary_gain: {balance: net_monetary_position}
+  land_at_current_cost: {balance: land}
+notes: >
+  The fixture's gain (360,000) is the net monetary liability (900,000) times the index's 40% rise; the
+  books reach it the other way, as the land's restatement (400,000) less the opening equity's (40,000).

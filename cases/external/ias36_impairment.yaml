@@ -1,0 +1,66 @@
+# External fixture "ias36_impairment": a cash-generating unit impaired to its value in use, one
+# reporting date (IAS 36 worked example, eduyush.com; cases/reference/external/ias36_impairment.json).
+#
+# Every amount is a fixture input by name, or a formula over them (generator `src`):
+#   * the books open on the carrying amounts: the CGU's goodwill, property, plant and patent, and the
+#     inventory and receivables outside the CGU (not tested with it); equity balances them;
+#   * the recoverable amount is the value in use the fixture gives (it exceeds fair value less costs
+#     of disposal, so IAS 36.18 takes it); the loss is the CGU's carrying amount less it (36.90);
+#   * the loss is allocated as IAS 36.104 orders: goodwill first, to nil at most; the rest to the
+#     CGU's other assets pro rata to their carrying amounts. No pack holds that allocation, so the
+#     formulas state it; the books post each write-down to one impairment expense and carry what is
+#     left;
+#   * the fixture prints the pro rata lines to the nearest thousand (its tolerance); the CGU total and
+#     the loss are exact.
+external: ias36_impairment
+entity: group
+plant: recoverable_amount
+case:
+  case: external-ias-impairment
+  periods: 1
+  phases: [impair]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: external
+      values:
+        loss: max(0, goodwill + property + plant + patent - recoverable_amount)
+        on_goodwill: min(goodwill, loss)
+        on_others: (loss - on_goodwill) / (property + plant + patent)
+        on_property: property * on_others
+        on_plant: plant * on_others
+        on_patent: patent * on_others
+  opening:
+    group:
+      goodwill: {nature: asset, value: {generator: src, output: goodwill}}
+      property: {nature: asset, value: {generator: src, output: property}}
+      plant: {nature: asset, value: {generator: src, output: plant}}
+      patent: {nature: asset, value: {generator: src, output: patent}}
+      inventory: {nature: asset, value: {generator: src, output: inventory}}
+      receivables: {nature: asset, value: {generator: src, output: receivables}}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    impairment:
+      kind: transfer
+      entity: group
+      phase: impair
+      declare: {impairment_loss: expense}
+      moves:
+        goodwill: {debit: impairment_loss, credit: goodwill, amount: {generator: src, output: on_goodwill}}
+        property: {debit: impairment_loss, credit: property, amount: {generator: src, output: on_property}}
+        plant: {debit: impairment_loss, credit: plant, amount: {generator: src, output: on_plant}}
+        patent: {debit: impairment_loss, credit: patent, amount: {generator: src, output: on_patent}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  goodwill: {balance: goodwill}
+  property: {balance: property}
+  plant: {balance: plant}
+  patent: {balance: patent}
+  cgu_total: {balance: goodwill + property + plant + patent}
+  impairment: {balance: impairment_loss}

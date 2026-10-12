@@ -1,0 +1,84 @@
+# External fixture "modeloff_property": ModelOff "Buying an Investment Property", official answers,
+# ten years (cases/reference/external/modeloff_property.json). The extract carries ModelOff's own
+# yearly series as inputs (the revaluation gain, rent, agency fees, maintenance, interest, income tax,
+# the loan repayment) and its balance sheet lines as answers.
+#
+# Every amount is a fixture input by name (generator `src`):
+#   * year 0 opens with the sources and uses: the investor's equity and the loan come in, the
+#     apartment is bought for cash, and the bank charges and the furniture are expensed (the fixture
+#     sets them beside the purchase, not in the apartment's cost);
+#   * the apartment is carried at fair value: each year's gain raises it against a revaluation
+#     income, with no cash (IAS 40.35);
+#   * rent is received in cash; agency, maintenance, interest and income tax are paid in cash (the
+#     fixture prints them as negative amounts, so each is posted at its negation);
+#   * every remaining dollar repays the loan (the fixture's repayment series, also printed negative);
+#   * equity is read from the books as the investor's contribution plus every income less every
+#     expense, not declared.
+# Not reported: cgt and exit_cash. The capital gains tax on a sale (and so the exit cash after it)
+# needs a capital gains tax rate and a cost base, which this extract does not carry (the full ModelOff
+# case, cases/modeloff_investment_property.yaml, has them; this fixture does not). The library's
+# own test reads cgt as given and checks only exit_cash = equity - cgt.
+external: modeloff_property
+entity: investor
+plant: debt
+case:
+  case: external-modeloff-property
+  periods: 10
+  phases: [fund, operate]
+  currency: AUD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 10
+      inputs: external
+      values:
+        start: t == 0
+        equity_in: equity * start
+        loan_in: debt * start
+        bought: apartment * start
+        charges: bank_charges * start
+        furnished: furniture * start
+        agency_paid: -agency
+        maintenance_paid: -maintenance
+        interest_paid: -interest
+        tax_paid: -tax
+        repaid: -repayment
+  opening:
+    investor:
+      cash: {nature: asset, value: 0}
+      contributed: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    purchase:
+      kind: transfer
+      entity: investor
+      phase: fund
+      declare: {loan: liability, apartment: asset, bank_charges: expense, furniture: expense}
+      moves:
+        equity: {debit: cash, credit: contributed, amount: {generator: src, output: equity_in}}
+        loan: {debit: cash, credit: loan, amount: {generator: src, output: loan_in}}
+        apartment: {debit: apartment, credit: cash, amount: {generator: src, output: bought}}
+        charges: {debit: bank_charges, credit: cash, amount: {generator: src, output: charges}}
+        furniture: {debit: furniture, credit: cash, amount: {generator: src, output: furnished}}
+    year:
+      kind: transfer
+      entity: investor
+      phase: operate
+      declare: {revaluation: income, rent: income, agency: expense, maintenance: expense, interest: expense,
+                income_tax: expense}
+      moves:
+        revalue: {debit: apartment, credit: revaluation, amount: {generator: src, output: gain}}
+        rent: {debit: cash, credit: rent, amount: {generator: src, output: rental}}
+        agency: {debit: agency, credit: cash, amount: {generator: src, output: agency_paid}}
+        maintenance: {debit: maintenance, credit: cash, amount: {generator: src, output: maintenance_paid}}
+        interest: {debit: interest, credit: cash, amount: {generator: src, output: interest_paid}}
+        tax: {debit: income_tax, credit: cash, amount: {generator: src, output: tax_paid}}
+        repay: {debit: loan, credit: cash, amount: {generator: src, output: repaid}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  apartment: {balance: apartment}
+  loan: {balance: loan}
+  equity: {balance: contributed + revaluation + rent - agency - maintenance - interest - income_tax - bank_charges - furniture}

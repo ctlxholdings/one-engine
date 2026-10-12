@@ -313,6 +313,7 @@ def families() -> List[Family]:
     from one_engine.oracles.actus import ActusFamily
     from one_engine.oracles.golds import GoldFamily
     from one_engine.oracles.esco import EscoFamily
+    from one_engine.oracles.external import ExternalFamily
     from one_engine.oracles.library import LibraryFamily
     from one_engine.oracles.published import PublishedFamily
-    return [ActusFamily(), GoldFamily(), PublishedFamily(), EscoFamily(), LibraryFamily()]
+    return [ActusFamily(), GoldFamily(), PublishedFamily(), EscoFamily(), LibraryFamily(), ExternalFamily()]

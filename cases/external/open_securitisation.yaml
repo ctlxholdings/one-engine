@@ -1,0 +1,148 @@
+# External fixture "open_securitisation": openSecuritisation's (Open Risk, Apache-2.0) zero-default
+# deterministic scenario, a 20-period cash securitisation (cases/reference/external/
+# open_securitisation.json).
+#
+# Every amount is a fixture input by name, or a formula over them (generator `src`):
+#   * the vehicle opens holding the asset pool (its initial notional), funded by four bonds at their
+#     initial notionals (A1 senior, then M1, M2, M3 by rank) and the equity tranche; the opening
+#     balance sheet balances by construction (the fixture's pool equals its bonds plus its equity);
+#   * each period the pool pays the scenario's interest and principal proceeds into cash; nothing
+#     defaults, so no recovery is used;
+#   * each bond is a term loan (`term_loan`): coupon at its spread over the risk-free rate on its
+#     opening notional each period, bullet repayment in the last period;
+#   * senior fees accrue at senior_fees on the pool's notional each period and are paid first;
+#   * the engine's waterfall (`waterfall`) then pays, in order, the fees, each bond's coupon by rank,
+#     each bond's principal by rank, and the residual to the equity tranche. The fixture's
+#     sequential structure pays interest and principal through separate priorities; with every
+#     claim met in full, as here, the order changes no payment;
+#   * a bond's payment is its coupon plus the fall in its notional, read from the books; the
+#     scheduled payment is read the same way, since nothing is short;
+#   * the sanity totals are read as totals over the 20 periods.
+# Not reported: the over-collateralisation and interest-coverage tests (oc_ratios, oc_status,
+# ic_ratios, ic_status). The waterfall's tests are coverage tests on debt service (DSCR); it has no
+# test of a balance against a balance (pool notional over the bonds ranked at or above a test) or of
+# interest left after a rank over the coupons through it. With every test passing, nothing in this
+# scenario is diverted, so no other figure depends on them.
+external: open_securitisation
+entity: spv
+plant: senior_fees
+case:
+  case: external-open-securitisation
+  periods: 20
+  phases: [collect, accrue, pay]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 20
+      inputs: external
+      values:
+        last: n_periods - 1
+        a1_rate: risk_free_rate + bonds_0__bond_spread
+        m1_rate: risk_free_rate + bonds_1__bond_spread
+        m2_rate: risk_free_rate + bonds_2__bond_spread
+        m3_rate: risk_free_rate + bonds_3__bond_spread
+        fees_due: senior_fees * notional
+  opening:
+    spv:
+      cash: {nature: asset, value: 0}
+      pool: {nature: asset, value: {generator: src, output: asset_scenario__initial_notional}}
+      A1.debt: {nature: liability, value: {generator: src, output: bonds_0__initial_notional}}
+      M1.debt: {nature: liability, value: {generator: src, output: bonds_1__initial_notional}}
+      M2.debt: {nature: liability, value: {generator: src, output: bonds_2__initial_notional}}
+      M3.debt: {nature: liability, value: {generator: src, output: bonds_3__initial_notional}}
+      equity.capital: {nature: equity, value: {generator: src, output: equity_amount}}
+  contracts:
+    A1:
+      type: term_loan
+      parties: {borrower: spv}
+      terms: &bond {commitment: {generator: src, output: bonds_0__initial_notional},
+                    rate: {generator: src, output: a1_rate}, rate_from: 0, days_per_period: 1,
+                    day_count_basis: 1, available_until: 0, commitment_fee_rate: 0,
+                    repay_from: {generator: src, output: last}, repay_periods: 1}
+    M1:
+      type: term_loan
+      parties: {borrower: spv}
+      terms: {<<: *bond, commitment: {generator: src, output: bonds_1__initial_notional},
+              rate: {generator: src, output: m1_rate}}
+    M2:
+      type: term_loan
+      parties: {borrower: spv}
+      terms: {<<: *bond, commitment: {generator: src, output: bonds_2__initial_notional},
+              rate: {generator: src, output: m2_rate}}
+    M3:
+      type: term_loan
+      parties: {borrower: spv}
+      terms: {<<: *bond, commitment: {generator: src, output: bonds_3__initial_notional},
+              rate: {generator: src, output: m3_rate}}
+    equity:
+      type: sponsor_equity
+      parties: {issuer: spv}
+      terms: {}
+  rulebooks:
+    proceeds:
+      kind: transfer
+      entity: spv
+      phase: collect
+      declare: {pool_interest: income, senior_fees: expense, fees_payable: liability}
+      moves:
+        interest: {debit: cash, credit: pool_interest, amount: {generator: src, output: interest_proceeds}}
+        principal: {debit: cash, credit: pool, amount: {generator: src, output: principal_proceeds}}
+        fees: {debit: senior_fees, credit: fees_payable, amount: {generator: src, output: fees_due}}
+    waterfall:
+      kind: waterfall
+      entity: spv
+      phase: pay
+      cash: cash
+      tiers:
+        - {name: fees, account: fees_payable}
+        - {claim: A1.interest}
+        - {claim: M1.interest}
+        - {claim: M2.interest}
+        - {claim: M3.interest}
+        - {claim: A1.principal}
+        - {claim: M1.principal}
+        - {claim: M2.principal}
+        - {claim: M3.principal}
+      residual: equity.distribute
+      cfads: {scheme: cash_flow, classes: [collections], less: [fees]}
+      service: [A1.interest, M1.interest, M2.interest, M3.interest, A1.principal, M1.principal, M2.principal,
+                M3.principal]
+      tests: []
+  schemes:
+    cash_flow:
+      pool_interest: collections
+      pool: collections
+      fees_payable: fees
+      A1.debt: bonds
+      M1.debt: bonds
+      M2.debt: bonds
+      M3.debt: bonds
+      A1.interest_payable: bonds
+      M1.interest_payable: bonds
+      M2.interest_payable: bonds
+      M3.interest_payable: bonds
+      equity.distributions: equity
+  cuts:
+    inflows: {entity: spv, account: cash, scheme: cash_flow, include: [collections]}
+    fees_paid: {entity: spv, account: cash, scheme: cash_flow, include: [fees]}
+    paid_out: {entity: spv, account: cash, scheme: cash_flow, include: [bonds, equity]}
+  measures: {}
+figures:
+  bond_payments.A1: {change: A1.interest - A1.debt}
+  bond_payments.M1: {change: M1.interest - M1.debt}
+  bond_payments.M2: {change: M2.interest - M2.debt}
+  bond_payments.M3: {change: M3.interest - M3.debt}
+  bond_notionals.A1: {balance: A1.debt}
+  bond_notionals.M1: {balance: M1.debt}
+  bond_notionals.M2: {balance: M2.debt}
+  bond_notionals.M3: {balance: M3.debt}
+  bond_scheduled_payments.A1: {change: A1.interest - A1.debt}
+  bond_scheduled_payments.M1: {change: M1.interest - M1.debt}
+  bond_scheduled_payments.M2: {change: M2.interest - M2.debt}
+  bond_scheduled_payments.M3: {change: M3.interest - M3.debt}
+  equity_payments: {change: equity.distributions, sign: -1}
+  _sanity.total_asset_inflows: {cut: inflows, total: true}
+  _sanity.total_bond_and_equity_outflows: {cut: paid_out, sign: -1, total: true}
+  _sanity.total_senior_fees: {cut: fees_paid, sign: -1, total: true}

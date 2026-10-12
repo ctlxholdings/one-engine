@@ -1,0 +1,68 @@
+# External fixture "cfi_3statement": Corporate Finance Institute's three-statement model, 2012 to
+# 2017 by year (cases/reference/external/cfi_3statement.json). The extract carries the income
+# statement lines, capex, debt and equity issued, and the opening fixed assets and debt as inputs, and
+# CFI's balance sheet lines as answers.
+#
+# Every amount is a fixture input by name (generator `src`):
+#   * the books open on the fixed assets and the debt the fixture gives; opening equity balances
+#     them (nil: CFI's first year opens with no equity);
+#   * each year's equity issue is paid in for cash; each year's debt issue (a negative issue is a
+#     repayment) moves the debt against cash;
+#   * revenue, cost of goods sold, salaries, rent, interest and taxes are posted to the income
+#     statement against cash; depreciation reduces the fixed assets; capex adds to them for cash;
+#   * equity is read from the books as the shares issued plus the retained profit (every income
+#     less every expense), never as assets less liabilities.
+# Not reported: cash, ar, inventory, ap. CFI holds receivables, inventory and payables at a share of
+# revenue or cost of goods sold (5% of revenue, 20% and 10% of COGS in 2012), and those working-
+# capital drivers are not in the extract. Without them the receivables, the stock, the payables and
+# so the cash cannot be derived; the cash the books here hold is before working capital and is not
+# compared. The library's own test feeds CFI's printed receivables, inventory and payables back in as
+# inputs (its collections and purchases are built from them), so those four lines pass there by
+# construction.
+external: cfi_3statement
+entity: company
+plant: ppe
+case:
+  case: external-cfi-three-statement
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 6
+      inputs: external
+      values: {}
+  opening:
+    company:
+      ppe: {nature: asset, value: {generator: src, output: ppe}}
+      debt: {nature: liability, value: {generator: src, output: debt}}
+      opening_equity: {nature: equity, value: balancing}
+      cash: {nature: asset, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {share_capital: equity, revenue: income, cogs: expense, salaries: expense, rent: expense,
+                depreciation: expense, interest: expense, taxes: expense}
+      moves:
+        shares: {debit: cash, credit: share_capital, amount: {generator: src, output: equity_issue}}
+        borrowing: {debit: cash, credit: debt, amount: {generator: src, output: debt_issue}}
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        cogs: {debit: cogs, credit: cash, amount: {generator: src, output: cogs}}
+        salaries: {debit: salaries, credit: cash, amount: {generator: src, output: salaries}}
+        rent: {debit: rent, credit: cash, amount: {generator: src, output: rent}}
+        interest: {debit: interest, credit: cash, amount: {generator: src, output: interest}}
+        taxes: {debit: taxes, credit: cash, amount: {generator: src, output: taxes}}
+        depreciation: {debit: depreciation, credit: ppe, amount: {generator: src, output: depreciation}}
+        capex: {debit: ppe, credit: cash, amount: {generator: src, output: capex}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ppe: {balance: ppe}
+  debt: {balance: debt}
+  equity: {balance: opening_equity + share_capital + revenue - cogs - salaries - rent - depreciation - interest - taxes}
