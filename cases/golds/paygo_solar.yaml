@@ -1,0 +1,468 @@
+# Gold "paygo_solar": pay-as-you-go solar home systems around Ouagadougou, one stationary year by
+# month (cases/reference/golds/paygo_solar.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the business is stationary: pre_horizon_installs_per_month kits a month have been sold for
+#     as long as a contract lasts, so the receivable book, two months of kits, the supplier
+#     advance and the motos are carried in at their steady-state levels;
+#   * a kit is sold at kit_cash_price: the deposit in cash at installation, the financed amount
+#     on credit (kit_vat_rate is nil: the solar exoneration). The credit book is the gold's own cohort arithmetic, read by name: per kit
+#     installed a month, the book carried (receivable_stock_per_cohort_kit), the instalments
+#     collected (instalment_cash_per_cohort_kit), the effective interest earned
+#     (financing_income_per_cohort_kit), and the balances written off when a customer stops at
+#     month 6 or 7 (receivable_balance_after_month6 and _month7, at default_share_month6 and
+#     _month7). They rest on a weekly effective rate and fractional weeks, which exact formulas
+#     cannot recompute, so the translation takes them as the gold states them;
+#   * each defaulted kit is recovered at recovery_cost_per_default, refurbished (half the
+#     batteries and all the lamps replaced) and resold for cash at resale_price_refurb;
+#   * kits: stock_cover_months of installs held, stock_shrinkage lost each month (its own cost
+#     line) and bought back; supplier_prepay_share of each order paid on ordering, the rest on
+#     delivery supplier_lag_weeks later, so the advance outstanding is that share of
+#     supplier_lag_weeks / weeks_per_month months of purchases (steady state: what lands is what
+#     was ordered that long before, the same amount);
+#   * payroll and employer charges, fuel and maintenance, rent, the patente (its proportional
+#     part on the rent, plus the fixed part), paid in the month; the cost lines the gold carries
+#     at nil (SIM platform, collection fees, in-contract service, marketing) are wired to their
+#     inputs;
+#   * the motos are carried at cost less moto_age_months_at_t0 of moto_life_months and
+#     depreciated monthly; their replacement falls after the year;
+#   * IBICA: the top band's rate on each month's profit, less the relief of the two lower bands
+#     spread over the year's 12 months (the gold's own schedule, valid while the year's profit is
+#     above the second band, which its checks assert); the CGA reduction applied to both.
+gold: paygo_solar
+entity: paygo
+plant: kit_cash_price
+case:
+  case: gold-paygo-solar
+  periods: 12
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 12
+      inputs: gold
+      values:
+        installs: {each_period: installs_per_month}      # flat: seasonality_amplitude is nil and no profile is stated
+        net: 1 / (1 + kit_vat_rate)
+        unit_cost: kit_purchase_cost * net
+        # the credit book, per kit installed a month (the gold's cohort figures)
+        cohort: {each_period: pre_horizon_installs_per_month}
+        defaults: cohort * (default_share_month6 + default_share_month7)
+        recovered: defaults * repossession_recovery_rate
+        # contract ages 0 to 8: all performing to age 6, the month-6 defaulters gone at age 7, the
+        # month-7 ones at age 8
+        active: cohort * (7 + (1 - default_share_month6) + (1 - default_share_month6 - default_share_month7))
+        book_carried: pre_horizon_installs_per_month * receivable_stock_per_cohort_kit
+        deposits: installs * deposit
+        financed: installs * (kit_cash_price - deposit)     # the gold's financed_amount
+        interest: cohort * financing_income_per_cohort_kit
+        collected: cohort * instalment_cash_per_cohort_kit
+        written_off: >-
+          cohort * (default_share_month6 * receivable_balance_after_month6
+          + default_share_month7 * receivable_balance_after_month7)
+        # refurbishment of the kits recovered
+        refurb_revenue: recovered * resale_price_refurb * net
+        refurb_cash: refurb_revenue * refurb_sale_is_cash
+        refurb_credit: refurb_revenue - refurb_cash
+        panels_in: recovered * panels_per_kit
+        panels_back: panels_in
+        batteries_in: recovered * batteries_per_kit
+        batteries_back: batteries_in * (1 - battery_replacement_rate)
+        batteries_bought: batteries_in - batteries_back
+        lamps_in: recovered * lamps_per_kit
+        lamps_lost: recovered * lamps_lost_per_repossessed_kit
+        lamps_back: lamps_in - lamps_lost
+        radios_in: recovered * radiochargers_per_kit
+        radios_back: recovered * radiocharger_recovery_rate
+        radios_lost: radios_in - radios_back
+        refurb_parts: >-
+          batteries_bought * refurb_battery_cost + lamps_lost * refurb_lamp_cost + radios_lost * radiocharger_replacement_cost
+        recovery: defaults * recovery_cost_per_default
+        # the kits in stock and the supplier
+        stock_level: stock_cover_months * installs_per_month
+        stock_units: {each_period: stock_level}
+        stock_open: stock_units * (t == 0)
+        shrunk: stock_units * inventory_shrinkage_rate_monthly
+        bought: installs + shrunk
+        cogs: installs * unit_cost
+        shrinkage: shrunk * unit_cost
+        purchases: bought * unit_cost
+        advance_paid: supplier_prepay_share * purchases
+        advance_released: advance_paid
+        paid_on_delivery: purchases - advance_released
+        # carried in: the steady month's stock, and the advance on supplier_lag_weeks of its purchases
+        stock_carried: stock_level * unit_cost
+        purchases_carried: (installs_per_month + stock_level * inventory_shrinkage_rate_monthly) * unit_cost
+        advance_carried: supplier_prepay_share * purchases_carried * supplier_lag_weeks / weeks_per_month
+        # people, premises, motos
+        payroll: {each_period: technicians * tech_wage_monthly}
+        cnss: payroll * cnss_employer_rate
+        tpa: payroll * tpa_rate
+        fuel_maint: {each_period: moto_fuel_maint_monthly}
+        rent: {each_period: rent_monthly}
+        patente: {each_period: (patente_droit_proportionnel_rate * rent_monthly * 12 + patente_droit_fixe_annual) / 12}
+        sim: active * sim_platform_cost_per_active_kit_month
+        collection_fees: collected / weekly_payment * collection_fee_per_instalment
+        service: active * in_contract_service_cost_per_active_kit_month
+        marketing: {each_period: marketing_cost_monthly}
+        trips: installs + recovered + defaults * recovery_trip_uses_company_moto
+        moto_days: {each_period: motos * (working_days_per_month - public_holidays_per_year / 12 - moto_downtime_days_per_month)}
+        moto_slack: moto_days - trips
+        tech_days:
+          each_period: >-
+            technicians * (working_days_per_month - public_holidays_per_year / 12
+            - paid_leave_working_days_per_month) * (1 - tech_absence_rate)
+        litres: fuel_maint * fuel_share_of_moto_budget / gasoline_price_per_litre
+        km: litres / moto_fuel_consumption_l_per_100km * 100
+        km_per_moto: km / motos
+        km_to_date: cumsum(km)
+        moto_carried: motos * moto_cost * (1 - moto_age_months_at_t0 / moto_life_months)
+        moto_life_left: moto_life_months - moto_age_months_at_t0
+        moto_replacement: motos * moto_cost * (t == moto_replacement_period_index)
+        # IBICA: the top band's rate, less the lower bands' relief a month
+        cga: 1 - cga_ibica_reduction * cga_member
+        ibica_rate: ibica_rate_band3 * cga
+        band_relief: >-
+          cga * ((ibica_rate_band3 - ibica_rate_band1) * ibica_band1_ceiling
+          + (ibica_rate_band3 - ibica_rate_band2) * (ibica_band2_ceiling - ibica_band1_ceiling)) / 12
+        relief: {each_period: band_relief}
+  opening:
+    paygo:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      motos: {nature: asset, value: {generator: gold, output: moto_carried}}
+      receivable: {nature: asset, value: {generator: gold, output: book_carried}}
+      inventory: {nature: asset, value: {generator: gold, output: stock_carried}}
+      advance: {nature: asset, value: {generator: gold, output: advance_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                      # all paid in the month; end: 60 is past the horizon
+    refurb_parts:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: refurb_parts}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    recovery:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: recovery}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    payroll:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: payroll}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    cnss:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: cnss}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    tpa:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: tpa}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    fuel_maint:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: fuel_maint}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    rent:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rent}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    patente:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: patente}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    sim:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: sim}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    collection_fees:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: collection_fees}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    service:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: service}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    marketing:
+      type: operating_cost
+      parties: {payer: paygo}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: marketing}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    moto_replacement:
+      type: capex
+      parties: {owner: paygo}
+      terms: {schedule: {generator: gold, output: moto_replacement}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+  rulebooks:
+    book:
+      kind: transfer
+      entity: paygo
+      phase: operate
+      declare:
+        goods_revenue: income
+        financing_income: income
+        refurb_revenue: income
+        kit_cost: expense
+        credit_losses: expense
+        shrinkage: expense
+      moves:
+        sell_deposit: {debit: cash, credit: goods_revenue, amount: {generator: gold, output: deposits}}
+        sell_credit: {debit: receivable, credit: goods_revenue, amount: {generator: gold, output: financed}}
+        accrue: {debit: receivable, credit: financing_income, amount: {generator: gold, output: interest}}
+        collect: {debit: cash, credit: receivable, amount: {generator: gold, output: collected}}
+        write_off: {debit: credit_losses, credit: receivable, amount: {generator: gold, output: written_off}}
+        resell_cash: {debit: cash, credit: refurb_revenue, amount: {generator: gold, output: refurb_cash}}
+        resell_credit: {debit: receivable, credit: refurb_revenue, amount: {generator: gold, output: refurb_credit}}
+        order: {debit: advance, credit: cash, amount: {generator: gold, output: advance_paid}}
+        apply_advance: {debit: inventory, credit: advance, amount: {generator: gold, output: advance_released}}
+        pay_on_delivery: {debit: inventory, credit: cash, amount: {generator: gold, output: paid_on_delivery}}
+        install: {debit: kit_cost, credit: inventory, amount: {generator: gold, output: cogs}}
+        shrink: {debit: shrinkage, credit: inventory, amount: {generator: gold, output: shrinkage}}
+    motos:
+      kind: asset_register
+      entity: paygo
+      phase: close
+      from: cwip
+      to: motos
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 60
+      life_periods: {generator: gold, output: moto_life_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: paygo
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: ibica_rate}
+      carry_forward_periods: null
+      scheme:
+        goods_revenue: taxable
+        financing_income: taxable
+        refurb_revenue: taxable
+        kit_cost: taxable
+        credit_losses: taxable
+        shrinkage: taxable
+        refurb_parts.expense: taxable
+        recovery.expense: taxable
+        payroll.expense: taxable
+        cnss.expense: taxable
+        tpa.expense: taxable
+        fuel_maint.expense: taxable
+        rent.expense: taxable
+        patente.expense: taxable
+        sim.expense: taxable
+        collection_fees.expense: taxable
+        service.expense: taxable
+        marketing.expense: taxable
+        depreciation: taxable
+        written_off: taxable
+        tax_expense: non_deductible
+        ibica_band_relief: non_deductible
+    bands:
+      kind: transfer
+      entity: paygo
+      phase: tax
+      declare:
+        ibica_band_relief: income
+      moves:
+        relief: {debit: tax_payable, credit: ibica_band_relief, amount: {generator: gold, output: relief}}
+    pay_tax:
+      kind: settle
+      entity: paygo
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      goods_revenue: goods
+      financing_income: financing
+      refurb_revenue: refurb
+      kit_cost: cogs
+      credit_losses: credit_losses
+      shrinkage: shrinkage
+      refurb_parts.expense: refurb_parts
+      recovery.expense: recovery
+      payroll.expense: payroll
+      cnss.expense: cnss
+      tpa.expense: tpa
+      fuel_maint.expense: fuel_maint
+      rent.expense: rent
+      patente.expense: patente
+      sim.expense: sim
+      collection_fees.expense: collection_fees
+      service.expense: service
+      marketing.expense: marketing
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+      ibica_band_relief: tax
+    cash_flow:
+      goods_revenue: deposits
+      receivable: instalments
+      refurb_revenue: refurb
+      advance: kits
+      inventory: kits
+      refurb_parts.payable: operating
+      recovery.payable: operating
+      payroll.payable: operating
+      cnss.payable: operating
+      tpa.payable: operating
+      fuel_maint.payable: operating
+      rent.payable: operating
+      patente.payable: operating
+      sim.payable: operating
+      collection_fees.payable: operating
+      service.payable: operating
+      marketing.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    goods: {kind: pnl, entity: paygo, scheme: pnl, include: [goods]}
+    financing: {kind: pnl, entity: paygo, scheme: pnl, include: [financing]}
+    refurb: {kind: pnl, entity: paygo, scheme: pnl, include: [refurb]}
+    revenue: {kind: pnl, entity: paygo, scheme: pnl, include: [goods, financing, refurb]}
+    cogs: {kind: pnl, entity: paygo, scheme: pnl, include: [cogs]}
+    refurb_parts: {kind: pnl, entity: paygo, scheme: pnl, include: [refurb_parts]}
+    recovery: {kind: pnl, entity: paygo, scheme: pnl, include: [recovery]}
+    shrinkage: {kind: pnl, entity: paygo, scheme: pnl, include: [shrinkage]}
+    credit_losses: {kind: pnl, entity: paygo, scheme: pnl, include: [credit_losses]}
+    payroll: {kind: pnl, entity: paygo, scheme: pnl, include: [payroll]}
+    cnss: {kind: pnl, entity: paygo, scheme: pnl, include: [cnss]}
+    tpa: {kind: pnl, entity: paygo, scheme: pnl, include: [tpa]}
+    fuel_maint: {kind: pnl, entity: paygo, scheme: pnl, include: [fuel_maint]}
+    rent: {kind: pnl, entity: paygo, scheme: pnl, include: [rent]}
+    patente: {kind: pnl, entity: paygo, scheme: pnl, include: [patente]}
+    sim: {kind: pnl, entity: paygo, scheme: pnl, include: [sim]}
+    collection_fees: {kind: pnl, entity: paygo, scheme: pnl, include: [collection_fees]}
+    service: {kind: pnl, entity: paygo, scheme: pnl, include: [service]}
+    marketing: {kind: pnl, entity: paygo, scheme: pnl, include: [marketing]}
+    opex: {kind: pnl, entity: paygo, scheme: pnl,
+           include: [refurb_parts, recovery, shrinkage, credit_losses, payroll, cnss, tpa, fuel_maint, rent, patente,
+                     sim, collection_fees, service, marketing]}
+    ebitda: {kind: pnl, entity: paygo, scheme: pnl,
+             include: [goods, financing, refurb, cogs, refurb_parts, recovery, shrinkage, credit_losses, payroll, cnss,
+                       tpa, fuel_maint, rent, patente, sim, collection_fees, service, marketing]}
+    depreciation: {kind: pnl, entity: paygo, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: paygo, scheme: pnl,
+           include: [goods, financing, refurb, cogs, refurb_parts, recovery, shrinkage, credit_losses, payroll, cnss,
+                     tpa, fuel_maint, rent, patente, sim, collection_fees, service, marketing, depreciation]}
+    tax: {kind: pnl, entity: paygo, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: paygo, scheme: pnl,
+            include: [goods, financing, refurb, cogs, refurb_parts, recovery, shrinkage, credit_losses, payroll, cnss,
+                      tpa, fuel_maint, rent, patente, sim, collection_fees, service, marketing, depreciation, tax]}
+    deposits: {entity: paygo, account: cash, scheme: cash_flow, include: [deposits]}
+    instalments: {entity: paygo, account: cash, scheme: cash_flow, include: [instalments]}
+    refurb_cash: {entity: paygo, account: cash, scheme: cash_flow, include: [refurb]}
+    kits: {entity: paygo, account: cash, scheme: cash_flow, include: [kits]}
+    cash_in: {entity: paygo, account: cash, scheme: cash_flow, include: [deposits, instalments, refurb]}
+    cash_out: {entity: paygo, account: cash, scheme: cash_flow, include: [kits, operating]}
+    cfo: {entity: paygo, account: cash, scheme: cash_flow, include: [deposits, instalments, refurb, kits, operating]}
+    cfi: {entity: paygo, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: paygo, account: cash, scheme: cash_flow,
+           include: [deposits, instalments, refurb, kits, operating, investing]}
+  measures: {}
+trace:
+  new_installs: {driver: gold.installs}
+  defaults_per_month: {driver: gold.defaults}
+  kits_recovered: {driver: gold.recovered}
+  refurb_installs: {driver: gold.recovered}
+  active_contracts: {driver: gold.active}
+  opening_inventory_injection: {driver: gold.stock_open}
+  inventory_units_opening: {driver: gold.stock_units}
+  kits_purchased: {driver: gold.bought}
+  kits_shrunk: {driver: gold.shrunk}
+  inventory_units: {balance: inventory, per: gold.unit_cost}
+  inventory_value: {balance: inventory}
+  panels_in_recovered_kits: {driver: gold.panels_in}
+  panels_recovered: {driver: gold.panels_back}
+  panels_lost: {sum: [{driver: gold.panels_in}, {driver: gold.panels_back, sign: -1}]}
+  panels_purchased: {sum: [{driver: gold.panels_in}, {driver: gold.panels_back, sign: -1}]}
+  panels_fitted_refurb: {driver: gold.panels_in}
+  batteries_in_recovered_kits: {driver: gold.batteries_in}
+  batteries_recovered_serviceable: {driver: gold.batteries_back}
+  batteries_scrapped: {driver: gold.batteries_bought}
+  batteries_purchased: {driver: gold.batteries_bought}
+  batteries_fitted_refurb: {driver: gold.batteries_in}
+  lamps_in_recovered_kits: {driver: gold.lamps_in}
+  lamps_recovered: {driver: gold.lamps_back}
+  lamps_lost: {driver: gold.lamps_lost}
+  lamps_purchased: {driver: gold.lamps_lost}
+  lamps_fitted_refurb: {driver: gold.lamps_in}
+  radiochargers_in_recovered_kits: {driver: gold.radios_in}
+  radiochargers_recovered: {driver: gold.radios_back}
+  radiochargers_lost: {driver: gold.radios_lost}
+  radiochargers_purchased: {driver: gold.radios_lost}
+  radiochargers_fitted_refurb: {driver: gold.radios_in}
+  trips_required: {driver: gold.trips}
+  moto_trip_capacity: {driver: gold.moto_days}
+  moto_slack_trip_days: {driver: gold.moto_slack}
+  tech_day_capacity: {driver: gold.tech_days}
+  litres_fuel_month: {driver: gold.litres}
+  km_fleet_month: {driver: gold.km}
+  km_per_moto_month: {driver: gold.km_per_moto}
+  cum_fleet_km: {driver: gold.km_to_date}
+  revenue_goods_new: {cut: goods}
+  revenue_financing: {cut: financing}
+  revenue_refurb_resale: {cut: refurb}
+  revenue_total: {cut: revenue}
+  cogs_new_kits: {cut: cogs, sign: -1}
+  cost_refurb_parts: {cut: refurb_parts, sign: -1}
+  cost_recovery: {cut: recovery, sign: -1}
+  cost_shrinkage: {cut: shrinkage, sign: -1}
+  credit_losses: {cut: credit_losses, sign: -1}
+  cost_payroll_gross: {cut: payroll, sign: -1}
+  cost_cnss: {cut: cnss, sign: -1}
+  cost_tpa: {cut: tpa, sign: -1}
+  cost_fuel_maint: {cut: fuel_maint, sign: -1}
+  cost_rent: {cut: rent, sign: -1}
+  cost_patente: {cut: patente, sign: -1}
+  cost_sim_platform: {cut: sim, sign: -1}
+  cost_collection_fees: {cut: collection_fees, sign: -1}
+  cost_in_contract_service: {cut: service, sign: -1}
+  cost_marketing: {cut: marketing, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  opening_receivables_injection: {carried_in: receivable}
+  receivable_additions: {driver: gold.financed}
+  receivable_interest_accrued: {driver: gold.interest}
+  receivable_collections: {driver: gold.collected}
+  receivable_writeoffs: {driver: gold.written_off}
+  receivables_gross: {balance: receivable}
+  refurb_receivable_created: {driver: gold.refurb_credit}
+  opening_advance_injection: {carried_in: advance}
+  advance_paid: {driver: gold.advance_paid}
+  advance_released: {driver: gold.advance_released}
+  supplier_advance: {balance: advance}
+  payables: {balance: refurb_parts.payable + recovery.payable + payroll.payable + cnss.payable + tpa.payable + fuel_maint.payable + rent.payable + patente.payable + sim.payable + collection_fees.payable + service.payable + marketing.payable}
+  nwc: {balance: inventory + receivable + advance - refurb_parts.payable - recovery.payable - payroll.payable - cnss.payable - tpa.payable - fuel_maint.payable - rent.payable - patente.payable - sim.payable - collection_fees.payable - service.payable - marketing.payable}
+  nwc_opening: {opening: inventory + receivable + advance - refurb_parts.payable - recovery.payable - payroll.payable - cnss.payable - tpa.payable - fuel_maint.payable - rent.payable - patente.payable - sim.payable - collection_fees.payable - service.payable - marketing.payable}
+  delta_nwc: {change: inventory + receivable + advance - refurb_parts.payable - recovery.payable - payroll.payable - cnss.payable - tpa.payable - fuel_maint.payable - rent.payable - patente.payable - sim.payable - collection_fees.payable - service.payable - marketing.payable}
+  moto_nbv_opening_injection: {carried_in: motos}
+  capex: {cut: cfi, sign: -1}
+  moto_nbv: {balance: motos + cwip}
+  cash_deposits: {cut: deposits}
+  cash_instalments: {cut: instalments}
+  cash_refurb_resale: {cut: refurb_cash}
+  cash_kit_purchases: {cut: kits, sign: -1}
+  cash_in_total: {cut: cash_in}
+  cash_out_total: {cut: cash_out, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

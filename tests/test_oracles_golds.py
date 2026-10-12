@@ -10,7 +10,9 @@ be caught:
 * a gold without a translation is ``blocked``, never ``matches``.
 
 Then every hand gold gets its recorded verdict: those with a translation
-match with the planted error caught; the rest are blocked.
+match with the planted error caught, except a gold that contradicts itself,
+which differs at the row its translation's notes explain; the rest are
+blocked.
 """
 import shutil
 from fractions import Fraction
@@ -26,6 +28,9 @@ FAMILY = GoldFamily()
 ORACLES = FAMILY.oracles()
 #: every translated gold must match; every other hand gold is blocked until translated
 TRANSLATED = {p.stem for p in TRANSLATIONS.glob("*.yaml")}
+#: translated golds whose receipt is ``differs`` because the gold contradicts itself, with the row
+#: it is first seen at; the cause is in the translation's notes, and the oracle is never edited
+GOLD_FINDINGS = {"importer_prepayment": "inv_active_opening"}
 
 
 def test_every_hand_gold_is_vendored_and_in_the_manifest():
@@ -40,7 +45,9 @@ def test_every_hand_gold_is_vendored_and_in_the_manifest():
 def test_every_hand_gold_gets_its_recorded_verdict(oid):
     r = O.receipt(FAMILY, oid, commit="test")
     assert r.verdict != "blind", r.reason
-    if oid in TRANSLATED:
+    if oid in GOLD_FINDINGS:
+        assert r.verdict == "differs" and r.first_difference["name"] == GOLD_FINDINGS[oid], r.reason
+    elif oid in TRANSLATED:
         assert r.verdict == "matches", r.reason
         assert r.planted_caught and r.n_checks > 3
     else:
@@ -109,6 +116,12 @@ def test_formulas_take_remainders_whole_powers_and_lags():
     assert out["month"] == [0, 1, 0]
     assert out["grown"] == [100, 110, 121]                              # exact: (11/10)**2 * 100
     assert out["prior"] == [0, 100, 110] and out["two_back"] == [0, 0, 100]
+
+
+def test_formulas_take_running_totals():
+    out = _gen({"landed": "(t % 2 == 0)", "to_date": "cumsum(landed)", "last_two": "to_date - lag(to_date, 2)",
+                "flat": "cumsum(base)"}, {"base": 5}, periods=4)
+    assert out["to_date"] == [1, 1, 2, 2] and out["last_two"] == [1, 1, 1, 1] and out["flat"] == [5, 10, 15, 20]
 
 
 def test_formulas_refuse_an_unknown_name_and_a_reused_one():
@@ -189,3 +202,24 @@ def test_a_row_times_a_rate_multiplies_by_the_gold_input(tmp_path):
     fam = _planted_copy(tmp_path, "arise_expiry", "{record: tax.expired, times: gold.tax_rate}", "{record: tax.expired}")
     r = O.receipt(fam, "arise_expiry", commit="test")
     assert r.verdict == "differs" and r.first_difference["name"] == "tax_shield_forgone"
+
+
+def test_a_pool_lives_its_mean_life_not_a_whole_number_of_years(tmp_path):
+    # the cylinders' mean life is 12.5 years; cut to a whole 12, the charge is too high
+    fam = _planted_copy(tmp_path, "lpg_deposits", "        mean_life: 1 / cylinder_loss_rate\n",
+                        "        mean_life: 1 / cylinder_loss_rate\n        whole_life: 12\n",
+                        more=[("      to: pool_6kg\n      expense: dep_cyl6\n      gross: {generator: gold, output: gross_6kg}\n"
+                               "      life_periods: {generator: gold, output: mean_life}",
+                               "      to: pool_6kg\n      expense: dep_cyl6\n      gross: {generator: gold, output: gross_6kg}\n"
+                               "      life_periods: {generator: gold, output: whole_life}")])
+    r = O.receipt(fam, "lpg_deposits", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] == "dep_cyl6"
+
+
+def test_the_lower_tax_bands_are_relieved(tmp_path):
+    # IBICA at the top rate on everything, without the two lower bands' relief, is too much tax
+    fam = _planted_copy(tmp_path, "paygo_solar",
+                        "        relief: {debit: tax_payable, credit: ibica_band_relief, amount: {generator: gold, output: relief}}\n",
+                        "        relief: {debit: tax_payable, credit: ibica_band_relief, amount: 0}\n")
+    r = O.receipt(fam, "paygo_solar", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] == "tax"

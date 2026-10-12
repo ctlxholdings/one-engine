@@ -1,0 +1,321 @@
+# Gold "importer_prepayment": a Cotonou motorcycle spare-parts wholesaler that prepays its
+# containers in full, over one stationary year by half-month (cases/reference/golds/importer_prepayment.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the gold's year repeats the one before it: containers in transit, stock on the shelf and
+#     credit to the shops are already there at its first half-month. The case starts the
+#     business from nothing warm_up half-months earlier, so the books build those balances
+#     themselves; the warm-up is long enough for every container of the gold's prior year to
+#     have been paid for (and no longer: earlier containers would land on a slow-stock pool the
+#     gold's prior year never had);
+#   * containers: one paid every container_order_interval_periods (goods_cost_per_container x
+#     supplier_prepayment_fraction, before loading), landed prepay_to_shelf_lag_periods later,
+#     when freight, insurance and duties are paid; the landed cost is the stock's cost;
+#   * each container sells through over sell_through_periods at its landed cost less its
+#     residue (annual_obsolete_stock_at_cost / containers_per_year), sold at
+#     realised_markup_on_landed over cost; the residue goes to a slow pool, cleared at the
+#     year's last half-month (24 a year: the gold's grid), dump_share_of_residue of it dumped at
+#     dump_price_factor of the price and the rest written off;
+#   * credit_sales_fraction of sales on credit_period_periods of credit, the rest paid at sale;
+#   * rent, wages and employer charges (CNSS, occupational risk, VPS), van running costs, the
+#     owner-manager's cost and other overheads, each paid in the half-month;
+#   * the van, carried at van_opening_nbv, depreciated straight-line over its remaining life
+#     (from the warm-up's start, so it is at the gold's book value at its first half-month);
+#   * tax at profit_tax_rate on each half-month's profit, paid in it (a loss gives a credit);
+#   * the gold carries transit losses, shrinkage and bad debts at nil rates and says so; the
+#     books carry none and those rows read nothing.
+#
+# The receipt is `differs`, and the gold is the reason (see notes): its opening stock on the
+# shelf counts two residues its own trace has already moved to the slow pool.
+gold: importer_prepayment
+notes: >-
+  The gold's inv_active_opening_balance (8 x a + 2 x residue_per_container) says the two
+  part-sold containers still hold "their two untouched residues" on the shelf. Its own trace
+  moves each container's residue to the slow pool when it lands (residue_transfer at t=1, 5, ...)
+  and clears that pool at the year end, so a container's residue is never on the shelf after
+  landing; the shelf holds 8 x a = 37,903,703.70 at the prior year end, and the gold's level is
+  2 x residue_per_container = 716,666.67 too high. The surplus never sells: it rides on the
+  shelf all year (inventory_active[last] equals the opening, so every gold check still
+  passes). The books start from nothing and carry the trace's own mechanics, so the six level
+  rows (inv_active_opening, inventory_active, inventory_total, stock_volume_m3, nwc,
+  capital_employed) are lower by exactly that amount in every period; every flow, delta_nwc and
+  the fcff headline agree. The oracle is left as it is; the question goes to its author.
+entity: importer
+plant: goods_cost_per_container
+warm_up: 28
+case:
+  case: gold-importer-prepayment
+  periods: 52
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 52
+      inputs: gold
+      values:
+        # the container calendar, from the gold's first half-month (negative in the warm-up)
+        half_month: t - warm_up
+        paid: (half_month % container_order_interval_periods == 0)
+        landed: lag(paid, prepay_to_shelf_lag_periods)
+        landed_to_date: cumsum(landed)
+        selling: landed_to_date - lag(landed_to_date, sell_through_periods)
+        year_end: (half_month % 24 == 23)
+        landed_this_year: landed_to_date - lag(landed_to_date, 24)
+        # cost and money
+        landed_cost: goods_cost_per_container + freight_insurance_per_container + duties_port_per_container
+        landing_charges: freight_insurance_per_container + duties_port_per_container
+        prepayment: >-
+          (goods_cost_per_container * supplier_prepayment_fraction
+          + share_of_landing_costs_prepaid_with_goods * landing_charges) * paid
+        transit_out: goods_cost_per_container * landed
+        landing_cash: (1 - share_of_landing_costs_prepaid_with_goods) * landing_charges * landed
+        residue: annual_obsolete_stock_at_cost / containers_per_year
+        set_aside: residue * landed
+        cogs_regular: selling * (landed_cost - residue) / sell_through_periods
+        cleared: year_end * residue * landed_this_year
+        cogs_dump: dump_share_of_residue * cleared
+        cogs_writeoff: (1 - dump_share_of_residue) * cleared
+        landed_in: landed_cost * landed
+        revenue_full: (1 + realised_markup_on_landed) * cogs_regular / vat_price_divisor
+        revenue_dump: (1 + realised_markup_on_landed) * dump_price_factor * cogs_dump / vat_price_divisor
+        revenue: revenue_full + revenue_dump
+        credit: credit_sales_fraction * revenue
+        collected: lag(credit, credit_period_periods) + revenue - credit
+        # the half-month's costs
+        rent: {each_period: rent_per_year / 24}
+        wages: {each_period: (n_salespeople * salesperson_wage_monthly + storeman_wage_monthly + apprentice_wage_monthly) / 2}
+        charges: wages * (cnss_family_rate + cnss_pension_employer_rate + risques_professionnels_rate + vps_rate)
+        van_running: {each_period: van_running_cost_per_year / 24}
+        owner: {each_period: owner_manager_cost_per_period}
+        overheads: {each_period: other_overheads_per_period}
+        # the van, and its physical rows
+        dep: van_opening_nbv / van_remaining_life_years / 24
+        van_carried: van_opening_nbv + warm_up * dep
+        van_months_left: van_remaining_life_years * 24 + warm_up
+        van_litres: van_fuel_share_of_running_cost * van_running / pump_price_essence
+        van_km: van_litres * 100 / van_fuel_consumption_l_per_100km
+        van_km_in_year: van_km * (half_month >= 0)
+        van_km_to_date: cumsum(van_km_in_year)
+        m3_per_xof: container_internal_volume_m3 * packing_efficiency / landed_cost
+  opening:
+    importer:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: van_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                      # all paid in the half-month; end: 60 is past the horizon
+    rent:
+      type: operating_cost
+      parties: {payer: importer}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rent}, index: 1, periods_per_year: 24,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 24}
+    wages:
+      type: operating_cost
+      parties: {payer: importer}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: wages}, index: 1, periods_per_year: 24,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 24}
+    charges:
+      type: operating_cost
+      parties: {payer: importer}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: charges}, index: 1, periods_per_year: 24,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 24}
+    van_running:
+      type: operating_cost
+      parties: {payer: importer}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: van_running}, index: 1, periods_per_year: 24,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 24}
+    owner:
+      type: operating_cost
+      parties: {payer: importer}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: owner}, index: 1, periods_per_year: 24,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 24}
+    overheads:
+      type: operating_cost
+      parties: {payer: importer}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: overheads}, index: 1, periods_per_year: 24,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 24}
+  rulebooks:
+    trade:
+      kind: transfer
+      entity: importer
+      phase: operate
+      declare:
+        transit: asset
+        inventory: asset
+        slow_stock: asset
+        receivable: asset
+        sales: income
+        dump_sales: income
+        cost_regular: expense
+        cost_dump: expense
+        cost_writeoff: expense
+      moves:
+        prepay: {debit: transit, credit: cash, amount: {generator: gold, output: prepayment}}
+        land: {debit: inventory, credit: transit, amount: {generator: gold, output: transit_out}}
+        clear_port: {debit: inventory, credit: cash, amount: {generator: gold, output: landing_cash}}
+        sell: {debit: receivable, credit: sales, amount: {generator: gold, output: revenue_full}}
+        sell_dump: {debit: receivable, credit: dump_sales, amount: {generator: gold, output: revenue_dump}}
+        collect: {debit: cash, credit: receivable, amount: {generator: gold, output: collected}}
+        cost: {debit: cost_regular, credit: inventory, amount: {generator: gold, output: cogs_regular}}
+        set_aside: {debit: slow_stock, credit: inventory, amount: {generator: gold, output: set_aside}}
+        dump: {debit: cost_dump, credit: slow_stock, amount: {generator: gold, output: cogs_dump}}
+        scrap: {debit: cost_writeoff, credit: slow_stock, amount: {generator: gold, output: cogs_writeoff}}
+    van:
+      kind: asset_register
+      entity: importer
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 60
+      life_periods: {generator: gold, output: van_months_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: importer
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: profit_tax_rate}
+      carry_forward_periods: null
+      loss_relief: refund
+      scheme:
+        sales: taxable
+        dump_sales: taxable
+        cost_regular: taxable
+        cost_dump: taxable
+        cost_writeoff: taxable
+        rent.expense: taxable
+        wages.expense: taxable
+        charges.expense: taxable
+        van_running.expense: taxable
+        owner.expense: taxable
+        overheads.expense: taxable
+        depreciation: taxable
+        written_off: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: importer
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      sales: revenue_full
+      dump_sales: revenue_dump
+      cost_regular: cogs_regular
+      cost_dump: cogs_dump
+      cost_writeoff: cogs_writeoff
+      rent.expense: opex
+      wages.expense: opex
+      charges.expense: opex
+      van_running.expense: opex
+      owner.expense: opex
+      overheads.expense: opex
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+    cash_flow:
+      transit: prepayment
+      inventory: landing
+      receivable: customers
+      rent.payable: operating
+      wages.payable: operating
+      charges.payable: operating
+      van_running.payable: operating
+      owner.payable: operating
+      overheads.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue_full: {kind: pnl, entity: importer, scheme: pnl, include: [revenue_full]}
+    revenue_dump: {kind: pnl, entity: importer, scheme: pnl, include: [revenue_dump]}
+    revenue: {kind: pnl, entity: importer, scheme: pnl, include: [revenue_full, revenue_dump]}
+    cogs_regular: {kind: pnl, entity: importer, scheme: pnl, include: [cogs_regular]}
+    cogs_dump: {kind: pnl, entity: importer, scheme: pnl, include: [cogs_dump]}
+    cogs_writeoff: {kind: pnl, entity: importer, scheme: pnl, include: [cogs_writeoff]}
+    obsolescence: {kind: pnl, entity: importer, scheme: pnl, include: [cogs_dump, cogs_writeoff]}
+    cogs: {kind: pnl, entity: importer, scheme: pnl, include: [cogs_regular, cogs_dump, cogs_writeoff]}
+    gross_profit: {kind: pnl, entity: importer, scheme: pnl,
+                   include: [revenue_full, revenue_dump, cogs_regular, cogs_dump, cogs_writeoff]}
+    losses: {kind: pnl, entity: importer, scheme: pnl, include: []}           # none carried
+    opex: {kind: pnl, entity: importer, scheme: pnl, include: [opex]}
+    ebitda: {kind: pnl, entity: importer, scheme: pnl,
+             include: [revenue_full, revenue_dump, cogs_regular, cogs_dump, cogs_writeoff, opex]}
+    depreciation: {kind: pnl, entity: importer, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: importer, scheme: pnl,
+           include: [revenue_full, revenue_dump, cogs_regular, cogs_dump, cogs_writeoff, opex, depreciation]}
+    tax: {kind: pnl, entity: importer, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: importer, scheme: pnl,
+            include: [revenue_full, revenue_dump, cogs_regular, cogs_dump, cogs_writeoff, opex, depreciation, tax]}
+    prepayment: {entity: importer, account: cash, scheme: cash_flow, include: [prepayment]}
+    landing: {entity: importer, account: cash, scheme: cash_flow, include: [landing]}
+    customers: {entity: importer, account: cash, scheme: cash_flow, include: [customers]}
+    cfo: {entity: importer, account: cash, scheme: cash_flow, include: [prepayment, landing, customers, operating]}
+    cfi: {entity: importer, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: importer, account: cash, scheme: cash_flow,
+           include: [prepayment, landing, customers, operating, investing]}
+  measures: {}
+trace:
+  containers_paid: {driver: gold.paid}
+  containers_landed: {driver: gold.landed}
+  containers_in_transit: {balance: transit, per: gold.goods_cost_per_container}
+  containers_selling: {driver: gold.selling}
+  prepayment_cash: {cut: prepayment, sign: -1}
+  transit_opening: {carried_in: transit}
+  transit_out: {driver: gold.transit_out}
+  transit_loss: {cut: losses}
+  transit_stock: {balance: transit}
+  landed_in: {driver: gold.landed_in}
+  cogs_regular: {cut: cogs_regular, sign: -1}
+  residue_transfer: {driver: gold.set_aside}
+  inventory_shrinkage: {cut: losses}
+  inv_active_opening: {carried_in: inventory}
+  inventory_active: {balance: inventory}
+  inventory_slow: {balance: slow_stock}
+  obsolescence_out: {cut: obsolescence, sign: -1}
+  cogs_dump: {cut: cogs_dump, sign: -1}
+  cogs_writeoff: {cut: cogs_writeoff, sign: -1}
+  dead_stock_cum: {cumulative: cogs_writeoff, sign: -1}
+  inventory_total: {balance: inventory + slow_stock}
+  stock_volume_m3: {sum: [{balance: inventory + slow_stock, times: gold.m3_per_xof},
+                          {cumulative: cogs_writeoff, sign: -1, times: gold.m3_per_xof}]}
+  revenue_full: {cut: revenue_full}
+  revenue_dump: {cut: revenue_dump}
+  revenue: {cut: revenue}
+  cogs_total: {cut: cogs, sign: -1}
+  gross_profit: {cut: gross_profit}
+  stock_losses: {cut: losses}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  dep: {cut: depreciation, sign: -1}
+  van_nbv: {balance: fixed_assets + cwip}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  credit_sales: {cut: revenue, times: gold.credit_sales_fraction}
+  collections: {sum: [{cut: customers}, {cut: revenue, times: gold.credit_sales_fraction}, {cut: revenue, sign: -1}]}
+  bad_debt: {cut: losses}
+  receivables_opening: {carried_in: receivable}
+  receivables: {balance: receivable}
+  payables: {balance: rent.payable + wages.payable + charges.payable + van_running.payable + owner.payable + overheads.payable}
+  nwc: {balance: transit + inventory + slow_stock + receivable - rent.payable - wages.payable - charges.payable - van_running.payable - owner.payable - overheads.payable}
+  delta_nwc: {change: transit + inventory + slow_stock + receivable - rent.payable - wages.payable - charges.payable - van_running.payable - owner.payable - overheads.payable}
+  capex: {cut: cfi, sign: -1}
+  capital_employed: {balance: transit + inventory + slow_stock + receivable + fixed_assets + cwip - rent.payable - wages.payable - charges.payable - van_running.payable - owner.payable - overheads.payable}
+  cash_from_customers: {cut: customers}
+  cash_landing_costs: {cut: landing, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  fcff_normalised: {sum: [{cut: fcff}, {cut: depreciation}, {cut: cfi, sign: -1}]}
+  customer_transactions: {cut: revenue, per: gold.average_ticket_xof}
+  van_fuel_litres: {driver: gold.van_litres}
+  van_km: {driver: gold.van_km}
+  van_km_cum: {driver: gold.van_km_to_date}

@@ -1,0 +1,398 @@
+# Gold "credit_retailer_baddebt": a Pikine furniture and appliance retailer selling on a quarter
+# down and four monthly instalments, by month for three years
+# (cases/reference/golds/credit_retailer_baddebt.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the gold's shop is already running in steady state at its first month: a credit book,
+#     an allowance against it and two months of stock. The case starts the shop from nothing
+#     warm_up months earlier (longer than the last instalment's write-off point) and lets the
+#     books build those balances; constant prices and no growth (sales_growth_per_month is nil);
+#   * sales: items_sold_per_month / items_per_basket baskets at avg_basket_ttc, VAT included
+#     (prices_are_vat_inclusive), so revenue is that net of vat_standard_rate and the rest is
+#     output VAT; credit_sales_share is sold on credit, the rest paid at the counter;
+#   * the credit book: down_payment_share at the sale, the rest in n_instalments equal
+#     instalments due one to four months after it; each due instalment is paid on time or one,
+#     two or three months late at the gold's shares, instalment_never_paid_share never, and that
+#     part is written off writeoff_lag_months after it fell due. The loss is provided for at the
+#     sale (bad_debt_rate_on_credit_sales of the credit sale, the allowance) and the write-off
+#     uses the allowance;
+#   * stock: inventory_months_of_sales months of units held, stock_shrinkage_rate_monthly of the
+#     units at the start of a month lost (its own cost line), purchases replace what was sold and
+#     lost; cost of sales at revenue x (1 - the blended margin), the unit cost that over units
+#     sold; purchases carry input VAT, supplier_credit_share of them on a month's credit; the
+#     month's net VAT is remitted the next month;
+#   * delivery at delivery_unit_cost a delivery, rent, salaries and employer charges (IPRES to
+#     its ceiling, CSS on its ceiling, CFCE), the collector's moto fuel, the 1% stamp duty on
+#     cash collected, CEL on rent and on value added, all paid in the month;
+#   * the van is carried at cost less van_age_months_at_t0 of its van_useful_life_months and
+#     depreciated over the life left (from the warm-up's start, so it is at the gold's book value
+#     at the gold's first month); its replacement is bought at van_replacement_period_index and
+#     not yet in service in the horizon;
+#   * IS at corporate_income_tax_rate on each month's profit, paid in the month; the IMF
+#     (imf_rate of revenue) is below it in every month and is the gold's memo row.
+# The credit and stock calendars are the gold's own arithmetic (formulas); the books carry
+# them, and every balance and cash flow is read back from them.
+gold: credit_retailer_baddebt
+entity: shop
+plant: avg_basket_ttc
+warm_up: 24
+case:
+  case: gold-credit-retailer-baddebt
+  periods: 60
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 60
+      inputs: gold
+      values:
+        # volumes and the stock in units
+        transactions: {each_period: items_sold_per_month / items_per_basket}
+        units_sold: {each_period: items_sold_per_month}
+        stock: {each_period: inventory_months_of_sales * items_sold_per_month}
+        stock_bop: lag(stock, 1)
+        stock_open: stock_bop * (t == warm_up)
+        shrunk: stock_bop * stock_shrinkage_rate_monthly
+        units_bought: units_sold + shrunk + stock - stock_bop
+        floor_m2: stock * floor_area_per_stored_unit_m2 * (1 - has_separate_storage)
+        # sales, margin and VAT
+        gross: transactions * avg_basket_ttc
+        revenue: gross / (1 + prices_are_vat_inclusive * vat_standard_rate)
+        vat_output: gross - revenue
+        margin: >-
+          margin_is_on_selling_price * (furniture_share_of_sales_value * furniture_margin_stated
+          + (1 - furniture_share_of_sales_value) * appliance_margin_stated)
+          + (1 - margin_is_on_selling_price) * (furniture_share_of_sales_value * furniture_margin_stated
+          / (1 + furniture_margin_stated) + (1 - furniture_share_of_sales_value) * appliance_margin_stated
+          / (1 + appliance_margin_stated))
+        cogs: revenue * (1 - margin)
+        unit_cost: cogs / units_sold
+        gross_margin: revenue - cogs
+        shrinkage: shrunk * unit_cost
+        purchases: units_bought * unit_cost
+        vat_input: purchases * vat_standard_rate
+        vat_net: vat_output - vat_input
+        vat_remitted: lag(vat_net, 1)
+        bought_ttc: purchases + vat_input
+        suppliers_paid: (1 - supplier_credit_share) * bought_ttc + supplier_credit_share * lag(bought_ttc, 1)
+        # the credit book: n_instalments (four) instalments, each due one to four months after the sale
+        credit: gross * credit_sales_share
+        down: credit * down_payment_share
+        per_instalment: instalment_total_share / n_instalments
+        due: per_instalment * (lag(credit, 1) + lag(credit, 2) + lag(credit, 3) + lag(credit, 4))
+        paid: >-
+          instalment_paid_on_time_share * due + instalment_paid_lag1_share * lag(due, 1)
+          + instalment_paid_lag2_share * lag(due, 2) + instalment_paid_lag3_share * lag(due, 3)
+        collected: gross - credit + down + paid
+        written_off: instalment_never_paid_share * lag(due, writeoff_lag_months)
+        provided: credit * bad_debt_rate_on_credit_sales
+        not_due: per_instalment * (4 * credit + 3 * lag(credit, 1) + 2 * lag(credit, 2) + lag(credit, 3))
+        # overdue: each due instalment until it is paid, or until its write-off
+        overdue: >-
+          (1 - instalment_paid_on_time_share) * due
+          + (1 - instalment_paid_on_time_share - instalment_paid_lag1_share) * lag(due, 1)
+          + (instalment_paid_lag3_share + instalment_never_paid_share) * lag(due, 2)
+          + instalment_never_paid_share * (lag(due, 3) + lag(due, 4) + lag(due, 5))
+        visits_required: overdue / avg_instalment_amount
+        # delivery and the collector's moto
+        deliveries: transactions * delivery_share_of_sales
+        delivery: deliveries * delivery_unit_cost
+        trips: deliveries / deliveries_per_trip
+        delivery_km: trips * round_trip_km
+        delivery_litres: delivery_km * van_fuel_l_per_km
+        delivery_fuel: delivery_litres * diesel_price_per_litre
+        van_trip_hours: trips * round_trip_hours
+        van_hours: {each_period: working_days_per_month * van_available_share * van_working_hours_per_day}
+        moto_fuel: {each_period: moto_fuel_budget_per_month}
+        moto_litres: moto_fuel / petrol_super_price_per_litre
+        moto_km: moto_litres / moto_fuel_l_per_km
+        visits_available: {each_period: working_days_per_month * collector_visits_per_day}
+        km_per_visit: moto_km / visits_available
+        # the shop's costs
+        rent: {each_period: rent_per_month * (1 - rent_vat_recoverable_share * vat_standard_rate / (1 + vat_standard_rate))}
+        salaries: {each_period: n_salespeople * salary_salesperson + salary_delivery_man + salary_collector}
+        per_head: css_pf_rate * css_monthly_ceiling + css_at_rate * css_monthly_ceiling
+        charges_on_collector: >-
+          ipres_employer_rate * min(salary_collector, ipres_monthly_ceiling) + per_head + cfce_rate * salary_collector
+        charges: >-
+          employees_declared_share * (n_salespeople * (ipres_employer_rate * min(salary_salesperson, ipres_monthly_ceiling)
+          + per_head + cfce_rate * salary_salesperson)
+          + ipres_employer_rate * min(salary_delivery_man, ipres_monthly_ceiling) + per_head
+          + cfce_rate * salary_delivery_man + charges_on_collector)
+        timbre: collected * cash_share_of_collections * cash_stamp_duty_rate
+        cel_vl: {each_period: cel_vl_rate_leased * rent_per_month}
+        value_added: gross_margin - shrinkage - rent - moto_fuel - delivery
+        cel_va: value_added * cel_va_rate
+        imf: revenue * imf_rate
+        credit_function: >-
+          provided + salary_collector + employees_declared_share * charges_on_collector + moto_fuel + timbre
+        # the van
+        van_carried: >-
+          van_cost * (1 - van_age_months_at_t0 / van_useful_life_months)
+          + warm_up * van_cost / van_useful_life_months
+        van_months_left: van_useful_life_months - van_age_months_at_t0 + warm_up
+        replacement: van_cost * (t == warm_up + van_replacement_period_index)
+  opening:
+    shop:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: van_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                      # all paid in the month; end: 60 is past the horizon
+    delivery:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: delivery}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    rent:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rent}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    salaries:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: salaries}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    charges:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: charges}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    moto_fuel:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: moto_fuel}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    timbre:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: timbre}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    cel_vl:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: cel_vl}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    cel_va:
+      type: operating_cost
+      parties: {payer: shop}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: cel_va}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    new_van:
+      type: capex
+      parties: {owner: shop}
+      terms: {schedule: {generator: gold, output: replacement}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+  rulebooks:
+    trade:
+      kind: transfer
+      entity: shop
+      phase: operate
+      declare:
+        receivable: asset
+        allowance: liability          # the contra-asset: a credit balance against the receivable
+        inventory: asset
+        suppliers: liability
+        vat_due: liability
+        sales: income
+        cost_of_sales: expense
+        shrinkage_loss: expense
+        bad_debt: expense
+      moves:
+        sell: {debit: receivable, credit: sales, amount: {generator: gold, output: revenue}}
+        sell_vat: {debit: receivable, credit: vat_due, amount: {generator: gold, output: vat_output}}
+        collect: {debit: cash, credit: receivable, amount: {generator: gold, output: collected}}
+        provide: {debit: bad_debt, credit: allowance, amount: {generator: gold, output: provided}}
+        write_off: {debit: allowance, credit: receivable, amount: {generator: gold, output: written_off}}
+        buy: {debit: inventory, credit: suppliers, amount: {generator: gold, output: purchases}}
+        buy_vat: {debit: vat_due, credit: suppliers, amount: {generator: gold, output: vat_input}}
+        pay_suppliers: {debit: suppliers, credit: cash, amount: {generator: gold, output: suppliers_paid}}
+        remit_vat: {debit: vat_due, credit: cash, amount: {generator: gold, output: vat_remitted}}
+        sold: {debit: cost_of_sales, credit: inventory, amount: {generator: gold, output: cogs}}
+        lost: {debit: shrinkage_loss, credit: inventory, amount: {generator: gold, output: shrinkage}}
+    van:
+      kind: asset_register
+      entity: shop
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 60
+      life_periods: {generator: gold, output: van_months_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: shop
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: corporate_income_tax_rate}
+      carry_forward_periods: null
+      scheme:
+        sales: taxable
+        cost_of_sales: taxable
+        shrinkage_loss: taxable
+        bad_debt: taxable
+        delivery.expense: taxable
+        rent.expense: taxable
+        salaries.expense: taxable
+        charges.expense: taxable
+        moto_fuel.expense: taxable
+        timbre.expense: taxable
+        cel_vl.expense: taxable
+        cel_va.expense: taxable
+        depreciation: taxable
+        written_off: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: shop
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      sales: revenue
+      cost_of_sales: cogs
+      shrinkage_loss: shrinkage
+      bad_debt: bad_debt
+      delivery.expense: delivery
+      rent.expense: rent
+      salaries.expense: salaries
+      charges.expense: charges
+      moto_fuel.expense: moto_fuel
+      timbre.expense: timbre
+      cel_vl.expense: cel_vl
+      cel_va.expense: cel_va
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+    cash_flow:
+      receivable: collections
+      suppliers: operating
+      vat_due: operating
+      delivery.payable: operating
+      rent.payable: operating
+      salaries.payable: operating
+      charges.payable: operating
+      moto_fuel.payable: operating
+      timbre.payable: operating
+      cel_vl.payable: operating
+      cel_va.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: shop, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: shop, scheme: pnl, include: [cogs]}
+    gross_margin: {kind: pnl, entity: shop, scheme: pnl, include: [revenue, cogs]}
+    shrinkage: {kind: pnl, entity: shop, scheme: pnl, include: [shrinkage]}
+    bad_debt: {kind: pnl, entity: shop, scheme: pnl, include: [bad_debt]}
+    delivery: {kind: pnl, entity: shop, scheme: pnl, include: [delivery]}
+    rent: {kind: pnl, entity: shop, scheme: pnl, include: [rent]}
+    salaries: {kind: pnl, entity: shop, scheme: pnl, include: [salaries]}
+    charges: {kind: pnl, entity: shop, scheme: pnl, include: [charges]}
+    payroll: {kind: pnl, entity: shop, scheme: pnl, include: [salaries, charges]}
+    moto_fuel: {kind: pnl, entity: shop, scheme: pnl, include: [moto_fuel]}
+    timbre: {kind: pnl, entity: shop, scheme: pnl, include: [timbre]}
+    cel_vl: {kind: pnl, entity: shop, scheme: pnl, include: [cel_vl]}
+    cel_va: {kind: pnl, entity: shop, scheme: pnl, include: [cel_va]}
+    cel: {kind: pnl, entity: shop, scheme: pnl, include: [cel_vl, cel_va]}
+    opex: {kind: pnl, entity: shop, scheme: pnl,
+           include: [shrinkage, rent, salaries, charges, moto_fuel, delivery, bad_debt, timbre, cel_vl, cel_va]}
+    ebitda: {kind: pnl, entity: shop, scheme: pnl,
+             include: [revenue, cogs, shrinkage, rent, salaries, charges, moto_fuel, delivery, bad_debt, timbre,
+                       cel_vl, cel_va]}
+    depreciation: {kind: pnl, entity: shop, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: shop, scheme: pnl,
+           include: [revenue, cogs, shrinkage, rent, salaries, charges, moto_fuel, delivery, bad_debt, timbre,
+                     cel_vl, cel_va, depreciation]}
+    tax: {kind: pnl, entity: shop, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: shop, scheme: pnl,
+            include: [revenue, cogs, shrinkage, rent, salaries, charges, moto_fuel, delivery, bad_debt, timbre,
+                      cel_vl, cel_va, depreciation, tax]}
+    collections: {entity: shop, account: cash, scheme: cash_flow, include: [collections]}
+    cfo: {entity: shop, account: cash, scheme: cash_flow, include: [collections, operating]}
+    cfi: {entity: shop, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: shop, account: cash, scheme: cash_flow, include: [collections, operating, investing]}
+  measures: {}
+trace:
+  transactions: {driver: gold.transactions}
+  units_sold: {driver: gold.units_sold}
+  stock_units_open: {driver: gold.stock_open}
+  stock_units_bop: {driver: gold.stock_bop}
+  units_shrunk: {driver: gold.shrunk}
+  units_purchased: {driver: gold.units_bought}
+  stock_units: {driver: gold.stock}
+  store_floor_required_m2: {driver: gold.floor_m2}
+  gross_sales_ttc: {driver: gold.gross}
+  revenue_ht: {cut: revenue}
+  vat_output: {driver: gold.vat_output}
+  cogs_ht: {cut: cogs, sign: -1}
+  unit_cost_ht: {driver: gold.unit_cost}
+  gross_margin_ht: {cut: gross_margin}
+  shrinkage_cost_ht: {cut: shrinkage, sign: -1}
+  purchases_ht: {driver: gold.purchases}
+  vat_input: {driver: gold.vat_input}
+  vat_payable: {balance: vat_due}
+  inventory_ht: {balance: inventory}
+  credit_sales_ttc: {driver: gold.credit}
+  down_payment_cash: {driver: gold.down}
+  instalments_due: {driver: gold.due}
+  instalment_cash: {driver: gold.paid}
+  cash_collections: {cut: collections}
+  writeoffs: {driver: gold.written_off}
+  bad_debt_expense: {cut: bad_debt, sign: -1}
+  ar_gross_open: {carried_in: receivable}
+  ar_gross: {balance: receivable}
+  ar_not_yet_due: {driver: gold.not_due}
+  ar_overdue: {sum: [{balance: receivable}, {driver: gold.not_due, sign: -1}]}
+  allowance_open: {carried_in: allowance}
+  allowance: {balance: allowance}
+  ar_net: {balance: receivable - allowance}
+  payables: {balance: suppliers}
+  deliveries: {driver: gold.deliveries}
+  delivery_cost: {cut: delivery, sign: -1}
+  delivery_trips: {driver: gold.trips}
+  delivery_km: {driver: gold.delivery_km}
+  delivery_fuel_litres: {driver: gold.delivery_litres}
+  delivery_fuel_cost: {driver: gold.delivery_fuel}
+  van_trip_hours: {driver: gold.van_trip_hours}
+  van_hours_available: {driver: gold.van_hours}
+  moto_fuel_litres: {driver: gold.moto_litres}
+  moto_km: {driver: gold.moto_km}
+  collection_visits_available: {driver: gold.visits_available}
+  collection_visits_required: {driver: gold.visits_required}
+  moto_km_per_visit: {driver: gold.km_per_visit}
+  rent_expense: {cut: rent, sign: -1}
+  salaries_gross: {cut: salaries, sign: -1}
+  social_charges: {cut: charges, sign: -1}
+  payroll_total: {cut: payroll, sign: -1}
+  moto_fuel_cost: {cut: moto_fuel, sign: -1}
+  timbre: {cut: timbre, sign: -1}
+  cel_vl: {cut: cel_vl, sign: -1}
+  value_added: {driver: gold.value_added}
+  cel_va: {cut: cel_va, sign: -1}
+  cel_total: {cut: cel, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  credit_function_cost: {driver: gold.credit_function}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  van_nbv_open: {carried_in: fixed_assets}
+  capex: {cut: cfi, sign: -1}
+  van_nbv: {balance: fixed_assets + cwip}
+  ebit: {cut: ebit}
+  is_charge: {cut: tax, sign: -1}
+  imf_charge: {driver: gold.imf}
+  tax_charge: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  nwc_open: {carried_in: inventory + receivable - allowance - suppliers - vat_due}
+  nwc: {balance: inventory + receivable - allowance - suppliers - vat_due}
+  delta_nwc: {change: inventory + receivable - allowance - suppliers - vat_due}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

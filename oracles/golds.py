@@ -21,7 +21,7 @@ Translation
   receives every numeric gold input by name, and every amount the case
   needs is one of those inputs or a formula over them. The only numbers
   typed in the case are structural (``STRUCTURAL``: period indices, counts,
-  60, 100 and 1000); any other is reported as a failed check, so a number
+  52, 60, 100 and 1000); any other is reported as a failed check, so a number
   fitted by hand cannot pass;
 * ``trace``: for each gold trace row, where the engine reports it.
 
@@ -115,9 +115,10 @@ FOLDER = "golds"
 TRANSLATIONS = pathlib.Path(__file__).resolve().parent.parent / "cases" / "golds"
 #: the library's ruler: amounts are whole currency units, so more than half a unit is a different claim
 ATOL = Fraction(1, 2)
-#: numbers a translation may type: period indices and counts, and the unit conversions 60 (minutes an
-#: hour), 100 and 1000. A case's ``periods`` is not among them: it is checked against the gold's grid
-STRUCTURAL = set(range(0, 25)) | {60, 100, 1000}
+#: numbers a translation may type: period indices and counts, and the unit conversions 52 (weeks a
+#: year), 60 (minutes an hour), 100 and 1000. A case's ``periods`` is not among them: it is checked
+#: against the gold's grid
+STRUCTURAL = set(range(0, 25)) | {52, 60, 100, 1000}
 _TERM = re.compile(r"\s*([+-]?)\s*([A-Za-z_][\w.]*)")
 
 

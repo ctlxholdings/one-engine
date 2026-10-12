@@ -1,0 +1,384 @@
+# Gold "momo_agent": a mobile-money agency kiosk with an airtime counter in the Adjame market,
+# Abidjan, by month for three years (cases/reference/golds/momo_agent.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the kiosk opens in the first month: the till cash and the e-float (opening_till_cash,
+#     opening_efloat), the operators' security deposits (deposit_per_operator each), the airtime
+#     stock and the commission owed are all put in place then and held;
+#   * operations: txn_per_normal_day on days_open_per_month less the half of each short day lost,
+#     at avg_ticket; withdrawal_share of the value paid out of the till against e-float, the rest
+#     taken in; the net drain is rebalanced at the super-agent (e-float for cash) trips_per_day
+#     times a day at rebalance_cost_per_trip. The till and the e-float are working capital, not
+#     the business's cash: every transaction moves value between them;
+#   * revenue: commission_rate on the value handled, paid by the operators
+#     commission_receivable_months in arrears; airtime sold at face value, bought at
+#     airtime_discount below it, airtime_stock_days of it held (purchases expensed, the stock held
+#     taken back out of the expense);
+#   * rent (rent_escalation_monthly, nil), the assistant's wage and employer charges (CNPS family,
+#     maternity and work-injury on the capped base), the genset's fuel and maintenance, the cash
+#     carried's shrinkage on the value handled, the owner's wage (nil), paid in the month;
+#   * the phones and the genset bought in the first month and again at the end of their lives
+#     (phone_life_months, genset_life_months), each depreciated from its month of purchase;
+#   * tax: the TEE at tee_rate_services on revenue, nothing deductible, paid in the month.
+gold: momo_agent
+entity: kiosk
+plant: commission_rate
+case:
+  case: gold-momo-agent
+  periods: 36
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 36
+      inputs: gold
+      values:
+        days_open: {each_period: days_open_per_month}
+        short_days: {each_period: short_days_per_month}
+        season: {each_period: seasonal_index}
+        effective_days: days_open - short_day_fraction_lost * short_days
+        txn_count: txn_per_normal_day * effective_days * season
+        txn_value: txn_count * avg_ticket
+        withdrawals: withdrawal_share * txn_value
+        deposits: deposit_share * txn_value
+        drain: withdrawals - deposits
+        rebalanced: drain
+        trips: trips_per_day * effective_days
+        cash_per_trip: rebalanced / trips
+        value_handled: txn_value + rebalanced
+        till_cover: opening_till_cash * trading_hours_per_day * effective_days / drain
+        # revenue and the airtime stock
+        commission_per_xof: commission_rate * commission_net_factor
+        airtime_sales: {each_period: airtime_sales_monthly}
+        airtime_cogs: airtime_sales * (1 - airtime_discount)
+        airtime_stock: airtime_stock_days * airtime_cogs / days_open_per_month
+        airtime_bought: airtime_cogs + airtime_stock - lag(airtime_stock, 1)
+        float_held: {each_period: opening_till_cash}
+        efloat_held: {each_period: opening_efloat}
+        operator_deposits: {each_period: operator_count * deposit_per_operator}
+        # costs
+        rebalancing: trips * rebalance_cost_per_trip
+        rent: rent_monthly * (1 + rent_escalation_monthly) ** t
+        wage: {each_period: assistant_wage_monthly}
+        charges: >-
+          assistant_cnps_declared_flag * (cnps_pension_rate_employer * wage + (cnps_family_rate_employer
+          + cnps_maternity_rate_employer + cnps_at_rate_employer) * min(wage, cnps_ceiling_monthly)
+          + employer_payroll_tax_rate * wage)
+        genset_hours: genset_hours_per_day * effective_days
+        fuel_litres: genset_hours * genset_burn_l_per_h
+        fuel: fuel_litres * fuel_price_xof_per_l
+        maintenance: genset_maint_pct_of_fuel * fuel
+        shrinkage: shrinkage_rate * value_handled
+        owner_wage: {each_period: owner_wage_monthly}
+        # equipment: bought at the start and at the end of each life
+        phone_purchase: (t % phone_life_months == 0)
+        phone_replacement: phone_purchase * (t > 0)
+        genset_purchase: (t % genset_life_months == 0)
+        genset_replacement: genset_purchase * (t > 0)
+        phone_capex: phone_set_cost * phone_purchase
+        genset_capex: genset_cost * genset_purchase
+        genset_unit_hours: cumsum(genset_hours) - genset_life_hours * cumsum(genset_replacement)
+        txn_per_phone: txn_count / phone_count
+        phone_unit_txns: cumsum(txn_per_phone) - phone_life_txns * cumsum(phone_replacement)
+        # capacity
+        service_minutes: txn_count * minutes_per_txn
+        travel_minutes: trips * minutes_per_rebalance_trip
+        counter_minutes: {each_period: service_points * trading_hours_per_day * 60 * days_open_per_month}
+        staffed_minutes: {each_period: staff_count * trading_hours_per_day * 60 * days_open_per_month}
+  opening:
+    kiosk:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:                      # end: 60 is past the horizon
+    commissions:
+      type: offtake
+      parties: {seller: kiosk}
+      terms: {volume: {generator: gold, output: txn_value}, price: {generator: gold, output: commission_per_xof},
+              payment_days: {generator: gold, output: commission_receivable_months}, days_per_year: 12,
+              periods_per_year: 12, end: 60}
+    airtime_sales:
+      type: offtake
+      parties: {seller: kiosk}
+      terms: {volume: {generator: gold, output: airtime_sales}, price: 1, payment_days: 0, days_per_year: 12,
+              periods_per_year: 12, end: 60}
+    airtime:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: airtime_bought}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: payables_days},
+              days_per_year: 12}
+    rebalancing:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rebalancing}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    rent:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rent}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    wage:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: wage}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    charges:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: charges}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    fuel:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: fuel}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    maintenance:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: maintenance}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    shrinkage:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: shrinkage}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    owner:
+      type: operating_cost
+      parties: {payer: kiosk}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: owner_wage}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    phones:
+      type: capex_class
+      parties: {owner: kiosk}
+      terms: {schedule: {generator: gold, output: phone_capex}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+    genset:
+      type: capex_class
+      parties: {owner: kiosk}
+      terms: {schedule: {generator: gold, output: genset_capex}, vat_rate: 0, vat_refund_lag: 0, end: 60}
+  rulebooks:
+    float:
+      kind: held_balance
+      entity: kiosk
+      cash: cash
+      phase: fund
+      accounts:
+        till: {side: asset, target: {generator: gold, output: float_held}}
+        efloat: {side: asset, target: {generator: gold, output: efloat_held}}
+        operator_deposits: {side: asset, target: {generator: gold, output: operator_deposits}}
+        airtime_stock: {side: asset, target: {generator: gold, output: airtime_stock}, against: airtime.expense}
+    agency:
+      kind: transfer
+      entity: kiosk
+      phase: operate
+      moves:
+        take_deposits: {debit: till, credit: efloat, amount: {generator: gold, output: deposits}}
+        pay_withdrawals: {debit: efloat, credit: till, amount: {generator: gold, output: withdrawals}}
+        rebalance: {debit: till, credit: efloat, amount: {generator: gold, output: rebalanced}}
+    phone_register:
+      kind: asset_register
+      entity: kiosk
+      phase: close
+      from: phones
+      to: phones_nbv
+      expense: dep_phones
+      disposal: written_off
+      in_service: [0, {generator: gold, output: phone_life_months}]
+      dispose_at: 60
+      life_periods: {generator: gold, output: phone_life_months}
+      first_charge: in_service
+    genset_register:
+      kind: asset_register
+      entity: kiosk
+      phase: close
+      from: genset
+      to: genset_nbv
+      expense: dep_genset
+      disposal: written_off
+      in_service: [0, {generator: gold, output: genset_life_months}]
+      dispose_at: 60
+      life_periods: {generator: gold, output: genset_life_months}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: kiosk
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tee_rate_services}
+      carry_forward_periods: null
+      scheme:
+        commissions.revenue: taxable
+        airtime_sales.revenue: taxable
+        airtime.expense: non_deductible
+        rebalancing.expense: non_deductible
+        rent.expense: non_deductible
+        wage.expense: non_deductible
+        charges.expense: non_deductible
+        fuel.expense: non_deductible
+        maintenance.expense: non_deductible
+        shrinkage.expense: non_deductible
+        owner.expense: non_deductible
+        dep_phones: non_deductible
+        dep_genset: non_deductible
+        written_off: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: kiosk
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      commissions.revenue: commission
+      airtime_sales.revenue: airtime_sales
+      airtime.expense: airtime_cogs
+      rebalancing.expense: rebalancing
+      rent.expense: rent
+      wage.expense: wage
+      charges.expense: charges
+      fuel.expense: fuel
+      maintenance.expense: maintenance
+      shrinkage.expense: shrinkage
+      owner.expense: owner
+      dep_phones: dep_phones
+      dep_genset: dep_genset
+      written_off: dep_phones
+      tax_expense: tax
+    cash_flow:
+      commissions.receivable: operating
+      airtime_sales.receivable: operating
+      airtime.payable: airtime
+      rebalancing.payable: operating
+      rent.payable: operating
+      wage.payable: operating
+      charges.payable: operating
+      fuel.payable: operating
+      maintenance.payable: operating
+      shrinkage.payable: operating
+      owner.payable: operating
+      till: operating
+      efloat: operating
+      operator_deposits: operating
+      vat_receivable: operating
+      tax_payable: operating
+      phones: investing
+      genset: investing
+  cuts:
+    commission: {kind: pnl, entity: kiosk, scheme: pnl, include: [commission]}
+    airtime_sales: {kind: pnl, entity: kiosk, scheme: pnl, include: [airtime_sales]}
+    airtime_cogs: {kind: pnl, entity: kiosk, scheme: pnl, include: [airtime_cogs]}
+    airtime_margin: {kind: pnl, entity: kiosk, scheme: pnl, include: [airtime_sales, airtime_cogs]}
+    revenue: {kind: pnl, entity: kiosk, scheme: pnl, include: [commission, airtime_sales]}
+    gross_profit: {kind: pnl, entity: kiosk, scheme: pnl, include: [commission, airtime_sales, airtime_cogs]}
+    stock_loss: {kind: pnl, entity: kiosk, scheme: pnl, include: []}        # airtime_stock_loss_rate is nil
+    rebalancing: {kind: pnl, entity: kiosk, scheme: pnl, include: [rebalancing]}
+    rent: {kind: pnl, entity: kiosk, scheme: pnl, include: [rent]}
+    wage: {kind: pnl, entity: kiosk, scheme: pnl, include: [wage]}
+    charges: {kind: pnl, entity: kiosk, scheme: pnl, include: [charges]}
+    fuel: {kind: pnl, entity: kiosk, scheme: pnl, include: [fuel]}
+    maintenance: {kind: pnl, entity: kiosk, scheme: pnl, include: [maintenance]}
+    shrinkage: {kind: pnl, entity: kiosk, scheme: pnl, include: [shrinkage]}
+    owner: {kind: pnl, entity: kiosk, scheme: pnl, include: [owner]}
+    opex: {kind: pnl, entity: kiosk, scheme: pnl,
+           include: [rebalancing, rent, wage, charges, fuel, maintenance, shrinkage, owner]}
+    ebitda: {kind: pnl, entity: kiosk, scheme: pnl,
+             include: [commission, airtime_sales, airtime_cogs, rebalancing, rent, wage, charges, fuel, maintenance,
+                       shrinkage, owner]}
+    dep_phones: {kind: pnl, entity: kiosk, scheme: pnl, include: [dep_phones]}
+    dep_genset: {kind: pnl, entity: kiosk, scheme: pnl, include: [dep_genset]}
+    dep: {kind: pnl, entity: kiosk, scheme: pnl, include: [dep_phones, dep_genset]}
+    ebit: {kind: pnl, entity: kiosk, scheme: pnl,
+           include: [commission, airtime_sales, airtime_cogs, rebalancing, rent, wage, charges, fuel, maintenance,
+                     shrinkage, owner, dep_phones, dep_genset]}
+    tax: {kind: pnl, entity: kiosk, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: kiosk, scheme: pnl,
+            include: [commission, airtime_sales, airtime_cogs, rebalancing, rent, wage, charges, fuel, maintenance,
+                      shrinkage, owner, dep_phones, dep_genset, tax]}
+    airtime_bought: {entity: kiosk, account: cash, scheme: cash_flow, include: [airtime]}
+    cfo: {entity: kiosk, account: cash, scheme: cash_flow, include: [operating, airtime]}
+    cfi: {entity: kiosk, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: kiosk, account: cash, scheme: cash_flow, include: [operating, airtime, investing]}
+  measures: {}
+trace:
+  days_open: {driver: gold.days_open}
+  short_days: {driver: gold.short_days}
+  effective_days: {driver: gold.effective_days}
+  seasonal_index: {driver: gold.season}
+  txn_count: {driver: gold.txn_count}
+  txn_value: {driver: gold.txn_value}
+  withdrawal_value: {driver: gold.withdrawals}
+  deposit_value: {driver: gold.deposits}
+  net_cash_drain: {driver: gold.drain}
+  rebalance_value: {driver: gold.rebalanced}
+  rebalance_trips: {driver: gold.trips}
+  cash_per_trip: {driver: gold.cash_per_trip}
+  value_handled: {driver: gold.value_handled}
+  till_cash_open: {driver: gold.float_held}            # the morning float, put in place on the first day
+  cash_in_deposits: {driver: gold.deposits}
+  cash_out_withdrawals: {driver: gold.withdrawals}
+  cash_in_rebalance: {driver: gold.rebalanced}
+  till_cash_close: {balance: till}
+  till_hours_of_cover: {driver: gold.till_cover}
+  efloat_open: {driver: gold.efloat_held}
+  efloat_in_withdrawals: {driver: gold.withdrawals}
+  efloat_out_deposits: {driver: gold.deposits}
+  efloat_out_rebalance: {driver: gold.rebalanced}
+  efloat_close: {balance: efloat}
+  airtime_sales: {cut: airtime_sales}
+  airtime_cogs: {cut: airtime_cogs, sign: -1}
+  airtime_margin: {cut: airtime_margin}
+  airtime_purchases: {cut: airtime_bought, sign: -1}
+  airtime_stock_loss: {cut: stock_loss}
+  airtime_stock_close: {balance: airtime_stock}
+  momo_commission: {cut: commission}
+  revenue: {cut: revenue}
+  gross_profit: {cut: gross_profit}
+  opex_rebalancing: {cut: rebalancing, sign: -1}
+  opex_rent: {cut: rent, sign: -1}
+  opex_wages_gross: {cut: wage, sign: -1}
+  opex_social_charges: {cut: charges, sign: -1}
+  genset_hours: {driver: gold.genset_hours}
+  fuel_litres: {driver: gold.fuel_litres}
+  opex_fuel: {cut: fuel, sign: -1}
+  opex_genset_maintenance: {cut: maintenance, sign: -1}
+  opex_shrinkage: {cut: shrinkage, sign: -1}
+  opex_owner_wage: {cut: owner, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  dep_phones: {cut: dep_phones, sign: -1}
+  dep_genset: {cut: dep_genset, sign: -1}
+  dep_total: {cut: dep, sign: -1}
+  ebit: {cut: ebit}
+  tee_tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  phone_purchase: {driver: gold.phone_purchase}
+  phone_replacement: {driver: gold.phone_replacement}
+  genset_purchase: {driver: gold.genset_purchase}
+  genset_replacement: {driver: gold.genset_replacement}
+  capex_phones: {driver: gold.phone_capex}
+  capex_genset: {driver: gold.genset_capex}
+  capex: {cut: cfi, sign: -1}
+  nbv_phones: {balance: phones_nbv + phones}
+  nbv_genset: {balance: genset_nbv + genset}
+  nbv_total: {balance: phones_nbv + phones + genset_nbv + genset}
+  genset_unit_hours: {driver: gold.genset_unit_hours}
+  phone_unit_txns: {driver: gold.phone_unit_txns}
+  nwc_till_cash: {balance: till}
+  nwc_efloat: {balance: efloat}
+  nwc_airtime_stock: {balance: airtime_stock}
+  nwc_commission_receivable: {balance: commissions.receivable + airtime_sales.receivable}
+  nwc_operator_deposits: {balance: operator_deposits}
+  nwc_payables: {balance: airtime.payable}
+  nwc: {balance: till + efloat + airtime_stock + commissions.receivable + airtime_sales.receivable + operator_deposits - airtime.payable}
+  delta_nwc: {change: till + efloat + airtime_stock + commissions.receivable + airtime_sales.receivable + operator_deposits - airtime.payable}
+  service_minutes: {driver: gold.service_minutes}
+  travel_minutes: {driver: gold.travel_minutes}
+  counter_minutes_available: {driver: gold.counter_minutes}
+  staffed_minutes: {driver: gold.staffed_minutes}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  cum_fcff: {cumulative: fcff}

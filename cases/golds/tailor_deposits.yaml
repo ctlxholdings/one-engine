@@ -1,0 +1,336 @@
+# Gold "tailor_deposits": a bespoke tailoring workshop in Treichville, Abidjan, taking half the
+# price as a deposit on order, by month for two years from January (cases/reference/golds/tailor_deposits.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * capacity: producing_workers seamstresses, working_days_per_month at attendance_availability,
+#     one outfit each per days_per_outfit (December by dec_capacity_uplift); every day is used,
+#     remake_rate of starts are remade, the rest completed, non_collection_rate of those never
+#     collected;
+#   * orders: the normal month's completions, scaled by the season (jan_feb_order_index in
+#     January and February, dec_order_index in December). The order book carried in at the
+#     start is the stated lead time's worth of a normal month (stated_lead_time_weeks, 52 weeks a
+#     year) plus the two quiet months' shortfall, so the book runs back to that lead time by
+#     March; every order in it has paid its deposit (deposit_share of outfit_price_xof);
+#   * money: the deposit on order (a liability, the deferred revenue), the balance on
+#     collection, revenue at the full price on collection; an uncollected outfit's deposit is
+#     forfeited (income); offcuts sold at offcut_price_per_m (nil);
+#   * fabric: fabric_cover_months of the metres consumed are held at fabric_price_per_m, and
+#     fabric_shrinkage_rate_monthly of the stock is lost each month (its own line) and bought
+#     back; materials are expensed on starts at materials_cost_per_outfit; the work in progress
+#     (wip_units outfits, at their materials and half their labour) is carried in
+#     and held;
+#   * wages, employer charges (employer_social_charge_rate, nil), the founder's draw, rent,
+#     electricity and maintenance, paid in the month;
+#   * the machines are carried at cost less machine_age_years_at_t0 of machine_useful_life_years
+#     and depreciated monthly over the life left;
+#   * tax: the TEE at tee_rate_services on revenue (halved for a CGA member), nothing
+#     deductible, paid in the month.
+gold: tailor_deposits
+entity: atelier
+plant: outfit_price_xof
+case:
+  case: gold-tailor-deposits
+  periods: 24
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 24
+      inputs: gold
+      values:
+        month: t % 12
+        quiet: (month < 2)
+        december: (month == 11)
+        order_index: quiet * jan_feb_order_index + december * dec_order_index + (1 - quiet - december)
+        # capacity and the order book, in outfits
+        days_available: producing_workers * working_days_per_month * attendance_availability
+        normal_starts: days_available / days_per_outfit
+        starts: normal_starts * (1 + december * (dec_capacity_uplift - 1))
+        remakes: starts * remake_rate
+        completions: starts - remakes
+        uncollected: completions * non_collection_rate
+        collected: completions - uncollected
+        normal_orders: normal_starts * (1 - remake_rate)
+        orders: normal_orders * order_index
+        book_carried: >-
+          normal_orders * stated_lead_time_weeks * 12 / 52 + 2 * normal_orders * (1 - jan_feb_order_index)
+        backlog: book_carried + cumsum(orders) - cumsum(completions)
+        lead_time: backlog / completions * 52 / 12
+        days_used: starts * days_per_outfit
+        machine_hours: days_available * hours_per_working_day
+        # money per outfit
+        deposit_each: outfit_price_xof * deposit_share
+        deposits_in: orders * deposit_each
+        deposits_used: collected * deposit_each
+        balance_paid: collected * (outfit_price_xof - deposit_each)
+        forfeited: uncollected * deposit_each
+        deferred_carried: book_carried * deposit_each
+        # fabric, materials, work in progress
+        fabric_price: materials_cost_per_outfit * fabric_share_of_materials / pagne_metres_per_outfit
+        consumed_m: starts * pagne_metres_per_outfit
+        offcuts_m: starts * offcut_metres_per_pagne
+        into_garments_m: consumed_m - offcuts_m
+        stock_m: fabric_cover_months * consumed_m
+        stock_carried_m: fabric_cover_months * normal_starts * pagne_metres_per_outfit
+        stock_open_m: lag(stock_m, 1) + stock_carried_m * (t == 0)
+        shrunk_m: stock_open_m * fabric_shrinkage_rate_monthly
+        bought_m: consumed_m + shrunk_m + stock_m - stock_open_m
+        stock_value: stock_m * fabric_price
+        stock_carried: stock_carried_m * fabric_price
+        shrinkage: shrunk_m * fabric_price
+        materials: starts * materials_cost_per_outfit * (1 + materials_offcut_uplift)
+        offcut_sales: offcuts_m * offcut_price_per_m
+        labour_each: seamstress_wage_monthly / working_days_per_month * days_per_outfit
+        wip_each: materials_cost_per_outfit + wip_conversion_fraction * labour_each
+        wip: wip_units * wip_each
+        # people and premises
+        wages: {each_period: seamstress_count * seamstress_wage_monthly}
+        charges: wages * employer_social_charge_rate
+        founder: {each_period: founder_draw_monthly}
+        rent: {each_period: rent_monthly}
+        electricity: {each_period: electricity_monthly}
+        maintenance: {each_period: maintenance_cost_monthly}
+        # machines
+        machines_cost: sewing_machine_count * sewing_machine_cost_each + overlocker_count * overlocker_cost
+        accumulated_carried: {each_period: machines_cost / machine_useful_life_years * machine_age_years_at_t0}
+        machines_carried: machines_cost * (1 - machine_age_years_at_t0 / machine_useful_life_years)
+        months_left: (machine_useful_life_years - machine_age_years_at_t0) * 12
+        tee: tee_rate_services * tee_applies * (1 - cga_rate_halving * cga_member)
+  opening:
+    atelier:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      machines: {nature: asset, value: {generator: gold, output: machines_carried}}
+      fabric: {nature: asset, value: {generator: gold, output: stock_carried}}
+      wip: {nature: asset, value: {generator: gold, output: wip}}
+      deferred_revenue: {nature: liability, value: {generator: gold, output: deferred_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                      # all paid in the month; end: 60 is past the horizon
+    materials:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: materials}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    fabric_lost:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: shrinkage}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    wages:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: wages}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    charges:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: charges}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    founder:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: founder}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    rent:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rent}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    electricity:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: electricity}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    maintenance:
+      type: operating_cost
+      parties: {payer: atelier}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: maintenance}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks:
+    stocks:
+      kind: held_balance
+      entity: atelier
+      cash: cash
+      phase: close
+      accounts:
+        fabric: {side: asset, target: {generator: gold, output: stock_value}}
+        wip: {side: asset, target: {generator: gold, output: wip}}
+    orders:
+      kind: transfer
+      entity: atelier
+      phase: operate
+      declare:
+        outfit_sales: income
+        forfeited_deposits: income
+        offcut_sales: income
+      moves:
+        take_deposits: {debit: cash, credit: deferred_revenue, amount: {generator: gold, output: deposits_in}}
+        deliver_deposit: {debit: deferred_revenue, credit: outfit_sales, amount: {generator: gold, output: deposits_used}}
+        deliver_balance: {debit: cash, credit: outfit_sales, amount: {generator: gold, output: balance_paid}}
+        forfeit: {debit: deferred_revenue, credit: forfeited_deposits, amount: {generator: gold, output: forfeited}}
+        sell_offcuts: {debit: cash, credit: offcut_sales, amount: {generator: gold, output: offcut_sales}}
+    machines:
+      kind: asset_register
+      entity: atelier
+      phase: close
+      from: cwip
+      to: machines
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 60
+      life_periods: {generator: gold, output: months_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: atelier
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tee}
+      carry_forward_periods: null
+      scheme:
+        outfit_sales: taxable
+        forfeited_deposits: taxable
+        offcut_sales: taxable
+        materials.expense: non_deductible
+        fabric_lost.expense: non_deductible
+        wages.expense: non_deductible
+        charges.expense: non_deductible
+        founder.expense: non_deductible
+        rent.expense: non_deductible
+        electricity.expense: non_deductible
+        maintenance.expense: non_deductible
+        depreciation: non_deductible
+        written_off: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: atelier
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      outfit_sales: collected
+      forfeited_deposits: forfeited
+      offcut_sales: offcuts
+      materials.expense: materials
+      fabric_lost.expense: shrinkage
+      wages.expense: wages
+      charges.expense: charges
+      founder.expense: founder
+      rent.expense: rent
+      electricity.expense: electricity
+      maintenance.expense: maintenance
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+    cash_flow:
+      deferred_revenue: customers
+      outfit_sales: customers
+      offcut_sales: customers
+      fabric: operating
+      wip: operating
+      materials.payable: operating
+      fabric_lost.payable: operating
+      wages.payable: operating
+      charges.payable: operating
+      founder.payable: operating
+      rent.payable: operating
+      electricity.payable: operating
+      maintenance.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    collected: {kind: pnl, entity: atelier, scheme: pnl, include: [collected]}
+    forfeited: {kind: pnl, entity: atelier, scheme: pnl, include: [forfeited]}
+    offcuts: {kind: pnl, entity: atelier, scheme: pnl, include: [offcuts]}
+    revenue: {kind: pnl, entity: atelier, scheme: pnl, include: [collected, forfeited, offcuts]}
+    materials: {kind: pnl, entity: atelier, scheme: pnl, include: [materials]}
+    shrinkage: {kind: pnl, entity: atelier, scheme: pnl, include: [shrinkage]}
+    wages: {kind: pnl, entity: atelier, scheme: pnl, include: [wages]}
+    charges: {kind: pnl, entity: atelier, scheme: pnl, include: [charges]}
+    founder: {kind: pnl, entity: atelier, scheme: pnl, include: [founder]}
+    rent: {kind: pnl, entity: atelier, scheme: pnl, include: [rent]}
+    electricity: {kind: pnl, entity: atelier, scheme: pnl, include: [electricity]}
+    maintenance: {kind: pnl, entity: atelier, scheme: pnl, include: [maintenance]}
+    opex: {kind: pnl, entity: atelier, scheme: pnl,
+           include: [materials, shrinkage, wages, charges, founder, rent, electricity, maintenance]}
+    ebitda: {kind: pnl, entity: atelier, scheme: pnl,
+             include: [collected, forfeited, offcuts, materials, shrinkage, wages, charges, founder, rent, electricity,
+                       maintenance]}
+    depreciation: {kind: pnl, entity: atelier, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: atelier, scheme: pnl,
+           include: [collected, forfeited, offcuts, materials, shrinkage, wages, charges, founder, rent, electricity,
+                     maintenance, depreciation]}
+    tax: {kind: pnl, entity: atelier, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: atelier, scheme: pnl,
+            include: [collected, forfeited, offcuts, materials, shrinkage, wages, charges, founder, rent, electricity,
+                      maintenance, depreciation, tax]}
+    no_credit: {kind: pnl, entity: atelier, scheme: pnl, include: []}   # no customer credit: the balance is paid on collection
+    customers: {entity: atelier, account: cash, scheme: cash_flow, include: [customers]}
+    cfo: {entity: atelier, account: cash, scheme: cash_flow, include: [customers, operating]}
+    cfi: {entity: atelier, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: atelier, account: cash, scheme: cash_flow, include: [customers, operating, investing]}
+  measures: {}
+trace:
+  order_index: {driver: gold.order_index}
+  orders: {driver: gold.orders}
+  capacity_starts: {driver: gold.starts}
+  starts: {driver: gold.starts}
+  remakes: {driver: gold.remakes}
+  completions: {driver: gold.completions}
+  collected: {driver: gold.collected}
+  uncollected: {driver: gold.uncollected}
+  backlog_opening: {opening: deferred_revenue, per: gold.deposit_each}
+  backlog: {balance: deferred_revenue, per: gold.deposit_each}
+  implied_lead_time_weeks: {driver: gold.lead_time}
+  labour_days_available: {driver: gold.days_available}
+  labour_days_used: {driver: gold.days_used}
+  machine_attended_hours: {driver: gold.machine_hours}
+  fabric_purchased_m: {driver: gold.bought_m}
+  fabric_consumed_m: {driver: gold.consumed_m}
+  fabric_into_garments_m: {driver: gold.into_garments_m}
+  offcuts_m: {driver: gold.offcuts_m}
+  fabric_shrinkage_m: {driver: gold.shrunk_m}
+  fabric_stock_opening_m: {opening: fabric, per: gold.fabric_price}
+  fabric_stock_m: {balance: fabric, per: gold.fabric_price}
+  fabric_stock_value: {balance: fabric}
+  wip_units: {driver: gold.wip_units}
+  wip_value: {balance: wip}
+  revenue_collected: {cut: collected}
+  revenue_forfeited_deposits: {cut: forfeited}
+  offcut_revenue: {cut: offcuts}
+  revenue: {cut: revenue}
+  materials_expense: {cut: materials, sign: -1}
+  shrinkage_expense: {cut: shrinkage, sign: -1}
+  seamstress_wages: {cut: wages, sign: -1}
+  employer_social_charges: {cut: charges, sign: -1}
+  founder_compensation: {cut: founder, sign: -1}
+  rent: {cut: rent, sign: -1}
+  electricity: {cut: electricity, sign: -1}
+  maintenance: {cut: maintenance, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  accumulated_depreciation: {sum: [{driver: gold.accumulated_carried}, {cumulative: depreciation, sign: -1}]}
+  net_book_value: {balance: machines}
+  ebit: {cut: ebit}
+  tax_tee: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  deferred_revenue: {balance: deferred_revenue}
+  delta_deferred_revenue: {change: deferred_revenue}
+  accounts_receivable: {cut: no_credit}
+  accounts_payable: {balance: materials.payable + fabric_lost.payable + wages.payable + charges.payable + founder.payable + rent.payable + electricity.payable + maintenance.payable}
+  nwc: {balance: fabric + wip - deferred_revenue - materials.payable - fabric_lost.payable - wages.payable - charges.payable - founder.payable - rent.payable - electricity.payable - maintenance.payable}
+  nwc_opening: {opening: fabric + wip - deferred_revenue - materials.payable - fabric_lost.payable - wages.payable - charges.payable - founder.payable - rent.payable - electricity.payable - maintenance.payable}
+  delta_nwc: {change: fabric + wip - deferred_revenue - materials.payable - fabric_lost.payable - wages.payable - charges.payable - founder.payable - rent.payable - electricity.payable - maintenance.payable}
+  capex: {cut: cfi, sign: -1}
+  cash_from_customers: {cut: customers}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

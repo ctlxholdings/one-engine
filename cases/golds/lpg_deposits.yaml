@@ -1,0 +1,426 @@
+# Gold "lpg_deposits": a butane cylinder distributor on the deposit (consigne) system in Yopougon,
+# Abidjan, ten years (cases/reference/golds/lpg_deposits.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * refills: exchanges_6kg_per_month and exchanges_12kg_per_month, months_per_year a year, sold
+#     at the refill price and bought from the marketeur at the refill cost; the gas lost
+#     (gas_loss_rate, nil) is bought on top of the gas sold; nothing on credit either way (the
+#     credit days are nil; days_per_year is a placeholder);
+#   * the depot holds depot stock of each size, filled_share_of_depot_stock of it full, at cost,
+#     carried in and held there;
+#   * the fleets (fleet_6kg_opening, fleet_12kg_opening) lose cylinder_loss_rate a year and the
+#     losses are bought back, so each fleet is a steady pool: gross cost at the cylinder cost,
+#     depreciated over the mean life 1 / cylinder_loss_rate, the year's purchases replacing what
+#     retires. The pools' net book value is not a gold row and starts at nil;
+#   * deposits: the deposit of every cylinder out with a customer (fleet less depot stock) is
+#     carried in as a liability; non_return_share_of_losses of the lost cylinders never come back,
+#     their deposits forfeited (income); the shop takes the same amount in new deposits on the
+#     replacements, and refunds deposit_refunds_value_per_year;
+#   * payroll and employer charges (CNPS pension on the gross, family, maternity and work-injury
+#     on the capped base, the payroll tax), rent, utilities, van fuel and running costs, paid
+#     in the year;
+#   * the van is carried at van_purchase_price less van_age_years of its van_economic_life_years,
+#     depreciated over the life left, and replaced like for like at van_replacement_index,
+#     depreciated from that year;
+#   * tax: the micro-enterprise tax (IME) at its rate on turnover, the forfeited deposits
+#     included, nothing deductible; paid in the year.
+gold: lpg_deposits
+entity: depot
+plant: refill_price_6kg
+case:
+  case: gold-lpg-deposits
+  periods: 10
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 10
+      inputs: gold
+      values:
+        refills_6kg: {each_period: exchanges_6kg_per_month * months_per_year}
+        refills_12kg: {each_period: exchanges_12kg_per_month * months_per_year}
+        gas_sold: refills_6kg * gas_content_6kg + refills_12kg * gas_content_12kg
+        gas_bought: gas_sold / (1 - gas_loss_rate)
+        gas_lost: gas_bought - gas_sold
+        stock_6kg: filled_share_of_depot_stock * depot_stock_6kg * refill_cost_6kg
+        stock_12kg: filled_share_of_depot_stock * depot_stock_12kg * refill_cost_12kg
+        # the fleets: lost cylinders bought back
+        fleet_6kg: {each_period: fleet_6kg_opening}
+        fleet_12kg: {each_period: fleet_12kg_opening}
+        lost_6kg: cylinder_loss_rate * fleet_6kg
+        lost_12kg: cylinder_loss_rate * fleet_12kg
+        buy_6kg: lost_6kg * cylinder_cost_6kg
+        buy_12kg: lost_12kg * cylinder_cost_12kg
+        gross_6kg: fleet_6kg_opening * cylinder_cost_6kg
+        gross_12kg: fleet_12kg_opening * cylinder_cost_12kg
+        mean_life: 1 / cylinder_loss_rate
+        non_return_6kg: non_return_share_of_losses * lost_6kg
+        non_return_12kg: non_return_share_of_losses * lost_12kg
+        at_customers_6kg: fleet_6kg - depot_stock_6kg
+        at_customers_12kg: fleet_12kg - depot_stock_12kg
+        exchange_cycle: at_customers_6kg / exchanges_6kg_per_month
+        fills_per_cylinder: refills_6kg / fleet_6kg
+        lifetime_fills: fills_per_cylinder * mean_life
+        # deposits
+        deposits_carried: >-
+          (fleet_6kg_opening - depot_stock_6kg) * deposit_6kg + (fleet_12kg_opening - depot_stock_12kg) * deposit_12kg
+        forfeited: non_return_6kg * deposit_6kg + non_return_12kg * deposit_12kg
+        refunded: {each_period: deposit_refunds_value_per_year}
+        received: forfeited + refunded
+        # people and premises
+        payroll: {each_period: (employees_count * employee_wage_monthly + driver_wage_monthly) * months_per_year}
+        charges: >-
+          staff_declared_to_cnps * (cnps_pension_employer_rate * payroll + (cnps_family_maternity_employer_rate
+          + cnps_at_mp_employer_rate) * (employees_count + 1) * cnps_capped_base_monthly * months_per_year)
+          + employer_payroll_tax_rate * payroll
+        rent: {each_period: rent_monthly * months_per_year}
+        utilities: {each_period: site_utilities_security_annual}
+        running: {each_period: vehicle_running_cost_ex_fuel_annual}
+        staff_hours: {each_period: employees_count * legal_working_week_hours}
+        site_hours: {each_period: sites_count * site_opening_hours_per_week}
+        staffing_gap: site_hours - staff_hours
+        # the van's work
+        slots: refills_6kg + refills_12kg * slot_equivalent_12kg
+        trips: slots / van_capacity_6kg_per_trip
+        trips_stated: {each_period: trips_per_week_stated * weeks_per_year}
+        trip_shortfall: trips - trips_stated
+        trip_days: {each_period: operating_days_per_year * max_round_trips_per_van_day}
+        payload: {each_period: van_capacity_6kg_per_trip * (gas_content_6kg + tare_6kg)}
+        km: trips * round_trip_km
+        litres: km * van_consumption_l_per_100km / 100
+        fuel: litres * fuel_price_per_litre
+        # the van
+        van_carried: van_purchase_price * (van_economic_life_years - van_age_years) / van_economic_life_years
+        van_life_left: van_economic_life_years - van_age_years
+        replacement: van_purchase_price * (t == van_replacement_index)
+        # tax and the price memo rows
+        ime: {each_period: ime_rate_standard - cga_member * (ime_rate_standard - ime_rate_cga)}
+        premium_6kg: {each_period: refill_price_6kg / homologated_price_6kg}
+        margin_homologated_6kg: {each_period: homologated_price_6kg - refill_cost_6kg}
+  opening:
+    depot:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      van: {nature: asset, value: {generator: gold, output: van_carried}}
+      stock_6kg: {nature: asset, value: {generator: gold, output: stock_6kg}}
+      stock_12kg: {nature: asset, value: {generator: gold, output: stock_12kg}}
+      deposits: {nature: liability, value: {generator: gold, output: deposits_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                      # all paid in the year; end: 10 is past the horizon
+    gas_6kg:
+      type: offtake
+      parties: {seller: depot}
+      terms: {volume: {generator: gold, output: refills_6kg}, price: {generator: gold, output: refill_price_6kg},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 10}
+    gas_12kg:
+      type: offtake
+      parties: {seller: depot}
+      terms: {volume: {generator: gold, output: refills_12kg}, price: {generator: gold, output: refill_price_12kg},
+              payment_days: {generator: gold, output: customer_credit_days_12kg}, days_per_year: 12,
+              periods_per_year: 1, end: 10}
+    refills_6kg:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: {generator: gold, output: refill_cost_6kg}, volume: {generator: gold, output: refills_6kg},
+              index: 1, periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_payment_days}, days_per_year: 12}
+    refills_12kg:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: {generator: gold, output: refill_cost_12kg}, volume: {generator: gold, output: refills_12kg},
+              index: 1, periods_per_year: 1, start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_payment_days}, days_per_year: 12}
+    payroll:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: payroll}, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    charges:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: charges}, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    rent:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: rent}, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    utilities:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: utilities}, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    fuel:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: fuel}, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    running:
+      type: operating_cost
+      parties: {payer: depot}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: running}, index: 1, periods_per_year: 1,
+              start: 0, end: 10, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    cylinders_6kg:
+      type: capex_class
+      parties: {owner: depot}
+      terms: {schedule: {generator: gold, output: buy_6kg}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+    cylinders_12kg:
+      type: capex_class
+      parties: {owner: depot}
+      terms: {schedule: {generator: gold, output: buy_12kg}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+    new_van:
+      type: capex_class
+      parties: {owner: depot}
+      terms: {schedule: {generator: gold, output: replacement}, vat_rate: 0, vat_refund_lag: 0, end: 10}
+  rulebooks:
+    depot_stock:
+      kind: held_balance
+      entity: depot
+      cash: cash
+      phase: close
+      accounts:
+        stock_6kg: {side: asset, target: {generator: gold, output: stock_6kg}, against: refills_6kg.expense}
+        stock_12kg: {side: asset, target: {generator: gold, output: stock_12kg}, against: refills_12kg.expense}
+    consigne:
+      kind: transfer
+      entity: depot
+      phase: operate
+      declare:
+        forfeited_deposits: income
+      moves:
+        receive: {debit: cash, credit: deposits, amount: {generator: gold, output: received}}
+        forfeit: {debit: deposits, credit: forfeited_deposits, amount: {generator: gold, output: forfeited}}
+        refund: {debit: deposits, credit: cash, amount: {generator: gold, output: refunded}}
+    fleet_6kg:
+      kind: asset_pool
+      entity: depot
+      phase: close
+      from: cylinders_6kg
+      to: pool_6kg
+      expense: dep_cyl6
+      gross: {generator: gold, output: gross_6kg}
+      life_periods: {generator: gold, output: mean_life}
+    fleet_12kg:
+      kind: asset_pool
+      entity: depot
+      phase: close
+      from: cylinders_12kg
+      to: pool_12kg
+      expense: dep_cyl12
+      gross: {generator: gold, output: gross_12kg}
+      life_periods: {generator: gold, output: mean_life}
+    old_van:
+      kind: asset_register
+      entity: depot
+      phase: close
+      from: cwip
+      to: van
+      expense: dep_van
+      disposal: written_off
+      in_service: 0
+      dispose_at: 10
+      life_periods: {generator: gold, output: van_life_left}
+      first_charge: in_service
+    replacement_van:
+      kind: asset_register
+      entity: depot
+      phase: close
+      from: new_van
+      to: van
+      expense: dep_van
+      disposal: written_off
+      in_service: {generator: gold, output: van_replacement_index}
+      dispose_at: 10
+      life_periods: {generator: gold, output: van_economic_life_years}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: depot
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: ime}
+      carry_forward_periods: null
+      scheme:
+        gas_6kg.revenue: taxable
+        gas_12kg.revenue: taxable
+        forfeited_deposits: taxable
+        refills_6kg.expense: non_deductible
+        refills_12kg.expense: non_deductible
+        payroll.expense: non_deductible
+        charges.expense: non_deductible
+        rent.expense: non_deductible
+        utilities.expense: non_deductible
+        fuel.expense: non_deductible
+        running.expense: non_deductible
+        dep_cyl6: non_deductible
+        dep_cyl12: non_deductible
+        dep_van: non_deductible
+        written_off: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: depot
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      gas_6kg.revenue: revenue_6kg
+      gas_12kg.revenue: revenue_12kg
+      forfeited_deposits: forfeiture
+      refills_6kg.expense: cogs_6kg
+      refills_12kg.expense: cogs_12kg
+      payroll.expense: payroll
+      charges.expense: charges
+      rent.expense: rent
+      utilities.expense: utilities
+      fuel.expense: fuel
+      running.expense: running
+      dep_cyl6: dep_cyl6
+      dep_cyl12: dep_cyl12
+      dep_van: dep_van
+      written_off: dep_van
+      tax_expense: tax
+    cash_flow:
+      gas_6kg.receivable: operating
+      gas_12kg.receivable: operating
+      refills_6kg.payable: operating
+      refills_12kg.payable: operating
+      payroll.payable: operating
+      charges.payable: operating
+      rent.payable: operating
+      utilities.payable: operating
+      fuel.payable: operating
+      running.payable: operating
+      deposits: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cylinders_6kg: cyl6
+      cylinders_12kg: cyl12
+      new_van: van
+      cwip: van
+  cuts:
+    revenue_6kg: {kind: pnl, entity: depot, scheme: pnl, include: [revenue_6kg]}
+    revenue_12kg: {kind: pnl, entity: depot, scheme: pnl, include: [revenue_12kg]}
+    revenue_gas: {kind: pnl, entity: depot, scheme: pnl, include: [revenue_6kg, revenue_12kg]}
+    cogs_6kg: {kind: pnl, entity: depot, scheme: pnl, include: [cogs_6kg]}
+    cogs_12kg: {kind: pnl, entity: depot, scheme: pnl, include: [cogs_12kg]}
+    cogs_gas: {kind: pnl, entity: depot, scheme: pnl, include: [cogs_6kg, cogs_12kg]}
+    gross_margin_gas: {kind: pnl, entity: depot, scheme: pnl, include: [revenue_6kg, revenue_12kg, cogs_6kg, cogs_12kg]}
+    forfeiture: {kind: pnl, entity: depot, scheme: pnl, include: [forfeiture]}
+    turnover: {kind: pnl, entity: depot, scheme: pnl, include: [revenue_6kg, revenue_12kg, forfeiture]}
+    payroll: {kind: pnl, entity: depot, scheme: pnl, include: [payroll]}
+    charges: {kind: pnl, entity: depot, scheme: pnl, include: [charges]}
+    payroll_cost: {kind: pnl, entity: depot, scheme: pnl, include: [payroll, charges]}
+    rent: {kind: pnl, entity: depot, scheme: pnl, include: [rent]}
+    utilities: {kind: pnl, entity: depot, scheme: pnl, include: [utilities]}
+    fuel: {kind: pnl, entity: depot, scheme: pnl, include: [fuel]}
+    running: {kind: pnl, entity: depot, scheme: pnl, include: [running]}
+    opex: {kind: pnl, entity: depot, scheme: pnl, include: [payroll, charges, rent, utilities, fuel, running]}
+    ebitda: {kind: pnl, entity: depot, scheme: pnl,
+             include: [revenue_6kg, revenue_12kg, forfeiture, cogs_6kg, cogs_12kg, payroll, charges, rent, utilities,
+                       fuel, running]}
+    dep_cyl6: {kind: pnl, entity: depot, scheme: pnl, include: [dep_cyl6]}
+    dep_cyl12: {kind: pnl, entity: depot, scheme: pnl, include: [dep_cyl12]}
+    dep_van: {kind: pnl, entity: depot, scheme: pnl, include: [dep_van]}
+    dep: {kind: pnl, entity: depot, scheme: pnl, include: [dep_cyl6, dep_cyl12, dep_van]}
+    ebit: {kind: pnl, entity: depot, scheme: pnl,
+           include: [revenue_6kg, revenue_12kg, forfeiture, cogs_6kg, cogs_12kg, payroll, charges, rent, utilities,
+                     fuel, running, dep_cyl6, dep_cyl12, dep_van]}
+    tax: {kind: pnl, entity: depot, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: depot, scheme: pnl,
+            include: [revenue_6kg, revenue_12kg, forfeiture, cogs_6kg, cogs_12kg, payroll, charges, rent, utilities,
+                      fuel, running, dep_cyl6, dep_cyl12, dep_van, tax]}
+    cfo: {entity: depot, account: cash, scheme: cash_flow, include: [operating]}
+    cyl6: {entity: depot, account: cash, scheme: cash_flow, include: [cyl6]}
+    cyl12: {entity: depot, account: cash, scheme: cash_flow, include: [cyl12]}
+    cylinders: {entity: depot, account: cash, scheme: cash_flow, include: [cyl6, cyl12]}
+    van: {entity: depot, account: cash, scheme: cash_flow, include: [van]}
+    cfi: {entity: depot, account: cash, scheme: cash_flow, include: [cyl6, cyl12, van]}
+    fcff: {entity: depot, account: cash, scheme: cash_flow, include: [operating, cyl6, cyl12, van]}
+  measures: {}
+trace:
+  refills_6kg: {driver: gold.refills_6kg}
+  refills_12kg: {driver: gold.refills_12kg}
+  gas_sold_kg: {driver: gold.gas_sold}
+  gas_loss_kg: {driver: gold.gas_lost}
+  gas_purchased_kg: {driver: gold.gas_bought}
+  revenue_6kg: {cut: revenue_6kg}
+  revenue_12kg: {cut: revenue_12kg}
+  revenue_gas: {cut: revenue_gas}
+  cogs_6kg: {cut: cogs_6kg, sign: -1}
+  cogs_12kg: {cut: cogs_12kg, sign: -1}
+  cogs_gas: {cut: cogs_gas, sign: -1}
+  gross_margin_gas: {cut: gross_margin_gas}
+  fleet_6kg_open: {driver: gold.fleet_6kg}
+  cyl6_lost: {driver: gold.lost_6kg}
+  cyl6_purchased: {cut: cyl6, sign: -1, per: gold.cylinder_cost_6kg}
+  fleet_6kg_close: {driver: gold.fleet_6kg}
+  fleet_12kg_open: {driver: gold.fleet_12kg}
+  cyl12_lost: {driver: gold.lost_12kg}
+  cyl12_purchased: {cut: cyl12, sign: -1, per: gold.cylinder_cost_12kg}
+  fleet_12kg_close: {driver: gold.fleet_12kg}
+  cyl6_non_return: {driver: gold.non_return_6kg}
+  cyl12_non_return: {driver: gold.non_return_12kg}
+  cylinders_at_customers_6kg: {driver: gold.at_customers_6kg}
+  cylinders_at_customers_12kg: {driver: gold.at_customers_12kg}
+  household_exchange_cycle_months: {driver: gold.exchange_cycle}
+  cyl6_fills_per_cylinder: {driver: gold.fills_per_cylinder}
+  cylinder_mean_life_years: {driver: gold.mean_life}
+  cyl6_lifetime_fills: {driver: gold.lifetime_fills}
+  deposits_received: {driver: gold.received}
+  deposits_forfeited: {driver: gold.forfeited}
+  deposits_refunded: {driver: gold.refunded}
+  deposit_liability_open: {opening: deposits}
+  deposit_liability_close: {balance: deposits}
+  forfeiture_income: {cut: forfeiture}
+  turnover_ttc: {cut: turnover}
+  gross_payroll: {cut: payroll, sign: -1}
+  employer_social_charges: {cut: charges, sign: -1}
+  payroll_cost: {cut: payroll_cost, sign: -1}
+  staff_hours_available: {driver: gold.staff_hours}
+  site_hours_required: {driver: gold.site_hours}
+  staffing_gap_hours: {driver: gold.staffing_gap}
+  rent: {cut: rent, sign: -1}
+  utilities_security: {cut: utilities, sign: -1}
+  van_slots_required: {driver: gold.slots}
+  trips_required: {driver: gold.trips}
+  trips_stated_capacity: {driver: gold.trips_stated}
+  trip_shortfall: {driver: gold.trip_shortfall}
+  van_trip_capacity_days: {driver: gold.trip_days}
+  van_payload_kg_per_trip: {driver: gold.payload}
+  van_km: {driver: gold.km}
+  fuel_litres: {driver: gold.litres}
+  fuel_cost: {cut: fuel, sign: -1}
+  vehicle_running_cost: {cut: running, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  cyl6_gross_book_value: {driver: gold.gross_6kg}
+  cyl12_gross_book_value: {driver: gold.gross_12kg}
+  dep_cyl6: {cut: dep_cyl6, sign: -1}
+  dep_cyl12: {cut: dep_cyl12, sign: -1}
+  van_nbv_open: {opening: van}
+  van_capex: {cut: van, sign: -1}
+  dep_van: {cut: dep_van, sign: -1}
+  van_nbv_close: {balance: van}
+  dep_total: {cut: dep, sign: -1}
+  ebit: {cut: ebit}
+  ime_rate: {driver: gold.ime}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  inventory: {balance: stock_6kg + stock_12kg}
+  receivables: {balance: gas_6kg.receivable + gas_12kg.receivable}
+  payables: {balance: refills_6kg.payable + refills_12kg.payable}
+  nwc_open: {opening: stock_6kg + stock_12kg + gas_6kg.receivable + gas_12kg.receivable - refills_6kg.payable - refills_12kg.payable - deposits}
+  nwc_close: {balance: stock_6kg + stock_12kg + gas_6kg.receivable + gas_12kg.receivable - refills_6kg.payable - refills_12kg.payable - deposits}
+  delta_nwc: {change: stock_6kg + stock_12kg + gas_6kg.receivable + gas_12kg.receivable - refills_6kg.payable - refills_12kg.payable - deposits}
+  capex_cylinders: {cut: cylinders, sign: -1}
+  capex_total: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  price_premium_6kg: {driver: gold.premium_6kg}
+  margin_at_homologated_price_6kg: {driver: gold.margin_homologated_6kg}

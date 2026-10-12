@@ -42,7 +42,10 @@ index ``t``, the comparisons ``< <= > >= == !=`` (1 when true, else 0), the
 conditional ``a if c else b``, ``min``, ``max``, ``abs``, and ``lag(name, k)``:
 the value ``name`` had ``k`` periods earlier, nil before the first period
 (nothing had happened yet: a case that starts a business from nothing, then
-warms up to its steady state, reads its payment calendar this way). A number typed
+warms up to its steady state, reads its payment calendar this way), and
+``cumsum(name)``: the running total of ``name`` from the first period to
+this one (containers landed to date; with ``lag``, those landed in the last
+so many periods). A number typed
 in a formula is read from its text (``0.3`` is 3/10). A formula that reads
 ``t`` or a series is a series of ``periods`` values; otherwise it is a
 number. ``{each_period: formula}`` is a series even when every period is
@@ -93,11 +96,11 @@ class _Formula:
             raise InputError(f"{where}: cannot parse formula {text!r}") from e
 
     def names(self) -> set:
-        return {n.id for n in ast.walk(self.tree) if isinstance(n, ast.Name)} - set(_FUNCS) - {"lag"}
+        return {n.id for n in ast.walk(self.tree) if isinstance(n, ast.Name)} - set(_FUNCS) - {"lag", "cumsum"}
 
     def lags(self) -> bool:
-        """Whether the formula reads an earlier period (``lag``): it is then a series."""
-        return any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "lag"
+        """Whether the formula reads other periods (``lag``, ``cumsum``): it is then a series."""
+        return any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ("lag", "cumsum")
                    for n in ast.walk(self.tree))
 
     def at(self, t: int, ns: Mapping[str, Value]) -> Fraction:
@@ -133,6 +136,12 @@ class _Formula:
             back = t - int(k)
             v = ns[n.args[0].id]
             return Fraction(0) if back < 0 else (v[back] if isinstance(v, list) else v)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "cumsum" and not n.keywords:
+            if len(n.args) != 1 or not isinstance(n.args[0], ast.Name) or n.args[0].id not in ns:
+                raise InputError(f"{self.where}: cumsum takes an earlier value's name ({self.text!r})")
+            v = ns[n.args[0].id]
+            # a number is the same every period: its running total is that many of it
+            return sum(v[:t + 1], Fraction(0)) if isinstance(v, list) else v * (t + 1)
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _FUNCS and not n.keywords:
             return Fraction(_FUNCS[n.func.id](*[ev(a) for a in n.args]))
         if isinstance(n, ast.Constant) and not isinstance(n.value, bool) and isinstance(n.value, (int, float, Fraction)):
@@ -152,13 +161,16 @@ class _Formula:
 def formulas(r: Reader) -> Dict[str, Value]:
     """Named values from named inputs (a generator); see the module docstring.
 
-    Case keys: ``periods``; ``inputs`` (name -> number: the gold's inputs,
+    Case keys: ``periods``; ``inputs`` (name -> number, or a list of numbers: the gold's inputs,
     filled in by the oracle family from the vendored gold); ``values``
     (name -> formula, in order, each reading inputs and earlier values).
     Outputs: every input, and every value.
     """
     periods = int(r.take("periods"))
-    ns: Dict[str, Value] = {k: _number(v, f"formulas.inputs.{k}") for k, v in r.take("inputs").items()}
+    # an input is a number, or a list of numbers (a series the source prints period by period)
+    ns: Dict[str, Value] = {k: ([_number(x, f"formulas.inputs.{k}[{i}]") for i, x in enumerate(v)]
+                                if isinstance(v, list) else _number(v, f"formulas.inputs.{k}"))
+                            for k, v in r.take("inputs").items()}
     for name, text in r.take("values").items():
         if name in ns:
             raise InputError(f"formulas.values.{name}: the name is already an input or an earlier value")
@@ -318,7 +330,8 @@ def asset_pool(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     Case keys: ``entity``, ``phase``, ``from`` (the account the period's
     spend arrives in, moved into service at once), ``to`` (the pool's net
     book value, carried in on the opening balance sheet), ``expense``,
-    ``gross`` (the pool's gross cost), ``life_periods``.
+    ``gross`` (the pool's gross cost), ``life_periods`` (the mean life, not
+    necessarily whole: a fleet losing 8% a year lives 12.5 years on average).
 
     Each period is charged ``gross / life_periods``. In a steady state the
     vintage that reaches the end of its life retires at nil book value and
@@ -329,7 +342,9 @@ def asset_pool(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     """
     entity, phase, unit = r.take("entity"), r.take("phase"), ctx["currency"]
     src, fa, dep = r.take("from"), r.take("to"), r.take("expense")
-    gross, life = exact(r.take("gross")), int(r.take("life_periods"))
+    gross, life = exact(r.take("gross")), exact(r.take("life_periods"))
+    if life <= 0:
+        raise InputError(f"asset_pool: life_periods must be above nil, not {life}")
     for name, nature in ((src, Nature.ASSET), (fa, Nature.ASSET), (dep, Nature.EXPENSE)):
         group.declare(entity, name, nature, unit)
     charge = gross / life
