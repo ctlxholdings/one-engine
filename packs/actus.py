@@ -1,4 +1,5 @@
-"""ACTUS contracts on the ledger kernel: the loans PAM, LAM, NAM and ANN, and the cash position CSH.
+"""ACTUS contracts on the ledger kernel: loans (PAM, LAM, LAX, NAM, ANN), call money (CLM),
+undefined maturity (UMP) and the cash position (CSH).
 
 What this pack is
 -----------------
@@ -69,6 +70,50 @@ Rules the corpus decided (each pinned in ``tests/test_case_actus.py``)
   coupon then pays (ad0, one case: a mid-period AD would test more);
 * a cash position (``CSH``) is a held balance with no schedule: it exists at
   its status date and reports only at its analysis dates (csh01..04).
+
+Call money (CLM) and undefined maturity (UMP)
+---------------------------------------------
+Both capitalise interest on their cycle (``IPCI``) and have no redemption
+schedule. The corpus fixed these readings:
+
+* the capitalisation cycle starts at the initial exchange when no anchor is
+  stated, so an exchange after the status date is also a (zero)
+  capitalisation (clm12). The standard says IED + one cycle;
+* the interest schedule of a CLM is its maturity alone, so a contract that
+  already exists at its status date opens with no accrued interest unless
+  it states some (clm03, clm08);
+* an event on the status date is past: a contract exchanged on its status
+  date opens with its notional and reports no IED (clm01, clm02);
+* a rate reset with no anchor starts one cycle after the exchange, and an
+  anchor with no cycle is a single reset (clm05, clm15);
+* a CLM matures at its stated maturity, or, once called (an observed
+  ``XD`` event), at the call date plus the notice period (``xDayNotice``),
+  where it pays its interest (``IP``) and settles its notional (``STD``).
+  Interest stops at the call: no capitalisation or reset falls on or after
+  it, and nothing accrues between call and settlement (clm07, clm08: the
+  settlement interest is exactly the interest to the call date). With a
+  notice period the interest to the call is fixed at the call as an amount
+  due (``called``), so the call reports no accrued interest (clm07, clm08);
+  with none it is paid at once and the call reports it accrued (clm09,
+  clm13, clm14). The settlement is reported even past the horizon
+  (clm07); the horizon cuts only scheduled events;
+* a UMP has no maturity: its schedule runs to the reporting horizon,
+  which is excluded (ump04: a yearly cycle with the horizon on a cycle date
+  ends one year before it).
+
+The exotic linear amortizer (LAX)
+---------------------------------
+A LAM whose redemption, interest and reset schedules are arrays of
+segments: segment ``i`` starts at its anchor and runs on its cycle up to
+the next anchor (excluded), the last one to maturity; with no cycle, the
+anchor alone. A redemption segment is ``DEC`` (principal redemptions,
+``PR``) or ``INC`` (principal increases, ``PI``: the lender pays out more);
+a reset anchor is ``FIX`` (``RRF`` to the array rate) or ``VAR`` (``RR`` to
+the observation times ``rateMultiplier`` plus the array rate as spread).
+Each ``PR``/``PI`` sets the instalment to its segment's amount before it
+pays, so the corpus's silent ``PRF`` events are not reported (lax01..18).
+With no stated maturity the contract matures at the redemption that would
+take the notional to zero (lax04, lax14, lax16).
 * with no maturity, a LAM matures at its ceil(NT / PRNXT)-th redemption and
   a NAM or ANN at the instalment that clears the notional after interest.
 
@@ -83,6 +128,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import math
+import re
 from dataclasses import dataclass, field, replace
 from fractions import Fraction
 from typing import Any, Dict, List, Mapping, Optional, Tuple
@@ -102,9 +148,11 @@ class ActusError(ValueError):
 
 #: Same-day order of event types, as the corpus publishes them (IED before PR
 #: before IP before IPCI before RR ...). ``init`` posts the starting state.
-PHASES = ("init", "AD", "PRD", "IED", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB", "TD", "MD")
+PHASES = ("init", "AD", "XD", "PRD", "IED", "PR", "PI", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB", "TD", "MD", "STD")
 
-TYPES = ("PAM", "LAM", "NAM", "ANN", "CSH")
+TYPES = ("PAM", "LAM", "LAX", "NAM", "ANN", "CLM", "UMP", "CSH")
+#: Types with no redemption schedule of their own: interest only, notional at the end.
+_BULLET = ("PAM", "CLM", "UMP")
 ROLES = {"RPA": 1, "RPL": -1}
 
 #: Terms read. Housekeeping terms (identifier, deal date) are read and have no effect on the stream.
@@ -123,8 +171,16 @@ BUILT_TERMS = frozenset({
     "cycleOfInterestCalculationBase", "interestCalculationBaseAmount",
     "marketObjectCodeOfScalingIndex", "scalingIndexAtContractDealDate", "notionalScalingMultiplier",
     "interestScalingMultiplier", "cycleAnchorDateOfScalingIndex", "cycleOfScalingIndex",
-    "scalingEffect",
+    "scalingEffect", "xDayNotice", "creatorID", "counterpartyID",
 })
+#: LAX's array terms; any other type that states one refuses.
+ARRAY_TERMS = frozenset({
+    "arrayCycleAnchorDateOfPrincipalRedemption", "arrayCycleOfPrincipalRedemption",
+    "arrayNextPrincipalRedemptionPayment", "arrayIncreaseDecrease",
+    "arrayCycleAnchorDateOfInterestPayment", "arrayCycleOfInterestPayment",
+    "arrayCycleAnchorDateOfRateReset", "arrayRate", "arrayFixedVariable",
+})
+BUILT_TERMS = BUILT_TERMS | ARRAY_TERMS
 
 #: ACTUS terms we know and do not compute; each refuses by name.
 KNOWN_UNBUILT = frozenset({
@@ -133,7 +189,7 @@ KNOWN_UNBUILT = frozenset({
     "cycleAnchorDateOfOptionality", "penaltyType", "penaltyRate",
     "lifeCap", "lifeFloor", "periodCap", "periodFloor", "cyclePointOfRateReset",
     "cyclePointOfInterestPayment", "delinquencyPeriod", "gracePeriod", "creditLineAmount",
-    "marketValueObserved", "settlementCurrency", "x_day_notice", "arrayCycleOfInterestPayment",
+    "marketValueObserved", "settlementCurrency", "x_day_notice", "arrayCycleOfRateReset",
     "contractPerformance", "seniority", "nonPerformingDate",
 })
 
@@ -186,6 +242,50 @@ class Terms:
     scanx: Optional[_dt.datetime]
     sccl: Optional[str]
     scef: Optional[str]
+    xdn: Optional[str] = None
+    lax: Optional["Arrays"] = None
+
+
+@dataclass(frozen=True)
+class Arrays:
+    """LAX's array terms, each a tuple (a single stated value is a one-entry array)."""
+
+    pr_anchors: Tuple[_dt.datetime, ...]
+    pr_cycles: Tuple[str, ...]
+    pr_amounts: Tuple[Fraction, ...]
+    pr_incdec: Tuple[str, ...]
+    ip_anchors: Tuple[_dt.datetime, ...]
+    ip_cycles: Tuple[str, ...]
+    rr_anchors: Tuple[_dt.datetime, ...]
+    rr_rates: Tuple[Fraction, ...]
+    rr_fixvar: Tuple[str, ...]
+
+
+def _array(v) -> list:
+    return [] if v in (None, "") else (list(v) if isinstance(v, (list, tuple)) else [v])
+
+
+def _parse_arrays(raw: Mapping[str, Any]) -> Arrays:
+    a = {k: _array(raw.get(k)) for k in ARRAY_TERMS}
+    out = Arrays(
+        pr_anchors=tuple(cal.instant(x) for x in a["arrayCycleAnchorDateOfPrincipalRedemption"]),
+        pr_cycles=tuple(str(x) for x in a["arrayCycleOfPrincipalRedemption"]),
+        pr_amounts=tuple(_num(x) for x in a["arrayNextPrincipalRedemptionPayment"]),
+        pr_incdec=tuple(str(x) for x in a["arrayIncreaseDecrease"]),
+        ip_anchors=tuple(cal.instant(x) for x in a["arrayCycleAnchorDateOfInterestPayment"]),
+        ip_cycles=tuple(str(x) for x in a["arrayCycleOfInterestPayment"]),
+        rr_anchors=tuple(cal.instant(x) for x in a["arrayCycleAnchorDateOfRateReset"]),
+        rr_rates=tuple(_num(x) for x in a["arrayRate"]),
+        rr_fixvar=tuple(str(x) for x in a["arrayFixedVariable"]),
+    )
+    cid = raw.get("contractID")
+    if not (len(out.pr_anchors) == len(out.pr_amounts) == len(out.pr_incdec) > 0):
+        raise ActusError(f"{cid}: LAX redemption arrays (anchors, amounts, INC/DEC) differ in length")
+    if set(out.pr_incdec) - {"INC", "DEC"} or set(out.rr_fixvar) - {"FIX", "VAR"}:
+        raise ActusError(f"{cid}: LAX array flags {sorted(set(out.pr_incdec) | set(out.rr_fixvar))} are not built")
+    if not (len(out.rr_anchors) == len(out.rr_rates) == len(out.rr_fixvar)):
+        raise ActusError(f"{cid}: LAX rate-reset arrays differ in length")
+    return out
 
 
 def _num(v: Any) -> Fraction:
@@ -201,6 +301,9 @@ def parse_terms(raw: Mapping[str, Any]) -> Terms:
     if unknown:
         raise ActusError(f"{raw.get('contractID')}: unknown term(s) {unknown}")
     kind = raw["contractType"]
+    arrays = sorted(set(raw) & ARRAY_TERMS)
+    if arrays and kind != "LAX":
+        raise ActusError(f"{raw.get('contractID')}: array term(s) {arrays} are built for LAX only")
     if kind not in TYPES:
         raise ActusError(f"{raw.get('contractID')}: contract type {kind!r} is not built ({TYPES})")
     if raw["contractRole"] not in ROLES:
@@ -243,7 +346,8 @@ def parse_terms(raw: Mapping[str, Any]) -> Terms:
         ipcbcl=s("cycleOfInterestCalculationBase"), ipcba=n("interestCalculationBaseAmount"),
         scmo=s("marketObjectCodeOfScalingIndex"), scied=n("scalingIndexAtContractDealDate"),
         scanx=d("cycleAnchorDateOfScalingIndex"), sccl=s("cycleOfScalingIndex"),
-        scef=s("scalingEffect"),
+        scef=s("scalingEffect"), xdn=s("xDayNotice"),
+        lax=_parse_arrays(raw) if kind == "LAX" else None,
     )
 
 
@@ -256,6 +360,20 @@ class Event:
     kind: str
     at: _dt.datetime
     calc: _dt.datetime
+    #: "schedule", or "observed" for an event an observed event caused (a call's settlement):
+    #: the reporting horizon cuts only scheduled events
+    source: str = "schedule"
+    #: the date before any business-day shift: market observations are read on it (clm09, clm10)
+    sched: Optional[_dt.datetime] = None
+
+
+def _notice(k: Terms, t: _dt.datetime) -> _dt.datetime:
+    """``t`` plus the CLM notice period ``xDayNotice`` (P<n>D|W|M|Y; P0D is the same instant)."""
+    m = re.match(r"^P(\d+)([DWMY])$", k.xdn or "")
+    if not m:
+        raise ActusError(f"{k.cid}: xDayNotice {k.xdn!r} is not built (P<n><D|W|M|Y>)")
+    n, unit = int(m.group(1)), m.group(2)
+    return t if n == 0 else cal.Cycle.parse(f"P{n}{unit}L0").step(t, 1, False)
 
 
 def _derive_maturity(k: Terms) -> _dt.datetime:
@@ -287,14 +405,21 @@ def _derive_maturity(k: Terms) -> _dt.datetime:
     raise ActusError(f"{k.cid}: no maturityDate and no rule here to derive one for {k.kind}")
 
 
-def schedule(k: Terms, analysis: Tuple[_dt.datetime, ...] = ()) -> List[Event]:
+def schedule(k: Terms, analysis: Tuple[_dt.datetime, ...] = (), called: Optional[_dt.datetime] = None,
+             horizon: Optional[_dt.datetime] = None) -> List[Event]:
     """Every event of the contract's life from its status date, in time and phase order.
 
     ``analysis`` are the instants at which the state is to be reported
-    (``AD`` events); they are not contract terms, so they come with the run.
+    (``AD`` events), ``called`` the instant a CLM was called (an observed
+    ``XD``) and ``horizon`` the reporting horizon, which is where a UMP's
+    schedule ends. None of these is a contract term, so they come with the run.
     """
     if k.kind == "CSH":
         return [Event("AD", t, t) for t in sorted(analysis) if t >= k.sd]
+    if k.kind in ("CLM", "UMP"):
+        return _schedule_open(k, analysis, called, horizon)
+    if k.kind == "LAX":
+        return _schedule_lax(k, analysis)
     md = k.md or _derive_maturity(k)
     raw: List[Tuple[str, _dt.datetime]] = [("IED", k.ied), ("MD", md)]
     raw += [("AD", t) for t in analysis]
@@ -337,11 +462,27 @@ def schedule(k: Terms, analysis: Tuple[_dt.datetime, ...] = ()) -> List[Event]:
         raw.append(("PRD", k.prd))
     if k.td is not None:
         raw.append(("TD", k.td))
+    # a maturity derived from the redemption cycle is a cycle date, and shifts (ann28: Sunday
+    # 2013-09-01 under SCF is paid Monday 09-02); a stated one does not (clm10)
+    return _order(k, raw, unshifted=UNSHIFTED if k.md is not None else UNSHIFTED - {"MD"})
+
+
+#: Events dated by a term rather than a cycle. The standard shifts only cycle dates by the
+#: business-day convention; clm10 matures on Sunday 2015-09-20 under SCP and reports it there,
+#: but computes on the shifted day all the same: its interest runs to Friday 09-18.
+UNSHIFTED = frozenset({"IED", "MD", "STD", "TD", "PRD", "AD", "XD"})
+
+
+def _order(k: Terms, raw, after_sd: bool = False, unshifted=UNSHIFTED) -> List[Event]:
+    """Shift each cycle (kind, date) by the business-day rule, drop what lies before the status
+    date (or on it, with ``after_sd``) or after a termination, and sort in time and phase order."""
     out = []
-    for kind, t in raw:
+    for kind, t, *src in raw:
         at, calc = cal.shift(t, k.bdc, k.cal)
-        out.append(Event(kind, at, calc))
-    out = [e for e in out if e.at >= k.sd]
+        if kind in unshifted:
+            at = t
+        out.append(Event(kind, at, calc, *(src or ["schedule"]), sched=t))
+    out = [e for e in out if (e.at > k.sd if after_sd else e.at >= k.sd)]
     if k.td is not None:
         out = [e for e in out if e.at <= k.td]
     out.sort(key=lambda e: (e.at, PHASES.index(e.kind)))
@@ -353,14 +494,104 @@ def schedule(k: Terms, analysis: Tuple[_dt.datetime, ...] = ()) -> List[Event]:
     return out
 
 
+def _schedule_open(k: Terms, analysis, called, horizon) -> List[Event]:
+    """CLM and UMP: interest capitalised on its cycle, no redemption schedule (rules in the module notes)."""
+    if k.kind == "CLM":
+        md = _notice(k, called) if called is not None else k.md
+        if md is None:
+            raise ActusError(f"{k.cid}: a CLM with no maturity that is never called is not built")
+        stop = called if called is not None else md            # interest events stop at the call
+    else:
+        if horizon is None:
+            raise ActusError(f"{k.cid}: a UMP has no maturity; it needs a reporting horizon (to)")
+        md = stop = horizon
+    src = "observed" if called is not None else "schedule"
+    raw = [("IED", k.ied)] + [("AD", t) for t in analysis]
+    if k.kind == "CLM":
+        raw += [("IP", md, src), ("STD" if called is not None else "MD", md, src)]
+    if called is not None:
+        raw.append(("XD", called))
+    if k.ipcl:
+        for t in cal.schedule(k.ipanx or k.ied, k.ipcl, stop, k.eomc, False):
+            if k.ied <= t < stop:
+                raw.append(("IPCI", t))
+    rranx = k.rranx or (k.ied + _cycle_delta(k.rrcl, k.ied) if k.rrcl else None)
+    if rranx is not None:
+        dates = cal.schedule(rranx, k.rrcl, stop, k.eomc, False) if k.rrcl else [rranx]
+        raw += [("RR", t) for t in dates if t < stop]
+    if k.td is not None:
+        raw.append(("TD", k.td))
+    # a CLM's one interest payment is dated by its maturity, not by a cycle
+    return _order(k, raw, after_sd=True, unshifted=UNSHIFTED | ({"IP"} if k.kind == "CLM" else set()))
+
+
+def _segments(anchors, cycles, end, include_end):
+    """An ACTUS array schedule: per anchor, its cycle's dates up to the next anchor (excluded),
+    the last up to ``end``; with no cycles, the anchors alone. Yields (segment index, date)."""
+    for i, a in enumerate(anchors):
+        stop = anchors[i + 1] if i + 1 < len(anchors) else end
+        if not cycles:
+            if a < end or (include_end and a == end):
+                yield i, a
+            continue
+        c = cycles[i] if len(cycles) == len(anchors) else cycles[0]
+        last = i + 1 == len(anchors)
+        for t in cal.schedule(a, c, stop, "SD", include_end and last):
+            if t < stop or (last and include_end and t == stop):
+                yield i, t
+
+
+def _lax_steps(k: Terms, md: Optional[_dt.datetime]):
+    """LAX principal events in order: (kind, date, amount). With no maturity, walks the segments
+    until a redemption would take the notional to zero; that date is the maturity."""
+    a, n, out = k.lax, k.nt, []
+    end = md or _dt.datetime(9999, 1, 1)
+    for i, t in _segments(a.pr_anchors, a.pr_cycles, end, False):
+        if md is None and a.pr_incdec[i] == "DEC" and n - a.pr_amounts[i] <= 0:
+            return out, t
+        n += a.pr_amounts[i] if a.pr_incdec[i] == "INC" else -a.pr_amounts[i]
+        out.append(("PI" if a.pr_incdec[i] == "INC" else "PR", t, a.pr_amounts[i]))
+        if len(out) > 10000:
+            break
+    if md is None:
+        raise ActusError(f"{k.cid}: LAX with no maturity never redeems its notional")
+    return out, md
+
+
+def _schedule_lax(k: Terms, analysis) -> List[Event]:
+    a = k.lax
+    steps, md = _lax_steps(k, k.md)
+    raw = [("IED", k.ied), ("MD", md)] + [("AD", t) for t in analysis]
+    raw += [(kind, t) for kind, t, _ in steps if k.ied <= t < md]
+    raw += [("IP", t) for _, t in _segments(a.ip_anchors, a.ip_cycles, md, True) if t >= k.ied]
+    if a.ip_anchors and not a.ip_cycles and md not in a.ip_anchors:
+        raw.append(("IP", md))                              # anchors alone: interest is still paid at maturity
+    raw += [("RRF" if a.rr_fixvar[i] == "FIX" else "RR", t) for i, t in enumerate(a.rr_anchors) if t < md]
+    if k.td is not None:
+        raw.append(("TD", k.td))
+    return _order(k, raw, unshifted=UNSHIFTED if k.md is not None else UNSHIFTED - {"MD"})
+
+
+def _lax_at(values, anchors, t) -> Any:
+    """The array value in force at ``t``: that of the last anchor at or before it."""
+    i = max(j for j, a in enumerate(anchors) if a <= t)
+    return values[i]
+
+
+def _cycle_delta(cycle: str, at: _dt.datetime) -> _dt.timedelta:
+    """One step of ``cycle`` from ``at``, as a duration."""
+    return cal.Cycle.parse(cycle).step(at, 1, False) - at
+
+
 # ── the contract type ───────────────────────────────────────────────────────
 
-MONEY = ("notional", "accrued", "interest", "result", "opening")
+MONEY = ("notional", "accrued", "called", "interest", "result", "opening")
 MEMO = ("rate", "prnxt", "ipcb", "nsc", "isc")
 _NATURE = {
-    1: {"notional": Nature.ASSET, "accrued": Nature.ASSET, "interest": Nature.INCOME,
+    1: {"notional": Nature.ASSET, "accrued": Nature.ASSET, "called": Nature.ASSET, "interest": Nature.INCOME,
         "result": Nature.INCOME, "opening": Nature.EQUITY},
-    -1: {"notional": Nature.LIABILITY, "accrued": Nature.LIABILITY, "interest": Nature.EXPENSE,
+    -1: {"notional": Nature.LIABILITY, "accrued": Nature.LIABILITY, "called": Nature.LIABILITY,
+         "interest": Nature.EXPENSE,
          "result": Nature.EXPENSE, "opening": Nature.ASSET},
 }
 
@@ -387,8 +618,12 @@ _MONEY_FLOWS = [
     ("IP_pay", "IP", "cash", "accrued"),
     ("IP_scale", "IP", "cash", "result"),
     ("IPCI_capitalise", "IPCI", "notional", "accrued"),
+    ("XD_call", "XD", "called", "accrued"),
+    ("IP_called", "IP", "cash", "called"),
+    ("STD_notional", "STD", "cash", "notional"),
+    ("PI_notional", "PI", "notional", "cash"),
 ] + [(f"{e}_accrue", e, "accrued", "interest")
-     for e in ("AD", "PRD", "TD", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB")]
+     for e in ("AD", "XD", "PI", "PRD", "TD", "PR", "IP", "IPCI", "RR", "RRF", "PRF", "SC", "IPCB")]
 
 
 def _nature(role: int, account: str) -> Nature:
@@ -468,6 +703,8 @@ class Plan:
     market: Optional[Market]
     events: List[Event]
     start: Start
+    #: when a CLM was called (an observed XD); nothing accrues from then on
+    called: Optional[_dt.datetime] = None
     instants: List[_dt.datetime] = field(default_factory=list)
     by_period: Dict[int, List[Tuple[Event, _dt.datetime]]] = field(default_factory=dict)
     pr_dates: List[_dt.datetime] = field(default_factory=list)
@@ -548,14 +785,23 @@ def _price(plan: Plan, ev: Event, sd: _dt.datetime, b, set_memo, bal) -> Dict[st
     k, out, E = plan.k, {}, ev.kind
     N, A, r = b("notional"), b("accrued"), b("rate")
     base = b("ipcb") if k.ipcb == "NTL" and k.kind != "PAM" else N
-    # a cash position bears no interest and states no day count
-    acc = Fraction(0) if k.kind == "CSH" else cal.year_fraction(k.dcc, sd, ev.calc) * r * base
+    # a cash position bears no interest and states no day count; a called CLM stops accruing
+    if k.kind == "CSH" or (plan.called is not None and sd >= plan.called):
+        acc = Fraction(0)
+    else:
+        acc = cal.year_fraction(k.dcc, sd, ev.calc) * r * base
 
     def accrue():
         _signed(out, f"{E}_accrue", acc)
 
     if E == "AD":
         accrue()                          # reported, not paid: the next payment settles it
+    elif E == "XD":
+        accrue()
+        if any(e.kind == "STD" and e.at > ev.at for e in plan.events):
+            _signed(out, "XD_call", A + acc)  # a notice period: the interest to the call becomes due
+    elif E == "STD":
+        _signed(out, "STD_notional", N)
     elif E == "IED":
         _signed(out, "IED_notional", k.nt)
         _signed(out, "IED_premium", k.pdied)
@@ -564,20 +810,30 @@ def _price(plan: Plan, ev: Event, sd: _dt.datetime, b, set_memo, bal) -> Dict[st
         elif k.ipanx is not None and k.ipanx < ev.calc:
             _signed(out, "IED_accrued", cal.year_fraction(k.dcc, k.ipanx, ev.calc) * k.ipnr * k.nt)
         set_memo(E, "rate", k.ipnr)
-        if k.kind != "PAM":
+        if k.kind not in _BULLET:
             set_memo(E, "ipcb", k.ipcba if k.ipcba is not None else k.nt)
             set_memo(E, "prnxt", _initial_prnxt(plan, ev))
     elif E == "IP":
         accrue()
         _signed(out, "IP_pay", A + acc)
         _signed(out, "IP_scale", (b("isc") - 1) * (A + acc))
+        _signed(out, "IP_called", b("called"))
     elif E == "IPCI":
         accrue()
         _signed(out, "IPCI_capitalise", A + acc)
+    elif E == "PI":
+        accrue()
+        P = _lax_at(k.lax.pr_amounts, k.lax.pr_anchors, ev.sched)
+        set_memo(E, "prnxt", P)
+        _signed(out, "PI_notional", P)
     elif E == "PR":
         accrue()
-        P = b("prnxt")
-        if k.kind == "LAM":
+        if k.kind == "LAX":
+            P = _lax_at(k.lax.pr_amounts, k.lax.pr_anchors, ev.sched)
+            set_memo(E, "prnxt", P)
+        else:
+            P = b("prnxt")
+        if k.kind in ("LAM", "LAX"):
             paid = min(P, N)
         else:
             paid = P - (A + acc)
@@ -592,12 +848,17 @@ def _price(plan: Plan, ev: Event, sd: _dt.datetime, b, set_memo, bal) -> Dict[st
         _signed(out, "MD_accrued_scale", (b("isc") - 1) * A)
     elif E in ("RR", "RRF"):
         accrue()
-        if E == "RRF":
+        if k.kind == "LAX":
+            spread = k.lax.rr_rates[k.lax.rr_anchors.index(ev.sched)]
+            new = spread if E == "RRF" else k.rrmlt * plan.market.series(k.rrmo).at(ev.sched) + spread
+        elif E == "RRF":
             new = k.rrnxt
         else:
             # the corpus prices a reset on the observation at the reset date itself, also when
-            # fixingDays is two days (ann16 has no observation before its 2013-07-01 reset)
-            obs = plan.market.series(k.rrmo).at(ev.calc)
+            # fixingDays is two days (ann16 has no observation before its 2013-07-01 reset), and
+            # on the scheduled date, not the business-day-shifted one: clm09 resets on Monday
+            # 2015-08-17 (SCF) and clm10 on Friday 2015-08-14 (SCP) on the Sunday 08-16 print
+            obs = plan.market.series(k.rrmo).at(ev.sched or ev.calc)
             new = k.rrmlt * obs + k.rrsp
         set_memo(E, "rate", new)
         if k.kind == "ANN":
@@ -654,6 +915,8 @@ def _initial_prnxt(plan: Plan, ev: Event) -> Fraction:
         return k.nt / n if n else Fraction(0)
     if k.kind == "ANN":
         return _annuity_at(plan, ev, k.nt, Fraction(0), k.ipnr)
+    if k.kind == "LAX":
+        return k.lax.pr_amounts[0]       # each PR/PI resets it to its segment's amount
     raise ActusError(f"{k.cid}: {k.kind} needs nextPrincipalRedemptionPayment")
 
 
@@ -698,8 +961,8 @@ class Run:
         """Per reported event: date, type, payoff, and the signed state after it (ACTUS sign)."""
         R, rows = self.plan.k.role, []
         for e in self.plan.events:
-            if self.horizon is not None and e.at > self.horizon:
-                break
+            if self.horizon is not None and e.at > self.horizon and e.source == "schedule":
+                continue
             t = self.plan.instants.index(e.at)
             before = self.state(t, PHASES[PHASES.index(e.kind) - 1])
             after = self.state(t, e.kind)
@@ -713,8 +976,9 @@ def _nature_of(book, name):
     return book._account(name).nature
 
 
-def _simulate(k: Terms, market: Optional[Market], events: List[Event], start: Start) -> Run:
-    plan = Plan(k, market, events, start)
+def _simulate(k: Terms, market: Optional[Market], events: List[Event], start: Start,
+              called: Optional[_dt.datetime] = None) -> Run:
+    plan = Plan(k, market, events, start, called)
     g = Group(periods=len(plan.instants), phases=PHASES)
     g.add_contract(Contract(k.cid, _TYPES[k.role], {"holder": "holder"},
                             {"plan": Value(plan, State.STATED, f"actus:{k.cid}")}, k.currency))
@@ -739,27 +1003,32 @@ def run(contract: Mapping[str, Any], analysis: Tuple[str, ...] = ()) -> Run:
     """
     k = parse_terms(contract["terms"])
     observed = contract.get("eventsObserved") or []
-    other = sorted({e.get("type") for e in observed} - {"AD"})
+    allowed = {"AD", "XD"} if k.kind == "CLM" else {"AD"}
+    other = sorted({e.get("type") for e in observed} - allowed)
     if other:
-        raise ActusError(f"{k.cid}: observed event type(s) {other} are not built")
-    ads = {cal.instant(e["time"]) for e in observed} | {cal.instant(t) for t in analysis}
-    out = _run(k, _market(contract.get("dataObserved")), tuple(sorted(ads)))
-    if contract.get("to"):
-        out.horizon = cal.instant(contract["to"])        # the corpus reports to a horizon (ann08: 2019-02-01)
+        raise ActusError(f"{k.cid}: observed event type(s) {other} are not built for {k.kind}")
+    ads = {cal.instant(e["time"]) for e in observed if e["type"] == "AD"} | {cal.instant(t) for t in analysis}
+    calls = sorted(cal.instant(e["time"]) for e in observed if e["type"] == "XD")
+    if len(calls) > 1:
+        raise ActusError(f"{k.cid}: more than one call (XD) observed")
+    horizon = cal.instant(contract["to"]) if contract.get("to") else None
+    out = _run(k, _market(contract.get("dataObserved")), tuple(sorted(ads)), calls[0] if calls else None, horizon)
+    out.horizon = horizon                                # the corpus reports to a horizon (ann08: 2019-02-01)
     return out
 
 
-def _run(k: Terms, market: Market, analysis: Tuple[_dt.datetime, ...] = ()) -> Run:
-    events = schedule(k, analysis)
+def _run(k: Terms, market: Market, analysis: Tuple[_dt.datetime, ...] = (),
+         called: Optional[_dt.datetime] = None, horizon: Optional[_dt.datetime] = None) -> Run:
+    events = schedule(k, analysis, called, horizon)
     if k.kind == "CSH":
         start = Start("opening", k.sd, notional=k.nt)
-    elif k.ied < k.sd:
+    elif k.ied < k.sd or (k.kind in ("CLM", "UMP") and k.ied <= k.sd):
         start = Start("opening", k.sd, notional=k.nt, accrued=_opening_accrued(k), rate=k.ipnr,
                       prnxt=k.prnxt or Fraction(0), ipcb=k.ipcba if k.ipcba is not None else k.nt)
     else:
         start = Start("fresh", k.sd)
     if k.prd is None:
-        return _simulate(k, market, events, start)
+        return _simulate(k, market, events, start, called)
     # events on the purchase date itself are the seller's (lam02 buys after that day's redemption)
     before = [e for e in events if e.at <= k.prd and e.kind != "PRD"]
     after = [e for e in events if e.kind == "PRD" or e.at > k.prd]
@@ -778,6 +1047,8 @@ def _opening_accrued(k: Terms) -> Fraction:
     """Interest accrued at the status date of a contract that already exists."""
     if k.ipac is not None:
         return k.ipac
+    if k.kind in ("CLM", "UMP"):
+        return Fraction(0)                # interest is due at maturity only (clm03, clm08)
     if k.ipanx is None or k.ipanx >= k.sd:
         return Fraction(0)
     last = k.ipanx

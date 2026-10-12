@@ -27,8 +27,9 @@ Checks, per oracle
 
 Planted error
 -------------
-``notionalPrincipal`` × 1.01 (the nominal rate + 1% when a contract has no
-notional). A comparison that still agrees after that is blind.
+``notionalPrincipal`` × 1.01; the nominal rate + 1% when a contract has no
+notional or the engine refuses the planted notional. A comparison that
+still agrees after that is blind.
 
 Ids
 ---
@@ -67,21 +68,33 @@ def _close(got: Any, want: Any) -> bool:
     return abs(g - w) <= REL * max(1.0, abs(w))
 
 
-def _plant(case: Dict[str, Any]) -> Dict[str, Any]:
-    case = copy.deepcopy(case)
-    t = case["terms"]
-    if t.get("notionalPrincipal") not in (None, ""):
-        t["notionalPrincipal"] = str(Fraction(str(t["notionalPrincipal"]).strip()) * Fraction(101, 100))
-    elif t.get("nominalInterestRate") not in (None, ""):
-        t["nominalInterestRate"] = str(Fraction(str(t["nominalInterestRate"]).strip()) + Fraction(1, 100))
-    else:
-        raise Blocked("no notional or rate to plant an error in")
-    return case
+def _plants(case: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The planted variants, in order of preference: notional x 1.01, then rate + 0.01."""
+    out = []
+    for term, change in (("notionalPrincipal", lambda v: v * Fraction(101, 100)),
+                         ("nominalInterestRate", lambda v: v + Fraction(1, 100))):
+        if case["terms"].get(term) not in (None, ""):
+            c = copy.deepcopy(case)
+            c["terms"][term] = str(change(Fraction(str(c["terms"][term]).strip())))
+            out.append(c)
+    return out
+
+
+def _run_planted(case: Dict[str, Any], asked) -> "actus.Run":
+    """Run the first planted variant the engine accepts. A notional that no longer fits its
+    redemption amounts (lax12: five redemptions of 20 do not clear 101) refuses, and then the
+    rate is planted instead, so the check is still put to the test."""
+    for c in _plants(case):
+        try:
+            return actus.run(c, analysis=asked)
+        except actus.ActusError:
+            continue
+    raise Blocked("no planted variant runs, so the check cannot be shown to fail")
 
 
 class ActusFamily(Family):
     name = "actus"
-    planted = "notionalPrincipal x 1.01 (nominal rate + 0.01 when there is no notional)"
+    planted = "notionalPrincipal x 1.01 (nominal rate + 0.01 when there is no notional or it is refused)"
     tolerance = "event list identical; each value within 1e-8 relative (floor 1), as the corpus prints to ten digits"
 
     def oracles(self) -> List[str]:
@@ -111,7 +124,7 @@ class ActusFamily(Family):
         if asked:
             inputs["analysis"] = {"instants": list(asked), "read from": "the answer's AD rows (dates only)"}
         try:
-            r = actus.run(_plant(case) if plant else case, analysis=asked)
+            r = _run_planted(case, asked) if plant else actus.run(case, analysis=asked)
         except actus.ActusError as e:
             raise Blocked(str(e).split(": ", 1)[-1]) from e
         got, want = r.stream(), case["results"]

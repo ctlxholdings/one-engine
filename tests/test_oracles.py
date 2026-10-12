@@ -101,7 +101,7 @@ def test_each_verdict_is_given_only_when_earned(behaviour, verdict, reason):
 
 FAMILY = ActusFamily()
 ORACLES = FAMILY.oracles()
-BUILT = {"pam", "lam", "nam", "ann", "ad0", "csh"}
+BUILT = {"pam", "lam", "nam", "ann", "ad0", "csh", "clm", "ump", "lax"}
 
 
 def test_the_whole_corpus_is_receipted():

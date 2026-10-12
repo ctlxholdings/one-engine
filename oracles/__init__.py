@@ -193,6 +193,9 @@ def receipt(family: Family, oid: str, commit: Optional[str] = None) -> Receipt:
     except Blocked as e:
         base.verdict, base.reason = "blocked", str(e)
         return base
+    except Exception as e:                # the engine failed on an oracle it claims to build
+        base.verdict, base.reason = "differs", f"the engine raised {type(e).__name__}: {e}"
+        return base
     base.inputs = inputs
     base.checks = [asdict(c) for c in checks]
     base.n_checks = len(checks)
@@ -206,7 +209,11 @@ def receipt(family: Family, oid: str, commit: Optional[str] = None) -> Receipt:
         base.first_difference = asdict(failed[0])
         base.reason = f"{len(failed)} of {len(checks)} checks disagree; first: {failed[0].name} at {failed[0].at}"
         return base
-    planted_checks, _ = family.run(oid, plant=True)
+    try:
+        planted_checks, _ = family.run(oid, plant=True)
+    except Blocked as e:
+        base.reason = f"the planted run could not be made: {e}"
+        return base
     base.planted_failures = sum(not c.ok for c in planted_checks)
     base.planted_caught = base.planted_failures > 0
     if base.planted_caught:
