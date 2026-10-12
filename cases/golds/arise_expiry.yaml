@@ -1,0 +1,189 @@
+# Gold "arise_expiry": the Arise 234 MW solar portfolio under Kenya's 100% investment deduction,
+# with tax losses that expire after five years; construction year and twenty PPA years
+# (cases/reference/golds/arise_expiry.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * capex_total spent in period 0; operations from idx_ops_start; generation is capacity_mw_ac
+#     x hours_per_year x capacity_factor, sold at the tariff (tariff_us_cents_per_kwh, 100 cents a
+#     dollar, 1000 kWh a MWh), billed on dso_days of a days_per_year year; operating cost
+#     opex_pct_of_capex of capex, paid on dpo_days; both collected and paid in full by idx_final;
+#   * books: straight-line over book_life_years from the year after the build, to the stated nil
+#     residual (book_residual_value);
+#   * tax: investment_deduction_rate of the cost deducted in the first operating year (its
+#     reducing balance from then); the loss it creates can be used for loss_carryforward_years
+#     and then expires; tax at tax_rate on operations, paid in the year;
+#   * the salvage (salvage_pct of capex) is received in idx_final and taxed apart from operations
+#     (the gold's salvage_tax, part of the net capex): a balancing charge on the whole salvage,
+#     the tax written-down value being nil once the cost was deducted in full. Its book gain is
+#     outside EBIT and NOPAT.
+gold: arise_expiry
+entity: ipp
+plant: tariff_us_cents_per_kwh
+case:
+  case: gold-arise-expiry
+  periods: 21
+  phases: [fund, operate, close, tax, settle]
+  currency: USD
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 21
+      inputs: gold
+      values:
+        operating: t >= idx_ops_start
+        generation: capacity_mw_ac * hours_per_year * capacity_factor * operating
+        tariff: tariff_us_cents_per_kwh * 1000 / 100
+        opex: opex_pct_of_capex * capex_total * operating
+        capex: capex_total * (t == 0)
+        salvage: salvage_pct * capex_total
+        sold: t == idx_final
+        # the loss pool counts the period a loss arises as the first of its life; the statute
+        # counts the years after it ("carried forward five years"), so the pool's life is one more
+        loss_life: loss_carryforward_years + 1
+  opening:
+    ipp:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    power:
+      type: offtake
+      parties: {seller: ipp}
+      terms: {volume: {generator: gold, output: generation}, price: {generator: gold, output: tariff},
+              payment_days: {generator: gold, output: dso_days}, days_per_year: {generator: gold, output: days_per_year},
+              periods_per_year: 1, end: {generator: gold, output: idx_final}}
+    om:
+      type: operating_cost
+      parties: {payer: ipp}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: opex}, index: 1, periods_per_year: 1,
+              start: 0, end: {generator: gold, output: idx_final}, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: dpo_days}, days_per_year: {generator: gold, output: days_per_year}}
+    salvage_sale:
+      type: offtake
+      parties: {seller: ipp}
+      terms: {volume: {generator: gold, output: sold}, price: {generator: gold, output: salvage},
+              payment_days: 0, days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: {generator: gold, output: idx_final}}
+    build:
+      type: capex
+      parties: {owner: ipp}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0,
+              end: {generator: gold, output: idx_final}}
+  rulebooks:
+    plant:
+      kind: asset_register
+      entity: ipp
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: gold, output: idx_final}
+      life_periods: {generator: gold, output: book_life_years}
+      first_charge: next_period
+      residual: {generator: gold, output: book_residual_value}
+      tax:
+        life_periods: null
+        declining_rate: {generator: gold, output: investment_deduction_rate}
+        first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: ipp
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: {generator: gold, output: loss_life}
+      timing: plant
+      scheme:
+        power.revenue: taxable
+        om.expense: taxable
+        depreciation: timing
+        written_off: timing
+        salvage_sale.revenue: exempt          # taxed apart, below
+        salvage_tax_expense: non_deductible
+        tax_expense: non_deductible
+    salvage_tax:
+      kind: income_tax
+      entity: ipp
+      phase: tax
+      expense: salvage_tax_expense
+      payable: salvage_tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        salvage_sale.revenue: taxable
+        power.revenue: exempt
+        om.expense: exempt
+        depreciation: exempt
+        written_off: exempt
+        tax_expense: non_deductible
+        salvage_tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: ipp
+      cash: cash
+      phase: settle
+      accounts: [tax_payable, salvage_tax_payable]
+  schemes:
+    pnl:
+      power.revenue: revenue
+      om.expense: opex
+      depreciation: depreciation
+      salvage_sale.revenue: disposal
+      written_off: disposal
+      salvage_tax_expense: disposal
+      tax_expense: tax
+    cash_flow:
+      power.receivable: operating
+      om.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      salvage_sale.receivable: sale
+      salvage_tax_payable: sale
+      cwip: capex
+  cuts:
+    revenue: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue]}
+    opex: {kind: pnl, entity: ipp, scheme: pnl, include: [opex]}
+    ebitda: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex]}
+    depreciation: {kind: pnl, entity: ipp, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex, depreciation]}
+    tax: {kind: pnl, entity: ipp, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex, depreciation, tax]}
+    capex: {entity: ipp, account: cash, scheme: cash_flow, include: [capex]}
+    cfo: {entity: ipp, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: ipp, account: cash, scheme: cash_flow, include: [capex, sale]}
+    fcff: {entity: ipp, account: cash, scheme: cash_flow, include: [operating, capex, sale]}
+  measures: {}
+trace:
+  generation_mwh: {driver: gold.generation}
+  revenue: {cut: revenue}
+  opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  nbv: {balance: cwip + fixed_assets}
+  tax_depreciation: {record: plant.tax_charge}
+  twdv: {record: plant.tax_nbv}
+  taxable_income_pre_relief: {record: tax.base}
+  loss_created: {record: tax.loss_added}
+  loss_used: {record: tax.loss_used}
+  loss_expired: {record: tax.expired}
+  loss_pool: {record: tax.losses}
+  tax_shield_forgone: {record: tax.expired, times: gold.tax_rate}
+  taxable_income: {record: tax.taxable}
+  tax_operating: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  ar: {balance: power.receivable}
+  ap: {balance: om.payable}
+  nwc: {balance: power.receivable - om.payable}
+  delta_nwc: {change: power.receivable - om.payable}
+  capex: {cut: capex, sign: -1}
+  salvage_gross: {record: salvage_tax.base}
+  salvage_tax: {record: salvage_tax.tax}
+  capex_net: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

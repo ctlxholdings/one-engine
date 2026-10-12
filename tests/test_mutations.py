@@ -547,7 +547,8 @@ MUTATIONS = [
     ('kernel.py', '            self._moves[(acct.name, p.period)] += natural * p.amount', '            self._moves[(acct.name, p.period)] += natural * p.amount * (1 + Fraction(1, 10**6))',
      'test_chain.py::test_every_case_file_runs_end_to_end_into_the_ledger'),  # ERIA reads only the journal: the chain's reconciliation sees it
     # the chain (test_chain.py, guards 1 and 3)
-    ("packs/pf.py", '            post(g, t, loss, fa, reg.dispose(), "disposal")', "            pass",
+    ("packs/pf.py", 'dispose_when == "end":\n            retire()\n            post(g, t, loss, fa, reg.dispose() + residual, "disposal")',
+     'dispose_when == "end":\n            retire()\n            pass',
      "test_chain.py::test_every_case_file_runs_end_to_end_into_the_ledger"),
     ("tests/test_case_eria.py", '/ "cases" / "eria.yaml"', '/ "cases" / "eria_renamed.yaml"',
      "test_chain.py::test_every_case_file_is_held_to_a_referee_by_a_test"),

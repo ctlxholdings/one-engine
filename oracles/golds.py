@@ -21,7 +21,7 @@ Translation
   receives every numeric gold input by name, and every amount the case
   needs is one of those inputs or a formula over them. The only numbers
   typed in the case are structural (``STRUCTURAL``: period indices, counts,
-  100 and 1000); any other is reported as a failed check, so a number
+  60, 100 and 1000); any other is reported as a failed check, so a number
   fitted by hand cannot pass;
 * ``trace``: for each gold trace row, where the engine reports it.
 
@@ -53,7 +53,27 @@ cannot add a piece the base run lacks.
 
 ``per: gen.output`` divides any row by a value the ``formulas`` generator
 computed (a gold input by name): a row the gold states per head or per unit
-(FCFF per worker). The divisor is the gold's own input, so nothing is typed.
+(FCFF per worker). ``times: gen.output`` multiplies by one instead (the tax
+a lost deduction would have saved: the expired losses times the rate). The
+factor is the gold's own input, so nothing is typed.
+
+``{carried_in: "a + b"}`` reads the balances carried into the gold's first
+period (the gold's "opening injection" rows: that amount in the first
+period, nil after); with ``hold: true``, the same amount every period (an
+"opening level" row).
+
+Warm-up
+-------
+A gold whose business is already running at its first period ("the pre-
+horizon months are taken to be steady state") carries working-capital
+balances in that only its own history explains: claims billed and not yet
+paid, retentions held a year. ``warm_up: W`` runs the case W periods longer,
+starting the business from nothing W periods before the gold's first
+period, so the books build those balances themselves; every row is then read
+from period W (cumulative rows sum from there). Every ``periods`` in the case
+must be the gold's plus W (that is checked, so a ``periods`` is never a
+number the gate has to trust), and the formulas generator receives
+``warm_up`` as an input beside the gold's.
 
 Every trace row is compared; a row the translation does not map is a failed
 check ("not reported"), never a skip. One exception, listed in the receipt:
@@ -95,8 +115,9 @@ FOLDER = "golds"
 TRANSLATIONS = pathlib.Path(__file__).resolve().parent.parent / "cases" / "golds"
 #: the library's ruler: amounts are whole currency units, so more than half a unit is a different claim
 ATOL = Fraction(1, 2)
-#: numbers a translation may type: period indices and counts, and the unit conversions 100 and 1000
-STRUCTURAL = set(range(0, 25)) | {100, 1000}
+#: numbers a translation may type: period indices and counts, and the unit conversions 60 (minutes an
+#: hour), 100 and 1000. A case's ``periods`` is not among them: it is checked against the gold's grid
+STRUCTURAL = set(range(0, 25)) | {60, 100, 1000}
 _TERM = re.compile(r"\s*([+-]?)\s*([A-Za-z_][\w.]*)")
 
 
@@ -141,7 +162,8 @@ def _numbers(node: Any, path: str = "") -> List[Tuple[str, Any]]:
 
 def untraced(case: Mapping[str, Any]) -> List[str]:
     """The numbers of a translated case that are not structural: each entered from the author's head."""
-    return [f"{where} = {v}" for where, v in _numbers(case) if v not in STRUCTURAL]
+    return [f"{where} = {v}" for where, v in _numbers(case)
+            if v not in STRUCTURAL and where.split(".")[-1] != "periods"]
 
 
 def _terms(expr: str) -> List[Tuple[int, str]]:
@@ -187,10 +209,18 @@ class GoldFamily(Family):
             raise Blocked(f"no translation yet (cases/golds/{oid}.yaml)")
         gold = _gold(oid)
         tr = load_yaml_strict(path.read_text())
-        unknown = sorted(set(tr) - {"gold", "entity", "plant", "case", "trace", "variants", "labels", "notes"})
+        unknown = sorted(set(tr) - {"gold", "entity", "plant", "case", "trace", "variants", "labels", "notes",
+                                    "warm_up"})
         if unknown or tr.get("gold") != oid:
             raise ValueError(f"{path.name}: keys {unknown} unknown, or gold is not '{oid}'")
         inputs = gold_inputs(gold)
+        n = int(gold["grid"]["periods"])
+        warm = tr.get("warm_up", 0)
+        if not isinstance(warm, int) or isinstance(warm, bool) or warm < 0:
+            raise ValueError(f"{path.name}: warm_up is a whole number of periods, not {warm!r}")
+        wrong = [f"{w} = {v}" for w, v in _numbers(tr["case"]) if w.split(".")[-1] == "periods" and v != n + warm]
+        if wrong:
+            raise ValueError(f"{path.name}: periods must be the gold's {n} plus warm_up {warm}: {wrong}")
         planted = None
         if plant:
             name = tr["plant"]
@@ -203,7 +233,9 @@ class GoldFamily(Family):
         fed = []
         for gname, g in (case.get("generators") or {}).items():
             if g.get("kind") == "formulas" and g.get("inputs") == "gold":
-                g["inputs"] = inputs
+                if warm and "warm_up" in inputs:
+                    raise ValueError(f"{path.name}: the gold has an input named warm_up; it cannot be fed both")
+                g["inputs"] = {**inputs, "warm_up": warm} if warm else inputs
                 fed.append(gname)
         if not fed:
             raise ValueError(f"{path.name}: no formulas generator takes 'inputs: gold'")
@@ -221,7 +253,6 @@ class GoldFamily(Family):
         results = {None: run_case(case)}
         for vname, v in variants.items():
             results[vname] = run_case(self._variant(case, fed[0], vname, v))
-        n = int(gold["grid"]["periods"])
         rows = dict(gold.get("trace") or {})
         mapping = tr.get("trace") or {}
         labels = tr.get("labels") or {}
@@ -237,7 +268,7 @@ class GoldFamily(Family):
             if spec is None:
                 checks.append(Check(row, "every period", "a mapped row", "not reported", False))
                 continue
-            got = self._read(results, tr["entity"], spec, n)
+            got = self._read(results, tr["entity"], spec, n, warm)
             label = f"driver {row}" if "driver" in spec else row
             checks.append(self._compare(label, want, got))
         extra = sorted(set(mapping) - set(rows))
@@ -246,7 +277,7 @@ class GoldFamily(Family):
         fcff = mapping.get("fcff")
         if fcff is not None and gold.get("fcff") is not None:
             checks.append(self._compare("fcff (headline)", gold["fcff"],
-                                        self._read(results, tr["entity"], fcff, n)))
+                                        self._read(results, tr["entity"], fcff, n, warm)))
         bad = [f"{k or 'base'}: {b}" for k, res in results.items() for b in res.failed_checks()]
         checks.append(Check("books", "every book and rulebook", "no failed check", "; ".join(bad) or "none", not bad))
         return checks, record
@@ -282,29 +313,34 @@ class GoldFamily(Family):
                      _fmt(got[-1]) + " at the last", True)
 
     @staticmethod
-    def _read(results, entity: str, spec: Mapping[str, Any], n: int) -> List[Fraction]:
+    def _read(results, entity: str, spec: Mapping[str, Any], n: int, warm: int = 0) -> List[Fraction]:
+        """One trace row as the engine reports it: the gold's ``n`` periods, after ``warm`` of warm-up."""
         sign = Fraction(spec.get("sign", 1))
         if "sum" in spec:
-            if "per" in spec:
-                raise ValueError("per divides one row; put it on a part of the sum")
-            parts = [GoldFamily._read(results, entity, s, n) for s in spec["sum"]]
+            if "per" in spec or "times" in spec:
+                raise ValueError("per and times scale one row; put them on a part of the sum")
+            parts = [GoldFamily._read(results, entity, s, n, warm) for s in spec["sum"]]
             return [sign * sum(col, Fraction(0)) for col in zip(*parts)]
         result = results[spec.get("variant")]
+        if "carried_in" in spec:
+            book = result.group.book(entity)
+            first = sum((s * book.opening(a, warm) for s, a in _terms(spec["carried_in"])), Fraction(0))
+            return [sign * (first if spec.get("hold") or t == 0 else Fraction(0)) for t in range(n)]
         if "cut" in spec:
             vals = list(result.cut(spec["cut"]).values)
         elif "cumulative" in spec:
-            vals, run = [], Fraction(0)
-            for x in result.cut(spec["cumulative"]).values:
+            vals, run = [Fraction(0)] * warm, Fraction(0)
+            for x in list(result.cut(spec["cumulative"]).values)[warm:]:
                 run += x
                 vals.append(run)
         elif "record" in spec:
             kind, _, field = spec["record"].partition(".")
             recs = result.records(kind)
-            vals = [recs[t][field] if t in recs else Fraction(0) for t in range(n)]
+            vals = [recs[t][field] if t in recs else Fraction(0) for t in range(n + warm)]
         elif "driver" in spec:
             gen, _, out = spec["driver"].rpartition(".")
             v = result.generated[gen or next(iter(result.generated))][out]
-            vals = list(v) if isinstance(v, list) else [v] * n
+            vals = list(v) if isinstance(v, list) else [v] * (n + warm)
         else:
             kind = next(k for k in ("balance", "opening", "change") if k in spec)
             book = result.group.book(entity)
@@ -313,15 +349,18 @@ class GoldFamily(Family):
             def at(t: int, opening: bool) -> Fraction:
                 return sum((s * (book.opening(a, t) if opening else book.balance(a, t)) for s, a in terms), Fraction(0))
             if kind == "balance":
-                vals = [at(t, False) for t in range(n)]
+                vals = [at(t, False) for t in range(n + warm)]
             elif kind == "opening":
-                vals = [at(t, True) for t in range(n)]
+                vals = [at(t, True) for t in range(n + warm)]
             else:
-                vals = [at(t, False) - at(t, True) for t in range(n)]
-        if "per" in spec:
-            gen, _, out = spec["per"].rpartition(".")
-            per = result.generated[gen or next(iter(result.generated))][out]
-            vals = [Fraction(x) / Fraction(per[t] if isinstance(per, list) else per) for t, x in enumerate(vals)]
+                vals = [at(t, False) - at(t, True) for t in range(n + warm)]
+        for key in ("per", "times"):
+            if key in spec:
+                gen, _, out = spec[key].rpartition(".")
+                f = result.generated[gen or next(iter(result.generated))][out]
+                f = [Fraction(f[t] if isinstance(f, list) else f) for t in range(len(vals))]
+                vals = [Fraction(x) / f[t] if key == "per" else Fraction(x) * f[t] for t, x in enumerate(vals)]
+        vals = vals[warm:]
         return [sign * Fraction(x) for x in vals]
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:

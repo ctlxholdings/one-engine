@@ -61,6 +61,20 @@ Rulebooks
     golds' ``bakery_disposal``). Either register may instead take a
     ``declining_rate`` (``Policy.declining_rate``: ModelOff 2012's 40% tax
     depreciation, step 7i); exactly one of the three is given.
+    ``residual`` (default 0) is the residual value of the cost placed in
+    service at the first in-service period (IAS 16.53: a plant's salvage,
+    the golds' ``arise``): the books depreciate that cost less the
+    residual, which stays in the asset account until the disposal writes
+    it off. A ``tax`` register depreciates the full cost.
+
+    Each period the register records, under the rulebook's own name, its
+    gross view (the golds report cost and accumulated depreciation apart):
+    ``cost`` placed in service and ``accumulated`` depreciation, both
+    closing and both cleared by a disposal; the period's ``charge``; the
+    ``disposed_cost``, ``disposed_accumulated`` and ``disposed_nbv`` taken
+    out by a disposal; and, with a ``tax`` register, its ``tax_charge``,
+    closing ``tax_nbv`` (the tax written-down value) and the
+    ``tax_disposed_nbv`` a disposal deducts.
 
 ``income_tax``
     The base comes from a scheme classifying every profit-and-loss account
@@ -105,7 +119,9 @@ Rulebooks
     The tax record also carries the loss pool's roll-forward (the golds
     library reports it): ``losses_opening``, ``loss_added``, ``loss_used``
     and the ``taxable`` amount left after losses (base mode only), with
-    ``losses`` the closing pool.
+    ``losses`` the closing pool. The record is kept under the rulebook's
+    name (``tax`` in every case so far), so a book may carry two taxes (the
+    golds' ``arise_expiry`` taxes its salvage apart from its operations).
 
 ``tax_instalments``
     Last year's tax, paid this year in instalments: each listed period of
@@ -453,6 +469,7 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     if dispose_when not in ("start", "end"):
         raise InputError(f"asset_register: dispose_when is start or end, not {dispose_when!r}")
     reg = Register(_policy(r, "asset_register"))
+    residual = exact(r.take_or_default("residual", 0, reason="depreciated to nil").value)
     tax_raw = r.take_or_default("tax", None, reason="the tax authority depreciates as the books do").value
     tax_reg = None
     if tax_raw is not None:
@@ -472,9 +489,21 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         if amount:
             g.post(entity, Posting(t, phase, debit, credit, amount, {debit: 1, credit: -1}, "measurement", f"{name}.{event}:{t}"))
 
+    # the register's gross view, for reports that show cost and accumulated depreciation apart (the golds):
+    # what was placed in service, and what has been charged on it, until a disposal clears both
+    gross = {"cost": Fraction(0), "charged": Fraction(0), "tax_charged": Fraction(0)}
+
     def handler(g: Group, t: int) -> None:
         book = g.book(entity)
+        disposed = {"cost": Fraction(0), "charged": Fraction(0), "nbv": Fraction(0), "tax_nbv": Fraction(0)}
+
+        def retire() -> None:
+            disposed.update(cost=gross["cost"], charged=gross["charged"], nbv=gross["cost"] - gross["charged"],
+                            tax_nbv=tax_reg.nbv() if tax_reg is not None else Fraction(0))
+            gross.update(cost=Fraction(0), charged=Fraction(0))
+
         if t == in_service[0] and book.opening(fa, t):
+            gross["cost"] += book.opening(fa, t)
             # fixed assets carried in on an opening balance sheet are a tranche from the first in-service
             # period: otherwise the register would never depreciate them
             for x in (reg, tax_reg):
@@ -483,22 +512,38 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         if t in in_service:
             cost = book.balance(src, t)
             post(g, t, fa, src, cost, "in_service")
-            for x in (reg, tax_reg):
-                if x is not None:
-                    x.add(t, cost)
+            # the residual value is held back from the books' first tranche: it stays in the asset account,
+            # never depreciated (IAS 16.53), until the disposal writes it off. Tax depreciates the full cost
+            held = residual if t == in_service[0] else Fraction(0)
+            if held > cost:
+                raise InputError(f"asset_register: residual {held} exceeds the cost {cost} placed in service in {t}")
+            reg.add(t, cost - held)
+            gross["cost"] += cost
+            if tax_reg is not None:
+                tax_reg.add(t, cost)
         if t == dispose_at and dispose_when == "start":
             # retired before the period runs: written off at its opening book value, nothing charged after
-            post(g, t, loss, fa, reg.dispose(), "disposal")
+            retire()
+            post(g, t, loss, fa, reg.dispose() + residual, "disposal")
             if tax_reg is not None:
                 regs.tax_moves[t] = tax_reg.dispose()
+        charge = tax_charge = Fraction(0)
         if t >= in_service[0]:
-            post(g, t, dep, fa, reg.charge(t), "depreciation")
+            charge = reg.charge(t)
+            gross["charged"] += charge
+            post(g, t, dep, fa, charge, "depreciation")
             if tax_reg is not None:
-                regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_reg.charge(t)
+                tax_charge = tax_reg.charge(t)
+                regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_charge
         if t == dispose_at and dispose_when == "end":
-            post(g, t, loss, fa, reg.dispose(), "disposal")
+            retire()
+            post(g, t, loss, fa, reg.dispose() + residual, "disposal")
             if tax_reg is not None:
                 regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_reg.dispose()
+        g.record(name, t, cost=gross["cost"], accumulated=gross["charged"], charge=charge,
+                 disposed_cost=disposed["cost"], disposed_accumulated=disposed["charged"], disposed_nbv=disposed["nbv"],
+                 tax_charge=tax_charge, tax_nbv=tax_reg.nbv() if tax_reg is not None else None,
+                 tax_disposed_nbv=disposed["tax_nbv"])
 
     group.register(phase, handler)
 
@@ -565,11 +610,11 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         # a refunded loss is relieved now, at the rate: the pool is never fed, so it stays empty
         tax = policy.rate * base if relief == "refund" else policy.charge(t, base, pool)
         if tax > 0:
-            g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"tax.charge:{t}"))
+            g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"{ctx['name']}.charge:{t}"))
         elif tax < 0:
             # a credit: the expense falls, and the payable with it (below nil it is a refund due)
             g.post(entity, Posting(t, phase, payable, expense, -tax, {payable: -1, expense: -1}, "tax",
-                                   f"tax.credit:{t}"))
+                                   f"{ctx['name']}.credit:{t}"))
         # what this period could still use but the next cannot: the vintages that expire at its end
         rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
         # the pool's roll-forward (the golds report it): opening + added - used = what this period can still use
@@ -596,11 +641,11 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                 last["diff"], last["rate"] = carrying - tax_base - losses, policy.rate
             if move > 0:
                 g.post(entity, Posting(t, phase, dt_expense, dt_acct, move, {dt_expense: 1, dt_acct: 1},
-                                       "tax", f"tax.deferred:{t}"))
+                                       "tax", f"{ctx['name']}.deferred:{t}"))
             elif move < 0:
                 g.post(entity, Posting(t, phase, dt_acct, dt_expense, -move, {dt_acct: -1, dt_expense: -1},
-                                       "tax", f"tax.deferred:{t}"))
-        g.record("tax", t, **rec)
+                                       "tax", f"{ctx['name']}.deferred:{t}"))
+        g.record(ctx["name"], t, **rec)
 
     group.register(phase, handler)
 

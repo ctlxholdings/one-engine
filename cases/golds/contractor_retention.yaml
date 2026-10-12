@@ -1,0 +1,301 @@
+# Gold "contractor_retention": a borehole driller near Bamako on public works contracts, by month
+# for three years, with the advance, the situations paid months late and the 5% retention held a
+# year past handover (cases/reference/golds/contractor_retention.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the gold's business is already running in steady state at its first month (January). The
+#     case starts it from nothing warm_up months earlier (a whole number of years, so the months
+#     line up) and lets the books build the balances that history leaves: claims billed and not
+#     yet paid, retentions held, advances not yet earned, materials in stock;
+#   * activity: throughput_boreholes_per_normal_month holes started a month, scaled by
+#     hivernage_activity_factor in the hivernage (July to September: months 6 to 8 counted from
+#     January); each takes cycle_months, handed over the month after it starts;
+#   * revenue over time: each hole earns its price (price_quoted_xof / price_ht_divisor) evenly
+#     over its cycle; billing: advance_pct at the start, then situation_pct_each in each month of
+#     works; the advance is paid after advance_lag_months, each situation after
+#     situation_payment_lag_months, retention_pct of every payment withheld; a hole's retention
+#     comes back retention_hold_months + retention_release_extra_lag_months after its handover,
+#     retention_loss_prob of it never (written off);
+#   * materials bought when a hole starts and used over its cycle; diesel per hole; payroll and
+#     employer charges; the truck's annual budget by the month; guarantee fees on advances;
+#   * the rig is carried at cost less rig_age_years_at_t0 of its rig_useful_life_years and
+#     depreciated monthly over the life left (from the warm-up's start, so it is at the gold's
+#     book value at the gold's first month);
+#   * tax at is_rate on each month's profit, a loss month giving a credit; the IMF floor is the
+#     gold's own memo row.
+# The billing and payment calendar is the gold's own arithmetic (formulas); the books carry it,
+# and every balance and cash flow is read back from them.
+gold: contractor_retention
+entity: driller
+plant: price_quoted_xof
+warm_up: 24
+case:
+  case: gold-contractor-retention
+  periods: 60
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 60
+      inputs: gold
+      values:
+        month: (t - warm_up) % 12
+        hivernage: (month >= 6) * (month < 6 + hivernage_months_per_year)
+        season: 1 - (1 - hivernage_activity_factor) * hivernage
+        starts: throughput_boreholes_per_normal_month * season
+        handovers: lag(starts, cycle_months - 1)
+        wip_end: starts                              # a two-month cycle: only this month's starts are open
+        wip_opening: lag(wip_end, 1) * (t == warm_up)
+        wip_active: wip_end + handovers
+        holes: starts * (1 + dry_hole_rate)
+        metres: holes * depth_avg_m
+        days_per_hole: granite_share * depth_avg_m / rate_granite_m_per_day + good_ground_share * depth_avg_m / rate_good_ground_m_per_day
+        rig_days_used: holes * days_per_hole
+        rig_days_available: working_days_per_month * rig_availability * season
+        truck_monthly: {each_period: truck_annual_cost_xof / 12}
+        truck_km: truck_monthly * truck_fuel_share * 100 / (diesel_price_xof * truck_consumption_l_per_100km)
+        price: price_quoted_xof / price_ht_divisor
+        revenue: price * wip_active / cycle_months
+        billed_advance: advance_pct * price * starts
+        billed_situations: situation_pct_each * price * (starts + handovers)
+        billed_total: billed_advance + billed_situations
+        advance_settled: lag(billed_advance, advance_lag_months)
+        situations_settled: lag(billed_situations, situation_payment_lag_months)
+        settled: advance_settled + situations_settled
+        withheld: retention_pct * public_client_share * settled
+        retention_due: >-
+          retention_pct * public_client_share * price
+          * lag(handovers, retention_hold_months + retention_release_extra_lag_months)
+        released: retention_recovery_prob * retention_due
+        written_off: retention_loss_prob * retention_due
+        materials_per_hole: materials_stated_per_borehole_xof + chateau_deau_extra_cost_per_borehole_xof + drill_consumables_per_borehole_xof
+        purchased: starts * materials_per_hole
+        consumed: materials_per_hole * wip_active / cycle_months
+        diesel: holes * diesel_litres_per_borehole * diesel_price_xof
+        payroll: {each_period: labourers_count * labourer_monthly_wage_xof + foreman_monthly_wage_xof}
+        charges: payroll * employer_social_charge_rate * workers_declared_share
+        guarantee_fees: advance_guarantee_fee_rate * billed_advance
+        imf: max(imf_rate * revenue, imf_floor_xof / 12)
+        rig_carried: >-
+          rig_cost_xof * (1 - rig_age_years_at_t0 / rig_useful_life_years)
+          + warm_up * rig_cost_xof / (rig_useful_life_years * 12)
+        rig_months_left: (rig_useful_life_years - rig_age_years_at_t0) * 12 + warm_up
+  opening:
+    driller:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      fixed_assets: {nature: asset, value: {generator: gold, output: rig_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:                      # all paid in the month; end: 60 is past the horizon
+    diesel:
+      type: operating_cost
+      parties: {payer: driller}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: diesel}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    payroll:
+      type: operating_cost
+      parties: {payer: driller}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: payroll}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    charges:
+      type: operating_cost
+      parties: {payer: driller}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: charges}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    truck:
+      type: operating_cost
+      parties: {payer: driller}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: truck_monthly}, index: 1, periods_per_year: 12,
+              start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    guarantees:
+      type: operating_cost
+      parties: {payer: driller}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: guarantee_fees}, index: 1,
+              periods_per_year: 12, start: 0, end: 60, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: 12}
+  rulebooks:
+    works:
+      kind: transfer
+      entity: driller
+      phase: operate
+      declare:
+        advance_receivable: asset
+        situations_receivable: asset
+        retention_held: asset
+        contract_liability: liability
+        inventory: asset
+        works_revenue: income
+        materials: expense
+        retention_lost: expense
+      moves:
+        bill_advance: {debit: advance_receivable, credit: contract_liability, amount: {generator: gold, output: billed_advance}}
+        bill_situations: {debit: situations_receivable, credit: contract_liability,
+                          amount: {generator: gold, output: billed_situations}}
+        earn: {debit: contract_liability, credit: works_revenue, amount: {generator: gold, output: revenue}}
+        advance_paid: {debit: cash, credit: advance_receivable, amount: {generator: gold, output: advance_settled}}
+        situations_paid: {debit: cash, credit: situations_receivable, amount: {generator: gold, output: situations_settled}}
+        withhold: {debit: retention_held, credit: cash, amount: {generator: gold, output: withheld}}
+        release: {debit: cash, credit: retention_held, amount: {generator: gold, output: released}}
+        lose: {debit: retention_lost, credit: retention_held, amount: {generator: gold, output: written_off}}
+        buy: {debit: inventory, credit: cash, amount: {generator: gold, output: purchased}}
+        use: {debit: materials, credit: inventory, amount: {generator: gold, output: consumed}}
+    rig:
+      kind: asset_register
+      entity: driller
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 60
+      life_periods: {generator: gold, output: rig_months_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: driller
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: is_rate}
+      carry_forward_periods: null
+      loss_relief: refund
+      scheme:
+        works_revenue: taxable
+        materials: taxable
+        retention_lost: taxable
+        diesel.expense: taxable
+        payroll.expense: taxable
+        charges.expense: taxable
+        truck.expense: taxable
+        guarantees.expense: taxable
+        depreciation: taxable
+        written_off: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: driller
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      works_revenue: revenue
+      materials: materials
+      retention_lost: retention_lost
+      diesel.expense: diesel
+      payroll.expense: payroll
+      charges.expense: charges
+      truck.expense: truck
+      guarantees.expense: guarantees
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+    cash_flow:
+      advance_receivable: settlements
+      situations_receivable: settlements
+      retention_held: retention
+      inventory: purchases
+      diesel.payable: operating
+      payroll.payable: operating
+      charges.payable: operating
+      truck.payable: operating
+      guarantees.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: driller, scheme: pnl, include: [revenue]}
+    materials: {kind: pnl, entity: driller, scheme: pnl, include: [materials]}
+    materials_lost: {kind: pnl, entity: driller, scheme: pnl, include: []}       # nothing lost on site
+    retention_lost: {kind: pnl, entity: driller, scheme: pnl, include: [retention_lost]}
+    diesel: {kind: pnl, entity: driller, scheme: pnl, include: [diesel]}
+    payroll: {kind: pnl, entity: driller, scheme: pnl, include: [payroll]}
+    charges: {kind: pnl, entity: driller, scheme: pnl, include: [charges]}
+    truck: {kind: pnl, entity: driller, scheme: pnl, include: [truck]}
+    guarantees: {kind: pnl, entity: driller, scheme: pnl, include: [guarantees]}
+    opex: {kind: pnl, entity: driller, scheme: pnl,
+           include: [materials, retention_lost, diesel, payroll, charges, truck, guarantees]}
+    ebitda: {kind: pnl, entity: driller, scheme: pnl,
+             include: [revenue, materials, retention_lost, diesel, payroll, charges, truck, guarantees]}
+    depreciation: {kind: pnl, entity: driller, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: driller, scheme: pnl,
+           include: [revenue, materials, retention_lost, diesel, payroll, charges, truck, guarantees, depreciation]}
+    tax: {kind: pnl, entity: driller, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: driller, scheme: pnl,
+            include: [revenue, materials, retention_lost, diesel, payroll, charges, truck, guarantees, depreciation,
+                      tax]}
+    settlements: {entity: driller, account: cash, scheme: cash_flow, include: [settlements]}
+    cash_in: {entity: driller, account: cash, scheme: cash_flow, include: [settlements, retention]}
+    purchases: {entity: driller, account: cash, scheme: cash_flow, include: [purchases]}
+    cfo: {entity: driller, account: cash, scheme: cash_flow, include: [settlements, retention, purchases, operating]}
+    cfi: {entity: driller, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: driller, account: cash, scheme: cash_flow,
+           include: [settlements, retention, purchases, operating, investing]}
+  measures: {}
+trace:
+  season_factor: {driver: gold.season}
+  starts: {driver: gold.starts}
+  handovers: {driver: gold.handovers}
+  wip_opening_injection: {driver: gold.wip_opening}
+  wip_end: {driver: gold.wip_end}
+  wip_active: {driver: gold.wip_active}
+  holes_drilled: {driver: gold.holes}
+  metres_drilled: {driver: gold.metres}
+  rig_days_used: {driver: gold.rig_days_used}
+  rig_days_available: {driver: gold.rig_days_available}
+  truck_km_implied: {driver: gold.truck_km}
+  revenue: {cut: revenue}
+  billed_advance: {driver: gold.billed_advance}
+  billed_situations: {driver: gold.billed_situations}
+  billed_total: {driver: gold.billed_total}
+  advance_settled_gross: {driver: gold.advance_settled}
+  situations_settled_gross: {driver: gold.situations_settled}
+  settled_gross_total: {cut: settlements}
+  retention_withheld: {driver: gold.withheld}
+  cash_from_settlements: {sum: [{cut: settlements}, {driver: gold.withheld, sign: -1}]}
+  retention_settled: {driver: gold.retention_due}
+  retention_released_cash: {driver: gold.released}
+  retention_written_off: {cut: retention_lost, sign: -1}
+  cash_in_total: {cut: cash_in}
+  receivable_opening_injection: {carried_in: situations_receivable}
+  amounts_receivable: {balance: situations_receivable}
+  retention_opening_injection: {carried_in: retention_held}
+  retention_held: {balance: retention_held}
+  contract_liability_opening_injection: {carried_in: contract_liability}
+  contract_liability: {balance: contract_liability}
+  advance_in_transit: {balance: advance_receivable}
+  materials_purchased: {cut: purchases, sign: -1}
+  materials_consumed: {cut: materials, sign: -1}
+  materials_loss: {cut: materials_lost, sign: -1}
+  inventory_opening_injection: {carried_in: inventory}
+  inventory: {balance: inventory}
+  client_position_opening_level:
+    carried_in: advance_receivable + situations_receivable + retention_held - contract_liability
+    hold: true
+  nwc: {balance: advance_receivable + situations_receivable + retention_held + inventory - contract_liability}
+  nwc_opening_level:
+    carried_in: advance_receivable + situations_receivable + retention_held + inventory - contract_liability
+    hold: true
+  delta_nwc: {change: advance_receivable + situations_receivable + retention_held + inventory - contract_liability}
+  cost_materials: {cut: materials, sign: -1}
+  cost_diesel: {cut: diesel, sign: -1}
+  cost_payroll_gross: {cut: payroll, sign: -1}
+  cost_payroll_charges: {cut: charges, sign: -1}
+  cost_truck: {cut: truck, sign: -1}
+  cost_guarantee_fees: {cut: guarantees, sign: -1}
+  opex_total: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax_imf: {driver: gold.imf}
+  tax_total: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  capex: {cut: cfi, sign: -1}
+  book_value_opening_injection: {carried_in: fixed_assets}
+  book_value: {balance: fixed_assets}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

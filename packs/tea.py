@@ -23,6 +23,10 @@ This pack adds only what the golds need and those packs do not have:
   deposit) held at a target each period, the change moving cash;
 * the rulebook ``settle``: payables paid in full in the period they arise
   (a small business's tax paid within its year);
+* the rulebook ``transfer``: a stated amount posted from one account to
+  another each period (a payment calendar the business states: a public
+  works contract billed, settled and its retention released on its own
+  timetable);
 * the rulebook ``write_down``: a stated amount of an asset written off to
   an expense each period (grain lost in store);
 * the rulebook ``asset_pool``: a pool of like assets in steady state,
@@ -31,9 +35,14 @@ This pack adds only what the golds need and those packs do not have:
 
 Formulas
 --------
-Exact arithmetic over names: ``+ - * /``, unary minus, numbers, the period
+Exact arithmetic over names: ``+ - * /``, ``%`` (the remainder: an event
+every so many periods), ``**`` to a whole power (a decline compounding by
+period), unary minus, numbers, the period
 index ``t``, the comparisons ``< <= > >= == !=`` (1 when true, else 0), the
-conditional ``a if c else b``, and ``min``, ``max``, ``abs``. A number typed
+conditional ``a if c else b``, ``min``, ``max``, ``abs``, and ``lag(name, k)``:
+the value ``name`` had ``k`` periods earlier, nil before the first period
+(nothing had happened yet: a case that starts a business from nothing, then
+warms up to its steady state, reads its payment calendar this way). A number typed
 in a formula is read from its text (``0.3`` is 3/10). A formula that reads
 ``t`` or a series is a series of ``periods`` values; otherwise it is a
 number. ``{each_period: formula}`` is a series even when every period is
@@ -84,20 +93,30 @@ class _Formula:
             raise InputError(f"{where}: cannot parse formula {text!r}") from e
 
     def names(self) -> set:
-        return {n.id for n in ast.walk(self.tree) if isinstance(n, ast.Name)} - set(_FUNCS)
+        return {n.id for n in ast.walk(self.tree) if isinstance(n, ast.Name)} - set(_FUNCS) - {"lag"}
+
+    def lags(self) -> bool:
+        """Whether the formula reads an earlier period (``lag``): it is then a series."""
+        return any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "lag"
+                   for n in ast.walk(self.tree))
 
     def at(self, t: int, ns: Mapping[str, Value]) -> Fraction:
         return self._eval(self.tree, t, ns)
 
     def _eval(self, n: ast.AST, t: int, ns: Mapping[str, Value]) -> Fraction:
         ev = lambda x: self._eval(x, t, ns)
-        if isinstance(n, ast.BinOp) and type(n.op) in (ast.Add, ast.Sub, ast.Mult, ast.Div):
+        if isinstance(n, ast.BinOp) and type(n.op) in (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod):
             a, b = ev(n.left), ev(n.right)
-            if isinstance(n.op, ast.Div):
+            if isinstance(n.op, (ast.Div, ast.Mod)):
                 if b == 0:
                     raise InputError(f"{self.where}: division by zero in {self.text!r} at period {t}")
-                return a / b
+                return a / b if isinstance(n.op, ast.Div) else a % b
             return a + b if isinstance(n.op, ast.Add) else a - b if isinstance(n.op, ast.Sub) else a * b
+        if isinstance(n, ast.BinOp) and isinstance(n.op, ast.Pow):
+            a, b = ev(n.left), ev(n.right)
+            if b.denominator != 1 or (a == 0 and b < 0):
+                raise InputError(f"{self.where}: {a} ** {b} is not exact ({self.text!r} at period {t})")
+            return a ** int(b)
         if isinstance(n, ast.UnaryOp) and isinstance(n.op, (ast.USub, ast.UAdd)):
             v = ev(n.operand)
             return -v if isinstance(n.op, ast.USub) else v
@@ -105,6 +124,15 @@ class _Formula:
             return Fraction(int(_CMP[type(n.ops[0])](ev(n.left), ev(n.comparators[0]))))
         if isinstance(n, ast.IfExp):
             return ev(n.body) if ev(n.test) else ev(n.orelse)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "lag" and not n.keywords:
+            if len(n.args) != 2 or not isinstance(n.args[0], ast.Name) or n.args[0].id not in ns:
+                raise InputError(f"{self.where}: lag takes an earlier value's name and a number of periods ({self.text!r})")
+            k = ev(n.args[1])
+            if k.denominator != 1 or k < 0:
+                raise InputError(f"{self.where}: lag by {k} periods is not a whole number of periods ({self.text!r})")
+            back = t - int(k)
+            v = ns[n.args[0].id]
+            return Fraction(0) if back < 0 else (v[back] if isinstance(v, list) else v)
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _FUNCS and not n.keywords:
             return Fraction(_FUNCS[n.func.id](*[ev(a) for a in n.args]))
         if isinstance(n, ast.Constant) and not isinstance(n.value, bool) and isinstance(n.value, (int, float, Fraction)):
@@ -140,7 +168,7 @@ def formulas(r: Reader) -> Dict[str, Value]:
                 raise InputError(f"formulas.values.{name}: a mapping value takes only each_period")
             text = text["each_period"]
         f = _Formula(text, f"formulas.values.{name}")
-        series = each or "t" in f.names() or any(isinstance(ns.get(x), list) for x in f.names())
+        series = each or f.lags() or "t" in f.names() or any(isinstance(ns.get(x), list) for x in f.names())
         ns[name] = [f.at(t, ns) for t in range(periods)] if series else f.at(0, ns)
     return ns
 
@@ -219,6 +247,46 @@ def settle(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     group.register(phase, handler)
 
 
+def transfer(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    """Stated amounts posted between accounts each period.
+
+    Case keys: ``entity``, ``phase``, ``declare`` (optional: account ->
+    nature, for accounts no other piece declares), and ``moves`` (name ->
+    ``{debit, credit, amount}``, the amount a number or a series, posted in
+    the order given). Each leg moves its account by its nature: a debit
+    raises a debit-natured account (cash, an asset, an expense) and lowers
+    a credit-natured one, a credit the reverse. A negative amount is
+    posted the other way round.
+
+    The amounts are the business's own schedule (formulas over the gold's
+    inputs); what the books add is every balance they leave behind, and the
+    cash they move, read back as any other account.
+    """
+    entity, phase = r.take("entity"), r.take("phase")
+    for acct, nature in (r.take_or_default("declare", {}, reason="the accounts are declared elsewhere").value or {}).items():
+        try:
+            group.declare(entity, acct, Nature(nature), ctx["currency"])
+        except ValueError as e:
+            raise InputError(f"transfer.declare.{acct}: {nature!r} is not a nature") from e
+    moves = []
+    for name, raw in r.take("moves").items():
+        mr = Reader(raw, source=f"transfer.moves.{name}")
+        moves.append((name, mr.take("debit"), mr.take("credit"), mr.take("amount")))
+        mr.finish()
+
+    def handler(g: Group, t: int) -> None:
+        book = g.book(entity)
+        for name, debit, credit, amount in moves:
+            x = _at(amount, t)
+            if not x:
+                continue
+            dr, cr = (debit, credit) if x > 0 else (credit, debit)
+            eff = {a: (1 if book.accounts[a].nature.debit_natured == (a == dr) else -1) for a in (dr, cr)}
+            g.post(entity, Posting(t, phase, dr, cr, abs(x), eff, "operating", f"{ctx['name']}.{name}:{t}"))
+
+    group.register(phase, handler)
+
+
 def write_down(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     """A stated amount of an asset written off to an expense each period.
 
@@ -281,4 +349,5 @@ def asset_pool(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     return {"steady_state": lambda: unsteady}
 
 
-RULEBOOKS = {"held_balance": held_balance, "settle": settle, "write_down": write_down, "asset_pool": asset_pool}
+RULEBOOKS = {"held_balance": held_balance, "settle": settle, "transfer": transfer, "write_down": write_down,
+             "asset_pool": asset_pool}

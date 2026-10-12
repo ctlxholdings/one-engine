@@ -1,0 +1,161 @@
+# Gold "arise": a 234 MW AC solar IPP in Kenya on a 20-year USD PPA, construction year and
+# twenty operating years (cases/reference/golds/arise.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * capex_construction spent in period 0; operations from ops_start to terminal_period;
+#   * energy_mwh a year sold at the tariff (tariff_c_per_kwh, 100 cents a dollar and 1000 kWh a
+#     MWh), billed on dso_days of a days_per_year year; collected in full in the last year;
+#   * operating cost opex_pct of the construction capex a year;
+#   * the plant is depreciated straight-line over depreciation_years from the year after the
+#     build, down to its salvage (salvage_pct of capex), and sold for that salvage at the end;
+#   * an overhaul of overhaul_pct of capex every overhaul_interval_years, num_overhauls times,
+#     each depreciated over overhaul_life_years from the year after (its own account);
+#   * tax at tax_rate on profit, paid in the year.
+gold: arise
+entity: ipp
+plant: tariff_c_per_kwh
+case:
+  case: gold-arise
+  periods: 21
+  phases: [fund, operate, close, tax, settle]
+  currency: USD
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 21
+      inputs: gold
+      values:
+        tariff: tariff_c_per_kwh * 1000 / 100
+        operating: (t >= ops_start) * (t <= terminal_period)
+        energy: energy_mwh * operating
+        opex: opex_pct * capex_construction * operating
+        overhaul: >-
+          overhaul_pct * capex_construction * (t % overhaul_interval_years == 0) * (t > 0)
+          * (t <= num_overhauls * overhaul_interval_years)
+        capex: capex_construction * (t == 0) + overhaul
+        salvage: salvage_pct * capex_construction
+        sold: t == terminal_period
+  opening:
+    ipp:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    power:
+      type: offtake
+      parties: {seller: ipp}
+      terms: {volume: {generator: gold, output: energy}, price: {generator: gold, output: tariff},
+              payment_days: {generator: gold, output: dso_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: {generator: gold, output: terminal_period}}
+    om:
+      type: operating_cost
+      parties: {payer: ipp}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: opex}, index: 1, periods_per_year: 1,
+              start: 0, end: {generator: gold, output: terminal_period}, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: {generator: gold, output: days_per_year}}
+    salvage_sale:
+      type: offtake
+      parties: {seller: ipp}
+      terms: {volume: {generator: gold, output: sold}, price: {generator: gold, output: salvage},
+              payment_days: 0, days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: {generator: gold, output: terminal_period}}
+    build:
+      type: capex
+      parties: {owner: ipp}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0,
+              end: {generator: gold, output: terminal_period}}
+  rulebooks:
+    plant:
+      kind: asset_register
+      entity: ipp
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: gold, output: terminal_period}
+      life_periods: {generator: gold, output: depreciation_years}
+      first_charge: next_period
+      residual: {generator: gold, output: salvage}
+    overhauls:
+      kind: asset_register
+      entity: ipp
+      phase: close
+      from: cwip
+      to: overhauls
+      expense: depreciation
+      disposal: written_off
+      in_service: [5, 10, 15]          # the overhaul periods of the capex schedule
+      dispose_at: {generator: gold, output: terminal_period}
+      life_periods: {generator: gold, output: overhaul_life_years}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: ipp
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        power.revenue: taxable
+        om.expense: taxable
+        salvage_sale.revenue: taxable
+        depreciation: taxable
+        written_off: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: ipp
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      power.revenue: revenue
+      om.expense: opex
+      depreciation: depreciation
+      salvage_sale.revenue: disposal
+      written_off: disposal
+      tax_expense: tax
+    cash_flow:
+      power.receivable: operating
+      om.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      salvage_sale.receivable: sale
+      cwip: capex
+  cuts:
+    revenue: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue]}
+    opex: {kind: pnl, entity: ipp, scheme: pnl, include: [opex]}
+    ebitda: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex]}
+    depreciation: {kind: pnl, entity: ipp, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex, depreciation, disposal]}
+    tax: {kind: pnl, entity: ipp, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex, depreciation, disposal, tax]}
+    capex: {entity: ipp, account: cash, scheme: cash_flow, include: [capex]}
+    salvage: {entity: ipp, account: cash, scheme: cash_flow, include: [sale]}
+    cfo: {entity: ipp, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: ipp, account: cash, scheme: cash_flow, include: [capex, sale]}
+    fcff: {entity: ipp, account: cash, scheme: cash_flow, include: [operating, capex, sale]}
+  measures: {}
+trace:
+  revenue: {cut: revenue}
+  opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  capex: {cut: capex, sign: -1}
+  disposal_bv: {change: written_off}
+  nbv: {balance: cwip + fixed_assets + overhauls}
+  salvage: {cut: salvage}
+  receivables: {balance: power.receivable}
+  delta_nwc: {change: power.receivable - om.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

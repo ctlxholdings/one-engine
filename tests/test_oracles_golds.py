@@ -47,12 +47,15 @@ def test_every_hand_gold_gets_its_recorded_verdict(oid):
         assert r.verdict == "blocked" and "no translation yet" in r.reason, (r.verdict, r.reason)
 
 
-def _planted_copy(tmp_path, oid, old, new):
+def _planted_copy(tmp_path, oid, old, new, more=()):
+    """A copy of one translation with ``old`` replaced by ``new`` (and each further pair in ``more``)."""
     folder = tmp_path / "golds"
     folder.mkdir()
     text = (TRANSLATIONS / f"{oid}.yaml").read_text()
-    assert text.count(old) == 1, old
-    (folder / f"{oid}.yaml").write_text(text.replace(old, new))
+    for a, b in ((old, new), *more):
+        assert text.count(a) == 1, a
+        text = text.replace(a, b)
+    (folder / f"{oid}.yaml").write_text(text)
     return GoldFamily(folder)
 
 
@@ -100,6 +103,14 @@ def test_formulas_make_series_when_they_read_the_period():
     assert out["ramp"] == [10, 20, 30] and out["after"] == [0, 20, 30] and out["flat"] == [10, 10, 10]
 
 
+def test_formulas_take_remainders_whole_powers_and_lags():
+    out = _gen({"month": "t % 2", "grown": "base * (1 + g) ** t", "prior": "lag(grown, 1)", "two_back": "lag(base, 2)"},
+               {"base": 100, "g": 0.1})
+    assert out["month"] == [0, 1, 0]
+    assert out["grown"] == [100, 110, 121]                              # exact: (11/10)**2 * 100
+    assert out["prior"] == [0, 100, 110] and out["two_back"] == [0, 0, 100]
+
+
 def test_formulas_refuse_an_unknown_name_and_a_reused_one():
     with pytest.raises(InputError, match="neither an input nor an earlier value"):
         _gen({"a": "b * 2"}, {"c": 1})
@@ -129,3 +140,52 @@ def test_a_row_per_head_divides_by_the_gold_input(tmp_path):
                         "fcff_per_woman: {cut: fcff}")
     r = O.receipt(fam, "attieke_biogaz", commit="test")
     assert r.verdict == "differs" and r.first_difference["name"] == "fcff_per_woman"
+
+
+def test_a_lagged_calendar_is_not_a_same_month_one(tmp_path):
+    # the driller's wells are handed over cycle_months after they start; same month, the books differ
+    fam = _planted_copy(tmp_path, "contractor_retention", "handovers: lag(starts, cycle_months - 1)", "handovers: starts")
+    r = O.receipt(fam, "contractor_retention", commit="test")
+    assert r.verdict == "differs"
+
+
+def test_a_business_started_cold_is_not_one_in_steady_state(tmp_path):
+    # no warm-up: the gold's first month already carries receivables and retentions; from nothing it does not
+    fam = _planted_copy(tmp_path, "contractor_retention", "warm_up: 24\n", "warm_up: 0\n",
+                        more=[("  periods: 60\n  phases", "  periods: 36\n  phases"),
+                              ("      periods: 60\n", "      periods: 36\n")])
+    r = O.receipt(fam, "contractor_retention", commit="test")
+    assert r.verdict == "differs"
+
+
+def test_a_warm_up_that_does_not_fit_the_periods_is_refused(tmp_path):
+    fam = _planted_copy(tmp_path, "contractor_retention", "warm_up: 24\n", "warm_up: 12\n")
+    r = O.receipt(fam, "contractor_retention", commit="test")
+    assert r.verdict != "matches" and "periods" in r.reason
+
+
+def test_a_transfer_left_out_is_seen(tmp_path):
+    # retentions withheld but never released: cash and the retention balance both move
+    fam = _planted_copy(tmp_path, "contractor_retention", "amount: {generator: gold, output: released}", "amount: 0")
+    r = O.receipt(fam, "contractor_retention", commit="test")
+    assert r.verdict == "differs"
+
+
+def test_an_opening_injection_is_not_the_running_balance(tmp_path):
+    fam = _planted_copy(tmp_path, "contractor_retention", "receivable_opening_injection: {carried_in: situations_receivable}",
+                        "receivable_opening_injection: {balance: situations_receivable}")
+    r = O.receipt(fam, "contractor_retention", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] == "receivable_opening_injection"
+
+
+def test_a_salvage_value_is_not_depreciated(tmp_path):
+    # without the residual the plant is depreciated to nil and the salvage sale books a gain
+    fam = _planted_copy(tmp_path, "arise", "      residual: {generator: gold, output: salvage}\n", "")
+    r = O.receipt(fam, "arise", commit="test")
+    assert r.verdict == "differs"
+
+
+def test_a_row_times_a_rate_multiplies_by_the_gold_input(tmp_path):
+    fam = _planted_copy(tmp_path, "arise_expiry", "{record: tax.expired, times: gold.tax_rate}", "{record: tax.expired}")
+    r = O.receipt(fam, "arise_expiry", commit="test")
+    assert r.verdict == "differs" and r.first_difference["name"] == "tax_shield_forgone"

@@ -1,0 +1,359 @@
+# Gold "clinic_thirdparty": a medical analysis laboratory in Cocody, Abidjan, sixty per cent of
+# whose billings are paid by insurance schemes months later; five years
+# (cases/reference/golds/clinic_thirdparty.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * activity: tests_per_day on days_per_week x weeks_per_year days (less holiday_closure_days);
+#     the gold's capacity, staffing, electricity and generator rows are its own arithmetic over
+#     those inputs, compared as drivers;
+#   * billings at price_per_test: the cash clients and the uncovered part of insured bills are
+#     collected at the counter; the covered part is claimed from the schemes, collected after a
+#     weighted delay (CMU and private lags, plus the redo delay on rejected claims) that fixes the
+#     claims receivable, carried in at opening_receivable_balance; of the rejected claims
+#     (rejection_rate_on_scheme_billings) half are recovered on redo and the rest written off,
+#     out of the receivable, before the period's collections;
+#   * reagents and consumables are bought ahead (purchase_cover_months, an average stock of half
+#     the cover) and paid on supplier_payment_days; a share of reagents bought expires
+#     (reagent_expiry_waste_rate) so purchases are what is used grossed up for it; purchases are
+#     expensed and the stock held taken back out, carried in at opening_inventory_balance;
+#   * payroll, CNPS charges on capped bases and payroll levies; rent, maintenance, power;
+#   * the two analysers are carried in at cost less depreciation_rate a year of their age, and
+#     depreciated over the years of their ten-year life left;
+#   * tax: the microenterprise levy, a rate on gross billings (no cost deducted), paid in the year.
+gold: clinic_thirdparty
+entity: lab
+plant: price_per_test
+case:
+  case: gold-clinic-thirdparty
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        operating_days: days_per_week * weeks_per_year - holiday_closure_days
+        tests: tests_per_day * operating_days
+        determinations: tests * determinations_per_billable_act
+        patients: tests / billable_acts_per_patient
+        run_hours: determinations / (analyser_rated_throughput_per_hour * analyser_count)
+        run_hours_per_day: run_hours / operating_days
+        capacity: >-
+          analyser_count * analyser_rated_throughput_per_hour * opening_hours_per_day * plant_availability_factor
+          * operating_days
+        cumulative_hours: run_hours * (haem_analyser_age_at_t0_years + t + 1)
+        minutes_required: patients * phlebotomy_minutes_per_patient + determinations * technician_minutes_per_determination
+        minutes_available: >-
+          technician_count * opening_hours_per_day * 60 * operating_days
+          * (1 - (statutory_leave_days_per_year + sick_absence_days_per_year) / (days_per_week * weeks_per_year))
+        grid_kwh: >-
+          fridge_count * fridge_kwh_per_day * days_per_calendar_year
+          + ac_unit_count * ac_kw * ac_hours_per_operating_day * operating_days
+          + analyser_kw * run_hours + misc_kwh_per_operating_day * operating_days
+        grid_cost: grid_kwh * electricity_tariff_ttc
+        generator_residual: power_annual - grid_cost
+        generator_hours: generator_residual / (gasoil_price_per_litre * genset_fuel_litres_per_hour)
+        reagent_consumed: tests * reagent_consumable_cost_per_test * reagent_share_of_input_cost * reagent_cost_is_net_of_expiry_waste
+        consumable_consumed: tests * reagent_consumable_cost_per_test * (1 - reagent_share_of_input_cost)
+        reagent_purchased: reagent_consumed / (1 - reagent_expiry_waste_rate)
+        reagent_expired: reagent_purchased * reagent_expiry_waste_rate
+        inventory: (reagent_purchased + consumable_consumed) * purchase_cover_months / 2 / months_per_year
+        covered: cmu_share_of_insured * cmu_coverage_rate + (1 - cmu_share_of_insured) * private_coverage_rate
+        claimed_tests: tests * insured_client_share * covered
+        counter_tests: tests - claimed_tests
+        billed_to_schemes: claimed_tests * price_per_test
+        rejected: billed_to_schemes * rejection_rate_on_scheme_billings
+        recovered: rejected * redo_recovery_share
+        written_off: rejected - recovered
+        cmu_weight: cmu_share_of_insured * cmu_coverage_rate / covered
+        claim_delay_months: >-
+          private_delay_months * (1 - cmu_weight) + cmu_delay_months * cmu_weight
+          + rejection_rate_on_scheme_billings * redo_extra_delay_months
+        gross_payroll: >-
+          (technician_count * technician_salary_monthly + biologist_salary_monthly + secretary_salary_monthly
+          + cleaner_salary_monthly) * months_per_year * (1 + overtime_premium_uplift) + founder_remuneration_annual
+        cnps_base: headcount * cnps_capped_base_monthly * months_per_year
+        cnps: >-
+          gross_payroll * cnps_pension_rate_employer
+          + cnps_base * (cnps_family_rate_employer + cnps_maternity_rate_employer + cnps_at_mp_rate_employer)
+        levies: gross_payroll * employer_payroll_levy_rate
+        rent_annual: rent_monthly * months_per_year
+        capex: {each_period: other_equipment_annual_capex}
+        haem_carried: haem_analyser_cost * (1 - depreciation_rate * haem_analyser_age_at_t0_years)
+        haem_life_left: 1 / depreciation_rate - haem_analyser_age_at_t0_years
+        biochem_carried: biochem_analyser_cost * (1 - depreciation_rate * biochem_analyser_age_at_t0_years)
+        biochem_life_left: 1 / depreciation_rate - biochem_analyser_age_at_t0_years
+        levy_rate: >-
+          tax_regime * (microenterprise_cga_rate * cga_member_flag + microenterprise_standard_rate * (1 - cga_member_flag))
+  opening:
+    lab:
+      cash: {nature: asset, value: 0}
+      claims.receivable: {nature: asset, value: {generator: gold, output: opening_receivable_balance}}
+      inventory: {nature: asset, value: {generator: gold, output: opening_inventory_balance}}
+      haem_analyser: {nature: asset, value: {generator: gold, output: haem_carried}}
+      biochem_analyser: {nature: asset, value: {generator: gold, output: biochem_carried}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    counter:
+      type: offtake
+      parties: {seller: lab}
+      terms: {volume: {generator: gold, output: counter_tests}, price: {generator: gold, output: price_per_test},
+              payment_days: 0, days_per_year: {generator: gold, output: months_per_year}, periods_per_year: 1, end: 5}
+    claims:
+      type: offtake
+      parties: {seller: lab}
+      terms: {volume: {generator: gold, output: claimed_tests}, price: {generator: gold, output: price_per_test},
+              payment_days: {generator: gold, output: claim_delay_months},
+              days_per_year: {generator: gold, output: months_per_year}, periods_per_year: 1,
+              end: 5}                 # past the horizon: the schemes still owe at its end (going concern)
+    reagents:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: reagent_purchased}, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_payment_days},
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    consumables:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: consumable_consumed}, index: 1,
+              periods_per_year: 1, start: 0, end: 5, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: supplier_payment_days},
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    payroll:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: gross_payroll}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    cnps:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: cnps}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    levies:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: levies}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    maintenance:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: maintenance_contract_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    power:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: power_annual}, unit_rate: 0, volume: 0, index: 1, periods_per_year: 1,
+              start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    other:
+      type: operating_cost
+      parties: {payer: lab}
+      terms: {annual: {generator: gold, output: other_unstated_opex_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_calendar_year}}
+    equipment:
+      type: capex
+      parties: {owner: lab}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    rejected_claims:
+      kind: write_down
+      entity: lab
+      phase: fund
+      account: claims.receivable
+      expense: claims_written_off
+      amount: {generator: gold, output: written_off}
+    stock:
+      kind: held_balance
+      entity: lab
+      cash: cash
+      phase: operate
+      accounts:
+        inventory: {side: asset, target: {generator: gold, output: inventory}, against: reagents.expense}
+    haem:
+      kind: asset_register
+      entity: lab
+      phase: close
+      from: cwip
+      to: haem_analyser
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 5
+      life_periods: {generator: gold, output: haem_life_left}
+      first_charge: in_service
+    biochem:
+      kind: asset_register
+      entity: lab
+      phase: close
+      from: cwip
+      to: biochem_analyser
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 5
+      life_periods: {generator: gold, output: biochem_life_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: lab
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: levy_rate}
+      carry_forward_periods: null
+      scheme:                       # a levy on gross billings: nothing is deducted
+        counter.revenue: taxable
+        claims.revenue: taxable
+        claims_written_off: non_deductible
+        reagents.expense: non_deductible
+        consumables.expense: non_deductible
+        payroll.expense: non_deductible
+        cnps.expense: non_deductible
+        levies.expense: non_deductible
+        rent.expense: non_deductible
+        maintenance.expense: non_deductible
+        power.expense: non_deductible
+        other.expense: non_deductible
+        depreciation: non_deductible
+        written_off: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: lab
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      counter.revenue: billings
+      claims.revenue: claims
+      claims_written_off: claims_lost
+      reagents.expense: reagents
+      consumables.expense: consumables
+      payroll.expense: payroll
+      cnps.expense: cnps
+      levies.expense: levies
+      rent.expense: fixed
+      maintenance.expense: fixed
+      power.expense: fixed
+      other.expense: fixed
+      depreciation: depreciation
+      written_off: depreciation
+      tax_expense: tax
+    cash_flow:
+      counter.receivable: counter
+      claims.receivable: claims
+      reagents.payable: reagents
+      consumables.payable: consumables
+      payroll.payable: operating
+      cnps.payable: operating
+      levies.payable: operating
+      rent.payable: operating
+      maintenance.payable: operating
+      power.payable: operating
+      other.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    gross_billings: {kind: pnl, entity: lab, scheme: pnl, include: [billings, claims]}
+    billed_to_schemes: {kind: pnl, entity: lab, scheme: pnl, include: [claims]}
+    claims_lost: {kind: pnl, entity: lab, scheme: pnl, include: [claims_lost]}
+    net_revenue: {kind: pnl, entity: lab, scheme: pnl, include: [billings, claims, claims_lost]}
+    materials: {kind: pnl, entity: lab, scheme: pnl, include: [reagents, consumables]}
+    consumables_expired: {kind: pnl, entity: lab, scheme: pnl, include: []}     # only reagents expire
+    payroll: {kind: pnl, entity: lab, scheme: pnl, include: [payroll]}
+    cnps: {kind: pnl, entity: lab, scheme: pnl, include: [cnps]}
+    levies: {kind: pnl, entity: lab, scheme: pnl, include: [levies]}
+    labour: {kind: pnl, entity: lab, scheme: pnl, include: [payroll, cnps, levies]}
+    fixed: {kind: pnl, entity: lab, scheme: pnl, include: [fixed]}
+    opex: {kind: pnl, entity: lab, scheme: pnl, include: [reagents, consumables, payroll, cnps, levies, fixed]}
+    ebitda: {kind: pnl, entity: lab, scheme: pnl,
+             include: [billings, claims, claims_lost, reagents, consumables, payroll, cnps, levies, fixed]}
+    depreciation: {kind: pnl, entity: lab, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: lab, scheme: pnl,
+           include: [billings, claims, claims_lost, reagents, consumables, payroll, cnps, levies, fixed, depreciation]}
+    tax: {kind: pnl, entity: lab, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: lab, scheme: pnl,
+            include: [billings, claims, claims_lost, reagents, consumables, payroll, cnps, levies, fixed, depreciation,
+                      tax]}
+    counter_cash: {entity: lab, account: cash, scheme: cash_flow, include: [counter]}
+    scheme_cash: {entity: lab, account: cash, scheme: cash_flow, include: [claims]}
+    reagents_paid: {entity: lab, account: cash, scheme: cash_flow, include: [reagents]}
+    consumables_paid: {entity: lab, account: cash, scheme: cash_flow, include: [consumables]}
+    cfo: {entity: lab, account: cash, scheme: cash_flow, include: [counter, claims, reagents, consumables, operating]}
+    cfi: {entity: lab, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: lab, account: cash, scheme: cash_flow,
+           include: [counter, claims, reagents, consumables, operating, investing]}
+  measures: {}
+trace:
+  operating_days: {driver: gold.operating_days}
+  tests: {driver: gold.tests}
+  patients: {driver: gold.patients}
+  determinations: {driver: gold.determinations}
+  analyser_run_hours: {driver: gold.run_hours}
+  analyser_run_hours_per_operating_day: {driver: gold.run_hours_per_day}
+  analyser_capacity_determinations: {driver: gold.capacity}
+  cumulative_analyser_hours_since_installation: {driver: gold.cumulative_hours}
+  technician_minutes_required: {driver: gold.minutes_required}
+  technician_minutes_available: {driver: gold.minutes_available}
+  grid_kwh: {driver: gold.grid_kwh}
+  grid_electricity_cost: {driver: gold.grid_cost}
+  generator_budget_residual: {driver: gold.generator_residual}
+  generator_hours_affordable: {driver: gold.generator_hours}
+  reagent_consumed: {driver: gold.reagent_consumed}
+  reagent_expired: {driver: gold.reagent_expired}
+  reagent_purchased: {cut: reagents_paid, sign: -1}
+  consumable_consumed: {driver: gold.consumable_consumed}
+  consumable_purchased: {cut: consumables_paid, sign: -1}
+  consumable_expired: {cut: consumables_expired, sign: -1}
+  inventory_open: {opening: inventory}
+  inventory_close: {balance: inventory}
+  gross_billings: {cut: gross_billings}
+  counter_cash_collected: {cut: counter_cash}
+  billed_to_schemes: {cut: billed_to_schemes}
+  scheme_claims_rejected: {driver: gold.rejected}
+  scheme_claims_recovered_on_redo: {driver: gold.recovered}
+  scheme_claims_written_off: {cut: claims_lost, sign: -1}
+  scheme_cash_collected: {cut: scheme_cash}
+  ar_open: {opening: claims.receivable + counter.receivable}
+  ar_close: {balance: claims.receivable + counter.receivable}
+  ap_close: {balance: reagents.payable + consumables.payable}
+  nwc_open: {opening: inventory + claims.receivable + counter.receivable - reagents.payable - consumables.payable}
+  nwc_close: {balance: inventory + claims.receivable + counter.receivable - reagents.payable - consumables.payable}
+  delta_nwc: {change: inventory + claims.receivable + counter.receivable - reagents.payable - consumables.payable}
+  gross_payroll: {cut: payroll, sign: -1}
+  cnps_capped_base: {driver: gold.cnps_base}
+  cnps_charges: {cut: cnps, sign: -1}
+  payroll_levies: {cut: levies, sign: -1}
+  net_revenue: {cut: net_revenue}
+  reagents_and_consumables_expense: {cut: materials, sign: -1}
+  labour_expense: {cut: labour, sign: -1}
+  fixed_other_expense: {cut: fixed, sign: -1}
+  total_opex: {cut: opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  nbv_open: {opening: cwip + haem_analyser + biochem_analyser}
+  nbv_close: {balance: cwip + haem_analyser + biochem_analyser}
+  ebit: {cut: ebit}
+  tax_charge: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  capex: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

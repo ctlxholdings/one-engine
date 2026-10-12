@@ -1,0 +1,158 @@
+# Gold "arise_5050": the Arise 234 MW solar portfolio with half the plant cost deducted for tax in
+# the first operating year, construction year and twenty PPA years
+# (cases/reference/golds/arise_5050.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * construction_cost spent in period 0; operations from first_operating_period; annual_energy_mwh
+#     a year sold at ppa_price_usd_per_kwh (1000 kWh a MWh), settled in the year (nwc_level nil);
+#   * operating cost opex_rate of capex a year;
+#   * books: straight-line over book_dep_years from the year after the build, to nil;
+#   * tax: tax_first_year_fraction of the cost in the first operating year, the
+#     tax_remaining_fraction straight-line over tax_remaining_years from second_operating_period;
+#     losses carried forward without limit; tax at tax_rate, paid in the year;
+#   * the plant is sold for its salvage (salvage_rate of cost) in disposal_period_index; with the
+#     tax value written down to nil the whole salvage is a balancing charge, taxed. The gold's
+#     EBIT and NOPAT leave that book gain out (its cash is a negative capex); its tax is in.
+gold: arise_5050
+entity: ipp
+plant: ppa_price_usd_per_kwh
+case:
+  case: gold-arise-half-first-year
+  periods: 21
+  phases: [fund, operate, close, tax, settle]
+  currency: USD
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 21
+      inputs: gold
+      values:
+        operating: t >= first_operating_period
+        energy: annual_energy_mwh * operating
+        price_mwh: ppa_price_usd_per_kwh * 1000
+        opex: opex_rate * construction_cost * operating
+        capex: construction_cost * (t == 0)
+        allowance_weights: >-
+          tax_first_year_fraction * (t == first_operating_period)
+          + tax_remaining_fraction / tax_remaining_years * (t >= second_operating_period)
+        salvage: salvage_rate * construction_cost
+        sold: t == disposal_period_index
+  opening:
+    ipp:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    power:
+      type: offtake
+      parties: {seller: ipp}
+      terms: {volume: {generator: gold, output: energy}, price: {generator: gold, output: price_mwh},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1,
+              end: {generator: gold, output: disposal_period_index}}
+    om:
+      type: operating_cost
+      parties: {payer: ipp}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: opex}, index: 1, periods_per_year: 1,
+              start: 0, end: {generator: gold, output: disposal_period_index}, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    salvage_sale:
+      type: offtake
+      parties: {seller: ipp}
+      terms: {volume: {generator: gold, output: sold}, price: {generator: gold, output: salvage},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1,
+              end: {generator: gold, output: disposal_period_index}}
+    build:
+      type: capex
+      parties: {owner: ipp}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0,
+              end: {generator: gold, output: disposal_period_index}}
+  rulebooks:
+    plant:
+      kind: asset_register
+      entity: ipp
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: gold, output: disposal_period_index}
+      life_periods: {generator: gold, output: book_dep_years}
+      first_charge: next_period
+      tax:
+        life_periods: null
+        weights: {generator: gold, output: allowance_weights}
+        first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: ipp
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      timing: plant
+      scheme:
+        power.revenue: taxable
+        om.expense: taxable
+        salvage_sale.revenue: taxable
+        depreciation: timing
+        written_off: timing
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: ipp
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      power.revenue: revenue
+      om.expense: opex
+      depreciation: depreciation
+      salvage_sale.revenue: disposal
+      written_off: disposal
+      tax_expense: tax
+    cash_flow:
+      power.receivable: operating
+      om.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      salvage_sale.receivable: sale
+      cwip: capex
+  cuts:
+    revenue: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue]}
+    opex: {kind: pnl, entity: ipp, scheme: pnl, include: [opex]}
+    depreciation: {kind: pnl, entity: ipp, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex, depreciation]}
+    tax: {kind: pnl, entity: ipp, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: ipp, scheme: pnl, include: [revenue, opex, depreciation, tax]}
+    capex: {entity: ipp, account: cash, scheme: cash_flow, include: [capex]}
+    salvage: {entity: ipp, account: cash, scheme: cash_flow, include: [sale]}
+    cfi: {entity: ipp, account: cash, scheme: cash_flow, include: [capex, sale]}
+    fcff: {entity: ipp, account: cash, scheme: cash_flow, include: [operating, capex, sale]}
+  measures: {}
+trace:
+  energy_mwh: {driver: gold.energy}
+  revenue: {cut: revenue}
+  opex: {cut: opex, sign: -1}
+  book_dep: {cut: depreciation, sign: -1}
+  book_nbv: {balance: cwip + fixed_assets}
+  capital_allowance: {record: plant.tax_charge}
+  twdv: {record: plant.tax_nbv}
+  balancing_charge: {sum: [{cut: salvage}, {record: plant.tax_disposed_nbv, sign: -1}]}
+  taxable_income_preloss: {record: tax.base}
+  loss_created: {record: tax.loss_added}
+  loss_offset: {record: tax.loss_used}
+  loss_cf: {record: tax.losses}
+  taxable_income_postloss: {record: tax.taxable}
+  cash_tax: {cut: tax, sign: -1}
+  ebit: {cut: ebit}
+  nopat: {cut: nopat}
+  dna: {cut: depreciation, sign: -1}
+  delta_nwc: {change: power.receivable - om.payable}
+  capex_gross: {cut: capex, sign: -1}
+  salvage_proceeds: {cut: salvage}
+  capex: {cut: cfi, sign: -1}
+  fcff: {cut: fcff}
