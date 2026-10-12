@@ -124,8 +124,8 @@ _TERM = re.compile(r"\s*([+-]?)\s*([A-Za-z_][\w.]*)")
 
 
 @lru_cache(maxsize=None)
-def _gold(oid: str) -> Dict[str, Any]:
-    return yaml.safe_load((REFERENCE / FOLDER / f"{oid}.yaml").read_text())
+def _gold(oid: str, folder: str = FOLDER) -> Dict[str, Any]:
+    return yaml.safe_load((REFERENCE / folder / f"{oid}.yaml").read_text())
 
 
 def gold_inputs(gold: Mapping[str, Any]) -> Dict[str, Any]:
@@ -191,16 +191,20 @@ class GoldFamily(Family):
     name = "golds"
     planted = "the gold input the translation names under 'plant', x 1.01 (+1 when it is zero)"
     tolerance = "every trace row and the fcff headline within 0.5 currency units per period (spec/GRAPH.yaml oracle.tolerance)"
+    #: the golds' folder under ``cases/reference``, and the folder inside the golds library they come from
+    #: (the inventory names a gold by its path there); a subclass reads another folder of the same library
+    folder = FOLDER
+    library_folder = "cases"
 
     def __init__(self, translations: pathlib.Path = TRANSLATIONS):
         #: the folder of translations (a test points it at a planted copy)
         self.translations = translations
 
     def oracles(self) -> List[str]:
-        return sorted(p.stem for p in (REFERENCE / FOLDER).glob("*.yaml"))
+        return sorted(p.stem for p in (REFERENCE / self.folder).glob("*.yaml"))
 
     def source(self, oid: str) -> str:
-        return f"{FOLDER}/{oid}.yaml"
+        return f"{self.folder}/{oid}.yaml"
 
     def translation(self, oid: str) -> Optional[pathlib.Path]:
         p = self.translations / f"{oid}.yaml"
@@ -209,8 +213,8 @@ class GoldFamily(Family):
     def run(self, oid: str, plant: bool = False) -> Tuple[List[Check], Dict[str, Any]]:
         path = self.translation(oid)
         if path is None:
-            raise Blocked(f"no translation yet (cases/golds/{oid}.yaml)")
-        gold = _gold(oid)
+            raise Blocked(f"no translation yet (cases/{self.translations.name}/{oid}.yaml)")
+        gold = _gold(oid, self.folder)
         tr = load_yaml_strict(path.read_text())
         unknown = sorted(set(tr) - {"gold", "entity", "plant", "case", "trace", "variants", "labels", "notes",
                                     "warm_up"})
@@ -242,7 +246,7 @@ class GoldFamily(Family):
                 fed.append(gname)
         if not fed:
             raise ValueError(f"{path.name}: no formulas generator takes 'inputs: gold'")
-        record = {"translation": f"cases/golds/{path.name}",
+        record = {"translation": f"cases/{self.translations.name}/{path.name}",
                   "translation_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                   "gold_inputs": len(inputs), "fed_to": fed}
         if planted:
@@ -367,9 +371,10 @@ class GoldFamily(Family):
         return [sign * Fraction(x) for x in vals]
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:
-        """Claim the inventory rows of the hand golds (``one-place/cases/<id>.yaml``)."""
-        path = row.get("path", "")
-        m = re.search(r"one-place/cases/([a-z0-9_]+)\.yaml$", path)
-        if m and (REFERENCE / FOLDER / f"{m.group(1)}.yaml").exists():
+        """Claim the inventory rows of the hand golds: ``<library_folder>/<id>.yaml`` in the golds library."""
+        if row.get("encoding_id") != "g_hand_gold":
+            return None
+        m = re.fullmatch(rf"{self.library_folder}/([a-z0-9_]+)\.yaml", row.get("path", ""))
+        if m and (REFERENCE / self.folder / f"{m.group(1)}.yaml").exists():
             return m.group(1)
         return None

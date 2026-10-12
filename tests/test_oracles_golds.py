@@ -41,6 +41,16 @@ def test_every_hand_gold_is_vendored_and_in_the_manifest():
         O.verify(f"golds/{oid}.yaml")
 
 
+def test_the_inventory_rows_of_the_hand_golds_are_claimed():
+    # the inventory names a hand gold by its path inside the golds library (``cases/<id>.yaml``), with the
+    # library as its system; a pilot gold (``pilot/<id>.yaml``) and a published one are not hand golds
+    row = {"system": "golds (Mac: one-place)", "encoding_id": "g_hand_gold", "path": "cases/arise.yaml"}
+    assert FAMILY.inventory_oid(row) == "arise"
+    assert FAMILY.inventory_oid({**row, "path": "pilot/sheep_tabaski.yaml"}) is None
+    assert FAMILY.inventory_oid({**row, "path": "cases/not_a_gold.yaml"}) is None
+    assert FAMILY.inventory_oid({**row, "encoding_id": "g_published_case", "path": "cases/golds/x.yaml"}) is None
+
+
 @pytest.mark.parametrize("oid", ORACLES)
 def test_every_hand_gold_gets_its_recorded_verdict(oid):
     r = O.receipt(FAMILY, oid, commit="test")
