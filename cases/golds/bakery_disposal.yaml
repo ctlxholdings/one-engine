@@ -1,0 +1,204 @@
+# Gold "bakery_disposal": the bakery replaces its six-year-old oven next year and sells the old
+# one to a dealer for more than its book value (cases/reference/golds/bakery_disposal.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the old oven (oven_old_cost, oven_old_life, oven_age_now years old) is carried in at book
+#     value and depreciated over the years it has left until replace_period; it is retired at the
+#     start of that year (no charge in it) and sold for disposal_proceeds: the gain is the
+#     proceeds less the book value written off;
+#   * the new oven (oven_new_cost) is bought in replace_period and depreciated over oven_new_life
+#     from that year; it is still in use at the end of the horizon;
+#   * flour, bakers, rent and gas are paid in cash; no working capital (nwc_level 0);
+#   * tax at tax_rate on profit including the gain, paid in the year.
+gold: bakery_disposal
+entity: bakery
+plant: disposal_proceeds
+case:
+  case: gold-bakery-disposal
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        period: t
+        loaves: loaves_per_day * days_per_year
+        bakers_annual: n_bakers * baker_wage * 12
+        rent_annual: rent_month * 12
+        gas_annual: gas_month * 12
+        old_book_value: oven_old_cost - (oven_old_cost - residual_value) * oven_age_now / oven_old_life
+        old_life_left: oven_old_life - oven_age_now
+        new_oven: oven_new_cost * (t == replace_period)
+        sold: t == replace_period
+  opening:
+    bakery:
+      oven_old: {nature: asset, value: {generator: gold, output: old_book_value}}
+      cwip: {nature: asset, value: 0}            # the old oven's register takes nothing new
+      equity: {nature: equity, value: balancing}
+  contracts:
+    bread:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: loaves}, price: {generator: gold, output: price_per_loaf},
+              payment_days: 0, days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1, end: 4}
+    old_oven_sale:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: sold}, price: {generator: gold, output: disposal_proceeds},
+              payment_days: 0, days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1, end: 4}
+    flour:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: 0, unit_rate: {generator: gold, output: flour_per_loaf},
+              volume: {generator: gold, output: loaves}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: days_per_year}}
+    bakers:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: bakers_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    gas:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: gas_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    new_oven:
+      type: capex_class
+      parties: {owner: bakery}
+      terms: {schedule: {generator: gold, output: new_oven}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    old:
+      kind: asset_register
+      entity: bakery
+      phase: close
+      from: cwip
+      to: oven_old
+      expense: dep_old
+      disposal: old_written_off
+      in_service: 0
+      dispose_at: {generator: gold, output: replace_period}
+      dispose_when: start
+      life_periods: {generator: gold, output: old_life_left}
+      first_charge: in_service
+    new:
+      kind: asset_register
+      entity: bakery
+      phase: close
+      from: new_oven
+      to: oven_new
+      expense: dep_new
+      disposal: new_written_off
+      in_service: {generator: gold, output: replace_period}
+      dispose_at: 5               # after the horizon: the new oven is still in use at its end
+      life_periods: {generator: gold, output: oven_new_life}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: bakery
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        bread.revenue: taxable
+        old_oven_sale.revenue: taxable
+        flour.expense: taxable
+        bakers.expense: taxable
+        rent.expense: taxable
+        gas.expense: taxable
+        dep_old: taxable
+        dep_new: taxable
+        old_written_off: taxable
+        new_written_off: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: bakery
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      bread.revenue: revenue
+      flour.expense: flour
+      bakers.expense: labour
+      rent.expense: rent
+      gas.expense: gas
+      dep_old: dep_old
+      dep_new: dep_new
+      old_oven_sale.revenue: disposal
+      old_written_off: disposal
+      new_written_off: disposal
+      tax_expense: tax
+    cash_flow:
+      bread.receivable: operating
+      old_oven_sale.receivable: sale
+      flour.payable: operating
+      bakers.payable: operating
+      rent.payable: operating
+      gas.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: capex
+      new_oven: capex
+  cuts:
+    revenue: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue]}
+    flour: {kind: pnl, entity: bakery, scheme: pnl, include: [flour]}
+    gross: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour]}
+    labour: {kind: pnl, entity: bakery, scheme: pnl, include: [labour]}
+    rent: {kind: pnl, entity: bakery, scheme: pnl, include: [rent]}
+    gas: {kind: pnl, entity: bakery, scheme: pnl, include: [gas]}
+    ebitda: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, labour, rent, gas]}
+    dep_old: {kind: pnl, entity: bakery, scheme: pnl, include: [dep_old]}
+    dep_new: {kind: pnl, entity: bakery, scheme: pnl, include: [dep_new]}
+    dep_total: {kind: pnl, entity: bakery, scheme: pnl, include: [dep_old, dep_new]}
+    gain: {kind: pnl, entity: bakery, scheme: pnl, include: [disposal]}
+    ebit_operating: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, labour, rent, gas, dep_old, dep_new]}
+    ebit_total: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, labour, rent, gas, dep_old, dep_new, disposal]}
+    tax: {kind: pnl, entity: bakery, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, labour, rent, gas, dep_old, dep_new, disposal, tax]}
+    proceeds_in: {entity: bakery, account: cash, scheme: cash_flow, include: [sale]}
+    capex: {entity: bakery, account: cash, scheme: cash_flow, include: [capex]}
+    fcff: {entity: bakery, account: cash, scheme: cash_flow, include: [operating, sale, capex]}
+  measures: {}
+trace:
+  t_index: {driver: gold.period}
+  revenue: {cut: revenue}
+  flour_cost: {cut: flour, sign: -1}
+  gross_profit: {cut: gross}
+  labor: {cut: labour, sign: -1}
+  rent: {cut: rent, sign: -1}
+  gas: {cut: gas, sign: -1}
+  ebitda: {cut: ebitda}
+  dep_old: {cut: dep_old, sign: -1}
+  dep_new: {cut: dep_new, sign: -1}
+  dep_total: {cut: dep_total, sign: -1}
+  nbv_old_open: {opening: oven_old}
+  nbv_old_close: {balance: oven_old}
+  nbv_new_open: {opening: oven_new}
+  nbv_new_close: {balance: oven_new}
+  nbv_disposed: {sum: [{opening: oven_old}, {balance: oven_old, sign: -1}, {cut: dep_old}]}
+  proceeds: {cut: proceeds_in}
+  gain_on_disposal: {cut: gain}
+  ppe_nbv_close: {balance: oven_old + oven_new}
+  capex: {cut: capex, sign: -1}
+  ebit_operating: {cut: ebit_operating}
+  ebit_total: {cut: ebit_total}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  nwc: {balance: bread.receivable - flour.payable - bakers.payable - rent.payable - gas.payable}
+  delta_nwc: {change: bread.receivable - flour.payable - bakers.payable - rent.payable - gas.payable}
+  fcff: {cut: fcff}

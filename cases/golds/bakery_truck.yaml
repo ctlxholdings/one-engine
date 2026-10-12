@@ -1,0 +1,258 @@
+# Gold "bakery_truck": the bakery delivering half its bread by a van bought two years ago, over
+# the van's last five years (cases/reference/golds/bakery_truck.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * delivery_share of the loaves are delivered at delivery_price on delivery_receivable_days of
+#     credit, the rest sold at the counter at counter_price for cash;
+#   * flour at flour_cost_per_loaf on flour_payable_days of credit, a stock of flour_inventory_days
+#     held; working capital is carried in at its steady level and terms run past the horizon;
+#   * bakers and rent are fixed monthly costs; the van's driver, fuel and maintenance are annual;
+#   * the van cost van_purchase_cost, is van_years_elapsed into a van_useful_life_years life with
+#     van_residual_value: carried in at book value, depreciated straight-line over what is left;
+#   * tax at tax_rate, paid in the year. Two "what ifs": `untaxed` (no tax) and `no_van` (every
+#     loaf sold at the counter, no van costs, no van), for the gold's incremental rows.
+gold: bakery_truck
+entity: bakery
+plant: delivery_price
+variants:
+  untaxed: {values: {rate: 0 * tax_rate}}
+  no_van:
+    values:
+      delivered_share: 0 * delivery_share
+      van_driver: 0 * van_driver_cost_per_year
+      van_fuel: 0 * van_fuel_cost_per_year
+      van_maintenance: 0 * van_maintenance_cost_per_year
+      van_book_value: 0 * van_purchase_cost
+case:
+  case: gold-bakery-truck
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        delivered_share: delivery_share
+        loaves: loaves_per_day * days_per_year
+        delivered: loaves * delivered_share
+        counter: loaves - delivered
+        flour_cost: loaves * flour_cost_per_loaf
+        stock: {each_period: flour_cost * flour_inventory_days / days_per_year}
+        stock_open: flour_cost * flour_inventory_days / days_per_year
+        receivable_open: delivered * delivery_price * delivery_receivable_days / days_per_year
+        payable_open: flour_cost * flour_payable_days / days_per_year
+        bakers_annual: baker_count * baker_wage_per_month * months_per_year
+        rent_annual: rent_per_month * months_per_year
+        van_driver: van_driver_cost_per_year
+        van_fuel: van_fuel_cost_per_year
+        van_maintenance: van_maintenance_cost_per_year
+        van_book_value: van_purchase_cost - (van_purchase_cost - van_residual_value) * van_years_elapsed / van_useful_life_years
+        van_life_left: van_useful_life_years - van_years_elapsed
+        van_cost: {each_period: van_purchase_cost}
+        incremental_ebitda: delivered * (delivery_price - counter_price) - van_driver - van_fuel - van_maintenance
+        incremental_ebitda_since_purchase: (van_years_elapsed + 1 + t) * incremental_ebitda
+        capex: {each_period: replacement_capex_in_horizon}
+        rate: tax_rate
+  opening:
+    bakery:
+      fixed_assets: {nature: asset, value: {generator: gold, output: van_book_value}}
+      flour_inventory: {nature: asset, value: {generator: gold, output: stock_open}}
+      delivered.receivable: {nature: asset, value: {generator: gold, output: receivable_open}}
+      flour.payable: {nature: liability, value: {generator: gold, output: payable_open}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    counter:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: counter}, price: {generator: gold, output: counter_price},
+              payment_days: {generator: gold, output: counter_receivable_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1, end: 4}
+    delivered:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: delivered}, price: {generator: gold, output: delivery_price},
+              payment_days: {generator: gold, output: delivery_receivable_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1,
+              end: 5}                 # past the horizon: shops still owe at its end (going concern)
+    flour:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: 0, unit_rate: {generator: gold, output: flour_cost_per_loaf},
+              volume: {generator: gold, output: loaves}, index: 1, periods_per_year: 1, start: 0,
+              end: 5,                 # past the horizon: the wholesaler is still owed at its end
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: flour_payable_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    bakers:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: bakers_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    van_driver:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: van_driver}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    van_fuel:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: van_fuel}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    van_maintenance:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: van_maintenance}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    replacement:
+      type: capex
+      parties: {owner: bakery}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    stock:
+      kind: held_balance
+      entity: bakery
+      cash: cash
+      phase: operate
+      accounts:
+        flour_inventory: {side: asset, target: {generator: gold, output: stock}}
+    van:
+      kind: asset_register
+      entity: bakery
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 4
+      life_periods: {generator: gold, output: van_life_left}
+      first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: bakery
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        counter.revenue: taxable
+        delivered.revenue: taxable
+        flour.expense: taxable
+        bakers.expense: taxable
+        rent.expense: taxable
+        van_driver.expense: taxable
+        van_fuel.expense: taxable
+        van_maintenance.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: bakery
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      counter.revenue: counter
+      delivered.revenue: delivered
+      flour.expense: flour
+      bakers.expense: bakers
+      rent.expense: rent
+      van_driver.expense: van_driver
+      van_fuel.expense: van_fuel
+      van_maintenance.expense: van_maintenance
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      counter.receivable: operating
+      delivered.receivable: operating
+      flour.payable: operating
+      bakers.payable: operating
+      rent.payable: operating
+      van_driver.payable: operating
+      van_fuel.payable: operating
+      van_maintenance.payable: operating
+      flour_inventory: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue_counter: {kind: pnl, entity: bakery, scheme: pnl, include: [counter]}
+    revenue_delivery: {kind: pnl, entity: bakery, scheme: pnl, include: [delivered]}
+    revenue: {kind: pnl, entity: bakery, scheme: pnl, include: [counter, delivered]}
+    flour: {kind: pnl, entity: bakery, scheme: pnl, include: [flour]}
+    gross: {kind: pnl, entity: bakery, scheme: pnl, include: [counter, delivered, flour]}
+    bakers: {kind: pnl, entity: bakery, scheme: pnl, include: [bakers]}
+    rent: {kind: pnl, entity: bakery, scheme: pnl, include: [rent]}
+    van_driver: {kind: pnl, entity: bakery, scheme: pnl, include: [van_driver]}
+    van_fuel: {kind: pnl, entity: bakery, scheme: pnl, include: [van_fuel]}
+    van_maintenance: {kind: pnl, entity: bakery, scheme: pnl, include: [van_maintenance]}
+    van_opex: {kind: pnl, entity: bakery, scheme: pnl, include: [van_driver, van_fuel, van_maintenance]}
+    cash_opex: {kind: pnl, entity: bakery, scheme: pnl, include: [flour, bakers, rent, van_driver, van_fuel, van_maintenance]}
+    ebitda: {kind: pnl, entity: bakery, scheme: pnl, include: [counter, delivered, flour, bakers, rent, van_driver, van_fuel, van_maintenance]}
+    depreciation: {kind: pnl, entity: bakery, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: bakery, scheme: pnl, include: [counter, delivered, flour, bakers, rent, van_driver, van_fuel, van_maintenance, depreciation]}
+    tax: {kind: pnl, entity: bakery, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: bakery, scheme: pnl, include: [counter, delivered, flour, bakers, rent, van_driver, van_fuel, van_maintenance, depreciation, tax]}
+    cfo: {entity: bakery, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: bakery, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: bakery, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  loaves_produced: {driver: gold.loaves}
+  loaves_counter: {driver: gold.counter}
+  loaves_delivered: {driver: gold.delivered}
+  revenue_counter: {cut: revenue_counter}
+  revenue_delivery: {cut: revenue_delivery}
+  revenue: {cut: revenue}
+  flour_cost: {cut: flour, sign: -1}
+  gross_margin: {cut: gross}
+  baker_wages: {cut: bakers, sign: -1}
+  rent: {cut: rent, sign: -1}
+  van_driver: {cut: van_driver, sign: -1}
+  van_fuel: {cut: van_fuel, sign: -1}
+  van_maintenance: {cut: van_maintenance, sign: -1}
+  van_cash_opex: {cut: van_opex, sign: -1}
+  total_cash_opex: {cut: cash_opex, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  van_bv_opening: {opening: fixed_assets}
+  van_bv_closing: {balance: fixed_assets}
+  accumulated_depreciation: {sum: [{driver: gold.van_cost}, {balance: fixed_assets, sign: -1}]}
+  capex: {cut: cfi, sign: -1}
+  nwc_inventory: {balance: flour_inventory}
+  nwc_receivables: {balance: counter.receivable + delivered.receivable}
+  nwc_payables: {balance: flour.payable + bakers.payable + rent.payable + van_driver.payable + van_fuel.payable + van_maintenance.payable}
+  nwc_opening: {opening: flour_inventory + counter.receivable + delivered.receivable - flour.payable - bakers.payable - rent.payable - van_driver.payable - van_fuel.payable - van_maintenance.payable}
+  nwc: {balance: flour_inventory + counter.receivable + delivered.receivable - flour.payable - bakers.payable - rent.payable - van_driver.payable - van_fuel.payable - van_maintenance.payable}
+  delta_nwc: {change: flour_inventory + counter.receivable + delivered.receivable - flour.payable - bakers.payable - rent.payable - van_driver.payable - van_fuel.payable - van_maintenance.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  cumulative_fcff: {cumulative: fcff}
+  nopat_untaxed: {variant: untaxed, cut: nopat}
+  fcff_untaxed: {variant: untaxed, cut: fcff}
+  revenue_counter_only_counterfactual: {variant: no_van, cut: revenue}
+  van_incremental_revenue: {sum: [{cut: revenue}, {variant: no_van, cut: revenue, sign: -1}]}
+  van_incremental_cash_opex: {sum: [{cut: cash_opex, sign: -1}, {variant: no_van, cut: cash_opex}]}
+  van_incremental_ebitda: {sum: [{cut: ebitda}, {variant: no_van, cut: ebitda, sign: -1}]}
+  van_incremental_ebit: {sum: [{cut: ebit}, {variant: no_van, cut: ebit, sign: -1}]}
+  van_cum_incr_ebitda_since_purchase: {driver: gold.incremental_ebitda_since_purchase}

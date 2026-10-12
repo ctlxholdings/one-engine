@@ -44,7 +44,9 @@ Where a row is read (``trace`` entries):
   arithmetic is compared with the gold's, but no ledger is involved, and the
   check's name says so (``driver ...``).
 
-Any of these may name a ``variant``: a "what if" of the gold (a higher tax
+``{sum: [spec, ...]}`` adds rows read any of these ways (a row the gold
+derives as a difference: an incremental revenue, the base run less a
+variant's). Any of these may name a ``variant``: a "what if" of the gold (a higher tax
 rate, an oven bought). ``variants`` (name -> ``{values: {name: formula}}``)
 replaces formulas the case already computes and runs the case again; it
 cannot add a piece the base run lacks.
@@ -231,7 +233,7 @@ class GoldFamily(Family):
             if spec is None:
                 checks.append(Check(row, "every period", "a mapped row", "not reported", False))
                 continue
-            got = self._read(results[spec.get("variant")], tr["entity"], spec, n)
+            got = self._read(results, tr["entity"], spec, n)
             label = f"driver {row}" if "driver" in spec else row
             checks.append(self._compare(label, want, got))
         extra = sorted(set(mapping) - set(rows))
@@ -240,7 +242,7 @@ class GoldFamily(Family):
         fcff = mapping.get("fcff")
         if fcff is not None and gold.get("fcff") is not None:
             checks.append(self._compare("fcff (headline)", gold["fcff"],
-                                        self._read(results[fcff.get("variant")], tr["entity"], fcff, n)))
+                                        self._read(results, tr["entity"], fcff, n)))
         bad = [f"{k or 'base'}: {b}" for k, res in results.items() for b in res.failed_checks()]
         checks.append(Check("books", "every book and rulebook", "no failed check", "; ".join(bad) or "none", not bad))
         return checks, record
@@ -276,8 +278,12 @@ class GoldFamily(Family):
                      _fmt(got[-1]) + " at the last", True)
 
     @staticmethod
-    def _read(result, entity: str, spec: Mapping[str, Any], n: int) -> List[Fraction]:
+    def _read(results, entity: str, spec: Mapping[str, Any], n: int) -> List[Fraction]:
         sign = Fraction(spec.get("sign", 1))
+        if "sum" in spec:
+            parts = [GoldFamily._read(results, entity, s, n) for s in spec["sum"]]
+            return [sign * sum(col, Fraction(0)) for col in zip(*parts)]
+        result = results[spec.get("variant")]
         if "cut" in spec:
             vals = list(result.cut(spec["cut"]).values)
         elif "cumulative" in spec:

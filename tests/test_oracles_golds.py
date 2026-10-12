@@ -24,8 +24,8 @@ from one_engine.packs.tea import formulas
 
 FAMILY = GoldFamily()
 ORACLES = FAMILY.oracles()
-#: golds whose translation reproduces them; every other hand gold is blocked until translated
-TRANSLATED = {"bakery", "moto", "bakery_growth", "bakery_priceindex", "bakery_oven", "bakery_wc"}
+#: every translated gold must match; every other hand gold is blocked until translated
+TRANSLATED = {p.stem for p in TRANSLATIONS.glob("*.yaml")}
 
 
 def test_every_hand_gold_is_vendored_and_in_the_manifest():

@@ -55,7 +55,10 @@ Rulebooks
     ``life_periods`` (stated null), each tranche is spread over the rest of
     the weights (``Policy.weights``: ModelOff's days of operation left,
     step 7h). Fixed assets on the opening balance sheet are a tranche from
-    the first in-service period. Either register may instead take a
+    the first in-service period. ``dispose_when`` (default ``end``) is
+    ``start`` for an asset retired at the start of its disposal period
+    (an oven replaced at the start of the year: no charge that year, the
+    golds' ``bakery_disposal``). Either register may instead take a
     ``declining_rate`` (``Policy.declining_rate``: ModelOff 2012's 40% tax
     depreciation, step 7i); exactly one of the three is given.
 
@@ -439,6 +442,9 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     raw_in = r.take("in_service")
     in_service = [int(x) for x in raw_in] if isinstance(raw_in, list) else [int(raw_in)]
     dispose_at = int(r.take("dispose_at"))
+    dispose_when = r.take_or_default("dispose_when", "end", reason="retired at the end of its period").value
+    if dispose_when not in ("start", "end"):
+        raise InputError(f"asset_register: dispose_when is start or end, not {dispose_when!r}")
     reg = Register(_policy(r, "asset_register"))
     tax_raw = r.take_or_default("tax", None, reason="the tax authority depreciates as the books do").value
     tax_reg = None
@@ -473,11 +479,16 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             for x in (reg, tax_reg):
                 if x is not None:
                     x.add(t, cost)
+        if t == dispose_at and dispose_when == "start":
+            # retired before the period runs: written off at its opening book value, nothing charged after
+            post(g, t, loss, fa, reg.dispose(), "disposal")
+            if tax_reg is not None:
+                regs.tax_moves[t] = tax_reg.dispose()
         if t >= in_service[0]:
             post(g, t, dep, fa, reg.charge(t), "depreciation")
             if tax_reg is not None:
-                regs.tax_moves[t] = tax_reg.charge(t)
-        if t == dispose_at:
+                regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_reg.charge(t)
+        if t == dispose_at and dispose_when == "end":
             post(g, t, loss, fa, reg.dispose(), "disposal")
             if tax_reg is not None:
                 regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_reg.dispose()

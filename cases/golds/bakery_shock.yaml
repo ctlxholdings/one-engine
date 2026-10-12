@@ -1,0 +1,186 @@
+# Gold "bakery_shock": the bakery in a year when flour doubles, then normalises; the loss is
+# carried forward against later tax (cases/reference/golds/bakery_shock.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * flour costs flour_cost_shock a loaf for shock_periods years, flour_cost_normal after;
+#   * flour is bought for cash as it is used, and a buffer of flour_stock_days days is held, valued
+#     at the year's price: the expense is the flour used (opening buffer plus purchases less
+#     closing buffer), so the shock year also carries the buffer bought at the old price. The
+#     buffer is carried in at nwc_opening;
+#   * bakers, rent and the owner's salary (owner_salary_month, 0) are fixed annual costs; other
+#     variable costs at other_variable_cost_per_loaf (0); no asset (capex and depreciation 0);
+#   * tax at tax_rate on profit after losses carried forward without limit, paid in the year.
+gold: bakery_shock
+entity: bakery
+plant: flour_cost_shock
+case:
+  case: gold-bakery-shock
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        flour_price: flour_cost_shock if t < shock_periods else flour_cost_normal
+        buffer_price_open: flour_cost_normal if t == 0 else (flour_cost_shock if t - 1 < shock_periods else flour_cost_normal)
+        loaves: loaves_per_day * days_per_year
+        buffer_loaves: flour_stock_days * loaves_per_day
+        buffer: buffer_loaves * flour_price
+        flour_purchases: flour_price * loaves
+        contribution: price_per_loaf - flour_price - other_variable_cost_per_loaf
+        bakers_annual: bakers_count * baker_wage_month * months_per_year
+        rent_annual: rent_month * months_per_year
+        owner_annual: owner_salary_month * months_per_year
+        capex: {each_period: capex_per_year}
+        depreciation: {each_period: depreciation_per_year}
+  opening:
+    bakery:
+      flour_inventory: {nature: asset, value: {generator: gold, output: nwc_opening}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    bread:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: loaves}, price: {generator: gold, output: price_per_loaf},
+              payment_days: {generator: gold, output: receivable_days},
+              days_per_year: {generator: gold, output: days_per_year}, periods_per_year: 1, end: 4}
+    flour:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: 0, unit_rate: 1, volume: {generator: gold, output: flour_purchases}, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: {generator: gold, output: payable_days},
+              days_per_year: {generator: gold, output: days_per_year}}
+    other_variable:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: 0, unit_rate: {generator: gold, output: other_variable_cost_per_loaf},
+              volume: {generator: gold, output: loaves}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: days_per_year}}
+    bakers:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: bakers_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    rent:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    owner:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: owner_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: days_per_year}}
+    equipment:
+      type: capex
+      parties: {owner: bakery}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    buffer:
+      kind: held_balance
+      entity: bakery
+      cash: cash
+      phase: operate
+      accounts:
+        flour_inventory: {side: asset, target: {generator: gold, output: buffer}, against: flour.expense}
+    tax:
+      kind: income_tax
+      entity: bakery
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        bread.revenue: taxable
+        flour.expense: taxable
+        other_variable.expense: taxable
+        bakers.expense: taxable
+        rent.expense: taxable
+        owner.expense: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: bakery
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      bread.revenue: revenue
+      flour.expense: flour
+      other_variable.expense: other_variable
+      bakers.expense: wages
+      rent.expense: rent
+      owner.expense: owner
+      tax_expense: tax
+    cash_flow:
+      bread.receivable: operating
+      flour.payable: flour
+      other_variable.payable: operating
+      bakers.payable: operating
+      rent.payable: operating
+      owner.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue]}
+    flour: {kind: pnl, entity: bakery, scheme: pnl, include: [flour]}
+    other_variable: {kind: pnl, entity: bakery, scheme: pnl, include: [other_variable]}
+    gross: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, other_variable]}
+    wages: {kind: pnl, entity: bakery, scheme: pnl, include: [wages]}
+    rent: {kind: pnl, entity: bakery, scheme: pnl, include: [rent]}
+    owner: {kind: pnl, entity: bakery, scheme: pnl, include: [owner]}
+    fixed: {kind: pnl, entity: bakery, scheme: pnl, include: [wages, rent, owner]}
+    ebitda: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, other_variable, wages, rent, owner]}
+    tax: {kind: pnl, entity: bakery, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: bakery, scheme: pnl, include: [revenue, flour, other_variable, wages, rent, owner, tax]}
+    purchases: {entity: bakery, account: cash, scheme: cash_flow, include: [flour]}
+    cfo: {entity: bakery, account: cash, scheme: cash_flow, include: [operating, flour]}
+    cfi: {entity: bakery, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: bakery, account: cash, scheme: cash_flow, include: [operating, flour, investing]}
+  measures: {}
+trace:
+  flour_cost_per_loaf: {driver: gold.flour_price}
+  loaves_produced: {driver: gold.loaves}
+  revenue: {cut: revenue}
+  buffer_price_open: {driver: gold.buffer_price_open}
+  buffer_loaves: {driver: gold.buffer_loaves}
+  flour_purchases: {cut: purchases, sign: -1}
+  flour_cost: {cut: flour, sign: -1}
+  other_variable_cost: {cut: other_variable, sign: -1}
+  contribution_per_loaf: {driver: gold.contribution}
+  gross_profit: {cut: gross}
+  wages: {cut: wages, sign: -1}
+  rent: {cut: rent, sign: -1}
+  owner_comp: {cut: owner, sign: -1}
+  fixed_costs: {cut: fixed, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {driver: gold.depreciation}
+  ebit: {cut: ebitda}
+  nol_opening: {record: tax.losses_opening}
+  loss_added: {record: tax.loss_added}
+  loss_used: {record: tax.loss_used}
+  nol_closing: {record: tax.losses}
+  taxable_income: {record: tax.taxable}
+  cash_tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  inventory_flour: {balance: flour_inventory}
+  receivables: {balance: bread.receivable}
+  payables: {balance: flour.payable + other_variable.payable + bakers.payable + rent.payable + owner.payable}
+  nwc: {balance: bread.receivable + flour_inventory - flour.payable - other_variable.payable - bakers.payable - rent.payable - owner.payable}
+  delta_nwc: {change: bread.receivable + flour_inventory - flour.payable - other_variable.payable - bakers.payable - rent.payable - owner.payable}
+  capex: {cut: cfi, sign: -1}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}
+  cumulative_fcff: {cumulative: fcff}
