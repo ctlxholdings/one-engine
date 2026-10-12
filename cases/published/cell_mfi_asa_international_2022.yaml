@@ -1,0 +1,96 @@
+# Published case "cell_mfi_asa_international_2022": ASA International Group plc, the microfinance
+# lender, FY2022 consolidated statement of profit or loss
+# (cases/reference/published/cell_mfi_asa_international_2022.yaml). USD'000.
+#
+# One period, FY2022. Every line is posted as one move of a `transfer` journal at the amount the
+# source prints, against cash:
+#   * interest income at the effective interest rate and other interest income make interest and
+#     similar income; interest and similar expense is deducted for net interest income;
+#   * other operating income is added for total operating income; the IFRS 9 credit loss expense
+#     (the source's own charge, not a computed impairment) gives net operating income;
+#   * personnel expenses, depreciation of property and equipment and of right-of-use assets (the
+#     source's own charges; no asset register), other operating expenses and exchange rate
+#     differences give profit before tax;
+#   * income tax and withholding tax are the source's own charges for the year.
+# The loan book (gross OLP), PAR, the ECL reserve and the client count are inputs no figure needs.
+published: cell_mfi_asa_international_2022
+entity: asa
+plant: interest_income_eir
+case:
+  case: published-asa-fy2022
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    asa:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: asa
+      phase: post
+      declare:
+        interest_income_eir: income
+        other_interest_income: income
+        interest_expense: expense
+        other_operating_income: income
+        credit_loss_expense: expense
+        personnel_expenses: expense
+        depreciation_property_and_equipment: expense
+        depreciation_right_of_use: expense
+        other_operating_expenses: expense
+        exchange_rate_differences: expense
+        income_tax_expense: expense
+        withholding_tax_expense: expense
+      moves:
+        interest_eir: {debit: cash, credit: interest_income_eir, amount: {generator: src, output: interest_income_eir}}
+        other_interest: {debit: cash, credit: other_interest_income, amount: {generator: src, output: other_interest_income}}
+        interest_expense: {debit: interest_expense, credit: cash, amount: {generator: src, output: interest_and_similar_expense}}
+        other_income: {debit: cash, credit: other_operating_income, amount: {generator: src, output: other_operating_income}}
+        credit_loss: {debit: credit_loss_expense, credit: cash, amount: {generator: src, output: credit_loss_expense}}
+        personnel: {debit: personnel_expenses, credit: cash, amount: {generator: src, output: personnel_expenses}}
+        depreciation_ppe: {debit: depreciation_property_and_equipment, credit: cash,
+                           amount: {generator: src, output: depreciation_property_and_equipment}}
+        depreciation_rou: {debit: depreciation_right_of_use, credit: cash, amount: {generator: src, output: depreciation_right_of_use_assets}}
+        other_expenses: {debit: other_operating_expenses, credit: cash, amount: {generator: src, output: other_operating_expenses}}
+        exchange: {debit: exchange_rate_differences, credit: cash, amount: {generator: src, output: exchange_rate_differences}}
+        income_tax: {debit: income_tax_expense, credit: cash, amount: {generator: src, output: income_tax_expense}}
+        withholding_tax: {debit: withholding_tax_expense, credit: cash, amount: {generator: src, output: withholding_tax_expense}}
+  schemes:
+    pnl:
+      interest_income_eir: interest_income
+      other_interest_income: interest_income
+      interest_expense: interest_expense
+      other_operating_income: other_income
+      credit_loss_expense: credit_loss
+      personnel_expenses: operating
+      depreciation_property_and_equipment: operating
+      depreciation_right_of_use: operating
+      other_operating_expenses: operating
+      exchange_rate_differences: operating
+      income_tax_expense: tax
+      withholding_tax_expense: tax
+  cuts:
+    interest_income: {kind: pnl, entity: asa, scheme: pnl, include: [interest_income]}
+    net_interest_income: {kind: pnl, entity: asa, scheme: pnl, include: [interest_income, interest_expense]}
+    total_operating_income: {kind: pnl, entity: asa, scheme: pnl, include: [interest_income, interest_expense, other_income]}
+    net_operating_income: {kind: pnl, entity: asa, scheme: pnl, include: [interest_income, interest_expense, other_income, credit_loss]}
+    pbt: {kind: pnl, entity: asa, scheme: pnl, include: [interest_income, interest_expense, other_income, credit_loss, operating]}
+    profit: {kind: pnl, entity: asa, scheme: pnl, include: [interest_income, interest_expense, other_income, credit_loss, operating, tax]}
+  measures: {}
+figures:
+  interest_and_similar_income: {cut: interest_income}
+  net_interest_income: {cut: net_interest_income}
+  total_operating_income: {cut: total_operating_income}
+  net_operating_income: {cut: net_operating_income}
+  profit_before_tax: {cut: pbt}
+  profit_for_the_period: {cut: profit}

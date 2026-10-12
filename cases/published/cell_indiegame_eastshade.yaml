@@ -1,0 +1,57 @@
+# Published case "cell_indiegame_eastshade": Eastshade Studios' post-mortem of the game Eastshade,
+# its development cost and revenue some 1.5 years after launch
+# (cases/reference/published/cell_indiegame_eastshade.yaml). USD.
+#
+# One period, the whole life to date. Each cost is one move of a `transfer` journal against cash:
+#   * the initial development budget (mostly the developer's own living costs over ~5 years) and
+#     the post-launch porting and patching, both expensed as spent (nothing is capitalised: the
+#     source states amounts spent, not an asset);
+#   * total development cost is the two together, read as a P&L cut.
+#
+# Not read, and why:
+#   * net_revenue_post_platform is scored by the library, but the inputs carry no revenue, no
+#     copies sold, no price and no platform share: it cannot be derived, so it is left unread
+#     ("not reported");
+#   * gross_revenue is set aside for the same reason.
+published: cell_indiegame_eastshade
+entity: studio
+plant: initial_development_budget
+case:
+  case: published-eastshade
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    studio:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: studio
+      phase: post
+      declare:
+        development: expense
+        porting_and_patching: expense
+      moves:
+        development: {debit: development, credit: cash, amount: {generator: src, output: initial_development_budget}}
+        porting: {debit: porting_and_patching, credit: cash, amount: {generator: src, output: post_launch_porting_and_patching}}
+  schemes:
+    pnl:
+      development: development
+      porting_and_patching: development
+  cuts:
+    development_cost: {kind: pnl, entity: studio, scheme: pnl, include: [development]}
+  measures: {}
+figures:
+  total_development_cost: {cut: development_cost, sign: -1}
+not_compared:
+  gross_revenue: "no revenue, copies sold or price is an input"

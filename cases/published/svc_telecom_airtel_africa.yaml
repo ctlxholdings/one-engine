@@ -1,0 +1,74 @@
+# Published case "svc_telecom_airtel_africa": Airtel Africa plc, the whole group across fourteen
+# African countries, the year ended 31 March 2023 (Airtel Africa plc investor factsheet, August
+# 2023; cases/reference/published/svc_telecom_airtel_africa.yaml).
+#
+# Every amount is a published input by name (generator `src`), in USD millions. One book, the
+# group's, one year:
+#   * revenue (the factsheet's group revenue), earned for cash;
+#   * the costs above underlying EBITDA (costs.opex_below_ebitda, the oracle's own line, revenue
+#     less EBITDA as printed: the factsheet itemises no cost), paid and expensed;
+#   * underlying EBITDA is revenue less those costs, its margin EBITDA per revenue (scale 0.01);
+#   * depreciation, interest, tax, capex and debt are not modelled (no input carries them).
+# The inputs hold the year only: the prior-year comparatives and the year-on-year changes printed
+# beside revenue and EBITDA need the prior year, which no input carries, and are set aside. Set
+# aside likewise: profit before tax, capex, operating free cash flow, net debt, leverage, and the
+# prior-year EBITDA margin.
+# EBITDA matches by construction: the oracle's one cost input is its revenue less its EBITDA (the
+# oracle's notes disclose this), so that figure tests the transcription and the posting, not the
+# arithmetic.
+published: svc_telecom_airtel_africa
+entity: group
+plant: revenue
+case:
+  case: published-airtel-africa-fy
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    group:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: group
+      phase: operate
+      declare: {revenue: income, operating_costs: expense}
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        costs: {debit: operating_costs, credit: cash, amount: {generator: src, output: opex_below_ebitda}}
+  schemes:
+    pnl:
+      revenue: revenue
+      operating_costs: opex
+  cuts:
+    revenue: {kind: pnl, entity: group, scheme: pnl, include: [revenue]}
+    ebitda: {kind: pnl, entity: group, scheme: pnl, include: [revenue, opex]}
+  measures: {}
+figures:
+  revenue_usd_m: {cut: revenue}
+  underlying_ebitda_usd_m: {cut: ebitda}
+  underlying_ebitda_margin_pct: {cut: ebitda, per: src.revenue, scale: 0.01}
+not_compared:
+  underlying_ebitda_margin_pct.prior_year_pct: &prior the prior year is not among the inputs
+  revenue_usd_m.prior_year_usd_m: *prior
+  revenue_usd_m.reported_currency_change_pct: *prior
+  revenue_usd_m.constant_currency_change_pct: *prior
+  underlying_ebitda_usd_m.prior_year_usd_m: *prior
+  underlying_ebitda_usd_m.reported_currency_change_pct: *prior
+  underlying_ebitda_usd_m.constant_currency_change_pct: *prior
+  profit_before_tax_usd_m: &below >-
+    no input carries the depreciation, finance costs, capex, cash flow or debt this needs (the
+    factsheet's other headline lines, and their prior-year columns)
+  capex_usd_m: *below
+  operating_free_cash_flow_usd_m: *below
+  net_debt_usd_m: *below
+  leverage_times: *below

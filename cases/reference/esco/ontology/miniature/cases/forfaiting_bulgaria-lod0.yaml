@@ -1,0 +1,316 @@
+# Miniature — the Bulgarian ESCO Fund (Enemona / EBRD) forfaiting case expressed at ESCO LOD 0
+#
+# Shape copied from bytom-lod0.yaml. Every fact carries its status: stated (in the source), inferred (follows
+# from a stated fact — said which), default (the setting's default; source silent), generic (from the source's
+# general description of the mechanism, not this deal), unstated (counter-promise required by duality; source
+# silent). Nothing invented.
+# Source-id note: CASE_SPEC calls the IEA DSM manual "E05"; SOURCES.md has E05 = the Global ESCO Network note
+# (which holds the Enemona sentence) and E08 = the IEA DSM manual. Both are cited below under their SOURCES.md ids.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: forfaiting_bulgaria
+lod: 0
+case: validation_targets.published.Forfaiting_Bulgaria
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E05
+  title: Global ESCO Network — Financing mechanisms to facilitate and promote ESCO operations
+  publisher: Global ESCO Network / UNEP CCC (C2E2), policy note, 2023
+  passage: "mechanism 5, 'Forfaiting via securitization/purchase fund' (corpus input/gesco-financing-mechanisms-note.txt L14; problem framing L6)"
+  generic_mechanism:
+    id: E08
+    title: Financing of ESCo Projects — IEA DSM Task XVI (Bleyl & Schinnerl, Grazer Energieagentur)
+    passage: "ch. 6 'Cession and Forfaiting of Contracting Rates' (corpus input/iea-dsm-financing-options-manual.txt L3086-3130, L3205-3260, L3303-3320, L4409-4420, L4546-4556)"
+    note: 'describes forfaiting in general (Austria/Germany); not the Bulgarian fund. Everything taken from it is status: generic'
+  oracle: "ORACLE-RESULTS.md §2: 'forfaiting-generic beds' accepted structurally; no numeric oracle exists for the Bulgarian fund (E05 publishes no figures)"
+  provenance_only: "instance.yaml L928 ('Enemona's ESCO fund on EBRD loans buying ESCO receivables; capital recycling'), L430 ('pairs 1 manager (Enemona) with 1 lender (EBRD)') — owner record, not evidence"
+  notes:
+  - 'Checked and found covered: forfaiter + fund_manager + ifi_dfi exist as roles; receivable purchase is a funding_promise; receivables transfer is a performance_promise (title); borrower: vehicle captures a fund that borrows; aggregation: pool captures the purchase fund.'
+  - "'capital recycling' (E05 L14) is an effect of c3 on the ESCO's balance sheet, not an element."
+  - If the fund is a securitisation vehicle issuing notes, securitisation_vehicle and equity_investor already exist; E05 does not say so.
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Bulgaria
+  iso: BG
+  eu_member: true
+  client_eu_general_government: false
+  status: inferred
+  why: "'Bulgarian ESCO Fund' (E05 L14); Bulgaria is an EU member state (E02 L345 lists it among the EU-27 markets; chapter 3, L150). The clients' sector is not stated (client_sector default private), so the client is not recorded as EU general government — if the clients were public bodies the flag and C1 would turn on"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  esco_fund:
+    entity: bulgarian_esco_fund
+    role: forfaiter
+    groups: [capital]
+    status: stated
+    name: Bulgarian ESCO Fund
+    text: "'fund buys the ESCO's future cash-flow stream ... (receivables transfer). Example: Bulgarian ESCO Fund' (E05 L14). The note calls it a 'securitization/purchase fund'; securitisation_vehicle would fit only if it issued notes against the receivables, which the source does not say — forfaiter chosen"
+  enemona:
+    entity: enemona
+    role: fund_manager
+    groups: [capital]
+    status: inferred
+    name: Enemona
+    text: "'Bulgarian ESCO Fund by Enemona' (E05 L14): 'by' read as established/managed by; the register's fund_manager entry cites this passage"
+  ebrd:
+    entity: ebrd
+    role: ifi_dfi
+    groups: [public, capital]
+    status: stated
+    name: EBRD
+    text: "'with EBRD loan financing' (E05 L14); the loan goes to the fund, not to an ESCO or a client"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'the ESCO's future cash-flow stream ... freeing ESCO equity for new projects' (E05 L14); ESCOs not named, number not given"
+  client:
+    role: host
+    groups: [demand]
+    status: inferred
+    text: "a receivable has a debtor: the ESCO's cash-flow stream is paid by its contract clients (E05 L14). Sector not stated; host follows the client_sector default (private); authority is the alternative"
+
+contract:   # the agreements that establish the commitments
+  esco_contract:
+    core: contract
+    parties: [client, esco]
+    status: inferred
+    note: "the underlying energy-service contract generating the 'future cash-flow stream' (E05 L14); type (EPC/ESC) and term not stated"
+  receivable_purchase:
+    core: contract
+    parties: [esco, esco_fund]
+    status: stated
+    note: "'receivables transfer' (E05 L14); E08 L3206-3208 calls it the forfaiting contract: ESCO sells future contracting rates for a discounted one-time payment (generic)"
+  ebrd_loan:
+    core: contract
+    parties: [ebrd, esco_fund]
+    status: stated
+    note: "'EBRD loan financing' (E05 L14); terms not given"
+  fund_management:
+    core: contract
+    parties: [enemona, esco_fund]
+    status: inferred
+    note: "follows from 'by Enemona' (E05 L14); terms not given"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: client
+    status: inferred
+    what: "energy services under the underlying contract; the stream of 'future cash-flow' (E05 L14) presupposes a service being paid for"
+    established_by: esco_contract
+  c2:
+    family: payment_promise
+    from: client
+    to: esco
+    status: inferred
+    what: "the contracting rates that make up 'the ESCO's future cash-flow stream' (E05 L14); amount and term not stated"
+    established_by: esco_contract
+  c3:
+    family: funding_promise
+    from: esco_fund
+    to: esco
+    status: stated
+    funding_instrument: receivable_purchase   # the fund buys the ESCO's future cash flow (E05 L14)
+    what: "'fund buys the ESCO's future cash-flow stream, freeing ESCO equity for new projects' (E05 L14) — a receivable purchase, capital now for a future claim"
+    established_by: receivable_purchase
+  c4:
+    family: performance_promise
+    from: esco
+    to: esco_fund
+    status: stated
+    what: "'receivables transfer' (E05 L14): title to the future contracting rates passes to the fund"
+    established_by: receivable_purchase
+  c5:
+    family: payment_promise
+    from: client
+    to: esco_fund
+    status: inferred
+    what: "the ceded rates are paid to the new creditor; follows from c4 (E05 L14). E08 Fig 30 L3312-3317 'payment of ceded contracting rates' client -> FI (generic)"
+    established_by: receivable_purchase
+  c6:
+    family: funding_promise
+    from: ebrd
+    to: esco_fund
+    status: stated
+    funding_instrument: loan   # EBRD loan (E05 L14)
+    what: "'EBRD loan financing' of the fund (E05 L14); amount and tenor not stated"
+    established_by: ebrd_loan
+  c7:
+    family: payment_promise
+    from: esco_fund
+    to: ebrd
+    status: inferred
+    what: "repayment of the loan with interest; a loan is by definition repayable (E05 L14 'loan')"
+    established_by: ebrd_loan
+  c8:
+    family: agency_promise
+    from: enemona
+    to: esco_fund
+    status: inferred
+    what: "management of the fund's money (buying, holding and collecting receivables) on its behalf; from 'by Enemona' (E05 L14) and the register's fund_manager definition"
+    established_by: fund_management
+  c9:
+    family: payment_promise
+    from: esco_fund
+    to: enemona
+    status: unstated
+    what: counter-promise required by duality; source silent (a management fee is economically necessary for a fund manager)
+    established_by: fund_management
+  c10:
+    family: determination_promise
+    from: client
+    to: [esco, esco_fund]
+    status: generic
+    determines: acceptance   # the client confirms the works are performed
+    what: "confirmation that the works are performed so that the ceded rates are 'legally rightful and undisputed' — 'the Client has to confirm the performance by different quality securing instruments so that the ceded share of the Contracting-rate is legally rightful' (E08 L3229-3233, generic forfaiting precondition); E05 does not mention it for the Bulgarian fund. Required by convention F21 (a payment computed on completion needs a determining party)"
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: default, why: "c2 inferred contracting rates; E05 L14 says only 'future cash-flow stream', nothing on how the client's payment is set."}
+  client_sector:
+    value: private
+    status: default
+    why: "E05 does not say who the ESCOs' clients are; EERSF (public clients) is a separate mechanism in the same note (L10). Convention G09: silent -> default private, role host. If the clients are public the Eurostat test would bite (Bulgaria is an EU member)"
+  partner_form: {value: corporate, status: default, why: not stated}
+  borrower:
+    value: vehicle
+    status: stated
+    why: the fund — an intermediary that is not the Partner — takes the EBRD loan (E05 L14); no loan to the ESCO or the client is mentioned
+  receivable_holder:
+    value: assignee
+    status: inferred
+    why: "'fund buys the ESCO's future cash-flow stream (receivables transfer)' (E05 L14). Alternative: split — E08 L3253-3256 (generic) says only the financing share of the rate should be forfaited and the O&M share stays with the ESCO; E05 does not say whether the whole stream or a share is sold"
+  collection_placement:
+    value: assignee_direct
+    status: generic
+    why: "conditional default (F09): receivables assigned and E05 silent -> assignee_direct, status generic. E08 Fig 30 L3312-3317: the client pays the ceded contracting rates to the FI. Alternative: operator_own with the ESCO passing collections through (E08 L3218 'hidden cession ... not common')"
+  aggregation:
+    value: pool
+    status: inferred
+    why: "a fund buying receivables 'freeing ESCO equity for new projects' (E05 L14) holds receivables from several contracts; each underlying ESCO contract on its own would be none"
+  debt_seniority: {value: senior, status: default, why: rank of the EBRD loan to the fund not stated}
+  assignment_recourse:
+    value: waiver
+    status: generic
+    why: "conditional default (F08): receivables assigned and E05 silent -> waiver, status generic. E08 L3222-3226: client, ESCO and FI sign a 'Notice and Acknowledgment of Assignment' in which the client 'acknowledges ... the continued payment obligations to the financial institution regardless of any disputes'; receivables must be 'undisputed' (L3229-3236). performance_exposed is the alternative if the Bulgarian fund bought unfixed rates"
+  savings_basis:
+    value: measured
+    status: default
+    why: not stated. E08 L3230-3236 (generic) requires the ceded amount to be fixed, which concerns the fee, not how savings are established
+  grant_recipient: {value: none, status: default, why: no grant or subsidy mentioned in E05 L14}
+  asset_owner: {value: client, status: default, why: not stated}
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: "does not bite on the record: client_sector defaults to private although the jurisdiction is EU (BG). If the clients were Bulgarian public bodies the forfaited rates would still count as the authority's operational payments (E15 14.9) and the test would apply"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: asset_owner client (default); nothing in E05 on title
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  forfaiting_precondition:
+    scope: external-contractual
+    status: generic
+    applies_when: {receivable_holder: assignee}
+    rule: "the ceded receivables must be 'legally rightful and undisputed': the client has approved the implemented measures and the ceded amount is fixed, settled independently of the ESCO's further performance"
+    this_case: stated by E08 for forfaiting in general (L3108-3111, L3229-3236, L4416-4420); E05 does not state it for the Bulgarian fund
+    source: E08 ch. 6
+
+numbers:   # instance data, not vocabulary
+  note: E05 publishes no figures for the Bulgarian ESCO Fund — no fund size, loan amount, discount rate, number of contracts or term. Nothing to derive.
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  esco_fund: {gives: [c3, c7, c9], receives: [c4, c5, c6, c8, c10], one_way: false}
+  enemona:
+    gives: [c8]
+    receives: [c9]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: a fund manager without a fee has no reciprocal; recorded as c9 status unstated (F06)'
+  ebrd: {gives: [c6], receives: [c7], one_way: false}
+  esco: {gives: [c1, c4], receives: [c2, c3, c10], one_way: false}
+  client:
+    gives: [c2, c5, c10]
+    receives: [c1]
+    one_way: false
+    reason: c2 and c5 are the same money before and after the transfer, not two payments
+
+lod0_gaps: []   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction BG / EU added; C1 applies_here false because client_sector is private by default
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'enemona one_way: true with reason (unstated management fee c9)'
+- id: F08
+  title: 'conditional default: assignment_recourse'
+  convention: "receivable_holder in {assignee, split} and source silent -> assignment_recourse = waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226 'continued payment obligations ... regardless of any disputes'); performance_exposed only when the source shows the assigned leg varying with performance."
+  origin: verdict change 3; findings F08; gaps G28
+  applied_here: assignment_recourse waiver, status generic (conditional default; E08 generic text supports it)
+- id: F09
+  title: 'conditional default: collection_placement'
+  convention: receivable_holder in {assignee, split} and source silent -> collection_placement = assignee_direct, status generic (E06 L558; E08 Fig 30 L3312-3317).
+  origin: verdict change 3; findings F09; gaps G28
+  applied_here: collection_placement assignee_direct, status generic (conditional default)
+- id: F10
+  title: fund and manager are two parties
+  convention: 'When the source names a manager distinct from the fund, record two parties: the fund by its act (lender / forfaiter / guarantee_facility) and the manager as fund_manager with an agency_promise and an unstated fee.'
+  origin: verdict rule; findings F10
+  applied_here: fund (esco_fund, forfaiter) and manager (enemona, fund_manager + agency_promise + unstated fee) are two parties — the reference encoding
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: determination_promise c10 added (client confirmation of works, generic from E08 L3229-3233)
+- id: G09
+  title: sector silent -> default private, role host
+  convention: "When the source does not say whether the client is public or private, client_sector takes the default private and the client the role host, status default (role inferred); no 'unknown' value."
+  origin: "verdict 'should not change'; gaps G09"
+  applied_here: client sector silent -> private / host
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [forfaiter, fund_manager, ifi_dfi, partner_esco, host]
+  roles_count: 5 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, agency_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 1, inferred: 2, generic: 2, default: 8}
+  commitments_by_status: {stated: 3, inferred: 5, generic: 1, unstated: 1}
+  one_way_parties: [enemona]
+  parties_count: 5
+  commitments_count: 10
+  below_lod0: {lod1_adds: 'events (works completion and client acceptance, assignment notice, purchase-price payment, periodic
+      payment of ceded rates, EBRD debt service), the discount formula, which share of the rate is sold', lod2_adds: 'the fee
+      variant of the underlying contract (fixed vs performance-linked share), bonus/malus for ESCO performance (E08 L3249-3250),
+      the fund''s own waterfall'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): E05 L14 states no risk bearer for this fund; E08 forfaiting text is generic, not this deal; the converter derives every row (ENCODING.md)

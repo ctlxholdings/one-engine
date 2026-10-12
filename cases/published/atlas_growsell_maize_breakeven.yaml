@@ -1,0 +1,70 @@
+# Published case "atlas_growsell_maize_breakeven": dryland maize at Bloedrivier, KwaZulu-Natal,
+# one hectare for the 2024/25 summer season (BFAP, Table 2.1;
+# cases/reference/published/atlas_growsell_maize_breakeven.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the crop: rendement t/ha on superficie ha, sold at the net farm-gate price the source derives
+#     (prix_safex_simule less deductions_totales), for cash at harvest;
+#   * the variable costs: the source's thirteen printed lines (movements.*), paid and expensed in
+#     the season, posted as one variable-cost line; the printed total (total_depenses_variables)
+#     is the source's own rollup and is not posted again;
+#   * overheads, land, depreciation, financing and tax are excluded by the source's own design.
+# marge_brute (mapped to gross_margin) is the season's profit. The two per-tonne figures are
+# money read from the books divided by the yield: the margin per tonne, and the variable costs per
+# tonne (the source's break-even price).
+#
+# The source contradicts itself by its own display rounding, and the case keeps the figure read:
+# 7.0 x 3,248 = 22,736 (printed gross income 22,738), the thirteen lines sum to 15,399 (printed
+# total 15,401), so the books' margin is 7,337 against the printed 7,338 (and 22,738 - 15,401 on
+# the source's own printed totals is 7,337 too). The tolerance (half a rand) is set so that this
+# one-rand gap surfaces: marge_brute differs, as the oracle's own notes expect.
+published: atlas_growsell_maize_breakeven
+entity: farm
+plant: prix_safex_simule
+case:
+  case: published-atlas-growsell-maize-breakeven
+  periods: 1
+  phases: [operate]
+  currency: ZAR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        tonnes: rendement * superficie
+        net_price: prix_safex_simule - deductions_totales
+        variable_costs: >-
+          (movements__contracting + movements__crop_insurance + movements__fertilizer + movements__lime
+          + movements__seed + movements__fuel + movements__herbicide + movements__insecticide_fungicide
+          + movements__marketing_costs + movements__repairs_maintenance + movements__casual_labour
+          + movements__aerial_spray + movements__other_expenditure) * superficie
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    maize:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: tonnes}, price: {generator: src, output: net_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    inputs:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: variable_costs}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      maize.revenue: revenue
+      inputs.expense: variable_cost
+  cuts:
+    variable_costs: {kind: pnl, entity: farm, scheme: pnl, include: [variable_cost]}
+    gross_margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable_cost]}
+  measures: {}
+figures:
+  marge_brute: {cut: gross_margin}
+  marge_brute_par_tonne: {cut: gross_margin, per: src.tonnes}
+  total_depenses_variables_par_tonne: {cut: variable_costs, sign: -1, per: src.tonnes}

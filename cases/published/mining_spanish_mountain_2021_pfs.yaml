@@ -1,0 +1,160 @@
+# Published case "mining_spanish_mountain_2021_pfs": the Spanish Mountain gold project (British
+# Columbia, 20,000 t/d), its life-of-mine operating cost, capital and mine-schedule totals, C$
+# (Moose Mountain / Ausenco et al. for Spanish Mountain Gold Ltd., NI 43-101 Prefeasibility Study,
+# May 2021, Tables 1-3, 1-5, 16-7, 22-1, 22-2, 22-3;
+# cases/reference/published/mining_spanish_mountain_2021_pfs.yaml).
+#
+# One period: the whole life of mine. The inputs carry the mine schedule by year (Table 16-7) but
+# no annual cost or capital profile (mining cost "varies annually" around a LOM average; capital
+# is three LOM totals), so the annual cash-flow rows cannot be built and the life of mine is
+# booked as one period. Every amount is a published input by name (generator `src`), in C$, for
+# the project as one book (`mine`, 100% equity, no debt):
+#   * milled tonnes: the sum of the schedule's annual total-to-mill (rows Y1..Y14, kt x 1000);
+#   * operating cost: Table 22-1's total C$/t milled on those tonnes, paid (notes 11);
+#   * initial capital: the twelve Table 1-3 areas (the printed total is not used), spent into its
+#     own construction account;
+#   * sustaining capital: the printed LOM capital less those twelve areas (Table 1-3);
+#   * closure: the closure total less the salvage value, both read as C$ (the "_usd_m" labels
+#     notwithstanding: 607 + 290 + 130 = 1,027 is the C$ cash-flow total, notes 7);
+#   * capital is investing cash; no depreciation and no tax (the source prints no tax inputs).
+# Readings: operating cost is a P&L cut, capital lines cash cuts (C$ millions by scale). Mill
+# feed, grades, waste and strip ratio are physical quantities no ledger holds, read as drivers
+# of the schedule rows (grades tonnage-weighted; strip = waste over ore mined, pit to mill plus
+# pit to stockpile).
+# Left unread (a figure the library scores, so it cannot be set aside): LOM net revenue
+# (cash_flow_summary.rows.17.3). It needs ounces from tonnes x g/t, i.e. the troy-ounce
+# conversion (31.1035 g/oz), which no input carries and which is not a number a translation may
+# type; nothing else derives revenue.
+# Set aside, with reasons below: the annual cash-flow rows, the metal ounces and per-ounce cost
+# metrics (the same troy-ounce conversion), pre-/post-tax cash flow, taxes, NPV, IRR and payback
+# (they need revenue, tax and the annual capital profile), and the sensitivity table.
+published: mining_spanish_mountain_2021_pfs
+entity: mine
+plant: total_operating_costs_cad_per_t_milled
+case:
+  case: published-spanish-mountain
+  periods: 1
+  phases: [fund, operate]
+  currency: CAD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        # Table 16-7, operating years Y1..Y14 (rows 2..15); kt
+        milled_kt: rows_2_4 + rows_3_4 + rows_4_4 + rows_5_4 + rows_6_4 + rows_7_4 + rows_8_4 + rows_9_4 + rows_10_4 + rows_11_4 + rows_12_4 + rows_13_4 + rows_14_4 + rows_15_4
+        milled_t: milled_kt * 1000
+        au_kt_g: rows_2_4 * rows_2_5 + rows_3_4 * rows_3_5 + rows_4_4 * rows_4_5 + rows_5_4 * rows_5_5 + rows_6_4 * rows_6_5 + rows_7_4 * rows_7_5 + rows_8_4 * rows_8_5 + rows_9_4 * rows_9_5 + rows_10_4 * rows_10_5 + rows_11_4 * rows_11_5 + rows_12_4 * rows_12_5 + rows_13_4 * rows_13_5 + rows_14_4 * rows_14_5 + rows_15_4 * rows_15_5
+        ag_kt_g: rows_2_4 * rows_2_6 + rows_3_4 * rows_3_6 + rows_4_4 * rows_4_6 + rows_5_4 * rows_5_6 + rows_6_4 * rows_6_6 + rows_7_4 * rows_7_6 + rows_8_4 * rows_8_6 + rows_9_4 * rows_9_6 + rows_10_4 * rows_10_6 + rows_11_4 * rows_11_6 + rows_12_4 * rows_12_6 + rows_13_4 * rows_13_6 + rows_14_4 * rows_14_6 + rows_15_4 * rows_15_6
+        au_grade: au_kt_g / milled_kt
+        ag_grade: ag_kt_g / milled_kt
+        mill_feed_mt: milled_kt / 1000
+        # Y-2..Y14 (rows 0..15)
+        waste_kt: rows_0_7 + rows_1_7 + rows_2_7 + rows_3_7 + rows_4_7 + rows_5_7 + rows_6_7 + rows_7_7 + rows_8_7 + rows_9_7 + rows_10_7 + rows_11_7 + rows_12_7 + rows_13_7 + rows_14_7 + rows_15_7
+        ore_mined_kt: rows_0_1 + rows_1_1 + rows_2_1 + rows_3_1 + rows_4_1 + rows_5_1 + rows_6_1 + rows_7_1 + rows_8_1 + rows_9_1 + rows_10_1 + rows_11_1 + rows_12_1 + rows_13_1 + rows_14_1 + rows_15_1 + rows_0_2 + rows_1_2 + rows_2_2 + rows_3_2 + rows_4_2 + rows_5_2 + rows_6_2 + rows_7_2 + rows_8_2 + rows_9_2 + rows_10_2 + rows_11_2 + rows_12_2 + rows_13_2 + rows_14_2 + rows_15_2
+        waste_mt: waste_kt / 1000
+        strip_ratio: waste_kt / ore_mined_kt
+        # Table 1-3 and 1-5, C$000 -> C$
+        initial_000: overall_site_development + initial_by_area__mining + ore_handling + process + initial_by_area__tailings_and_water_management + environmental + on_site_infrastructure + off_site_infrastructure + water_treatment_facilities + project_indirect_costs + owners_costs + contingency
+        initial: {each_period: initial_000 * 1000}
+        sustaining: {each_period: (lom_total_printed - initial_000) * 1000}
+        closure: {each_period: closure_total_printed * 1000 - salvage_value_printed_usd_m * 1000 * 1000}
+  opening:
+    mine:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    operating:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {annual: 0, unit_rate: {generator: src, output: total_operating_costs_cad_per_t_milled},
+              volume: {generator: src, output: milled_t}, index: 1, periods_per_year: 1, start: 0, end: 0,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    initial_capital:
+      type: capex_class
+      parties: {owner: mine}
+      terms: &capex {schedule: {generator: src, output: initial}, vat_rate: 0, vat_refund_lag: 0, end: 0}
+    sustaining_capital:
+      type: capex_class
+      parties: {owner: mine}
+      terms: {<<: *capex, schedule: {generator: src, output: sustaining}}
+    closure_capital:
+      type: capex_class
+      parties: {owner: mine}
+      terms: {<<: *capex, schedule: {generator: src, output: closure}}
+  rulebooks: {}
+  schemes:
+    pnl:
+      operating.expense: opex
+    cash_flow:
+      operating.payable: operating
+      initial_capital: initial
+      sustaining_capital: sustaining
+      closure_capital: closure
+  cuts:
+    opex: {kind: pnl, entity: mine, scheme: pnl, include: [opex]}
+    initial: {entity: mine, account: cash, scheme: cash_flow, include: [initial]}
+    sustaining: {entity: mine, account: cash, scheme: cash_flow, include: [sustaining]}
+    closure: {entity: mine, account: cash, scheme: cash_flow, include: [closure]}
+    capital: {entity: mine, account: cash, scheme: cash_flow, include: [initial, sustaining, closure]}
+  measures: {}
+figures:
+  cash_flow_summary.rows.17.4: {cut: opex, sign: -1, scale: 1000000}
+  cash_flow_summary.rows.17.5: {cut: capital, sign: -1, scale: 1000000}
+  economic_analysis_summary.initial_capital_cad_m: {cut: initial, sign: -1, scale: 1000000}
+  economic_analysis_summary.sustaining_capital_cad_m: {cut: sustaining, sign: -1, scale: 1000000}
+  economic_analysis_summary.closure_capital_cad_m: {cut: closure, sign: -1, scale: 1000000}
+  economic_analysis_summary.mill_feed_mt: {driver: src.mill_feed_mt}
+  economic_analysis_summary.au_grade_g_t: {driver: src.au_grade}
+  economic_analysis_summary.ag_grade_g_t: {driver: src.ag_grade}
+  economic_analysis_summary.waste_mined_mt: {driver: src.waste_mt}
+  economic_analysis_summary.strip_ratio: {driver: src.strip_ratio}
+not_compared:
+  cash_flow_summary.rows.0: &annual >-
+    an annual row of Table 22-3: the inputs carry no annual operating-cost or capital profile
+    (mining cost varies by year around a LOM average; capital is three LOM totals) and no tax
+    inputs, and revenue needs the troy-ounce conversion no input carries
+  cash_flow_summary.rows.1: *annual
+  cash_flow_summary.rows.2: *annual
+  cash_flow_summary.rows.3: *annual
+  cash_flow_summary.rows.4: *annual
+  cash_flow_summary.rows.5: *annual
+  cash_flow_summary.rows.6: *annual
+  cash_flow_summary.rows.7: *annual
+  cash_flow_summary.rows.8: *annual
+  cash_flow_summary.rows.9: *annual
+  cash_flow_summary.rows.10: *annual
+  cash_flow_summary.rows.11: *annual
+  cash_flow_summary.rows.12: *annual
+  cash_flow_summary.rows.13: *annual
+  cash_flow_summary.rows.14: *annual
+  cash_flow_summary.rows.15: *annual
+  cash_flow_summary.rows.16: *annual
+  cash_flow_summary.rows.17.1: &ounces >-
+    ounces from tonnes x g/t need the troy-ounce conversion (31.1035 g/oz), which no input carries
+    and a translation may not type
+  cash_flow_summary.rows.17.2: *ounces
+  economic_analysis_summary.au_produced_koz: *ounces
+  economic_analysis_summary.ag_produced_koz: *ounces
+  economic_analysis_summary.cash_costs_lom_usd_per_oz: *ounces
+  economic_analysis_summary.aisc_lom_usd_per_oz: *ounces
+  economic_analysis_summary.total_costs_lom_usd_per_oz: *ounces
+  cash_flow_summary.rows.17.6: &revenue >-
+    revenue less costs: revenue needs the troy-ounce conversion no input carries, and taxes have no
+    inputs (no rate, no tax depreciation)
+  cash_flow_summary.rows.17.7: *revenue
+  cash_flow_summary.rows.17.8: *revenue
+  economic_analysis_summary.net_cash_flow_pre_tax_cad_m: *revenue
+  economic_analysis_summary.pre_tax_npv5_cad_m: &timing >-
+    needs the annual cash flows (Table 22-3), whose revenue, capital profile and taxes no input
+    carries
+  economic_analysis_summary.pre_tax_irr_pct: *timing
+  economic_analysis_summary.pre_tax_payback_years: *timing
+  economic_analysis_summary.post_tax_npv5_cad_m: *timing
+  economic_analysis_summary.post_tax_irr_pct: *timing
+  economic_analysis_summary.post_tax_payback_years: *timing
+  post_tax_npv_sensitivity_cad_m: >-
+    alternative scenarios (gold price, capital, operating cost at -20% to +50%) on the post-tax
+    NPV, which itself needs the annual cash flows no input carries

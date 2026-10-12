@@ -1,0 +1,78 @@
+# Published case "energy_irena_hydropower_2023": one kW of hydropower for one representative year
+# of its economic life, at IRENA's 2023 global weighted averages, costed the way IRENA's own LCOE
+# formula and Table A1 assumptions cost it (IRENA, Renewable Power Generation Costs in 2023, ch.7
+# and Annex I; cases/reference/published/energy_irena_hydropower_2023.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the capital charge: the installed cost (total_installed_cost_usd_per_kw_2023) recovered as
+#     a level annuity over economic_life_years (30) at the real WACC, i.e. installed cost x the
+#     capital recovery factor r(1+r)^n / ((1+r)^n - 1), expensed in the year (the annualised form
+#     of IRENA's discounted LCOE, p.199, no fuel, a flat capacity factor);
+#   * the WACC is wacc_real.oecd_and_china (5%), the same Table A1 band as the solar case;
+#   * O&M is om_cost_pct_of_capex_per_yr.lo (2% of installed cost a year), the low end of the
+#     IPCC norm IRENA cites and the level of IRENA's own 25-project sample ("slightly less than
+#     2%"); the EIA fixed-plus-variable reference is not used; no tax, no revenue;
+#   * the year's generation is capacity_factor_2023 x the hours of a 365-day year, typed as the
+#     unit conversion 24 x (52 x 7 + 1) hours.
+# The LCOE is the year's total cost per kWh generated: the P&L cost cut divided (`per`) by the
+# year's kWh, a physical count no ledger holds.
+# FINDING (kept, not fitted): the books give 0.0514 $/kWh against IRENA's printed 0.057, outside
+# the 0.001 display tolerance. The oracle's notes reproduce this by hand and record why no input
+# set reproduces 0.057: IRENA prints two unreconciled O&M references (IPCC 2-2.5% of capex vs EIA
+# 0.06% + $0.003/kWh, a factor of about four apart) and its real LCOE uses country-level WACCs
+# that are not among the inputs (5%: 0.051-0.054; 7.5%: 0.063-0.066; EIA O&M: 0.043).
+# Set aside: the lowest (Georgia, 34 MW) and highest (Canada, 5.5 MW) project LCOEs are single
+# named projects whose costs and capacity factors no input carries.
+published: energy_irena_hydropower_2023
+entity: plant
+plant: total_installed_cost_usd_per_kw_2023
+case:
+  case: published-irena-hydropower
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        growth: (1 + oecd_and_china) ** economic_life_years
+        crf: oecd_and_china * growth / (growth - 1)
+        capital_charge: total_installed_cost_usd_per_kw_2023 * crf
+        om_year: total_installed_cost_usd_per_kw_2023 * lo
+        hours_year: 24 * (52 * 7 + 1)
+        kwh_year: capacity_factor_2023 * hours_year
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    capital:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: src, output: capital_charge}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    om:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: src, output: om_year}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      capital.expense: capital_charge
+      om.expense: opex
+  cuts:
+    cost: {kind: pnl, entity: plant, scheme: pnl, include: [capital_charge, opex]}
+  measures: {}
+figures:
+  lcoe_usd_per_kwh_2023: {cut: cost, sign: -1, per: src.kwh_year}
+not_compared:
+  lcoe_usd_per_kwh_2023_lowest_project: >-
+    a single 34 MW Georgian project (p.166); no input carries its installed cost or capacity factor
+  lcoe_usd_per_kwh_2023_highest_project: >-
+    a single 5.5 MW Canadian project (p.166); no input carries its installed cost or capacity factor

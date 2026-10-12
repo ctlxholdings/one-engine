@@ -1,0 +1,76 @@
+# Published case "atlas_extract_freshfish": a fresh-fish fisher on the Lagdo reservoir, Nord
+# region, Cameroon, one representative first year (GIZ / PARSE, Métiers Rentables Nord;
+# cases/reference/published/atlas_extract_freshfish.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the catch sold: recette_mensuelle a month times the source's own x12 column (annualization),
+#     collected in cash (the source prints no catch weight or price behind it);
+#   * the canoe, net and outboard motor (stocks.pirogue, stocks.filet, stocks.moteur) are bought
+#     for cash at the start of the year and capitalised as fishing equipment; the source states no
+#     life for them and its notes say not to re-amortise, so no depreciation is charged;
+#   * taxes and dues, and fuel and lubricant (movements.impots_et_taxes,
+#     movements.carburant_et_lubrifiant), paid in the year as operating charges;
+#   * no tax on profit.
+# The source's marge_beneficiaire_annuelle nets the whole "Total des charges" (equipment plus the
+# year's charges, investissement_initial) against one year's receipts: the first-year-cumulative
+# convention of this source family. That is the year's net cash flow, and it is read here as the
+# cash the year leaves (receipts in, less charges and equipment paid out).
+published: atlas_extract_freshfish
+entity: fisher
+plant: recette_mensuelle
+case:
+  case: published-atlas-extract-freshfish
+  periods: 1
+  phases: [fund, operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        catch_year: 1                           # no catch weight is printed: the year's receipts are one lot
+        receipts: recette_mensuelle * annualization
+        equipment_spend: {each_period: (stocks__pirogue + stocks__filet + stocks__moteur) * (t == 0)}
+  opening:
+    fisher:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    catch:
+      type: offtake
+      parties: {seller: fisher}
+      terms: {volume: {generator: src, output: catch_year}, price: {generator: src, output: receipts},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    dues:
+      type: operating_cost
+      parties: {payer: fisher}
+      terms: {annual: {generator: src, output: movements__impots_et_taxes}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    fuel:
+      type: operating_cost
+      parties: {payer: fisher}
+      terms: {annual: {generator: src, output: movements__carburant_et_lubrifiant}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    equipment:
+      type: capex_class
+      parties: {owner: fisher}
+      terms: {schedule: {generator: src, output: equipment_spend}, vat_rate: 0, vat_refund_lag: 0, end: 0}
+  rulebooks: {}
+  schemes:
+    pnl:
+      catch.revenue: revenue
+      dues.expense: opex
+      fuel.expense: opex
+    cash_flow:
+      catch.receivable: operating
+      dues.payable: operating
+      fuel.payable: operating
+      equipment: investing
+  cuts:
+    profit: {kind: pnl, entity: fisher, scheme: pnl, include: [revenue, opex]}
+    net_cash: {entity: fisher, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+figures:
+  marge_beneficiaire_annuelle: {cut: net_cash}

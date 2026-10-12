@@ -1,0 +1,125 @@
+# Published case "ext_soybean_iowa2025": herbicide-tolerant soybeans following corn in Iowa,
+# 60 bu/acre trend yield, one acre for one season (Iowa State University Extension, Ag Decision
+# Maker A1-20, Estimated Costs of Crop Production in Iowa 2025, p.5; cases/reference/published/
+# ext_soybean_iowa2025.yaml).
+#
+# One period, one acre. Every amount is a published input by name (generator `src`), the
+# source's own line costs (the hand-labelled `costs` list), posted by a `transfer` rulebook. The
+# source publishes costs only (no price, no margin), so only the cost side is booked:
+#   * variable costs (preharvest machinery operating cost, the eight seed/chemical lines with
+#     the interest on preharvest variable costs, the four harvest-machinery operating costs) are
+#     paid in cash and expensed;
+#   * fixed costs: the machinery ownership costs (preharvest and the four harvest operations),
+#     the labour at its hourly rate and the land at its cash-rent equivalent are the owner's own
+#     machines, labour and land charged at their opportunity cost and credited to the owner (no
+#     cash moves);
+#   * no tax.
+# Per-bushel figures divide a cost total by yield_bu_per_acre (a physical driver) via `per`.
+published: ext_soybean_iowa2025
+entity: farm
+plant: seed
+case:
+  case: published-ext-soybean-iowa2025
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        preharvest_machinery_fixed: expense
+        preharvest_machinery_variable: expense
+        seed: expense
+        phosphate: expense
+        potash: expense
+        lime: expense
+        herbicide: expense
+        crop_insurance: expense
+        miscellaneous: expense
+        interest_on_preharvest_variable_costs: expense
+        harvest_combine_fixed: expense
+        harvest_combine_variable: expense
+        harvest_grain_cart_fixed: expense
+        harvest_grain_cart_variable: expense
+        harvest_haul_fixed: expense
+        harvest_haul_variable: expense
+        harvest_handle_auger_fixed: expense
+        harvest_handle_auger_variable: expense
+        labor: expense
+        land_cash_rent_equivalent: expense
+      moves:
+        preharvest_fixed: {debit: preharvest_machinery_fixed, credit: owner_equity, amount: {generator: src, output: preharvest_machinery_fixed}}
+        preharvest_variable: {debit: preharvest_machinery_variable, credit: cash, amount: {generator: src, output: preharvest_machinery_variable}}
+        seed: {debit: seed, credit: cash, amount: {generator: src, output: seed}}
+        phosphate: {debit: phosphate, credit: cash, amount: {generator: src, output: phosphate}}
+        potash: {debit: potash, credit: cash, amount: {generator: src, output: potash}}
+        lime: {debit: lime, credit: cash, amount: {generator: src, output: lime}}
+        herbicide: {debit: herbicide, credit: cash, amount: {generator: src, output: herbicide}}
+        crop_insurance: {debit: crop_insurance, credit: cash, amount: {generator: src, output: crop_insurance}}
+        miscellaneous: {debit: miscellaneous, credit: cash, amount: {generator: src, output: miscellaneous}}
+        interest: {debit: interest_on_preharvest_variable_costs, credit: cash, amount: {generator: src, output: interest_on_preharvest_variable_costs}}
+        combine_fixed: {debit: harvest_combine_fixed, credit: owner_equity, amount: {generator: src, output: harvest_combine_fixed}}
+        combine_variable: {debit: harvest_combine_variable, credit: cash, amount: {generator: src, output: harvest_combine_variable}}
+        grain_cart_fixed: {debit: harvest_grain_cart_fixed, credit: owner_equity, amount: {generator: src, output: harvest_grain_cart_fixed}}
+        grain_cart_variable: {debit: harvest_grain_cart_variable, credit: cash, amount: {generator: src, output: harvest_grain_cart_variable}}
+        haul_fixed: {debit: harvest_haul_fixed, credit: owner_equity, amount: {generator: src, output: harvest_haul_fixed}}
+        haul_variable: {debit: harvest_haul_variable, credit: cash, amount: {generator: src, output: harvest_haul_variable}}
+        auger_fixed: {debit: harvest_handle_auger_fixed, credit: owner_equity, amount: {generator: src, output: harvest_handle_auger_fixed}}
+        auger_variable: {debit: harvest_handle_auger_variable, credit: cash, amount: {generator: src, output: harvest_handle_auger_variable}}
+        labor: {debit: labor, credit: owner_equity, amount: {generator: src, output: labor}}
+        land: {debit: land_cash_rent_equivalent, credit: owner_equity, amount: {generator: src, output: land_cash_rent_equivalent}}
+  schemes:
+    pnl:
+      preharvest_machinery_fixed: preharvest_fixed
+      preharvest_machinery_variable: preharvest_variable
+      seed: seed_chemical
+      phosphate: seed_chemical
+      potash: seed_chemical
+      lime: seed_chemical
+      herbicide: seed_chemical
+      crop_insurance: seed_chemical
+      miscellaneous: seed_chemical
+      interest_on_preharvest_variable_costs: seed_chemical
+      harvest_combine_fixed: harvest_fixed
+      harvest_combine_variable: harvest_variable
+      harvest_grain_cart_fixed: harvest_fixed
+      harvest_grain_cart_variable: harvest_variable
+      harvest_haul_fixed: harvest_fixed
+      harvest_haul_variable: harvest_variable
+      harvest_handle_auger_fixed: harvest_fixed
+      harvest_handle_auger_variable: harvest_variable
+      labor: labor_land
+      land_cash_rent_equivalent: labor_land
+  cuts:
+    seed_chemical: {kind: pnl, entity: farm, scheme: pnl, include: [seed_chemical]}
+    harvest_fixed: {kind: pnl, entity: farm, scheme: pnl, include: [harvest_fixed]}
+    harvest_variable: {kind: pnl, entity: farm, scheme: pnl, include: [harvest_variable]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [preharvest_fixed, harvest_fixed, labor_land]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [preharvest_variable, seed_chemical, harvest_variable]}
+    total: {kind: pnl, entity: farm, scheme: pnl,
+            include: [preharvest_fixed, harvest_fixed, labor_land, preharvest_variable, seed_chemical, harvest_variable]}
+  measures: {}
+figures:
+  seed_chemical_section_total_variable_usd_per_acre: {cut: seed_chemical, sign: -1}
+  harvest_machinery_section_total.fixed_usd_per_acre: {cut: harvest_fixed, sign: -1}
+  harvest_machinery_section_total.variable_usd_per_acre: {cut: harvest_variable, sign: -1}
+  total_fixed_usd_per_acre: {cut: fixed, sign: -1}
+  total_variable_usd_per_acre: {cut: variable, sign: -1}
+  total_cost_per_acre: {cut: total, sign: -1}
+  total_cost_per_bushel: {cut: total, sign: -1, per: src.yield_bu_per_acre}
+  fixed_cost_per_bushel: {cut: fixed, sign: -1, per: src.yield_bu_per_acre}
+  variable_cost_per_bushel: {cut: variable, sign: -1, per: src.yield_bu_per_acre}

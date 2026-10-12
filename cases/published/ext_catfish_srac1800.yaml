@@ -1,0 +1,128 @@
+# Published case "ext_catfish_srac1800": small-scale catfish for direct sales, six 2-acre levee
+# ponds (12 water acres), base scenario, one year (Engle and Stone, SRAC Publication 1800, Apr 2014
+# rev., Table 3 with Tables 1 and 2; cases/reference/published/ext_catfish_srac1800.yaml).
+#
+# One period, the budget year. Every amount is a published input by name (generator `src`),
+# posted by a `transfer` rulebook. The source publishes no sale, so only the cost side is booked:
+#   * the twelve operating costs are the source's own line totals (the hand-labelled `costs`
+#     list), paid in cash and expensed; the 9-month interest on operating capital is its
+#     printed line;
+#   * ownership costs: pond/water-supply and equipment depreciation charged against
+#     accumulated_depreciation (no cash); interest on the land/pond/well and equipment
+#     investment is the owner's capital charged at its opportunity cost and credited to the owner
+#     (no cash moves); property taxes paid in cash;
+#   * the long-term investment (Table 1: land, pond construction, water supply, unit cost x
+#     quantity each) and the equipment (Table 2's printed total) are the owner's contribution,
+#     held at cost in two accounts; depreciation is the source's own two lines;
+#   * no tax.
+# Break-even prices divide a cost total by the year's marketable fish
+# (expected_marketable_yield_lbs_per_acre x total_water_acres, a physical driver); the
+# per-acre investment figures divide by total_water_acres. Both via `per`.
+# Set aside: the processor price, which the source gives as market context only.
+published: ext_catfish_srac1800
+entity: farm
+plant: feed
+case:
+  case: published-ext-catfish-srac1800
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        fish_lbs: expected_marketable_yield_lbs_per_acre * total_water_acres
+        long_term_cost: >-
+          land__unit_cost_usd * land__quantity + pond_construction__unit_cost_usd * pond_construction__quantity
+          + water_supply_250gpm__unit_cost_usd * water_supply_250gpm__quantity
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        long_term_investment: asset
+        equipment: asset
+        accumulated_depreciation: asset
+        fingerlings: expense
+        feed: expense
+        labor: expense
+        gas_and_diesel: expense
+        electricity: expense
+        repairs_and_maintenance: expense
+        plankton_control: expense
+        depredation: expense
+        telephone: expense
+        office_supplies: expense
+        insurance: expense
+        operating_interest: expense
+        interest_on_land_ponds_well: expense
+        interest_on_equipment: expense
+        depreciation_ponds_water_supply: expense
+        depreciation_equipment: expense
+        property_taxes: expense
+      moves:
+        long_term: {debit: long_term_investment, credit: owner_equity, amount: {generator: src, output: long_term_cost}}
+        equipment: {debit: equipment, credit: owner_equity, amount: {generator: src, output: equipment_investment_table2_total_usd}}
+        fingerlings: {debit: fingerlings, credit: cash, amount: {generator: src, output: fingerlings}}
+        feed: {debit: feed, credit: cash, amount: {generator: src, output: feed}}
+        labor: {debit: labor, credit: cash, amount: {generator: src, output: labor}}
+        fuel: {debit: gas_and_diesel, credit: cash, amount: {generator: src, output: gas_and_diesel}}
+        electricity: {debit: electricity, credit: cash, amount: {generator: src, output: electricity}}
+        repairs: {debit: repairs_and_maintenance, credit: cash, amount: {generator: src, output: repairs_and_maintenance}}
+        plankton: {debit: plankton_control, credit: cash, amount: {generator: src, output: plankton_control}}
+        depredation: {debit: depredation, credit: cash, amount: {generator: src, output: depredation}}
+        telephone: {debit: telephone, credit: cash, amount: {generator: src, output: telephone}}
+        office: {debit: office_supplies, credit: cash, amount: {generator: src, output: office_supplies}}
+        insurance: {debit: insurance, credit: cash, amount: {generator: src, output: insurance}}
+        operating_interest: {debit: operating_interest, credit: cash, amount: {generator: src, output: interest_9_months}}
+        land_interest: {debit: interest_on_land_ponds_well, credit: owner_equity, amount: {generator: src, output: interest_on_investment_land_ponds_well}}
+        equipment_interest: {debit: interest_on_equipment, credit: owner_equity, amount: {generator: src, output: interest_on_investment_equipment}}
+        pond_dep: {debit: depreciation_ponds_water_supply, credit: accumulated_depreciation, amount: {generator: src, output: annual_depreciation_ponds_water_supply}}
+        equipment_dep: {debit: depreciation_equipment, credit: accumulated_depreciation, amount: {generator: src, output: annual_depreciation_equipment}}
+        taxes: {debit: property_taxes, credit: cash, amount: {generator: src, output: taxes}}
+  schemes:
+    pnl:
+      fingerlings: operating
+      feed: operating
+      labor: operating
+      gas_and_diesel: operating
+      electricity: operating
+      repairs_and_maintenance: operating
+      plankton_control: operating
+      depredation: operating
+      telephone: operating
+      office_supplies: operating
+      insurance: operating
+      operating_interest: operating
+      interest_on_land_ponds_well: ownership
+      interest_on_equipment: ownership
+      depreciation_ponds_water_supply: ownership
+      depreciation_equipment: ownership
+      property_taxes: ownership
+  cuts:
+    operating: {kind: pnl, entity: farm, scheme: pnl, include: [operating]}
+    ownership: {kind: pnl, entity: farm, scheme: pnl, include: [ownership]}
+    total: {kind: pnl, entity: farm, scheme: pnl, include: [operating, ownership]}
+  measures: {}
+figures:
+  total_operating_costs_usd: {cut: operating, sign: -1}
+  total_ownership_costs_usd: {cut: ownership, sign: -1}
+  total_costs_usd: {cut: total, sign: -1}
+  breakeven_price_above_operating_cost_usd_per_lb: {cut: operating, sign: -1, per: src.fish_lbs}
+  breakeven_price_above_total_cost_usd_per_lb: {cut: total, sign: -1, per: src.fish_lbs}
+  long_term_investment_total_usd: {balance: long_term_investment}
+  long_term_investment_total_usd.per_water_acre_usd: {balance: long_term_investment, per: src.total_water_acres}
+  equipment_total_usd: {balance: equipment}
+  equipment_total_usd.per_acre_usd: {balance: equipment, per: src.total_water_acres}
+not_compared:
+  market_context_not_part_of_answer_key: >-
+    a market price the source quotes as context, outside its answer key; the case books no sale

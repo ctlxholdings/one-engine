@@ -1,0 +1,77 @@
+# esco deal "eria_hospital": a shared-savings EPC for a 548-bed hospital (ERIA, Energy Efficiency
+# and Conservation Master Plan of Cambodia, 2020, ch. 2 §5.5; cases/reference/esco/ontology/
+# miniature/cases/eria_hospital-lod0.yaml; answer key cases/reference/esco/tests/test_lod0_numbers.py).
+#
+# Every amount is a number of the case by name (generator `src`):
+#   * the ESCO pays the project cost (project_cost_usd) in period 0, funded by its own equity;
+#   * the savings are the chiller's and the LED lighting's kWh (chiller_savings_kwh_per_y +
+#     led_savings_kwh_per_y) at the hospital's tariff (tariff_usd_per_kwh), each year for
+#     term_years from period 1; the ESCO takes esco_share_pct of them, the hospital keeps the rest;
+#   * the hospital's saving is booked as its avoided energy cost (the contract's with-versus-
+#     without view); the ESCO's share is its revenue, paid in cash in the year.
+# Periods are years; 0 is the investment year.
+#
+# One figure differs, and the cause is the record's, not the books': eria.esco_share_record is
+# the case file's 80% of the source's ROUNDED annual savings, 0.8 x 332,702 = 266,161.6. The books
+# take 80% of 3,080,573 kWh x 0.108 = 332,701.884, which is 266,161.51 (the source's own 266,161.50
+# is the same rounding the other way; the answer key marks that one xfail).
+esco: eria_hospital
+entity: esco
+plant: tariff_usd_per_kwh
+case:
+  case: esco-eria-hospital
+  periods: 9
+  phases: [accrue, settle]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 9
+      inputs: esco
+      values:
+        kwh: chiller_savings_kwh_per_y + led_savings_kwh_per_y
+        split: esco_share_pct / 100
+  contracts:
+    funding:
+      type: equity_funding
+      parties: {issuer: esco}
+      terms: {amount: {generator: src, output: project_cost_usd}, period: 0}
+    retrofit:
+      type: one_off_purchase
+      parties: {buyer: esco}
+      terms: {amount: {generator: src, output: project_cost_usd}, period: 0}
+    savings:
+      type: shared_savings
+      parties: {provider: esco, client: hospital}
+      terms: {kwh: {generator: src, output: kwh}, tariff: {generator: src, output: tariff_usd_per_kwh},
+              performance: 1, split: {generator: src, output: split}, start: 1,
+              terms: {generator: src, output: term_years}}
+  schemes:
+    pnl:
+      avoided_energy_cost: savings
+      shared_savings_fee: fee
+      shared_savings_revenue: revenue
+    cash_flow:
+      share_capital: financing
+      equipment: investing
+      shared_savings_revenue: operating
+      avoided_energy_cost: operating
+      shared_savings_fee: operating
+  cuts:
+    hospital_savings: {kind: pnl, entity: hospital, scheme: pnl, include: [savings]}
+    hospital_fee: {kind: pnl, entity: hospital, scheme: pnl, include: [fee]}
+    esco_revenue: {kind: pnl, entity: esco, scheme: pnl, include: [revenue]}
+    provider_project_cash_flow: {entity: esco, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures:
+    irr: {measure: irr, cut: provider_project_cash_flow}
+    payback: {measure: payback, cut: provider_project_cash_flow}
+figures:
+  eria.total_kwh: {driver: src.kwh, at: 1}
+  eria.total_usd: {cut: hospital_savings, at: 1}
+  eria.payback: {measure: payback}
+  eria.payback_4dp: {measure: payback}
+  eria.irr_oracle_pct: {measure: irr, scale: 0.01}
+  eria.esco_share_record: {cut: esco_revenue, at: 1}
+  eria.client_share: {sum: [{cut: hospital_savings}, {cut: hospital_fee}], at: 1}
+  eria.esco_income_term: {cut: esco_revenue, total: true}

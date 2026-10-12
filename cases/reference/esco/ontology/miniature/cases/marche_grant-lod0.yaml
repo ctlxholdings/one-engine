@@ -1,0 +1,352 @@
+# Miniature — the Marche region health-building EPCs (grant + interest-free fund loan) expressed at ESCO LOD 0
+#
+# Shape copied from bytom-lod0.yaml. Frame: elements_pilot.yaml (ESCO LOD 0: 41 roles, 7 commitment families,
+# 12 settings; owner rulings 28 Sep 2026). Core v7 = lod0/ (ISO/IEC 15944-4 Figure B.3 + 3.5 + 3.14).
+# Every fact carries its status: stated (the Marche paragraph or Figure 2 says it), inferred (follows from a
+# stated fact — which is named), default (setting default; source silent), generic (from the source's description
+# of EPC in general, not of this deal), unstated (counter-promise required by duality; source silent).
+# Only the corpus is evidence. The source is one paragraph (E07 L255-264) and one figure (L265-287): the financing
+# mix is fully stated; the EPC itself (fee, savings, term) is not quantified.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: marche_health_buildings
+lod: 0
+case: validation_targets.published.Marche_grant_blend
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E07
+  title: Implementing Energy Efficiency projects via Energy Performance Contracting with support from ERDF financial instruments in Poland
+  publisher: fi-compass (EC / EIB), November 2023
+  passage: "'Existing good practice in combining Cohesion Policy funding and EPC', p. 7 (corpus input/fic-erdf-epc-poland-factsheet-2023.txt L255-264) and Figure 2 'Combination in one single operation in support of an EPC project' (L265-287)"
+  supporting:
+  - id: E15
+    file: input/eib-eurostat-statistical-treatment-epc.txt
+    passage: L5365-5379 (EU grants and loans vs government financing), L6932-6943 (guaranteed-savings rule)
+  oracle: 'ORACLE-RESULTS.md #3: Marche ESCO own share 18.00% reproduced exactly'
+  context:
+  - "Intelligent Energy – Europe (EU programme; now LIFE Climate action sub-programme, fn 5): 'The region therefore developed a scheme with the support from the EU funded programme Intelligent Energy – Europe' (L258-259). Support to the managing authority for designing the scheme — programme-design support outside the deal boundary (F23, G03); recorded here, not as a party."
+  notes:
+  - "The ESCO's 18% own resources (L263) is a resource, not a commitment; LOD 0 has no arrow for a party's own equity in its own project and needs none (F05: own capital sits inside c1) — it appears in numbers."
+  - 0% interest is pricing (LOD 1/2), not a LOD 0 setting; debt_seniority is the only LOD 0 facet on the loan.
+  - "The grant pass-through (health authority pays the ESCO 'for works' out of the grant) fits payment_promise (c2, inferred); grant_recipient = client covers it, as in CTU."
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Italy
+  iso: IT
+  eu_member: true
+  client_eu_general_government: true
+  status: stated
+  why: "'the Italian region of Marche' (L256); 'a grant to the regional health authority' (L260-261) — a public body of an EU member state, inside general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  health_authority:
+    entity: marche_regional_health_authority
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Regional Health Authority (Marche)
+    text: "'a grant to the regional health authority' (L260-261); Figure 2 'Beneficiary: Regional Health Authority' (L272-273); the buildings are 'health sector buildings' (L256-257)"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'the EPC provider' (L262-263); Figure 2 'ESCO: Company implementing works contract and final recipient of FI' (L274-281); name not given"
+  region_of_marche:
+    entity: regione_marche
+    role: eu_funds
+    groups: [public, capital]
+    status: stated
+    name: Region of Marche (managing authority of the ERDF regional operational programme)
+    text: "Figure 2 'MA: Region of Marche' (L276-280); 'the regional operational programme funded by the European Regional Development Fund (ERDF)' (L259-260). Role eu_funds = 'EU structural funds and their managing authority'"
+  energy_mobility_fund:
+    role: lender
+    groups: [capital]
+    status: stated
+    name: Energy and Mobility Fund (ERDF financial instrument)
+    text: "'an interest rate free loan which covered 42% of the costs from the Energy and Mobility Fund to the EPC provider' (L261-262); Figure 2 'Financial Instrument Energy and Mobility Fund' (L283-284). Role follows the act (F11): the fund lends to the Partner, so lender; alternative revolving_fund (a public fund, but LOD 0 defines revolving_fund as financing public agencies' projects). Its public character is carried by its funder (region_of_marche, eu_funds)"
+  artigiancassa:
+    entity: artigiancassa
+    role: fund_manager
+    groups: [capital]
+    status: stated
+    name: Artigiancassa
+    text: "'The fund is managed by the commercial bank, Artigiancassa' (L262-263)"
+  verifier:
+    role: verifier_mnv
+    groups: [verification]
+    status: generic
+    text: "'a third party undertakes the commissioning and verifies ...' (L162-163, lifecycle section, not Marche-specific)"
+
+contract:   # the agreements that establish the commitments
+  epc_contract:
+    core: contract
+    parties: [health_authority, esco]
+    term_years: null
+    status: stated
+    text: "'deep renovation of health sector buildings' via EPC (L256-257); 'EPC provider' (L257); term not given. Figure 2 calls the ESCO's contract a 'works contract' (L277-279) — the text says EPC"
+  grant_decision:
+    core: contract
+    parties: [region_of_marche, health_authority]
+    status: inferred
+    text: a grant from the operational programme to a beneficiary implies a grant decision; not described
+  loan_agreement:
+    core: contract
+    parties: [energy_mobility_fund, esco]
+    status: inferred
+    text: an interest-free loan to the EPC provider implies a loan agreement; terms beyond 0% and 42% not given
+  funding_agreement:
+    core: contract
+    parties: [region_of_marche, energy_mobility_fund, artigiancassa]
+    status: inferred
+    text: "a managing authority's 'Contribution' to a financial instrument managed by a bank implies a funding agreement; not described"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: health_authority
+    status: stated
+    what: deep renovation of health sector buildings under EPC (L256-257); savings guaranteed (the factsheet covers guaranteed-savings EPC only, fn 3 L168 — generic); no savings figure or term given
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: health_authority
+    to: esco
+    status: inferred
+    what: "'Payment for works' (Figure 2, L272-273) from the health authority to the ESCO; that this payment is the 40% grant passed through is inferred from the figure (the grant arrow lands on the Beneficiary and the works payment leaves it), not stated (F18)"
+    established_by: epc_contract
+  c3:
+    family: payment_promise
+    from: health_authority
+    to: esco
+    status: inferred
+    what: "EPC fee during the performance period — an EPC is paid 'for the achieved savings compared to the guaranteed savings' (L181-184, generic); the Marche text and figure show only the works payment, so the fee is inferred from the deal being an EPC; amount and term not given"
+    established_by: epc_contract
+  c4:
+    family: benefit_promise
+    from: region_of_marche
+    to: health_authority
+    status: stated
+    what: "grant covering 40% of the costs (L260-261); Figure 2 'Grant' MA -> Beneficiary (L272-273)"
+    established_by: grant_decision
+  c5:
+    family: funding_promise
+    from: region_of_marche
+    to: energy_mobility_fund
+    status: stated
+    what: "'Contribution' of ERDF programme resources to the Energy and Mobility Fund (Figure 2, L283-284). Family inferred: a contribution to a financial instrument is capital placed against the fund's future reflows; alternative benefit_promise if the contribution is treated as non-returnable"
+    established_by: funding_agreement
+  c6:
+    family: funding_promise
+    from: energy_mobility_fund
+    to: esco
+    status: stated
+    funding_instrument: loan   # interest-free loan (L261-262)
+    what: "interest-free loan covering 42% of the costs (L261-262); Figure 2 'Loan 42%' (L281-284)"
+    established_by: loan_agreement
+  c7:
+    family: payment_promise
+    from: esco
+    to: energy_mobility_fund
+    status: inferred
+    what: "repayment of the loan principal — a loan implies repayment; 'interest rate free' (L261) so no interest; schedule not given. The factsheet's general text says the EPC provider repays the loan 'during the duration of the contract from achieved energy savings' (L448-449, generic)"
+    established_by: loan_agreement
+  c8:
+    family: agency_promise
+    from: artigiancassa
+    to: energy_mobility_fund
+    status: stated
+    what: "management of the fund — acting for the fund's money: appraising, disbursing and collecting the loans (L262-263); LOD 0 fund_manager 'acts under an agency promise toward the fund'"
+    established_by: funding_agreement
+  c9:
+    family: payment_promise
+    from: energy_mobility_fund
+    to: artigiancassa
+    status: unstated
+    what: counter-promise required by duality; source silent (a management fee is economically necessary but not mentioned)
+  c10:
+    family: payment_promise
+    from: energy_mobility_fund
+    to: region_of_marche
+    status: unstated
+    what: counter-promise required by duality; source silent (return of the contribution / reflows of repaid loans to the programme — the future claim that makes c5 a funding promise)
+  c12:
+    family: determination_promise
+    from: verifier
+    to: [health_authority, esco]
+    status: generic
+    determines: both   # commissioning check and verification of savings
+    what: commissioning check and verification of savings against the pre-agreed standard (L162-163, L141-142)
+  c13:
+    family: payment_promise
+    from: [health_authority, esco]
+    to: verifier
+    status: unstated
+    what: counter-promise required by duality; source silent (which party pays the verifier is not said)
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c3 EPC fee inferred from the deal being an EPC: 'the EPC provider is paid for the achieved savings compared to the guaranteed savings' (E07 L181-182, generic); c2 works payment is the grant pass-through."}
+  client_sector:
+    value: public
+    status: stated
+    why: a regional health authority, beneficiary of an ERDF grant (L260-261, L272-273)
+  partner_form:
+    value: corporate
+    status: inferred
+    why: "Figure 2 labels the ESCO 'Company implementing works contract' (L274-277); no SPV mentioned; default would give the same value"
+  borrower:
+    value: partner
+    status: stated
+    why: "the loan goes 'from the Energy and Mobility Fund to the EPC provider' (L261-262); the ESCO is 'final recipient of FI' (L281)"
+  receivable_holder:
+    value: partner
+    status: default
+    why: "no assignment or forfaiting mentioned; the paragraph says Italian EPC providers 'have difficulties to secure long-term financing from banks' (L257-258), which is why the fund loan exists"
+  collection_placement: {value: operator_own, status: default, why: not stated}
+  aggregation:
+    value: none
+    status: inferred
+    why: "'The projects were financed with ...' (L260) — several health-building projects under one regional scheme, each presumably its own EPC; LOD 0 pool means deals pooled for finance or contract, which the source does not say. Alternative pool if the scheme bundles the projects into one operation"
+  debt_seniority:
+    value: senior
+    status: default
+    why: not stated; the fund loan is the only debt named (the rest is grant and own funds)
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: generic
+    why: "'Savings ... determined by a predefined and transparent measurement and verification protocol' (L141-142, generic); nothing Marche-specific"
+  grant_recipient:
+    value: client
+    status: stated
+    why: "'a grant to the regional health authority' (L260-261); the ESCO is final recipient of the loan, not the grant (L281)"
+  asset_owner: {value: client, status: default, why: not stated (public health buildings; default)}
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "not computable from the source: no savings value, no fee, no term. Classification of the money: the 40% grant and the 42% loan both come from an ERDF operational programme — E15 L5365 'EU financing (e.g. grant, loan) is not counted as government financing' and the EU grant is deducted from capex (L5368-5375); the national co-financing share of the programme counts as government financing (L5378-5379) and is not given. The loan is repayable by the Partner, so outside the grant term of the rule in any case. Interest-free lending to the Partner is a public subsidy the rule does not price"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  programming_period: 2014-2020
+  grant_pct_of_cost: 40
+  loan_pct_of_cost: 42
+  loan_interest_rate_pct: 0
+  esco_own_funds_pct_of_cost: 18
+  derived:
+    financing_mix_sums_to: 40 + 42 + 18 = 100 (%)
+    repayable_share: 42% (the fund loan) — the only part the EPC fee must service, at 0% interest
+    non_grant_share: 42 + 18 = 60%, of which 70% debt (42/60) and 30% own funds (18/60)
+    oracle: 'ESCO own share 18.00% reproduced exactly (ORACLE-RESULTS #3)'
+  not_given: [project cost in EUR, savings, fee, contract term, number of buildings]
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  health_authority: {gives: [c2, c3, c13], receives: [c1, c4, c12], one_way: false}
+  esco: {gives: [c1, c7, c13], receives: [c2, c3, c6, c12], one_way: false}
+  region_of_marche:
+    gives: [c4, c5]
+    receives: [c10]
+    one_way: true
+    reason: "toward the health authority the grant (c4) is unilateral by nature; toward the fund the reflow claim on its contribution (c10) is required by duality and unstated (F06, F07 — a contribution to a financial instrument is capital against the fund's future reflows)"
+  energy_mobility_fund: {gives: [c6, c9, c10], receives: [c5, c7, c8], one_way: false}
+  artigiancassa:
+    gives: [c8]
+    receives: [c9]
+    one_way: true
+    reason: "counter-promise economically necessary but unstated: the fund manager's remuneration (c9) is not mentioned (F06)"
+  verifier:
+    gives: [c12]
+    receives: [c13]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: which party pays the verifier is not said; recorded as c13 status unstated (F06)'
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: benefit_to_public_intermediary
+  description: the EU programme (IEE) supported the Region of Marche — the managing authority, neither client nor Partner — in developing the scheme (L258-259); grant_recipient has no value for it. Under the boundary rule (F23) scheme-level support is context, not a commitment, so no recipient value is needed; moved to source.context
+  review: 'G03: encoding question (deal boundary); action: boundary rule F23; IEE support moved to source.context'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 rule text on the NPV basis; Marche remains not computable
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction IT / EU general government added; C1 applies_here true
+- id: F03
+  title: ESIF/Cohesion grant giver = eu_funds
+  convention: "A grant paid from an ESIF/Cohesion operational programme is given by eu_funds whatever national body administers it (elements_pilot eu_funds = 'EU structural funds and their managing authority'); grant_provider is for national or other non-EU grants. The EU/national co-financing split is an amount (LOD 1), not a role."
+  origin: verdict rule; findings F03; gaps G01
+  applied_here: Region of Marche (MA of the ERDF ROP) as eu_funds — the reference encoding for an ESIF grant giver
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'region_of_marche, artigiancassa and verifier one_way: true with reasons'
+- id: F10
+  title: fund and manager are two parties
+  convention: 'When the source names a manager distinct from the fund, record two parties: the fund by its act (lender / forfaiter / guarantee_facility) and the manager as fund_manager with an agency_promise and an unstated fee.'
+  origin: verdict rule; findings F10
+  applied_here: fund (lender) and manager (Artigiancassa, fund_manager + agency_promise + unstated fee) are two parties — the reference encoding
+- id: F11
+  title: role follows the act for financial instruments
+  convention: A financial instrument acting in the deal takes the role of its act (lender / forfaiter / guarantee_facility); the EU money source is a separate eu_funds party when the source distinguishes it, otherwise it is noted in text.
+  origin: findings F11 (either acceptable until ruled; this is the choice made)
+  applied_here: Energy and Mobility Fund keeps lender (role follows the act)
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: c2 (works payment = grant pass-through) downgraded from stated to inferred
+- id: F23
+  title: deal boundary
+  convention: "Include the funding of any party to the deal one level up (the Partner's lenders and shareholders, a fund's lenders and capitaliser); exclude programme-design support and advisers to shareholder transactions, which are recorded under source.context, not as parties."
+  origin: verdict rule; findings F19, F23; gaps G03, G20, G21
+  applied_here: IEE scheme-design support (former c11) moved to source.context; party removed
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, eu_funds, lender, fund_manager, verifier_mnv]
+  roles_count: 6 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, agency_promise, determination_promise]
+  families_absent: [risk_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 3, inferred: 4, generic: 1, default: 5}
+  commitments_by_status: {stated: 5, inferred: 3, generic: 1, unstated: 3}
+  one_way_parties: [region_of_marche, artigiancassa, verifier]
+  parties_count: 6
+  commitments_count: 12
+  below_lod0: {lod1_adds: 'events (grant disbursement, works payment, loan drawdown, loan repayments from savings, annual verification,
+      annual fee), the fee formula, the shortfall rule, the fund''s reflow to the programme', lod2_adds: 'fee variant, M&V option,
+      the loan''s 0% pricing and schedule, the fund manager''s fee'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): the Marche paragraph and Figure 2 (E07 L255-287) give only the financing mix and allocate no risk. Dropped: B's R1 technical (E07 L140 is the factsheet's generic EPC definition, equal to the default); A's R7 interest_rate on the fund (an interest-free loan fixes the ESCO's rate at zero; the fund forgoing interest is a subsidy, not a stated transfer of rate risk). The converter derives every row (ENCODING.md)

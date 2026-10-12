@@ -1,0 +1,360 @@
+# Miniature — the Czech Technical University (CTU) dormitories EPC expressed at ESCO LOD 0
+#
+# Shape copied from bytom-lod0.yaml. Frame: elements_pilot.yaml (ESCO LOD 0: 41 roles, 7 commitment families,
+# 12 settings; owner rulings 28 Sep 2026). Core v7 = lod0/ (ISO/IEC 15944-4 Figure B.3 + 3.5 + 3.14).
+# Every fact carries its status: stated (the CTU box says it), inferred (follows from a stated fact — which is
+# named), default (setting default; source silent), generic (from the source's description of the Czech model or
+# of EPC in general, not of this deal), unstated (counter-promise required by duality; source silent).
+# Only the corpus is evidence. The CTU box (E07 L325-330) is six lines; most of the financing structure comes from
+# the Czech-model paragraph on the same page (E07 L302-314), so much of this miniature is `generic`.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: ctu_prague_dormitories
+lod: 0
+case: validation_targets.published.CTU_Prague_dormitories
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E07
+  title: Implementing Energy Efficiency projects via Energy Performance Contracting with support from ERDF financial instruments in Poland
+  publisher: fi-compass (EC / EIB), November 2023
+  passage: "'Renovation of dormitories of the Czech Technical University in Prague', p. 9 (corpus input/fic-erdf-epc-poland-factsheet-2023.txt L325-330); Czech-model paragraph p. 8 (L302-314)"
+  supporting:
+  - id: E02
+    file: input/jrc-epc-in-the-eu-2020-2021.txt
+    passage: Czech Republic chapter L9380-9710 (market-level; no CTU-specific text)
+  - id: E15
+    file: input/eib-eurostat-statistical-treatment-epc.txt
+    passage: L5365-5379 (EU grants vs government financing), L6932-6943 (guaranteed-savings rule)
+  - id: E06
+    file: input/fic-esif-epc-guide-2020.txt
+    passage: L503-561 (forfaiting mechanics, generic)
+  oracle: 'ORACLE-RESULTS.md #3: CTU grant share 25.88% reproduced (published 26%)'
+  notes:
+  - Two-stage financing (construction loan, then sale of receivables) is two simultaneous LOD 0 facts (borrower = partner, receivable_holder = assignee); the ordering is a LOD 1 event (G04).
+  - The grant pass-through (client reimburses the provider from the grant, L312-313) fits payment_promise (c3); grant_recipient = client covers it.
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Czech Republic
+  iso: CZ
+  eu_member: true
+  client_eu_general_government: true
+  status: inferred
+  why: "'Czech Technical University in Prague' (L325); Czech paragraph: 'public sector entities, mainly local governments, hospitals and universities' (L307); an EU member state (E02 L345 lists the Czech Republic among the EU-27 markets)"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  ctu:
+    entity: ctu_prague
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Czech Technical University in Prague
+    text: "'Renovation of dormitories of the Czech Technical University in Prague ... using EPC' (L325-327); public-sector status follows from L307 'public sector entities, mainly local governments, hospitals and universities'"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: inferred
+    text: "the box names no provider; an EPC has an EPC provider by definition ('contractual arrangements between EPC clients ... and an EPC provider (usually an ESCO)', L130-131); name not given"
+  op_environment_sfzp:
+    entity: sfzp_cz
+    role: eu_funds
+    groups: [public, capital]
+    status: inferred
+    name: State Environmental Fund (operational programme for environmental protection)
+    text: "box: 'EUR 2.2.m are funded from the operational programme for environmental protection in form of a grant' (L329-330); the body is named in the Czech paragraph: 'Grants are provided by the State Environmental Fund from the operational programme for environmental protection to the EPC client' (L311-312), the programme being 'mainly from Cohesion Policy funding' (L305-306). Role eu_funds per convention F03 (an ESIF/Cohesion OP grant is given by eu_funds whatever national body administers it); alternative grant_provider if read as a national grant"
+  construction_lender:
+    role: lender
+    groups: [capital]
+    status: generic
+    text: "'EPC providers finance their projects through a bank loan for the construction period' (L303-304); not stated for CTU"
+  forfaiter_bank:
+    role: forfaiter
+    groups: [capital]
+    status: generic
+    text: "'sell future receivables (forfaiting) to commercial banks for the duration of the contract after completion of the works' (L304-305); not stated for CTU"
+  facilitator:
+    role: facilitator
+    groups: [delivery, public]
+    status: generic
+    text: "'the strong role project facilitators play in identifying suitable buildings, preparing projects and support public entities during the procurement process' (L309-311)"
+  verifier:
+    role: verifier_mnv
+    groups: [verification]
+    status: generic
+    text: "'a third party undertakes the commissioning and verifies if the works have been undertaken according to the pre-agreed standard' (L162-163, lifecycle section); E02 L9395-9396 'a government-organized M&V system' (Czech market)"
+
+contract:   # the agreements that establish the commitments
+  epc_contract:
+    core: contract
+    parties: [ctu, esco]
+    term_years: 10
+    status: stated
+    text: "'a contract duration of 10 years' (L329)"
+  grant_agreement:
+    core: contract
+    parties: [op_environment_sfzp, ctu]
+    status: inferred
+    text: "a grant from the operational programme implies a grant agreement; the factsheet says of the Czech Republic that 'the grant agreement is modified following the signature of the EPC contract' (L537-539)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: ctu
+    status: stated
+    what: "refurbishment of the building envelope and changes to the heating and lighting system of nine dormitories; energy savings of 8.9 GWh/year (the box says 'expected'; the factsheet covers guaranteed-savings EPC only, fn 3 L168, and the Czech paragraph speaks of 'guaranteed savings' L309 — guarantee inferred); energy management for 10 years"
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: ctu
+    to: esco
+    status: stated
+    savings_arrangement: guaranteed   # fees not exceeding the guaranteed savings (L308-309)
+    what: "fees over 10 years repaying 'a substantial part of the investment cost and the cost for energy management' (L328-329); amount not given; the Czech model has fees not exceeding guaranteed savings (L308-309)"
+    established_by: epc_contract
+  c3:
+    family: payment_promise
+    from: ctu
+    to: esco
+    status: inferred
+    what: "reimbursement of part of the investment cost out of the grant — 'to the EPC client who reimburses the EPC provider for part of the cost' (L312-313); for CTU the grant is EUR 2.2m (L329-330), so the pass-through is up to 2.2m"
+    established_by: epc_contract
+  c4:
+    family: benefit_promise
+    from: op_environment_sfzp
+    to: ctu
+    status: stated
+    what: grant of EUR 2.2m of the EUR 8.5m project cost (L329-330) from the Cohesion-funded OP for environmental protection (L305-306, L311-312); recipient = client per L311-312 (inferred); Czech scheme pays EPC projects a grant 5 percentage points higher than works contracts (L313-314, generic)
+    established_by: grant_agreement
+  c5:
+    family: funding_promise
+    from: construction_lender
+    to: esco
+    status: generic
+    funding_instrument: loan   # bank loan for construction (L303-304)
+    what: bank loan for the construction period (L303-304)
+  c6:
+    family: payment_promise
+    from: esco
+    to: construction_lender
+    status: inferred
+    what: repayment of the construction loan — a loan implies repayment; the source does not say when or from what (the forfaiting proceeds after completion are the evident but unstated source)
+  c7:
+    family: funding_promise
+    from: forfaiter_bank
+    to: esco
+    status: generic
+    funding_instrument: receivable_purchase   # forfaiting of future receivables (L304-305)
+    what: "purchase of the future receivables after completion of the works, for the duration of the contract (L304-305); 'Forfaiting is the sales of future receivables from the EPC provider to a financial intermediary after commissioning' (L616-617)"
+  c8:
+    family: performance_promise
+    from: esco
+    to: forfaiter_bank
+    status: generic
+    what: "transfer of the right to the client's future payments (the receivables sold) — a right/asset promise under the performance family"
+  c9:
+    family: benefit_promise
+    from: facilitator
+    to: ctu
+    status: generic
+    facilitator_task: [appraisal, tender]   # identifies buildings, prepares the project, supports procurement (L309-311)
+    what: "identifying suitable buildings, preparing the project, supporting the procurement (L309-311), given without a stated client payment; E02 L9394-9395 (Czech market): free consultation centres (EKIS) and 'the documental preparation of projects is subsidized' — a free public-programme service, so benefit_promise (F12)"
+  c11:
+    family: determination_promise
+    from: verifier
+    to: [ctu, esco]
+    status: generic
+    determines: both   # commissioning check (L162-163) and M&V of savings (L141-142)
+    what: commissioning check and verification of the works against the pre-agreed standard (L162-163); savings determined by a predefined M&V protocol (L141-142)
+  c12:
+    family: payment_promise
+    from: [ctu, esco]
+    to: verifier
+    status: unstated
+    what: counter-promise required by duality; source silent (which party pays the verifier is not said)
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c2: fees repay investment from expected savings (E07 L327-329); Czech model 'fees to the EPC provider do not exceed the guaranteed savings' (E07 L308-309), generic, not stated for CTU."}
+  client_sector:
+    value: public
+    status: inferred
+    why: "a university; the Czech paragraph lists 'universities' among the 'public sector entities' using this model (L307); the workshop's focus was public buildings (L107)"
+  partner_form:
+    value: corporate
+    status: default
+    why: "not stated for CTU; E02 Table A46 L9617 rates SPVs 'not in use' in the Czech market (supports the default)"
+  borrower:
+    value: partner
+    status: generic
+    why: 'Czech model: EPC providers take a bank loan for the construction period (L303-304); the box itself is silent'
+  receivable_holder:
+    value: assignee
+    status: generic
+    why: "Czech model: future receivables sold to commercial banks for the duration of the contract (L304-305). Alternative split: E06 L506 (same publisher) says forfaiting relates only to the CAPEX part of the fee and CTU's fee also covers energy management (L328-329); E07 does not restrict the sale, so assignee chosen"
+  collection_placement:
+    value: assignee_direct
+    status: generic
+    why: "conditional default (F09): receivables assigned and E07 silent -> assignee_direct, status generic (E06 L558 'The forfeiter will be reimbursed directly the monthly payments made by the EPC client'). Alternative operator_own if payments still route via the ESCO"
+  aggregation:
+    value: none
+    status: inferred
+    why: "one university, one project of nine dormitories, one 10-year contract (L326-329) — like Bytom's 17 schools. E02 L9407-9408 says municipal and regional projects form 'project pools', but CTU is a single institution"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "not stated; E02 Table A46 L9614 rates mezzanine 'not in use' in the Czech market"
+  assignment_recourse:
+    value: waiver
+    status: generic
+    why: "conditional default (F08): receivables assigned and the source silent on the client's defences -> waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226). Supporting Czech evidence: E02 L9624-9625 names 'Eurostat categorization of receivables as public debt' as the major barrier, which arises when the client's obligation to the assignee is unconditional; E06 fn 8 L566-569 prices forfaiting without irrevocable payment obligations 5% p.a. higher. Alternative performance_exposed (E06 L534-535) only if the source showed the assigned leg varying, which it does not"
+  savings_basis:
+    value: measured
+    status: generic
+    why: "'Savings ... determined by a predefined and transparent measurement and verification protocol' (L141-142); E02 L9395-9396 government-organised M&V system; savings stated as a yearly quantity, not stipulated"
+  grant_recipient:
+    value: client
+    status: inferred
+    why: "the box says the project is part-funded by a grant (L329-330); the Czech paragraph says grants go 'to the EPC client who reimburses the EPC provider for part of the cost' (L311-313)"
+  asset_owner:
+    value: client
+    status: default
+    why: "not stated (public dormitories; default). The factsheet's generic lifecycle allows transfer of the asset from provider to client at contract end (L185-186) but says nothing for CTU"
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "not computable from the source: no EUR value of savings, no fee amount; savings repay only 'a substantial part' of cost (L328) and the grant covers the rest. With the grant given by eu_funds (F03), E15 L5365-5375 excludes it from government financing and deducts it from capex; only the national co-financing share of the OP (E15 L5378-5379), not given, would count. If all 2.2m were government financing its share would be 25.9% of capex — E15 L6904 '> 10% but <= 1/3: HIGH importance'; if all EU, 0%"
+    context: "E02 L9624-9630: Eurostat categorisation of receivables as public debt is the major Czech barrier; providers avoid maintenance risk 'which is needed for the contract to be accepted as off-balance within Eurostat rules'"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public; C1 is the public-sector test
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  dormitories: 9
+  term_years: 10
+  project_cost_eur_m: 8.5
+  grant_eur_m: 2.2
+  expected_savings_gwh_per_year: 8.9
+  derived:
+    grant_share: '2.2 / 8.5 = 0.2588 (25.9%; oracle: published 26%)'
+    non_grant_cost_eur_m: "8.5 - 2.2 = 6.3 (74.1%), to be repaid 'in substantial part' from savings over 10 years"
+    savings_over_term_gwh: 8.9 x 10 = 89
+  market_context_e02:
+    typical_contract_size_eur_m: 1.8
+    typical_duration_years: 10
+    typical_payback_years: 8.5 (14-18 with subsidy support)
+    typical_savings_pct_of_baseline: 30
+  epc_grant_bonus_pct_points:
+    value: 5
+    status: generic
+    text: "'Projects implemented via EPC receive a grant 5 percent points higher' (L313-314)"
+  links:   # R-A17 (architect, 6 Oct): which recorded figure sizes which promise; configuration, read by oe.census.printability
+  - {evidence: "fic-erdf-epc-poland-factsheet-2023.txt:329-330 (project cost EUR 8.5m, of which EUR 2.2m grant); ctu_prague-lod0.yaml:119-120; adjudication n 4", figure: project_cost_eur_m, origin: "linked by adjudication (blind pair)", promise: c1, promise_kind: performance_promise, sizes: outlay, period: once, scale: 1000000, scale_rule: "the key says millions (_m)", scale_status: derived, currency: EUR}
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  ctu: {gives: [c2, c3, c12], receives: [c1, c4, c9, c11], one_way: false}
+  esco: {gives: [c1, c6, c8, c12], receives: [c2, c3, c5, c7, c11], one_way: false}
+  op_environment_sfzp:
+    gives: [c4]
+    receives: []
+    one_way: true
+    reason: benefit promise, unilateral by nature (grant eligibility conditions are not a counter-promise)
+  construction_lender: {gives: [c5], receives: [c6], one_way: false}
+  forfaiter_bank:
+    gives: [c7]
+    receives: [c8]
+    one_way: false
+    reason: "after the sale the forfaiter is the creditor of c2's assigned part (receivable_holder = assignee); its reciprocal c8 is generic from the same passage"
+  facilitator:
+    gives: [c9]
+    receives: []
+    one_way: true
+    reason: "benefit promise, unilateral by nature: the facilitator's service is free or subsidised by the state programme (E02 L9394-9395); the subsidy that pays the facilitator is market-level context, not a deal commitment (F12)"
+  verifier:
+    gives: [c11]
+    receives: [c12]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: which party pays the verifier is not said; recorded as c12 status unstated (F06)'
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: grant_origin_for_eurostat
+  description: "The Eurostat test (C1, E15 L5365-5379) needs the grant's origin — EU programme money (deducted from capex) vs national co-financing (government financing). The CTU grant is one payment from a nationally administered, Cohesion-funded operational programme (L305-306, L311-312): two origins in one grant. Convention F03 fixes the giver's role (eu_funds); the EU/national split is an amount the source does not give."
+  review: 'G01: encoding question + evidence gap; action: rule F03; the EU/national split is a LOD 1 amount'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 rule text now on the NPV basis; CTU remains not computable
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction CZ / EU general government added; C1 applies_here true
+- id: F03
+  title: ESIF/Cohesion grant giver = eu_funds
+  convention: "A grant paid from an ESIF/Cohesion operational programme is given by eu_funds whatever national body administers it (elements_pilot eu_funds = 'EU structural funds and their managing authority'); grant_provider is for national or other non-EU grants. The EU/national co-financing split is an amount (LOD 1), not a role."
+  origin: verdict rule; findings F03; gaps G01
+  applied_here: 'State Environmental Fund re-encoded from grant_provider to eu_funds (party op_environment_sfzp): the grant is paid from the Cohesion-funded OP Environment (L305-306, L311-312)'
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'verifier and facilitator flagged one_way: true with reasons'
+- id: F08
+  title: 'conditional default: assignment_recourse'
+  convention: "receivable_holder in {assignee, split} and source silent -> assignment_recourse = waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226 'continued payment obligations ... regardless of any disputes'); performance_exposed only when the source shows the assigned leg varying with performance."
+  origin: verdict change 3; findings F08; gaps G28
+  applied_here: assignment_recourse waiver kept, status changed from inferred to generic (conditional default)
+- id: F09
+  title: 'conditional default: collection_placement'
+  convention: receivable_holder in {assignee, split} and source silent -> collection_placement = assignee_direct, status generic (E06 L558; E08 Fig 30 L3312-3317).
+  origin: verdict change 3; findings F09; gaps G28
+  applied_here: collection_placement assignee_direct, status generic (conditional default)
+- id: F12
+  title: free public-programme service = benefit_promise
+  convention: 'A service a public programme gives free is a benefit_promise (one_way: true, unilateral by nature); performance_promise + unstated payment only when the client plausibly pays.'
+  origin: verdict rule; findings F12
+  applied_here: "facilitator's service re-encoded as benefit_promise (c9); the unstated client payment c10 dropped"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, eu_funds, lender, forfaiter, facilitator, verifier_mnv]
+  roles_count: 7 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, determination_promise]
+  families_absent: [risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 0, inferred: 4, generic: 5, default: 4}
+  commitments_by_status: {stated: 3, inferred: 2, generic: 5, unstated: 1}
+  one_way_parties: [op_environment_sfzp, facilitator, verifier]
+  parties_count: 7
+  commitments_count: 11
+  below_lod0: {lod1_adds: 'events (construction loan drawdown, works, commissioning, forfaiting sale and loan repayment, grant
+      disbursement and pass-through invoice, annual verification, annual fee), the fee formula, the shortfall rule, the grant-agreement
+      modification after EPC signature (L537-539)', lod2_adds: 'fee variant (Czech public modality: guaranteed first rank plus
+      shared extra savings, E02 L9511-9512), M&V option, the forfaited vs retained fee legs'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): the CTU box (E07 L325-330) allocates no risk; draft A's R1 (E07 L140, generic EPC definition, equal to the default) and R2 (E02 L9629, Czech market-level, contradicts c1) dropped as generic text; the converter derives every row (ENCODING.md)

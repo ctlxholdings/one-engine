@@ -1,0 +1,84 @@
+# Published case "cell_franchise_jackinthebox_item19": Jack in the Box FDD Item 19, FY2025, one
+# franchised unit at the system average unit volume, from the franchisor's own franchising pages
+# (cases/reference/published/cell_franchise_jackinthebox_item19.yaml). USD a unit a year.
+#
+# One period, one unit-year. Each amount is one move of a `transfer` journal against cash:
+#   * sales are the system AUV;
+#   * food, labour, royalty, marketing fee, occupancy and other costs are Item 19 Table 3's
+#     realised percentages of AUV (5.2% royalty and marketing, not the 5.0% contractual rates),
+#     each times the AUV, expensed in the year;
+#   * EBITDAR is earnings before rent: sales less every cost line except occupancy.
+#
+# THE SOURCE DOES NOT RECONCILE, and the figure is read and DIFFERS: the six cost lines leave
+# 22.7% of AUV before occupancy (10.9% after it), against the stated EBITDAR of 17.7% and
+# $338,600, which agree only with each other. The engine reports 22.7% and $434,327.
+# (ebitdar_pct is compared at the oracle's single abs tolerance of 5,000, which cannot fail a
+# percentage; the dollar figure carries the finding.)
+#
+# Set aside: the AUV thirds and the share of units above the average are statistics of the unit
+# distribution, which the inputs (the system average only) say nothing about.
+published: cell_franchise_jackinthebox_item19
+entity: unit
+plant: auv
+case:
+  case: published-jackinthebox-unit
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        food: auv * food_costs / 100
+        labor: auv * total_labor / 100
+        royalty: auv * royalty_pct / 100
+        marketing: auv * marketing_pct / 100
+        rent: auv * occupancy / 100
+        other_costs: auv * other / 100
+  opening:
+    unit:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: unit
+      phase: post
+      declare:
+        sales: income
+        food_costs: expense
+        labor: expense
+        royalty: expense
+        marketing_fee: expense
+        occupancy: expense
+        other_costs: expense
+      moves:
+        sales: {debit: cash, credit: sales, amount: {generator: src, output: auv}}
+        food: {debit: food_costs, credit: cash, amount: {generator: src, output: food}}
+        labor: {debit: labor, credit: cash, amount: {generator: src, output: labor}}
+        royalty: {debit: royalty, credit: cash, amount: {generator: src, output: royalty}}
+        marketing: {debit: marketing_fee, credit: cash, amount: {generator: src, output: marketing}}
+        occupancy: {debit: occupancy, credit: cash, amount: {generator: src, output: rent}}
+        other: {debit: other_costs, credit: cash, amount: {generator: src, output: other_costs}}
+  schemes:
+    pnl:
+      sales: sales
+      food_costs: operating
+      labor: operating
+      royalty: operating
+      marketing_fee: operating
+      other_costs: operating
+      occupancy: rent
+  cuts:
+    ebitdar: {kind: pnl, entity: unit, scheme: pnl, include: [sales, operating]}
+  measures: {}
+figures:
+  ebitdar_at_auv: {cut: ebitdar}
+  ebitdar_pct: {cut: ebitdar, per: src.auv, scale: 0.01}
+not_compared:
+  auv_thirds: "the AUV of each third of the system is a statistic of the unit distribution; the inputs carry the system average only"
+  units_above_system_average: "a statistic of the unit distribution; the inputs carry the system average only"

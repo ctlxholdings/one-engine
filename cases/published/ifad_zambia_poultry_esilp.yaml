@@ -1,0 +1,197 @@
+# Published case "ifad_zambia_poultry_esilp": a smallholder poultry unit under Zambia's E-SLIP
+# "pass-on the gift" model, a without-project year then twenty project years (IFAD/FAO, Economic
+# and Financial Analysis of Rural Investment Projects, vol. 3, case study 4, example 2, Tables 12
+# and 13, pp.72-73; cases/reference/published/ifad_zambia_poultry_esilp.yaml).
+#
+# Every amount is a published input by name (generator `src`). One book, the household's:
+#   * period 0 is the without-project (WOP) column: the household earns its alternative income
+#     (wop_baseline_net_income_K); periods 1 to 20 are project years 1 to 20; the source's
+#     "Yr5-20" column is period 5, every later year repeating it;
+#   * the technical inputs are printed for year 1, year 2 and years 3-20 (three-element series);
+#     period p reads element min(p-1, 2), and the year-2 element for the year-1 vet contribution;
+#   * sales: each year's offtake of hens, roosters and broilers (offtake_*_selling_head,
+#     offtake_broilers_head) at their selling prices, for cash; the hens passed on earn nothing;
+#   * investment, year 1, expensed as the source's net-income row nets it (the table is a cash
+#     budget, not accrual accounts): housing_K, and the one-time veterinary contribution at its
+#     percent of gross revenue (the first selling year's, year 2);
+#   * operating costs each project year, paid in cash: chick feed per head of the chicken stock
+#     (stock_chickens_head), broiler feed per head of the broiler stock (stock_broilers_head),
+#     animal health per head of the whole flock (stock_total_head), miscellaneous at its percent
+#     of the year's gross revenue;
+#   * family labour: family_labour_days_per_year at family_labour_wage_K_per_day, unpaid, so
+#     posted against the household's equity (an imputed cost, no cash); the hired-labour account
+#     is declared and stays nil (the source hires none);
+#   * the WOP income the project displaces is charged every period as an imputed opportunity cost
+#     (against equity, no cash): net income less it is the net incremental benefit, the stream
+#     whose IRR and NPV (discount_rate_pct, year 1 discounted one year) the source reports;
+#   * no tax, no depreciation (the source's table has neither).
+# Return to labour is net income per family-labour day, the benefit/cost ratio revenue per total
+# cost (`per`, over the same costs computed from the inputs).
+# Source findings (read, they differ): the miscellaneous cost of year 1 is printed 4,000 though
+# its own rule (10% of gross revenue) gives nil, there being no sale in year 1; year 4 sales are
+# printed 45,046 though the inputs give years 3-20 one pattern (45,346); chick feed (6,480) and
+# broiler feed (17,314) match no stated head count (3 x 2,700 = 8,100; 9 x 1,890 = 17,010); every
+# total built on them (operating and total costs, net income, incremental benefits, returns,
+# NPV, IRR) inherits the gap. The oracle's notes record the year-1 total investment printed one
+# below its own parts (4,905 against 4,906).
+published: ifad_zambia_poultry_esilp
+entity: farm
+plant: selling_price_broiler_K_per_head
+case:
+  case: published-ifad-zambia-poultry
+  periods: 21
+  phases: [operate]
+  currency: ZMW
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 21
+      inputs: published
+      values:
+        project: (t >= 1)
+        year1: (t == 1)
+        # element min(t-1, 2) of a [year 1, year 2, years 3-20] series; nil in the WOP period
+        hens_sold: lag(offtake_hens_selling_head, t - min(t - 1, 2))
+        roosters_sold: lag(offtake_roosters_selling_head, t - min(t - 1, 2))
+        broilers_sold: lag(offtake_broilers_head, t - min(t - 1, 2))
+        chickens: lag(stock_chickens_head, t - min(t - 1, 2))
+        broilers: lag(stock_broilers_head, t - min(t - 1, 2))
+        flock: lag(stock_total_head, t - min(t - 1, 2))
+        sales: >-
+          hens_sold * selling_price_hen_K_per_head + roosters_sold * selling_price_rooster_K_per_head
+          + broilers_sold * selling_price_broiler_K_per_head
+        # the first selling year's (year 2's) gross revenue: element 1, for every period from 1
+        sales_year2: >-
+          lag(offtake_hens_selling_head, max(0, t - 1)) * selling_price_hen_K_per_head
+          + lag(offtake_roosters_selling_head, max(0, t - 1)) * selling_price_rooster_K_per_head
+          + lag(offtake_broilers_head, max(0, t - 1)) * selling_price_broiler_K_per_head
+        alternative_income: wop_baseline_net_income_K * (t == 0)
+        housing: housing_K * year1
+        vet_contribution: one_time_veterinary_contribution_pct_of_gross_revenue / 100 * sales_year2 * year1
+        feed_chicks: feed_cost_chicks_K_per_head * chickens * project
+        feed_broilers: feed_cost_broilers_K_per_head * broilers * project
+        health: veterinary_cost_K_per_head * flock * project
+        miscellaneous: miscellaneous_expenditure_pct_of_gross_revenue / 100 * sales * project
+        family_labour: family_labour_days_per_year * family_labour_wage_K_per_day * project
+        forgone: {each_period: wop_baseline_net_income_K}
+        total_costs: housing + vet_contribution + feed_chicks + feed_broilers + health + miscellaneous + family_labour
+        # the benefit/cost ratio's denominator; the WOP period has no cost (and no ratio): one there
+        bcr_base: total_costs + (t == 0)
+        rate: discount_rate_pct / 100
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    books:
+      kind: transfer
+      entity: farm
+      phase: operate
+      declare:
+        live_animal_sales: income
+        alternative_income: income
+        housing: expense
+        vet_contribution: expense
+        feed_chicks: expense
+        feed_broilers: expense
+        animal_health: expense
+        miscellaneous: expense
+        family_labour: expense
+        hired_labour: expense            # the source hires none: declared, nothing posted
+        forgone_income: expense
+      moves:
+        alternative: {debit: cash, credit: alternative_income, amount: {generator: src, output: alternative_income}}
+        sales: {debit: cash, credit: live_animal_sales, amount: {generator: src, output: sales}}
+        housing: {debit: housing, credit: cash, amount: {generator: src, output: housing}}
+        vet: {debit: vet_contribution, credit: cash, amount: {generator: src, output: vet_contribution}}
+        feed_chicks: {debit: feed_chicks, credit: cash, amount: {generator: src, output: feed_chicks}}
+        feed_broilers: {debit: feed_broilers, credit: cash, amount: {generator: src, output: feed_broilers}}
+        health: {debit: animal_health, credit: cash, amount: {generator: src, output: health}}
+        misc: {debit: miscellaneous, credit: cash, amount: {generator: src, output: miscellaneous}}
+        family_labour: {debit: family_labour, credit: equity, amount: {generator: src, output: family_labour}}
+        forgone: {debit: forgone_income, credit: equity, amount: {generator: src, output: forgone}}
+  schemes:
+    pnl:
+      live_animal_sales: revenue
+      alternative_income: revenue
+      housing: investment
+      vet_contribution: investment
+      feed_chicks: operating
+      feed_broilers: operating
+      animal_health: operating
+      miscellaneous: operating
+      family_labour: labour
+      hired_labour: labour
+      forgone_income: opportunity
+    lines:
+      live_animal_sales: sales
+      alternative_income: wop
+      housing: housing
+      vet_contribution: vet
+      feed_chicks: feed_chicks
+      feed_broilers: feed_broilers
+      animal_health: health
+      miscellaneous: misc
+      family_labour: family
+      hired_labour: hired
+      forgone_income: opportunity
+  cuts:
+    sales: {kind: pnl, entity: farm, scheme: lines, include: [sales]}
+    housing: {kind: pnl, entity: farm, scheme: lines, include: [housing]}
+    vet: {kind: pnl, entity: farm, scheme: lines, include: [vet]}
+    feed_chicks: {kind: pnl, entity: farm, scheme: lines, include: [feed_chicks]}
+    feed_broilers: {kind: pnl, entity: farm, scheme: lines, include: [feed_broilers]}
+    health: {kind: pnl, entity: farm, scheme: lines, include: [health]}
+    misc: {kind: pnl, entity: farm, scheme: lines, include: [misc]}
+    investment: {kind: pnl, entity: farm, scheme: pnl, include: [investment]}
+    operating: {kind: pnl, entity: farm, scheme: pnl, include: [operating]}
+    family_labour: {kind: pnl, entity: farm, scheme: lines, include: [family]}
+    hired_labour: {kind: pnl, entity: farm, scheme: lines, include: [hired]}
+    total_costs: {kind: pnl, entity: farm, scheme: pnl, include: [investment, operating, labour]}
+    net_income: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, investment, operating, labour]}
+    incremental: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, investment, operating, labour, opportunity]}
+  measures:
+    firr: {measure: irr, cut: incremental}
+    npv: {measure: npv, cut: incremental, rate: {generator: src, output: rate}}
+figures:
+  sales_live_animals_K: {cut: sales, periods: [0, 1, 2, 3, 4, 5]}
+  total_revenues_K: {cut: sales, periods: [0, 1, 2, 3, 4, 5]}
+  investment_housing_K: {cut: housing, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  investment_one_time_veterinary_contribution_K: {cut: vet, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  total_investment_costs_K: {cut: investment, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  operating_feed_chicks_K: {cut: feed_chicks, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  operating_feed_broilers_K: {cut: feed_broilers, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  operating_animal_health_care_K: {cut: health, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  operating_miscellaneous_K: {cut: misc, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  total_operating_costs_K: {cut: operating, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  labour_hired_K: {cut: hired_labour, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  labour_family_K: {cut: family_labour, sign: -1, periods: [0, 1, 2, 3, 4, 5]}
+  total_costs_K.1: {cut: total_costs, sign: -1, at: 1}
+  total_costs_K.2: {cut: total_costs, sign: -1, at: 2}
+  total_costs_K.3: {cut: total_costs, sign: -1, at: 3}
+  total_costs_K.4: {cut: total_costs, sign: -1, at: 4}
+  total_costs_K.5: {cut: total_costs, sign: -1, at: 5}
+  net_income_K: {cut: net_income, periods: [0, 1, 2, 3, 4, 5]}
+  net_incremental_benefits_K.1: {cut: incremental, at: 1}
+  net_incremental_benefits_K.2: {cut: incremental, at: 2}
+  net_incremental_benefits_K.3: {cut: incremental, at: 3}
+  net_incremental_benefits_K.4: {cut: incremental, at: 4}
+  net_incremental_benefits_K.5: {cut: incremental, at: 5}
+  financial_internal_rate_of_return_pct: {measure: firr, scale: 0.01}
+  npv_at_8pct_K: {measure: npv}
+  return_to_labour_K_per_day.1: {cut: net_income, per: src.family_labour_days_per_year, at: 1}
+  return_to_labour_K_per_day.2: {cut: net_income, per: src.family_labour_days_per_year, at: 2}
+  return_to_labour_K_per_day.3: {cut: net_income, per: src.family_labour_days_per_year, at: 3}
+  return_to_labour_K_per_day.4: {cut: net_income, per: src.family_labour_days_per_year, at: 4}
+  return_to_labour_K_per_day.5: {cut: net_income, per: src.family_labour_days_per_year, at: 5}
+  benefit_cost_ratio.1: {cut: sales, per: src.bcr_base, at: 1}
+  benefit_cost_ratio.2: {cut: sales, per: src.bcr_base, at: 2}
+  benefit_cost_ratio.3: {cut: sales, per: src.bcr_base, at: 3}
+  benefit_cost_ratio.4: {cut: sales, per: src.bcr_base, at: 4}
+  benefit_cost_ratio.5: {cut: sales, per: src.bcr_base, at: 5}
+not_compared:
+  npv_at_8pct_usd_approx: >-
+    the source's "about US$1,300" converts the kwacha NPV at an exchange rate the inputs do not
+    carry

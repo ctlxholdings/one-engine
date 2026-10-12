@@ -1,0 +1,126 @@
+# Published case "ext_hay_tamu2023": Coastal bermudagrass hay in North Texas (Extension District
+# 4), one acre for one season, with the source's 100-acre enterprise column (Bennet, Texas A&M
+# AgriLife Extension, 2023 Estimated Costs and Returns per Acre, Coastal Bermudagrass Hay;
+# cases/reference/published/ext_hay_tamu2023.yaml).
+#
+# One period, one acre. Every amount is a published input by name (generator `src`), posted by
+# a `transfer` rulebook:
+#   * the hay, quantity_bales_per_acre bales at bermuda_hay__price_usd_per_bale, sold for cash;
+#   * the ten variable costs are the source's own line costs (the hand-labelled `costs` list:
+#     custom baling and hauling, two fertilizers, herbicide, machinery labour, diesel, two
+#     repair lines, interest on the credit line at its printed amount), paid in cash and
+#     expensed;
+#   * fixed costs: tractor and implement depreciation charged against accumulated_depreciation
+#     (no cash); the interest on the equipment investment is the owner's capital charged at its
+#     opportunity cost and credited to the owner (no cash moves); the land rent is paid;
+#   * no tax.
+# Break-even prices divide a cost total by quantity_bales_per_acre (a physical driver) via
+# `per`; the 100-acre enterprise column is the per-acre books times crop_acres_in_enterprise
+# via `times`.
+#
+# Source finding: the enterprise column is computed from unrounded per-acre costs that the
+# source does not print (repairs, depreciation: 335.41 against 3.35 x 100, 343.55 against
+# 3.44 x 100), so its variable, fixed and specified totals and its return are not the printed
+# per-acre column times 100. Those four figures are read (per-acre books x 100) and differ by
+# 5 to 41 cents; the per-acre unrounded values are not inputs.
+published: ext_hay_tamu2023
+entity: farm
+plant: bermuda_hay__price_usd_per_bale
+case:
+  case: published-ext-hay-tamu2023
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        hay_sales: quantity_bales_per_acre * bermuda_hay__price_usd_per_bale
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        accumulated_depreciation: asset
+        bermuda_hay: income
+        custom_baling: expense
+        custom_hay_hauling: expense
+        fertilizer_18_46_0: expense
+        fertilizer_34_0_0: expense
+        herbicide: expense
+        machinery_labor: expense
+        diesel_fuel: expense
+        repairs_tractors: expense
+        repairs_implements: expense
+        interest_on_credit_line: expense
+        depreciation_tractors: expense
+        depreciation_implements: expense
+        investment_interest_tractors: expense
+        investment_interest_implements: expense
+        rent: expense
+      moves:
+        hay: {debit: cash, credit: bermuda_hay, amount: {generator: src, output: hay_sales}}
+        baling: {debit: custom_baling, credit: cash, amount: {generator: src, output: custom_baling}}
+        hauling: {debit: custom_hay_hauling, credit: cash, amount: {generator: src, output: custom_hay_hauling}}
+        dap: {debit: fertilizer_18_46_0, credit: cash, amount: {generator: src, output: fertilizer_18_46_0}}
+        nitrate: {debit: fertilizer_34_0_0, credit: cash, amount: {generator: src, output: fertilizer_34_0_0}}
+        herbicide: {debit: herbicide, credit: cash, amount: {generator: src, output: herbicide_pre_emerge_bermuda}}
+        labour: {debit: machinery_labor, credit: cash, amount: {generator: src, output: machinery_labor_tractors_self_propelled}}
+        diesel: {debit: diesel_fuel, credit: cash, amount: {generator: src, output: diesel_fuel_tractors_self_propelled}}
+        repairs_tractors: {debit: repairs_tractors, credit: cash, amount: {generator: src, output: repairs_maintenance_tractors}}
+        repairs_implements: {debit: repairs_implements, credit: cash, amount: {generator: src, output: repairs_maintenance_implements}}
+        interest: {debit: interest_on_credit_line, credit: cash, amount: {generator: src, output: interest_on_credit_line}}
+        dep_tractors: {debit: depreciation_tractors, credit: accumulated_depreciation, amount: {generator: src, output: machinery_depreciation_tractors}}
+        dep_implements: {debit: depreciation_implements, credit: accumulated_depreciation, amount: {generator: src, output: machinery_depreciation_implements}}
+        inv_tractors: {debit: investment_interest_tractors, credit: owner_equity, amount: {generator: src, output: equipment_investment_tractors}}
+        inv_implements: {debit: investment_interest_implements, credit: owner_equity, amount: {generator: src, output: equipment_investment_implements}}
+        rent: {debit: rent, credit: cash, amount: {generator: src, output: rent_coastal}}
+  schemes:
+    pnl:
+      bermuda_hay: revenue
+      custom_baling: variable
+      custom_hay_hauling: variable
+      fertilizer_18_46_0: variable
+      fertilizer_34_0_0: variable
+      herbicide: variable
+      machinery_labor: variable
+      diesel_fuel: variable
+      repairs_tractors: variable
+      repairs_implements: variable
+      interest_on_credit_line: variable
+      depreciation_tractors: fixed
+      depreciation_implements: fixed
+      investment_interest_tractors: fixed
+      investment_interest_implements: fixed
+      rent: fixed
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [variable]}
+    above_variable: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [fixed]}
+    specified: {kind: pnl, entity: farm, scheme: pnl, include: [variable, fixed]}
+    above_specified: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable, fixed]}
+  measures: {}
+figures:
+  total_revenue_per_acre: {cut: revenue}
+  total_variable_costs_per_acre: {cut: variable, sign: -1}
+  planned_returns_above_variable_costs_per_acre: {cut: above_variable}
+  breakeven_price_to_cover_variable_costs_usd_per_bale: {cut: variable, sign: -1, per: src.quantity_bales_per_acre}
+  total_fixed_costs_per_acre: {cut: fixed, sign: -1}
+  total_specified_costs_per_acre: {cut: specified, sign: -1}
+  returns_above_specified_costs_per_acre: {cut: above_specified}
+  breakeven_price_to_cover_total_costs_usd_per_bale: {cut: specified, sign: -1, per: src.quantity_bales_per_acre}
+  enterprise_total_100_acres.total_revenue: {cut: revenue, times: src.crop_acres_in_enterprise}
+  enterprise_total_100_acres.total_variable_costs: {cut: variable, sign: -1, times: src.crop_acres_in_enterprise}
+  enterprise_total_100_acres.total_fixed_costs: {cut: fixed, sign: -1, times: src.crop_acres_in_enterprise}
+  enterprise_total_100_acres.total_specified_costs: {cut: specified, sign: -1, times: src.crop_acres_in_enterprise}
+  enterprise_total_100_acres.returns_above_specified_costs: {cut: above_specified, times: src.crop_acres_in_enterprise}

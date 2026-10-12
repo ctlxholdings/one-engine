@@ -1,0 +1,62 @@
+# Published case "energy_diesel_genset_fuel_consumption": one hour of a 500 kVA (400 kW) diesel
+# generator run at 75% load, from the 500 kVA row of a published fuel-consumption chart and its
+# own worked cost example (ASO Genset, "Diesel Generator Fuel Consumption Chart", built on
+# ISO 3046-1:2002 and OEM datasheets; cases/reference/published/energy_diesel_genset_fuel_consumption.yaml).
+#
+# One period is the source's one hour. Every amount is a published input by name (generator `src`):
+#   * the fuel burnt in the hour is fuel_burn_rate litres (76 L/hr at 75% load), bought at
+#     diesel_price a litre and expensed in the hour as fuel (an operating cost, rate x volume,
+#     paid at once); the input costs.fuel_one_hour_at_75pct_load is the transcriber's own product
+#     of those two and is not used, so the books compute the hour's cost themselves;
+#   * the hour's output is power_delivered kW for one hour, i.e. that many kWh (the source's
+#     400 kW x 75% = 300 kW); no electricity is sold: the source prices fuel only, cost side;
+#   * no tax, no capital cost: the source's figures are fuel alone.
+# Readings: the hour's fuel cost (mapped to cost_of_sales) is the P&L fuel line; the fuel cost
+# per kWh is that same line divided by the hour's kWh (`per`, a physical count no ledger holds);
+# the specific consumption (litres per kWh) is a physical rate, read as a driver.
+# The typical $0.30-0.50/kWh range is the article's market range for diesel generation in
+# general, not a figure the 500 kVA row derives, so it is set aside.
+published: energy_diesel_genset_fuel_consumption
+entity: genset
+plant: diesel_price
+case:
+  case: published-diesel-genset-fuel
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        kwh_hour: power_delivered          # kW delivered for one hour
+        litres_per_kwh: fuel_burn_rate / power_delivered
+  opening:
+    genset:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    fuel:
+      type: operating_cost
+      parties: {payer: genset}
+      terms: {annual: 0, unit_rate: {generator: src, output: diesel_price},
+              volume: {generator: src, output: fuel_burn_rate}, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      fuel.expense: opex
+  cuts:
+    fuel_cost: {kind: pnl, entity: genset, scheme: pnl, include: [opex]}
+  measures: {}
+figures:
+  total_fuel_cost_one_hour_usd: {cut: fuel_cost, sign: -1}
+  fuel_cost_per_kwh_usd: {cut: fuel_cost, sign: -1, per: src.kwh_hour}
+  specific_consumption_at_75pct_l_per_kwh: {driver: src.litres_per_kwh}
+not_compared:
+  typical_range_usd_per_kwh: >-
+    the article's general market range for diesel generation cost ($0.30-0.50/kWh), stated for
+    all gensets and fuel prices; nothing in the 500 kVA row or its worked example derives it

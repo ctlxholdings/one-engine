@@ -1,0 +1,237 @@
+# Miniature — Berliner Energiesparpartnerschaft Pool 24 (SPIE), 18 properties of the Land Berlin, expressed at ESCO LOD 0
+#
+# Batch 5, pair A, reviewer's reconciled file (writers X and Y encoded blind; decisions in ../decisions.json).
+# Evidence: one dena project record, re-fetched 1 Oct 2026 by the reviewer (curl, read as text); every quote below was matched
+# against that text. Cited '[DENA | <section>]', quotes of 25 words or fewer, German number format kept as printed.
+#   [DENA] https://www.dena.de/kompetenzzentrum-contracting/energiespar-contracting/anwendungsbeispiele/
+#          dena, 'Anwendungsbeispiele von Energiespar-Contracting', entry 'Berliner Energiesparpartnerschaft Pool 24'.
+# The page is a project summary, not the contract. Every fact carries its status: stated / inferred / default / unstated.
+
+miniature: berlin_pool24
+lod: 0
+case: batch5.D03
+case_kind: deal   # one contract over a pool of 18 properties, signed 25.06.2009
+in_scope: true
+in_scope_why: "The contractor guarantees an annual saving across the pool: 'Einspargarantie: 432.000 Euro pro Jahr (21 Prozent)' [DENA | Basisdaten], under 'Energiespar-Contracting'. A guaranteed-savings contract meets the EED energy performance contracting test (E02 L556-560). The client also pays a top-up because the contractor maintains old plant; the guarantee still anchors the deal"
+
+tests_unused:   # CASE_SPEC_5 unused items; none is forced in
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "The page lists client, adviser and contractor only; nothing is sold on or securitised"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No debt and no hedge are described"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No guarantee of the client's payments; BIM represents the client and promises nothing of its own"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Title is not stated; asset_owner is the default client. The Sondervermögen holds the buildings for the Land; it is the client, not a third party"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The guarantee is a savings amount in EUR per year. The top-up pays for maintenance of old plant, not for an availability or output level; its size is not printed"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: DENA
+  title: "dena Kompetenzzentrum Contracting, 'Anwendungsbeispiele von Energiespar-Contracting', entry 'Berliner Energiesparpartnerschaft Pool 24'"
+  publisher: Deutsche Energie-Agentur GmbH (dena)
+  passage: "https://www.dena.de/kompetenzzentrum-contracting/energiespar-contracting/anwendungsbeispiele/ | entry 'Berliner Energiesparpartnerschaft Pool 24' (text, Basisdaten, Projektbeteiligte, Weitere Daten, Maßnahmen, Merkmale)"
+  oracle: "the printed ratio Einspargarantie / Basisenergiekosten (21 Prozent) is re-computed in numbers.derived"
+  context:
+  - "Berliner Energieagentur GmbH is listed under 'Beratung' (adviser) with no promise stated: context (batch-5 ruling on advisers and energy agencies)"
+  - "BIM Berliner Immobilienmanagement GmbH represents the client: 'Sondervermögen Immobilien des Landes Berlin vertreten durch die BIM Berliner Immobilienmanagement GmbH' [DENA | Projektbeteiligte]. Legal representation, no promise of its own: carried in the authority's name, not a party"
+  - "The 1996 predecessor partnerships: 'Nach Ablauf der ersten Verträge im Jahr 2008 wurden die Objekte in eine Folgeausschreibung aufgenommen' [DENA | text]. Outside this contract"
+  notes:
+  - "Contradiction on the page: 'Haushaltsentlastung: 20.820.000 Euro pro Jahr' [DENA | Weitere Daten] against 'keine Haushaltsentlastung möglich ist, sondern aufgrund des großen Anlagenbestandes eine Zuzahlung benötigt wird' [DENA | Maßnahmen]. The figure is 9,9 times the whole base energy cost; the text is used, the figure is recorded and not used"
+  - "Two bases: the text halves energy costs 'Bezogen auf das Jahr 1996' [DENA | text]; the 21 % guarantee is against the current base cost of 2,1 Mio. Euro. Not mixed"
+  - "Baseline unit as printed: 'Baseline-Verbrauch: 21.232 MW/a Wärme, 7.548 MWh/a Strom' [DENA | Weitere Daten]. 'MW/a' is probably MWh/a; recorded as printed"
+  - "CHP units are installed 'in allen gasversorgten Objekten' [DENA | Maßnahmen]; what happens to their electricity is not stated, so no grid_buyer"
+  - "The page gives no fee formula, no top-up amount, no shortfall rule, no financier and no M&V party"
+
+jurisdiction:   # header field, not a setting (F02); dated at financial close
+  country: Germany
+  iso: DE
+  eu_member: true
+  client_eu_general_government_at_close: true
+  as_of: "contract signed 25.06.2009: 'Vertragsschluss: 25.06.2009' [DENA | Weitere Daten]"
+  status: stated
+  why: "The source names a public body: the Sondervermögen Immobilien des Landes Berlin, typed 'Auftraggeber: Land' [DENA | Merkmale]. Germany was an EU member in 2009"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the energy-saving contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 37 (a list = several roles, home role first; F13); groups computed from the role(s)
+  sondervermoegen_berlin:
+    entity: land_berlin
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Sondervermögen Immobilien des Landes Berlin, represented by BIM Berliner Immobilienmanagement GmbH
+    text: "listed as 'Auftraggeber' [DENA | Projektbeteiligte]; 'Auftraggeber: Land' [DENA | Merkmale]; 'Die Immobilien werden von der BIM im Auftrag des Landes Berlin verwaltet' [DENA | Liegenschaft(en)]"
+  spie:
+    entity: spie_energy_solutions
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: SPIE Energy Solutions GmbH, Energy Solutions Nordost, Berlin
+    text: "listed as 'Contractor' [DENA | Projektbeteiligte]; installs, maintains old plant ('Der Contractor ist zudem für die Instandhaltung der entsprechenden Altanlagen zuständig' [DENA | Maßnahmen]) and guarantees the savings. No separate operator is named, so no operator_om party"
+
+contract:   # the agreements that establish the commitments
+  esc_contract:
+    core: contract
+    parties: [sondervermoegen_berlin, spie]
+    status: stated
+    note: "'Contracting-Modell: Energiespar-Contracting' [DENA | Basisdaten]; 'Vertragsschluss: 25.06.2009'; Hauptleistungsphase ': 01/2011 bis 12/2020' (the page breaks the line before the colon) [DENA | Weitere Daten]; 'Verfahren: Einstufig'"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: spie
+    to: sondervermoegen_berlin
+    status: stated
+    what: "installs hydraulic balancing, heating-circuit optimisation, high-efficiency pumps, oil-to-gas conversion with some boiler renewals, CHP units in all gas-supplied properties and a new building control system linked to the contractor's control room; maintains the old plant [DENA | Maßnahmen]; guarantees 'Einspargarantie: 432.000 Euro pro Jahr (21 Prozent)' [DENA | Basisdaten] across 18 properties, 01/2011-12/2020. Its own funding of the 'Investition: 2,4 Mio. Euro' sits inside this promise (F05)"
+    established_by: esc_contract
+  c2:
+    family: payment_promise
+    from: sondervermoegen_berlin
+    to: spie
+    status: inferred
+    what: "pays the contractor during the performance phase, including a top-up the page states is needed ('eine Zuzahlung benötigt wird' [DENA | Maßnahmen]) because of the old-plant maintenance. That the client pays is inferred from the model; amount, formula and the top-up's size are not printed"
+    established_by: esc_contract
+  c3:
+    family: determination_promise
+    from: unstated
+    to: [sondervermoegen_berlin, spie]
+    status: unstated
+    what: "establishes the achieved savings against the guarantee (F21). A baseline is printed ('Baseline-Verbrauch') but no verifier or method"
+    established_by: esc_contract
+
+settings:   # the 13 LOD 0 facets, in vocabulary order
+  payment_basis: {value: savings, status: inferred, why: "'Energiespar-Contracting' with an 'Einspargarantie' in EUR per year [DENA | Basisdaten]; the top-up ('Zuzahlung') is for maintenance and its size is not printed. If it dominated the payments the value could shift; not determinable"}
+  client_sector: {value: public, status: stated, why: "'Auftraggeber: Land' [DENA | Merkmale]"}
+  partner_form: {value: corporate, status: inferred, why: "SPIE Energy Solutions GmbH is a standing company named with a regional unit; the page does not say it is not a deal SPV"}
+  borrower: {value: partner, status: default, why: "no loan, lease or equity is named; ENCODING.md fallback partner"}
+  receivable_holder: {value: partner, status: default, why: "no assignment of the client's payments is mentioned"}
+  collection_placement: {value: operator_own, status: default, why: "nothing assigned and no escrow; vocabulary default"}
+  aggregation: {value: none, status: inferred, why: "one client, one contract covering several buildings; the source's own 'Pool-Projekt: ja' / 'Gebäudepool' names a building pool, which the terms dictionary rules a false friend of aggregation=pool (pool = several clients' contracts or loans financed together; same as bytom_schools)"}
+  debt_seniority: {value: senior, status: default, why: "no debt is stated"}
+  assignment_recourse: {value: not_applicable, status: default, why: "nothing assigned"}
+  savings_basis: {value: measured, status: default, why: "a consumption baseline is printed, which fits measured savings, but how savings are determined is not stated (a deemed scheme also has a baseline); vocabulary default kept"}
+  grant_recipient: {value: none, status: stated, why: "'mit Baukostenzuschuss: nein' [DENA | Merkmale]; no grant is mentioned"}
+  asset_owner: {value: client, status: default, why: "title is not stated; ENCODING.md fallback"}
+  bill_custody: {value: client, status: default, why: "who pays the energy bill is not stated; vocabulary default"}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2578-2582)
+    applies_here: true
+    this_case: "applies (special fund of the Land Berlin, EU at close); outcome undetermined: the payments, including the top-up, are not published. Guaranteed savings 432.000 Euro/yr x 10 years = 4,32 Mio. Euro nominal; no government contribution ('mit Baukostenzuschuss: nein'). A stated top-up beyond the savings points toward payments exceeding the guarantee, but without amounts the test cannot be run"
+    source: E15 L2576-2582, L6930-6943; RULINGS.md ruling 3
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1"
+    applies_here: false
+    this_case: "public client; asset_owner is the default client"
+    source: E02 L3293-3295; RULINGS.md ruling 7
+
+numbers:   # published figures as printed, with units; derived values with arithmetic
+  contract_signed: {value: '2009-06-25', unit: date, source: "'Vertragsschluss: 25.06.2009' [DENA | Weitere Daten]"}
+  performance_phase: {value: 01/2011 to 12/2020, unit: month range, source: "Hauptleistungsphase ': 01/2011 bis 12/2020' [DENA | Weitere Daten]"}
+  base_energy_costs: {value: 2100000, unit: 'EUR/yr, net', source: "'Basisenergiekosten: 2,1 Mio. Euro pro Jahr' '(Kostenangaben netto)' [DENA | Basisdaten]"}
+  guaranteed_savings: {value: 432000, unit: EUR/yr, source: "'Einspargarantie: 432.000 Euro pro Jahr (21 Prozent)' [DENA | Basisdaten]"}
+  guaranteed_savings_pct: {value: 21, unit: '% of base energy costs', source: same line}
+  investment: {value: 2400000, unit: EUR, source: "'Investition: 2,4 Mio. Euro' [DENA | Basisdaten]"}
+  properties: {value: 18, unit: properties, source: "'Anzahl Liegenschaften: 18' [DENA | Weitere Daten]"}
+  baseline_consumption: {value: '21.232 heat; 7.548 electricity', unit: 'MW/a (as printed) and MWh/a', source: "'Baseline-Verbrauch: 21.232 MW/a Wärme, 7.548 MWh/a Strom' [DENA | Weitere Daten]"}
+  co2_saving: {value: 2208, unit: t/yr, source: "'2.208 Tonnen pro Jahr' [DENA | Weitere Daten]", note: the text says 'über 2.200 Tonnen jährlich'}
+  budget_relief_as_printed: {value: 20820000, unit: 'EUR/yr, NOT USED', source: "'Haushaltsentlastung: 20.820.000 Euro pro Jahr' [DENA | Weitere Daten]", note: contradicts the text and the base cost}
+  derived:
+    savings_pct_check: "432.000 / 2.100.000 = 20,57 %, printed 21 % (closes on rounding)"
+    performance_phase_length: "01/2011 to 12/2020 = 120 months = 10 years (a count)"
+    guarantee_over_phase: "432.000 x 10 = 4.320.000 Euro nominal vs investment 2.400.000 Euro: ratio 1,8; simple payback 2.400.000 / 432.000 = 5,6 years"
+    budget_relief_check: "20.820.000 / 432.000 = 48,2 times the guarantee; 20.820.000 / 2.100.000 = 9,9 times the whole base energy cost; cannot be a yearly relief, and the text says none. Source error likely; not corrected"
+    pre_phase: "signature 06/2009 to start 01/2011 = 19 months (a count)"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  sondervermoegen_berlin: {gives: [c2], receives: [c1, c3], one_way: false}
+  spie: {gives: [c1], receives: [c2, c3], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification (reviewer ids in ../gaps.json)
+- kind: maintenance_top_up
+  description: "The client pays a top-up because the contractor maintains old plant. LOD 0 carries it inside c2 and c1; how a savings payment and a maintenance top-up combine is fee structure (LOD 1-2), no new term (A5-G03)"
+  classification: below LOD 0
+- kind: page_contradiction
+  description: "Haushaltsentlastung 20.820.000 Euro/yr against the text 'keine Haushaltsentlastung möglich'; the stated text is used (A5-G05)"
+  classification: evidence gap
+- kind: fee_funding_verifier
+  description: "Fee formula, top-up amount, financier of the 2,4 Mio. Euro, verifier and penalties are not on the page (A5-G04)"
+  classification: evidence gap
+
+conventions_applied:   # what this file assumes beyond elements.yaml
+- id: B5-advisers
+  title: advisers and energy agencies are context
+  convention: "dena, Berliner Energieagentur, KEA-BW, eta, CDM Consult are source.context unless the source states a promise by them"
+  origin: REVIEW_SPEC_5 rulings
+  applied_here: "Berliner Energieagentur in source.context; BIM is the client's legal representative, carried in the client's name"
+- id: B5-pool
+  title: aggregation from the source's own flag
+  convention: "aggregation pool when the source says the deal covers a pool of buildings; record a contradiction and take the stated flag"
+  origin: REVIEW_SPEC_5 rulings
+  applied_here: "'Pool-Projekt: ja', 18 properties: pool, stated; no contradiction"
+- id: F02
+  title: jurisdiction header, C1 trigger
+  convention: "Jurisdiction dated at financial close; German public client = EU general government, stated when a public body is named; C1 outcome undetermined when payments are not published"
+  origin: RULINGS.md ruling 4; REVIEW_SPEC_5 rulings
+  applied_here: "true, stated; C1 applies, outcome undetermined"
+- id: F05
+  title: provider's own capital and maintenance inside performance_promise
+  convention: "Under one service contract the provider's own capital and duties sit inside its performance_promise"
+  origin: ENCODING.md
+  applied_here: "investment and old-plant maintenance inside c1"
+- id: F21
+  title: determination_promise required
+  convention: "A determination_promise is required when a payment depends on savings; from the literal unstated when no verifier is named"
+  origin: ENCODING.md; REVIEW_SPEC_5 rulings
+  applied_here: "c3 from unstated"
+- id: ENC
+  title: fallbacks when the source is silent
+  convention: "Silent settings take the ENCODING.md fallback with status default"
+  origin: ENCODING.md
+  applied_here: "borrower, receivable_holder, collection_placement, debt_seniority, assignment_recourse, savings_basis, asset_owner, bill_custody"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco]
+  roles_count: 2 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [determination_promise]
+  settings_by_status: {stated: 2, inferred: 3, generic: 0, default: 8}
+  commitments_by_status: {stated: 1, inferred: 1, generic: 0, unstated: 1}
+  one_way_parties: []
+  parties_count: 2
+  commitments_count: 3
+  below_lod0: {lod1_adds: 'events (signature 06/2009, works, start 01/2011, annual savings determination and top-up payment,
+      end 12/2020); one contract over 18 properties', lod2_adds: 'fee formula and top-up, baseline (21.232 / 7.548) and adjustments,
+      shortfall and surplus rules'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "cases/berlin_pool24-lod0.yaml:15", why: "the dena page prints SPIE's pool-wide savings guarantee ('Einspargarantie: 432.000 Euro pro Jahr (21 Prozent)'); equal to the default but stated. A and B agree (B had written the party id spie, corrected to the role)"}
+  - {category: R2, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "cases/berlin_pool24-lod0.yaml:93", why: "the page says the contractor also maintains the existing old plant ('Der Contractor ist zudem für die Instandhaltung der entsprechenden Altanlagen zuständig'), for which the client pays a top-up; equal to the default but stated. A and B agree"}

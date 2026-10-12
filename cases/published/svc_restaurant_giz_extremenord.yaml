@@ -1,0 +1,71 @@
+# Published case "svc_restaurant_giz_extremenord": a small restaurant in Cameroon's Far North
+# (boules, porridge, breakfasts), 330 working days a year, year 3 of its three-year business plan
+# (GIZ / PARSE, Étude sur la catégorisation des AGR, Région de l'Extrême-Nord, Tableaux 36-38,
+# pp.35-36; cases/reference/published/svc_restaurant_giz_extremenord.yaml).
+#
+# Every amount is a published input by name (generator `src`). One book, the restaurant's, year 3
+# (the steady year: the installation cost is fully deducted by then):
+#   * sales: the year's meals (sale.quantity, the three products' monthly counts times twelve)
+#     at the blended price a meal (sale.price), for cash;
+#   * the recurring charges (costs.charges_annuelles_recurrentes: wages, transport, food, rent,
+#     electricity, printed as TOTAL 2) paid and expensed in the year;
+#   * the flat discharge tax (impot_liberatoire), paid in the year;
+#   * the year's net is sales less both.
+# Set aside, as the inputs do not carry what they need: the installation cost (TOTAL 1, its
+# fourteen lines are not inputs), the total cost built on it, and the year 1 and 2 nets (which
+# deduct 250,000 and 257,000 of it).
+published: svc_restaurant_giz_extremenord
+entity: restaurant
+plant: charges_annuelles_recurrentes
+case:
+  case: published-giz-restaurant-extremenord
+  periods: 1
+  phases: [operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        sales: quantity * price
+  opening:
+    restaurant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year3:
+      kind: transfer
+      entity: restaurant
+      phase: operate
+      declare: {meal_sales: income, recurring_charges: expense, impot_liberatoire: expense}
+      moves:
+        sales: {debit: cash, credit: meal_sales, amount: {generator: src, output: sales}}
+        charges: {debit: recurring_charges, credit: cash, amount: {generator: src, output: charges_annuelles_recurrentes}}
+        tax: {debit: impot_liberatoire, credit: cash, amount: {generator: src, output: impot_liberatoire}}
+  schemes:
+    pnl:
+      meal_sales: revenue
+      recurring_charges: charges
+      impot_liberatoire: tax
+  cuts:
+    revenue: {kind: pnl, entity: restaurant, scheme: pnl, include: [revenue]}
+    charges: {kind: pnl, entity: restaurant, scheme: pnl, include: [charges]}
+    tax: {kind: pnl, entity: restaurant, scheme: pnl, include: [tax]}
+    net: {kind: pnl, entity: restaurant, scheme: pnl, include: [revenue, charges, tax]}
+  measures: {}
+figures:
+  production_annuelle_brute_fcfa: {cut: revenue}
+  charges_recurrentes_fcfa: {cut: charges, sign: -1}
+  impot_liberatoire_fcfa: {cut: tax, sign: -1}
+  net_annee_3_fcfa: {cut: net}
+not_compared:
+  charges_fixes_installation_fcfa: &install >-
+    the installation cost (TOTAL 1) is printed as fourteen lines none of which is among the inputs
+  cout_total_fcfa: *install
+  net_annee_1_fcfa: &deduct >-
+    deducts part of the installation cost (250,000 in year 1, 257,000 in year 2), which the inputs
+    do not carry
+  net_annee_2_fcfa: *deduct

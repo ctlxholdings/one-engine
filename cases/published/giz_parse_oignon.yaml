@@ -1,0 +1,82 @@
+# Published case "giz_parse_oignon": irrigated onion on one hectare, one production cycle (GIZ /
+# PARSE, Métiers Rentables, pp.29-30; cases/reference/published/giz_parse_oignon.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the harvest: valeurs_des_produits_qte_sacs sacks at valeurs_des_produits_cout_unitaire_fcfa_par_sac
+#     a sack, sold for cash;
+#   * the costs: the source's fourteen table lines, each its own quantity times unit cost (land
+#     rent, clearing, ploughing, sowing, weeding, irrigation fuel, NPK, urea, fungicide, spreading
+#     labour, herbicide, treatment labour, harvest labour, transport), paid and expensed in the
+#     cycle, posted as one cycle-cost line;
+#   * the prose figures (prose_*) are the source's own restated totals, not lines, and are not
+#     posted; no equipment, financing or tax.
+# valeurs_des_produits_fcfa (mapped to revenue) is the cycle's sales, total_des_charges_fcfa
+# (cost_of_sales) its costs, marge_beneficiaire_fcfa (gross_margin) its profit.
+#
+# The source contradicts itself twice, and the case keeps both figures read, so both differ:
+#   * its fourteen lines sum to 560,400, but its table prints "TOTAL DES CHARGES" 709,000 (a 148,600
+#     gap no visible line explains; its prose repeats 709,000 as the starting investment), so
+#     total_des_charges_fcfa reads 560,400;
+#   * its table prints the margin 1,116,000, a transposed-digit typo of its own prose's 1,166,000
+#     (1,875,000 - 709,000); on the itemised lines the margin is 1,314,600, which is what the books
+#     read. No input carries the missing 148,600, so neither printed total can be derived.
+published: giz_parse_oignon
+entity: farm
+plant: valeurs_des_produits_cout_unitaire_fcfa_par_sac
+case:
+  case: published-giz-parse-oignon
+  periods: 1
+  phases: [operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        cycle_costs: >-
+          location_terrain_qte * location_terrain_cout_unitaire_fcfa
+          + defrichage_qte * defrichage_cout_unitaire_fcfa
+          + labour_qte * labour_cout_unitaire_fcfa
+          + semis_qte * semis_cout_unitaire_fcfa
+          + sarclage_manuel_qte * sarclage_manuel_cout_unitaire_fcfa
+          + carburant_arrosage_qte * carburant_arrosage_cout_unitaire_fcfa
+          + engrais_npk_22_10_15_qte * engrais_npk_22_10_15_cout_unitaire_fcfa
+          + uree_46pct_qte * uree_46pct_cout_unitaire_fcfa
+          + fongicides_insecticide_semence_qte * fongicides_insecticide_semence_cout_unitaire_fcfa
+          + main_doeuvre_epandage_engrais_qte * main_doeuvre_epandage_engrais_cout_unitaire_fcfa
+          + herbicide_roundup_durion_qte * herbicide_roundup_durion_cout_unitaire_fcfa
+          + main_doeuvre_traitement_qte * main_doeuvre_traitement_cout_unitaire_fcfa
+          + main_doeuvre_recolte_qte * main_doeuvre_recolte_cout_unitaire_fcfa
+          + transport_qte * transport_cout_unitaire_fcfa
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    onions:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: valeurs_des_produits_qte_sacs},
+              price: {generator: src, output: valeurs_des_produits_cout_unitaire_fcfa_par_sac},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    cycle:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: cycle_costs}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      onions.revenue: revenue
+      cycle.expense: cost_of_sales
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    costs: {kind: pnl, entity: farm, scheme: pnl, include: [cost_of_sales]}
+    margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, cost_of_sales]}
+  measures: {}
+figures:
+  valeurs_des_produits_fcfa: {cut: revenue}
+  total_des_charges_fcfa: {cut: costs, sign: -1}
+  marge_beneficiaire_fcfa: {cut: margin}

@@ -1,0 +1,224 @@
+# Miniature — Bundesagentur für Arbeit Frankfurt, Kundenzentrum Ost, guaranteed-savings energy-saving contract (Siemens), expressed at ESCO LOD 0
+#
+# Batch 5, pair A, reviewer's reconciled file (writers X and Y encoded blind; decisions in ../decisions.json).
+# Evidence: one dena project record, re-fetched 1 Oct 2026 by the reviewer (curl, read as text); every quote below was matched
+# against that text. Cited '[DENA | <section>]', quotes of 25 words or fewer, German number format kept as printed.
+#   [DENA] https://www.dena.de/kompetenzzentrum-contracting/energiespar-contracting/anwendungsbeispiele/
+#          dena, 'Anwendungsbeispiele von Energiespar-Contracting', entry 'Bundesagentur für Arbeit Frankfurt'.
+# The page is a project summary, not the contract. Every fact carries its status: stated / inferred / default / unstated.
+
+miniature: ba_frankfurt_kundenzentrum_ost
+lod: 0
+case: batch5.D05
+case_kind: deal   # one named contract, signed 01.04.2005
+in_scope: true
+in_scope_why: "The contractor invested and guarantees an annual saving: 'Einspargarantie: 35.000 Euro pro Jahr (14,9 Prozent)' [DENA | Basisdaten]; 'Der Energiedienstleister hat in technische Einsparmaßnahmen investiert' [DENA | text]. A guaranteed-savings contract meets the EED energy performance contracting test (E02 L556-560)"
+
+tests_unused:   # CASE_SPEC_5 unused items; none is forced in
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "The page lists client, adviser and contractor only; nothing is sold on or securitised"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No debt and no hedge are described"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No guarantee of the client's payments; the federal user (BA) is named but promises nothing"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Title is not stated; asset_owner is the default client. No lessor or fund appears"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The guarantee is a savings amount in EUR per year, not an availability, output or comfort level"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: DENA
+  title: "dena Kompetenzzentrum Contracting, 'Anwendungsbeispiele von Energiespar-Contracting', entry 'Bundesagentur für Arbeit Frankfurt'"
+  publisher: Deutsche Energie-Agentur GmbH (dena)
+  passage: "https://www.dena.de/kompetenzzentrum-contracting/energiespar-contracting/anwendungsbeispiele/ | entry 'Bundesagentur für Arbeit Frankfurt' (text, Basisdaten, Projektbeteiligte, Weitere Daten, Maßnahmen, Merkmale)"
+  oracle: "the printed ratio Einspargarantie / Basisenergiekosten (14,9 Prozent) is re-computed in numbers.derived"
+  context:
+  - "dena is listed under 'Beratung' (adviser) with no promise stated: context (batch-5 ruling on advisers and energy agencies)"
+  - "Bundesagentur für Arbeit (BA), the building's user: 'Das Kundenzentrum Ost ist eines von insgesamt fünf Standorten der Arbeitsagentur in Frankfurt am Main' [DENA | Liegenschaft(en)]. Not among the 'Projektbeteiligte' and no promise stated, so not encoded; occupant would carry it if a promise appeared"
+  notes:
+  - "Who contracts: 'Projektbeteiligte' names the Hessisches Baumanagement, Regionalniederlassung Nord (Kassel) as 'Auftraggeber', while Merkmale type the client 'Auftraggeber: Bund' and the headline names the BA. Read as a Land building agency contracting for a federal user; the page does not say on whose budget"
+  - "'Haushaltsentlastung: 0 Euro pro Jahr' [DENA | Weitere Daten] is printed without a definition. With the 35.000 Euro guarantee it suggests the payments absorb the guaranteed saving during the phase; not encoded as an amount"
+  - "Measures include user training and energy controlling: 'Nutzermotivation, Monitoring und Energiecontrolling' [DENA | Maßnahmen]; inside c1"
+  - "The page gives no fee formula, no shortfall rule, no financier and no M&V party"
+
+jurisdiction:   # header field, not a setting (F02); dated at financial close
+  country: Germany
+  iso: DE
+  eu_member: true
+  client_eu_general_government_at_close: true
+  as_of: "contract signed 01.04.2005: 'Vertragsschluss: 01.04.2005' [DENA | Weitere Daten]"
+  status: stated
+  why: "The source names a public body as Auftraggeber (Hessisches Baumanagement) and types the client 'Auftraggeber: Bund' [DENA | Merkmale]. Germany was an EU member in 2005"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the energy-saving contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 37 (a list = several roles, home role first; F13); groups computed from the role(s)
+  hessisches_baumanagement:
+    entity: bund_de
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Hessisches Baumanagement, Regionalniederlassung Nord, Kassel
+    text: "listed as 'Auftraggeber' [DENA | Projektbeteiligte]; 'Auftraggeber: Bund' [DENA | Merkmale]. A public building agency contracting for a federal user"
+  siemens:
+    entity: siemens_ag
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: Siemens AG, Siemens Deutschland, Building Technologies Division, Frankfurt am Main
+    text: "listed as 'Contractor' [DENA | Projektbeteiligte]; 'Der Energiedienstleister hat in technische Einsparmaßnahmen investiert' [DENA | text]; guarantees the savings"
+
+contract:   # the agreements that establish the commitments
+  esc_contract:
+    core: contract
+    parties: [hessisches_baumanagement, siemens]
+    status: stated
+    note: "'Contracting-Modell: Energiespar-Contracting' [DENA | Basisdaten]; 'Vertragsschluss: 01.04.2005'; Hauptleistungsphase ': 06/2006 bis 05/2015' (the page breaks the line before the colon) [DENA | Weitere Daten]; 'Verfahren: Zweistufig'"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: siemens
+    to: hessisches_baumanagement
+    status: stated
+    what: "invests in and delivers heating hydraulics, demand-based ventilation for canteen, kitchen and meeting rooms, a new building control system, lighting, taps, user motivation and monitoring [DENA | text, Maßnahmen]; guarantees 'Einspargarantie: 35.000 Euro pro Jahr (14,9 Prozent)' [DENA | Basisdaten], 06/2006-05/2015. Its own investment of 'Investition: 222.000 Euro' sits inside this promise (F05)"
+    established_by: esc_contract
+  c2:
+    family: payment_promise
+    from: hessisches_baumanagement
+    to: siemens
+    status: inferred
+    what: "pays the contractor during the performance phase. Inferred from the contracting model; amount and formula are not printed"
+    established_by: esc_contract
+  c3:
+    family: determination_promise
+    from: unstated
+    to: [hessisches_baumanagement, siemens]
+    status: unstated
+    determines: savings   # achieved savings against the guarantee
+    what: "establishes the achieved savings against the guarantee (F21). The page mentions 'Monitoring und Energiecontrolling' but names no verifier"
+    established_by: esc_contract
+
+settings:   # the 13 LOD 0 facets, in vocabulary order
+  payment_basis: {value: savings, status: inferred, why: "'Energiespar-Contracting' with an 'Einspargarantie' in EUR per year [DENA | Basisdaten]; what the client pays for is not printed"}
+  client_sector: {value: public, status: stated, why: "'Auftraggeber: Bund' [DENA | Merkmale]; the contracting body is a public building agency"}
+  partner_form: {value: corporate, status: inferred, why: "Siemens AG, named with a division; the page does not say it is not a deal SPV"}
+  borrower: {value: partner, status: default, why: "the contractor 'investiert' but no loan, lease or equity is named; ENCODING.md fallback partner"}
+  receivable_holder: {value: partner, status: default, why: "no assignment of the client's payments is mentioned"}
+  collection_placement: {value: operator_own, status: default, why: "nothing assigned and no escrow; vocabulary default"}
+  aggregation: {value: none, status: stated, why: "'Pool-Projekt: nein' [DENA | Merkmale]; 'Anzahl Liegenschaften: 1' [DENA | Weitere Daten]"}
+  debt_seniority: {value: senior, status: default, why: "no debt is stated"}
+  assignment_recourse: {value: not_applicable, status: default, why: "nothing assigned"}
+  savings_basis: {value: measured, status: default, why: "how savings are determined is not stated; vocabulary default"}
+  grant_recipient: {value: none, status: stated, why: "'mit Baukostenzuschuss: nein' [DENA | Merkmale]; no grant is mentioned"}
+  asset_owner: {value: client, status: default, why: "title is not stated; ENCODING.md fallback"}
+  bill_custody: {value: client, status: default, why: "who pays the energy bill (the agency or the BA as user) is not stated; vocabulary default"}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2578-2582)
+    applies_here: true
+    this_case: "applies (public building agency for a federal user, EU at close); outcome undetermined: the payments are not published. Guaranteed savings 35.000 Euro/yr x 9 years = 315.000 Euro nominal; no government contribution ('mit Baukostenzuschuss: nein'). 'Haushaltsentlastung: 0' hints that payments equal the guaranteed saving, which would sit at the threshold, but it is not a published payment"
+    source: E15 L2576-2582, L6930-6943; RULINGS.md ruling 3
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1"
+    applies_here: false
+    this_case: "public client; asset_owner is the default client"
+    source: E02 L3293-3295; RULINGS.md ruling 7
+
+numbers:   # published figures as printed, with units; derived values with arithmetic
+  contract_signed: {value: '2005-04-01', unit: date, source: "'Vertragsschluss: 01.04.2005' [DENA | Weitere Daten]"}
+  performance_phase: {value: 06/2006 to 05/2015, unit: month range, source: "Hauptleistungsphase ': 06/2006 bis 05/2015' [DENA | Weitere Daten]"}
+  base_energy_costs: {value: 235000, unit: 'EUR/yr, net', source: "'Basisenergiekosten: 235.000 Euro pro Jahr' '(Kostenangaben netto)' [DENA | Basisdaten]"}
+  guaranteed_savings: {value: 35000, unit: EUR/yr, source: "'Einspargarantie: 35.000 Euro pro Jahr (14,9 Prozent)' [DENA | Basisdaten]", note: the text says 'um 35.000 Euro jährlich reduziert'}
+  guaranteed_savings_pct: {value: 14.9, unit: '% of base energy costs', source: same line}
+  investment: {value: 222000, unit: EUR, source: "'Investition: 222.000 Euro' [DENA | Basisdaten]"}
+  budget_relief: {value: 0, unit: EUR/yr, source: "'Haushaltsentlastung: 0 Euro pro Jahr' [DENA | Weitere Daten]", note: term not defined on the page}
+  co2_saving: {value: 148, unit: t/yr (12,0 %), source: "'148 Tonnen pro Jahr (12,0 Prozent)' [DENA | Weitere Daten]"}
+  floor_area: {value: 27000, unit: m2 BGF, source: "'Fläche: 27.000 m² BGF' [DENA | Weitere Daten]"}
+  derived:
+    savings_pct_check: "35.000 / 235.000 = 14,89 %, printed 14,9 % (closes)"
+    performance_phase_length: "06/2006 to 05/2015 = 108 months = 9 years (a count)"
+    guarantee_over_phase: "35.000 x 9 = 315.000 Euro nominal vs investment 222.000 Euro: ratio 1,42; simple payback 222.000 / 35.000 = 6,3 years, inside the phase"
+    pre_phase: "signature 04/2005 to start 06/2006 = 14 months (a count)"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  hessisches_baumanagement: {gives: [c2], receives: [c1, c3], one_way: false}
+  siemens: {gives: [c1], receives: [c2, c3], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification (reviewer ids in ../gaps.json)
+- kind: contracting_body_vs_user
+  description: "A Land building agency contracts for a federal user. LOD 0 already carries this as authority plus occupant; the occupant is not encoded only because the page states no promise by the BA (A5-G07)"
+  classification: encoding question
+- kind: fee_funding_verifier
+  description: "Fee formula, financier of the 222.000 Euro, verifier and penalties are not on the page; 'Haushaltsentlastung: 0' is undefined (A5-G04, A5-G05)"
+  classification: evidence gap
+
+conventions_applied:   # what this file assumes beyond elements.yaml
+- id: B5-advisers
+  title: advisers and energy agencies are context
+  convention: "dena, Berliner Energieagentur, KEA-BW, eta, CDM Consult are source.context unless the source states a promise by them"
+  origin: REVIEW_SPEC_5 rulings
+  applied_here: "dena in source.context; the BA (user, no promise) also in context"
+- id: F02
+  title: jurisdiction header, C1 trigger
+  convention: "Jurisdiction dated at financial close; German public client = EU general government, stated when a public body is named; C1 outcome undetermined when payments are not published"
+  origin: RULINGS.md ruling 4; REVIEW_SPEC_5 rulings
+  applied_here: "true, stated (a public body is named); C1 applies, outcome undetermined"
+- id: F05
+  title: provider's own capital inside performance_promise
+  convention: "Under one service contract the provider's own capital sits inside its performance_promise"
+  origin: ENCODING.md
+  applied_here: "the 222.000 Euro investment inside c1"
+- id: F21
+  title: determination_promise required
+  convention: "A determination_promise is required when a payment depends on savings; from the literal unstated when no verifier is named"
+  origin: ENCODING.md; REVIEW_SPEC_5 rulings
+  applied_here: "c3 from unstated"
+- id: ENC
+  title: fallbacks when the source is silent
+  convention: "Silent settings take the ENCODING.md fallback with status default"
+  origin: ENCODING.md
+  applied_here: "borrower, receivable_holder, collection_placement, debt_seniority, assignment_recourse, savings_basis, asset_owner, bill_custody"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco]
+  roles_count: 2 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [determination_promise]
+  settings_by_status: {stated: 3, inferred: 2, generic: 0, default: 8}
+  commitments_by_status: {stated: 1, inferred: 1, generic: 0, unstated: 1}
+  one_way_parties: []
+  parties_count: 2
+  commitments_count: 3
+  below_lod0: {lod1_adds: 'events (signature 04/2005, works, start 06/2006, annual savings determination, end 05/2015)', lod2_adds: 'fee
+      formula, baseline and adjustments, shortfall and surplus rules'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "cases/ba_frankfurt_kundenzentrum_ost-lod0.yaml:106", why: "the dena page prints the contractor's savings guarantee ('Einspargarantie: 35.000 Euro pro Jahr'), so a technical shortfall falls on the contractor; same bearer as the default but stated, which upgrades it from derived. Adjudicator call: drafts A and B agree (stated); A cited a scratchpad copy, re-anchored to the case-file quote; stated, as for the other dena entries (baw_karlsruhe). Nothing else on the page allocates risk"}

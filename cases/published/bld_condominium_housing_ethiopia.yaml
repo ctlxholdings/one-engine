@@ -1,0 +1,92 @@
+# Published case "bld_condominium_housing_ethiopia": IHDP subsidised condominium units, Addis Ababa,
+# 11th lottery round (2019), on the housing agency's books (Agness & Getahun 2024, pp.9-10;
+# cases/reference/published/bld_condominium_housing_ethiopia.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the agency sells one unit of each size at the round's printed prices (revenue for the
+#     two-bedroom unit, unit_price_1bed_usd and unit_price_3bed_usd), for cash;
+#   * each unit's cost of production is its price times cost_ratio (the paper's "a 40% subsidy
+#     relative to the cost of production": price is 60% of cost, so cost is price / 0.60, carried
+#     to six decimals by the transcriber), expensed as the unit's cost of sales. The paper says the
+#     40% holds "on average"; applying it to each size is the oracle's own illustration;
+#   * the mortgage, the down-payment programmes and the units-built counts are context with no
+#     money in the round's figures; they are not posted. No tax.
+# revenue (mapped) is the two-bedroom unit's price, implied_cost_of_production_usd its cost,
+# implied_gross_margin_usd its profit: a loss, the per-unit subsidy. The one- and three-bedroom
+# costs are read from their own cost lines.
+published: bld_condominium_housing_ethiopia
+entity: agency
+plant: revenue
+case:
+  case: published-bld-condominium-housing-ethiopia
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        units: 1                              # one unit of each size
+        cost_2bed: revenue * cost_ratio
+        cost_1bed: unit_price_1bed_usd * cost_ratio
+        cost_3bed: unit_price_3bed_usd * cost_ratio
+  opening:
+    agency:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    sale_2bed:
+      type: offtake
+      parties: {seller: agency}
+      terms: {volume: {generator: src, output: units}, price: {generator: src, output: revenue},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    sale_1bed:
+      type: offtake
+      parties: {seller: agency}
+      terms: {volume: {generator: src, output: units}, price: {generator: src, output: unit_price_1bed_usd},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    sale_3bed:
+      type: offtake
+      parties: {seller: agency}
+      terms: {volume: {generator: src, output: units}, price: {generator: src, output: unit_price_3bed_usd},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    build_2bed:
+      type: operating_cost
+      parties: {payer: agency}
+      terms: {annual: {generator: src, output: cost_2bed}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    build_1bed:
+      type: operating_cost
+      parties: {payer: agency}
+      terms: {annual: {generator: src, output: cost_1bed}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    build_3bed:
+      type: operating_cost
+      parties: {payer: agency}
+      terms: {annual: {generator: src, output: cost_3bed}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      sale_2bed.revenue: revenue_2bed
+      sale_1bed.revenue: revenue_1bed
+      sale_3bed.revenue: revenue_3bed
+      build_2bed.expense: cost_2bed
+      build_1bed.expense: cost_1bed
+      build_3bed.expense: cost_3bed
+  cuts:
+    revenue_2bed: {kind: pnl, entity: agency, scheme: pnl, include: [revenue_2bed]}
+    cost_2bed: {kind: pnl, entity: agency, scheme: pnl, include: [cost_2bed]}
+    margin_2bed: {kind: pnl, entity: agency, scheme: pnl, include: [revenue_2bed, cost_2bed]}
+    cost_1bed: {kind: pnl, entity: agency, scheme: pnl, include: [cost_1bed]}
+    cost_3bed: {kind: pnl, entity: agency, scheme: pnl, include: [cost_3bed]}
+  measures: {}
+figures:
+  revenue: {cut: revenue_2bed}
+  implied_cost_of_production_usd: {cut: cost_2bed, sign: -1}
+  implied_gross_margin_usd: {cut: margin_2bed}
+  implied_cost_of_production_1bed_usd: {cut: cost_1bed, sign: -1}
+  implied_cost_of_production_3bed_usd: {cut: cost_3bed, sign: -1}

@@ -1,0 +1,141 @@
+# Published case "phys_hdm4_motorcycle_convey": one motorcycle driven HDM-4's generic 15,000 km in
+# one year, its vehicle operating cost built from the model's per-1000-vehicle-km coefficients and
+# unit prices (World Bank, HDM-4 Road User Costs Model v5.01, motorcycle, US$ 2018;
+# cases/reference/published/phys_hdm4_motorcycle_convey.yaml).
+#
+# Every amount is a published input by name (generator `src`); km is annual_km_driven_default,
+# and a coefficient "per 1000 vehicle-km" is divided by 1000 (a unit conversion):
+#   * fuel: km / fuel_economy_km_per_litre litres, at fuel_per_litre, bought and expensed;
+#   * lubricants: lubricant_litres per 1000 km, at lubricating_oil_per_litre;
+#   * tyres: tyre_wear_fraction_per_wheel x number_of_wheels per 1000 km tyres, at tyre_each;
+#   * maintenance parts: maintenance_parts_fraction_of_vehicle_price per 1000 km of the new price;
+#   * maintenance labour: maintenance_labour_hours per 1000 km, at maintenance_labour_per_hour;
+#   * interest: interest_fraction_of_vehicle_price per 1000 km of the gross new price, paid;
+#     all of these are operating costs paid in the year;
+#   * the vehicle is on the opening balance sheet at its new price, split into the body
+#     (new_vehicle_price_usd less number_of_wheels x tyre_each, HDM-4's depreciation base: the
+#     oracle's notes show its depreciation line reconciles only net of the tyres, which have
+#     their own wear line) and the fitted tyres; owner's equity balances it;
+#   * depreciation: depreciation_fraction_of_vehicle_price per 1000 km of the body, written off
+#     the body account to a depreciation expense (no cash);
+#   * no revenue (HDM-4 prices cost only), no tax.
+# Annual costs are the P&L lines; the depreciation base is the body's opening balance. The
+# per-km and annual litres and tyres are physical quantities, read as drivers. The published
+# $/v-km inputs (published_voc_per_vkm_usd) are the source's own cross-check and are not used.
+published: phys_hdm4_motorcycle_convey
+entity: rider
+plant: fuel_per_litre
+case:
+  case: published-motorcycle-voc
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        km: annual_km_driven_default
+        fuel_per_km: 1 / fuel_economy_km_per_litre
+        fuel_litres: fuel_per_km * km
+        lube_litres: lubricant_litres / 1000 * km
+        tyres_per_km: tyre_wear_fraction_per_wheel * number_of_wheels / 1000
+        tyres_worn: tyres_per_km * km
+        labour_hours: maintenance_labour_hours / 1000 * km
+        parts_cost: maintenance_parts_fraction_of_vehicle_price / 1000 * km * new_vehicle_price_usd
+        interest_cost: interest_fraction_of_vehicle_price / 1000 * km * new_vehicle_price_usd
+        tyres_fitted: number_of_wheels * tyre_each
+        body: new_vehicle_price_usd - tyres_fitted
+        depreciation_cost: depreciation_fraction_of_vehicle_price / 1000 * km * body
+  opening:
+    rider:
+      cash: {nature: asset, value: 0}
+      vehicle_body: {nature: asset, value: {generator: src, output: body}}
+      tyres_fitted: {nature: asset, value: {generator: src, output: tyres_fitted}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    fuel:
+      type: operating_cost
+      parties: {payer: rider}
+      terms: {annual: 0, unit_rate: {generator: src, output: fuel_per_litre},
+              volume: {generator: src, output: fuel_litres}, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    lubricants:
+      type: operating_cost
+      parties: {payer: rider}
+      terms: {annual: 0, unit_rate: {generator: src, output: lubricating_oil_per_litre},
+              volume: {generator: src, output: lube_litres}, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    tyres:
+      type: operating_cost
+      parties: {payer: rider}
+      terms: {annual: 0, unit_rate: {generator: src, output: tyre_each},
+              volume: {generator: src, output: tyres_worn}, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    parts:
+      type: operating_cost
+      parties: {payer: rider}
+      terms: {annual: {generator: src, output: parts_cost}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    labour:
+      type: operating_cost
+      parties: {payer: rider}
+      terms: {annual: 0, unit_rate: {generator: src, output: maintenance_labour_per_hour},
+              volume: {generator: src, output: labour_hours}, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    interest:
+      type: operating_cost
+      parties: {payer: rider}
+      terms: {annual: {generator: src, output: interest_cost}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks:
+    wear:
+      kind: write_down
+      entity: rider
+      phase: operate
+      account: vehicle_body
+      expense: depreciation
+      amount: {generator: src, output: depreciation_cost}
+  schemes:
+    pnl:
+      fuel.expense: fuel
+      lubricants.expense: lubricants
+      tyres.expense: tyre
+      parts.expense: maintenance_parts
+      labour.expense: maintenance_labour
+      depreciation: depreciation
+      interest.expense: interest
+  cuts:
+    fuel: {kind: pnl, entity: rider, scheme: pnl, include: [fuel]}
+    lubricants: {kind: pnl, entity: rider, scheme: pnl, include: [lubricants]}
+    tyre: {kind: pnl, entity: rider, scheme: pnl, include: [tyre]}
+    maintenance_parts: {kind: pnl, entity: rider, scheme: pnl, include: [maintenance_parts]}
+    maintenance_labour: {kind: pnl, entity: rider, scheme: pnl, include: [maintenance_labour]}
+    depreciation: {kind: pnl, entity: rider, scheme: pnl, include: [depreciation]}
+    interest: {kind: pnl, entity: rider, scheme: pnl, include: [interest]}
+    total: {kind: pnl, entity: rider, scheme: pnl,
+            include: [fuel, lubricants, tyre, maintenance_parts, maintenance_labour, depreciation, interest]}
+  measures: {}
+figures:
+  fuel_litres_per_km: {driver: src.fuel_per_km}
+  tyres_per_km: {driver: src.tyres_per_km}
+  annual_fuel_litres: {driver: src.fuel_litres}
+  annual_lubricant_litres: {driver: src.lube_litres}
+  annual_tyres_consumed: {driver: src.tyres_worn}
+  annual_cost_usd.fuel: {cut: fuel, sign: -1}
+  annual_cost_usd.lubricants: {cut: lubricants, sign: -1}
+  annual_cost_usd.tyre: {cut: tyre, sign: -1}
+  annual_cost_usd.maintenance_parts: {cut: maintenance_parts, sign: -1}
+  annual_cost_usd.maintenance_labour: {cut: maintenance_labour, sign: -1}
+  annual_cost_usd.depreciation: {cut: depreciation, sign: -1}
+  annual_cost_usd.interest: {cut: interest, sign: -1}
+  annual_cost_usd.total: {cut: total, sign: -1}
+  depreciation_base_usd: {opening: vehicle_body}

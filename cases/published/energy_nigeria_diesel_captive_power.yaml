@@ -1,0 +1,60 @@
+# Published case "energy_nigeria_diesel_captive_power": Nigeria's telecom towers generating their
+# own power on diesel gensets, calendar 2012, run through the report's own fuel-to-energy equation
+# (Triple E Systems for the World Bank, "Diesel Power Generation: Inventories and Black Carbon
+# Emissions in Nigeria", 2014, Tables 3-5 and Annex 2(e);
+# cases/reference/published/energy_nigeria_diesel_captive_power.yaml).
+#
+# A physical inventory: every figure is energy (GWh) or emissions, none is money, and every site
+# generates for its own use, so nothing is sold or priced. All readings are drivers (generator
+# `src`), each a published input by name:
+#   * a population's litres in the year = sites x litres per site a month x 12 months;
+#   * energy per litre = diesel_density_kg_per_l x diesel_ncv_kj_per_kg x genset_fuel_efficiency
+#     (the telecom fleet's 35%) / 3,600 kJ per kWh (typed as 60 x 60), the report's own Annex 2(e)
+#     equation; GWh = kWh / (1000 x 1000);
+#   * on-grid and off-grid sites use their own litres a month; the total is their sum.
+# No book is posted: the report carries no cost or revenue (the pump price of "nearly $1" is a
+# qualitative aside, and no figure is money).
+# FINDING (kept, not fitted): the report's own equation and inputs give 804.75 GWh on-grid,
+# 849.02 GWh off-grid and 1,653.76 GWh in total, against the printed 852.22, 793.32 and 1,645.54
+# (tolerance 0.5 GWh). The oracle's notes record the same: the total is within 0.5% but the split
+# is reversed (off-grid sites burn more litres each), so Table 5 must split each population by a
+# genset size class with a different effective rate that Table 4's single 35% does not disclose.
+# Set aside: the black-carbon emissions (1.22 kt/yr) need an emissions factor that no input carries.
+published: energy_nigeria_diesel_captive_power
+entity: towers
+plant: on_grid_diesel_l_per_month
+case:
+  case: published-nigeria-diesel-captive
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        kwh_per_litre: diesel_density_kg_per_l * diesel_ncv_kj_per_kg * genset_fuel_efficiency / (60 * 60)
+        litres_on_grid: on_grid_sites * on_grid_diesel_l_per_month * 12
+        litres_off_grid: off_grid_sites * off_grid_diesel_l_per_month * 12
+        gwh_on_grid: litres_on_grid * kwh_per_litre / (1000 * 1000)
+        gwh_off_grid: litres_off_grid * kwh_per_litre / (1000 * 1000)
+        gwh_total: gwh_on_grid + gwh_off_grid
+  opening:
+    towers:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  generation_on_grid_gwh_2012: {driver: src.gwh_on_grid}
+  generation_off_grid_gwh_2012: {driver: src.gwh_off_grid}
+  generation_total_gwh_2012: {driver: src.gwh_total}
+not_compared:
+  bc_emissions_telecom_kt_per_yr: >-
+    black-carbon emissions (p.24) need an emissions factor per litre or per kWh, which no input
+    carries; the report prints the figure for context only

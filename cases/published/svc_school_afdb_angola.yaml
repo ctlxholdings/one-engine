@@ -1,0 +1,100 @@
+# Published case "svc_school_afdb_angola": the AfDB-financed Angola Basic Education and Job Skills
+# Project (2001), its whole-project cost by category of expenditure (African Development Bank,
+# Appraisal Report ADF/BD/WP/2001/153, Table 4.2, p.21;
+# cases/reference/published/svc_school_afdb_angola.yaml).
+#
+# Every amount is a published input by name (generator `src`), printed in USD millions and
+# booked in dollars (x 1000 x 1000; read back at scale one million). One book, the project's,
+# one period (the whole project, appraised August 2001):
+#   * the seven base-cost categories (costs.*) are spent in cash: professional services, civil
+#     works, furniture and equipment capitalised as the schools built and fitted; training,
+#     technical assistance and operating costs expensed;
+#   * the physical and price contingencies are spent in cash too, as the appraisal budgets them,
+#     and capitalised with the works they cover;
+#   * the base cost, sub-total and total cost are the project's cash spend through each stage
+#     (a cash cut by class, sign -1); no tax.
+# Set aside, as the inputs do not carry what they need: the total in units of account (the
+# 1 UA = 1.26 USD rate is not an input) and the financing plan (ADF, OPEC Fund, Government and
+# TAF amounts and shares are not inputs).
+published: svc_school_afdb_angola
+entity: project
+plant: civil_works
+case:
+  case: published-afdb-angola-education
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        professional: professional_services * 1000 * 1000
+        works: civil_works * 1000 * 1000
+        furnishing: furniture * 1000 * 1000
+        fitting: equipment * 1000 * 1000
+        trainings: training * 1000 * 1000
+        assistance: technical_assistance * 1000 * 1000
+        operating: operating_costs * 1000 * 1000
+        physical: physical_contingencies * 1000 * 1000
+        prices: price_contingencies * 1000 * 1000
+  opening:
+    project:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    project_cost:
+      kind: transfer
+      entity: project
+      phase: operate
+      declare:
+        professional_services: asset
+        civil_works: asset
+        furniture: asset
+        equipment: asset
+        physical_contingencies: asset
+        price_contingencies: asset
+        training: expense
+        technical_assistance: expense
+        operating_costs: expense
+      moves:
+        professional: {debit: professional_services, credit: cash, amount: {generator: src, output: professional}}
+        works: {debit: civil_works, credit: cash, amount: {generator: src, output: works}}
+        furniture: {debit: furniture, credit: cash, amount: {generator: src, output: furnishing}}
+        equipment: {debit: equipment, credit: cash, amount: {generator: src, output: fitting}}
+        training: {debit: training, credit: cash, amount: {generator: src, output: trainings}}
+        assistance: {debit: technical_assistance, credit: cash, amount: {generator: src, output: assistance}}
+        operating: {debit: operating_costs, credit: cash, amount: {generator: src, output: operating}}
+        physical: {debit: physical_contingencies, credit: cash, amount: {generator: src, output: physical}}
+        prices: {debit: price_contingencies, credit: cash, amount: {generator: src, output: prices}}
+  schemes:
+    cash_flow:
+      professional_services: base
+      civil_works: base
+      furniture: base
+      equipment: base
+      training: base
+      technical_assistance: base
+      operating_costs: base
+      physical_contingencies: physical
+      price_contingencies: price
+  cuts:
+    base: {entity: project, account: cash, scheme: cash_flow, include: [base]}
+    subtotal: {entity: project, account: cash, scheme: cash_flow, include: [base, physical]}
+    total: {entity: project, account: cash, scheme: cash_flow, include: [base, physical, price]}
+  measures: {}
+figures:
+  base_cost_usd_m: {cut: base, sign: -1, scale: 1000000}
+  subtotal_usd_m: {cut: subtotal, sign: -1, scale: 1000000}
+  total_cost_usd_m: {cut: total, sign: -1, scale: 1000000}
+not_compared:
+  total_cost_ua_m: the 1 UA = 1.26 USD exchange rate it is converted at is not among the inputs
+  adf_loan_ua_m: &finance >-
+    the financing plan (each financier's amount in units of account and its share) is not among
+    the inputs
+  opec_fund_ua_m: *finance
+  government_contribution_ua_m: *finance
+  taf_grant_ua_m: *finance

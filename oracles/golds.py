@@ -98,6 +98,7 @@ given to the translation; the gold's rows are untouched.
 from __future__ import annotations
 
 import ast
+import numbers
 import copy
 import hashlib
 import pathlib
@@ -148,7 +149,8 @@ def _numbers(node: Any, path: str = "") -> List[Tuple[str, Any]]:
             out += _numbers(v, f"{path}[{i}]")
     elif isinstance(node, bool) or node is None:
         pass
-    elif isinstance(node, (int, float)):
+    elif isinstance(node, numbers.Number):
+        # the strict loader keeps a typed decimal exact (a Decimal), so every kind of number counts
         out.append((path, node))
     elif isinstance(node, str) and path.split(".")[-1] not in ("kind", "type") and any(c.isdigit() for c in node):
         try:

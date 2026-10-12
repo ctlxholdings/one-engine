@@ -1,0 +1,190 @@
+# Published case "mining_mt_todd_2024_fs": the Mt Todd gold project (Northern Territory, Australia,
+# 50,000 tpd), its life-of-mine cash-flow summary, US$000 in Q4 2021 dollars (Tetra Tech for Vista
+# Gold, NI 43-101 Feasibility Study, April 2024, Tables 22-20, 22-26, 22-27;
+# cases/reference/published/mining_mt_todd_2024_fs.yaml).
+#
+# One period: the whole life of mine, because the inputs carry life-of-mine totals only (the
+# year-by-year schedule, Table 22-28, is transcribed under `expected`, not as inputs). Every
+# amount is a published input by name (generator `src`), in US$000, for the project as one book
+# (`mine`, 100% equity, no debt):
+#   * gold sales: the payable ounces (sale.quantity_koz) at the flat US$1,800/oz, collected;
+#   * refining: the all-in refining rate per ounce (refining_cost_breakdown_usd_per_oz.all_in)
+#     on the payable ounces, paid;
+#   * private royalties: JAAC's and Wheaton's life-of-mine totals as Table 22-20 prints them
+#     (jaac/wheaton.lom_total_usd_000), paid. The flat 1% Wheaton rate of Table 22-1 does not
+#     reproduce its own total (0.851% effective: oracle notes, finding 4), so the printed totals,
+#     which the source's cash flow uses, are posted;
+#   * operating costs: open pit mine, CIP process plant, project services and G&A, each its
+#     life-of-mine total (opex_lom_total_usd_000), paid;
+#   * capital: the nine capex lines of Table 22-4 (asset sale credit included), spent into
+#     construction in progress (investing cash, no depreciation: the source's summary is cash);
+#   * the NT royalty and the Commonwealth income tax: their printed life-of-mine totals
+#     (US$ million x 1000), paid. Neither can be computed here: the NT royalty's capital
+#     recognition and other deductions are not itemised, and taxable income needs tax
+#     depreciation the source does not print.
+# Readings: sales, refining, royalties, operating costs and their subtotals are P&L cuts; capital,
+# pre-tax and after-tax cash flow are cash cuts; cash cost per ounce is the operating cost,
+# refining and private royalty cut divided (`per`) by payable ounces. The annual totals check
+# (US$ million) reads the same cuts with scale 1000.
+# FINDING (kept, not fitted): refining at the printed all-in US$3.68/oz gives 23,231.8 against the
+# printed 23,206 (the rate is printed to the cent; 23,206 / 6,313 = 3.6759), just outside the
+# 0.1% band.
+# Left unread (a figure the library scores, so it cannot be set aside): the after-tax IRR
+# (after_tax_irr_pct), which needs the year-by-year cash flows no input carries.
+# Set aside, with reasons below: the NPVs, the pre-tax IRR and payback (they need the annual cash flows,
+# which no input carries), the per-year schedule and cumulative cash flow, the sensitivity
+# tables, and the figures that are inputs printed again.
+published: mining_mt_todd_2024_fs
+entity: mine
+plant: price_usd_per_oz
+case:
+  case: published-mt-todd
+  periods: 1
+  phases: [fund, operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        capex: {each_period: "mining + process_plant + capex_lom_usd_000__project_services + project_infrastructure + permanent_accommodation + site_establishment_early_works + management_engineering_epcm + pre_production_costs + asset_sale_credit"}
+        nt_royalty_paid: nt_royalty__lom_total_usd_million * 1000
+        income_tax_paid: income_tax__lom_total_usd_million * 1000
+  opening:
+    mine:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    gold:
+      type: offtake
+      parties: {seller: mine}
+      terms: {volume: {generator: src, output: quantity_koz}, price: {generator: src, output: price_usd_per_oz},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    refining:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: &cost {annual: 0, unit_rate: {generator: src, output: all_in}, volume: {generator: src, output: quantity_koz},
+                    index: 1, periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+                    payment_days: 0, days_per_year: 12}
+    jaac:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: jaac__lom_total_usd_000}}
+    wheaton:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: wheaton__lom_total_usd_000}}
+    open_pit_mine:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: opex_lom_total_usd_000__open_pit_mine}}
+    process_plant:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: opex_lom_total_usd_000__cip_process_plant}}
+    project_services:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: opex_lom_total_usd_000__project_services}}
+    ga:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: opex_lom_total_usd_000__ga}}
+    nt_royalty:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: nt_royalty_paid}}
+    income_tax:
+      type: operating_cost
+      parties: {payer: mine}
+      terms: {<<: *cost, unit_rate: 0, volume: 0, annual: {generator: src, output: income_tax_paid}}
+    capital:
+      type: capex
+      parties: {owner: mine}
+      terms: {schedule: {generator: src, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 0}
+  rulebooks: {}
+  schemes:
+    pnl:
+      gold.revenue: sales
+      refining.expense: refining
+      jaac.expense: royalties
+      wheaton.expense: royalties
+      open_pit_mine.expense: opex
+      process_plant.expense: opex
+      project_services.expense: opex
+      ga.expense: opex
+      nt_royalty.expense: tax
+      income_tax.expense: tax
+    cash_flow:
+      gold.receivable: operating
+      refining.payable: operating
+      jaac.payable: operating
+      wheaton.payable: operating
+      open_pit_mine.payable: operating
+      process_plant.payable: operating
+      project_services.payable: operating
+      ga.payable: operating
+      cwip: investing
+      nt_royalty.payable: tax
+      income_tax.payable: tax
+  cuts:
+    sales: {kind: pnl, entity: mine, scheme: pnl, include: [sales]}
+    refining: {kind: pnl, entity: mine, scheme: pnl, include: [refining]}
+    royalties: {kind: pnl, entity: mine, scheme: pnl, include: [royalties]}
+    gross_income: {kind: pnl, entity: mine, scheme: pnl, include: [sales, refining, royalties]}
+    opex: {kind: pnl, entity: mine, scheme: pnl, include: [opex]}
+    cash_cogs: {kind: pnl, entity: mine, scheme: pnl, include: [opex, refining]}
+    cash_cost: {kind: pnl, entity: mine, scheme: pnl, include: [opex, refining, royalties]}
+    operating_margin: {kind: pnl, entity: mine, scheme: pnl, include: [sales, refining, royalties, opex]}
+    capital: {entity: mine, account: cash, scheme: cash_flow, include: [investing]}
+    pre_tax: {entity: mine, account: cash, scheme: cash_flow, include: [operating, investing]}
+    after_tax: {entity: mine, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+  measures: {}
+figures:
+  cash_flow_summary_usd_000.gold_sales: {cut: sales}
+  cash_flow_summary_usd_000.refinery_costs: {cut: refining}
+  cash_flow_summary_usd_000.royalties_private: {cut: royalties}
+  cash_flow_summary_usd_000.gross_income_from_mining: {cut: gross_income}
+  cash_flow_summary_usd_000.operating_costs: {cut: opex}
+  cash_flow_summary_usd_000.cash_cogs: {cut: cash_cogs}
+  cash_flow_summary_usd_000.operating_margin: {cut: operating_margin}
+  cash_flow_summary_usd_000.capital_costs: {cut: capital, sign: -1}
+  cash_flow_summary_usd_000.pre_tax_cash_flow: {cut: pre_tax}
+  cash_flow_summary_usd_000.after_tax_cash_flow: {cut: after_tax}
+  cash_costs_including_royalties_usd_per_oz: {cut: cash_cost, sign: -1, per: src.quantity_koz}
+  annual_schedule.totals_check.gold_sales: {cut: sales, scale: 1000}
+  annual_schedule.totals_check.pre_tax_cash_flow: {cut: pre_tax, scale: 1000}
+  annual_schedule.totals_check.after_tax_cash_flow: {cut: after_tax, scale: 1000}
+not_compared:
+  pre_tax_npv_5pct_usd_million: &annual >-
+    needs the year-by-year cash flows (Table 22-28), which the oracle transcribes under expected,
+    not as inputs; the inputs carry life-of-mine totals only, so no timing is derivable
+  pre_tax_irr_pct: *annual
+  after_tax_npv_5pct_usd_million: *annual
+  after_tax_payback_years: *annual
+  annual_schedule.years: *annual
+  annual_schedule.after_tax_cumulative_cash_flow_usd_million: *annual
+  discount_rate_pct: the study's stated discount-rate assumption, printed among the answers; no input carries it
+  sensitivity: >-
+    alternative scenarios (gold price, opex, capex at 85-115%, discount rates, exchange rates) on the
+    after-tax NPV, which itself needs the annual cash flows no input carries
+  mine_life_years: &echo >-
+    an input printed again as an answer (physics.mine_life_years_headline, sale.quantity_koz,
+    sale.price_usd_per_oz, recovery_chain lom_blended_average, the NT royalty and income tax
+    life-of-mine totals); read back it would be compared with itself
+  cash_flow_summary_usd_000.gold_produced_koz: *echo
+  cash_flow_summary_usd_000.gold_price_usd_oz: *echo
+  annual_schedule.totals_check.payable_gold_koz: *echo
+  annual_schedule.totals_check.recovery_pct: *echo
+  nt_royalty_paid_usd_million: *echo
+  australian_income_tax_paid_usd_million: *echo
+  annual_schedule.totals_check.nt_royalty: *echo
+  annual_schedule.totals_check.income_tax: *echo
+  annual_schedule.totals_check.plant_feed_kt: >-
+    the post-sorting plant feed (253,673 kt) appears in the inputs only inside a text description,
+    not as a number; nothing numeric derives it
+  annual_schedule.totals_check.gold_contained_koz: >-
+    the post-sorting contained gold (6,891 koz) appears in the inputs only inside a text
+    description, not as a number; nothing numeric derives it

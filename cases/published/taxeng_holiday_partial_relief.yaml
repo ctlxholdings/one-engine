@@ -1,0 +1,98 @@
+# Published case "taxeng_holiday_partial_relief": a flat-rate tax on profit under a holiday that
+# steps down, full relief for two years then half relief for two (the old engine's own test,
+# engine/tests/test_tax.py TestHoliday; cases/reference/published/taxeng_holiday_partial_relief.yaml).
+# Self-graded: the old engine wrote both the question and the answer.
+#
+# Every amount is an input by name (generator `src`), one period a year:
+#   * each year's profit_before_allowances is posted as one income line (`profit`, against cash);
+#     the turnover row (nil) is not a base of this tax and is not posted;
+#   * the gross tax (income_tax `tax`) is `rate` on the books' profit, charged to tax expense;
+#   * the holiday relieves the liability, not the base: a second income_tax (`holiday`) on the
+#     same base at minus `rate` times the year's relief fraction credits the payable and a
+#     relief account (holiday_relief, an expense taken below nil). The fraction is the largest
+#     of the clauses covering the year (holiday_<k>___from to ___from + __years - 1, at
+#     __relief_fraction), as the source's _relief_fraction takes it; a year no clause covers has
+#     none. The relief is refunded against the year's tax, never carried;
+#   * the net tax is paid in the year (settle).
+published: taxeng_holiday_partial_relief
+entity: firm
+plant: rate
+case:
+  case: published-taxeng-holiday-partial-relief
+  periods: 5
+  phases: [post, tax, settle]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 5
+      inputs: published
+      values:
+        profit: {each_period: profit_before_allowances}
+        relief: >-
+          max(holiday_0__relief_fraction * (holiday_0___from <= t) * (t < holiday_0___from + holiday_0__years),
+              holiday_1__relief_fraction * (holiday_1___from <= t) * (t < holiday_1___from + holiday_1__years))
+        relief_rate: -rate * relief
+  opening:
+    firm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: firm
+      phase: post
+      declare:
+        profit: income
+      moves:
+        profit: {debit: cash, credit: profit, amount: {generator: src, output: profit}}
+    tax:
+      kind: income_tax
+      entity: firm
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: rate}
+      carry_forward_periods: null
+      scheme:
+        profit: taxable
+        tax_expense: non_deductible
+        holiday_relief: non_deductible
+    holiday:
+      kind: income_tax
+      entity: firm
+      phase: tax
+      expense: holiday_relief
+      payable: tax_payable
+      rate: {generator: src, output: relief_rate}
+      carry_forward_periods: null
+      loss_relief: refund
+      scheme:
+        profit: taxable
+        tax_expense: non_deductible
+        holiday_relief: non_deductible
+    pay_tax:
+      kind: settle
+      entity: firm
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      profit: profit
+      tax_expense: gross
+      holiday_relief: relief
+    cash_flow:
+      profit: trade
+      tax_payable: tax
+  cuts:
+    gross: {kind: pnl, entity: firm, scheme: pnl, include: [gross]}
+    relief: {kind: pnl, entity: firm, scheme: pnl, include: [relief]}
+    tax_paid: {entity: firm, account: cash, scheme: cash_flow, include: [tax]}
+  measures: {}
+figures:
+  cash_tax: {cut: tax_paid, sign: -1}
+  taxes_cit_relief_holiday: {cut: relief}
+  taxes_cit_gross: {cut: gross, sign: -1}

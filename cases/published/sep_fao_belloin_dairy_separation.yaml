@@ -1,0 +1,65 @@
+# Published case "sep_fao_belloin_dairy_separation": a dairy plant separates 1,000 litres of whole
+# milk into standardised milk and cream and divides the milk's cost between them by the value of
+# their fat (J.C. Belloin, Milk and dairy products: production and processing costs, FAO Animal
+# Production and Health Paper 62, 1988, chapter 5, Example 1;
+# cases/reference/published/sep_fao_belloin_dairy_separation.yaml).
+#
+# Every amount is a published input by name (generator `src`). One book, the plant's, one period:
+#   * the whole milk is bought for cash at its stated total cost price
+#     (whole_milk_cost_price_total) and expensed as the separation's input cost;
+#   * the two outputs are invoiced (for cash) at the cost prices the fat-value convention gives
+#     them, the source's own per-litre prices: standardized_milk_output_l at
+#     standardized_milk_price_per_l and cream_output_l at cream_price_per_l;
+#   * the margin is the outputs' allocated value less the input cost, nil but for the source's
+#     own display rounding (975 x 89.052 = 86,825.7); no tax.
+# Example 2 (cream into butter and buttermilk) prints no figure: its inputs feed nothing here.
+published: sep_fao_belloin_dairy_separation
+entity: plant
+plant: cream_price_per_l
+case:
+  case: published-belloin-dairy-separation
+  periods: 1
+  phases: [operate]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        standardized_milk_value: standardized_milk_output_l * standardized_milk_price_per_l
+        cream_value: cream_output_l * cream_price_per_l
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    separation:
+      kind: transfer
+      entity: plant
+      phase: operate
+      declare: {whole_milk: expense, standardized_milk: income, cream: income}
+      moves:
+        whole_milk: {debit: whole_milk, credit: cash, amount: {generator: src, output: whole_milk_cost_price_total}}
+        standardized_milk: {debit: cash, credit: standardized_milk, amount: {generator: src, output: standardized_milk_value}}
+        cream: {debit: cash, credit: cream, amount: {generator: src, output: cream_value}}
+  schemes:
+    pnl:
+      standardized_milk: milk_out
+      cream: cream_out
+      whole_milk: input
+  cuts:
+    standardized_milk: {kind: pnl, entity: plant, scheme: pnl, include: [milk_out]}
+    cream: {kind: pnl, entity: plant, scheme: pnl, include: [cream_out]}
+    outputs: {kind: pnl, entity: plant, scheme: pnl, include: [milk_out, cream_out]}
+    input: {kind: pnl, entity: plant, scheme: pnl, include: [input]}
+    margin: {kind: pnl, entity: plant, scheme: pnl, include: [milk_out, cream_out, input]}
+  measures: {}
+figures:
+  standardized_milk_value_total: {cut: standardized_milk}
+  cream_value_total: {cut: cream}
+  reconciled_total: {cut: outputs}
+  whole_milk_input_cost: {cut: input, sign: -1}
+  gross_margin: {cut: margin}

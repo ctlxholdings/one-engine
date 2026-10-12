@@ -1,0 +1,519 @@
+# Miniature — D30 Mosaic Solar Loan Trust 2022-3 (US): residential solar loan ABS, expressed at ESCO LOD 0
+#
+# Batch 5 FINAL, reviewer rev-F (1 Oct 2026), reconciled from writers F-X and F-Y; base Y (its page cites match the PDF footers),
+# class R residual and the trustee direction from X. Decisions: batch5/rev-F/decisions.json. Source re-fetched by the reviewer (curl, pdftotext).
+# OUT-OF-SCOPE WITNESS: a pool of residential solar loans; the presale states 'Nonsolar Loans (%) 0.0'.
+# Kept to show the vocabulary can express a trust-issuer ABS with a backup servicer, a trustee and an explicit no-hedge; uses not counted.
+# Evidence is one public document, fetched 1 Oct 2026 (curl to stdout, pdftotext to stdout; nothing saved): [FITCH-PS] https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf
+# Fitch Ratings presale report 'Mosaic Solar Loan Trust 2022-3', 7 Dec 2022, 21 pages. It is a presale: the coupons are 'Fixed - TBD',
+# the ratings are 'expected', documentation was still in draft. PDF page numbers = page of the PDF file. Quotes exact, <= 25 words.
+# Statuses: stated / inferred / default / generic / unstated.
+
+miniature: mosaic_solar_loan_trust_2022_3
+lod: 0
+case: batch5.D30_mosaic_solar_loan_trust_2022_3
+case_kind: deal   # a named issue at presale stage ('the transaction has yet to be finalized' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]); the loan below it is the representative (generic) contract
+in_scope: false
+in_scope_why: "The collateral is consumer loans on PV equipment: 'a securitization of consumer loans backed by residential solar equipment' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]; 'Nonsolar Loans (%) 0.0' [p.3]; the loans 'finance PV systems' [p.4]. Mosaic's non-solar home-improvement loans 'are not included in the securitization' [p.17]. No efficiency asset and no energy service is paid for. Out-of-scope witness; uses not counted (B3-scope)"
+
+tests_unused:   # CASE_SPEC_5 list of unused items; a witness, so every item is false even where it fits
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "Structurally it fits and is stated: 'Issuer: Mosaic Solar Loan Trust 2022-3' and 'The issuer buys the assets from the originator. The issuer contributes the assets to the underlying trust, which grants the indenture trustee a security interest' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2, p.14]. Bankruptcy-remoteness is not stated in the presale. Not counted: solar-only pool"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Does not fit. The homeowner buys the PV system with the loan; the trust holds the loan and a security interest (a UCC-1 and county lien on the equipment, [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.4]), not title. asset_owner = client"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "Explicitly none, quoted: 'As both assets and liabilities pay a fixed coupon, there is no need for an interest rate hedge and, thus, no exposure to swap counterparties' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]. Repeated on p.9: 'no hedging is necessary'. The spec's expectation (no named hedge provider) holds"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No public client; obligors are homeowners ('Obligors are homeowners with strong WA FICO scores of 750', [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]). No guarantee of any payment is described"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The homeowner pays a fixed-coupon amortising loan ('fully amortizing and pay a fixed coupon up to 8.7%', [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.4]); payment does not depend on output. About 20% of installers offer production guarantees (p.18), but that is the installer's warranty to the homeowner, not the basis of payment. payment_basis = asset"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: FITCH-PS
+  title: "Fitch Ratings presale, Mosaic Solar Loan Trust 2022-3 (7 Dec 2022)"
+  publisher: "Fitch Ratings (expected ratings; information provided by the issuer as of 7 Dec 2022)"
+  passage: "https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1 (capital structure, key rating drivers), p.2-3 (key parties, comparison table), p.4-5 (asset analysis, ACH), p.9 (cash flow, no hedge), p.11-14 (credit enhancement, reserve, waterfall, structure diagram), p.14-15 (counterparties), p.17-19 (appendix: originator, installers, servicing, backup)"
+  oracle: "none; every published sum is re-computed in numbers"
+  context:
+  - "Wells Fargo Bank, N.A.: '(Servicer's) Collection Account Bank', footnoted 'Not a transaction party' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]. Holds the servicer's own collection account before transfer to the trust; no promise to the trust, so context. 'transfer of collections within two business days' [p.1]"
+  - "Initial purchasers: shown on the structure diagram [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14], not named. Transient buyers of the notes, outside the deal boundary (as Ramirez in nyserda_green_bonds_2024a)"
+  - "Goal Structured Solutions: 'After 120 dpd, Goal Structured Solutions is responsible for collections on defaulted loans' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]. A post-charge-off collector with no stated agreement in the structure; context"
+  - "Fitch Ratings: rates the notes and 'is not a transaction party' ([https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]); a rule source for rating confirmations"
+  - "Solar Mosaic as holder of the retained piece: 'it retains at least 5% of all classes of notes, including class R' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.17]. Risk retention; no separate promise encoded"
+  - "Mosaic Underlying Loan Trust 2022-3: the underlying trust that holds the loans and grants the indenture trustee a security interest [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]; folded into the issuer party (two tiers, one role)"
+  notes:
+  - "Presale caveat confirmed: the coupons are 'Fixed - TBD' for classes A to D [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]; class R is a residual with no coupon; ratings are expected, not final"
+  - "Concord is a servicing subcontractor, not a transaction party in the documents: 'The subservicer is not technically a transaction party and the related agreements are not transaction documents' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]. Encoded as a party because it collects from the borrowers for the payee (c11-c12), but its contract is a servicing-side agreement, status stated for existence, inferred for the fee"
+  - "Row check: collateral 'USD 307.9m' = aggregate principal balance 307,906,983 [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3] (statistical cut-off 31 Oct 2022); classes 114.0/74.3/12.1/5.3 and R 12.7 match p.1; reserve 'USD 3.08m' matches p.11; 'no hedge (both sides fixed)' matches p.1 and p.9"
+  - "Adjusted vs unadjusted balance: Fitch's credit enhancement uses an adjusted collateral balance of $218.4 million (loans priced at the greater of contract rate and 7.7% discount rate, the 'YSOC'), not the $307.9 million principal [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.11]"
+  - "Wells Fargo and Wilmington Trust ratings in the presale ('A/Negative/F1', 'AA-/Stable/F1+') are counterparty-criteria data, not promises"
+
+jurisdiction:   # header field, not a setting (F02); dated at financial close
+  country: United States
+  iso: US
+  eu_member: false
+  client_eu_general_government_at_close: false
+  as_of: "presale 7 Dec 2022; closing expected December 2022 ('Closing Date December 2022 (est.)', [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]); not yet closed in the document"
+  status: stated
+  why: "'Solar U.S.A.' (every page header); obligors are homeowners in US states (Florida share 23%, p.2). Not EU; C1 does not apply"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 37 (a list = several roles, home role first; F13); groups computed from the role(s)
+  homeowners:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'Obligors are homeowners with strong WA FICO scores of 750' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]; '6,781' loans [p.3]. Not named"
+  solar_mosaic:
+    entity: solar_mosaic_llc
+    role: [originator_developer, collector_biller]
+    groups: [delivery, collection]
+    status: stated
+    name: Solar Mosaic, LLC
+    text: "'Originator/Servicer/Sponsor ... Solar Mosaic LLC' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]; 'Mosaic is the master servicer in its securitizations' [p.18]; also 'Originator, Servicer, Seller, and Administrator' (structure diagram, p.14). Originates the loans (originator_developer) and, as master servicer, collects and remits (collector_biller)"
+  concord:
+    entity: concord_servicing_llc
+    role: collector_biller
+    groups: [collection]
+    status: stated
+    name: Concord Servicing, LLC
+    text: "'Subservicer ... Concord Servicing, LLC' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]; 'Servicing activities are mostly outsourced to a subservicer, Concord Servicing, LLC, under a subservicing agreement' [p.18]; works with delinquent borrowers 'to address and collect delinquent payments'. Not technically a transaction party (see notes)"
+  vervent:
+    entity: vervent_inc
+    role: backup_servicer
+    groups: [collection]
+    status: stated
+    name: Vervent Inc.
+    text: "'Backup Servicer/Verification Agent ... Vervent Inc.' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]; 'The backup servicer's duties mainly consist of reconciling a monthly data tape' and, on a servicer termination event, it can be appointed [p.18-19]"
+  issuer_trust:
+    entity: mosaic_solar_loan_trust_2022_3
+    role: securitisation_vehicle
+    groups: [capital]
+    status: stated
+    name: Mosaic Solar Loan Trust 2022-3 (with Mosaic Underlying Loan Trust 2022-3)
+    text: "'Issuer ... Mosaic Solar Loan Trust 2022-3' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]; 'The issuer buys the assets from the originator' [p.14]. Notes classes A-D plus R: $114.0m / $74.3m / $12.1m / $5.3m + $12.7m (p.1)"
+  wilmington:
+    entity: wilmington_trust_na
+    role: account_bank_trustee
+    groups: [collection]
+    status: stated
+    name: Wilmington Trust, National Association
+    text: "'Transaction Account Bank/Indenture Trustee/Collection Account Bank ... Wilmington Trust, National Association' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]; 'Indenture Trustee, Paying Agent, and Underlying Trustee' (p.14); 'The transaction account is with Wilmington Trust' (p.1)"
+  noteholders:
+    role: lender
+    groups: [capital]
+    status: stated
+    text: "investors in classes A, B, C and D 'Fixed - TBD' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]; $205.7 million rated notes. Not named"
+  class_r_holder:
+    role: equity_investor
+    groups: [capital]
+    status: stated
+    text: "holder of the class R residual, $12.7 million, 'NRsf', 'Residual' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]; 'Mosaic will retain at least 5% of the class R certificates (i.e. equity)' (p.10). The other holders are not named (from writer X)"
+  installers:
+    role: epc_contractor
+    groups: [delivery]
+    status: generic
+    text: "'Mosaic currently works with 700+ installers nationwide' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]; 'installers are paid through dealer fees' (p.18); the largest is 17.0% of the pool. Install PV equipment for the homeowner; not a Partner (works for the client, batch-2 touch-up)"
+
+contract:   # the agreements that establish the commitments
+  solar_loan:
+    core: contract
+    parties: [solar_mosaic, homeowners]
+    status: generic
+    note: "the representative contract: a solar loan with 'terms of 10 years to 25 years (with a small portion at 30 years)', 'between $10,000 and $135,000', 'fully amortizing and pay a fixed coupon up to 8.7%' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.4]"
+  installer_sale:
+    core: contract
+    parties: [installers, homeowners]
+    status: generic
+    note: "the homeowner buys and the installer installs the PV system, financed by Mosaic: 'the price at which the loan is acquired from the installer' (p.17); installers 'deal with' prospective borrowers at the point of sale (p.17). About 20% offer production guarantees of 85% or 95% of target output and a two-year minimum workmanship warranty (p.18)"
+  loan_sale:
+    core: contract
+    parties: [solar_mosaic, issuer_trust]
+    status: stated
+    note: "'Loan Sale and Contribution Agreement' and 'Representations and Warranties Agreement' on the structure diagram [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]; 'The issuer buys the assets from the originator'"
+  indenture:
+    core: contract
+    parties: [issuer_trust, wilmington, noteholders]
+    status: stated
+    note: "'Indenture' with Wilmington Trust as indenture trustee, paying agent and underlying trustee [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]; 'Grantor Trust Agreement' with the underlying trust"
+  servicing:
+    core: contract
+    parties: [solar_mosaic, issuer_trust]
+    status: stated
+    note: "'Servicing Agreement' on the structure diagram [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]; Mosaic is master servicer: 'monitoring and reporting the loans; preparing a master servicer report; transferring collections to the issuer account' [p.18]"
+  subservicing:
+    core: contract
+    parties: [solar_mosaic, concord]
+    status: stated
+    note: "'under a subservicing agreement and subject to Mosaic's oversight' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]; not a transaction document"
+  class_r_certificates:
+    core: contract
+    parties: [issuer_trust, class_r_holder]
+    status: inferred
+    note: "the residual certificates; terms not in the presale (from writer X)"
+  backup_servicing:
+    core: contract
+    parties: [issuer_trust, vervent]
+    status: stated
+    note: "'Backup Servicing Agreement' on the structure diagram [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: funding_promise
+    from: solar_mosaic
+    to: homeowners
+    status: generic
+    funding_instrument: loan   # solar loan to the homeowner (Fitch p.1)
+    what: "a solar loan to the homeowner: 'Mosaic has advanced solar loans since 2014' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]; paid to the installer (c4)"
+    established_by: solar_loan
+  c2:
+    family: payment_promise
+    from: homeowners
+    to: issuer_trust
+    status: inferred
+    depends_on_savings: false   # instalments on a fixed-coupon loan (Fitch p.5)
+    what: "monthly instalments on the fixed-coupon loan, collected by ACH ('virtually all new originations are for loans paid through ACH', [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.5]). Payee inferred as the trust once the loan is sold (loan_sale); 82.6% of the pool pays by ACH (p.3)"
+    established_by: solar_loan
+  c3:
+    family: performance_promise
+    from: installers
+    to: homeowners
+    status: generic
+    what: "designs and installs the PV system (and batteries) from an approved vendor list, with a workmanship warranty of 'a two-year minimum' and, at about 20% of installers, a production guarantee [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]. The make-good for a production shortfall stays inside this promise"
+    established_by: installer_sale
+  c4:
+    family: payment_promise
+    from: solar_mosaic
+    to: installers
+    status: generic
+    what: "pays the installer for the loan it acquires: 'installers are paid through dealer fees' as a percentage of the loan balance [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]"
+    established_by: installer_sale
+  c5:
+    family: performance_promise
+    from: solar_mosaic
+    to: issuer_trust
+    status: stated
+    what: "sells and contributes the loans to the issuer, with representations and warranties and a repurchase duty: 'Mosaic must repurchase the affected solar loan' if PTO is not granted within 90 or 120 days [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]"
+    established_by: loan_sale
+  c6:
+    family: payment_promise
+    from: issuer_trust
+    to: solar_mosaic
+    status: inferred
+    what: "pays the purchase price for the loans out of the note proceeds; price not stated. Inferred from 'The issuer buys the assets from the originator' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]"
+    established_by: loan_sale
+  c7:
+    family: funding_promise
+    from: noteholders
+    to: issuer_trust
+    status: stated
+    funding_instrument: bond   # rated notes classes A-D (Fitch p.1)
+    what: "buy the rated notes, classes A-D, $205.7 million in all; class R is the residual (c17) [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]"
+    established_by: indenture
+  c8:
+    family: payment_promise
+    from: issuer_trust
+    to: noteholders
+    status: stated
+    what: "pays interest and principal through a combined waterfall (class A interest, A default provisioning, B interest, ... residual to class R) [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.11-12]. Coupons are 'Fixed - TBD' (p.1), so the rates are not stated"
+    established_by: indenture
+  c9:
+    family: agency_promise
+    from: solar_mosaic
+    to: issuer_trust
+    status: stated
+    what: "master servicer: 'monitoring and reporting the loans; preparing a master servicer report; transferring collections to the issuer account; keeping books' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]"
+    established_by: servicing
+  c10:
+    family: payment_promise
+    from: issuer_trust
+    to: solar_mosaic
+    status: stated
+    what: "servicing fees, item 2 of the waterfall, ahead of all note interest [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.11-12]; Fitch assumes 'The stressed senior and servicing fee at the AAsf category is 0.9% a year' (p.9)"
+    established_by: servicing
+  c11:
+    family: agency_promise
+    from: concord
+    to: solar_mosaic
+    status: stated
+    what: "subservices the loans: contacts delinquent borrowers 'to address and collect delinquent payments' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18]"
+    established_by: subservicing
+  c12:
+    family: payment_promise
+    from: solar_mosaic
+    to: concord
+    status: unstated
+    what: "counter-promise required by duality; source silent (the subservicer is paid under a contract that is not a transaction document)"
+    established_by: subservicing
+  c13:
+    family: agency_promise
+    from: vervent
+    to: issuer_trust
+    status: stated
+    what: "backup servicer and verification agent: reconciles 'a monthly data tape received by the servicer' and takes over servicing after a termination notice [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.18-19]"
+    established_by: backup_servicing
+  c14:
+    family: payment_promise
+    from: issuer_trust
+    to: vervent
+    status: unstated
+    what: "counter-promise required by duality; the fee is not stated. It sits in 'Taxes and senior expenses' (waterfall item 1) by inference only"
+    established_by: backup_servicing
+  c15:
+    family: agency_promise
+    from: wilmington
+    to: noteholders
+    status: stated
+    what: "indenture trustee and paying agent for the noteholders, and holder of the transaction account; the collateral is 'transaction account and collection account' pledged to it [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]. Collections reach it from the servicer's account 'within two business days' (p.1)"
+    established_by: indenture
+  c16:
+    family: payment_promise
+    from: issuer_trust
+    to: wilmington
+    status: unstated
+    what: "counter-promise required by duality; trustee fees are not stated (they fall in 'Taxes and senior expenses', item 1, [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.11-12], by inference)"
+    established_by: indenture
+
+  c17:
+    family: funding_promise
+    from: class_r_holder
+    to: issuer_trust
+    status: stated
+    what: "the residual layer: class R $12.7 million, 'Residual' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]; with the rated notes it funds the $218.4 million adjusted balance (numbers)"
+    established_by: class_r_certificates
+  c18:
+    family: payment_promise
+    from: issuer_trust
+    to: class_r_holder
+    status: inferred
+    what: "'Any residual to class R', the last item of the waterfall [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.12]. A residual claim (ENCODING: equity is a funding_promise with a residual claim back)"
+    established_by: class_r_certificates
+
+settings:   # the 13 LOD 0 facets, in vocabulary order
+  payment_basis: {value: asset, status: inferred, why: "a fixed-coupon amortising loan for the purchase of PV equipment [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.4]; payment does not depend on savings, output or energy delivered. 'Expected savings on utility bills do not directly affect our default or recovery assumptions' (p.2) confirms the payment is not savings-based. No Partner"}
+  client_sector: {value: private, status: stated, why: "'Obligors are homeowners' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]"}
+  partner_form:
+    value: corporate
+    status: default
+    why: "no Partner: no ESCO designs, guarantees or operates; installers install for the homeowner and Mosaic lends. Default kept (as batch-3 nyserda_green_bonds_2024a)"
+  borrower:
+    value: client
+    status: stated
+    why: "the homeowner takes the loan [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.5]; the notes are funding one level up (c7-c8)"
+  receivable_holder:
+    value: assignee
+    status: stated
+    why: "'The issuer buys the assets from the originator' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.14]: the payments under the loans belong to the trust, not to the originator"
+  collection_placement:
+    value: operator_own
+    status: inferred
+    why: "payments land first in the servicer's own account and are then transferred: 'the servicer's collection account is with Wells Fargo ... transfer of collections within two business days' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]. Not assignee_direct (the ENCODING fallback), which the source contradicts"
+  aggregation:
+    value: pool
+    status: stated
+    why: "6,781 loans pooled into one issuer [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]"
+  debt_seniority:
+    value: subordinated
+    status: stated
+    why: "classes A to D and a residual R rank in a stated sequence ('class B interest', 'class C interest', ... [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.11-12]); the most junior debt class is D (BB-sf, $5.3m) ahead of the residual R. Recorded as the rank of the most junior debt in the deal"
+  assignment_recourse:
+    value: waiver
+    status: default
+    why: "ENCODING fallback (receivable_holder = assignee, source silent on the borrower's right to withhold). The presale notes the practical risk but no legal exposure: defaults will come 'where the borrower is dissatisfied with the installer's services and/or the utility savings and stops paying' [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.8]. Alternative performance_exposed"
+  savings_basis:
+    value: measured
+    status: default
+    why: "the default; payment is not tied to savings (payment_basis = asset), so the facet has no object"
+  grant_recipient:
+    value: client
+    status: inferred
+    why: "reviewer, aligned with D29: the borrower receives public support as a federal tax credit; a tax credit is a forgone charge, which benefit_promise lists, and grant_recipient covers 'public non-repayable support'. No grant is stated. The federal investment tax credit (ITC) is a borrower tax benefit ('borrowers may apply as a partial loan prepayment', [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]): a forgone tax, no giver party and no payment in the deal. About one borrower in eight uses it (p.2). Alternative none (writer Y) if only money paid counts"
+  asset_owner:
+    value: client
+    status: inferred
+    why: "the loan finances the borrower's purchase ('loans backed by residential solar equipment', [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1]); the loans 'are secured by a UCC-1' on the equipment (p.4): a lien, not title"
+  bill_custody:
+    value: client
+    status: default
+    why: "source silent; the homeowner keeps its electricity bill (the loan is a separate payment by ACH)"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2578-2582)
+    applies_here: false
+    this_case: "private US homeowners; not EU"
+    source: E15 L2576-2582, L6930-6943
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1: fires when client_sector is private and asset_owner is not client"
+    applies_here: false
+    this_case: "asset_owner = client (a loan, not a lease)"
+    source: E02 L3293-3295; elements.yaml IFRS16_lease_test
+  pto_repurchase:
+    scope: contractual
+    rule: "If within 90 or 120 days 'after installation permission to operate (PTO) is not granted, Mosaic must repurchase the affected solar loan' at 100% of principal plus accrued interest [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2]"
+    applies_here: true
+    source: "https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.2"
+  target_oc_and_trigger:
+    scope: contractual
+    rule: "Class A and B amortise to a target OC: 100% for the first 16 months, then 10.5%; a breach of the escalating cumulative loss trigger switches the waterfall to turbo sequential and defers class C and D interest [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1, p.11-12]"
+    applies_here: true
+    source: "https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.1, p.11-12"
+
+numbers:   # only published figures, as printed, with units; checks shown with arithmetic
+  aggregate_principal_balance_usd: 307906983           # statistical cut-off 31 Oct 2022 [https://your.fitch.group/rs/fitchgroup/images/Mosaic_Solar_Loan_Trust_2022-3_presale_Fitch_10220282.pdf | p.3]
+  aggregate_adjusted_balance_usd: 218435262             # [p.3]
+  number_of_loans: 6781                                 # [p.3]
+  avg_original_loan_balance_usd: 45500                  # [p.3]
+  wa_original_term_years: 24.3                          # [p.3]
+  wa_fico: 750                                          # [p.3]
+  wa_interest_rate_pct: 2.5                             # contractual portfolio yield 2.5% [p.5, p.11]
+  max_coupon_pct: 8.7                                   # 'fixed coupon up to 8.7%' [p.4]
+  ach_share_pct: 82.6                                   # [p.3]
+  top_installer_share_pct: 17.0                         # [p.3]
+  classes_usd_m: {A: 114.0, B: 74.3, C: 12.1, D: 5.3, R: 12.7}   # [p.1]
+  total_rated_notes_usd_m: 205.7                        # [p.1]
+  expected_ratings: {A: AA-sf, B: A-sf, C: BBBsf, D: BBsf, R: NRsf}   # [p.1]
+  credit_enhancement_pct: {A: 49.2, B: 15.2, C: 9.7, D: 7.2}   # on adjusted balance [p.1]
+  coupons: "Fixed - TBD for A-D (not published in the presale)"
+  reserve_fund_usd_m: {initial: 3.08, floor: 1.54}     # [p.11]
+  target_oc_pct: "100 for the first 16 months, then 10.5"  # [p.1, p.11]
+  ysoc_discount_rate_pct: 7.7                           # [p.11]
+  ysoc_amount_usd_m: "about 89 at closing"              # [p.11]
+  legal_final_maturity: "June 2053"                     # [p.1]
+  lifetime_default_expectation_pct: 8.3                 # [p.1]
+  base_case_recovery_pct: 30                            # [p.1]
+  derived:
+    classes_sum: "114.0 + 74.3 + 12.1 + 5.3 = 205.7 (closes with 'Total Rated Notes 205.7')"
+    total_with_r: "205.7 + 12.7 = 218.4 = adjusted collateral balance of 218.4 (closes: 218,435,262 rounded; the notes fund the adjusted balance, not the $307.9m principal)"
+    ysoc: "307.907 - 218.435 = 89.47 million, matching 'about $89 million' (closes)"
+    reserve_pct_unadjusted: "3.08 / 307.907 = 1.00% = 'equal to 1% of the outstanding unadjusted collateral balance' (closes); floor 1.54 = 3.08 / 2 = 0.50% of the initial balance"
+    reserve_pct_adjusted: "3.08 / 218.4 = 1.41% = the presale's 'equal to 1.4% of the balance of the adjusted collateral portfolio' (closes)"
+    class_a_ce: "114.0 / 218.4 = 52.2%, so 1 - 0.522 = 47.8% subordination; the presale gives 49.2% including the reserve (3.08 / 218.4 = 1.4%: 47.8 + 1.4 = 49.2, closes)"
+    class_bcd_ce: "reviewer: (218.435 + 3.08 - 188.3) / 218.435 = 15.2% (B), (218.435 + 3.08 - 200.4) / 218.435 = 9.7% (C), (218.435 + 3.08 - 205.7) / 218.435 = 7.2% (D): all close with p.1"
+    class_a_ce_unadjusted: "reviewer: (307.907 + 3.08 - 114.0) / 307.907 = 64.0%, the printed unadjusted class A CE on p.11 (closes; from writer X)"
+    avg_balance: "307,906,983 / 6,781 = 45,407 USD against a published 'Average Original Loan Balance' of 45,500 (original balance, so a small difference is expected; current average not published). Not forced to close"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  homeowners: {gives: [c2], receives: [c1, c3], one_way: false}
+  solar_mosaic: {gives: [c1, c4, c5, c9, c12], receives: [c6, c10, c11], one_way: false}
+  concord:
+    gives: [c11]
+    receives: [c12]
+    one_way: true
+    reason: the subservicing fee exists only by duality; recorded as c12 unstated
+  vervent:
+    gives: [c13]
+    receives: [c14]
+    one_way: true
+    reason: the backup servicer's fee exists only by duality; recorded as c14 unstated
+  issuer_trust: {gives: [c6, c8, c10, c14, c16, c18], receives: [c2, c5, c7, c9, c13, c17], one_way: false}
+  wilmington:
+    gives: [c15]
+    receives: [c16]
+    one_way: true
+    reason: the trustee's fee exists only by duality; recorded as c16 unstated
+  noteholders: {gives: [c7], receives: [c8, c15], one_way: false}
+  class_r_holder: {gives: [c17], receives: [c18], one_way: false}
+  installers: {gives: [c3], receives: [c4], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: no_efficiency_no_partner
+  description: "A solar loan pool with no energy service: payment_basis = asset with no Partner. Three settings that presume a Partner (partner_form, receivable_holder, assignment_recourse) carry values with nothing to describe, as in batch-3 nyserda_green_bonds_2024a"
+  classification: "scope boundary (out-of-scope witness)"
+- kind: servicer_chain_roles
+  description: "Master servicer, subservicer, backup servicer and 'verification agent' map to collector_biller (two parties) and backup_servicer; the 'verification agent' duty of Vervent (checking the servicer's reports) is not a role of its own and sits under backup_servicer, not verifier_mnv (which certifies savings, not data tapes)"
+  classification: "encoding question; no new term needed"
+- kind: collector_not_a_transaction_party
+  description: "Concord and Wells Fargo (the servicer's collection account) are outside the transaction documents but inside the cash path. LOD 0 has no flag for 'party outside the transaction documents'; Concord is encoded as a party, Wells Fargo as context"
+  classification: "encoding question (deal boundary, F23)"
+- kind: presale_terms
+  description: "Coupons 'TBD', ratings 'expected', documentation in draft: the final terms are not in the document"
+  classification: "evidence gap"
+- kind: waterfall_detail
+  description: "The combined waterfall (15 lines, before and after a trigger breach, with a 16-month equity lockout) is below LOD 0"
+  classification: "below LOD 0 (LOD 1 waterfall, LOD 3 levels)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F02
+  title: "jurisdiction header field, dated at financial close; C1 trigger"
+  convention: "A `jurisdiction` block (country, EU membership at close, whether the client is EU general government at close) sits in the header; C1 applies_when {client_sector: public, jurisdiction: EU at close}."
+  applied_here: "jurisdiction US, dated presale 7 Dec 2022; C1 applies_here false"
+- id: F04
+  title: "borrower rule"
+  convention: "borrower = none only when the source says own funds or equity; when no loan or equity is named, keep the default partner with status default."
+  applied_here: "borrower = client (the homeowner takes the loan)"
+- id: F06
+  title: "one_way form"
+  convention: "A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated."
+  applied_here: "concord, vervent and wilmington one_way (fees c12, c14, c16 unstated)"
+- id: F21
+  title: "determination_promise is required"
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  applied_here: "not triggered: loan instalments are not computed on savings"
+- id: IFRS16
+  title: "IFRS16_lease_test rule entry"
+  convention: "IFRS16_lease_test applies_when {client_sector: private, asset_owner not client}."
+  applied_here: "applies_here false (asset_owner client)"
+- id: B2-R1
+  title: "grant or loan giver by identity"
+  convention: "A government body that lends or grants takes government_financier; grant_provider only for givers that are neither government nor EU funds."
+  applied_here: "not triggered: no public lender or grant; the federal ITC has no giver party in the deal (grant_recipient client, inferred)"
+- id: B3-web
+  title: "web evidence"
+  convention: "Evidence cited '<url> | <page or section>' with exact quotes of 25 words or fewer; PDF page = page of the PDF file."
+  applied_here: "one Fitch presale PDF, 21 pages"
+- id: B3-scope
+  title: "in_scope decided from the source"
+  convention: "A case counts only if the source shows an efficiency deal; otherwise the file is kept as a witness and its uses do not count."
+  applied_here: "in_scope false: solar-only pool ('Nonsolar Loans 0.0'); witness, uses not counted"
+- id: E1
+  title: "equity layer"
+  convention: "Equity is a funding_promise with an inferred residual-claim payment_promise back (ENCODING)."
+  applied_here: "class R holder, c17-c18 (from writer X)"
+- id: B5-payment_basis
+  title: "payment_basis setting (1 Oct ruling 1)"
+  convention: "payment_basis goes first in settings with a status and a reason; no Partner is possible only when payment_basis is asset."
+  applied_here: "payment_basis asset, inferred (a loan for equipment); no Partner"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, originator_developer, collector_biller, backup_servicer, securitisation_vehicle, account_bank_trustee,
+    lender, equity_investor, epc_contractor]
+  roles_count: 9 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, agency_promise]
+  families_absent: [benefit_promise, risk_promise, determination_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 5, inferred: 4, generic: 0, default: 4}
+  commitments_by_status: {stated: 9, inferred: 3, generic: 3, unstated: 3}
+  one_way_parties: [concord, vervent, wilmington]
+  parties_count: 9
+  commitments_count: 18
+  below_lod0: {lod1_adds: 'installation and PTO, loan funding and sale (statistical cut-off 31 Oct 2022, closing December 2022),
+      monthly ACH collection and transfer within two business days, ITC prepayment events, servicer termination and backup takeover',
+    lod2_adds: 'coupons by class (TBD), the waterfall levels and trigger, the YSOC discounting, the target OC schedule, fees'}

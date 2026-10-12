@@ -1,0 +1,57 @@
+# Published case "energy_esmap_africa_minigrid_2019": the one detailed mini-grid of the World Bank
+# ESMAP mini-grid costing deck (294 firm kW, 1,099 customers, 22% load factor, HOMER LCOE
+# $0.55/kWh), one representative year, revenue side only (C. Greacen, "Mini Grid Costing and
+# Innovation", ESMAP Learning Event, Accra, 2019, slides 12-13;
+# cases/reference/published/energy_esmap_africa_minigrid_2019.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the year's energy sold is sale.quantity kWh (the transcriber's 294 kW x 22% x 8,760 h,
+#     rounded to the kWh), sold at sale.price, the project's own LCOE read as its break-even
+#     tariff, and collected in the year (an offtake, paid at once);
+#   * no cost is posted: the deck prints no operating cost, fuel bill or debt service for this
+#     project, only cross-project capex shares (see the oracle's notes); no tax.
+# The source's computed figure, the year's revenue at the LCOE, is the P&L revenue line.
+# Set aside: the productive-use LCOE reduction (11-25%) is the deck's statement about a 40%
+# load-factor scenario that no input models, and the Nigerian module benchmark ($402/kWp) is a
+# separate study's equipment price that nothing in this project's inputs derives.
+published: energy_esmap_africa_minigrid_2019
+entity: minigrid
+plant: price
+case:
+  case: published-esmap-minigrid
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    minigrid:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: minigrid}
+      terms: {volume: {generator: src, output: quantity}, price: {generator: src, output: price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+  rulebooks: {}
+  schemes:
+    pnl:
+      sales.revenue: revenue
+  cuts:
+    revenue: {kind: pnl, entity: minigrid, scheme: pnl, include: [revenue]}
+  measures: {}
+figures:
+  annual_revenue_at_lcoe_usd: {cut: revenue}
+not_compared:
+  productive_use_lcoe_reduction_pct: >-
+    the deck's claim for a 22% to 40% load-factor shift (slide 12), a scenario none of the inputs
+    describe; the LCOE at 40% is never printed, so nothing here derives the reduction
+  nigeria_solar_module_benchmark_usd_per_kwp: >-
+    a separate October 2018 Nigerian study's module price (slide 6), not a quantity of this
+    project; no input carries module capacity or module spend

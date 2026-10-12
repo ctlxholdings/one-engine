@@ -1,0 +1,320 @@
+# Miniature — the Austrian pharmaceutical plant EPC with operate leasing expressed at ESCO LOD 0
+#
+# Batch 2 (CASE_SPEC_2.md), reconciled by the adjudicator from writers X (base) and Y; changes listed in source.notes.
+# Original writer X. Shape copied from bytom_schools-lod0.yaml (normalised 1 Oct 2026).
+# Frame: model/elements.yaml LOD 0 block (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Every fact carries its status: stated / inferred / default / generic / unstated. Nothing invented; only the corpus.
+# Line numbers refer to corpus input/iea-dsm-financing-options-manual.txt (E08) unless another file is named.
+
+miniature: austria_pharma_lease
+lod: 0
+case: batch2.austria_pharma_lease
+case_kind: deal   # a real signed contract; the client is described ('an international pharmaceutical enterprise', L2494-2495) but not named, the ESCO and FIN are unnamed
+
+tests_unused:   # which of the 22 unused LOD 0 items this case was chosen to test
+- item: lessor
+  kind: role
+  used: true
+  reason: "FIN concluded 'an operate lease agreement' with the ESCO (L2561) and 'Assets were activated by FIN' (L2598); E08's operate-lease table: 'Lessor is legal and economic owner' (L2083). FIN is the lessor"
+- item: asset_owner=lessor
+  kind: setting_value
+  used: true
+  reason: "'Assets were activated by FIN and do not appear in the books of ESCO nor the CLIENTs' (L2598-2599): the lessor owns the installed assets during the 6-year term"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E08
+  title: Financing of ESCo Projects — Financing Options for Energy-Contracting Projects (IEA DSM Task XVI)
+  publisher: Bleyl & Schinnerl, Grazer Energieagentur (IEA DSM Task XVI), ~2008-10
+  passage: "§5.5.1 'Pharmaceutical Plant uses Operate Leasing for EPC in HVAC-System, Austria' (corpus input/iea-dsm-financing-options-manual.txt L2484-2601); operate-lease features §5.3 (L1963-1971, L2080-2090, L2214-2229)"
+  oracle: none (no ORACLE-RESULTS row for this case)
+  notes:
+  - "Figure 17 (L2586-2592) shows 'total investment FIN (111,000 €)'. The figure does not say what EUR 111,000 is (not the 1,150,000 investment; not the 229,560 guaranteed savings). Recorded as published, meaning unknown"
+  - "Adjudication (batch 2): assignment_recourse changed from X's waiver (generic) to Y's performance_exposed (inferred): the source is not silent, the assignee FIN takes a bank guarantee 'to assure completion and technical and economical performance' (L2564-2566) and no Notice and Acknowledgement / waiver is mentioned. Y's separate risk_promise FIN->ESCO for the client's 'economic downfall' (L2562-2564) not adopted: non-recourse is a term of the funding (c4), as batch 1 kept 'without recourse' inside the transfer (ficompass_example-lod0.yaml L130)"
+  - "O&M stays with the client: 'All operation & maintenance (o&m) tasks remain within the responsibility of CLIENT' (L2573-2574) — no operator_om party"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Austria
+  iso: AT
+  eu_member: true
+  client_eu_general_government: false
+  status: stated
+  why: "'Pharmaceutical Plant ... Austria' (L2484-2486); 'a production site of an international pharmaceutical enterprise' (L2494-2495): a private company, not general government. EU membership: E02 (jrc-epc-in-the-eu-2020-2021.txt L332-333) counts Austria among the Member States ('stable in 6 MSs, i.e. Austria, ...')"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the energy service contract, the operate lease and the framework contract each establish (fibo-fnd-rel-rel:confers) their commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  client:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'a production site of an international pharmaceutical enterprise with a usable floor space of 48,000 m2' (L2494-2495); 'companies investment funds were reserved for research and production investments' (L2499-2500); not named"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'the ESCO formally takes over responsibility for the complete energy service project including a savings guarantee over the contract term of 6 years' (L2546-2548); not named"
+  fin:
+    role: lessor
+    groups: [capital]
+    status: stated
+    text: "'ESCO and FIN have concluded an operate lease agreement' (L2561); 'Assets were activated by FIN' (L2598). FIN also takes the ceded contracting rates (L2558-2559, L2582); forfaiter is the alternative for that leg, but the source names the instrument a lease and the cession is the repayment route of the lease, so the home role is lessor. Not named"
+  guarantee_bank:
+    role: surety_guarantor
+    groups: [risk]
+    status: stated
+    text: "'ESCO has to provide a bank guarantee to FIN to secure the amount of the total savings' (L2565-2566); Figure 16 '3. bank guarantee' (L2570); the bank is not named"
+
+contract:   # the agreements that establish the commitments
+  energy_service_contract:
+    core: contract
+    parties: [client, esco]
+    term_years: 6
+    status: stated
+    note: "'ESCO and CLIENT have entered into an energy service contract including financing. This contract also contains a cession agreement of ESCOs claims to FIN' (L2548-2559)"
+  operate_lease:
+    core: contract
+    parties: [fin, esco]
+    status: stated
+    note: "'At the same time ESCO and FIN have concluded an operate lease agreement' (L2561)"
+  framework_contract:
+    core: contract
+    parties: [fin, esco]
+    status: stated
+    note: "'FIN also accepts the risk of an economic downfall of the CLIENT, which is recorded in a project framework contract between FIN and ESCO' (L2562-2564)"
+  bank_guarantee:
+    core: contract
+    parties: [guarantee_bank, fin]
+    status: stated
+    note: "Figure 16 '3. bank guarantee' (L2570); provided by the ESCO to FIN (L2565-2566)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: client
+    status: stated
+    what: "complete energy service project: recirculation units, three new ventilation units (120,000 m3/h), exhaust-gas heat recovery, hot-water rehabilitation, building control system, continuous energy control system (L2527-2536); guaranteed energy savings EUR 229,560/year (L2541) over the 6-year term (L2547-2548). The shortfall make-good is inside this promise (G18)"
+    established_by: energy_service_contract
+  c2:
+    family: payment_promise
+    from: client
+    to: fin
+    status: stated
+    savings_arrangement: guaranteed   # payments covered by the guaranteed savings (L2582-2583)
+    what: "'The CLIENT pays the ceded contracting rates directly to FIN. The Client's payments are being covered by the guaranteed energy and maintenance savings' (L2582-2583); amount per rate not published"
+    established_by: energy_service_contract
+  c3:
+    family: performance_promise
+    from: esco
+    to: fin
+    status: stated
+    what: "cession of the ESCO's claims on the client to FIN: 'This contract also contains a cession agreement of ESCOs claims to FIN' (L2558-2559) — title to the contracting rates passes (the forfaiting_bulgaria form)"
+    established_by: energy_service_contract
+  c4:
+    family: funding_promise
+    from: fin
+    to: esco
+    status: stated
+    funding_instrument: lease   # operate lease (L2578-2581)
+    what: "operate lease: 'the investment is paid with 100% external capital, provided by FIN. ESCO invoices the total investment of 1,150,000 € (excl. VAT) to FIN and is being paid according to a payment plan' (L2578-2581); FIN 'accepts the risk of an economic downfall of the CLIENT' (L2562-2564) — the non-recourse term of this funding, not a separate promise"
+    established_by: operate_lease
+  c5:
+    family: risk_promise
+    covers: [R1, R3]
+    from: guarantee_bank
+    to: fin
+    status: stated
+    cover_kind: guarantee   # bank guarantee (L2564-2566)
+    what: "bank guarantee 'to assure completion and technical and economical performance of the measures ... to secure the amount of the total savings' (L2564-2566)"
+    established_by: bank_guarantee
+  c6:
+    family: payment_promise
+    from: esco
+    to: guarantee_bank
+    status: unstated
+    what: "counter-promise required by duality; source silent (the guarantee fee the ESCO pays the bank that issues the guarantee on its behalf is not stated)"
+  c7:
+    family: determination_promise
+    from: [esco, client]
+    to: [esco, client, fin]
+    status: stated
+    determines: savings   # energy control of the savings against the guarantee (L2535-2536)
+    what: "'Implementation of a continuous energy control system, monitored by both contract parties' (L2535-2536): the savings against the guarantee (c1) are established jointly by ESCO and client; the bank guarantee (c5) also relies on it"
+    established_by: energy_service_contract
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c2: client pays the ESCO's ceded contracting rates to FIN, 'covered by the guaranteed energy and maintenance savings' (E08 L2582-2583); guarantee EUR 229,560/yr (c1, L2541)."}
+  client_sector:
+    value: private
+    status: stated
+    why: "'an international pharmaceutical enterprise' (L2494-2495)"
+  partner_form: {value: corporate, status: default, why: "not stated; 'the ESCO' only"}
+  borrower:
+    value: partner
+    status: inferred
+    why: "no loan; the financing is an operate lease with the ESCO as lessee (L2561), so the Partner is the financed party ('energy service contract including financing', L2548-2558). Inferred: the setting names 'project loan' and the instrument here is a lease (funding_promise covers a lease). Alternative none (no loan) — rejected because the lease is debt-like financing taken by the Partner, not own funds (F04)"
+  receivable_holder:
+    value: assignee
+    status: stated
+    why: "'a cession agreement of ESCOs claims to FIN' (L2558-2559); 'The CLIENT pays the ceded contracting rates directly to FIN' (L2582)"
+  collection_placement:
+    value: assignee_direct
+    status: stated
+    why: "'The CLIENT pays the ceded contracting rates directly to FIN' (L2582); Figure 17 'Client pays contracting rates (cession)' (L2590-2591)"
+  aggregation: {value: none, status: inferred, why: one plant, one energy service contract}
+  debt_seniority: {value: senior, status: default, why: "not stated; no loan is named (lease financing)"}
+  assignment_recourse:
+    value: performance_exposed
+    status: inferred
+    why: "the source is not silent, so the F08 waiver default does not apply: 'To assure completion and technical and economical performance of the measures, ESCO has to provide a bank guarantee to FIN to secure the amount of the total savings' (L2564-2566) — the assignee needs security for the Partner's performance, which it would not need if the client had waived its defences; no 'Notice and Acknowledgement of Assignment' is mentioned for this deal (contrast E08's generic forfaiting text L3222-3224), and the client's payments 'are being covered by the guaranteed energy and maintenance savings' (L2582-2583). Alternative waiver (generic, F08) if a waiver were shown"
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "a continuous energy control system 'monitored by both contract parties' (L2535-2536) checks a guarantee in EUR/year (L2541)"
+  grant_recipient:
+    value: none
+    status: stated
+    why: "'The CLIENT provides no equity capital or building cost subsidy, so the investment is paid with 100% external capital, provided by FIN' (L2578-2579); no public grant is mentioned"
+  asset_owner:
+    value: lessor
+    status: stated
+    why: "'Assets were activated by FIN and do not appear in the books of ESCO nor the CLIENTs' (L2598-2599); operate lease: 'Lessor is legal and economic owner' (L2083), 'Lessor remains owner' at end of term (L2085)"
+  bill_custody: {value: client, status: default, why: "not stated; the client keeps O&M (L2573-2574) and the ESCO guarantees savings, not supply"}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: client is a private company; the Eurostat test does not reach it
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: not client}   # trigger widened 1 Oct
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: true
+    this_case: "private client; asset_owner = lessor, not client: the widened trigger fires (owner ruling 1 Oct, RULINGS.md item 7). The deal's stated purpose is keeping the assets off the client's and the ESCO's books (E08 L2561-2562, L2598-2599)."
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  floor_area_m2: 48000
+  energy_cost_before_eur_per_year: 1500000   # 'Cost for heat and electricity amounted to 1.5 Million € per year' (L2495-2496)
+  total_investment_eur_excl_vat: 1150000      # L2539, L2580
+  guaranteed_savings_eur_per_year: 229560     # L2541
+  co2_reduction_t_per_year: 1300              # L2542
+  contract_term_years: 6                      # L2548
+  ventilation_airflow_m3_per_h: 120000        # L2530-2531
+  figure17_label_eur: 111000                  # L2587; meaning not stated
+  engine_inputs:   # R1 step 6 (3 Oct): which figure above sizes which promise, read by engine/oe/engine/from_case.py; no new figure
+    term_years: contract_term_years
+    legs:
+    - {promise: c4, leg: funding, amount: total_investment_eur_excl_vat, start_year: 0, evidence: "iea-dsm-financing-options-manual.txt:2579-2581 ESCO invoices the total investment of 1,150,000 to FIN; timing is a payment plan the source does not print, so year 0 is a flagged default and only the total is tested"}
+    - {promise: c1, leg: outlay, amount: total_investment_eur_excl_vat, start_year: 0, evidence: "iea-dsm-financing-options-manual.txt:2539 total investment 1,150,000 (excl. VAT)"}
+    - {promise: c1, leg: savings, amount: guaranteed_savings_eur_per_year, evidence: "iea-dsm-financing-options-manual.txt:2541 guarantees energy savings of 229,560 Euro/year"}
+    missing:
+    - {promise: c2, what: "amount and schedule of the ceded contracting rates the client pays FIN", evidence: "iea-dsm-financing-options-manual.txt:2582-2583 (no amount printed)"}
+    - {promise: c4, what: "FIN's payment plan to the ESCO (dates and instalments)", evidence: "iea-dsm-financing-options-manual.txt:2580-2581"}
+    - {promise: c6, what: "the bank guarantee fee", evidence: "iea-dsm-financing-options-manual.txt:2565-2566 (not stated)"}
+  derived:
+    guaranteed_savings_over_term_eur: 229,560 x 6 = 1,377,360
+    savings_over_term_vs_investment: 1,377,360 / 1,150,000 = 1.198 (nominal, before financing cost)
+    simple_payback_years: 1,150,000 / 229,560 = 5.01 (fits the 6-year term; 'Short pay back time of investments was mandatory', L2514-2515)
+    guaranteed_savings_vs_prior_energy_cost: 229,560 / 1,500,000 = 15.3%
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  client: {gives: [c2, c7], receives: [c1, c7], one_way: false}
+  esco: {gives: [c1, c3, c6, c7], receives: [c4, c7], one_way: false}
+  fin: {gives: [c4], receives: [c2, c3, c5, c7], one_way: false}
+  guarantee_bank:
+    gives: [c5]
+    receives: [c6]
+    one_way: true
+    reason: "counter-promise economically necessary but unstated: a bank guarantee is issued against a fee, which the source does not mention; recorded as c6 status unstated (F06)"
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: rule_trigger_lessor_owned
+  description: "IFRS16_lease_test applies_when {client_sector: private, asset_owner: partner}. Here the client is private and pays for the use of assets owned by a lessor (asset_owner = lessor); the on/off-balance question is the deal's stated purpose (L2561-2562, L2598-2599) but the trigger as written does not fire. The trigger may need asset_owner in {partner, lessor, vehicle}"
+  classification: "real LOD 0 gap (rule trigger; the rule entry is a proposed convention, IFRS16_lease_test)"
+- kind: recourse_for_client_credit_risk
+  description: "'FIN (rather than the ESCO) accepts the economic risks of the (industrial) CLIENT' (L2600-2601). assignment_recourse records whether the assignee is exposed to the Partner's performance; whether the financier has recourse to the Partner for the client's default is a separate dimension LOD 0 does not record. Kept as a term of the funding promise c4"
+  classification: "below LOD 0 (LOD 1 term of the funding promise)"
+- kind: f08_trigger_wording
+  description: "F08 sends assigned deals to waiver unless the source 'shows the assigned leg varying with performance'. Here the source shows something adjacent: the assignee takes a performance bank guarantee from the Partner (L2564-2566). Proposed wording: performance_exposed when the source shows the assigned leg varying OR the assignee taking security for the Partner's performance; waiver only when the source is silent or shows a waiver"
+  classification: "encoding question (wording of the F08 conditional default; no new value)"
+- kind: lessee_not_named_by_borrower
+  description: "borrower names who takes the 'project loan'. With an operate lease to the Partner the setting reads oddly (the lease is chosen to keep the investment off the ESCO's balance sheet, L2561-2562). Proposed definition touch-up: 'takes the project loan or lease' (writer Y raised the same in sittard_cityhall)"
+  classification: "encoding question (definition touch-up of borrower; no new value)"
+- kind: legal_vs_economic_ownership
+  description: "asset_owner has one value; leasing law splits legal and economic ownership (operate lease: lessor is both, L2083; finance lease: lessor legal, lessee economic, L2338-2339). No conflict here (both with the lessor) but the setting cannot record the split"
+  classification: "encoding question (definition note: asset_owner = legal owner during the term)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction AT; C1 applies_here false (private client)
+- id: F04
+  title: borrower rule for provider-financed deals
+  convention: borrower = none only when the source says own funds or equity; when the Partner finances the works and no loan or equity is named, keep the default partner with status default.
+  origin: verdict change 4; findings F04; gaps G24
+  applied_here: borrower partner (inferred, lease financing taken by the ESCO); none rejected
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'guarantee_bank one_way: true; c6 unstated fee'
+- id: F08
+  title: 'conditional default: assignment_recourse'
+  convention: "receivable_holder in {assignee, split} and source silent -> assignment_recourse = waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226 'continued payment obligations ... regardless of any disputes'); performance_exposed only when the source shows the assigned leg varying with performance."
+  origin: verdict change 3; findings F08; gaps G28
+  applied_here: "not applied as a default: the source shows the assignee taking performance security (L2564-2566), so performance_exposed (inferred); the convention's wording ('shows the assigned leg varying') is widened in lod0_gaps"
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: c7 joint monitoring by both contract parties (L2535-2536)
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "the ESCO's savings guarantee stays inside c1; the bank guarantee (third party) is the risk_promise c5"
+- id: IFRS16
+  title: IFRS16_lease_test rule entry
+  convention: "One rule entry, not a setting: IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner} — the private counterpart of C1."
+  origin: verdict change 6; gaps G23
+  applied_here: rule present; does not fire (asset_owner lessor) — gap recorded
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, lessor, surety_guarantor]
+  roles_count: 4 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, risk_promise, determination_promise]
+  families_absent: [benefit_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 5, inferred: 5, generic: 0, default: 3}
+  commitments_by_status: {stated: 6, inferred: 0, generic: 0, unstated: 1}
+  one_way_parties: [guarantee_bank]
+  parties_count: 4
+  commitments_count: 7
+  below_lod0: {lod1_adds: 'events (feasibility study, works during continuous operation, acceptance, monthly/annual ceded rates,
+      guarantee call), the lease payment plan from FIN to the ESCO, the shortfall rule, the end-of-term ownership of the leased
+      assets', lod2_adds: 'fee variant (guaranteed savings; savings above the guarantee go to the client, L2593-2594), indexation,
+      the operate-lease fungibility test under Austrian tax law (L1955-1962)'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:2546", why: "'the ESCO formally takes over responsibility for the complete energy service project including a savings guarantee' (L2546-2547; 'The ESCo guarantees energy savings', L2541). Same bearer as the default, kept because stated. A and B agree"}
+  - {category: R2, driver: null, bearer: [host], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:2573", why: "'All operation & maintenance (o&m) tasks remain within the responsibility of CLIENT' (L2573). Departs from the default (payment on savings => Partner). A and B agree"}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:2564", why: "completion sits with the ESCO: it takes over 'the complete energy service project' (L2546) and must post a bank guarantee to FIN 'to assure completion and technical and economical performance' (L2564-2566), backed by c5. Same bearer as the default. Adjudicator call: both drafts wrote inferred; upgraded to stated because two sentences name the ESCO's completion responsibility"}
+  - {category: R5a, driver: null, bearer: [lessor], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:2563", why: "'FIN also accepts the risk of an economic downfall of the CLIENT' (L2562-2563), repeated L2600-2601 'FIN (rather than the ESCO) accepts the economic risks'. FIN holds the lessor role, which the default (assignee => forfaiter) does not name. A and B agree"}

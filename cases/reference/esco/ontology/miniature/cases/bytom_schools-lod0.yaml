@@ -1,0 +1,260 @@
+# Miniature — the Bytom schools EPC expressed at ESCO LOD 0
+#
+# Purpose: the golden example (Grüninger & Fox motivating scenario) that defines what "done" looks like for one deal
+# at the coarsest zoom: who promises what to whom, the twelve settings, the one external rule that bites, the numbers.
+# Frame: pilot/register-elements model/elements.yaml (ESCO LOD 0: 41 roles, 7 commitment families, 12 settings;
+# owner rulings 28 Sep 2026). Core v7 = lod0/ (ISO/IEC 15944-4 Figure B.3 + 3.5 + 3.14 on published terms).
+# Every fact carries its status: stated (in the source), inferred (follows from a stated fact), default (the
+# setting's default; the source is silent). Nothing invented.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: bytom_schools
+lod: 0
+case: validation_targets.published.Bytom_schools
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E07
+  title: Implementing Energy Efficiency projects via Energy Performance Contracting with support from ERDF financial instruments in Poland
+  publisher: fi-compass (EC / EIB), November 2023
+  passage: "'School renovation in the City of Bytom', p. 7 (corpus input/fic-erdf-epc-poland-factsheet-2023.txt L243-252)"
+  oracle: 'ORACLE-RESULTS.md #3: volume/savings 1.405x reproduced; C1 Eurostat classifies the deal on-balance (nominal basis)'
+  notes:
+  - "F17: the template's typed coverage miscounted (said 5 of 7 families, 3 stated settings); coverage is now computed"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Poland
+  iso: PL
+  eu_member: true
+  client_eu_general_government: true
+  status: stated
+  why: "'The City of Bytom' (E07 L244), in the factsheet on EPC in Poland (E07 title L15); a city is a local government unit inside general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  city_of_bytom:
+    entity: city_of_bytom
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: The City of Bytom renovated 17 schools using EPC
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'the ESCO secured the financing'; name not given"
+  financier:
+    role: lender
+    groups: [capital]
+    status: inferred
+    text: "'the ESCO secured the financing of the project for the duration ... repaid conditional to the achievement of the guaranteed energy savings'; the lender is not named"
+  verifier:
+    role: verifier_mnv
+    groups: [verification]
+    status: generic
+    text: "'a third party undertakes the commissioning and verifies ...' (lifecycle section, not Bytom-specific)"
+
+contract:   # the agreements that establish the commitments
+  epc_contract: {core: contract, parties: [city_of_bytom, esco], term_years: 15, status: stated}
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: city_of_bytom
+    status: stated
+    what: deep renovation of 17 schools, replacement of the lighting system, remote energy management system; guaranteed energy savings 48% of heating energy and 20% of electricity, valued EUR 7.9m; energy management for 15 years
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: city_of_bytom
+    to: esco
+    status: stated
+    what: contract volume almost EUR 11.1m = capital expenditure + fees for energy management, over 15 years; the City pays more than the guaranteed savings
+    established_by: epc_contract
+  c3:
+    family: funding_promise
+    from: financier
+    to: esco
+    status: inferred
+    what: financing of the project for its duration
+  c4:
+    family: payment_promise
+    from: esco
+    to: financier
+    status: stated
+    depends_on_savings: true   # repayment conditional on achieving the guaranteed savings
+    what: repayment of the financing, conditional on the achievement of the guaranteed energy savings
+  c5:
+    family: determination_promise
+    from: verifier
+    to: [city_of_bytom, esco]
+    status: generic
+    determines: both   # commissioning check and verification of savings
+    what: commissioning check and verification of savings against the pre-agreed standard
+  c6:
+    family: payment_promise
+    from: [city_of_bytom, esco]
+    to: verifier
+    status: unstated
+    what: counter-promise required by duality; source silent (which party pays the third-party verifier is not said)
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2/c4: contract volume of capex plus fees, financing 'repaid conditional to the achievement of the guaranteed energy savings' (E07 L249-251); guaranteed-savings EPC."}
+  client_sector: {value: public, status: stated, why: a City}
+  partner_form: {value: corporate, status: default, why: not stated}
+  borrower:
+    value: partner
+    status: inferred
+    why: "'The ESCO secured the financing of the project ... and the financing is repaid conditional to the achievement of the guaranteed energy savings' (L249-251): repayment implies a financier and the ESCO as debtor; the source does not name a loan, so inferred, not stated (F04)"
+  receivable_holder: {value: partner, status: default, why: no assignment or forfaiting mentioned}
+  collection_placement: {value: operator_own, status: default, why: not stated}
+  aggregation: {value: none, status: inferred, why: 'one city, one contract covering 17 schools'}
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: inferred
+    why: repayment is conditional on achieved savings, so savings are measured
+  grant_recipient:
+    value: none
+    status: inferred
+    why: the factsheet contrasts Bytom with the grant-blended cases (Marche, CTU); no grant is mentioned
+  asset_owner: {value: client, status: default, why: not stated (public buildings; default)}
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "nominal: guaranteed savings EUR 7.9m < contract volume EUR 11.1m over 15 years -> ON BALANCE (L247-252: 'the City pays more than the amount of guaranteed savings'). The rule is on an NPV basis (E15 L2578-2582); both sides are level 15-year flows (0.527m/y vs 0.74m/y), so discounting at one rate leaves the direction unchanged; the magnitude of the gap changes, the classification does not (F01). The oracle's note that discounting 'could change it' concerns magnitude"
+    oracle: ORACLE-RESULTS R-orc-2 (nominal computation)
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public; the Eurostat test is the public-sector counterpart
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  schools: 17
+  term_years: 15
+  contract_volume_eur_m: 11.1
+  guaranteed_savings_value_eur_m: 7.9
+  heating_energy_saving_pct: 48
+  electricity_saving_pct: 20
+  savings_quantity: 1.18 GJ (sic in the source; unit evidently wrong)
+  derived: {volume_over_savings: 1.405, annual_payment_eur_m: 0.74, annual_savings_eur_m: 0.527}
+  links:   # R-A17 (architect, 6 Oct): which recorded figure sizes which promise; configuration, read by oe.census.printability
+  - {evidence: "guaranteed_savings_per_period printed once (guaranteed_savings_value_eur_m); c1 is the deal's only candidate", figure: guaranteed_savings_value_eur_m, origin: "linked by rule single savings promise", promise: c1, promise_kind: performance_promise, sizes: savings, period: total over term, scale: 1000000, scale_rule: "the key says millions (_m, _mn, million)", currency: EUR}
+  - {evidence: "fic-erdf-epc-poland-factsheet-2023.txt:246-249 (volume = capex plus energy-management fees over 15 years); bytom_schools-lod0.yaml:87; adjudication n 2", figure: contract_volume_eur_m, origin: "linked by adjudication (blind pair)", promise: c2, promise_kind: payment_promise, sizes: amount_total_over_term, period: total over term, scale: 1000000, scale_rule: "the key says millions (_m)", scale_status: derived, currency: EUR}
+  engine_inputs:   # R-A38 (2): written by program from numbers.links; edit the links, then re-run
+    origin: derived from numbers.links by oe.census.inputs_from_links
+    term_years:
+      value: 15
+      from: numbers.term_years
+      rule: printed
+    legs:
+    - promise: c1
+      leg: savings
+      amount:
+        key: guaranteed_savings_value_eur_m
+        scale: 200000/3
+      evidence: numbers.guaranteed_savings_value_eur_m (linked by rule single savings promise)
+    - promise: c2
+      leg: fee
+      amount:
+        key: contract_volume_eur_m
+        scale: 200000/3
+      evidence: numbers.contract_volume_eur_m (linked by adjudication (blind pair))
+    dated_legs: []
+    not_booked:
+    - 'c4: repayment of c3; c3 not printed: schedule terms (principal, rate, term, frequency)'
+    not_linked: []
+    missing:
+    - promise: c3
+      what: c3 amount not printed
+      evidence: engine/out/r2_census/census.csv
+    calendar:
+      anchor: '2023-01-01'
+      cycle: P1Y
+      status: default
+      flagged: true
+      why: period 0 = 1 January of the source's publication year (2023); one period = one contract year. A flagged default date names the default used (R-A19); dates change no figure
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  city_of_bytom: {gives: [c2, c6], receives: [c1, c5], one_way: false}
+  esco: {gives: [c1, c4, c6], receives: [c2, c3, c5], one_way: false}
+  financier: {gives: [c3], receives: [c4], one_way: false}
+  verifier:
+    gives: [c5]
+    receives: [c6]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: the lifecycle text has a third party verify (L162-163) and never says who pays it; recorded as c6 status unstated (F06)'
+
+lod0_gaps: []   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 rule text now states the NPV basis; the nominal 7.9m < 11.1m result is kept with the note that level flows leave the direction unchanged
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction PL / EU general government added; C1 applies_here true
+- id: F04
+  title: borrower rule for provider-financed deals
+  convention: borrower = none only when the source says own funds or equity; when the Partner finances the works and no loan or equity is named, keep the default partner with status default.
+  origin: verdict change 4; findings F04; gaps G24
+  applied_here: borrower partner kept; status downgraded from stated to inferred (repayment conditional on savings implies a financier)
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'verifier flagged one_way: true with reason; c6 unstated payment added'
+- id: F17
+  title: fact correction (bytom template)
+  convention: "The template's typed coverage miscounted families and setting statuses; coverage is now computed in every file."
+  origin: findings F17
+  applied_here: coverage recomputed (was 5 of 7 families, 3 stated settings); reciprocity and lod0_gaps added to the golden example
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "the ESCO's guarantee (repayment conditional on savings, L250-251) stays inside c1/c4; no risk_promise"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, lender, verifier_mnv]
+  roles_count: 4 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 2, inferred: 5, generic: 0, default: 6}
+  commitments_by_status: {stated: 3, inferred: 1, generic: 1, unstated: 1}
+  one_way_parties: [verifier]
+  parties_count: 4
+  commitments_count: 6
+  below_lod0: {lod1_adds: 'events (works, commissioning, annual verification, annual payment, repayment), the fee formula, the
+      shortfall rule', lod2_adds: 'the fee variant (fixed fee with provider covering shortfall), M&V option, indexation'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): the Bytom box (E07 L244-252) states no bearer; both drafts' R1 technical (repayment conditional on the guaranteed savings, L249-250) and draft A's R7 (ESCO secured the financing, L249) are inferred rows equal to the converter defaults, dropped; the converter derives every row (ENCODING.md)

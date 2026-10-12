@@ -1,0 +1,109 @@
+# Published case "agro_sugar_hippo_valley_zw_2020": Hippo Valley Estates Limited (Zimbabwe), the
+# year ended 31 March 2020, the INFLATION-ADJUSTED (IAS 29) consolidated statement of profit or
+# loss (Annual Report 2020, p.23; cases/reference/published/agro_sugar_hippo_valley_zw_2020.yaml).
+# ZWL'000.
+#
+# One period, the FY2020 inflation-adjusted column. Every line is posted as one move of a
+# `transfer` journal at the amount the source prints, against cash:
+#   * turnover is revenue plus the fair value gain on biological assets (standing cane), as the
+#     source strikes it; cost of sales is deducted from turnover to give gross profit;
+#   * marketing and selling, administrative and other expenses, the other operating loss and the
+#     net impairment reversal (nil this year) are the operating lines down to operating profit;
+#   * the IAS 29 net monetary loss, finance costs, finance income and the share of associates'
+#     profit after tax sit between operating profit and profit before tax, as printed;
+#   * income tax is the source's own charge for the year.
+#
+# Not read, and why:
+#   * total_assets, total_equity and closing cash are scored by the library, but the inputs
+#     carry no balance sheet and no cash-flow line: they cannot be derived, so they are left
+#     unread ("not reported");
+#   * the historical-cost column (unaudited supplementary information) is a second presentation
+#     whose lines are not inputs; total comprehensive income (OCI is not an input), EPS (no share
+#     count), total equity and liabilities and the cash-flow subtotals are set aside below.
+published: agro_sugar_hippo_valley_zw_2020
+entity: hippo
+plant: revenue
+case:
+  case: published-hippo-valley-fy2020
+  periods: 1
+  phases: [post]
+  currency: ZWL
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    hippo:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: hippo
+      phase: post
+      declare:
+        revenue: income
+        biological_asset_gain: income
+        cost_of_sales: expense
+        marketing_and_selling: expense
+        administrative_and_other: expense
+        impairment_reversal: income
+        other_operating_loss: expense
+        monetary_loss: expense
+        finance_costs: expense
+        finance_income: income
+        share_of_associates: income
+        income_tax_expense: expense
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        biological_gain: {debit: cash, credit: biological_asset_gain, amount: {generator: src, output: fair_value_gain_on_biological_assets}}
+        cost_of_sales: {debit: cost_of_sales, credit: cash, amount: {generator: src, output: cost_of_sales}}
+        marketing: {debit: marketing_and_selling, credit: cash, amount: {generator: src, output: marketing_and_selling_expenses}}
+        administration: {debit: administrative_and_other, credit: cash, amount: {generator: src, output: administrative_and_other_expenses}}
+        impairment_reversal: {debit: cash, credit: impairment_reversal, amount: {generator: src, output: net_impairment_reversal}}
+        other_operating_loss: {debit: other_operating_loss, credit: cash, amount: {generator: src, output: other_operating_loss}}
+        monetary_loss: {debit: monetary_loss, credit: cash, amount: {generator: src, output: monetary_loss}}
+        finance_costs: {debit: finance_costs, credit: cash, amount: {generator: src, output: finance_costs}}
+        finance_income: {debit: cash, credit: finance_income, amount: {generator: src, output: finance_income}}
+        associates: {debit: cash, credit: share_of_associates, amount: {generator: src, output: share_of_associate_companies_profit_after_tax}}
+        tax: {debit: income_tax_expense, credit: cash, amount: {generator: src, output: income_tax_expense}}
+  schemes:
+    pnl:
+      revenue: turnover
+      biological_asset_gain: turnover
+      cost_of_sales: cost_of_sales
+      marketing_and_selling: operating
+      administrative_and_other: operating
+      impairment_reversal: operating
+      other_operating_loss: operating
+      monetary_loss: below_operating
+      finance_costs: below_operating
+      finance_income: below_operating
+      share_of_associates: below_operating
+      income_tax_expense: tax
+  cuts:
+    turnover: {kind: pnl, entity: hippo, scheme: pnl, include: [turnover]}
+    gross_profit: {kind: pnl, entity: hippo, scheme: pnl, include: [turnover, cost_of_sales]}
+    operating_profit: {kind: pnl, entity: hippo, scheme: pnl, include: [turnover, cost_of_sales, operating]}
+    pbt: {kind: pnl, entity: hippo, scheme: pnl, include: [turnover, cost_of_sales, operating, below_operating]}
+    profit: {kind: pnl, entity: hippo, scheme: pnl, include: [turnover, cost_of_sales, operating, below_operating, tax]}
+  measures: {}
+figures:
+  turnover: {cut: turnover}
+  gross_profit: {cut: gross_profit}
+  operating_profit: {cut: operating_profit}
+  profit_before_tax: {cut: pbt}
+  profit_for_the_year: {cut: profit}
+not_compared:
+  total_comprehensive_income: "other comprehensive income (exchange loss, actuarial losses) is not an input"
+  basic_and_diluted_eps_zwl_cents: "the number of shares is not an input"
+  total_equity_and_liabilities: "the inputs carry no balance sheet"
+  net_cash_generated_from_operations: "no cash-flow line (working capital) is an input"
+  net_cash_inflow_from_operating_activities: "finance charges paid and tax paid are not inputs"
+  net_cash_inflow_from_investing_activities: "no investing line is an input"
+  net_cash_outflow_from_financing_activities: "no financing line is an input"
+  historical_cost_column: "the unaudited historical-cost presentation: its lines are not inputs (the inputs are the inflation-adjusted column)"

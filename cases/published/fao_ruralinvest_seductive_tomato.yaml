@@ -1,0 +1,82 @@
+# Published case "fao_ruralinvest_seductive_tomato": a 5 ha irrigated tomato investment, one
+# season per hectare, as promised and as realised (FAO RuralInvest Module 3, Chapter II, box
+# "The seductive tomato", p.16; cases/reference/published/fao_ruralinvest_seductive_tomato.yaml).
+#
+# Every amount is a published input by name (generator `src`). Two books, one per scenario,
+# each one hectare for one season:
+#   * realised (entity `farm`): quantity tonnes sold at price a tonne (the source's
+#     0.60 a kg after losses and transport, restated a tonne), for cash; the season's cost
+#     costs__promised_cost_per_ha_usd, paid and expensed in the season (the source gives one
+#     lump cost, the same in both scenarios);
+#   * promised (entity `plan`): promised_yield_t_per_ha tonnes at the conservative
+#     promised_conservative_sale_price_usd_per_kg a kg (1000 kg a tonne), less the same
+#     promised_cost_per_ha_usd;
+#   * the promised first-year profit is the hectare's profit times planted_area_ha (`times`);
+#   * no tax, no depreciation: the irrigation investment is not in any figure the source prints.
+# The realised average price a kg is read from the books as the revenue per tonne sold (`per`,
+# scale 1000: the source prints it a kg, the books sell by the tonne). The realised saleable yield
+# is set aside: it is an input, and nothing else derives it.
+published: fao_ruralinvest_seductive_tomato
+entity: farm
+plant: price
+case:
+  case: published-fao-seductive-tomato
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        realised_sales: quantity * price
+        tonnes_sold: quantity
+        promised_sales: promised_yield_t_per_ha * promised_conservative_sale_price_usd_per_kg * 1000
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    plan:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    realised:
+      kind: transfer
+      entity: farm
+      phase: operate
+      declare: {sales: income, growing_cost: expense}
+      moves:
+        sales: {debit: cash, credit: sales, amount: {generator: src, output: realised_sales}}
+        cost: {debit: growing_cost, credit: cash, amount: {generator: src, output: costs__promised_cost_per_ha_usd}}
+    promised:
+      kind: transfer
+      entity: plan
+      phase: operate
+      declare: {sales: income, growing_cost: expense}
+      moves:
+        sales: {debit: cash, credit: sales, amount: {generator: src, output: promised_sales}}
+        cost: {debit: growing_cost, credit: cash, amount: {generator: src, output: promised_cost_per_ha_usd}}
+  schemes:
+    pnl:
+      sales: revenue
+      growing_cost: cost
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    profit: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, cost]}
+    plan_revenue: {kind: pnl, entity: plan, scheme: pnl, include: [revenue]}
+    plan_profit: {kind: pnl, entity: plan, scheme: pnl, include: [revenue, cost]}
+  measures: {}
+figures:
+  promised_income_per_ha_usd: {cut: plan_revenue}
+  promised_profit_per_ha_usd: {cut: plan_profit}
+  promised_first_year_profit_usd: {cut: plan_profit, times: src.planted_area_ha}
+  realized_avg_price_after_transport_usd_per_kg: {cut: revenue, per: src.tonnes_sold, scale: 1000}
+  realized_income_per_ha_usd: {cut: revenue}
+  realized_loss_per_ha_usd: {cut: profit}
+not_compared:
+  realized_saleable_yield_t_per_ha: >-
+    the saleable 4 t/ha is the input sale.quantity itself; no other input derives it (the oracle's
+    notes: the loss cascade from 6.25 t/ha cannot be reconstructed from the printed loss rates)

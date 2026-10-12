@@ -1,0 +1,100 @@
+# Published case "bld_menuiserie_bois_extremenord": a young trained carpenter's wood workshop,
+# Extrême-Nord Cameroon, its three-year business plan (GIZ / PARSE AGR study, Tableaux 24-26;
+# cases/reference/published/bld_menuiserie_bois_extremenord.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * three years, periods 0 to 2; each year's sales are the six furniture lines of Tableau 25
+#     (tables, chairs, wardrobes, sideboards, beds, living-room sets), collected in cash. The body
+#     text's "cumul main d'oeuvre" (cout_main_oeuvre_annuel_body_text, 5,280,000) is a figure the
+#     source's own business plan never uses; it is not posted. Timber is client-supplied and never
+#     priced, so no materials are bought;
+#   * the recurring charges (workshop rent, electricity), paid each year;
+#   * the installation (charges_fixes_installation: training, tools, workbench, power hook-up) is
+#     paid at the start of year 1, capitalised, and depreciated straight-line over the source's own
+#     window (amortissement_years), charged from year 1: by year 3 it is fully recovered;
+#   * no tax on profit. Years 1 and 2 carry the same sales and charges as year 3 (the source's
+#     years 1 and 2 net incomes are not transcribed).
+# production_annuelle (mapped to revenue) and charges_recurrentes_total (cost_of_sales) are year 3's
+# sales and recurring charges, revenu_net_annee_3 (gross_margin) its profit, with no depreciation
+# left to charge. cout_total_year1_cumulative is the source's first-year-cumulative total, the
+# installation plus one year of recurring charges: what year 1 pays out for its costs, read as the
+# year-1 cash paid for charges and installation.
+published: bld_menuiserie_bois_extremenord
+entity: workshop
+plant: lits
+case:
+  case: published-bld-menuiserie-bois-extremenord
+  periods: 3
+  phases: [fund, operate, close]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: published
+      values:
+        orders_year: 1                           # Tableau 25's lines are annual totals: one lot a year
+        furniture: tables + chaises + armoires + buffets + lits + salon
+        installation: {each_period: charges_fixes_installation * (t == 0)}
+  opening:
+    workshop:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    orders:
+      type: offtake
+      parties: {seller: workshop}
+      terms: {volume: {generator: src, output: orders_year}, price: {generator: src, output: furniture},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 2}
+    rent:
+      type: operating_cost
+      parties: {payer: workshop}
+      terms: {annual: {generator: src, output: location_atelier}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 2, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    power:
+      type: operating_cost
+      parties: {payer: workshop}
+      terms: {annual: {generator: src, output: electricite}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 2, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    install:
+      type: capex
+      parties: {owner: workshop}
+      terms: {schedule: {generator: src, output: installation}, vat_rate: 0, vat_refund_lag: 0, end: 2}
+  rulebooks:
+    installation_register:
+      kind: asset_register
+      entity: workshop
+      phase: close
+      from: cwip
+      to: installation_nbv
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 3
+      life_periods: {generator: src, output: amortissement_years}
+      first_charge: in_service
+  schemes:
+    pnl:
+      orders.revenue: revenue
+      rent.expense: recurring
+      power.expense: recurring
+      depreciation: depreciation
+      disposal_loss: depreciation
+    cash_flow:
+      orders.receivable: receipts
+      rent.payable: charges
+      power.payable: charges
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: workshop, scheme: pnl, include: [revenue]}
+    recurring: {kind: pnl, entity: workshop, scheme: pnl, include: [recurring]}
+    profit: {kind: pnl, entity: workshop, scheme: pnl, include: [revenue, recurring, depreciation]}
+    costs_paid: {entity: workshop, account: cash, scheme: cash_flow, include: [charges, investing]}
+  measures: {}
+figures:
+  production_annuelle: {cut: revenue, at: 2}
+  charges_recurrentes_total: {cut: recurring, sign: -1, at: 2}
+  revenu_net_annee_3: {cut: profit, at: 2}
+  cout_total_year1_cumulative: {cut: costs_paid, sign: -1, at: 0}

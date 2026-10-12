@@ -1,0 +1,382 @@
+# Miniature — the Armenian R2E2 Fund energy service agreements (ESAs) expressed at ESCO LOD 0
+#
+# Shape copied from bytom-lod0.yaml. Every fact carries its status: stated (in the source), inferred (follows
+# from a stated fact — said which), default (the setting's default; source silent), generic (from the source's
+# general description, not this deal), unstated (counter-promise required by duality; source silent). Nothing
+# invented.
+# Wording note: CASE_SPEC summarises the case as 'financier recovers via savings share or fixed payments' — that
+# phrase is the owner's (instance.yaml L930), not the corpus. The corpus says the client pays its baseline
+# energy costs into an escrow account and the Fund pays the new, lower energy bill and recovers its investment
+# and fees from the difference (E16 fn10, Fig 8).
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: revolving_armenia
+lod: 0
+case: validation_targets.published.Revolving_fund_Armenia
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E16
+  title: 'Transforming Energy Efficiency Markets in Developing Countries: The Emerging Possibilities of Super ESCOs'
+  publisher: World Bank Live Wire 2018/92 (Sarkar & Moin)
+  passage: "'Armenia's Renewable Resources and Energy Efficiency Fund (R2E2 Fund)', pp. 8-9 (corpus input/wb-super-escos-emerging-possibilities-2018.txt L503-527 right column, L570-600 left column), Figure 8 'End user's cash flows under the ESA in Armenia' (wb-super-escos-emerging-possibilities-2018.txt:528), footnotes 10-11 (L613-619); R2E2 listed among Super ESCOs at L403-404"
+  secondary:
+    id: E05
+    passage: "corpus input/gesco-financing-mechanisms-note.txt L10: 'Energy Efficiency Revolving Funds (EERF) — government (+FIs). Long-term affordable loans to public agencies for upfront investment; savings repay the fund + interest. Examples: Bulgaria EERSF, Armenia R2E2, UK Salix'"
+  oracle: 'none numeric (oracle-matrix.md: P5 super-ESCO delivery has the HEP case only); instance.yaml L1066 records the 51% / 2.6-8.8 y figures as provenance'
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Armenia
+  iso: AM
+  eu_member: false
+  client_eu_general_government: false
+  status: stated
+  why: "'Armenia's Renewable Resources and Energy Efficiency Fund (R2E2 Fund)' established by 'The Armenian government' (E16 L503-507); public buildings (L517-518) — a public client outside EU general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the ESA establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  r2e2_fund:
+    entity: r2e2_fund
+    role: [revolving_fund, aggregator_super_esco]
+    groups: [public, capital, partner, delivery]
+    status: stated
+    name: Renewable Resources and Energy Efficiency Fund (R2E2 Fund)
+    text: "'The Armenian government established the R2E2 Fund in 2005' (wb-super-escos-emerging-possibilities-2018.txt:505-507); 'the financier (in this case, the R2E2 Fund) offers a full package of services to identify, finance, procure, implement, and monitor' (fn10 L613-614). It is Partner and financier in one. Role list (F13): revolving_fund (home: a public fund financing public agencies' projects, recovered from savings) and aggregator_super_esco — E16 L403-404 lists it among the 'recently established Super ESCOs in India, Armenia, Saudi Arabia, and the United Arab Emirates' — which pairs with aggregation = super_esco"
+  public_agency:
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: "'energy efficiency upgrades in public buildings' (wb-super-escos-emerging-possibilities-2018.txt:517-519); Fig 8 'Agency cash flow' (wb-super-escos-emerging-possibilities-2018.txt:537); fn10 'the client'. Individual agencies not named; 62 ESAs"
+  escrow_bank:
+    role: account_bank_trustee
+    groups: [collection]
+    status: inferred
+    text: "Fig 8: 'Baseline payments to escrow account for 5-10 years' (wb-super-escos-emerging-possibilities-2018.txt:531); an escrow account has a holder, who is not named"
+  utility:
+    role: utility_supplier
+    groups: [energy, collection]
+    status: inferred
+    text: "fn10 L616: the financier 'make[s] the new (lower) energy payments' — payments to an energy supplier, not named"
+  contractors:
+    role: epc_contractor
+    groups: [delivery]
+    status: inferred
+    text: "the Fund's package includes 'procure[ment]' and 'construction' (L515-517, fn10); 'the procurement scheme encouraged the development of a local ESCO industry' (wb-super-escos-emerging-possibilities-2018.txt:585-587) — the procured local ESCOs/suppliers build the retrofits. They take no performance guarantee in the text, hence contractor rather than partner_esco"
+  world_bank_gef:
+    role: ifi_dfi
+    groups: [public, capital]
+    status: stated
+    name: World Bank–Global Environment Facility Energy Efficiency Project
+    text: "'Under the World Bank–Global Environment Facility's Energy Efficiency Project, the R2E2 Fund provides turnkey services' (wb-super-escos-emerging-possibilities-2018.txt:513-515). Whether the project money reaching the Fund is loan or grant is not stated; if GEF's part is a grant, grant_provider is the role for that leg"
+  government:
+    entity: republic_of_armenia
+    role: government_financier
+    groups: [public, capital, risk]
+    status: inferred
+    name: Government of Armenia
+    text: "'The Armenian government established the R2E2 Fund' (wb-super-escos-emerging-possibilities-2018.txt:505-507); E05 L10 'EERF — government (+FIs)'. Establishing is stated; capitalising is the inference. Weakest party on the list"
+
+contract:   # the agreements that establish the commitments
+  esa:
+    core: contract
+    parties: [public_agency, r2e2_fund]
+    term_years: 5-10
+    status: stated
+    note: "'energy service agreements (ESAs)' (wb-super-escos-emerging-possibilities-2018.txt:566-567); 'to escrow account for 5-10 years' (Fig 8 L531); 'output- and performance-based contracts' (wb-super-escos-emerging-possibilities-2018.txt:519-521)"
+  escrow_agreement:
+    core: contract
+    parties: [public_agency, r2e2_fund, escrow_bank]
+    status: inferred
+    note: the escrow account of Fig 8 implies an escrow arrangement; terms not given
+  works_contracts:
+    core: contract
+    parties: [r2e2_fund, contractors]
+    status: inferred
+    note: "from 'procurement' (wb-super-escos-emerging-possibilities-2018.txt:515) and 'procurement scheme' (wb-super-escos-emerging-possibilities-2018.txt:585-587)"
+  project_funding:
+    core: contract
+    parties: [world_bank_gef, r2e2_fund]
+    status: inferred
+    note: the WB-GEF Energy Efficiency Project under which the Fund operates (L511-515); instrument not stated
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: r2e2_fund
+    to: public_agency
+    status: stated
+    what: "'turnkey services (energy audit, procurement, detailed design, financing, construction, and monitoring) for energy efficiency upgrades in public buildings' (wb-super-escos-emerging-possibilities-2018.txt:515-519); Fig 8 'EE retrofit' (wb-super-escos-emerging-possibilities-2018.txt:530). The Fund's own capital is part of this promise (F05): it finances the upfront investment and recovers 'its investment costs and associated fees until the contract period ends' (fn10 L616-617; Fig 8 'Investment repayment' L538-540); E05 L10 frames EERFs generically as 'long-term affordable loans to public agencies', but the ESA form (fn10) is a service agreement, not a loan to the agency"
+    established_by: esa
+  c3:
+    family: payment_promise
+    from: public_agency
+    to: r2e2_fund
+    status: stated
+    depends_on_savings: false   # the client pays its baseline energy cost (fn10 L615)
+    what: "'The client is asked to pay only what it is currently paying for energy, that is, its baseline energy costs' (fn10 L615), as 'Baseline payments to escrow account for 5-10 years' (Fig 8 L531). Out of these the Fund takes investment repayment and fees; after the contract the agency keeps the 'Reduced energy bill' (Fig 8 L543-558)"
+    established_by: esa
+  c4:
+    family: payment_promise
+    from: r2e2_fund
+    to: utility
+    status: stated
+    what: "'The financier then uses this to make the new (lower) energy payments' (fn10 L616); Fig 8 'New energy bill' (wb-super-escos-emerging-possibilities-2018.txt:544-551)"
+    established_by: esa
+  c5:
+    family: performance_promise
+    from: utility
+    to: public_agency
+    status: inferred
+    what: "energy supply to the agency's building; follows from c4 (the bill is for energy the building uses)"
+  c6:
+    family: determination_promise
+    from: r2e2_fund
+    to: public_agency
+    status: stated
+    what: "'monitoring' (wb-super-escos-emerging-possibilities-2018.txt:517) of the upgrades under 'output- and performance-based contracts' (wb-super-escos-emerging-possibilities-2018.txt:519-521); the Fund both finances and monitors — no independent verifier is named"
+    established_by: esa
+  c7:
+    family: agency_promise
+    from: escrow_bank
+    to: [public_agency, r2e2_fund]
+    status: inferred
+    what: "holding the agency's baseline payments in escrow and releasing them to the Fund (Fig 8 L531); the holder is not named"
+    established_by: escrow_agreement
+  c8:
+    family: payment_promise
+    from: r2e2_fund
+    to: escrow_bank
+    status: unstated
+    what: counter-promise required by duality; source silent (escrow fees; could equally be owed by the agency)
+    established_by: escrow_agreement
+  c9:
+    family: performance_promise
+    from: contractors
+    to: r2e2_fund
+    status: inferred
+    what: construction of the retrofits the Fund procures (L516-517, L585-587)
+    established_by: works_contracts
+  c10:
+    family: payment_promise
+    from: r2e2_fund
+    to: contractors
+    status: inferred
+    what: payment for the procured works; a procurement implies a price
+    established_by: works_contracts
+  c11:
+    family: funding_promise
+    from: world_bank_gef
+    to: r2e2_fund
+    status: inferred
+    what: project funding under the WB-GEF Energy Efficiency Project (L511-515); amount and instrument not stated
+    established_by: project_funding
+  c12:
+    family: payment_promise
+    from: r2e2_fund
+    to: world_bank_gef
+    status: unstated
+    what: "counter-promise required by duality; source silent — repayment if the WB money is a loan; if GEF's part is a grant, c11 is partly a benefit_promise with no reciprocal"
+    established_by: project_funding
+  c13:
+    family: funding_promise
+    from: government
+    to: r2e2_fund
+    status: inferred
+    what: "capitalisation of the Fund it 'established' in 2005 (L505-507); E05 L10 'EERF — government (+FIs)'; amount not stated"
+  c14:
+    family: payment_promise
+    from: r2e2_fund
+    to: government
+    status: inferred
+    what: "residual claim of the founder on the Fund it 'established' (wb-super-escos-emerging-possibilities-2018.txt:505): the capitalisation is capital against the owner's future claim on the Fund's surplus and assets — the F07 form (as eeaas c4); amount and form not stated. Were the endowment shown as non-returnable, c13 would be a benefit_promise"
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c3: agency pays its baseline energy cost; the Fund pays the lower new bill (c4) and keeps the difference, i.e. the savings, to recover investment and fees (E16 fn10 L615-617)."}
+  client_sector: {value: public, status: stated, why: "'public buildings' (wb-super-escos-emerging-possibilities-2018.txt:519); Fig 8 'Agency' (L537)"}
+  partner_form:
+    value: corporate
+    status: inferred
+    why: "the Partner is a state fund 'established' by the government in 2005 (L505-507): a standing legal entity that is not a deal-specific SPV, i.e. corporate under the clarified definition (F22); the source gives no legal form"
+  borrower:
+    value: partner
+    status: default
+    why: the Fund (the Partner) carries the WB-GEF project money (L511-515) and finances the ESAs; whether that money is a loan, a grant or equity is not stated, so the default partner is kept with status default (F04). Alternative none if the WB-GEF funds are grant/equity. No loan to the agency is stated; the ESA form (fn10) replaces a loan with a service agreement
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: the baseline payments flow to the Fund via escrow (Fig 8 L531, fn10 L616); no assignment to a third party is mentioned
+  collection_placement:
+    value: pledged_escrow
+    status: stated
+    why: "'Baseline payments to escrow account for 5-10 years' (Fig 8 L531)"
+  aggregation:
+    value: super_esco
+    status: stated
+    why: "E16 L403-404 lists Armenia's R2E2 among the 'recently established Super ESCOs'; one fund signed 62 ESAs (L570-571). Paired with the role aggregator_super_esco in the Fund's role list (F13). Alternative: pool (a programme of stand-alone ESAs) if the Fund is read as a financier only"
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "'monitoring' (wb-super-escos-emerging-possibilities-2018.txt:517) and 'output- and performance-based contracts' (wb-super-escos-emerging-possibilities-2018.txt:519-521); achieved savings are reported as 520 million kWh (wb-super-escos-emerging-possibilities-2018.txt:573) and 'almost 51 percent' (wb-super-escos-emerging-possibilities-2018.txt:579). Deemed is not indicated"
+  grant_recipient:
+    value: none
+    status: default
+    why: "no grant to agency or Fund is stated; if GEF's share of the project is a grant to the Fund, the value is partner"
+  asset_owner:
+    value: client
+    status: default
+    why: "not stated; after the contract the agency keeps the reduced bill (Fig 8 'After contract'), consistent with the default"
+  bill_custody:
+    value: provider
+    status: stated
+    why: "'The financier then uses this to make the new (lower) energy payments' (fn10 L616); the register's bill_custody entry cites this footnote"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: "client is public, but Armenia is outside EU general government (jurisdiction), so the test does not bite. Were it applied, the agency's payments equal its baseline bill, i.e. payments = savings + new bill > savings, so it would classify on balance"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  fund_established: 2005
+  project_end: 2016
+  esas_signed: 62
+  esas_value_usd_m: 9.89
+  esas_completed_and_commissioned: "64 ESAs representing 164 facilities (fn11 L619, 'as of today', i.e. 2018)"
+  energy_savings_million_kwh: 520
+  energy_savings_target_million_kwh: 215
+  ghg_savings_tco2: 137569
+  ghg_savings_target_tco2: 50549
+  average_energy_saving_pct: almost 51
+  payback_years: 2.6 to 8.8
+  repaid_usd_m: 2.6
+  defaults: none; several early repayments (L583-584)
+  contract_term_years: 5-10 (Fig 8 L531)
+  derived:
+    average_esa_usd_m: 9.89 / 62 = 0.1595
+    repaid_share_pct: 2.6 / 9.89 = 26.3 (at 2016)
+    savings_vs_target: 520 / 215 = 2.42x energy; 137569 / 50549 = 2.72x GHG
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  r2e2_fund:
+    gives: [c1, c4, c6, c8, c10, c12, c14]
+    receives: [c3, c7, c9, c11, c13]
+    one_way: false
+  public_agency: {gives: [c3], receives: [c1, c5, c6, c7], one_way: false}
+  escrow_bank:
+    gives: [c7]
+    receives: [c8]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: an escrow agent without a fee has no reciprocal; recorded as c8 status unstated (F06)'
+  utility: {gives: [c5], receives: [c4], one_way: false}
+  contractors: {gives: [c9], receives: [c10], one_way: false}
+  world_bank_gef:
+    gives: [c11]
+    receives: [c12]
+    one_way: true
+    reason: 'the reciprocal of the project funding (c12: repayment if loan; none if GEF grant, then c11 is partly a benefit_promise) is unstated (F06, F07)'
+  government:
+    gives: [c13]
+    receives: [c14]
+    one_way: false
+    reason: "c14 (the founder's residual claim) is inferred from the stated fact that the government established the Fund (L505-507), per F07; not 'unilateral by nature'"
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: partner_form_state_fund
+  description: "the Partner under the ESA is a state fund (R2E2 Fund). The facet's values are [corporate, spv]; neither named a public fund. Convention F22 clarifies corporate as any standing legal entity that is not a deal SPV; recorded as corporate, inferred"
+  review: 'G14: encoding question (definition); action: corporate definition clarified (F22); no new value'
+- kind: self_determination
+  description: one party holds financier, Partner and monitor roles (c1, c6) with no independent verifier; expressible through the role list and the from-party of c6 (G08); nothing at LOD 0 records that the determination is made by an interested party, and nothing is added
+  review: "G08: encoding question; action: rule F21; the determination_promise's from-party says who determines; no setting"
+- kind: programme_funding_family
+  description: the WB-GEF project funding (c11) is a funding_promise if loan and a benefit_promise if a GEF grant; the corpus does not say. Recorded funding_promise, inferred, reciprocal c12 unstated
+  review: 'G12: evidence gap; action: recorded as unstated; none'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction AM added; C1 applies_here false (public, non-EU)
+- id: F04
+  title: borrower rule for provider-financed deals
+  convention: borrower = none only when the source says own funds or equity; when the Partner finances the works and no loan or equity is named, keep the default partner with status default.
+  origin: verdict change 4; findings F04; gaps G24
+  applied_here: 'borrower partner: status changed from inferred to default (no loan or equity named)'
+- id: F05
+  title: "provider's own capital is inside performance_promise"
+  convention: "Under one service contract the provider's own capital is part of its performance_promise; funding_promise requires a distinct claim between distinct parties (loan, equity, receivable purchase, lease)."
+  origin: verdict rule; findings F05; gaps G07
+  applied_here: "c2 (funding_promise Fund -> agency) dropped; the Fund's own capital stays inside c1; repayment is c3"
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'escrow_bank and world_bank_gef one_way: true with reasons'
+- id: F07
+  title: equity / capitalisation reciprocal
+  convention: "Equity or state capitalisation is a funding_promise whose reciprocal is the residual claim, recorded as a payment_promise with status inferred; if the source shows a non-returnable endowment, benefit_promise. Never funding_promise + 'unilateral by nature'."
+  origin: verdict rule; findings F07
+  applied_here: "state capitalisation c13 given its inferred reciprocal c14 (residual claim); government no longer 'unilateral by nature'"
+- id: F13
+  title: aggregation super_esco iff the role; role may be a list
+  convention: "aggregation = super_esco iff a party carries aggregator_super_esco. A party's `role` may be a list, home role first, so one party can carry several of the 41 roles."
+  origin: verdict rule; findings F13; gaps G11
+  applied_here: r2e2_fund carries [revolving_fund, aggregator_super_esco]; aggregation = super_esco is now paired with the role
+- id: F22
+  title: partner_form corporate definition
+  convention: partner_form corporate = any standing legal entity (company, public body, state fund) that is not a deal-specific SPV (E15 ch.2 fn 21 reading). No new value.
+  origin: verdict change 5; findings F22; gaps G14
+  applied_here: partner_form corporate (inferred) under the clarified definition — a state fund is a standing legal entity
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: determination_promise c6 from the Fund (the source names no other determining party)
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [revolving_fund, aggregator_super_esco, authority, account_bank_trustee, utility_supplier, epc_contractor, ifi_dfi,
+    government_financier]
+  roles_count: 8 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, agency_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 4, inferred: 5, generic: 0, default: 4}
+  commitments_by_status: {stated: 4, inferred: 7, generic: 0, unstated: 2}
+  one_way_parties: [escrow_bank, world_bank_gef]
+  parties_count: 7
+  commitments_count: 13
+  below_lod0: {lod1_adds: 'events (audit, procurement, construction, commissioning, monthly baseline payment into escrow, utility
+      bill payment, investment repayment, early repayment, contract end and transfer of the reduced bill to the agency), the
+      baseline-cost payment formula, the escrow release rule', lod2_adds: 'the fee variant (baseline-cost payment is chauffage-like:
+      client pays bill_ref, Fund keeps bill_ref minus new bill), the fee split between investment repayment and ''associated
+      fees'', baseline adjustment'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [aggregator_super_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input-capitalstack/world-armenia-energy-efficiency-project-project-performance-assessment-2019.txt:800", why: "World Bank assessment of this Fund's project: the R2E2 Fund markets its services 'taking on repayment and performance risks' (world-armenia-energy-efficiency-project-project-performance-assessment-2019.txt:800); L885-886 'The fund assumed all of the business risks', bidders only 'ensuring energy savings' (a task, not a risk; kept sole). Same bearer as the default, kept because stated. A and B agree"}
+  - {category: R5a, driver: null, bearer: [aggregator_super_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input-capitalstack/world-armenia-energy-efficiency-project-project-performance-assessment-2019.txt:800", why: "same sentence: the Fund takes on the 'repayment' risk, i.e. the public agencies' repayment to it (the pledged escrow account mitigates it but moves it to nobody). Same bearer as the default. Adjudicator call: A inferred, B stated; stated, the sentence names the Fund"}
+  # dropped: draft B R4 (Fund pays the new bill, E16 L615-616): inferred, equal to the default for bill_custody provider

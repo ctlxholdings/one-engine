@@ -1,0 +1,66 @@
+# Published case "atlas_buyresell_friperie": a secondhand-underwear stall in Adamaoua, Cameroon,
+# one representative year (GIZ / PARSE, Métiers Rentables Adamaoua, p.63;
+# cases/reference/published/atlas_buyresell_friperie.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * vente_sous_vetements, the year's sales (printed only as the annual aggregate, no unit
+#     economics), sold for cash;
+#   * the bales bought in Douala (movements.matieres_premieres_intrants_achats), paid and expensed
+#     in the year: the stall turns its stock, so what it bought is what it sold;
+#   * the other charges (movements.autres_charges), paid in the year;
+#   * the working capital the source states (fonds_roulement) is stock carried in on the opening
+#     balance sheet and held at that level through the year (steady state): a balance-sheet item,
+#     never a cost, exactly as the source's own benefice leaves it out;
+#   * no tax: the source's benefice is before any tax.
+# The source's single figure, benefice (the library maps it to gross_margin), is the year's
+# profit: sales less purchases less the other charges.
+published: atlas_buyresell_friperie
+entity: stall
+plant: vente_sous_vetements
+case:
+  case: published-atlas-buyresell-friperie
+  periods: 1
+  phases: [operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        lots_year: 1           # the source prints no annual quantity: the year's sales are one lot
+  opening:
+    stall:
+      cash: {nature: asset, value: 0}
+      stock: {nature: asset, value: {generator: src, output: fonds_roulement}}
+      equity: {nature: equity, value: balancing}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: stall}
+      terms: {volume: {generator: src, output: lots_year}, price: {generator: src, output: vente_sous_vetements},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    bales:
+      type: operating_cost
+      parties: {payer: stall}
+      terms: {annual: {generator: src, output: movements__matieres_premieres_intrants_achats}, unit_rate: 0,
+              volume: 0, index: 1, periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    other:
+      type: operating_cost
+      parties: {payer: stall}
+      terms: {annual: {generator: src, output: movements__autres_charges}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      bales.expense: cogs
+      other.expense: opex
+  cuts:
+    profit: {kind: pnl, entity: stall, scheme: pnl, include: [revenue, cogs, opex]}
+  measures: {}
+figures:
+  benefice: {cut: profit}

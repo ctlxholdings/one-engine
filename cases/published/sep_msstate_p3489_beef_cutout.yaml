@@ -1,0 +1,116 @@
+# Published case "sep_msstate_p3489_beef_cutout": how much meat comes home from a 1,200 lb steer,
+# live animal to hot carcass to chilled carcass to freezer-ready meat, then ten retail cuts
+# (Mississippi State University Extension, Publication P3489, "How Much Meat to Expect from a
+# Beef Animal", Tables 1 and 2; cases/reference/published/sep_msstate_p3489_beef_cutout.yaml).
+#
+# The source prints weights only, no money: the book here is a physical one, in pounds. Every
+# quantity is a published input by name, or a formula over inputs (generator `src`); the stages
+# are posted as stock moving between accounts (nature stock), what leaves the system to boundary
+# accounts, one stage a period so each stage's weight is the balance it leaves:
+#   * period 0: the steer (live_weight_lb) enters; the hot carcass is live weight times
+#     dressing_percentage_pct; the rest leaves as slaughter loss;
+#   * period 1: the cooler shrink (cooler_shrink_pct) leaves the hot carcass, the rest is the
+#     chilled carcass;
+#   * period 2: the freezer-ready meat is what the ten printed cut weights add up to (the
+#     source gives the trim-and-bone loss only as a 30-40% band, so the stage is fixed by its
+#     outputs); the rest of the chilled carcass leaves as fat trim and bone;
+#   * period 3: the freezer-ready meat is cut ten ways, each cut its printed percent of the
+#     printed freezer-ready weight.
+# Source finding: the chilled carcass is printed "about 726" lb, against 756 x 96% = 725.76; the
+# 0.24 lb of the source's own rounding is wider than its stated 0.05 lb tolerance, so it differs.
+published: sep_msstate_p3489_beef_cutout
+entity: steer
+plant: freezer_ready_weight_lb
+case:
+  case: published-msstate-beef-cutout
+  periods: 4
+  phases: [process]
+  currency: lb
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 4
+      inputs: published
+      values:
+        live: live_weight_lb * (t == 0)
+        hot: live_weight_lb * dressing_percentage_pct / 100
+        dress: hot * (t == 0)
+        slaughter_loss: (live_weight_lb - hot) * (t == 0)
+        chilled: hot * (1 - cooler_shrink_pct / 100)
+        chill: chilled * (t == 1)
+        shrink: (hot - chilled) * (t == 1)
+        freezer_ready: flank_lb + sirloin_lb + short_loin_lb + round_lb + rib_lb + chuck_lb + brisket_lb + short_plate_lb + suet_and_hanging_tender_lb + shank_lb
+        trim: freezer_ready * (t == 2)
+        trim_loss: (chilled - freezer_ready) * (t == 2)
+        cut_flank: flank_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_sirloin: sirloin_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_short_loin: short_loin_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_round: round_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_rib: rib_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_chuck: chuck_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_brisket: brisket_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_short_plate: short_plate_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_suet_and_hanging_tender: suet_and_hanging_tender_pct * freezer_ready_weight_lb / 100 * (t == 3)
+        cut_shank: shank_pct * freezer_ready_weight_lb / 100 * (t == 3)
+  opening: {}
+  contracts: {}
+  rulebooks:
+    cutout:
+      kind: transfer
+      entity: steer
+      phase: process
+      declare:
+        farm: boundary
+        slaughter_loss: boundary
+        cooler_shrink: boundary
+        fat_trim_and_bone: boundary
+        live_steer: stock
+        hot_carcass: stock
+        chilled_carcass: stock
+        freezer_ready: stock
+        flank: stock
+        sirloin: stock
+        short_loin: stock
+        round: stock
+        rib: stock
+        chuck: stock
+        brisket: stock
+        short_plate: stock
+        suet_and_hanging_tender: stock
+        shank: stock
+      moves:
+        arrive: {debit: live_steer, credit: farm, amount: {generator: src, output: live}}
+        dress: {debit: hot_carcass, credit: live_steer, amount: {generator: src, output: dress}}
+        slaughter_loss: {debit: slaughter_loss, credit: live_steer, amount: {generator: src, output: slaughter_loss}}
+        chill: {debit: chilled_carcass, credit: hot_carcass, amount: {generator: src, output: chill}}
+        shrink: {debit: cooler_shrink, credit: hot_carcass, amount: {generator: src, output: shrink}}
+        trim: {debit: freezer_ready, credit: chilled_carcass, amount: {generator: src, output: trim}}
+        trim_loss: {debit: fat_trim_and_bone, credit: chilled_carcass, amount: {generator: src, output: trim_loss}}
+        flank: {debit: flank, credit: freezer_ready, amount: {generator: src, output: cut_flank}}
+        sirloin: {debit: sirloin, credit: freezer_ready, amount: {generator: src, output: cut_sirloin}}
+        short_loin: {debit: short_loin, credit: freezer_ready, amount: {generator: src, output: cut_short_loin}}
+        round: {debit: round, credit: freezer_ready, amount: {generator: src, output: cut_round}}
+        rib: {debit: rib, credit: freezer_ready, amount: {generator: src, output: cut_rib}}
+        chuck: {debit: chuck, credit: freezer_ready, amount: {generator: src, output: cut_chuck}}
+        brisket: {debit: brisket, credit: freezer_ready, amount: {generator: src, output: cut_brisket}}
+        short_plate: {debit: short_plate, credit: freezer_ready, amount: {generator: src, output: cut_short_plate}}
+        suet_and_hanging_tender: {debit: suet_and_hanging_tender, credit: freezer_ready, amount: {generator: src, output: cut_suet_and_hanging_tender}}
+        shank: {debit: shank, credit: freezer_ready, amount: {generator: src, output: cut_shank}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  hot_carcass_weight_lb: {balance: hot_carcass, at: 0}
+  chilled_carcass_weight_lb: {balance: chilled_carcass, at: 1}
+  freezer_ready_weight_lb: {balance: freezer_ready, at: 2}
+  flank_lb: {balance: flank, at: 3}
+  sirloin_lb: {balance: sirloin, at: 3}
+  short_loin_lb: {balance: short_loin, at: 3}
+  round_lb: {balance: round, at: 3}
+  rib_lb: {balance: rib, at: 3}
+  chuck_lb: {balance: chuck, at: 3}
+  brisket_lb: {balance: brisket, at: 3}
+  short_plate_lb: {balance: short_plate, at: 3}
+  suet_and_hanging_tender_lb: {balance: suet_and_hanging_tender, at: 3}
+  shank_lb: {balance: shank, at: 3}

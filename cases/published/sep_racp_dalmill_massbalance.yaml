@@ -1,0 +1,86 @@
+# Published case "sep_racp_dalmill_massbalance": a 20 MT/day pigeon-pea dal mill in Rajasthan, its
+# third year at 85% utilisation, selling split dal and the husk and broken grain as cattle feed
+# (RACP Agribusiness Promotion Facility, Technology DPR: Dal Mill, by Grant Thornton India,
+# section 7.2, pp.58-61; cases/reference/published/sep_racp_dalmill_massbalance.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). One
+# book, the mill's, one year:
+#   * the production programme is physical, read as drivers: the year's throughput is the daily
+#     capacity times the operating days at full use times capacity_utilisation_pct; the
+#     operating days are the full-use days times that rate; the job work is the throughput less
+#     the pulses for sale, and the pulses for sale the throughput less the job work;
+#   * each product's stock rolls forward: production is the quantity sold plus the closing stock
+#     less the opening stock, and the quantity sold is production less closing plus opening
+#     stock (drivers, each from the other inputs);
+#   * dal and cattle feed are sold for cash, each its quantity sold at its price a MT
+#     (implied_price_*, the source's revenue per tonne sold, constant over its five years);
+#   * the raw material purchased (costs.raw_material_purchased, printed with no tonnage or price)
+#     is paid in cash and expensed as purchases; finished-stock values and the rest of the P&L
+#     print no figure here and are not modelled; no tax.
+# Source finding, not one any figure tests: the revenue schedule makes 7,164 MT of product from
+# a throughput the production programme puts at 3,060 MT (oracle notes); with no yield among the
+# inputs, no figure here derives one table from the other, so each is read on its own terms.
+published: sep_racp_dalmill_massbalance
+entity: mill
+plant: implied_price_dal_inr_per_mt
+case:
+  case: published-racp-dalmill-plateau
+  periods: 1
+  phases: [operate]
+  currency: INR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        throughput: installed_capacity_mt_per_day * operational_days_at_100pct * capacity_utilisation_pct / 100
+        days: operational_days_at_100pct * capacity_utilisation_pct / 100
+        job_work: throughput - quantity_for_sales_mt_year3
+        for_sales: throughput - job_work_mt_year3
+        dal_made: dal_sold_mt_year3 + dal_closing_stock_mt_year3 - dal_opening_stock_mt_year3
+        dal_sold: dal_production_mt_year3 - dal_closing_stock_mt_year3 + dal_opening_stock_mt_year3
+        feed_made: cattle_feed_sold_mt_year3 + cattle_feed_closing_stock_mt_year3 - cattle_feed_opening_stock_mt_year3
+        feed_sold: cattle_feed_production_mt_year3 - cattle_feed_closing_stock_mt_year3 + cattle_feed_opening_stock_mt_year3
+        dal_sales: dal_sold * implied_price_dal_inr_per_mt
+        feed_sales: feed_sold * implied_price_cattle_feed_inr_per_mt
+  opening:
+    mill:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year3:
+      kind: transfer
+      entity: mill
+      phase: operate
+      declare: {dal_sales: income, cattle_feed_sales: income, raw_material_purchases: expense}
+      moves:
+        dal: {debit: cash, credit: dal_sales, amount: {generator: src, output: dal_sales}}
+        feed: {debit: cash, credit: cattle_feed_sales, amount: {generator: src, output: feed_sales}}
+        raw_material: {debit: raw_material_purchases, credit: cash, amount: {generator: src, output: raw_material_purchased}}
+  schemes:
+    pnl:
+      dal_sales: dal
+      cattle_feed_sales: feed
+      raw_material_purchases: purchases
+  cuts:
+    dal: {kind: pnl, entity: mill, scheme: pnl, include: [dal]}
+    feed: {kind: pnl, entity: mill, scheme: pnl, include: [feed]}
+    sales: {kind: pnl, entity: mill, scheme: pnl, include: [dal, feed]}
+    purchases: {kind: pnl, entity: mill, scheme: pnl, include: [purchases]}
+  measures: {}
+figures:
+  quantity_required_mt_year3: {driver: src.throughput}
+  job_work_mt_year3: {driver: src.job_work}
+  quantity_for_sales_mt_year3: {driver: src.for_sales}
+  operational_days_year3: {driver: src.days}
+  dal_production_mt_year3: {driver: src.dal_made}
+  dal_sold_mt_year3: {driver: src.dal_sold}
+  cattle_feed_production_mt_year3: {driver: src.feed_made}
+  cattle_feed_sold_mt_year3: {driver: src.feed_sold}
+  dal_revenue_inr_year3: {cut: dal}
+  cattle_feed_revenue_inr_year3: {cut: feed}
+  total_sales_inr_year3: {cut: sales}
+  raw_material_purchased_inr_year3: {cut: purchases, sign: -1}

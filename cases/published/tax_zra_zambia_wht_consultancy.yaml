@@ -1,0 +1,80 @@
+# Published case "tax_zra_zambia_wht_consultancy": withholding tax on a resident management or
+# consultancy fee, withheld by the payer and remitted the month after (Zambia Revenue Authority,
+# "Withholding Tax" guide; cases/reference/published/tax_zra_zambia_wht_consultancy.yaml).
+#
+# Every amount is an input by name (generator `src`), the payer's books, one period a month:
+#   * the fee of gross_fee is expensed in full in month 1 against the consultant's payable;
+#   * wht_rate of it is withheld: moved from the consultant's payable to wht_payable (a transfer
+#     at the stated rate: the engine's withholding rulebook attaches only to financing claims,
+#     interest and dividends, and has no hold on an operating payment);
+#   * the consultant is paid what is left on the payable, in cash in the month (settle), so the
+#     net paid is the books' own gross less withheld;
+#   * the withheld tax is remitted the month after (the guide's 14th of the following month):
+#     wht_payable is settled at the start of month 2;
+#   * the consultant's books are not modelled: what the consultant declares is the gross fee,
+#     the amount the payer expenses (the withholding is a credit on the payee's own return, not
+#     a reduction of the income), read from the payer's fee expense; no VAT, no income tax.
+published: tax_zra_zambia_wht_consultancy
+entity: payer
+plant: wht_rate
+case:
+  case: published-zra-wht-consultancy
+  periods: 2
+  phases: [remit, operate, pay]
+  currency: ZMW
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: published
+      values:
+        fee: gross_fee * (t == 0)
+        withheld: fee * wht_rate
+  opening:
+    payer:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    fee:
+      kind: transfer
+      entity: payer
+      phase: operate
+      declare:
+        fee_expense: expense
+        consultant_payable: liability
+        wht_payable: liability
+      moves:
+        charge: {debit: fee_expense, credit: consultant_payable, amount: {generator: src, output: fee}}
+        withhold: {debit: consultant_payable, credit: wht_payable, amount: {generator: src, output: withheld}}
+    pay_consultant:
+      kind: settle
+      entity: payer
+      cash: cash
+      phase: pay
+      accounts: [consultant_payable]
+    remit:
+      kind: settle
+      entity: payer
+      cash: cash
+      phase: remit
+      accounts: [wht_payable]
+  schemes:
+    pnl:
+      fee_expense: fee
+    wht:
+      consultant_payable: withheld
+      cash: remitted
+    cash_flow:
+      consultant_payable: consultant
+      wht_payable: authority
+  cuts:
+    fee: {kind: pnl, entity: payer, scheme: pnl, include: [fee]}
+    withheld: {entity: payer, account: wht_payable, scheme: wht, include: [withheld]}
+    to_consultant: {entity: payer, account: cash, scheme: cash_flow, include: [consultant]}
+  measures: {}
+figures:
+  wht_withheld: {cut: withheld, sign: -1, total: true}
+  net_paid_to_consultant: {cut: to_consultant, sign: -1, total: true}
+  consultant_declares_on_own_return: {cut: fee, sign: -1, total: true}

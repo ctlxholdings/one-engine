@@ -1,0 +1,135 @@
+# Published case "sep_msucot24_cotton_ginning": one acre of Delta cotton, 2024 planning budget,
+# lint and cottonseed from one crop (Mississippi State University, Cotton 2024 Planning Budgets,
+# MSUCOT24, Tables 1.A and 1.B; cases/reference/published/sep_msucot24_cotton_ginning.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). One
+# book, the acre's, one season:
+#   * lint sold for cash at the budget's own extended income (cotton_lint_income_usd): its
+#     displayed 0.80 a lb is a rounded reference price (963.36 / 1,200 = 0.8028, the forward or
+#     loan-rate price of the source's p.6 methodology), so the extension is the sale;
+#   * cottonseed sold for cash at cottonseed_yield_lb_per_acre times cottonseed_price_usd_per_lb;
+#   * the twenty-one direct expense lines (costs.*, ginning among them) paid and expensed in the
+#     season; the fixed expenses (fixed_expenses_total_usd, printed only as a total) charged in
+#     the season below the direct-expense return;
+#   * no tax: the budget's returns are before any.
+published: sep_msucot24_cotton_ginning
+entity: acre
+plant: ginning
+case:
+  case: published-msu-cotton-planning
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        seed_income: cottonseed_yield_lb_per_acre * cottonseed_price_usd_per_lb
+  opening:
+    acre:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    season:
+      kind: transfer
+      entity: acre
+      phase: operate
+      declare:
+        lint_sales: income
+        cottonseed_sales: income
+        fixed_expenses: expense
+        custom_spray: expense
+        harvest_aids: expense
+        ginning: expense
+        fertilizers: expense
+        fungicides: expense
+        herbicides: expense
+        insecticides: expense
+        seed_plants_b3xf_planting_seed: expense
+        growth_regulators: expense
+        adjuvants: expense
+        custom_fertilize: expense
+        eradication_fee: expense
+        custom_lime: expense
+        crop_consultant: expense
+        soil_test: expense
+        hand_labor: expense
+        operator_labor: expense
+        unallocated_labor: expense
+        diesel_fuel: expense
+        repair_maintenance: expense
+        interest_on_op_capital: expense
+      moves:
+        lint: {debit: cash, credit: lint_sales, amount: {generator: src, output: cotton_lint_income_usd}}
+        cottonseed: {debit: cash, credit: cottonseed_sales, amount: {generator: src, output: seed_income}}
+        custom_spray: {debit: custom_spray, credit: cash, amount: {generator: src, output: custom_spray}}
+        harvest_aids: {debit: harvest_aids, credit: cash, amount: {generator: src, output: harvest_aids}}
+        ginning: {debit: ginning, credit: cash, amount: {generator: src, output: ginning}}
+        fertilizers: {debit: fertilizers, credit: cash, amount: {generator: src, output: fertilizers}}
+        fungicides: {debit: fungicides, credit: cash, amount: {generator: src, output: fungicides}}
+        herbicides: {debit: herbicides, credit: cash, amount: {generator: src, output: herbicides}}
+        insecticides: {debit: insecticides, credit: cash, amount: {generator: src, output: insecticides}}
+        seed_plants_b3xf_planting_seed: {debit: seed_plants_b3xf_planting_seed, credit: cash, amount: {generator: src, output: seed_plants_b3xf_planting_seed}}
+        growth_regulators: {debit: growth_regulators, credit: cash, amount: {generator: src, output: growth_regulators}}
+        adjuvants: {debit: adjuvants, credit: cash, amount: {generator: src, output: adjuvants}}
+        custom_fertilize: {debit: custom_fertilize, credit: cash, amount: {generator: src, output: custom_fertilize}}
+        eradication_fee: {debit: eradication_fee, credit: cash, amount: {generator: src, output: eradication_fee}}
+        custom_lime: {debit: custom_lime, credit: cash, amount: {generator: src, output: custom_lime}}
+        crop_consultant: {debit: crop_consultant, credit: cash, amount: {generator: src, output: crop_consultant}}
+        soil_test: {debit: soil_test, credit: cash, amount: {generator: src, output: soil_test}}
+        hand_labor: {debit: hand_labor, credit: cash, amount: {generator: src, output: hand_labor}}
+        operator_labor: {debit: operator_labor, credit: cash, amount: {generator: src, output: operator_labor}}
+        unallocated_labor: {debit: unallocated_labor, credit: cash, amount: {generator: src, output: unallocated_labor}}
+        diesel_fuel: {debit: diesel_fuel, credit: cash, amount: {generator: src, output: diesel_fuel}}
+        repair_maintenance: {debit: repair_maintenance, credit: cash, amount: {generator: src, output: repair_maintenance}}
+        interest_on_op_capital: {debit: interest_on_op_capital, credit: cash, amount: {generator: src, output: interest_on_op_capital}}
+        fixed: {debit: fixed_expenses, credit: cash, amount: {generator: src, output: fixed_expenses_total_usd}}
+  schemes:
+    pnl:
+      lint_sales: lint
+      cottonseed_sales: seed
+      fixed_expenses: fixed
+      custom_spray: direct
+      harvest_aids: direct
+      ginning: direct
+      fertilizers: direct
+      fungicides: direct
+      herbicides: direct
+      insecticides: direct
+      seed_plants_b3xf_planting_seed: direct
+      growth_regulators: direct
+      adjuvants: direct
+      custom_fertilize: direct
+      eradication_fee: direct
+      custom_lime: direct
+      crop_consultant: direct
+      soil_test: direct
+      hand_labor: direct
+      operator_labor: direct
+      unallocated_labor: direct
+      diesel_fuel: direct
+      repair_maintenance: direct
+      interest_on_op_capital: direct
+  cuts:
+    lint: {kind: pnl, entity: acre, scheme: pnl, include: [lint]}
+    seed: {kind: pnl, entity: acre, scheme: pnl, include: [seed]}
+    income: {kind: pnl, entity: acre, scheme: pnl, include: [lint, seed]}
+    direct: {kind: pnl, entity: acre, scheme: pnl, include: [direct]}
+    fixed: {kind: pnl, entity: acre, scheme: pnl, include: [fixed]}
+    specified: {kind: pnl, entity: acre, scheme: pnl, include: [direct, fixed]}
+    above_direct: {kind: pnl, entity: acre, scheme: pnl, include: [lint, seed, direct]}
+    above_specified: {kind: pnl, entity: acre, scheme: pnl, include: [lint, seed, direct, fixed]}
+  measures: {}
+figures:
+  cotton_lint_income_usd: {cut: lint}
+  cotton_seed_income_usd: {cut: seed}
+  total_income_usd: {cut: income}
+  total_direct_expenses_usd: {cut: direct, sign: -1}
+  returns_above_direct_expenses_usd: {cut: above_direct}
+  total_fixed_expenses_usd: {cut: fixed, sign: -1}
+  total_specified_expenses_usd: {cut: specified, sign: -1}
+  returns_above_total_specified_expenses_usd: {cut: above_specified}

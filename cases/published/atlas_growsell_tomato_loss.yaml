@@ -1,0 +1,54 @@
+# Published case "atlas_growsell_tomato_loss": FAO's "Seductive Tomato" teaching case, the
+# realized season on one hectare (FAO, Module 3; cases/reference/published/atlas_growsell_tomato_loss.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the realized crop: realized_saleable_per_ha tonnes (after the selection, packing and
+#     transport losses) at realized_avg_price_after_transport USD a kg (x 1000 kg a tonne), sold
+#     for cash;
+#   * the season's cost, the source's one lump line (costs.promised_cost_per_ha), paid and expensed
+#     in the season; the source gives no breakdown;
+#   * the 50,000 irrigation investment covers all five hectares and the source's per-hectare loss
+#     never draws on it, so it is not posted; the promised scenario (yield, price, profit) is the
+#     promoter's projection, not a season the case runs; no tax.
+# realized_loss_per_ha (mapped to gross_margin) is the hectare's profit for the season: a loss.
+published: atlas_growsell_tomato_loss
+entity: farm
+plant: realized_avg_price_after_transport
+case:
+  case: published-atlas-growsell-tomato-loss
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        price_per_tonne: realized_avg_price_after_transport * 1000
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    tomatoes:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: realized_saleable_per_ha}, price: {generator: src, output: price_per_tonne},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    season:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: costs__promised_cost_per_ha}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      tomatoes.revenue: revenue
+      season.expense: cost
+  cuts:
+    margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, cost]}
+  measures: {}
+figures:
+  realized_loss_per_ha: {cut: margin}

@@ -1,0 +1,191 @@
+# Published case "express_fiji_toll_road_pf": a 40-year toll-road concession in Fiji, four years
+# of construction then 36 of operation, financed 65% senior debt and 35% equity (Meta Brains /
+# Packt, "Project Finance Modeling Test - Express Fiji", brief and solved workbook;
+# cases/reference/published/express_fiji_toll_road_pf.yaml).
+#
+# Forty annual periods: 0 is concession year 1, construction is periods 0-3, operation 4-39.
+# Every amount is a published input by name (generator `src`), in GBP, for the SPV (`spv`):
+#   * construction: the total capex spread evenly over the construction years, spent into
+#     construction in progress;
+#   * maintenance and SPV costs: the 2023 amount escalated at its inflation rate from contract
+#     award (period 0), charged and paid in each operating year;
+#   * senior debt: the gearing share of the total investment (capex plus the arrangement fee, the
+#     commitment fee and interest during construction), sized by the `budget` loop over the
+#     funding plan's own uses; interest at base rate plus margin on the opening balance; the
+#     arrangement fee (its rate of the debt) paid in year 1; the commitment fee (its share of the
+#     margin) on the opening undrawn amount in each construction year; construction interest
+#     and fees are uses funded like the capex, not capitalised;
+#   * funding: equity first (the 35% equity commitment paid in before any debt, equity_first 1
+#     in Bodmer's pro-rata rule), then debt;
+#   * repayment: a constant annuity of interest and principal over the 36 operating years (the
+#     workbook's choice, recorded in the inputs), the `annuity` loop's schedule;
+#   * no revenue: see below. Debt service is paid when due (cash is not floored), and with no
+#     income there is no tax and no dividend.
+# Readings: construction cost and equity injection are cash cuts of year 1; total investment is the
+# construction years' capex, fees and interest (the cash cut accumulated to period 3); interest, principal
+# and debt service are cash cuts of year 5; opex a P&L cut; the debt balance a balance.
+# Left unread (a figure the library scores, so it cannot be set aside): year-5 revenue
+# (revenue_nominal_year_5_kgbp). Its heavy-vehicle toll (19.382655) is the answer to the brief's
+# goal seek ("what tariff gives an equity IRR of 23%"): the 23% target is only in the question
+# text, not a number among the inputs, and the engine has no rule that solves a price for a target
+# IRR. With revenue go EBITDA, CFADS, net profit, DSCR, the IRRs, the solved toll and the year-40
+# cash (set aside below).
+# FINDING (kept, not fitted): the workbook's own printed figures are not one fixed point of its
+# funding circularity. Interest, debt service and the year-20 balance all imply a debt of
+# 214,538.1797k; 65% of the printed total investment (330,058.75k) is 214,538.1875k; and the
+# year-1 equity (82,610.7398k = capex + arrangement fee + commitment fee) implies fees on
+# 214,538.06k. The converged books give 214,538.185k, so total investment, year-1 equity and the
+# year-20 balance miss by GBP 2-4 (330,058.746k, 82,610.742k, 176,325.527k), beyond the one-pound
+# band (the workbook's iterative calculation stopped short of convergence; interest, debt service
+# and principal land inside it).
+published: express_fiji_toll_road_pf
+entity: spv
+plant: maintenance_2023_gbp_per_year
+case:
+  case: published-express-fiji
+  periods: 40
+  phases: [accrue, fund, operate, pay, close]
+  currency: GBP
+  floors: {}
+  loops:
+    budget:
+      rule: {kind: uses_total, record: funding}
+      start: {total: 0}
+      tolerance: 0
+      max_iterations: 24
+    payment:
+      rule: {kind: annuity, loan: senior}
+      start: {repayment: 0}
+      tolerance: 0
+      max_iterations: 24
+  generators:
+    src:
+      kind: formulas
+      periods: 40
+      inputs: published
+      values:
+        capex: {each_period: (t < construction_duration_years) * total_gbp / construction_duration_years}
+        escalation: {each_period: (1 + maintenance_inflation_rate_per_year) ** t}
+        rate: base_interest_rate_pa + fixed_rate_margin_pa
+        commitment_fee_rate: engagement_fee_pct_of_margin * fixed_rate_margin_pa
+        arrangement_share: gearing_debt_pct * arrangement_fee_pct_of_debt
+        last_draw: construction_duration_years - 1
+        last_year: concession_duration_years - 1
+  opening:
+    spv:
+      cash: {nature: asset, value: 0}
+  contracts:
+    construction:
+      type: capex
+      parties: {owner: spv}
+      terms: {schedule: {generator: src, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 0}
+    maintenance:
+      type: operating_cost
+      parties: {payer: spv}
+      terms: {annual: {generator: src, output: maintenance_2023_gbp_per_year}, unit_rate: 0, volume: 0,
+              index: {generator: src, output: escalation}, periods_per_year: 1,
+              start: {generator: src, output: construction_duration_years}, end: {generator: src, output: last_year}, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    senior:
+      type: loan
+      parties: {borrower: spv}
+      terms:
+        commitment: {loop: budget, output: total, times: {generator: src, output: gearing_debt_pct}}
+        draw_schedule: {loop: budget, output: total, times: {generator: src, output: gearing_debt_pct}}
+        available_until: {generator: src, output: last_draw}
+        rate: {generator: src, output: rate}
+        rate_from: 0
+        days_per_period: 1
+        day_count_basis: 1
+        commitment_fee_rate: {generator: src, output: commitment_fee_rate}
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: construction_duration_years}
+        repay_periods: {generator: src, output: operations_duration_years}
+        sculpt_dscr: null
+        principal_schedule: {loop: payment, output: repayment}
+        arrangement_fee: {loop: budget, output: total, times: {generator: src, output: arrangement_share}}
+        fee_at: 0
+    equity:
+      type: sponsor_equity
+      parties: {issuer: spv}
+      terms: {}
+  rulebooks:
+    funding:
+      kind: pro_rata_funding
+      entity: spv
+      cash: cash
+      phase: fund
+      until: 3
+      uses:
+        - {flow: construction.spend}
+        - {claim: senior.arrangement_fee}
+        - {claim: senior.interest}
+        - {claim: senior.fee}
+      loan: senior
+      equity: equity.contribute
+      equity_first: 1
+      budget: {loop: budget, output: total}
+    service:
+      kind: pay_as_due
+      phase: pay
+      claims: [senior.interest, senior.principal]
+  schemes:
+    pnl:
+      maintenance.expense: opex
+      senior.interest: finance
+      senior.fees: finance
+    cash_flow:
+      maintenance.payable: operating
+      cwip: investing
+      senior.debt: principal
+      senior.interest_payable: interest
+      senior.fee_payable: fees
+      senior.deferred_fees: fees
+      equity.capital: equity
+  cuts:
+    opex: {kind: pnl, entity: spv, scheme: pnl, include: [opex]}
+    construction: {entity: spv, account: cash, scheme: cash_flow, include: [investing]}
+    equity: {entity: spv, account: cash, scheme: cash_flow, include: [equity]}
+    investment: {entity: spv, account: cash, scheme: cash_flow, include: [investing, interest, fees]}
+    interest: {entity: spv, account: cash, scheme: cash_flow, include: [interest]}
+    principal: {entity: spv, account: cash, scheme: cash_flow, include: [principal]}
+    debt_service: {entity: spv, account: cash, scheme: cash_flow, include: [interest, principal]}
+  measures: {}
+figures:
+  spot_check_year_1.construction_cost_kgbp: {cut: construction, sign: -1, scale: 1000, at: 0}
+  spot_check_year_1.equity_injection_kgbp: {cut: equity, scale: 1000, at: 0}
+  total_investment_kgbp_year1: {cumulative: investment, scale: 1000, at: 3}
+  spot_check_year_5.opex_nominal_kgbp: {cut: opex, sign: -1, scale: 1000, at: 4}
+  spot_check_year_5.debt_service_kgbp: {cut: debt_service, scale: 1000, at: 4}
+  spot_check_year_5.interest_kgbp: {cut: interest, scale: 1000, at: 4}
+  spot_check_year_5.principal_repayment_kgbp: {cut: principal, scale: 1000, at: 4}
+  spot_check_year_20.opex_nominal_kgbp: {cut: opex, sign: -1, scale: 1000, at: 19}
+  spot_check_year_20.debt_service_kgbp: {cut: debt_service, scale: 1000, at: 19}
+  spot_check_year_20.debt_balance_kgbp: {balance: senior.debt, scale: 1000, at: 19}
+  spot_check_year_40.opex_nominal_kgbp: {cut: opex, sign: -1, scale: 1000, at: 39}
+  spot_check_year_40.closing_debt_kgbp: {balance: senior.debt, scale: 1000, at: 39}
+  opex_nominal_year_5_kgbp: {cut: opex, sign: -1, scale: 1000, at: 4}
+not_compared:
+  toll_rate_hv_solved_gbp: &toll >-
+    needs the solved heavy-vehicle toll: a goal seek for a 23% equity IRR, a target that is only in
+    the question text (no input carries it) and that no engine rule solves a price for
+  equity_irr: *toll
+  project_irr: *toll
+  dscr_annual_series: *toll
+  spot_check_year_5.revenue_nominal_kgbp: *toll
+  spot_check_year_5.ebitda_kgbp: *toll
+  spot_check_year_5.cfads_kgbp: *toll
+  spot_check_year_5.net_profit_kgbp: *toll
+  spot_check_year_5.dscr: *toll
+  spot_check_year_20.revenue_nominal_kgbp: *toll
+  spot_check_year_20.ebitda_kgbp: *toll
+  spot_check_year_20.cfads_kgbp: *toll
+  spot_check_year_20.net_profit_kgbp: *toll
+  spot_check_year_20.dscr: *toll
+  spot_check_year_40.revenue_nominal_kgbp: *toll
+  spot_check_year_40.ebitda_kgbp: *toll
+  spot_check_year_40.cfads_kgbp: *toll
+  spot_check_year_40.net_profit_kgbp: *toll
+  spot_check_year_40.dscr: *toll
+  spot_check_year_40.cash_in_hand_kgbp: *toll
+  spot_check_year_40.total_assets_kgbp: *toll

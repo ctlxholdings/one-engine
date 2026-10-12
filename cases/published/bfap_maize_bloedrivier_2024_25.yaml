@@ -1,0 +1,80 @@
+# Published case "bfap_maize_bloedrivier_2024_25": dryland maize at Bloedrivier, KwaZulu-Natal, one
+# hectare for the 2024/25 summer season (BFAP, Table 2.1;
+# cases/reference/published/bfap_maize_bloedrivier_2024_25.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the crop: yield_t_per_ha tonnes on area_ha, sold at the net farm-gate price the source derives
+#     (safex_simulated_price_zar_per_t less total_deductions_zar_per_t), for cash at harvest;
+#   * the variable costs: the source's thirteen printed lines (variable_costs_zar_per_ha.*, per
+#     hectare), paid and expensed in the season, posted as one variable-cost line;
+#   * overheads, land, depreciation, financing and tax are excluded by the source's own design.
+# gross_income (mapped to revenue), total_variable_expenditure (cost_of_sales) and gross_margin
+# (gross_margin) are the season's sales, costs and profit. Every per-tonne figure is money read from
+# the books divided by a driver: the net farm-gate price and the two R/ton rows divide by the
+# tonnes harvested, the break-even price is the costs per tonne, and the break-even yield is the
+# costs divided by the net farm-gate price (the tonnes that would just pay them).
+#
+# The source contradicts itself by its own display rounding, and the case keeps the figures read:
+# 7.0 x 3,248 = 22,736 against the printed GROSS INCOME 22,738; the thirteen lines sum to 15,399
+# against the printed TOTAL VARIABLE EXPENDITURE 15,401; so the margin is 7,337 against the printed
+# 7,338 (and 22,738 - 15,401 on the source's own printed totals is 7,337 too). The tolerance (half a
+# rand) is set so that these gaps surface: the three R/ha money totals differ, as the oracle's own
+# notes expect. The per-tonne figures agree within half a rand.
+published: bfap_maize_bloedrivier_2024_25
+entity: farm
+plant: safex_simulated_price_zar_per_t
+case:
+  case: published-bfap-maize-bloedrivier-season
+  periods: 1
+  phases: [operate]
+  currency: ZAR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        tonnes: yield_t_per_ha * area_ha
+        net_price: safex_simulated_price_zar_per_t - total_deductions_zar_per_t
+        variable_costs: >-
+          (variable_costs_zar_per_ha__contracting + variable_costs_zar_per_ha__crop_insurance
+          + variable_costs_zar_per_ha__fertilizer + variable_costs_zar_per_ha__lime + variable_costs_zar_per_ha__seed
+          + variable_costs_zar_per_ha__fuel + variable_costs_zar_per_ha__herbicide
+          + variable_costs_zar_per_ha__insecticide_fungicide + variable_costs_zar_per_ha__marketing_costs
+          + variable_costs_zar_per_ha__repairs_maintenance + variable_costs_zar_per_ha__casual_labour
+          + variable_costs_zar_per_ha__aerial_spray + variable_costs_zar_per_ha__other_expenditure) * area_ha
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    maize:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: tonnes}, price: {generator: src, output: net_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    inputs:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: variable_costs}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      maize.revenue: revenue
+      inputs.expense: variable_cost
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    variable_costs: {kind: pnl, entity: farm, scheme: pnl, include: [variable_cost]}
+    gross_margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable_cost]}
+  measures: {}
+figures:
+  net_farm_gate_price_zar_per_t: {cut: revenue, per: src.tonnes}
+  gross_income_zar_per_ha: {cut: revenue}
+  total_variable_expenditure_zar_per_ha: {cut: variable_costs, sign: -1}
+  total_variable_expenditure_zar_per_t: {cut: variable_costs, sign: -1, per: src.tonnes}
+  gross_margin_zar_per_ha: {cut: gross_margin}
+  gross_margin_zar_per_t: {cut: gross_margin, per: src.tonnes}
+  break_even_yield_t_per_ha: {cut: variable_costs, sign: -1, per: src.net_price}
+  break_even_price_zar_per_t: {cut: variable_costs, sign: -1, per: src.tonnes}

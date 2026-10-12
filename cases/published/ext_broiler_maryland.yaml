@@ -1,0 +1,141 @@
+# Published case "ext_broiler_maryland": a contract broiler grower with two 60' x 550' houses,
+# one year (University of Maryland Extension, Farm Broiler Production Enterprise Budget, Table 1,
+# rev. Feb 2021; cases/reference/published/ext_broiler_maryland.yaml).
+#
+# One period, the budget year. Every amount is a published input by name (generator `src`),
+# posted by a `transfer` rulebook:
+#   * grower payments: grower_payments__quantity thousand birds placed times the integrator's
+#     grower_payments__price_usd per thousand; litter: litter_sales__quantity tons at
+#     price_usd_per_ton; both received in cash in the year;
+#   * the eight variable costs are the source's own line totals (the hand-labelled `costs`
+#     list), paid in cash and expensed; interest on operating capital is its printed line;
+#   * fixed costs: property taxes and insurance paid in cash; building and equipment
+#     depreciation charged against accumulated_depreciation (no cash); owner's labour, interest
+#     on investment and the land charge are the owner's own labour, capital and land charged at
+#     their opportunity cost and credited to the owner (no cash moves);
+#   * the fixed investment (nine lines, quantity x price each) is the owner's contribution,
+#     held at cost in `investment`; its depreciation is the source's own two lines, not a
+#     schedule derived from it;
+#   * no tax: the budget stops before income tax.
+# Per-square-foot figures divide by the two houses' floor area (house_sqft_each x
+# number_of_houses), a physical driver, via `per`.
+#
+# Source finding: the eight variable lines sum to 31,712, but the source prints its variable
+# total as 31,711 and carries that 1-dollar rounding into net over variable costs (106,089),
+# the variable-and-fixed total (101,937) and the net return (35,863). Those four figures are
+# read from the books and differ by one dollar, wider than the half-dollar tolerance; the
+# oracle's tolerance note says this gap must surface.
+published: ext_broiler_maryland
+entity: farm
+plant: grower_payments__price_usd
+case:
+  case: published-ext-broiler-maryland
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        grower_income: grower_payments__quantity * grower_payments__price_usd
+        litter_income: litter_sales__quantity * price_usd_per_ton
+        investment_cost: >-
+          tunnel_house__quantity * tunnel_house__price_usd
+          + generator_wiring_alarm__quantity * generator_wiring_alarm__price_usd
+          + equipment__quantity * equipment__price_usd
+          + site_preparation__quantity * site_preparation__price_usd
+          + tractor_loader_blade_mower__quantity * tractor_loader_blade_mower__price_usd
+          + manure_storage_composting_shed__quantity * manure_storage_composting_shed__price_usd
+          + vegetative_shelterbelt__quantity * vegetative_shelterbelt__price_usd
+          + well_and_water_system__quantity * well_and_water_system__price_usd
+          + stone__quantity * stone__price_usd
+        floor_sqft: house_sqft_each * number_of_houses
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        investment: asset
+        accumulated_depreciation: asset
+        grower_payments: income
+        litter_sales: income
+        electricity: expense
+        telephone_alarm: expense
+        supplies_and_miscellaneous: expense
+        building_and_equipment_repairs: expense
+        crust_out_or_windrow: expense
+        partial_house_cleanout: expense
+        full_house_cleanout: expense
+        interest_on_operating_capital: expense
+        owners_labor: expense
+        building_depreciation: expense
+        equipment_depreciation: expense
+        interest_on_investment: expense
+        property_taxes: expense
+        insurance: expense
+        land_charge: expense
+      moves:
+        invest: {debit: investment, credit: owner_equity, amount: {generator: src, output: investment_cost}}
+        grower: {debit: cash, credit: grower_payments, amount: {generator: src, output: grower_income}}
+        litter: {debit: cash, credit: litter_sales, amount: {generator: src, output: litter_income}}
+        electricity: {debit: electricity, credit: cash, amount: {generator: src, output: electricity}}
+        telephone: {debit: telephone_alarm, credit: cash, amount: {generator: src, output: telephone_alarm}}
+        supplies: {debit: supplies_and_miscellaneous, credit: cash, amount: {generator: src, output: supplies_and_miscellaneous}}
+        repairs: {debit: building_and_equipment_repairs, credit: cash, amount: {generator: src, output: building_and_equipment_repairs}}
+        crust_out: {debit: crust_out_or_windrow, credit: cash, amount: {generator: src, output: crust_out_or_windrow}}
+        partial_cleanout: {debit: partial_house_cleanout, credit: cash, amount: {generator: src, output: partial_house_cleanout_annual}}
+        full_cleanout: {debit: full_house_cleanout, credit: cash, amount: {generator: src, output: full_house_cleanout}}
+        operating_interest: {debit: interest_on_operating_capital, credit: cash, amount: {generator: src, output: interest_on_operating_capital}}
+        labour: {debit: owners_labor, credit: owner_equity, amount: {generator: src, output: owners_labor}}
+        building_dep: {debit: building_depreciation, credit: accumulated_depreciation, amount: {generator: src, output: building_depreciation}}
+        equipment_dep: {debit: equipment_depreciation, credit: accumulated_depreciation, amount: {generator: src, output: equipment_depreciation}}
+        investment_interest: {debit: interest_on_investment, credit: owner_equity, amount: {generator: src, output: interest_on_investment}}
+        property_tax: {debit: property_taxes, credit: cash, amount: {generator: src, output: property_taxes}}
+        insurance: {debit: insurance, credit: cash, amount: {generator: src, output: insurance}}
+        land: {debit: land_charge, credit: owner_equity, amount: {generator: src, output: land_charge}}
+  schemes:
+    pnl:
+      grower_payments: revenue
+      litter_sales: revenue
+      electricity: variable
+      telephone_alarm: variable
+      supplies_and_miscellaneous: variable
+      building_and_equipment_repairs: variable
+      crust_out_or_windrow: variable
+      partial_house_cleanout: variable
+      full_house_cleanout: variable
+      interest_on_operating_capital: variable
+      owners_labor: fixed
+      building_depreciation: fixed
+      equipment_depreciation: fixed
+      interest_on_investment: fixed
+      property_taxes: fixed
+      insurance: fixed
+      land_charge: fixed
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [variable]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [fixed]}
+    costs: {kind: pnl, entity: farm, scheme: pnl, include: [variable, fixed]}
+    over_variable: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable]}
+    net: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable, fixed]}
+  measures: {}
+figures:
+  total_gross_income_usd: {cut: revenue}
+  total_gross_income_usd.dollars_per_sqft: {cut: revenue, per: src.floor_sqft}
+  total_variable_costs_usd: {cut: variable, sign: -1}
+  net_income_over_variable_costs_usd: {cut: over_variable}
+  total_fixed_cost_usd: {cut: fixed, sign: -1}
+  total_variable_and_fixed_cost_usd: {cut: costs, sign: -1}
+  net_income_over_variable_and_fixed_costs_usd: {cut: net}
+  net_income_over_variable_and_fixed_costs_usd.dollars_per_sqft: {cut: net, per: src.floor_sqft}
+  total_investment_usd: {balance: investment}

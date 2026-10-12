@@ -63,6 +63,10 @@ Translation
   library's own ``mapping`` scores can never be set aside this way;
 * ``notes``: anything a reader needs.
 
+A ``driver`` reading that only repeats an input (the input's own name, or a
+formula that is nothing but that name) is refused: the figure would be
+compared with itself.
+
 Every figure is either compared or set aside with a reason: a figure the
 translation neither maps nor sets aside is a failed check ("not reported").
 
@@ -200,7 +204,19 @@ def figures(oracle: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 class PublishedFamily(Family):
+    """The published cases (see the module docstring).
+
+    The reading machinery is shared with other families whose oracles state
+    figures in a different layout (:mod:`one_engine.oracles.esco`): a subclass
+    sets ``key`` and ``folder`` and overrides :meth:`_load`, :meth:`_inputs`,
+    :meth:`_wanted` and :meth:`_within`.
+    """
+
     name = "published"
+    #: the translation's id key, the generator's ``inputs:`` marker, and the translations' folder name
+    key = "published"
+    #: the oracles' folder under ``cases/reference``
+    folder = FOLDER
     planted = "the input the translation names under 'plant', x 1.01 (+1 when it is zero)"
     tolerance = ("every compared figure within the case's own tolerance: max(abs, rel x |figure|), "
                  "or tolerance.quantities for a figure the library maps to a quantity")
@@ -210,10 +226,10 @@ class PublishedFamily(Family):
         self.translations = translations
 
     def oracles(self) -> List[str]:
-        return sorted(p.stem for p in (REFERENCE / FOLDER).glob("*.yaml"))
+        return sorted(p.stem for p in (REFERENCE / self.folder).glob("*.yaml"))
 
     def source(self, oid: str) -> str:
-        return f"{FOLDER}/{oid}.yaml"
+        return f"{self.folder}/{oid}.yaml"
 
     def translation(self, oid: str) -> Optional[pathlib.Path]:
         p = self.translations / f"{oid}.yaml"
@@ -226,19 +242,41 @@ class PublishedFamily(Family):
         t = q if q is not None else tol
         return max(_exact(t.get("abs", 0)), _exact(t.get("rel", 0)) * abs(value))
 
-    def run(self, oid: str, plant: bool = False) -> Tuple[List[Check], Dict[str, Any]]:
-        path = self.translation(oid)
-        if path is None:
-            raise Blocked(f"no translation yet (cases/published/{oid}.yaml)")
+    # ── what differs between families ──────────────────────────────────────
+    def _load(self, oid: str) -> Tuple[Mapping[str, Any], Any]:
+        """The oracle and its tolerance; a case without a tolerance and a reason does not run."""
         oracle = _oracle(oid)
         tol = oracle.get("tolerance")
         if not isinstance(tol, Mapping) or not str(tol.get("why", "")).strip():
             raise Blocked("the case declares no tolerance with a reason, so the library does not run it")
+        return oracle, tol
+
+    def _inputs(self, oracle: Mapping[str, Any]) -> Dict[str, Any]:
+        return published_inputs(oracle)
+
+    def _wanted(self, oid: str, oracle: Mapping[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, str]]:
+        """The figures (path -> value), the library's scored ones (path -> canon name), and any the
+        oracle itself sets aside (path -> its reason)."""
+        mapped = {str(k): (v.get("canon") if isinstance(v, Mapping) else v)
+                  for k, v in (oracle.get("mapping") or {}).items()}
+        return figures(oracle), mapped, {}
+
+    def _within(self, fig: str, value: Fraction, got: Fraction, tol: Any, canon: Optional[str]) -> Tuple[bool, str]:
+        """Whether ``got`` reproduces ``value``, and the rule applied, in words."""
+        allowed = self._allowed(tol, canon, value)
+        return abs(got - value) <= allowed, f"within {_fmt(allowed)}"
+
+    # ── shared ───────────────────────────────────────────────────────────────
+    def run(self, oid: str, plant: bool = False) -> Tuple[List[Check], Dict[str, Any]]:
+        path = self.translation(oid)
+        if path is None:
+            raise Blocked(f"no translation yet (cases/{self.key}/{oid}.yaml)")
+        oracle, tol = self._load(oid)
         tr = load_yaml_strict(path.read_text())
-        unknown = sorted(set(tr) - {"published", "entity", "plant", "case", "figures", "not_compared", "notes"})
-        if unknown or tr.get("published") != oid:
-            raise ValueError(f"{path.name}: keys {unknown} unknown, or published is not '{oid}'")
-        inputs = published_inputs(oracle)
+        unknown = sorted(set(tr) - {self.key, "entity", "plant", "case", "figures", "not_compared", "notes"})
+        if unknown or tr.get(self.key) != oid:
+            raise ValueError(f"{path.name}: keys {unknown} unknown, or {self.key} is not '{oid}'")
+        inputs = self._inputs(oracle)
         planted = None
         if plant:
             name = tr["plant"]
@@ -250,31 +288,39 @@ class PublishedFamily(Family):
         case = copy.deepcopy(tr["case"])
         fed = []
         for gname, g in (case.get("generators") or {}).items():
-            if g.get("kind") == "formulas" and g.get("inputs") == "published":
+            if g.get("kind") == "formulas" and g.get("inputs") == self.key:
                 g["inputs"] = {k: ([str(x) for x in v] if isinstance(v, list) else str(v)) for k, v in inputs.items()}
                 fed.append(gname)
         if not fed:
-            raise ValueError(f"{path.name}: no formulas generator takes 'inputs: published'")
+            raise ValueError(f"{path.name}: no formulas generator takes 'inputs: {self.key}'")
 
-        want = figures(oracle)
-        mapped = {str(k): (v.get("canon") if isinstance(v, Mapping) else v)
-                  for k, v in (oracle.get("mapping") or {}).items()}
+        want, mapped, by_oracle = self._wanted(oid, oracle)
         specs = tr.get("figures") or {}
         aside = tr.get("not_compared") or {}
+        clash = sorted(set(by_oracle) & (set(specs) | set(aside)))
+        if clash:
+            raise ValueError(f"{path.name}: figures the oracle itself sets aside are also read or set aside: {clash}")
+        aside = {**aside, **by_oracle}
         # a figure is set aside by its own path or by a table above it
         def set_aside(fig: str) -> Optional[str]:
             return next((p for p in aside if fig == p or fig.startswith(p + ".")), None)
         wrong = sorted(set(specs) - set(want))
         idle = sorted(p for p in aside if not any(f == p or f.startswith(p + ".") for f in want))
         both = sorted(f for f in specs if set_aside(f))
-        headline = sorted(f for f in want if set_aside(f) and any(f == m or f.startswith(m + ".") for m in mapped))
+        # a scored path is the figure itself, or a table whose figures are all scored; a figure that
+        # has its own value keeps only that value scored, not the comparatives printed under it
+        headline = sorted(f for f in want if set_aside(f)
+                          and any(f == m or (f.startswith(m + ".") and m not in want) for m in mapped))
         if wrong or idle or both or headline:
             raise ValueError(f"{path.name}: figures not in the case {wrong}; set-asides matching nothing {idle}; "
                              f"figures both read and set aside {both}; scored figures set aside {headline}")
+        echoes = sorted(f for f, spec in specs.items() if _echoes(spec, inputs, case))
+        if echoes:
+            raise ValueError(f"{path.name}: figures read straight from an input, which proves nothing: {echoes}")
         compared = [f for f in want if f in specs]
         if not compared:
             raise Blocked("the translation compares no figure")
-        record: Dict[str, Any] = {"translation": f"cases/published/{path.name}",
+        record: Dict[str, Any] = {"translation": f"cases/{self.key}/{path.name}",
                                   "translation_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                                   "inputs": len(inputs), "fed_to": fed, "figures": len(want),
                                   "compared": len(compared),
@@ -322,7 +368,7 @@ class PublishedFamily(Family):
             if len(idx) != len(value):
                 return Check(label, "length", f"{len(value)} elements", f"{len(idx)} periods read", False)
             for i, (w, t) in enumerate(zip(value, idx)):
-                if abs(reading[t] - w) > self._allowed(tol, canon, w):
+                if not self._within(fig, w, reading[t], tol, canon)[0]:
                     return Check(label, f"element {i} (t={t})", _fmt(w), _fmt(reading[t]), False)
             return Check(label, f"all {len(value)} elements", _fmt(value[-1]) + " at the last",
                          _fmt(reading[idx[-1]]) + " at the last", True)
@@ -334,8 +380,8 @@ class PublishedFamily(Family):
             got, at = reading[0], "the period"
         else:
             raise ValueError(f"figure {fig}: a single figure from a {len(reading)}-period reading needs at or total")
-        allowed = self._allowed(tol, canon, value)
-        return Check(label, f"{at}, within {_fmt(allowed)}", _fmt(value), _fmt(got), abs(got - value) <= allowed)
+        ok, rule = self._within(fig, value, got, tol, canon)
+        return Check(label, f"{at}, {rule}", _fmt(value), _fmt(got), ok)
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:
         """Claim the inventory rows of the published cases (``cases/golds/<id>.yaml``, encoding g_published_case)."""
@@ -345,6 +391,21 @@ class PublishedFamily(Family):
         if m and (REFERENCE / FOLDER / f"{m.group(1)}.yaml").exists():
             return m.group(1)
         return None
+
+
+def _echoes(spec: Any, inputs: Mapping[str, Any], case: Mapping[str, Any]) -> bool:
+    """Whether a reading is a ``driver`` that only repeats an input (directly, or through a formula that
+    is the input's bare name): the figure would then be compared with itself."""
+    if isinstance(spec, Mapping) and "sum" in spec:
+        return any(_echoes(s, inputs, case) for s in spec["sum"])
+    if not isinstance(spec, Mapping) or "driver" not in spec:
+        return False
+    gen, _, out = str(spec["driver"]).rpartition(".")
+    gens = case.get("generators") or {}
+    values = (gens.get(gen) or next(iter(gens.values()), {}) or {}).get("values") or {}
+    text = values.get(out)
+    text = text.get("each_period") if isinstance(text, Mapping) else text
+    return out in inputs or (isinstance(text, str) and text.strip() in inputs)
 
 
 def _show(v: Any) -> str:

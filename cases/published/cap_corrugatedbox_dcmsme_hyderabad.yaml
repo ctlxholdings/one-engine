@@ -1,0 +1,144 @@
+# Published case "cap_corrugatedbox_dcmsme_hyderabad": DC-MSME (Government of India) project report
+# for a corrugated paper board and box unit in Hyderabad, the year-5 column (FY2025-26, the first
+# year at the 75% steady state) of its eight-year profitability table (p.39;
+# cases/reference/published/cap_corrugatedbox_dcmsme_hyderabad.yaml).
+#
+# One period, year 5. The books are kept in rupees; the source prints in crore, so every money
+# figure is read at scale 10^7 and every cost input (printed in crore) is posted times 100 x 100 x
+# 1000 rupees. Each amount is one move of a `transfer` journal against cash:
+#   * sales are the tonnes made and sold, the installed capacity (60,000 MT, the figure the
+#     source's own model runs on) times the year-5 utilisation (75%), at the stated Rs 41,000/MT;
+#   * cost of production (raw material, utilities, direct wages, repairs; salaries and other
+#     administrative expenses; selling expenses, nil) is the source's year-5 line by line,
+#     expensed in the year;
+#   * interest on the term loan and on the working-capital loan and depreciation are the source's
+#     own year-5 charges (no loan or asset register: the inputs carry the charges only);
+#   * income tax at the stated 25% of operating profit (the `income_tax` rulebook), paid in the
+#     year.
+#
+# Set aside: the other seven years of the eight-year table (the inputs carry the cost lines of
+# year 5 only), and the break-even point, DSCR and working-capital cycle (their fixed/variable
+# split, loan schedule and holding periods are not inputs).
+published: cap_corrugatedbox_dcmsme_hyderabad
+entity: unit
+plant: selling_price_per_mt
+case:
+  case: published-corrugated-box-year5
+  periods: 1
+  phases: [post, tax, settle]
+  currency: INR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        crore: 100 * 100 * 1000
+        tonnes: installed_capacity_mt_per_annum * year_5_onwards / 100
+        sales: tonnes * selling_price_per_mt
+        raw_material: raw_material_and_consumables * crore
+        power_water: utilities * crore
+        direct_wages: wages_direct * crore
+        repairs: repair_and_maintenance * crore
+        staff_salaries: salaries * crore
+        other_admin: other_administrative_expenses * crore
+        selling: selling_expenses * crore
+        term_loan_interest: interest_on_term_loan * crore
+        wc_loan_interest: interest_on_working_capital_loan * crore
+        depreciation_charge: depreciation * crore
+        tax_rate: tax_rate_pct / 100
+  opening:
+    unit:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: unit
+      phase: post
+      declare:
+        sales: income
+        raw_material: expense
+        utilities: expense
+        wages_direct: expense
+        repair_and_maintenance: expense
+        salaries: expense
+        other_administrative: expense
+        selling_expenses: expense
+        interest_term_loan: expense
+        interest_working_capital: expense
+        depreciation: expense
+      moves:
+        sales: {debit: cash, credit: sales, amount: {generator: src, output: sales}}
+        raw_material: {debit: raw_material, credit: cash, amount: {generator: src, output: raw_material}}
+        utilities: {debit: utilities, credit: cash, amount: {generator: src, output: power_water}}
+        wages: {debit: wages_direct, credit: cash, amount: {generator: src, output: direct_wages}}
+        repairs: {debit: repair_and_maintenance, credit: cash, amount: {generator: src, output: repairs}}
+        salaries: {debit: salaries, credit: cash, amount: {generator: src, output: staff_salaries}}
+        other_admin: {debit: other_administrative, credit: cash, amount: {generator: src, output: other_admin}}
+        selling: {debit: selling_expenses, credit: cash, amount: {generator: src, output: selling}}
+        term_loan_interest: {debit: interest_term_loan, credit: cash, amount: {generator: src, output: term_loan_interest}}
+        wc_loan_interest: {debit: interest_working_capital, credit: cash, amount: {generator: src, output: wc_loan_interest}}
+        depreciation: {debit: depreciation, credit: cash, amount: {generator: src, output: depreciation_charge}}
+    tax:
+      kind: income_tax
+      entity: unit
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: tax_rate}
+      carry_forward_periods: null
+      loss_relief: refund
+      scheme:
+        sales: taxable
+        raw_material: taxable
+        utilities: taxable
+        wages_direct: taxable
+        repair_and_maintenance: taxable
+        salaries: taxable
+        other_administrative: taxable
+        selling_expenses: taxable
+        interest_term_loan: taxable
+        interest_working_capital: taxable
+        depreciation: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: unit
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      sales: sales
+      raw_material: cost_of_production
+      utilities: cost_of_production
+      wages_direct: cost_of_production
+      repair_and_maintenance: cost_of_production
+      salaries: cost_of_production
+      other_administrative: cost_of_production
+      selling_expenses: cost_of_production
+      interest_term_loan: finance_and_depreciation
+      interest_working_capital: finance_and_depreciation
+      depreciation: finance_and_depreciation
+      tax_expense: tax
+  cuts:
+    sales: {kind: pnl, entity: unit, scheme: pnl, include: [sales]}
+    cost_of_production: {kind: pnl, entity: unit, scheme: pnl, include: [cost_of_production]}
+    gross_profit: {kind: pnl, entity: unit, scheme: pnl, include: [sales, cost_of_production]}
+    operating_profit: {kind: pnl, entity: unit, scheme: pnl, include: [sales, cost_of_production, finance_and_depreciation]}
+    net_profit: {kind: pnl, entity: unit, scheme: pnl, include: [sales, cost_of_production, finance_and_depreciation, tax]}
+  measures: {}
+figures:
+  sales_year_5: {cut: sales, scale: 10000000}
+  total_cost_of_production_year_5: {cut: cost_of_production, sign: -1, scale: 10000000}
+  gross_profit_before_tax_and_depreciation_year_5: {cut: gross_profit, scale: 10000000}
+  operating_profit_year_5: {cut: operating_profit, scale: 10000000}
+  net_profit_after_tax_year_5: {cut: net_profit, scale: 10000000}
+not_compared:
+  eight_year_table: "the other years of the eight-year projection: the case models year 5, and the inputs carry the cost lines of year 5 only"
+  break_even_point_pct: "the fixed/variable cost split behind the break-even is not an input"
+  dscr: "the loan principal schedule behind the DSCR is not an input"
+  working_capital_one_cycle: "the holding periods and their amounts (raw material, WIP, finished goods, receivables) are not inputs"

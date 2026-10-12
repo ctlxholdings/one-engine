@@ -1,0 +1,393 @@
+# Miniature — the state-capitalised super-ESCO (Etihad ESCO / Tarshid; SOFIAC named only) expressed at ESCO LOD 0
+#
+# Shape copied from bytom-lod0.yaml. This case is a structure the corpus describes generically (E05 mechanism 4,
+# E16 Figure 6, E09 definition) and instantiates with two named entities (Tarshid, Etihad ESCO; E16 pp. 8-10).
+# Where a fact is specific to Tarshid or Etihad the text says which. SOFIAC (Canada) appears in the corpus only
+# as a name (E05 L13) — nothing is recorded about it. Every fact carries its status: stated, inferred (follows
+# from a stated fact — said which), default (source silent), generic (from the general description, not a named
+# deal), unstated (counter-promise required by duality; source silent). Nothing invented.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: super_esco
+lod: 0
+case: validation_targets.published.Super_ESCO_worlds
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E16
+  title: 'Transforming Energy Efficiency Markets in Developing Countries: The Emerging Possibilities of Super ESCOs'
+  publisher: World Bank Live Wire 2018/92 (Sarkar & Moin)
+  passage: "'How do they work?' and Figure 6 (corpus input/wb-super-escos-emerging-possibilities-2018.txt L312-360); 'Saudi Arabia's Tarshid' (L454-498, right column); 'The Etihad ESCO in the United Arab Emirates' and Figure 10 (L612-672); 'What have we learned?' (L623-664 right column)"
+  secondary:
+  - id: E05
+    passage: "corpus input/gesco-financing-mechanisms-note.txt L13: 'Super ESCOs — capitalized by government/IFIs; contracts end users directly, cuts procurement transaction costs, finances aggregated projects, hires ESCOs as subcontractors — no financing needed from beneficiary or ESCO. Examples: Etihad ESCO (UAE), SOFIAC (Canada), Tarshid (Saudi)'"
+  - id: E09
+    passage: "corpus input/src-limaye-case-for-super-esco-2010.txt L429-470 (definition: 'established by the Government ... The Government capitalizes the Super ESCO ... may also provide credit or risk guarantees ... or act as a leasing or financing company'; L463-469 'engage private ESCOs as contractors for parts of the implementation'). The HEP ESCO capitalisation (L500-520) is a different super-ESCO and is not used as this deal's data"
+  - id: E04
+    passage: 'corpus input/iea-esco-contracts-typology.txt L28-31 (functions: aggregate projects, standardise, accredit ESCOs; can supply capital, credit-enhancement guarantees)'
+  oracle: "ORACLE-RESULTS.md §2: 'P5 (super-ESCO) ... below threshold / zero numeric oracles'; acceptance is structural. oracle-matrix.md L57: P5 has the HEP case only"
+  provenance_only: "instance.yaml L933 ('Etihad/Tarshid/SOFIAC — state-capitalized aggregator contracts end users and subcontracts ESCOs'); case-register.md C21-C22 (owner record, not corpus)"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Saudi Arabia / United Arab Emirates
+  iso: SA / AE
+  eu_member: false
+  client_eu_general_government: false
+  status: stated
+  why: "Tarshid: 'Saudi Arabia's Public Investment Fund ... created the National Energy Services Company' (E16 L454-461); Etihad ESCO 'established in 2013 by the Dubai Electricity and Water Authority (DEWA)' (L612-614); SOFIAC (Canada) is a name only (E05 L13). Public clients outside EU general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the master ESPC and the sub-ESPC each establish (fibo-fnd-rel-rel:confers) their commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  super_esco:
+    role: aggregator_super_esco
+    groups: [partner, delivery, capital, public]
+    status: stated
+    name: Tarshid (National Energy Services Company, Saudi Arabia) / Etihad ESCO (Dubai)
+    text: "E05 L13 'contracts end users directly ... finances aggregated projects, hires ESCOs as subcontractors'; E16 Fig 6 'Super ESCO' signs the 'Super/master ESPC' with the end user and an 'ESPC' with the private ESCO (L318-350); Tarshid 'created ... in October 2017' by PIF (L454-461); Etihad ESCO 'established in 2013 by the Dubai Electricity and Water Authority (DEWA) as a Super ESCO' (L612-614)"
+  end_user:
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: "E16 Fig 6 'End user (public building, street lighting, water pumping)' (L334-336); Tarshid: 'All government bodies are mandated to contract with Tarshid' (L476-477). Etihad's Fig 10 says 'Building owner' (L625-627) and its named clients include DEWA power stations, Dubai Healthcare City, Dubai Golf and the airport (L667-671) — some are not general government; host is the alternative for those"
+  private_esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "E16 Fig 6 'ESCO (private)': 'Invest and implement EE measures' / 'Implement EE measures' under an 'ESPC' with the Super ESCO (L328-350); Fig 10: ESCOs give Etihad a 'Guarantee of savings' and 'Supply of retrofit work' (L644-648). E05 L13 calls them 'subcontractors' — epc_contractor is the alternative where the ESCO gives no guarantee"
+  state_capitaliser:
+    role: government_financier
+    groups: [public, capital, risk]
+    status: stated
+    name: Public Investment Fund (Tarshid) / DEWA (Etihad)
+    text: "'Typically, the government capitalizes a Super ESCO with sufficient funds to undertake public sector ESPC projects and to leverage private sector/commercial financing' (L317-320); 'Saudi Arabia's Public Investment Fund (PIF 2017) created the National Energy Services Company ... with an initial capitalization of over $500 million' (L454-461). DEWA is a utility: utility_supplier ('may own an ESCO') also fits Etihad's owner"
+  investor:
+    role: equity_investor
+    groups: [capital]
+    status: inferred
+    text: "E16 Fig 10 (Etihad): 'Investor' -> 'Investment' -> Etihad ESCO; 'Profit' -> Investor (L634-640). 'Investment'/'Profit' read as equity-like; lender is the alternative if the investment is debt"
+  mnv_agency:
+    role: verifier_mnv
+    groups: [verification]
+    status: stated
+    text: "E16 Fig 6 'Independent M&V agency' giving 'M&V service' and receiving 'M&V fees' from the Super ESCO (L324-348). In Etihad's Fig 10 the Super ESCO itself does 'Verification of savings' (L638) — the independent agency is the Fig 6 variant"
+  ifi:
+    role: ifi_dfi
+    groups: [public, capital]
+    status: generic
+    text: "E05 L13 'capitalized by government/IFIs'; E16 L317-320 'leverage private sector/commercial financing'. Not named for Tarshid or Etihad"
+  commercial_lender:
+    role: lender
+    groups: [capital]
+    status: generic
+    text: "E16 Fig 5 'Financing (banks/FIs, leasing companies, equipment suppliers)' (L273-276); L317-320 'leverage private sector/commercial financing'. Not named for Tarshid or Etihad"
+
+contract:   # the agreements that establish the commitments
+  master_espc:
+    core: contract
+    parties: [end_user, super_esco]
+    status: stated
+    note: "E16 Fig 6 'Super/master ESPC' (L330-332); E16 L344-348 'entering into ESPCs (shared or guaranteed savings contracts through pay-as-you-save [PAYS] schemes) with end users'; term not given"
+  sub_espc:
+    core: contract
+    parties: [super_esco, private_esco]
+    status: stated
+    note: "E16 Fig 6 'ESPC' between Super ESCO and 'ESCO (private)' preceded by 'Energy audit and MOU' (L326-330); Tarshid 'framework for competitively procuring the services of private sector ESCOs through ESPCs' (L480-482)"
+  mnv_contract:
+    core: contract
+    parties: [super_esco, mnv_agency]
+    status: stated
+    note: "E16 Fig 6 'M&V fees' / 'M&V service' (L324-348)"
+  capitalisation:
+    core: contract
+    parties: [state_capitaliser, super_esco]
+    status: stated
+    note: "Tarshid: 'initial capitalization of over $500 million' (L461); terms of ownership not given"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: super_esco
+    to: end_user
+    status: stated
+    what: "Fig 10 (Etihad): 'Energy efficiency equipment and services', 'Guarantee of savings', 'Audit and consulting', 'Tendering and bid negotiation', 'Project management', 'Verification of savings', 'Reporting' (L628-641); E16 L660-664: 'prequalifies buildings ... organizes the tendering on behalf of owners, arranges financing if it is outside an owner's budget, follows up ... during the guarantee phase'. The super-ESCO's own capital is part of this promise (F05): E05 L13 'finances aggregated projects ... no financing needed from beneficiary'; Fig 6 (GS variant) 'Investment in EE measures' (L344-346); it recovers its investment 'from end users' monetized energy savings' (L352-354) — the repayment leg is c3"
+    established_by: master_espc
+  c3:
+    family: payment_promise
+    from: end_user
+    to: super_esco
+    status: stated
+    what: "Fig 10 'Payments' from Building owner to Etihad ESCO (L628); E16 L352-354 the Super ESCO recovers its investment 'from end users' monetized energy savings, as realized through PAYS schemes'"
+    established_by: master_espc
+  c4:
+    family: performance_promise
+    from: private_esco
+    to: super_esco
+    status: stated
+    what: "Fig 6 'Invest and implement EE measures' (SS) / 'Implement EE measures' (GS) (L333, L350); Fig 10 'Supply of retrofit work' (chiller retrofit, lighting retrofit, BAS installation) and 'Guarantee of savings' to Etihad (L644-648)"
+    established_by: sub_espc
+  c5:
+    family: payment_promise
+    from: super_esco
+    to: private_esco
+    status: stated
+    what: "Fig 6 'Shared savings to ESCO' (SS) / 'Fee payments to ESCO' (GS) (L322-344); Fig 10 'Payments' Etihad -> ESCOs (L644)"
+    established_by: sub_espc
+  c6:
+    family: determination_promise
+    from: mnv_agency
+    to: [super_esco, end_user, private_esco]
+    status: stated
+    determines: savings   # independent M&V of savings (L328-348)
+    what: "Fig 6 'M&V service' by the 'Independent M&V agency' (L328-348); E16 L350-351 'joint (with end users) or independent M&V of energy savings (as per the protocol agreed to in the ESPC)'"
+    established_by: mnv_contract
+  c7:
+    family: payment_promise
+    from: super_esco
+    to: mnv_agency
+    status: stated
+    what: "Fig 6 'M&V fees' (L324, L344)"
+    established_by: mnv_contract
+  c8:
+    family: funding_promise
+    from: state_capitaliser
+    to: super_esco
+    status: stated
+    funding_instrument: equity   # the government capitalises the Super ESCO (L317, L461)
+    what: "'the government capitalizes a Super ESCO' (L317); Tarshid 'initial capitalization of over $500 million' (L461)"
+    established_by: capitalisation
+  c9:
+    family: funding_promise
+    from: investor
+    to: super_esco
+    status: inferred
+    what: "Fig 10 'Investment' (L634); Etihad-specific; amount not given"
+  c10:
+    family: payment_promise
+    from: super_esco
+    to: investor
+    status: stated
+    what: "Fig 10 'Profit' to Investor (L640); Etihad-specific"
+  c11:
+    family: funding_promise
+    from: ifi
+    to: super_esco
+    status: generic
+    what: "E05 L13 'capitalized by government/IFIs'; instrument not stated for Tarshid or Etihad"
+  c12:
+    family: payment_promise
+    from: super_esco
+    to: ifi
+    status: unstated
+    what: counter-promise required by duality; source silent — repayment if the IFI money is a loan; a grant would be a benefit_promise (E09 L517 records a GEF grant for HEP, a different super-ESCO)
+  c13:
+    family: funding_promise
+    from: commercial_lender
+    to: super_esco
+    status: generic
+    what: "'leverage private sector/commercial financing' (L317-320); Fig 5 'Financing (banks/FIs, leasing companies, equipment suppliers)' (L273-276)"
+  c14:
+    family: payment_promise
+    from: super_esco
+    to: commercial_lender
+    status: inferred
+    what: debt service; a commercial loan is by definition repayable (L317-320)
+  c15:
+    family: payment_promise
+    from: super_esco
+    to: state_capitaliser
+    status: inferred
+    what: "residual claim of the owner on the entity it capitalised: 'the government capitalizes a Super ESCO' (L317), PIF 'created' Tarshid 'with an initial capitalization of over $500 million' (L454-461) — ownership capital whose reciprocal is the owner's residual return, the F07 form; where the owner is a separate 'Investor' (Etihad Fig 10) the corpus shows the reciprocal 'Profit' (c10) explicitly"
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c3: Super ESCO recovers its investment 'from end users' monetized energy savings, as realized through PAYS schemes' (E16 L352-354); guarantee of savings (Fig 10 L628-641)."}
+  client_sector:
+    value: public
+    status: stated
+    why: "Fig 6 end user 'public building, street lighting, water pumping' (L334-336); Tarshid 'government and public buildings' (L462-463), 'All government bodies are mandated' (L476-477). Alternative private for part of Etihad's portfolio (Dubai Golf, airport hotel, L667-671)"
+  partner_form:
+    value: corporate
+    status: inferred
+    why: "the Partner on the master ESPC is the super-ESCO, 'the National Energy Services Company' (L458-459); Etihad is 'The company' (L667). A state-owned standing company is corporate under the clarified definition (F22); not an spv"
+  borrower:
+    value: partner
+    status: generic
+    why: "the super-ESCO (the Partner on the master ESPC) carries the financing: 'no financing needed from beneficiary or ESCO' (E05 L13), capitalised 'to leverage private sector/commercial financing' (L317-320). Alternative none where it invests equity only; client where Etihad's owner finances within its own budget (L662)"
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: "end-user payments go to the super-ESCO (Fig 10 'Payments', L628; L352-354); no assignment mentioned"
+  collection_placement:
+    value: operator_own
+    status: default
+    why: not stated; PAYS (L346, L354) is a repayment basis, not an on-bill route in the text
+  aggregation:
+    value: super_esco
+    status: stated
+    why: "E05 L13 'finances aggregated projects, hires ESCOs as subcontractors'; E16 L343 'Aggregate the demand for energy efficiency measures'; the Fig 6 master ESPC / sub-ESPC pair is the setting's defining case"
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "an 'Independent M&V agency' verifies savings per the ESPC protocol (Fig 6; L350-351); Etihad 'Verification of savings' (L638) and a 'guarantee phase' (L664). Deemed is used by EESL street lighting (L484-504), a different super-ESCO"
+  grant_recipient:
+    value: none
+    status: default
+    why: state capitalisation (L317, L461) is ownership capital, not a grant to the deal; no grant to the end user or ESCO is stated
+  asset_owner:
+    value: client
+    status: default
+    why: "not stated. E09 L440-442 says a Super ESCO 'may ... act as a leasing ... company' — generic possibility (lessor) not stated for Tarshid or Etihad"
+  bill_custody:
+    value: client
+    status: default
+    why: not stated; Fig 6 and Fig 10 show no energy-bill arrow through the super-ESCO
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: 'client is public, but Saudi Arabia, the UAE and Canada are outside EU general government (jurisdiction), so the test does not bite. The super-ESCO is itself state-owned: inside the EU that alone would be a government-influence question (E15 themes), not computed here'
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  mandated_exclusivity:
+    scope: external-procurement
+    status: stated
+    applies_when: {aggregation: super_esco}
+    rule: "'All government bodies are mandated to contract with Tarshid on an exclusive basis as per a royal decree' (L476-477); private ESCOs are then 'competitively procur[ed]' by Tarshid (L480-482)"
+    this_case: "Tarshid-specific; fixes who the Partner on the master ESPC is before any deal. Etihad instead 'organizes the tendering on behalf of owners' (L660-662). A procurement constraint kept as a rule beside the tree, not a setting (G15)"
+    source: E16 L476-482
+
+numbers:   # instance data, not vocabulary
+  tarshid:
+    created: October 2017 (L460)
+    initial_capitalisation_usd_m: '>500 (L461)'
+    share_of_national_ee_projects_pct: 70 (L478)
+    national_ee_market_usd_bn: '>11 (L479)'
+  etihad:
+    established: 2013 (L613)
+    target_buildings: 30,000 by 2030 (L655-656)
+    target_savings_twh: 1.7 by 2030 (L656-657)
+    retrofit_programme_buildings: 243 (Sep 2017, L665-666)
+    six_projects_annual_savings_usd_m: 16.44
+    six_projects_annual_savings_gwh: 131.45
+    derived: {implied_energy_value_usd_per_kwh: 16.44e6 / 131.45e6 = 0.125}
+  not_this_case: "E09 L516-519: HEP ESCO (Croatia) received a $7m GEF grant, a $5m World Bank loan and parent-utility equity; $35.4m of contracts by 2008 — the corpus's only super-ESCO capitalisation anatomy, but another entity"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  super_esco:
+    gives: [c1, c5, c7, c10, c12, c14, c15]
+    receives: [c3, c4, c6, c8, c9, c11, c13]
+    one_way: false
+  end_user: {gives: [c3], receives: [c1, c6], one_way: false}
+  private_esco: {gives: [c4], receives: [c5, c6], one_way: false}
+  state_capitaliser:
+    gives: [c8]
+    receives: [c15]
+    one_way: false
+    reason: "c15 (residual claim) is inferred from the stated capitalisation (L317, L461), per F07; no longer 'unilateral by nature'"
+  investor:
+    gives: [c9]
+    receives: [c10]
+    one_way: false
+    reason: "Etihad only; Fig 10 shows 'Investment' and 'Profit' (L634-640)"
+  mnv_agency: {gives: [c6], receives: [c7], one_way: false}
+  ifi:
+    gives: [c11]
+    receives: [c12]
+    one_way: true
+    reason: 'counter-promise required by duality and unstated (c12): repayment if the IFI money is a loan, a benefit_promise if a grant; generic party (F06)'
+  commercial_lender:
+    gives: [c13]
+    receives: [c14]
+    one_way: false
+    reason: generic party; c14 debt service inferred from a loan being repayable
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: award_mode
+  description: "how the master contract is awarded — mandated/direct award vs competitive. Tarshid: exclusive by royal decree (L476-477); E09 L514-516: public agencies 'are not required to conduct any competitive procurement to contract with HEP ESCO'; E16 L578-580: FEDESCO contracts 'without competition'. Review: a procurement constraint on who becomes Partner, kept as the rule mandated_exclusivity; no setting"
+  review: 'G15: below LOD 0 / rule; action: keep as rule mandated_exclusivity; no setting'
+- kind: back_to_back_guarantees
+  description: "the super-ESCO is Partner on the master ESPC and client on the sub-ESPC at once; the savings guarantee exists twice (c1, c4) and LOD 0 has no way to say that c1's guarantee is backed by c4's — a relation between two performance promises, LOD 1 territory"
+  review: 'G26: below LOD 0; action: forward to LOD 1'
+- kind: programme_funding_family
+  description: the IFI capitalisation (c11) is funding_promise if loan and benefit_promise if grant (E09 L517 records a GEF grant for HEP, another super-ESCO); the corpus does not say for Tarshid or Etihad. Recorded funding_promise, generic, reciprocal c12 unstated
+  review: 'G12: evidence gap; action: recorded as unstated; none'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction SA / AE added; C1 applies_here false (public, non-EU)
+- id: F05
+  title: "provider's own capital is inside performance_promise"
+  convention: "Under one service contract the provider's own capital is part of its performance_promise; funding_promise requires a distinct claim between distinct parties (loan, equity, receivable purchase, lease)."
+  origin: verdict rule; findings F05; gaps G07
+  applied_here: "c2 (funding_promise super-ESCO -> end user) dropped; the super-ESCO's own capital stays inside c1; repayment is c3"
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'ifi one_way: true with reason (c12 unstated)'
+- id: F07
+  title: equity / capitalisation reciprocal
+  convention: "Equity or state capitalisation is a funding_promise whose reciprocal is the residual claim, recorded as a payment_promise with status inferred; if the source shows a non-returnable endowment, benefit_promise. Never funding_promise + 'unilateral by nature'."
+  origin: verdict rule; findings F07
+  applied_here: "state capitalisation c8 given its inferred reciprocal c15 (residual claim); state_capitaliser no longer 'unilateral by nature'"
+- id: F13
+  title: aggregation super_esco iff the role; role may be a list
+  convention: "aggregation = super_esco iff a party carries aggregator_super_esco. A party's `role` may be a list, home role first, so one party can carry several of the 41 roles."
+  origin: verdict rule; findings F13; gaps G11
+  applied_here: aggregation = super_esco paired with the role aggregator_super_esco on super_esco — the reference encoding
+- id: F22
+  title: partner_form corporate definition
+  convention: partner_form corporate = any standing legal entity (company, public body, state fund) that is not a deal-specific SPV (E15 ch.2 fn 21 reading). No new value.
+  origin: verdict change 5; findings F22; gaps G14
+  applied_here: a state-owned company is corporate under the clarified definition
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "the 'Guarantee of savings' arrows (c1, c4) are performance promises, not third-party risk cover"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [aggregator_super_esco, authority, partner_esco, government_financier, equity_investor, verifier_mnv, ifi_dfi,
+    lender]
+  roles_count: 8 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 3, inferred: 4, generic: 1, default: 5}
+  commitments_by_status: {stated: 8, inferred: 3, generic: 2, unstated: 1}
+  one_way_parties: [ifi]
+  parties_count: 8
+  commitments_count: 14
+  below_lod0: {lod1_adds: 'events (prequalification, energy audit and MOU, tendering of the private ESCO, works, M&V report,
+      end-user payment, pass-through fee to the ESCO, dividend to owner), the PAYS repayment formula, the shortfall rule on
+      each of the two guarantees', lod2_adds: 'the fee variant of each contract (Fig 6 shows shared-savings and guaranteed-savings
+      sub-ESPC variants), M&V option (E16 fn7: IPMVP Option A to D), the super-ESCO''s exit/transition rule (L657-664)'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [aggregator_super_esco, partner_esco], share: shared, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/wb-super-escos-emerging-possibilities-2018.txt:631 | Guarantee of savings", why: "Etihad, Figure 10: the super-ESCO gives the building owner a guarantee of savings (L631) and the private ESCOs give the super-ESCO one back to back (L644); both carry it. A and B agree. A's R2 row (an optional super-ESCO O&M function, L357) dropped: the case holds no O&M promise from the super-ESCO."}

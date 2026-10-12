@@ -1,0 +1,397 @@
+# Miniature — the fi-compass EUR 2m schools EPC with forfaiting expressed at ESCO LOD 0
+#
+# Purpose: validation case for LOD 0 (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Same shape as bytom-lod0.yaml. Every fact carries its status: stated / inferred / default / generic / unstated.
+# Nothing invented; the source is the fi-compass ESIF-EPC guide (E06) §4 worked example plus the §2-3 text it rests on.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: ficompass_example
+lod: 0
+case: validation_targets.published.ficompass_esif_epc_example
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E06
+  title: European Structural and Investment Funds (ESIF) in Energy Performance Contracting (EPC) — Stimulating investment in energy efficiency
+  publisher: fi-compass (EC DG REGIO / EIB), 2020
+  passage: "§4 'Numerical example of an EPC project with forfaiting', pp. 15-16 (corpus input/fic-esif-epc-guide-2020.txt L740-805); structure from §3.2 L501-658 and §2 L330-354"
+  oracle: 'ORACLE-RESULTS.md #2: NPV 1,844,437; client nets +5,000/+4,500/+3,750; provider 16,000 at 90%; R-bb2-1/3 source rounding (220,500->220,000; 16,000 interest != 1.5% of 2m); R-bb2-2 gross routing of the fixed leg underdetermined under underachievement'
+  note: "an illustrative example ('Illustrative project example', L753), not a named deal; the municipality, provider and forfeiter are unnamed"
+  notes:
+  - "Parties not modelled: arbiter (fn5 L354, generic: 'they may call an arbiter for settlement'); the 'body implementing the financial instrument' (L666) is the guarantee_facility party, its ESIF funding noted in its text (F11)."
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: not named (an EU member state)
+  iso: null
+  eu_member: true
+  client_eu_general_government: true
+  status: inferred
+  why: "'A municipality (the EPC client)' (L742) in an illustrative example of an ESIF-supported EPC; ESIF financial instruments are set up by Member States (E06 L402), so the municipality is in an EU member state and is general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  municipality:
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: "'A municipality (the EPC client) wishes to renovate a number of school buildings procured through a single EPC contract' (L742-743); unnamed"
+  epc_provider:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'The EPC provider undertakes the initial investment of EUR 2 million' (L765); 'EPC provider (ESCO)' in Fig. 4 (L544); unnamed"
+  forfeiter:
+    role: forfaiter
+    groups: [capital]
+    status: stated
+    text: "'sells the future receivables of the annual CAPEX related EPC fee ... to a forfeiter/bank for its NPV' (L767-768); 'financial institution acting as a forfeiter (financial intermediary)' (L504); unnamed"
+  bridge_lender:
+    role: lender
+    groups: [capital]
+    status: inferred
+    text: "'the short-term debt taken to finance the CAPEX works' (L770-771) implies a lender; 'initial financing provided by the EPC provider or third party should be considered as bridge financing' (L625-626); not named"
+  esif_instrument:
+    role: guarantee_facility
+    groups: [public, risk]
+    status: stated
+    text: "'The shortfall of EUR 20 000 of the CAPEX related fee would be covered by the ESIF contribution to the financial instrument' (L800-801); §3.2.2: ESIF guarantee for the forfeiter 'against its exposure to the EPC client credit risk and EPC provider performance risk' (L607-610). Role follows the act (F11): the instrument acts as a guarantor of a financier, so guarantee_facility; the money is ESIF (eu_funds — 'not government financing for Eurostat'), which the worked example does not separate into a managing-authority party, so it is noted here. Alternative eu_funds (definition includes 'financial instruments'); the Marche file applies the same act-based logic (fund = lender)"
+  verifier:
+    role: verifier_mnv
+    groups: [verification]
+    status: generic
+    text: "'On an annual basis, a third party verifies the measurements by the EPC provider' (§2 L334; general EPC description, not the worked example)"
+
+contract:   # the agreements that establish the commitments
+  epc_contract:
+    core: contract
+    parties: [municipality, epc_provider]
+    term_years: 10
+    status: stated
+    text: "'Duration of contract 10 years' (L756)"
+  forfaiting_agreement:
+    core: contract
+    parties: [epc_provider, forfeiter]
+    status: stated
+    text: "'the forfaiting agreement between the forfeiter/financial intermediary and the EPC provider, needs to be signed directly after the EPC provider is awarded the EPC contract' (L623-625); sale of receivables 'right after completion of the project' (L627)"
+  esif_support_agreement:
+    core: contract
+    parties: [esif_instrument, forfeiter]
+    status: inferred
+    text: "the ESIF contribution covers the forfeiter's shortfall and receives recoveries (L800-802); the guide names the forfeiter as 'the financial intermediary' of the instrument (L600); the agreement itself is not described"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: epc_provider
+    to: municipality
+    status: stated
+    what: efficient lighting inside and outside, reconstruction of boiler houses, CHP units, heating controls and an energy management system (L744-747); guaranteed minimum energy saving of 35% relative to the historic baseline = EUR 245 000 per annum (L747-748, L758-759); operation and maintenance of the EPC assets over the contract (OPEX fee, L635, L762)
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: municipality
+    to: epc_provider
+    status: stated
+    depends_on_savings: true   # L777-778: at 90% of the guaranteed savings the client pays 90% of the sum of the fees
+    what: 'EUR 40 000 per annum = OPEX related fee EUR 24 000 + interest related fee EUR 16 000 (L762-763, L774-775); reduced proportionally to achievement: EUR 16 000 at 90% (L778-780)'
+    established_by: epc_contract
+  c3:
+    family: payment_promise
+    from: municipality
+    to: forfeiter
+    status: stated
+    depends_on_savings: true   # L777-778 (the sum of the fees falls with savings); L797-800: at 75% the CAPEX leg falls EUR 20 000 short
+    what: "CAPEX related fee EUR 200 000 per annum for 10 years 'paid by the EPC client directly to the forfeiter' (L642, L773-774); in the 75% scenario this leg falls EUR 20 000 short (L798-800)"
+    established_by: [epc_contract, forfaiting_agreement]
+  c4:
+    family: funding_promise
+    from: forfeiter
+    to: epc_provider
+    status: stated
+    funding_instrument: receivable_purchase   # purchase of the CAPEX receivables (L766-770)
+    what: purchase of the CAPEX receivables (10 x EUR 200 000) for their NPV at 1.5% = EUR 1.84m, paid after completion (L766-770)
+    established_by: forfaiting_agreement
+  c5:
+    family: performance_promise
+    from: epc_provider
+    to: forfeiter
+    status: stated
+    what: "transfer of the right to the CAPEX related receivables, 'a sale of receivables without recourse against the seller regarding the receivables sold' (L503-505)"
+    established_by: forfaiting_agreement
+  c6:
+    family: payment_promise
+    from: epc_provider
+    to: forfeiter
+    status: stated
+    depends_on_savings: true   # L801-802: due only on a performance shortfall
+    what: "'the forfeiter has the right to recover the performance shortfall from the EPC provider' (L801-802) — a conditional payment on underachievement"
+    established_by: forfaiting_agreement
+  c7:
+    family: risk_promise
+    from: esif_instrument
+    to: forfeiter
+    status: stated
+    cover_kind: guarantee   # ESIF cover of the CAPEX fee shortfall; recorded as guarantee behaviour (L608-610, L800-801)
+    what: "cover of the CAPEX fee shortfall caused by underachievement (EUR 20 000 at 75%, L800-801); generally 'cover the financial intermediary acting as a forfeiter against its exposure to the EPC client credit risk and EPC provider performance risk' (L608-610). Alternative reading: the guide also allows an ESIF 'forfaiting' loan to the forfeiter (L607-608, L664-668) — then c7 would be a funding_promise with a payment_promise back; the worked example's shortfall cover (L800) is the guarantee behaviour, so risk_promise is recorded"
+    established_by: esif_support_agreement
+    covers: [R5a, R1]   # L608-610: client credit risk and provider performance risk
+  c8:
+    family: payment_promise
+    from: forfeiter
+    to: esif_instrument
+    status: stated
+    what: "'Eventually recovered amounts will flow back to the financial instrument' (L802)"
+    established_by: esif_support_agreement
+  c9:
+    family: funding_promise
+    from: bridge_lender
+    to: epc_provider
+    status: inferred
+    funding_instrument: loan   # short-term debt (L765-766)
+    what: short-term debt financing the CAPEX works during implementation (L765-766, L770-771); amount and terms not given
+  c10:
+    family: payment_promise
+    from: epc_provider
+    to: bridge_lender
+    status: stated
+    what: repayment of the short-term debt out of the EUR 1.84m forfaiting proceeds (L770-771)
+  c11:
+    family: determination_promise
+    from: verifier
+    to: [municipality, epc_provider]
+    status: generic
+    determines: savings   # annual verification of savings (L333-347)
+    what: "annual verification of the provider's savings measurements; actual vs guaranteed savings drive the payment adjustment (L333-347)"
+  c12:
+    family: payment_promise
+    from: unstated
+    to: verifier
+    status: unstated
+    what: 'counter-promise required by duality; source silent; candidates: municipality or epc_provider'
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: EUR 40,000 fee 'reduced proportionally' to savings achieved, EUR 16,000 at 90% (E06 L778-780); c3 CAPEX fee shortfall recovered from the provider (L798-802)."}
+  client_sector: {value: public, status: stated, why: "'A municipality (the EPC client)' (L742)"}
+  partner_form: {value: corporate, status: default, why: "not stated; 'EPC provider (ESCO)'"}
+  borrower:
+    value: partner
+    status: inferred
+    why: "the provider takes 'short-term debt ... to finance the CAPEX works' (L770-771) and sells the receivables; alternative: client — the guide says the forfaiting 'can be assimilated to a loan from the perspective of the final recipient/EPC client' (L603-605) and 'a loan to be repaid by the EPC client' (L599); that is an ESIF-eligibility frame, the actual debt is the provider's bridge"
+  receivable_holder:
+    value: split
+    status: stated
+    why: "'A CAPEX related fee paid by the EPC client directly to the forfeiter'; OPEX and interest fees 'paid by the EPC client to the EPC provider' (L642-645); only the CAPEX element is forfeited (L506, L645-647)"
+  collection_placement:
+    value: assignee_direct
+    status: stated
+    why: "'The forfeiter will be reimbursed directly the monthly payments made by the EPC client' (L558); L642, L773-774 — records the assigned leg; the unassigned leg lands with the provider (LOD 1)"
+  aggregation:
+    value: none
+    status: inferred
+    why: "one municipality, 'a number of school buildings procured through a single EPC contract' (L742-743); Fig. 4 shows one provider serving several clients (L540-546) but the example is a single contract"
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse:
+    value: performance_exposed
+    status: inferred
+    why: "at 75% achievement the client pays only 75% of the sum of the fees and the CAPEX leg owed to the forfeiter falls EUR 20 000 short (L798-800), so the client has not waived its defences and the forfeiter bears performance risk — the one assigned case where the source shows the assigned leg varying, hence performance_exposed rather than the conditional default waiver (F08); reallocated by the ESIF cover (c7) and the recovery right (c6); the guide itself names this exposure where there are 'no irrevocable payment obligations' (L533-535, fn8 L566-569)"
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "the scenarios turn on the provider 'achieves only 90%/75% of the guaranteed savings' (L778, L798); §2: the provider 'measures continually the actual energy savings' and a third party verifies annually (L333-334)"
+  grant_recipient:
+    value: none
+    status: inferred
+    why: 'ESIF support here is a financial instrument (loan or guarantee, L450, L607-610) with recovery rights (L801-802), not a non-repayable grant; alternative: the EUR 20 000 cover at 75% that is never recovered would function as a subsidy to the forfeiter/client — a LOD 1 outcome, not a grant promise'
+  asset_owner: {value: client, status: default, why: not stated (municipal school buildings; default)}
+  bill_custody:
+    value: client
+    status: inferred
+    why: "'the EPC client will make EUR 245 000 worth of energy cost savings' against its own baseline energy cost of EUR 700 000 (L757, L773-774): the client pays the energy bill"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: 'nominal: 10 x 245 000 = 2.45m guaranteed savings >= 10 x 240 000 = 2.40m operational payments, no non-repayable government financing (the ESIF cover is EU money, E15 L5365) -> passes the savings test. The rule is on an NPV basis (E15 L2578-2582); both sides are level 10-year flows, so discounting leaves the direction unchanged (F01). E06 L94-100 adds the two Maastricht-neutral provisions the example satisfies: majority of risk and rewards with the provider, provider arranges the CAPEX financing'
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  forfaiting_pass_through:
+    scope: external-state-aid
+    applies_when: {receivable_holder: split, guarantee_facility_present: true}
+    rule: the interest rate applied by the forfeiter to the EPC provider is the same that is invoiced by the EPC provider to the EPC client; only the CAPEX element is forfeited and ESIF-eligible; the economic advantage is passed through to the client (L645-647, L649-658)
+    ficompass_example: interest related fee EUR 16 000 disclosed as a separate fee element (L763); forfeiter discount 1.5% (L768) — the oracle notes 16 000 != 1.5% of 2m (R-bb2-3)
+    source: E06 §3.2.2 L637-658
+
+numbers:   # instance data, not vocabulary
+  capex_eur: 2000000
+  term_years: 10
+  baseline_energy_cost_eur_per_y: 700000
+  guaranteed_savings_pct: 35
+  guaranteed_savings_eur_per_y: 245000
+  epc_fee_eur_per_y: 240000
+  fee_capex_eur_per_y: 200000
+  fee_opex_eur_per_y: 24000
+  fee_interest_eur_per_y: 16000
+  forfeiter_discount_rate_pct: 1.5
+  forfaiting_proceeds_eur_m: 1.84
+  scenarios:
+    s100:
+      achievement_pct: 100
+      savings_eur: 245000
+      fees_eur: 240000
+      to_forfeiter_eur: 200000
+      to_provider_eur: 40000
+      client_net_eur: 5000
+      source: L773-776
+    s90:
+      achievement_pct: 90
+      savings_eur: 220 000 (source; 0.9 x 245 000 = 220 500)
+      fees_eur: 216000
+      to_forfeiter_eur: 200000
+      to_provider_eur: 16000
+      client_net_eur: "4 500 (220 500 - 216 000); 4 000 on the source's rounded savings"
+      source: L778-780
+    s75:
+      achievement_pct: 75
+      savings_eur: 183750
+      fees_eur: 180000
+      capex_shortfall_eur: 20000
+      shortfall_covered_by: esif_instrument
+      client_net_eur: 3750
+      to_provider_eur: not stated; 180 000 - (200 000 - 20 000) = 0 if the client pays the forfeiter first (gross routing underdetermined, oracle R-bb2-2)
+      source: L798-802
+  esif_eligible_expenditure_eur: 2000000
+  engine_inputs:   # R1 step 6 (3 Oct): which figure above sizes which promise, read by engine/oe/engine/from_case.py; no new figure
+    term_years: term_years
+    scenarios: scenarios
+    legs:
+    - {promise: c1, leg: outlay, amount: capex_eur, start_year: 0, evidence: "fic-esif-epc-guide-2020.txt:765 the provider undertakes the initial investment of EUR 2 million"}
+    - {promise: c1, leg: savings, amount: {product: [baseline_energy_cost_eur_per_y, guaranteed_savings_pct]}, evidence: "fic-esif-epc-guide-2020.txt:757-759 baseline EUR 700 000, 35%"}
+    - {promise: c3, leg: fee, amount: fee_capex_eur_per_y, rank: fixed, rank_evidence: "fic-esif-epc-guide-2020.txt:778-779 at 90% of the savings the client still pays the full CAPEX related fees to the forfeiter", evidence: "fic-esif-epc-guide-2020.txt:773-774 EUR 200 000 of CAPEX related fees to the forfeiter"}
+    - {promise: c2, leg: fee, amount: {sum: [fee_opex_eur_per_y, fee_interest_eur_per_y]}, rank: variable, rank_evidence: "fic-esif-epc-guide-2020.txt:778-779 at 90% the EPC provider receives only EUR 16 000 (it absorbs the shortfall)", evidence: "fic-esif-epc-guide-2020.txt:774-775 a further EUR 40 000 to the EPC provider"}
+    - {promise: c4, leg: sale, of: c3, rate: forfeiter_discount_rate_pct, start_year: 0, evidence: "fic-esif-epc-guide-2020.txt:767-768 sold for its NPV at a discount rate of 1.5% after completion"}
+    # LOD 1 (R2, 5 Oct; read by engine/oe/engine/lod1.py, not by from_case.py)
+    calendar:   # FLAGGED DEFAULT: the source prints no date (E06 L740-805); flip here. Dates do not change any figure
+      anchor: "2021-01-01"   # period 0: completion, sale of the CAPEX receivables (L766-768)
+      cycle: P1Y             # one period = one year: the fees fall each 1 January 2022-2031 (ACTUS cycle notation)
+      status: default
+      flagged: true
+      why: "fi-compass prints no dates; completion 2021-01-01 and annual fees each 1 January are the dates the architect's slices 1-2 assumed (5 Oct 2026)"
+    from_proceeds:   # a payment the engine does not book, made out of another leg's proceeds on the same date
+    - {promise: c10, of: c4, share_pct: 100, evidence: "fic-esif-epc-guide-2020.txt:770 | EUR 1.84 million from the forfeiter, which it uses to repay the short-term debt"}
+    missing:
+    - {promise: c9, what: "bridge loan amount, rate and term (c9) and its repayment (c10); the source says only that the EUR 1.84m repays it", evidence: "fic-esif-epc-guide-2020.txt:770-771"}
+    - {promise: c12, what: "who pays the verifier, and how much", evidence: "fic-esif-epc-guide-2020.txt:334"}
+  derived:
+    annuity_factor_1_5pct_10y: 9.2222
+    npv_capex_receivables_eur: '200 000 x 9.2222 = 1 844 437 (source: 1.84m)'
+    savings_over_fees: 245 000 / 240 000 = 1.021
+    eurostat_nominal: 2.45m savings vs 2.40m payments
+    interest_fee_over_capex_pct: 16 000 / 2 000 000 = 0.8% (not the 1.5% discount rate; oracle R-bb2-3)
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  municipality: {gives: [c2, c3], receives: [c1, c11], one_way: false}
+  epc_provider: {gives: [c1, c5, c6, c10], receives: [c2, c4, c9, c11], one_way: false}
+  forfeiter: {gives: [c4, c8], receives: [c3, c5, c6, c7], one_way: false}
+  bridge_lender: {gives: [c9], receives: [c10], one_way: false}
+  esif_instrument:
+    gives: [c7]
+    receives: [c8]
+    one_way: false
+    reason: 'no guarantee fee to the instrument is stated; its stated reciprocal is the flow-back of recoveries (c8). The guide requires the economic advantage to be passed through to the client (L649-653), so the cover is benefit-like by design and no unstated fee is recorded (F20 test: pass-through stated)'
+  verifier:
+    gives: [c11]
+    receives: [c12]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: the guide says a third party verifies annually (L334) but never says who pays it; recorded as c12 status unstated (F06)'
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: time_phased_financing
+  description: the financing changes hands at completion (bridge lender during works, forfeiter afterwards; L625-627, L770). The single-valued borrower setting records one of them; the hand-over is a LOD 1 event (sale of receivables). Expressible at LOD 0 by recording both capital parties — acceptable, but the setting value is time-dependent
+  review: 'G04: below LOD 0; action: two simultaneous LOD 0 facts; hand-over is a LOD 1 event'
+- kind: risk_reallocation_chain
+  description: the forfeiter is performance_exposed, the ESIF instrument covers it, and the forfeiter keeps a recovery right against the provider (L798-802). LOD 0 carries this as three commitments (c6, c7, c8) plus one setting value; no element names who ultimately bears the shortfall — the LOD 1 settlement question the oracle flagged (R-bb2-2)
+  review: 'G05: below LOD 0; action: settlement order is LOD 1'
+- kind: payee_split_of_one_fee
+  description: "one EPC fee with three elements paid to two payees (L641-645). receivable_holder = split and collection_placement = assignee_direct cover the assigned leg; the unassigned leg's placement is per-leg at LOD 1. No gap at LOD 0"
+  review: 'G06: below LOD 0; action: per-leg placement is LOD 1'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 rule text on the NPV basis; the nominal 2.45m >= 2.40m pass is kept with the note that level flows leave the direction unchanged
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction (unnamed EU member state) added; C1 applies_here true
+- id: F08
+  title: 'conditional default: assignment_recourse'
+  convention: "receivable_holder in {assignee, split} and source silent -> assignment_recourse = waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226 'continued payment obligations ... regardless of any disputes'); performance_exposed only when the source shows the assigned leg varying with performance."
+  origin: verdict change 3; findings F08; gaps G28
+  applied_here: 'assignment_recourse performance_exposed kept (inferred): the source shows the assigned leg falling short at 75%, so not the waiver default'
+- id: F09
+  title: 'conditional default: collection_placement'
+  convention: receivable_holder in {assignee, split} and source silent -> collection_placement = assignee_direct, status generic (E06 L558; E08 Fig 30 L3312-3317).
+  origin: verdict change 3; findings F09; gaps G28
+  applied_here: collection_placement assignee_direct is stated here (L558), not the conditional default
+- id: F11
+  title: role follows the act for financial instruments
+  convention: A financial instrument acting in the deal takes the role of its act (lender / forfaiter / guarantee_facility); the EU money source is a separate eu_funds party when the source distinguishes it, otherwise it is noted in text.
+  origin: findings F11 (either acceptable until ruled; this is the choice made)
+  applied_here: esif_instrument re-encoded from eu_funds to guarantee_facility (role follows the act); ESIF origin kept in text
+- id: F20
+  title: public guarantee with no fee
+  convention: A risk_promise from a public instrument whose pass-through of advantage is stated (E06 L649-653) is recorded with a benefit-like reason and no unstated fee; otherwise the guarantee fee is recorded as an unstated payment_promise.
+  origin: findings F20
+  applied_here: pass-through of advantage stated (L649-653) -> no unstated guarantee fee; benefit-like reason recorded
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'verifier one_way: true with reason'
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, forfaiter, lender, guarantee_facility, verifier_mnv]
+  roles_count: 6 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, risk_promise, determination_promise]
+  families_absent: [benefit_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 4, inferred: 6, generic: 0, default: 3}
+  commitments_by_status: {stated: 9, inferred: 1, generic: 1, unstated: 1}
+  one_way_parties: [verifier]
+  parties_count: 6
+  commitments_count: 12
+  below_lod0: {lod1_adds: 'events (works, commissioning, sale of receivables at completion, monthly payments, annual verification,
+      fee adjustment), the proportional-reduction formula, the 2/3 overperformance rule (L344-347), baseline adjustment (fn5),
+      the gross routing of the fixed leg under underachievement', lod2_adds: 'fee decomposition into CAPEX / OPEX / interest
+      legs with separate payees, guarantee-call and recovery mechanics'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, via: [c7], evidence: "der-vpp/spec-run/esco-moneyflow/input/fic-esif-epc-guide-2020.txt:330 | assumes the performance risk for the measures", why: "The provider gives a long-term performance guarantee. The forfeiter is exposed first (L535), covered by the ESIF guarantee c7, and may recover the shortfall from the provider (L801-802), so the provider is the final bearer. A and B agree."}
+  - {category: R1, driver: usage, bearer: [authority], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/fic-esif-epc-guide-2020.txt:353 | such as climate, change in energy prices or utilisation of the building", why: "Footnote 5: a gap caused by climate, prices or building use is neutralised by adjusting the baseline, so the client carries it. A and B agree."}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/fic-esif-epc-guide-2020.txt:305 | overruns or delays during the implementation period are the risk of the EPC provider", why: "Stated in the guide's model, which is this illustration's source. A and B agree."}
+  - {category: R5a, driver: null, bearer: [forfaiter, partner_esco], share: shared, status: stated, via: [c7], evidence: "der-vpp/spec-run/esco-moneyflow/input/fic-esif-epc-guide-2020.txt:535 | is exposed to both risks, i.e. the EPC client’s credit risk", why: "Both drafts wrote forfaiter sole. Adjudicated shared: forfaiting covers only the CAPEX part of the fee (L506), so client credit on the remaining fee stays with the provider (receivable_holder split). The forfeiter's share is covered by c7 (L608-610)."}

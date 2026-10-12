@@ -1,0 +1,387 @@
+# Miniature — a task order under the DOE IDIQ ESPC (US federal) expressed at ESCO LOD 0
+#
+# Batch 2 (CASE_SPEC_2.md), reconciled by the adjudicator from writers X (base) and Y; changes listed in source.notes.
+# Original writer X. Shape copied from bytom_schools-lod0.yaml (normalised 1 Oct 2026).
+# Frame: model/elements.yaml LOD 0 block (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Every fact carries its status: stated / inferred / default / generic / unstated. Nothing invented; only the corpus.
+# A programme: the DOE indefinite-delivery, indefinite-quantity (IDIQ) ESPC is a standing contract under which many
+# federal task orders (TOs) are placed; encoded as one representative TO from FEMP's TO-RFP template. Template
+# clauses that are the IDIQ's standard language are 'stated' for the programme; bracketed agency options are
+# 'inferred' (F18). Line numbers refer to corpus input/femp-espc-project-development-guide-2019.txt (E11).
+
+miniature: doe_idiq_task_order
+lod: 0
+case: batch2.doe_idiq_task_order
+case_kind: programme   # the DOE IDIQ ESPC with many task orders; no task order with named parties or amounts is in the corpus
+
+tests_unused:   # which of the 22 unused LOD 0 items this case was chosen to test
+- item: aggregation=framework
+  kind: setting_value
+  used: true
+  reason: "'The TO incorporates the TO-RFP, the ESCO's IGA/proposal, and the IDIQ (the DOE indefinite-delivery, indefinite-quantity contract)'; the TO-RFP modifies IDIQ terms 'as long as these changes are within the overall scope of the IDIQ' (L1317-1320): a task order under a standing framework contract, the value's own definition"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "the only mention is a disclosure duty: 'The Selection Memorandum shall state whether any interest rate locks or hedge costs are included in the proposals, and the terms and costs of such' (L4448-4449). No hedge, hedge provider or hedged deal is named; a rate lock may sit inside the financier's offer. Not forced in"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E11
+  title: A Guide to FEMP Resources and Deliverables for DOE-IDIQ ESPC Project Development
+  publisher: U.S. DOE FEMP, 2019 (TO-RFP template revision 05/30/2017)
+  passage: "Introduction (L133-145, L189-195); ESCO selection and TO-RFP (L977-979, L1265-1280, L1316-1320); PA checklist Sch1 (L1953-1957); TO-RFP Template: M&V (L2465-2476), F.3 period of performance (L3571-3575), G.4 payments (L3753-3804), G.5 shortfall (L3809-3833), H.2 title (L4050-4060), H.6 competitive financing (L4402-4484), H.7 bonds (L4494-4545), H.8 financier's interest (L4550-4576)"
+  secondary:
+  - id: E12
+    passage: "corpus input/femp-espc-small-projects-2021.txt L657-705: ENABLE, a 'simplified ESPC process for small federal facilities' also open to state and local governments 'through General Services Administration Federal Supply Schedule 84, SIN 246-53' with a 'list of prequalified ESCOs' — a second standing framework. E12 has no task order with amounts (searched: 'task order', 'IDIQ' — no hits in E12)"
+  oracle: "none; espc_us-lod0.yaml (batch 1) recorded this federal variant as generic text beside the Montezuma-Cortez deal and gave aggregation framework as its alternative"
+  notes:
+  - "Adjudication (batch 2): X and Y agreed on parties, roles and the framework value. DOE/FEMP kept as facilitator (both writers): it administers the IDIQ, issues the NOO to the 16 ESCOs and provides Project Facilitators, but pays nothing under the task order, so authority (which 'pays the operational payments') does not fit. The ESCO's standing offer kept inferred (X; Y had stated): the IDIQ award text is not reproduced, only its scope clause (L2103-2104). Added writer Y's insurer and premium (IDIQ H.9 minimum insurance 'at its expense', L4600-4612). hedge_counterparty stays unused: the IDIQ only asks the Selection Memorandum to state 'whether any interest rate locks or hedge costs are included' (L4448-4449); no hedge or counterparty is named"
+  - "No amounts: the corpus holds no task order with a contract value, savings or payment. Only caps and percentages are published (numbers)"
+  - "Subcontractors appear only as beneficiaries of the payment bond ('laborers, suppliers and subcontractors', L4522-4526) and in subcontracting goals (L4395-4397); not modelled as parties"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: United States (federal)
+  iso: US
+  eu_member: false
+  client_eu_general_government: false
+  status: stated
+  why: "'federal agencies are authorized to enter into ESPC multiyear TOs' under 42 U.S.C. §8287 (L3574-3575); US federal government, outside the EU"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the IDIQ (framework), the task order, the financing agreement, the bonds and the interagency agreement each establish (fibo-fnd-rel-rel:confers) their commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  ordering_agency:
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: "the federal 'ordering agency' that awards the TO, pays the Contractor and accepts the annual M&V report (L3765-3769, L2465-2474); not named"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'the Contractor' holding the DOE IDIQ and performing the TO; selected by the agency through a Notice of Opportunity (NOO) among IDIQ holders (L977-979, L1265-1280); not named"
+  doe_femp:
+    entity: us_federal_government
+    role: facilitator
+    groups: [delivery, public]
+    status: stated
+    name: U.S. Department of Energy, Federal Energy Management Program (FEMP)
+    text: "DOE awards and administers the IDIQ ('DOE as administrator of the IDIQ contract', L4452-4453); FEMP provides 'project development support to agencies' through Project Facilitators (PFs) and Federal Project Executives (FPEs) (L133-139), the NOO/ESCO Selector Tool (L977-979) and the TO-RFP template (L1321-1322). facilitator 'prepares tenders ... and arranges finance' fits the FEMP services (incl. 'Interest Rate Analysis', L863-869); the IDIQ-issuer function has no role of its own (lod0_gaps)"
+  financier:
+    role: lender
+    groups: [capital]
+    status: stated
+    text: "the finance company selected by the Contractor after soliciting 'offers from a minimum of three reputable finance companies' (L4421-4426); holder of the Contractor's 'TO project loan agreements' (L4467-4471); not named"
+  surety:
+    role: surety_guarantor
+    groups: [risk]
+    status: stated
+    text: "'a surety's commitment to provide performance and payment bonds to the ordering agency prior to award of the TO' (L4506-4508); not named"
+  insurer:
+    role: insurer
+    groups: [risk]
+    status: stated
+    text: "'The Contractor shall procure, at its expense, and maintain during the entire period of performance under this IDIQ contract, and the TOs ... the following minimum insurance coverage' (L4600-4603). Not named (taken from writer Y)"
+
+contract:   # the agreements that establish the commitments
+  idiq:
+    core: contract
+    parties: [doe_femp, esco]
+    status: stated
+    note: "'the DOE indefinite-delivery, indefinite-quantity contract' (L1317-1318); the standing framework under which TOs are placed"
+  task_order:
+    core: contract
+    parties: [ordering_agency, esco]
+    term_years: "negotiated at award from the combined payback; not to exceed 25 (L3573-3575)"
+    status: stated
+    note: "'The TO incorporates the TO-RFP, the ESCO's IGA/proposal, and the IDIQ' (L1317-1318)"
+  financing_agreement:
+    core: contract
+    parties: [financier, esco]
+    status: stated
+    note: "'its TO project loan agreements ... the Government is not a contractual party to such financing agreements' (L4469-4471)"
+  bonds:
+    core: contract
+    parties: [surety, esco]
+    status: stated
+    note: "performance bond (financier co-beneficiary with the ordering agency) and payment bond, each 100% of the bonded amount (L4514-4526)"
+  insurance:
+    core: contract
+    parties: [insurer, esco]
+    status: stated
+    note: "minimum coverage (L4600-4612); endorsement protecting the ordering agency's interest (L4619-4624)"
+  pf_iaa:
+    core: contract
+    parties: [ordering_agency, doe_femp]
+    status: stated
+    note: "'IAA: Interagency Agreement for DOE Project Facilitator Support — Agency agreement with DOE for PF support' (L275-277); FEMP services 'to be formalized through Interagency Agreement' (L265-267)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: ordering_agency
+    status: stated
+    what: "design, installation and performance of the energy conservation measures (ECMs) under the TO, with 'guaranteed annual energy, water, and related cost savings as required by the TO' (L2468-2469); title stays with the Contractor's 'responsibility for ECM performance' after vesting (L4050-4051). The shortfall make-good — the agency adjusts the payment schedule 'to recover the ordering agency's overpayments' (L3827-3830) — is inside this promise (G18)"
+    established_by: task_order
+  c2:
+    family: payment_promise
+    from: ordering_agency
+    to: esco
+    status: stated
+    savings_arrangement: guaranteed   # annual payments below the guaranteed annual savings (L3765-3777)
+    what: "'Payments to the Contractor will commence when acceptance by the ordering agency is obtained'; frequency 'as negotiated and specified in the TO' (monthly, quarterly, annual in advance or arrears) (L3765-3777); 'All annual payments are less than guaranteed annual savings (required)' (Sch1, L1955)"
+    established_by: task_order
+  c3:
+    family: performance_promise
+    from: esco
+    to: doe_femp
+    status: inferred
+    what: "standing offer to perform task orders on call within the scope of the IDIQ (the performance_promise definition's framework clause): TO-RFPs may modify IDIQ terms only 'within the overall scope of the IDIQ' (L1319-1320). The IDIQ award itself is not reproduced in E11, so inferred"
+    established_by: idiq
+  c4:
+    family: performance_promise
+    from: doe_femp
+    to: ordering_agency
+    status: stated
+    facilitator_task: [appraisal, tender]   # project facilitation, assessments, TO-RFP template (L855-869, L1321-1322)
+    what: "project facilitation: PF and FPE services from the NOO through the first-year M&V report (L855-861), NOO/ESCO Selector Tool (L977-979), TO-RFP template (L1321-1322), renewable-energy assessment and interest-rate analysis (L863-869)"
+    established_by: pf_iaa
+  c5:
+    family: payment_promise
+    from: ordering_agency
+    to: doe_femp
+    status: unstated
+    what: "counter-promise required by duality; source silent. The PF support runs under an 'Interagency Agreement' (L275-277) whose consideration is not stated (F12: performance_promise + unstated payment when the client plausibly pays, since an agreement for support is signed)"
+    established_by: pf_iaa
+  c6:
+    family: funding_promise
+    from: financier
+    to: esco
+    status: stated
+    funding_instrument: loan   # TO project loan (L4421-4430)
+    what: "TO project loan selected through 'a documented competitive selection process' with at least three offers in the Standard Financing Offer form (L4421-4430); the Contractor documents 'whether any interest rate locks or hedge costs are included in the proposals' (L4448-4449); the financier may take 'a security interest in the installed ECM(s), subject to, and subordinate to, the rights of the ordering agency' (L4563-4564)"
+    established_by: financing_agreement
+  c7:
+    family: payment_promise
+    from: esco
+    to: financier
+    status: inferred
+    what: "debt service on the Contractor's 'TO project loan agreements' (L4469-4471); refinancing encouraged 'every 3 to 5 years after acceptance' (L4467-4469). A loan is by definition repayable"
+    established_by: financing_agreement
+  c8:
+    family: risk_promise
+    covers: [R3]
+    from: surety
+    to: [ordering_agency, financier]
+    status: stated
+    cover_kind: surety   # performance and payment bonds (L4514-4526)
+    what: "performance bond 'with project financier as co-beneficiary along with the ordering agency' and payment bond, each 'a penal sum equal to 100 percent of the total bonded amount' (L4514-4526); released on acceptance of all ECMs / payment of all subcontractors (L4528-4541)"
+    established_by: bonds
+  c9:
+    family: payment_promise
+    from: esco
+    to: surety
+    status: unstated
+    what: counter-promise required by duality; source silent (the bond premium is not stated)
+    established_by: bonds
+  c10:
+    family: determination_promise
+    from: esco
+    to: ordering_agency
+    status: stated
+    determines: savings   # annual M&V report accepted by the agency (L2465)
+    what: "'The Contractor shall prepare and submit an annual M&V report ... Inspections and measurements conducted by the Contractor ... shall be witnessed by the ordering agency ... and must be accepted, in writing, by the authorized ordering agency official(s)' (L2465-2474); shortfalls are those 'verified by the M&V documents' (L3827-3828)"
+    established_by: task_order
+  c11:
+    family: risk_promise
+    covers: [R2]
+    from: insurer
+    to: esco
+    status: stated
+    cover_kind: insurance   # liability and workers' compensation insurance (L4605-4611)
+    what: "minimum coverage: comprehensive general liability $500,000 per occurrence; automobile liability $200,000 per person, $500,000 per occurrence, $20,000 property damage; workers' compensation; employer's liability $100,000 (L4605-4611); cancellation not effective less than 30 days after notice to the ordering agency CO (L4619-4624)"
+    established_by: insurance
+  c12:
+    family: payment_promise
+    from: esco
+    to: insurer
+    status: inferred
+    what: "premium: the Contractor procures the insurance 'at its expense' (L4600)"
+    established_by: insurance
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: 'All annual payments are less than guaranteed annual savings (required)' (E11 L1955); shortfall adjusts the payment schedule (G.5, L3809-3833)."}
+  client_sector: {value: public, status: stated, why: "a federal ordering agency (L3574-3575)"}
+  partner_form: {value: corporate, status: default, why: "not stated; 'the Contractor'"}
+  borrower:
+    value: partner
+    status: stated
+    why: "the Contractor procures the financing and holds 'its TO project loan agreements'; 'the Government is not a contractual party to such financing agreements' (L4469-4471)"
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: "payments go to the Contractor's bank account (L3802-3804, DOE TOs). Alternative assignee: 'the ESCO may be required to assign to its lenders some or all of its rights under a TO', subject to the Assignment of Claims Act and agency approval (L4565-4570) — permitted, not required"
+  collection_placement:
+    value: operator_own
+    status: inferred
+    why: "'All payments are made by electronic funds transfer to the bank account identified on the filed ACH Vendor banking data form' (L3802-3804): the Contractor's own account (DOE TOs)"
+  aggregation:
+    value: framework
+    status: stated
+    why: "the TO is placed under and incorporates the DOE IDIQ, a standing framework contract (L1317-1320)"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "not stated. The financier's security interest is 'subordinate to the rights of the ordering agency' (L4563-4564) — a rank against the agency's rights in the ECMs, not a subordinated loan"
+  assignment_recourse: {value: not_applicable, status: inferred, why: "follows from receivable_holder = partner; if assigned, whether the assignee is exposed is not stated (L4568-4570)"}
+  savings_basis:
+    value: measured
+    status: stated
+    why: "annual M&V report with 'data and calculations that demonstrate that continued ECM performance achieves the guaranteed annual ... savings' (L2465-2469)"
+  grant_recipient: {value: none, status: default, why: "not stated; the agency 'must evaluate the use of financial incentives, such as ... tax credits' when deciding title (L4054-4056), no grant named"}
+  asset_owner:
+    value: client
+    status: inferred
+    why: "'As a general rule, title to all equipment installed by the Contractor shall be vested in the Government after acceptance'; but 'during the term of the TO, title may be vested in the Contractor or a third party, as determined by the ordering agency' (L4050-4053). The general rule is taken; alternatives partner or a third party (lessor/vehicle) per TO"
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: "public client but US federal, outside EU general government; the source's own analogue is US_payments_within_guaranteed_savings"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  US_term_cap:
+    scope: external-sectoral
+    rule: "'Under 42 U.S.C. §8287, federal agencies are authorized to enter into ESPC multiyear TOs for a period not to exceed 25 years' (L3574-3575)"
+    applies_here: true
+    source: E11 L3571-3575
+  US_payments_within_guaranteed_savings:
+    scope: contractual
+    rule: "'Sch1: All annual payments are less than guaranteed annual savings (required)' (L1955); on a shortfall 'the ordering agency shall adjust the payment schedule, as necessary, to recover the ordering agency's overpayments in the previous year' (L3827-3830)"
+    applies_here: true
+    source: E11 L1953-1957, L3809-3833
+  competitive_financing:
+    scope: contractual
+    rule: "the Contractor solicits 'a minimum of three reputable finance companies', compares rates and total finance costs, and states in a Selection Memorandum 'whether any interest rate locks or hedge costs are included in the proposals' (L4421-4453)"
+    applies_here: true
+    source: E11 L4402-4465
+
+numbers:   # instance data, not vocabulary
+  max_task_order_term_years: 25            # L3575
+  min_financing_offers: 3                  # L4424
+  performance_bond_pct_of_bonded_amount: 100   # L4518
+  payment_bond_pct_of_bonded_amount: 100       # L4524-4525
+  refinancing_review_interval_years: 3-5   # L4468
+  approval_deadline_days: 30               # DOE invoice approval 'not later than 30 days' (L3799-3800)
+  derived: "none computable: the corpus gives no task-order value, savings or payment"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  ordering_agency: {gives: [c2, c5], receives: [c1, c4, c8, c10], one_way: false}
+  esco: {gives: [c1, c3, c7, c9, c10, c12], receives: [c2, c6, c11], one_way: false}
+  doe_femp:
+    gives: [c4]
+    receives: [c3, c5]
+    one_way: false
+    reason: "c5 (payment under the Interagency Agreement) is unstated; doe_femp is not one-directional because it also receives the Contractor's standing offer c3"
+  financier: {gives: [c6], receives: [c7, c8], one_way: false}
+  surety:
+    gives: [c8]
+    receives: [c9]
+    one_way: true
+    reason: "counter-promise economically necessary but unstated: the bond premium is not stated; recorded as c9 status unstated (F06)"
+  insurer: {gives: [c11], receives: [c12], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: framework_issuer_role
+  description: "the IDIQ is a contract between DOE and the ESCOs; the ordering agency places TOs under it. No role among the 41 names the body that awards and administers a framework contract for others to order under; DOE is encoded facilitator (its FEMP services fit) and the framework relation sits in the contract block (idiq) and in aggregation = framework"
+  classification: "encoding question (the framework issuer is expressed by contract + setting; no new role proposed)"
+- kind: hedge_disclosure_only
+  description: "interest-rate hedging appears only as a disclosure item in the Selection Memorandum (L4448-4449). hedge_counterparty ('Interest-rate hedge provider at financial close') stays unused; the corpus gives no deal with a hedge"
+  classification: "evidence gap"
+- kind: title_vesting_by_task_order
+  description: "asset_owner during the term is chosen per TO ('may be vested in the Contractor or a third party, as determined by the ordering agency', L4052-4053); the programme-level miniature takes the general rule (client)"
+  classification: "evidence gap (programme vs task-order level)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction US federal; C1 applies_here false — the US payment and term rules stay national rules
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: "surety one_way: true (c9 unstated premium); doe_femp's IAA payment c5 unstated"
+- id: F12
+  title: free public-programme service = benefit_promise
+  convention: 'A service a public programme gives free is a benefit_promise (one_way: true, unilateral by nature); performance_promise + unstated payment only when the client plausibly pays.'
+  origin: verdict rule; findings F12
+  applied_here: "FEMP project facilitation runs under an Interagency Agreement with the agency (L275-277), so performance_promise c4 + unstated payment c5, not a benefit"
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: "IDIQ standard clauses stated for the programme; title during the term and assignment (agency options) inferred"
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: c10 from the Contractor, witnessed and accepted by the agency
+- id: G17
+  title: receivable_holder = payments under the EPC
+  convention: "receivable_holder concerns the client's payments under the EPC contract; with borrower = client (two-contract model) the Partner's receivable is the works price and the value is partner."
+  origin: verdict change 5; gaps G17
+  applied_here: receivable_holder = the Contractor's payments under the TO; partner, with assignee as the permitted alternative
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "the payment-schedule adjustment on shortfall (G.5) stays inside c1; the surety's bonds are the risk_promise c8"
+- id: IFRS16
+  title: IFRS16_lease_test rule entry
+  convention: "One rule entry, not a setting: IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner} — the private counterpart of C1."
+  origin: verdict change 6; gaps G23
+  applied_here: rule present; does not apply (public client)
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, facilitator, lender, surety_guarantor, insurer]
+  roles_count: 6 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, risk_promise, determination_promise]
+  families_absent: [benefit_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 5, inferred: 4, generic: 0, default: 4}
+  commitments_by_status: {stated: 7, inferred: 3, generic: 0, unstated: 2}
+  one_way_parties: [surety]
+  parties_count: 6
+  commitments_count: 12
+  below_lod0: {lod1_adds: 'events (NOO and ESCO selection, preliminary assessment, IGA, TO award, financing selection and rate
+      update, construction, acceptance, payments, annual M&V report, shortfall adjustment, refinancing review), title vesting
+      at acceptance, the assignment of claims', lod2_adds: 'payment frequency option, M&V option per ECM, interest-rate lock
+      or hedge terms in the financing offer'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-project-development-guide-2019.txt:3828 | the ordering agency shall adjust the payment schedule", why: "G.5: if the Contractor misses the guaranteed savings as verified by M&V, the agency cuts the payment schedule to recover overpayments (L3825-3828); M&V must show the guaranteed savings (L2469). Equal to the default but stated. A and B agree (B had written the party id esco, corrected to the role); evidence moved to the shortfall clause"}
+  - {category: R2, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-project-development-guide-2019.txt:2876 | the Contractor shall be responsible for the operations of all installed ECMs", why: "regardless of who performs operations, the Contractor is responsible for all installed ECMs; the template lets an agency take repair by agreement or a 'pay as it fails' option (L2955-2962), so a task order may differ. Equal to the default but stated. A and B agree"}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-project-development-guide-2019.txt:3693 | TOs awarded against this IDIQ contract shall be firm fixed price", why: "firm fixed price, and changes to meet design or performance requirements are at no cost to the agency (L3694-3695); cost changes the agency itself causes are negotiated (L3696-3697), the client-caused carve-out of the default. A and B agree. Dropped: B's inferred R1 usage (L2411-2414 sets a baseline-adjustment process but does not say who bears; inferred duplicate of the default); R7 refinancing (A stated, B inferred) because L4469-4471 says only that the Contractor must start any debt modification since the Government is no party to the loan, which is who acts, not who bears; equal to the derived borrower row"}

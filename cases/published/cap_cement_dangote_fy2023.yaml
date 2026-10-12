@@ -1,0 +1,143 @@
+# Published case "cap_cement_dangote_fy2023": Dangote Cement Plc, FY2023 audited results statement
+# (1 March 2024): nameplate capacity, volumes, revenue, EBITDA and manufacturing costs by segment
+# (cases/reference/published/cap_cement_dangote_fy2023.yaml). NGN million; volumes in '000 tonnes.
+#
+# Two periods: period 0 is FY2022 (the comparative column every money input carries as
+# prior_year), period 1 is FY2023. Each line is posted as one move of a `transfer` journal, at
+# the amount the source prints for that year, against cash:
+#   * revenue by segment: Nigeria, Pan-Africa and the inter-company elimination (negative);
+#   * the eight manufacturing-cost lines as printed (materials, fuel and power, royalties,
+#     salaries, depreciation and amortisation, maintenance, other production expenses, and the
+#     increase in finished goods and work in progress, a negative cost), expensed in the year;
+#   * the source prints EBITDA by segment but not every line between revenue and EBITDA (its
+#     admin and selling costs net of other income are not itemised), so the operating costs other
+#     than manufacturing, before depreciation, are revenue less EBITDA (both the source's own
+#     segment sums) less the manufacturing costs other than their depreciation;
+#   * depreciation, amortisation and impairment below EBITDA is the source's own line; the part
+#     not already inside manufacturing costs is posted as its own expense.
+# Volumes and capacities are physical: group volume (segments less inter-company) and the two
+# utilisations (volume over nameplate x 1000 kt/Mt) are read as drivers of the formulas generator.
+# The EBITDA margin is the EBITDA cut per the year's revenue (the source's segment sum); the
+# revenue growth is the FY2023 revenue cut per the FY2022 revenue, less one.
+#
+# Set aside: profit before tax, net profit and EPS (finance costs, tax and the share count are not
+# inputs).
+published: cap_cement_dangote_fy2023
+entity: dangote
+plant: revenue__nigeria
+case:
+  case: published-dangote-fy2023
+  periods: 2
+  phases: [post]
+  currency: NGN
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: published
+      values:
+        fy2023: t == 1
+        fy2022: t == 0
+        rev_nigeria: revenue__nigeria__prior_year * fy2022 + revenue__nigeria * fy2023
+        rev_pan_africa: revenue__pan_africa__prior_year * fy2022 + revenue__pan_africa * fy2023
+        rev_intercompany: intercompany__prior_year * fy2022 + intercompany * fy2023
+        revenue_total: rev_nigeria + rev_pan_africa + rev_intercompany
+        revenue_fy2022: revenue__nigeria__prior_year + revenue__pan_africa__prior_year + intercompany__prior_year
+        revenue_fy2023: revenue__nigeria + revenue__pan_africa + intercompany
+        ebitda_total: (ebitda__nigeria__prior_year + ebitda__pan_africa__prior_year + central_and_elimination__prior_year) * fy2022 + (ebitda__nigeria + ebitda__pan_africa + central_and_elimination) * fy2023
+        materials: materials_consumed__prior_year * fy2022 + costs__materials_consumed * fy2023
+        fuel_power: fuel_and_power_consumed__prior_year * fy2022 + costs__fuel_and_power_consumed * fy2023
+        royalties: royalties__prior_year * fy2022 + costs__royalties * fy2023
+        salaries: salaries_and_related_staff_costs__prior_year * fy2022 + costs__salaries_and_related_staff_costs * fy2023
+        mfg_depreciation: depreciation_and_amortization__prior_year * fy2022 + costs__depreciation_and_amortization * fy2023
+        maintenance: plant_maintenance_costs__prior_year * fy2022 + costs__plant_maintenance_costs * fy2023
+        other_production: other_production_expenses__prior_year * fy2022 + costs__other_production_expenses * fy2023
+        stock_change: increase_in_fg_and_wip__prior_year * fy2022 + costs__increase_in_fg_and_wip * fy2023
+        mfg_before_depreciation: materials + fuel_power + royalties + salaries + maintenance + other_production + stock_change
+        other_operating_before_depreciation: revenue_total - ebitda_total - mfg_before_depreciation
+        # the source prints D, A and impairment below EBITDA as a negative line
+        other_depreciation: -(depreciation_amortization_impairment__prior_year * fy2022 + depreciation_amortization_impairment * fy2023) - mfg_depreciation
+        # physical: '000 tonnes sold, and nameplate in Mt a year (x 1000 kt)
+        group_volume: (nigeria_kt__prior_year + pan_africa_kt__prior_year + intercompany_kt__prior_year) * fy2022 + (nigeria_kt + pan_africa_kt + intercompany_kt) * fy2023
+        nigeria_utilisation: nigeria_kt / (nigeria_total_mta * 1000)
+        group_utilisation: (nigeria_kt + pan_africa_kt + intercompany_kt) / (group_total_mta * 1000)
+        minus_one: 0 - 1
+  opening:
+    dangote:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: dangote
+      phase: post
+      declare:
+        revenue_nigeria: income
+        revenue_pan_africa: income
+        revenue_intercompany: income
+        materials_consumed: expense
+        fuel_and_power: expense
+        royalties: expense
+        salaries: expense
+        manufacturing_depreciation: expense
+        plant_maintenance: expense
+        other_production: expense
+        change_in_fg_and_wip: expense
+        other_operating_costs: expense
+        other_depreciation_and_impairment: expense
+      moves:
+        nigeria: {debit: cash, credit: revenue_nigeria, amount: {generator: src, output: rev_nigeria}}
+        pan_africa: {debit: cash, credit: revenue_pan_africa, amount: {generator: src, output: rev_pan_africa}}
+        intercompany: {debit: cash, credit: revenue_intercompany, amount: {generator: src, output: rev_intercompany}}
+        materials: {debit: materials_consumed, credit: cash, amount: {generator: src, output: materials}}
+        fuel_power: {debit: fuel_and_power, credit: cash, amount: {generator: src, output: fuel_power}}
+        royalties: {debit: royalties, credit: cash, amount: {generator: src, output: royalties}}
+        salaries: {debit: salaries, credit: cash, amount: {generator: src, output: salaries}}
+        mfg_depreciation: {debit: manufacturing_depreciation, credit: cash, amount: {generator: src, output: mfg_depreciation}}
+        maintenance: {debit: plant_maintenance, credit: cash, amount: {generator: src, output: maintenance}}
+        other_production: {debit: other_production, credit: cash, amount: {generator: src, output: other_production}}
+        stock_change: {debit: change_in_fg_and_wip, credit: cash, amount: {generator: src, output: stock_change}}
+        other_operating: {debit: other_operating_costs, credit: cash, amount: {generator: src, output: other_operating_before_depreciation}}
+        other_depreciation: {debit: other_depreciation_and_impairment, credit: cash, amount: {generator: src, output: other_depreciation}}
+  schemes:
+    pnl:
+      revenue_nigeria: revenue
+      revenue_pan_africa: revenue
+      revenue_intercompany: revenue
+      materials_consumed: manufacturing
+      fuel_and_power: manufacturing
+      royalties: manufacturing
+      salaries: manufacturing
+      plant_maintenance: manufacturing
+      other_production: manufacturing
+      change_in_fg_and_wip: manufacturing
+      manufacturing_depreciation: manufacturing_depreciation
+      other_operating_costs: other_operating
+      other_depreciation_and_impairment: other_depreciation
+  cuts:
+    revenue: {kind: pnl, entity: dangote, scheme: pnl, include: [revenue]}
+    manufacturing_costs: {kind: pnl, entity: dangote, scheme: pnl, include: [manufacturing, manufacturing_depreciation]}
+    ebitda: {kind: pnl, entity: dangote, scheme: pnl, include: [revenue, manufacturing, other_operating]}
+    operating_profit: {kind: pnl, entity: dangote, scheme: pnl,
+                       include: [revenue, manufacturing, manufacturing_depreciation, other_operating, other_depreciation]}
+  measures: {}
+figures:
+  group_volume_kt: {driver: src.group_volume, at: 1}
+  nigeria_capacity_utilisation_pct: {driver: src.nigeria_utilisation, at: 1, scale: 0.01}
+  group_capacity_utilisation_pct: {driver: src.group_utilisation, at: 1, scale: 0.01}
+  total_revenue: {cut: revenue, at: 1}
+  total_revenue.pct_change_as_printed:
+    sum: [{cut: revenue, per: src.revenue_fy2022}, {driver: src.minus_one}]
+    at: 1
+    scale: 0.01
+  total_ebitda: {cut: ebitda, at: 1}
+  total_manufacturing_costs: {cut: manufacturing_costs, sign: -1, at: 1}
+  total_manufacturing_costs.prior_year: {cut: manufacturing_costs, sign: -1, at: 0}
+  operating_profit: {cut: operating_profit, at: 1}
+  group_ebitda_margin_pct: {cut: ebitda, per: src.revenue_fy2023, at: 1, scale: 0.01}
+not_compared:
+  profit_before_tax: "finance income and costs and the tax charge are not inputs (both years, and the printed change)"
+  net_profit: "finance income and costs and the tax charge are not inputs (both years, and the printed change)"
+  earnings_per_share: "the number of shares is not an input"

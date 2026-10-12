@@ -1,0 +1,103 @@
+# Published case "agro_palmoil_okomu_ng_2022": The Okomu Oil Palm Company Plc (Nigeria), the
+# year ended 31 December 2022, its statement of profit or loss as printed (Annual Report and
+# Accounts 2022, p.33; cases/reference/published/agro_palmoil_okomu_ng_2022.yaml). N'000.
+#
+# One period, the FY2022 column. The income statement is by NATURE of expense (no cost of sales,
+# no gross profit), and every line the source prints is posted as one move of a `transfer`
+# journal, at the amount the source prints (its input by name), against cash:
+#   * revenue from contracts with customers, other income, finance income and the net gain on
+#     valuation of biological assets are income;
+#   * raw materials and consumables, employee benefits, depreciation and amortisation, other
+#     expenses and finance costs are expenses, expensed in the year as the source's own profit
+#     before taxation nets them (depreciation is posted as the source's charge; no asset register);
+#   * income tax is the source's own charge for the year (income_tax_expense), not a computed rate.
+# Profit before taxation and profit for the year are read as P&L cuts.
+#
+# Not read, and why:
+#   * total_assets, total_liabilities, total_equity and closing cash (and their prior-year
+#     columns) are scored by the library but the inputs carry no balance sheet and no cash flow
+#     (no opening balances, capex, working capital, loans or dividends): they cannot be derived,
+#     so they are left unread and report "not reported";
+#   * the prior-year (FY2021) profit lines: the inputs carry FY2021 revenue and income lines
+#     but none of its expenses;
+#   * total comprehensive income: other comprehensive income (remeasurement and its tax) is not
+#     an input; EPS: the share count is not an input;
+#   * the cash flow statement subtotals: no cash-flow line is an input.
+published: agro_palmoil_okomu_ng_2022
+entity: okomu
+plant: revenue_from_contracts_with_customers
+case:
+  case: published-okomu-fy2022
+  periods: 1
+  phases: [post]
+  currency: NGN
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    okomu:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: okomu
+      phase: post
+      declare:
+        revenue: income
+        other_income: income
+        finance_income: income
+        biological_asset_gain: income
+        raw_materials_and_consumables: expense
+        employee_benefits: expense
+        depreciation_and_amortisation: expense
+        other_expenses: expense
+        finance_costs: expense
+        income_tax_expense: expense
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue_from_contracts_with_customers}}
+        other_income: {debit: cash, credit: other_income, amount: {generator: src, output: other_income}}
+        finance_income: {debit: cash, credit: finance_income, amount: {generator: src, output: finance_income}}
+        biological_gain: {debit: cash, credit: biological_asset_gain,
+                          amount: {generator: src, output: net_gain_on_valuation_of_biological_assets}}
+        raw_materials: {debit: raw_materials_and_consumables, credit: cash,
+                        amount: {generator: src, output: raw_materials_and_consumables_used}}
+        employees: {debit: employee_benefits, credit: cash, amount: {generator: src, output: employee_benefits_expense}}
+        depreciation: {debit: depreciation_and_amortisation, credit: cash,
+                       amount: {generator: src, output: depreciation_and_amortisation_expense}}
+        other: {debit: other_expenses, credit: cash, amount: {generator: src, output: other_expenses}}
+        finance: {debit: finance_costs, credit: cash, amount: {generator: src, output: finance_costs}}
+        tax: {debit: income_tax_expense, credit: cash, amount: {generator: src, output: income_tax_expense}}
+  schemes:
+    pnl:
+      revenue: income
+      other_income: income
+      finance_income: income
+      biological_asset_gain: income
+      raw_materials_and_consumables: expense
+      employee_benefits: expense
+      depreciation_and_amortisation: expense
+      other_expenses: expense
+      finance_costs: expense
+      income_tax_expense: tax
+  cuts:
+    profit_before_tax: {kind: pnl, entity: okomu, scheme: pnl, include: [income, expense]}
+    profit: {kind: pnl, entity: okomu, scheme: pnl, include: [income, expense, tax]}
+  measures: {}
+figures:
+  profit_before_taxation: {cut: profit_before_tax}
+  profit_for_the_year: {cut: profit}
+not_compared:
+  profit_before_taxation.prior_year: "FY2021 comparative: the case models FY2022; the inputs carry no FY2021 expense line"
+  profit_for_the_year.prior_year: "FY2021 comparative: the case models FY2022; the inputs carry no FY2021 expense line or tax"
+  total_comprehensive_income: "other comprehensive income (remeasurement of the benefit plan and its tax) is not an input"
+  basic_and_diluted_eps_kobo: "the number of shares is not an input"
+  net_cash_flows_from_operating_activities: "no cash-flow line (working capital, tax paid, benefits paid) is an input"
+  net_cash_flows_used_in_investing_activities: "no investing line (bearer plant, PPE purchases) is an input"
+  net_cash_flows_from_financing_activities: "no financing line (loans, leases, dividends) is an input"
+  net_decrease_in_cash_and_cash_equivalents: "the cash flow statement's lines are not inputs"

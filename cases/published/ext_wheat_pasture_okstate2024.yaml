@@ -1,0 +1,119 @@
+# Published case "ext_wheat_pasture_okstate2024": dual-purpose dryland wheat in Oklahoma, grain
+# harvested and forage grazed, one acre for one season (Sahs, de Oliveira Silva and DeVuyst,
+# Oklahoma State University Extension CR-212, Sep 2024, Tables 1a-1c; cases/reference/published/
+# ext_wheat_pasture_okstate2024.yaml).
+#
+# One period, one acre. Every amount is a published input by name (generator `src`), posted by a
+# `transfer` rulebook:
+#   * receipts: wheat__quantity bushels at wheat__price_usd, and the small-grain pasture
+#     (grazing rights on the same acre) at its quantity times price; both received in cash;
+#   * the ten operating inputs are the source's own line totals (the hand-labelled `costs` list,
+#     the operating-capital interest at its printed amount), paid in cash and expensed;
+#   * fixed costs (Table 1c): interest on machinery is the owner's capital charged at its
+#     opportunity cost and credited to the owner; machinery taxes and insurance paid; machinery
+#     depreciation charged against accumulated_depreciation; land interest and taxes nil;
+#   * no income tax.
+# The return above all specified costs is read against the oracle's recomputed +0.75: the
+# source prints it as $(0.75), a negative, which its own receipts and costs cannot produce (the
+# printed text is not a figure the harness reads).
+published: ext_wheat_pasture_okstate2024
+entity: farm
+plant: wheat__price_usd
+case:
+  case: published-ext-wheat-pasture-okstate2024
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        wheat_sales: wheat__quantity * wheat__price_usd
+        pasture_rent: small_grain_pasture__quantity * small_grain_pasture__price_usd
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        accumulated_depreciation: asset
+        wheat: income
+        small_grain_pasture: income
+        wheat_seed: expense
+        fertilizer: expense
+        custom_harvest: expense
+        pesticide: expense
+        crop_insurance: expense
+        operating_capital_interest: expense
+        machinery_labor: expense
+        custom_hire: expense
+        machinery_fuel_lube_repairs: expense
+        other_expenses: expense
+        machinery_interest: expense
+        machinery_taxes: expense
+        machinery_insurance: expense
+        machinery_depreciation: expense
+        land_interest: expense
+        land_taxes: expense
+      moves:
+        wheat: {debit: cash, credit: wheat, amount: {generator: src, output: wheat_sales}}
+        pasture: {debit: cash, credit: small_grain_pasture, amount: {generator: src, output: pasture_rent}}
+        seed: {debit: wheat_seed, credit: cash, amount: {generator: src, output: wheat_seed}}
+        fertilizer: {debit: fertilizer, credit: cash, amount: {generator: src, output: fertilizer}}
+        custom_harvest: {debit: custom_harvest, credit: cash, amount: {generator: src, output: custom_harvest}}
+        pesticide: {debit: pesticide, credit: cash, amount: {generator: src, output: pesticide}}
+        crop_insurance: {debit: crop_insurance, credit: cash, amount: {generator: src, output: crop_insurance}}
+        operating_interest: {debit: operating_capital_interest, credit: cash, amount: {generator: src, output: annual_operating_capital}}
+        labour: {debit: machinery_labor, credit: cash, amount: {generator: src, output: machinery_labor}}
+        custom_hire: {debit: custom_hire, credit: cash, amount: {generator: src, output: custom_hire}}
+        fuel: {debit: machinery_fuel_lube_repairs, credit: cash, amount: {generator: src, output: machinery_fuel_lube_repairs}}
+        other: {debit: other_expenses, credit: cash, amount: {generator: src, output: other_expenses}}
+        m_interest: {debit: machinery_interest, credit: owner_equity, amount: {generator: src, output: machinery_irrigation_interest__total_usd_per_acre}}
+        m_taxes: {debit: machinery_taxes, credit: cash, amount: {generator: src, output: machinery_irrigation_taxes__total_usd_per_acre}}
+        m_insurance: {debit: machinery_insurance, credit: cash, amount: {generator: src, output: machinery_irrigation_insurance__total_usd_per_acre}}
+        m_depreciation: {debit: machinery_depreciation, credit: accumulated_depreciation, amount: {generator: src, output: machinery_irrigation_depreciation__total_usd_per_acre}}
+        l_interest: {debit: land_interest, credit: owner_equity, amount: {generator: src, output: land_interest__total_usd_per_acre}}
+        l_taxes: {debit: land_taxes, credit: cash, amount: {generator: src, output: land_taxes__total_usd_per_acre}}
+  schemes:
+    pnl:
+      wheat: revenue
+      small_grain_pasture: revenue
+      wheat_seed: operating
+      fertilizer: operating
+      custom_harvest: operating
+      pesticide: operating
+      crop_insurance: operating
+      operating_capital_interest: operating
+      machinery_labor: operating
+      custom_hire: operating
+      machinery_fuel_lube_repairs: operating
+      other_expenses: operating
+      machinery_interest: fixed
+      machinery_taxes: fixed
+      machinery_insurance: fixed
+      machinery_depreciation: fixed
+      land_interest: fixed
+      land_taxes: fixed
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    operating: {kind: pnl, entity: farm, scheme: pnl, include: [operating]}
+    above_operating: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, operating]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [fixed]}
+    total: {kind: pnl, entity: farm, scheme: pnl, include: [operating, fixed]}
+    above_all: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, operating, fixed]}
+  measures: {}
+figures:
+  total_receipts_usd_per_acre: {cut: revenue}
+  total_operating_costs_usd_per_acre: {cut: operating, sign: -1}
+  returns_above_total_operating_costs_usd_per_acre: {cut: above_operating}
+  total_fixed_costs_usd_per_acre: {cut: fixed, sign: -1}
+  total_costs_operating_plus_fixed_usd_per_acre: {cut: total, sign: -1}
+  returns_above_all_specified_costs_usd_per_acre.my_computed_value: {cut: above_all}

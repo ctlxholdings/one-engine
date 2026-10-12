@@ -1,0 +1,123 @@
+# Published case "ext_maple_ohio2017": a 1,000-tap vacuum-tubing maple syrup operation with an
+# oil-fired evaporator, 400 gallons of syrup, one season (Ober, Ohio State University Extension,
+# 2017 Maple Syrup Business Planning Guide, Vacuum Tubing Systems; cases/reference/published/
+# ext_maple_ohio2017.yaml).
+#
+# One period, the season, oil-fuel scenario. Every amount is a published input by name
+# (generator `src`), posted by a `transfer` rulebook:
+#   * receipts: half the crop retailed (retail_half__gallons at retail_half__price_usd_per_gal)
+#     and half sold bulk (bulk_half__gallons at bulk_half__price_usd_per_gal), for cash;
+#   * the nine variable costs are the source's season totals (the hand-labelled `costs` list),
+#     paid in cash and expensed;
+#   * fixed costs: the equipment expense (the source's season line) charged against
+#     accumulated_depreciation (no cash); product-liability insurance paid; the operator's own
+#     sugarhouse labour and management charged at its hourly rate and credited to the owner (no
+#     cash moves), which is why the return to labour and management adds it back;
+#   * no tax.
+# Per-gallon figures divide a season total by total_syrup_gallons (a physical driver) via `per`.
+#
+# Source finding: the source prints each cost per gallon beside its season total, and the two
+# columns disagree (evaporator fuel 7.82 a gallon against 2,880 / 400 = 7.20; equipment expense
+# 9.51 a gallon against 3,565 / 400 = 8.91, the per-gallon rate matching the investment table's
+# 3,805 depreciation instead). The section totals per gallon (19.54, 16.01, 35.55) are the sums
+# of the per-gallon column, so read from the season books over 400 gallons they differ (18.92,
+# 15.41, 34.33). The season totals and the three returns are consistent and match.
+# Set aside: the wood-fired alternative's totals, an alternative fuel scenario.
+published: ext_maple_ohio2017
+entity: farm
+plant: retail_half__price_usd_per_gal
+case:
+  case: published-ext-maple-ohio2017
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        retail_sales: retail_half__gallons * retail_half__price_usd_per_gal
+        bulk_sales: bulk_half__gallons * bulk_half__price_usd_per_gal
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        accumulated_depreciation: asset
+        retail_syrup: income
+        bulk_syrup: income
+        evaporator_fuel: expense
+        fuel_diesel_gasoline: expense
+        utilities: expense
+        canning_supplies: expense
+        repairs: expense
+        labor_tubing_system: expense
+        marketing: expense
+        interest: expense
+        miscellaneous: expense
+        equipment_expense: expense
+        operator_labor_management: expense
+        insurance_product_liability: expense
+      moves:
+        retail: {debit: cash, credit: retail_syrup, amount: {generator: src, output: retail_sales}}
+        bulk: {debit: cash, credit: bulk_syrup, amount: {generator: src, output: bulk_sales}}
+        evaporator_fuel: {debit: evaporator_fuel, credit: cash, amount: {generator: src, output: evaporator_fuel}}
+        fuel: {debit: fuel_diesel_gasoline, credit: cash, amount: {generator: src, output: fuel_diesel_gasoline}}
+        utilities: {debit: utilities, credit: cash, amount: {generator: src, output: utilities}}
+        canning: {debit: canning_supplies, credit: cash, amount: {generator: src, output: canning_supplies}}
+        repairs: {debit: repairs, credit: cash, amount: {generator: src, output: repairs}}
+        tubing_labour: {debit: labor_tubing_system, credit: cash, amount: {generator: src, output: labor_operate_tubing_system}}
+        marketing: {debit: marketing, credit: cash, amount: {generator: src, output: marketing}}
+        interest: {debit: interest, credit: cash, amount: {generator: src, output: interest}}
+        miscellaneous: {debit: miscellaneous, credit: cash, amount: {generator: src, output: miscellaneous}}
+        equipment: {debit: equipment_expense, credit: accumulated_depreciation, amount: {generator: src, output: equipment_expense}}
+        operator: {debit: operator_labor_management, credit: owner_equity, amount: {generator: src, output: operator_labor_sugarhouse_mgt}}
+        insurance: {debit: insurance_product_liability, credit: cash, amount: {generator: src, output: insurance_product_liability}}
+  schemes:
+    pnl:
+      retail_syrup: revenue
+      bulk_syrup: revenue
+      evaporator_fuel: variable
+      fuel_diesel_gasoline: variable
+      utilities: variable
+      canning_supplies: variable
+      repairs: variable
+      labor_tubing_system: variable
+      marketing: variable
+      interest: variable
+      miscellaneous: variable
+      equipment_expense: fixed
+      insurance_product_liability: fixed
+      operator_labor_management: operator
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [variable]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [fixed, operator]}
+    total: {kind: pnl, entity: farm, scheme: pnl, include: [variable, fixed, operator]}
+    above_total: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable, fixed, operator]}
+    above_variable: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable]}
+    to_labor_and_management: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable, fixed]}
+  measures: {}
+figures:
+  total_receipts_usd: {cut: revenue}
+  total_variable_cost_oil.per_gal_usd: {cut: variable, sign: -1, per: src.total_syrup_gallons}
+  total_variable_cost_oil.per_season_usd: {cut: variable, sign: -1}
+  total_fixed_cost_oil.per_gal_usd: {cut: fixed, sign: -1, per: src.total_syrup_gallons}
+  total_fixed_cost_oil.per_season_usd: {cut: fixed, sign: -1}
+  total_cost_oil.per_gal_usd: {cut: total, sign: -1, per: src.total_syrup_gallons}
+  total_cost_oil.per_season_usd: {cut: total, sign: -1}
+  return_above_total_cost_oil: {cut: above_total}
+  return_above_variable_costs_oil: {cut: above_variable}
+  return_to_labor_and_management_oil: {cut: to_labor_and_management}
+not_compared:
+  wood_fired_alternative_totals_same_document: >-
+    the source's wood-fired alternative, a second fuel scenario whose line costs are not
+    inputs; the case models the oil-fired budget

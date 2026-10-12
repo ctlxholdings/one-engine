@@ -1,0 +1,365 @@
+# Miniature: Ahmedabad Electric Company / Saha Sprague Limited capacitor leasing programme (India), expressed at ESCO LOD 0.
+# Batch 7, group M, reviewed final (reconciles writers X and Y, 3 Oct 2026).
+#
+# Evidence: one local text, the World Bank book "Financing Energy Efficiency" (2008), lessons from Brazil, China and India,
+# case study 13 "India Capacitor Leasing", plus case study 4 for IREDA's public status.
+# WBF = der-vpp/spec-run/esco-moneyflow/input/wb-financing-energy-efficiency-brazil-china-india-2008.txt. Cited as WBF L<line> | 'quote'.
+# Quotes are 8 words or fewer (review rule for this group). Line numbers as grep -n counts them; every line re-opened by the reviewer.
+# The case study gives the structure and three ratios (90% guarantee, 0.95 target, 3% deduction); no price, rental, term, loan or date.
+# Every fact carries its status: stated / inferred / default / generic / unstated.
+
+miniature: ahmedabad_capacitor_leasing
+lod: 0
+case: batch7.T14
+case_kind: programme   # one MOU and one loan serve many consumers, each with a tripartite lease; one representative consumer is written
+in_scope: true
+in_scope_why: "power-factor correction to cut 'system losses' and 'technical losses' (WBF L10767, L10774), delivered by a 'vendor ESCO' (WBF L10778) under a performance guarantee, in a book on financing energy efficiency. An efficiency deal (ruling 14); payment_basis asset (inferred), so not an ESCO deal by the payment_basis test although the Partner is an ESCO"
+
+tests_unused:
+- item: collector_biller
+  kind: role
+  used: true
+  reason: "'Lease payments are collected from the consumers' by AEC (WBF L10834) and 'transferred to SSL after deducting 3 percent' (WBF L10835): a party other than the payee bills and collects for the payee, the role's definition. AEC also sells the electricity (figure CS13.1, WBF L10810), so it holds utility_supplier first, collector_biller second (same pairing as hawaii_gems_on_bill, which is out of scope)"
+- item: collection_placement=pledged_escrow
+  kind: setting_value
+  used: false
+  reason: "The rentals do pass through an escrow account with the lender's first charge (WBF L10844-10846, L10852), but the client's payment lands first on AEC's electricity bill: on_bill recorded, escrow leg kept as a rule (lod0_gaps). Not a single-source term either way"
+- item: collection_placement=on_tax
+  kind: setting_value
+  used: false
+  reason: "collection runs through the electricity bill, not a property-tax bill"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "SSL guarantees 'a minimum of 90 percent' of design value (WBF L10791), but nothing says the rental varies with it; the consumer pays a lease rental for equipment that passes to it 'upon payment of a nominal amount' (WBF L10828-10829). asset, not performance"
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "No receivable is sold and no notes are issued; the lender holds a loan to SSL with a first charge on the escrow account (WBF L10852)"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No hedge or rate instrument is mentioned"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No guarantee of the consumers' payments. AEC collects and forwards them, and SSL may terminate if AEC does not transfer (WBF L10840-10841), but AEC does not guarantee them"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "SSL, the Partner, owns the capacitors as lessor (WBF L10826); no third-party owner"
+
+single_source_exercised:
+- term: collector_biller
+  evidence: "der-vpp/spec-run/esco-moneyflow/input/wb-financing-energy-efficiency-brazil-china-india-2008.txt:10834 | Lease payments are collected from the consumers"
+  confirmed: "stated; the sentence continues 'by AEC through' the billing system (L10834-10835). Second in-scope source for the role after NYSERDA"
+
+source:
+  id: WBF
+  title: "Financing Energy Efficiency (World Bank, 2008; lessons from Brazil, China, India), case study 13 India Capacitor Leasing; case study 4 IREDA Energy Efficiency Loan Fund"
+  publisher: The International Bank for Reconstruction and Development / The World Bank, 2008
+  passage: "WBF L10760-10870 (introduction L10763-10782, description and figure CS13.1 L10786-10853, lessons L10857-10870); IREDA status L3342-3344, L7925-7929; programme mentions L3450-3452, L4957-4961"
+  oracle: "none; not a published validation target"
+  context:
+  - "Case study 4 (WBF L7920-8130): IREDA's own loan fund. Used only to place IREDA as a government company; its general lending terms are not the SSL loan's terms"
+  - "The power-factor tariff regime (a penalty on HT consumers below 0.8, WBF L10768-10771): a tariff rule that creates the demand. Recorded as a rule"
+  - "Escrow account holder: not named. The account 'serves as a channel for the AEC' (WBF L10845) to pass the rentals to SSL; the generic text says escrow accounts have 'account control assigned to lenders' (WBF L4960). No account_bank_trustee party"
+  notes:
+  - "No figures beyond three ratios: no rental, number of consumers, capacitor value, loan amount, term, rate or date"
+  - "Two beneficiaries of SSL's promises. The 90 percent performance guarantee goes 'to the utility (AEC)' (WBF L10790), who does not pay for the equipment; the lease rentals are paid by the consumers, who receive the equipment. Both promises are written (c1 to the consumer, c2 to AEC); the client role sits with the payer"
+  - "The MOU is an MOU by name but carries obligations (guarantee, supply and maintenance, collection and transfer) and termination rights for both sides (WBF L10839-10841). Binding and settled by default (ruling 17); the source does not call it non-binding"
+  - "AEC's ownership (private or public) and the programme date are not given. The consumers are 'industrial' (WBF L10776) HT consumers (WBF L10768); their sector is not stated"
+
+jurisdiction:
+  country: India
+  iso: IN
+  eu_member: false
+  client_eu_general_government_at_close: false
+  as_of: "no date given; the book is of 2008"
+  status: stated
+  why: "'tariff structure for high tension (HT)' consumers 'in India' (WBF L10768-10769); Ahmedabad Electric Company (WBF L10777). Not an EU member; C1 does not apply"
+
+core_v7:
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:
+  consumers:
+    role: host
+    groups: [demand]
+    status: stated
+    name: Participating HT industrial consumers (lessees)
+    text: "'each participating consumer' signs a tripartite agreement (WBF L10829-10830); ownership passes 'to the lessee' at the end (WBF L10828). Industrial (WBF L10776); sector not stated: host by the silent-sector default"
+  ssl:
+    entity: saha_sprague_limited
+    role: [partner_esco, lessor]
+    groups: [partner, capital]
+    status: stated
+    name: Saha Sprague Limited (SSL), vendor ESCO
+    text: "'a vendor ESCO, Saha Sprague Limited (SSL)' (WBF L10778-10779) that will 'supply, install, own, and maintain capacitors' (WBF L10826) on lease. Partner by what it does (delivers and guarantees the power-factor service); lessor because it 'Owns the equipment until the lease is paid' (elements.yaml) and title passes at the end (WBF L10827-10829)"
+  aec:
+    entity: ahmedabad_electric_company
+    role: [utility_supplier, collector_biller]
+    groups: [energy, collection]
+    status: stated
+    name: Ahmedabad Electric Company (AEC)
+    text: "the utility that signed the MOU with SSL (WBF L10794-10795), receives the performance guarantee (WBF L10790) and collects the lease rentals 'through the billing system' (WBF L10834-10835). utility_supplier: it sells the consumers electricity (figure CS13.1, WBF L10810). collector_biller: it bills and collects for the payee"
+  ireda:
+    entity: ireda
+    role: government_financier
+    groups: [public, capital, risk]
+    status: stated
+    name: Indian Renewable Energy Development Agency Ltd (IREDA)
+    text: "'IREDA and SSL signed a loan agreement' (WBF L10830-10831). Public lender: a 'Public Limited Government Company' (WBF L7926-7927) under the Ministry of New and Renewable Energy (WBF L7927-7928); 'a publicly owned financial institution' (WBF L3342-3343). Rule B2-R1: government_financier"
+
+contract:
+  mou:
+    core: contract
+    parties: [ssl, aec]
+    status: stated
+    note: "'a memorandum of understanding (MOU)' (WBF L10794-10795) for improving reactive power demand in selected supply areas, target power factor 0.95 (WBF L10825). Binding and settled by default: obligations and termination rights for both sides (WBF L10839-10841)"
+  tripartite_agreement:
+    core: contract
+    parties: [consumers, aec, ssl]
+    status: stated
+    note: "'a tripartite agreement between each participating consumer' (WBF L10829-10830), AEC and SSL: the equipment lease and the billing route. Terms not published; SSL may remove the equipment if the rental is unpaid (WBF L10837-10838)"
+  loan_agreement:
+    core: contract
+    parties: [ireda, ssl]
+    status: stated
+    note: "the loan financing 'the capital cost of the equipment' (WBF L10832-10833), secured by IREDA's 'first charge on the escrow account' (WBF L10852). Amount, rate and term not published"
+
+commitments:
+  c1:
+    family: performance_promise
+    from: ssl
+    to: consumers
+    status: stated
+    what: "supply, install, own and maintain capacitors at the consumer's premises on lease (WBF L10826-10827); at the end ownership passes to the lessee 'upon payment of a nominal amount' (WBF L10828-10829)"
+    established_by: tripartite_agreement
+  c2:
+    family: performance_promise
+    from: ssl
+    to: aec
+    status: stated
+    what: "'a performance guarantee to the utility (AEC)' (WBF L10790) that the equipment performs at 'a minimum of 90 percent' of design value (WBF L10791-10792); programme target power factor 0.95 (WBF L10825). AEC can terminate the MOU if performance is not satisfactory (WBF L10839-10840). The guarantee and any make-good stay inside this promise (G18)"
+    established_by: mou
+  c3:
+    family: payment_promise
+    from: consumers
+    to: ssl
+    status: stated
+    what: "the lease rental, billed with the electricity bill (figure CS13.1, WBF L10810-10811; WBF L10834-10835). If a consumer fails to pay, SSL may remove the equipment and 'collect the outstanding amount' (WBF L10837-10839). Amount and term not published"
+    established_by: tripartite_agreement
+  c4:
+    family: agency_promise
+    from: aec
+    to: ssl
+    status: stated
+    what: "collect the lease rentals through the billing system and transfer them to SSL through the escrow account (WBF L10834-10835, L10844-10846); if AEC does not transfer, SSL can terminate (WBF L10840-10841)"
+    established_by: mou
+  c5:
+    family: payment_promise
+    from: ssl
+    to: aec
+    status: stated
+    what: "3 percent of the collections, deducted by AEC 'toward administrative costs' (WBF L10835-10836): the counter-payment for the collection service, paid by deduction"
+    established_by: mou
+  c6:
+    family: funding_promise
+    from: ireda
+    to: ssl
+    status: stated
+    funding_instrument: loan   # debt financing (WBF L10831-10833)
+    what: "debt financing that 'helped to finance the capital cost' of the equipment at consumer premises (WBF L10831-10833)"
+    established_by: loan_agreement
+  c7:
+    family: payment_promise
+    from: ssl
+    to: ireda
+    status: stated
+    what: "'SSL then makes the loan repayments' (WBF L10836) to IREDA, from rentals that reach SSL through the escrow account over which IREDA has the first charge (WBF L10842-10853). Amount and schedule not published"
+    established_by: loan_agreement
+
+settings:
+  payment_basis:
+    value: asset
+    status: inferred
+    why: "the consumer pays a lease rental for equipment that becomes its own for a nominal amount (WBF L10827-10829): a price for equipment, in instalments. The 90 percent guarantee runs to the utility and nothing says the rental changes with it. Alternative performance if the guarantee is read as the basis of the service"
+  client_sector:
+    value: private
+    status: default
+    why: "industrial HT consumers (WBF L10768, L10776); ownership not stated"
+  partner_form:
+    value: corporate
+    status: inferred
+    why: "Saha Sprague Limited (WBF L10779), a vendor ESCO running a programme of leases: a standing company, not a deal vehicle"
+  borrower:
+    value: partner
+    status: stated
+    why: "'SSL received debt financing from IREDA' (WBF L10779). The consumer's lease is the Partner's own financing product, not a second loan. Alternative [partner, client] if the lease is counted as a second financing"
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: "the rentals are 'transferred to SSL' (WBF L10835); IREDA has security over the escrow account, not the right to the rentals. A pledge is not an assignment"
+  collection_placement:
+    value: on_bill
+    status: stated
+    why: "'collected from the consumers by AEC through' the billing system (WBF L10834-10835); the book's overview calls it payments 'made through electricity bills' (WBF L3451). The rentals then pass through an escrow account with the lender's first charge (WBF L10844-10846, L10852), a second stage carried by the escrow_first_charge rule (lod0_gaps). Alternative pledged_escrow"
+  aggregation:
+    value: pool
+    status: inferred
+    why: "one MOU for selected supply areas (WBF L10825) and one loan finance the equipment at many consumers' premises, each under its own tripartite agreement (WBF L10829-10833): several clients' contracts financed together. Alternative framework"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "rank not stated; the first charge on the escrow account is security, not rank between debts"
+  assignment_recourse:
+    value: not_applicable
+    status: inferred
+    why: "nothing assigned (receivable_holder partner)"
+  savings_basis:
+    value: measured
+    status: default
+    why: "not applicable: payment_basis is asset (known wrinkle, DEAL_SCHEMA). Power factor 'can be easily monitored' (WBF L10862) but no payment depends on it"
+  grant_recipient:
+    value: none
+    status: default
+    why: "no grant or subsidy is described"
+  asset_owner:
+    value: lessor
+    status: stated
+    why: "'SSL will supply, install, own, and maintain' (WBF L10826) the capacitors on lease; title passes to the lessee at the end (WBF L10827-10829). SSL holds the lessor role itself. A lease is asset_owner = lessor (DEAL_SCHEMA independent settings). Alternative partner (same legal person)"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "the consumer keeps paying its own electricity bill, with the rental added (figure CS13.1, WBF L10810-10811)"
+
+rules:
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, client_eu_general_government_at_close: true}
+    rule: "NPV at financial close of guaranteed savings over the EPC >= NPV of operational payments + non-repayable government financing (upfront grant at face value), else ON the government balance sheet (E15 L2578-2582)"
+    applies_here: false
+    this_case: "India, not EU; client private (default)"
+    source: E15 L2576-2582, L6930-6943; RULINGS.md ruling 3-4
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: not client}
+    rule: "service agreement or lease under IFRS 16, when a private client pays for assets someone else owns"
+    applies_here: true
+    this_case: "trigger met on the recorded values: a private (default) consumer pays rentals for capacitors the lessor SSL owns until the lease is paid. On its face a lease; the consumers' accounting framework is not stated, so the outcome is undetermined"
+    source: RULINGS.md ruling 7; E02 L3293-3295
+  escrow_first_charge:
+    scope: contractual
+    rule: "'IREDA has first charge on the escrow account' (WBF L10852) through which AEC passes the rentals to SSL; the escrow makes sure the debt 'is serviced on time' (WBF L10843) and IREDA is 'insulated from repayment risks' (WBF L10852-10853)"
+    applies_here: true
+    source: WBF L10842-10853
+  tariff_power_factor_penalty:
+    scope: external-sectoral
+    rule: "HT consumers below a 0.8 power factor pay a tariff penalty; utilities would like 0.9 or more (WBF L10768-10771). The rule that creates the need; the programme targets 0.95 (WBF L10825)"
+    applies_here: true
+    source: WBF L10768-10771, L10825
+
+numbers:
+  performance_guarantee_pct_of_design: "90 minimum (WBF L10790-10792)"
+  target_power_factor: "0.95 (WBF L10825); tariff penalty below 0.8, utilities' ideal 0.9 or higher (WBF L10769-10771)"
+  admin_deduction_pct: "3 of the lease collections (WBF L10835-10836)"
+  loan_amount: "not published"
+  lease_rental_and_term: "not published; nominal end-of-lease price (WBF L10828-10829)"
+  derived: {}
+
+reciprocity:
+  consumers: {gives: [c3], receives: [c1], one_way: false}
+  ssl: {gives: [c1, c2, c5, c7], receives: [c3, c4, c6], one_way: false}
+  aec: {gives: [c4], receives: [c2, c5], one_way: false}
+  ireda: {gives: [c6], receives: [c7], one_way: false}
+
+lod0_gaps:
+- kind: two_stage_collection
+  description: "the rentals land first on AEC's electricity bill (on_bill), then pass through an escrow account over which the lender holds the first charge (pledged_escrow). collection_placement holds one value; the escrow stage and the security are carried by the escrow_first_charge rule and agency promise c4. Writable; whether the setting should hold a route of two values is a design choice"
+  classification: "encoding question"
+- kind: collector_biller_vs_utility_supplier
+  description: "utility_supplier 'can collect payments on-bill'; collector_biller is 'a party other than the payee' that bills and collects. A utility collecting for a third party on its own bill fits both; the list form [utility_supplier, collector_biller] carries it, as in hawaii_gems_on_bill. eesl_ujala_onbill kept utility_supplier alone"
+  classification: "encoding question"
+- kind: payer_differs_from_guarantee_beneficiary
+  description: "the consumers pay; the utility receives the performance guarantee. Written as two performance promises from SSL (c1 to consumers, c2 to AEC) with the client role on the payer"
+  classification: "encoding question"
+- kind: escrow_holder_unnamed
+  description: "who holds the escrow account is not stated, so no account_bank_trustee is written"
+  classification: "evidence gap"
+- kind: figures_unpublished
+  description: "no rental, price, loan amount, rate, term or date; the lease term and the nominal transfer price are LOD 1-2 terms"
+  classification: "evidence gap"
+
+conventions_applied:
+- id: F02
+  title: jurisdiction header, dated at close
+  convention: "country, EU membership, client EU general government at close"
+  origin: RULINGS.md ruling 4
+  applied_here: "IN, C1 false"
+- id: F13
+  title: role list, home role first
+  convention: "a party may hold several roles"
+  origin: verdict rule
+  applied_here: "ssl [partner_esco, lessor]; aec [utility_supplier, collector_biller]"
+- id: B2-R1
+  title: giver by identity
+  convention: "a government lender or grantor takes government_financier"
+  origin: batch-2 adjudication; RULINGS #8
+  applied_here: "IREDA government_financier"
+- id: G17
+  title: receivable_holder = payments under the contract
+  convention: "a pledge to the lender is not an assignment"
+  origin: verdict change 5; gaps G17
+  applied_here: "partner; the lender's first charge is security"
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "the performing party's own guarantee is part of its performance_promise"
+  origin: verdict rule; gaps G18
+  applied_here: "inside c2; no risk_promise"
+- id: B7-ruling14
+  title: every efficiency deal counts; ESCO or not is read from payment_basis
+  convention: "in_scope true for any efficiency deal; payment_basis != asset marks an ESCO deal"
+  origin: RULINGS.md ruling 14
+  applied_here: "asset (inferred): in scope, not an ESCO deal by this test"
+- id: B7-ruling17
+  title: contracts binding and settled by default
+  convention: "binding: non_binding or terms_settled: unsettled only when the source says so"
+  origin: RULINGS.md ruling 17
+  applied_here: "the MOU stays binding and settled"
+- id: B7-ruling18
+  title: one identity per legal entity
+  convention: "entity_new for a legal person not yet in cases/parties.yaml; entity_local when the source names none"
+  origin: RULINGS.md ruling 18
+  applied_here: "SSL, AEC, IREDA new; the representative consumer local"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, lessor, utility_supplier, collector_biller, government_financier]
+  roles_count: 6 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, agency_promise]
+  families_absent: [benefit_promise, risk_promise, determination_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 3, inferred: 6, generic: 0, default: 4}
+  commitments_by_status: {stated: 7, inferred: 0, generic: 0, unstated: 0}
+  one_way_parties: []
+  parties_count: 4
+  commitments_count: 7
+  below_lod0: {lod1_adds: 'MOU signature, tripartite agreements per consumer, loan signature and escrow set-up, rental billing
+      cycles, the 3 percent deduction, performance test and termination, end-of-lease title transfer', lod2_adds: 'lease rental
+      formula, lease period and nominal transfer price, loan rate and term, escrow waterfall, the 90 percent test and its measurement'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/wb-financing-energy-efficiency-brazil-china-india-2008.txt:10790 | provide a performance guarantee to the utility", why: "SSL guarantees at least 90 percent of design value and AEC can terminate the MOU if it falls short (L10790-10792, L10839-10840). Differs from the asset-basis default (client)"}
+  - {category: R2, driver: null, bearer: [partner_esco], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/wb-financing-energy-efficiency-brazil-china-india-2008.txt:10826 | supply, install, own, and maintain capacitors", why: "SSL maintains and owns the equipment during the lease (L10826-10827). Same legal person as the default bearer (asset owner = lessor = SSL); written because the maintenance duty is stated, not only title"}
+  - {category: R5a, driver: null, bearer: [partner_esco], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/wb-financing-energy-efficiency-brazil-china-india-2008.txt:10837 | SSL is entitled to remove the equipment", why: "a consumer's non-payment lands on SSL, whose remedy is to remove the equipment and collect the arrears (L10837-10839). Equal to the default (Partner holds the payments), kept because the source supports it for this deal"}
+  # not written: R3 (no delivery terms); R4 (no energy-price exposure in the lease); R5b (IREDA is 'insulated from repayment risks', L10852-10853, but the escrow still depends on consumers paying, so the derived client + lender row stands); R7 (loan terms unpublished; the default bearer, the Partner, stands)

@@ -1,0 +1,61 @@
+# Published case "bld_boq_house_southafrica": the priced Bill of Quantities for a new house at
+# 100 Erica Road, Heatherlands, George, Western Cape, its Summary page, on the client's books
+# (cases/reference/published/bld_boq_house_southafrica.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the four bill sections the Summary page totals (preliminaries and general, builder's works,
+#     site works, budgetary allowances) are the contract value of the house, posted one move each
+#     to the house, capitalised at cost, owed to the builder;
+#   * VAT at vat_rate on that contract value is charged on top. The client is a private household
+#     and cannot recover it, so it is part of the house's cost; it is posted to its own account
+#     (house_vat) so that the books show the contract value and the VAT apart;
+#   * the contract sum is owed to the builder (contract_payable); the source states no payment
+#     dates (its retention clause gives shares but no offsets), so nothing is paid within the case.
+#   * The brickwork resource analysis (quantities and rates inside Builder's Works) is a sample of
+#     how one section is built up, already inside builders_works; it is not posted again.
+# subtotal_ex_vat_zar (mapped to cost_of_sales) is the house at its contract value, vat_zar the
+# VAT on it, total_contract_sum_zar the whole sum owed.
+published: bld_boq_house_southafrica
+entity: client
+plant: builders_works
+case:
+  case: published-bld-boq-house-southafrica
+  periods: 1
+  phases: [post]
+  currency: ZAR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        contract_value: preliminaries_and_general + builders_works + site_works + budgetary_allowances
+        vat: contract_value * vat_rate
+  opening:
+    client:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    bills:
+      kind: transfer
+      entity: client
+      phase: post
+      declare:
+        house: asset
+        house_vat: asset
+        contract_payable: liability
+      moves:
+        preliminaries: {debit: house, credit: contract_payable, amount: {generator: src, output: preliminaries_and_general}}
+        builders_works: {debit: house, credit: contract_payable, amount: {generator: src, output: builders_works}}
+        site_works: {debit: house, credit: contract_payable, amount: {generator: src, output: site_works}}
+        allowances: {debit: house, credit: contract_payable, amount: {generator: src, output: budgetary_allowances}}
+        vat: {debit: house_vat, credit: contract_payable, amount: {generator: src, output: vat}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  subtotal_ex_vat_zar: {balance: house}
+  vat_zar: {balance: house_vat}
+  total_contract_sum_zar: {balance: contract_payable}

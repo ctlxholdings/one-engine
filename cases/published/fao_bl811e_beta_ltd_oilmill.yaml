@@ -1,0 +1,204 @@
+# Published case "fao_bl811e_beta_ltd_oilmill": Beta Ltd, a vegetable oil mill, six years from
+# installation (1990) to the end of its project life (1995) (FAO, Financial analysis in
+# agricultural project preparation, 1991, Comprehensive Illustration, Schedules 1-6 and 8,
+# pp.38-45; cases/reference/published/fao_bl811e_beta_ltd_oilmill.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). One
+# book, the mill's; period t is year t+1 (t=0 is 1990):
+#   * the mill (land, buildings, plant and machinery, investment_*_usd000, in thousands) is
+#     bought for cash in year 1 and capitalised; year 1 installs and produces nothing;
+#   * oilseed crushed is capacity times the year's utilisation (0, 90, then 100%); oil and meal
+#     are that times their yields; all are physical, read as drivers; fuel is
+#     fuel_use_ton_per_ton_oilseed_processed a tonne crushed;
+#   * oil and meal are sold in the year at their prices, for cash; the oilseed, packing (a tonne
+#     of oil), fuel and labour (full wages from year 2) are paid and expensed as cost of sales;
+#     admin and marketing overheads (from year 2) are paid and expensed below gross profit;
+#   * depreciation from year 2 at the stated rates on buildings and plant (land none), charged
+#     against accumulated depreciation, in cost of sales (Schedule 5's footnote);
+#   * working capital (Schedule 4): cash and bank, receivables, inventories and payables held at
+#     their printed levels (in thousands) in years 2 to 5, the cash moving each year; it is
+#     recovered in year 6 (the source's 1995 stream);
+#   * financing (equity, the loans, interest, repayments, dividends) and tax are not modelled.
+# Schedule 8's streams are cash cuts: the investment stream is the capex and the working capital
+# (sign -1), the operating stream the trading cash, the net stream both.
+# Not derivable from the inputs, read and differing: Schedule 8's year-6 investment stream
+# credits a 150 residual value the inputs do not state, and its operating stream deducts the
+# short-term interest (4 in years 2-3) on a loan whose amount the inputs do not state, so the
+# net cash flow differs in years 2, 3 and 6. For the same two reasons the FRR (17%, mapped) is
+# left unread. Schedule 5 below profit before interest, Schedule 6, the after-financing stream
+# and the tax payments need the loans' repayment schedule, the short-term loan, the dividend
+# policy and the tax rate, none of which the inputs carry: set aside.
+published: fao_bl811e_beta_ltd_oilmill
+entity: mill
+plant: sale_price_meal_usd_per_ton
+case:
+  case: published-fao-betaltd-oilmill
+  periods: 6
+  phases: [operate, wc]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 6
+      inputs: published
+      values:
+        util: >-
+          capacity_utilisation_year1_pct * (t == 0) + capacity_utilisation_year2_pct * (t == 1)
+          + capacity_utilisation_year3_to_6_pct * (t >= 2)
+        producing: (t >= 1)
+        seed_t: plant_capacity_oilseed_tons_per_year * util / 100
+        oil_t: seed_t * oil_yield_pct_of_oilseed / 100
+        meal_t: seed_t * meal_yield_pct_of_oilseed / 100
+        fuel_t: seed_t * fuel_use_ton_per_ton_oilseed_processed
+        oil_sales: oil_t * sale_price_oil_usd_per_ton
+        meal_sales: meal_t * sale_price_meal_usd_per_ton
+        oilseed: seed_t * raw_material_price_oilseed_usd_per_ton
+        packing: oil_t * packing_material_price_usd_per_ton_oil_processed
+        fuel: fuel_t * fuel_price_usd_per_ton
+        labour: labour_total_wages_usd_per_year * producing
+        overheads: overheads_admin_marketing_usd_per_year * producing
+        land: investment_land_usd000 * 1000 * (t == 0)
+        buildings: investment_buildings_usd000 * 1000 * (t == 0)
+        plant: investment_plant_machinery_equipment_usd000 * 1000 * (t == 0)
+        depreciation: >-
+          (investment_buildings_usd000 * depreciation_rate_buildings_pct_pa
+          + investment_plant_machinery_equipment_usd000 * depreciation_rate_plant_machinery_pct_pa) * 1000 / 100 * producing
+        # Schedule 4's levels, printed for years 2 to 5; nil in year 6, whose stream recovers them
+        cash_and_bank: 1000 * (cash_and_bank_usd000_1 * (t == 1) + cash_and_bank_usd000_2 * (t == 2) + cash_and_bank_usd000_3 * (t == 3) + cash_and_bank_usd000_4 * (t == 4))
+        receivables: 1000 * (receivables_usd000_1 * (t == 1) + receivables_usd000_2 * (t == 2) + receivables_usd000_3 * (t == 3) + receivables_usd000_4 * (t == 4))
+        inventories: 1000 * (inventories_usd000_1 * (t == 1) + inventories_usd000_2 * (t == 2) + inventories_usd000_3 * (t == 3) + inventories_usd000_4 * (t == 4))
+        payables: 1000 * (payables_usd000_1 * (t == 1) + payables_usd000_2 * (t == 2) + payables_usd000_3 * (t == 3) + payables_usd000_4 * (t == 4))
+  opening:
+    mill:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    trading:
+      kind: transfer
+      entity: mill
+      phase: operate
+      declare:
+        land: asset
+        buildings: asset
+        plant_machinery: asset
+        accumulated_depreciation: asset
+        oil_sales: income
+        meal_sales: income
+        oilseed: expense
+        packing_material: expense
+        labour: expense
+        fuel: expense
+        depreciation: expense
+        admin_marketing: expense
+      moves:
+        land: {debit: land, credit: cash, amount: {generator: src, output: land}}
+        buildings: {debit: buildings, credit: cash, amount: {generator: src, output: buildings}}
+        plant: {debit: plant_machinery, credit: cash, amount: {generator: src, output: plant}}
+        oil: {debit: cash, credit: oil_sales, amount: {generator: src, output: oil_sales}}
+        meal: {debit: cash, credit: meal_sales, amount: {generator: src, output: meal_sales}}
+        oilseed: {debit: oilseed, credit: cash, amount: {generator: src, output: oilseed}}
+        packing: {debit: packing_material, credit: cash, amount: {generator: src, output: packing}}
+        labour: {debit: labour, credit: cash, amount: {generator: src, output: labour}}
+        fuel: {debit: fuel, credit: cash, amount: {generator: src, output: fuel}}
+        depreciation: {debit: depreciation, credit: accumulated_depreciation, amount: {generator: src, output: depreciation}}
+        overheads: {debit: admin_marketing, credit: cash, amount: {generator: src, output: overheads}}
+    working_capital:
+      kind: held_balance
+      entity: mill
+      cash: cash
+      phase: wc
+      accounts:
+        cash_and_bank: {side: asset, target: {generator: src, output: cash_and_bank}}
+        receivables: {side: asset, target: {generator: src, output: receivables}}
+        inventories: {side: asset, target: {generator: src, output: inventories}}
+        payables: {side: liability, target: {generator: src, output: payables}}
+  schemes:
+    pnl:
+      oil_sales: oil
+      meal_sales: meal
+      oilseed: raw_material
+      packing_material: packing
+      labour: labour
+      fuel: fuel
+      depreciation: depreciation
+      admin_marketing: overheads
+    cash_flow:
+      land: capex
+      buildings: capex
+      plant_machinery: capex
+      oil_sales: operating
+      meal_sales: operating
+      oilseed: operating
+      packing_material: operating
+      labour: operating
+      fuel: operating
+      admin_marketing: operating
+      cash_and_bank: working_capital
+      receivables: working_capital
+      inventories: working_capital
+      payables: working_capital
+  cuts:
+    oil: {kind: pnl, entity: mill, scheme: pnl, include: [oil]}
+    meal: {kind: pnl, entity: mill, scheme: pnl, include: [meal]}
+    revenue: {kind: pnl, entity: mill, scheme: pnl, include: [oil, meal]}
+    raw_material: {kind: pnl, entity: mill, scheme: pnl, include: [raw_material]}
+    packing: {kind: pnl, entity: mill, scheme: pnl, include: [packing]}
+    labour: {kind: pnl, entity: mill, scheme: pnl, include: [labour]}
+    fuel: {kind: pnl, entity: mill, scheme: pnl, include: [fuel]}
+    direct: {kind: pnl, entity: mill, scheme: pnl, include: [raw_material, packing, labour, fuel]}
+    depreciation: {kind: pnl, entity: mill, scheme: pnl, include: [depreciation]}
+    cost_of_sales: {kind: pnl, entity: mill, scheme: pnl, include: [raw_material, packing, labour, fuel, depreciation]}
+    gross_profit: {kind: pnl, entity: mill, scheme: pnl, include: [oil, meal, raw_material, packing, labour, fuel, depreciation]}
+    overheads: {kind: pnl, entity: mill, scheme: pnl, include: [overheads]}
+    profit_before_interest: {kind: pnl, entity: mill, scheme: pnl, include: [oil, meal, raw_material, packing, labour, fuel, depreciation, overheads]}
+    investment: {entity: mill, account: cash, scheme: cash_flow, include: [capex, working_capital]}
+    operations: {entity: mill, account: cash, scheme: cash_flow, include: [operating]}
+    net_cash_flow: {entity: mill, account: cash, scheme: cash_flow, include: [capex, working_capital, operating]}
+  measures: {}
+figures:
+  oil_produced_tons: {driver: src.oil_t, periods: [1, 2, 3, 4]}
+  meal_produced_tons: {driver: src.meal_t, periods: [1, 2, 3, 4]}
+  oil_sales_revenue_usd000: {cut: oil, scale: 1000, periods: [1, 2, 3, 4]}
+  meal_sales_revenue_usd000: {cut: meal, scale: 1000, periods: [1, 2, 3, 4]}
+  total_revenue_usd000: {cut: revenue, scale: 1000, periods: [1, 2, 3, 4]}
+  oilseed_used_tons: {driver: src.seed_t, periods: [1, 2, 3, 4]}
+  fuel_used_tons: {driver: src.fuel_t, periods: [1, 2, 3, 4]}
+  cost_raw_material_usd000: {cut: raw_material, sign: -1, scale: 1000, periods: [1, 2, 3, 4]}
+  cost_packing_material_usd000: {cut: packing, sign: -1, scale: 1000, periods: [1, 2, 3, 4]}
+  cost_labour_usd000: {cut: labour, sign: -1, scale: 1000, periods: [1, 2, 3, 4]}
+  cost_fuel_usd000: {cut: fuel, sign: -1, scale: 1000, periods: [1, 2, 3, 4]}
+  cost_of_sales_before_depreciation_usd000: {cut: direct, sign: -1, scale: 1000, periods: [1, 2, 3, 4]}
+  sales_revenue_usd000: {cut: revenue, scale: 1000, periods: [1, 2, 3, 4, 5]}
+  cost_of_sales_incl_depreciation_usd000: {cut: cost_of_sales, sign: -1, scale: 1000, periods: [1, 2, 3, 4, 5]}
+  gross_profit_usd000: {cut: gross_profit, scale: 1000, periods: [1, 2, 3, 4, 5]}
+  admin_marketing_costs_usd000: {cut: overheads, sign: -1, scale: 1000, periods: [1, 2, 3, 4, 5]}
+  profit_before_interest_usd000: {cut: profit_before_interest, scale: 1000, periods: [1, 2, 3, 4, 5]}
+  depreciation_addback_usd000: {cut: depreciation, sign: -1, scale: 1000, periods: [1, 2, 3, 4, 5]}
+  investment_cost_stream_usd000: {cut: investment, sign: -1, scale: 1000}
+  cash_flow_from_operations_usd000: {cut: operations, scale: 1000}
+  net_cash_flow_usd000: {cut: net_cash_flow, scale: 1000}
+not_compared:
+  interest_short_term_usd000: &stl >-
+    the short-term loan behind this interest is not among the inputs (only its 14% rate is)
+  interest_long_term_usd000: &ltl >-
+    needs the long-term loan's repayment schedule (163, 168, 169), which the inputs do not carry
+  net_profit_usd000: &below >-
+    below profit before interest: needs the short-term loan and the long-term repayment schedule,
+    neither among the inputs
+  dividends_distribution_usd000: &div >-
+    the dividend policy is not among the inputs, and the profit it distributes is after interest
+    the inputs cannot derive
+  retained_earnings_usd000: *div
+  accumulated_retained_earnings_usd000: *div
+  funds_from_operations_usd000: *below
+  repayment_lt_debt_usd000: *ltl
+  increase_decrease_working_capital_usd000: >-
+    Schedule 6's balancing line: needs the funds from operations after interest and the loan
+    repayments, which the inputs do not carry
+  net_cash_flow_after_tax_financing_usd000: &tax >-
+    after tax and financing: the tax rate, the loans' repayment schedule and the short-term loan
+    are not among the inputs
+  return_to_equity_pct: *tax
+  tax_payment_usd: *tax

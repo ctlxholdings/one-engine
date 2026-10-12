@@ -1,0 +1,67 @@
+# Published case "bld_briqueterie_parpaing_adamaoua": a hollow-block (parpaing) maker in Adamaoua,
+# Cameroon, one representative year (GIZ / PARSE, Métiers Rentables Adamaoua, p.60;
+# cases/reference/published/bld_briqueterie_parpaing_adamaoua.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the year's block-making (revenue, the source's fabrication_parpaings), sold for cash: the
+#     maker sells his moulding labour and equipment time;
+#   * the raw materials (sand, cement, water) are supplied by the client and priced at
+#     materiel_premieres_intrants, nil: nothing is bought, so nothing is posted;
+#   * the taxes and dues (costs.autres_charges_impots_taxes), paid in the year as an operating
+#     charge;
+#   * the tools (outils_production: moulds, spades, wheelbarrow, buckets) are bought for cash at
+#     the start of the year and capitalised; the source states no life and does not amortise them,
+#     so no depreciation is charged and the bénéfice carries none;
+#   * no tax on profit.
+# fabrication_parpaings (mapped to revenue) is the year's sales, autres_charges_impots_taxes
+# (cost_of_sales) its one charge, benefice (gross_margin) its profit.
+published: bld_briqueterie_parpaing_adamaoua
+entity: maker
+plant: revenue
+case:
+  case: published-bld-briqueterie-parpaing-adamaoua
+  periods: 1
+  phases: [fund, operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        blocks_year: 1                       # the source prints no block count: the year's work is one lot
+        tools_spend: {each_period: outils_production * (t == 0)}
+  opening:
+    maker:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    blocks:
+      type: offtake
+      parties: {seller: maker}
+      terms: {volume: {generator: src, output: blocks_year}, price: {generator: src, output: revenue},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    dues:
+      type: operating_cost
+      parties: {payer: maker}
+      terms: {annual: {generator: src, output: autres_charges_impots_taxes}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    tools:
+      type: capex_class
+      parties: {owner: maker}
+      terms: {schedule: {generator: src, output: tools_spend}, vat_rate: 0, vat_refund_lag: 0, end: 0}
+  rulebooks: {}
+  schemes:
+    pnl:
+      blocks.revenue: revenue
+      dues.expense: cost_of_sales
+  cuts:
+    revenue: {kind: pnl, entity: maker, scheme: pnl, include: [revenue]}
+    costs: {kind: pnl, entity: maker, scheme: pnl, include: [cost_of_sales]}
+    profit: {kind: pnl, entity: maker, scheme: pnl, include: [revenue, cost_of_sales]}
+  measures: {}
+figures:
+  fabrication_parpaings: {cut: revenue}
+  autres_charges_impots_taxes: {cut: costs, sign: -1}
+  benefice: {cut: profit}

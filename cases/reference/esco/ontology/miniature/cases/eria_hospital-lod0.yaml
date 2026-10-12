@@ -1,0 +1,240 @@
+# Miniature — the ERIA shared-savings hospital EPC expressed at ESCO LOD 0
+#
+# Purpose: validation case for LOD 0 (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Same shape as bytom-lod0.yaml. Every fact carries its status: stated / inferred / default / generic / unstated.
+# Nothing invented; the source is the ERIA Cambodia master-plan chapter (E10) §5.5 case study plus the §5.2 model text it rests on.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: eria_hospital
+lod: 0
+case: validation_targets.published.ERIA_hospital_shared_savings
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E10
+  title: Energy Service Company (Chapter 2, Energy Efficiency and Conservation Master Plan of Cambodia, ERIA Research Project Report FY2020 no.07)
+  publisher: ERIA (Lee Yuen How), July 2020
+  passage: "§5.5 'Case study: Shared savings EPC hospital project', pp. 14-15 (corpus input/eria-esco-models-cambodia-2020.txt L309-344); model text §5.2 L227-237"
+  oracle: 'ORACLE-RESULTS.md #1: payback 3.1935 y, IRR 26.554%, ESCO income 266,161.51 reproduced blind (published 3.19 y / 26.56% / 266,161.50; <=0.11%)'
+  note: the hospital, the ESCO and the country of the case are not named; the chapter is about Cambodia but the case is not located
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: not stated
+  iso: null
+  eu_member: false
+  client_eu_general_government: false
+  status: inferred
+  why: "the hospital is not located (source.note); the chapter belongs to the 'Energy Efficiency and Conservation Master Plan of Cambodia' (E10 L17) — not an EU member state in any reading; client_sector is the default private"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  hospital:
+    role: host
+    groups: [demand]
+    status: inferred
+    text: "'a hospital with 548 beds' (L311), 'the client who owns the facility' (L228-229); whether public or private is not stated, so the role follows the client_sector default (private -> host); if public it would be authority"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'80% to the ESCO' (L315); 'Total investment cost by ESCO: US$850,000.00' (L339); unnamed"
+
+contract:   # the agreements that establish the commitments
+  epc_contract:
+    core: contract
+    parties: [hospital, esco]
+    term_years: 8
+    status: stated
+    text: "'an EPC contract of 8 years where the savings are split – 80% to the ESCO and 20% to the client' (L314-315)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: hospital
+    status: stated
+    what: retrofit and upgrade of the chiller plant (1.86 -> 0.83 kW/RT at the same comfort, humidity and temperature) and LED lighting (~7,000 tubes, 40W -> 10.5W/9W), completed within 30 weeks (L313-314, L320-327); the ESCO bears the US$850,000 project cost incl. engineering, consultancy, M&V, procurement, project management (L317-319); transfer of the asset to the client without any cost at the end of the 8 years (L315-316)
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: hospital
+    to: esco
+    status: stated
+    depends_on_savings: true   # 80% of the measured savings (L315)
+    savings_arrangement: shared   # 80% of the measured savings (L315)
+    what: 80% of the measured electricity cost savings for 8 years (L315; US$266,161.50 per year on the reported savings, L338); the client keeps 20% and 100% after the term (L315-317)
+    established_by: epc_contract
+  c3:
+    family: determination_promise
+    from: esco
+    to: hospital
+    status: inferred
+    determines: savings   # measured savings (L228, L318)
+    what: "measurement of the savings on which c2 is computed: 'Measured cost savings during the contract period are shared' (L228); 'measurement and verification' is a line of the ESCO's project cost (L318), and no third-party verifier is named — so the determining party is the ESCO itself"
+    established_by: epc_contract
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: hospital pays the ESCO 80% of measured electricity cost savings for 8 years (E10 L315; shared savings L228)."}
+  client_sector:
+    value: private
+    status: default
+    why: "not stated: 'a hospital with 548 beds' built 1987, 44,800 m2 (L311-312); the chapter treats government buildings separately in §5.4 (L284-294) without linking the case to them. Convention G09: silent -> default private, role host"
+  partner_form: {value: corporate, status: default, why: not stated}
+  borrower:
+    value: partner
+    status: default
+    why: "'In shared savings projects, ESCOs finance the investment' (L234-235) and 'Total investment cost by ESCO: US$850,000.00' (L339); whether the ESCO borrowed or used own funds is not stated — the source does not say own funds or equity, so the default partner is kept with status default (F04); alternative none"
+  receivable_holder: {value: partner, status: default, why: no assignment or sale of the savings share is mentioned}
+  collection_placement: {value: operator_own, status: default, why: not stated; no escrow mentioned}
+  aggregation: {value: none, status: inferred, why: 'one hospital, one EPC contract (L311-315)'}
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: stated
+    why: "'Measured cost savings during the contract period are shared' (L228); the case reports savings 'achieved in a year' (L322-323, L327)"
+  grant_recipient: {value: none, status: default, why: no grant mentioned}
+  asset_owner:
+    value: partner
+    status: inferred
+    why: "'After the contract period, the asset would be transferred to the client without any cost' (L315-316): the ESCO holds the asset during the term (the elements file already cites E10 l.315 for this facet)"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "savings are valued at the client's tariff US$0.108/kWh and the client 'enjoys' its 20% then 100% share (L312-317): the client pays the electricity bill and the ESCO is paid out of the client's saving"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: client_sector is the default private and the case is not in the EU; the test does not apply
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: true
+    this_case: "applies on the record: private client (default) and the ESCO holds the asset during the 8 years ('After the contract period, the asset would be transferred to the client without any cost', L315-316). The source says nothing about the client's accounting; not testable"
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  beds: 548
+  gross_floor_area_m2: 44800
+  built_year: 1987
+  tariff_usd_per_kwh: 0.108
+  term_years: 8
+  implementation_weeks: 30
+  esco_share_pct: 80
+  client_share_pct: 20
+  project_cost_usd: 850000
+  chiller_efficiency_kw_per_rt: {before: 1.86, after: 0.83}
+  lighting_units: about 7,000 (T8 40W 4ft and T8 2ft -> LED 10.5W and 9W)
+  chiller_savings_kwh_per_y: 2144362
+  chiller_savings_usd_per_y: 231434
+  led_savings_kwh_per_y: 936211
+  led_savings_usd_per_y: 101042
+  total_savings_kwh_per_y: 3080573
+  total_savings_usd_per_y: 332702
+  esco_income_usd_per_y: 266161.5
+  simple_payback_years: 3.19
+  irr_pct: 26.56
+  engine_inputs:   # R2 (R-A16, R-A17; 6 Oct 2026): which figure above sizes which promise, read by engine/oe/engine/from_case.py and lod1.py; no new figure
+    term_years: term_years
+    legs:
+    - {promise: c1, leg: outlay, amount: project_cost_usd, start_year: 0, evidence: "eria-esco-models-cambodia-2020.txt:317-319, 339 the ESCO bears the US$850,000 project cost"}
+    - {promise: c1, leg: savings, amount: total_savings_usd_per_y, evidence: "eria-esco-models-cambodia-2020.txt:338 total savings US$332,702 per year (reported savings)"}
+    - {promise: c2, leg: fee, amount: esco_income_usd_per_y, evidence: "eria-esco-models-cambodia-2020.txt:315, 338 80% of the measured savings to the ESCO: US$266,161.50 per year"}
+    calendar:   # FLAGGED DEFAULT: the source prints no project date (E10 L309-344); flip here. Dates change no figure
+      anchor: "2020-07-01"   # period 0: the ESCO's outlay; set to the report's publication month (July 2020, source.publisher)
+      cycle: P1Y             # one period = one year: the shared-savings payment each year for 8 years (L314-315)
+      status: default
+      flagged: true
+      why: "ERIA prints no contract or completion date; period 0 is set to the report's publication month (July 2020), and the yearly cycle follows the 8-year annual split (L314-315). R-A19: a flagged default date names the default used"
+  derived:
+    total_check: '3,080,573 x 0.108 = 332,701.9 (matches); component values do not: 2,144,362 x 0.108 = 231,591 (source 231,434), 936,211 x 0.108 = 101,111 (source 101,042) — source-side rounding or a different per-measure tariff'
+    esco_share: 0.8 x 332,702 = 266,161.6
+    client_share_usd_per_y: 0.2 x 332,702 = 66,540.4
+    payback: 850,000 / 266,161.5 = 3.1935 y
+    irr: IRR of -850,000 then 8 x 266,161.5 = 26.55% (oracle 26.554%)
+    esco_income_8y_usd: "8 x 266,161.5 = 2,129,292 (gross, before the ESCO's O&M and M&V costs, which are not stated)"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  hospital: {gives: [c2], receives: [c1, c3], one_way: false}
+  esco: {gives: [c1, c3], receives: [c2], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: family_classification_of_provider_self_financing
+  description: "the ESCO 'finances the investment' (L234) and is repaid from the savings share. Recorded inside the performance_promise (c1), not as a funding_promise esco -> hospital. Convention F05 now says so: own capital under one service contract is part of performance_promise; funding_promise needs a distinct claim between distinct parties"
+  review: 'G07: encoding question; action: rule F05 (own capital inside performance_promise)'
+- kind: determining_party_independence
+  description: "the savings that drive the payment are measured by the paid party (c3 from esco; M&V in the ESCO's cost line, L318). Expressible through the from-party of the determination_promise (G08); no setting for self-measured vs independently verified, and none is added"
+  review: "G08: encoding question; action: rule F21; the determination_promise's from-party says who determines; no setting"
+- kind: client_sector_unknown
+  description: "the source never says whether the hospital is public or private; the role (host vs authority) and the Eurostat rule both hinge on it. Convention G09: default private, role host, status default — no 'unknown' value"
+  review: "G09: evidence gap; action: convention documented (default private -> host); no 'unknown' value"
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction (country not stated; not EU) added; C1 applies_here false
+- id: F04
+  title: borrower rule for provider-financed deals
+  convention: borrower = none only when the source says own funds or equity; when the Partner finances the works and no loan or equity is named, keep the default partner with status default.
+  origin: verdict change 4; findings F04; gaps G24
+  applied_here: "borrower partner / default kept — the reference encoding for 'provider-financed, no lender named'"
+- id: F05
+  title: "provider's own capital is inside performance_promise"
+  convention: "Under one service contract the provider's own capital is part of its performance_promise; funding_promise requires a distinct claim between distinct parties (loan, equity, receivable purchase, lease)."
+  origin: verdict rule; findings F05; gaps G07
+  applied_here: "the ESCO's US$850,000 investment stays inside c1 (performance_promise); no funding_promise esco -> hospital"
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: determination_promise c3 from the ESCO (the source names no other determining party)
+- id: G09
+  title: sector silent -> default private, role host
+  convention: "When the source does not say whether the client is public or private, client_sector takes the default private and the client the role host, status default (role inferred); no 'unknown' value."
+  origin: "verdict 'should not change'; gaps G09"
+  applied_here: client sector silent -> private / host (status default; role inferred)
+- id: G23
+  title: IFRS16_lease_test rule entry
+  convention: "Rule entry IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner}: whether the client's contract is a service agreement or a lease (IFRS 16) — the private counterpart of C1. A rule beside the tree, not a setting (corpus: E02 L3293-3295)."
+  origin: verdict change 6; gaps G23
+  applied_here: IFRS16_lease_test rule entry added; bites on the record (private, asset_owner partner); not testable
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco]
+  roles_count: 2 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 2, inferred: 4, generic: 0, default: 7}
+  commitments_by_status: {stated: 2, inferred: 1, generic: 0, unstated: 0}
+  one_way_parties: []
+  parties_count: 2
+  commitments_count: 3
+  below_lod0: {lod1_adds: 'events (30-week works, annual measurement, annual 80/20 split payment, asset transfer at year 8),
+      the fee formula fee(y) = 0.8 x S(y), the baseline for measured savings', lod2_adds: 'fee_basis = shared (fee_shared: provider
+      s x S(y)); M&V option; what happens below the 850,000 recovery (no guarantee is stated)'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/eria-esco-models-cambodia-2020.txt:235", why: "model text the case file takes as its source (§5.2 L227-237): 'In shared savings projects, ESCOs finance the investment. In such a case, ESCOs take on the performance and credit risks' (L234-235), applied by the hospital case (L309-344). Same bearer as the default, kept because stated. A and B agree"}
+  - {category: R5a, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/eria-esco-models-cambodia-2020.txt:235", why: "same sentence: the ESCO takes on 'the credit risks'; financing the investment and being paid from a share of the client's savings, the credit at risk is the client's. Same bearer as the default. Adjudicator call: A inferred ('credit' undefined), B stated; stated, the sentence names the ESCO as bearer"}

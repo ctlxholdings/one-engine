@@ -1,0 +1,139 @@
+# Published case "ifad_bangladesh_irrigation_nilphamari": an average 21 ha buried-pipe irrigation
+# scheme in Nilphamari District, Bangladesh, a mature year without and with the project (IFAD/FAO,
+# Economic and Financial Analysis of Rural Investment Projects, vol. 3, case study 10, Table 6,
+# p.171; cases/reference/published/ifad_bangladesh_irrigation_nilphamari.yaml).
+#
+# Every amount is a published input by name (generator `src`). Two books, one a scenario, each one
+# steady-state year of the whole scheme:
+#   * `wop` (without project) and `wp` (with project): the year's crop revenues (revenues_usd__*),
+#     sold for cash; the production costs excluding labour (costs_of_production_excl_labour_usd__*)
+#     and the hired labour (the costs including hired labour less those excluding it), paid and
+#     expensed in the year; no tax, no depreciation (the source's margins are before both);
+#   * gross margin is revenue less the costs excluding labour; the margin including hired labour
+#     is less both lines;
+#   * an absolute change is the with-project reading less the without-project one; a percent
+#     change is that difference over the without-project amount (a formula over the inputs, the
+#     same revenue less costs), scale 0.01;
+#   * returns to labour are the margins per person-day of labour (labour_pers_day__*) and of family
+#     labour (family_labour_pers_day__*): money from the books per a stated physical count (`per`);
+#   * production (kg) and labour (person-days) are physical, no ledger holds them: their changes
+#     are read as drivers.
+# Source findings: the with-project gross margin is printed 20,657 against 33,587 - 12,929 =
+# 20,658, and four printed changes are a unit off the printed pairs (oracle notes); all fall inside
+# the source's abs 1 and are compared.
+published: ifad_bangladesh_irrigation_nilphamari
+entity: wp
+plant: revenues_usd__with_project
+case:
+  case: published-ifad-nilphamari-irrigation
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        wop_hired: costs_of_production_incl_hired_labour_usd__without_project - costs_of_production_excl_labour_usd__without_project
+        wp_hired: costs_of_production_incl_hired_labour_usd__with_project - costs_of_production_excl_labour_usd__with_project
+        # the without-project amounts a percent change is taken over
+        wop_gm: revenues_usd__without_project - costs_of_production_excl_labour_usd__without_project
+        wop_gm_hired: revenues_usd__without_project - costs_of_production_incl_hired_labour_usd__without_project
+        # a return's percent change divides the with-project return (margin / days) by the
+        # without-project return: the margin is divided by days times that return
+        wop_rtl: wop_gm / labour_pers_day__without_project
+        wp_rtl_base: labour_pers_day__with_project * wop_rtl
+        wop_rtfl: wop_gm_hired / family_labour_pers_day__without_project
+        wp_rtfl_base: family_labour_pers_day__with_project * wop_rtfl
+        # physical quantities
+        production_change: production_kg__with_project - production_kg__without_project
+        production_change_pct: production_change / production_kg__without_project * 100
+        labour_change: labour_pers_day__with_project - labour_pers_day__without_project
+        labour_change_pct: labour_change / labour_pers_day__without_project * 100
+        family_change: family_labour_pers_day__with_project - family_labour_pers_day__without_project
+        family_change_pct: family_change / family_labour_pers_day__without_project * 100
+  opening:
+    wop:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    wp:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    without_project:
+      kind: transfer
+      entity: wop
+      phase: operate
+      declare: {crop_sales: income, production_costs: expense, hired_labour: expense}
+      moves:
+        sales: {debit: cash, credit: crop_sales, amount: {generator: src, output: revenues_usd__without_project}}
+        costs: {debit: production_costs, credit: cash, amount: {generator: src, output: costs_of_production_excl_labour_usd__without_project}}
+        hired: {debit: hired_labour, credit: cash, amount: {generator: src, output: wop_hired}}
+    with_project:
+      kind: transfer
+      entity: wp
+      phase: operate
+      declare: {crop_sales: income, production_costs: expense, hired_labour: expense}
+      moves:
+        sales: {debit: cash, credit: crop_sales, amount: {generator: src, output: revenues_usd__with_project}}
+        costs: {debit: production_costs, credit: cash, amount: {generator: src, output: costs_of_production_excl_labour_usd__with_project}}
+        hired: {debit: hired_labour, credit: cash, amount: {generator: src, output: wp_hired}}
+  schemes:
+    pnl:
+      crop_sales: revenue
+      production_costs: costs
+      hired_labour: labour
+  cuts:
+    wop_revenue: {kind: pnl, entity: wop, scheme: pnl, include: [revenue]}
+    wop_costs: {kind: pnl, entity: wop, scheme: pnl, include: [costs]}
+    wop_costs_hired: {kind: pnl, entity: wop, scheme: pnl, include: [costs, labour]}
+    wop_gm: {kind: pnl, entity: wop, scheme: pnl, include: [revenue, costs]}
+    wop_gm_hired: {kind: pnl, entity: wop, scheme: pnl, include: [revenue, costs, labour]}
+    wp_revenue: {kind: pnl, entity: wp, scheme: pnl, include: [revenue]}
+    wp_costs: {kind: pnl, entity: wp, scheme: pnl, include: [costs]}
+    wp_costs_hired: {kind: pnl, entity: wp, scheme: pnl, include: [costs, labour]}
+    wp_gm: {kind: pnl, entity: wp, scheme: pnl, include: [revenue, costs]}
+    wp_gm_hired: {kind: pnl, entity: wp, scheme: pnl, include: [revenue, costs, labour]}
+  measures: {}
+figures:
+  gross_margin_usd.without_project: {cut: wop_gm}
+  gross_margin_usd.with_project: {cut: wp_gm}
+  gross_margin_pct_change: {sum: [{cut: wp_gm, per: src.wop_gm}, {cut: wop_gm, sign: -1, per: src.wop_gm}], scale: 0.01}
+  gross_margin_abs_change_usd: {sum: [{cut: wp_gm}, {cut: wop_gm, sign: -1}]}
+  gross_margin_incl_hired_labour_usd.without_project: {cut: wop_gm_hired}
+  gross_margin_incl_hired_labour_usd.with_project: {cut: wp_gm_hired}
+  gross_margin_incl_hired_labour_pct_change: {sum: [{cut: wp_gm_hired, per: src.wop_gm_hired}, {cut: wop_gm_hired, sign: -1, per: src.wop_gm_hired}], scale: 0.01}
+  gross_margin_incl_hired_labour_abs_change_usd: {sum: [{cut: wp_gm_hired}, {cut: wop_gm_hired, sign: -1}]}
+  return_to_labour_usd_per_pers_day.without_project: {cut: wop_gm, per: src.labour_pers_day__without_project}
+  return_to_labour_usd_per_pers_day.with_project: {cut: wp_gm, per: src.labour_pers_day__with_project}
+  return_to_labour_pct_change: {sum: [{cut: wp_gm, per: src.wp_rtl_base}, {cut: wop_gm, sign: -1, per: src.wop_gm}], scale: 0.01}
+  return_to_labour_abs_change_usd: {sum: [{cut: wp_gm, per: src.labour_pers_day__with_project}, {cut: wop_gm, sign: -1, per: src.labour_pers_day__without_project}]}
+  return_to_family_labour_usd_per_pers_day.without_project: {cut: wop_gm_hired, per: src.family_labour_pers_day__without_project}
+  return_to_family_labour_usd_per_pers_day.with_project: {cut: wp_gm_hired, per: src.family_labour_pers_day__with_project}
+  return_to_family_labour_pct_change: {sum: [{cut: wp_gm_hired, per: src.wp_rtfl_base}, {cut: wop_gm_hired, sign: -1, per: src.wop_gm_hired}], scale: 0.01}
+  return_to_family_labour_abs_change_usd: {sum: [{cut: wp_gm_hired, per: src.family_labour_pers_day__with_project}, {cut: wop_gm_hired, sign: -1, per: src.family_labour_pers_day__without_project}]}
+  production_pct_change: {driver: src.production_change_pct}
+  production_abs_change_kg: {driver: src.production_change}
+  revenues_pct_change: {sum: [{cut: wp_revenue, per: src.revenues_usd__without_project}, {cut: wop_revenue, sign: -1, per: src.revenues_usd__without_project}], scale: 0.01}
+  revenues_abs_change_usd: {sum: [{cut: wp_revenue}, {cut: wop_revenue, sign: -1}]}
+  costs_excl_labour_pct_change: {sum: [{cut: wp_costs, sign: -1, per: src.costs_of_production_excl_labour_usd__without_project}, {cut: wop_costs, per: src.costs_of_production_excl_labour_usd__without_project}], scale: 0.01}
+  costs_excl_labour_abs_change_usd: {sum: [{cut: wp_costs, sign: -1}, {cut: wop_costs}]}
+  costs_incl_hired_labour_pct_change: {sum: [{cut: wp_costs_hired, sign: -1, per: src.costs_of_production_incl_hired_labour_usd__without_project}, {cut: wop_costs_hired, per: src.costs_of_production_incl_hired_labour_usd__without_project}], scale: 0.01}
+  costs_incl_hired_labour_abs_change_usd: {sum: [{cut: wp_costs_hired, sign: -1}, {cut: wop_costs_hired}]}
+  labour_pct_change: {driver: src.labour_change_pct}
+  labour_abs_change_pers_day: {driver: src.labour_change}
+  family_labour_pct_change: {driver: src.family_change_pct}
+  family_labour_abs_change_pers_day: {driver: src.family_change}
+not_compared:
+  net_margin_considering_irrigation_fees_usd: &netm >-
+    the net margins (and their changes) deduct a cost the source does not itemise: gross margin
+    less irrigation fees (i) or system cost (ii) leaves a further 2,600 (WOP) and 5,177 (WP) the
+    inputs carry nowhere (oracle notes: "could NOT be reconciled")
+  net_margin_considering_irrigation_fees_pct_change: *netm
+  net_margin_considering_irrigation_fees_abs_change_usd: *netm
+  net_margin_system_usd: *netm
+  net_margin_system_pct_change: *netm
+  net_margin_system_abs_change_usd: *netm

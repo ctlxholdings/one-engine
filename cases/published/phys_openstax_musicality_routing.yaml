@@ -1,0 +1,194 @@
+# Published case "phys_openstax_musicality_routing": Musicality Manufacturing, one year, three
+# products (Solo, Band, Orchestra) sharing one 1,250,000 direct-labour-hour budget, overhead
+# applied at a predetermined rate per labour hour (OpenStax, Principles of Accounting vol. 2,
+# section 6.1, Figures 6.3-6.6; cases/reference/published/phys_openstax_musicality_routing.yaml).
+#
+# Every amount is a published input by name (generator `src`), the costs by nature (`factory`):
+#   * the year's estimated overhead (estimated_total_overhead_usd) is incurred and paid into an
+#     overhead control account; it is applied to the products at the predetermined rate,
+#     estimated overhead / estimated labour hours, times each product's direct labour hours,
+#     clearing the control account (the source absorbs it exactly, nothing over or under);
+#   * each product's direct materials and direct labour are its per-unit inputs times the units
+#     it produced, paid in the year; materials, labour and applied overhead are each product's
+#     manufacturing cost by nature, expensed as incurred;
+#   * each product's sales are its units_sold at its sales_price, collected in the year;
+#   * cost of goods sold is reached the by-nature way: the manufacturing cost plus the change in
+#     finished goods, (units produced - units sold) x the product's full unit cost (materials +
+#     labour + overhead per unit), posted between one finished-goods account and each product's
+#     change-in-inventory line. Solo and Band sell 10,000 units more than they made and the
+#     source states no opening finished goods, so their changes are drawdowns of a stock the
+#     source never shows; the one finished-goods account ends at the net 647,500 (Orchestra's
+#     50,000 unsold units less those drawdowns);
+#   * no tax: the source stops at gross profit.
+# Readings: costs, sales, cost of goods sold and gross profit are P&L cuts; the overhead rate and
+# the per-unit overhead and total cost are those cuts divided (`per`) by labour hours or units
+# produced, physical counts no ledger holds; total hours and total units are drivers. Each
+# product's own hours and units are inputs printed again as answers, so they are set aside.
+published: phys_openstax_musicality_routing
+entity: factory
+plant: estimated_total_overhead_usd
+case:
+  case: published-musicality
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        rate: estimated_total_overhead_usd / estimated_total_labour_hours
+        hours_total: solo__direct_labour_hours + band__direct_labour_hours + orchestra__direct_labour_hours
+        units_total: solo__units_produced + band__units_produced + orchestra__units_produced
+        solo_materials: solo__direct_materials_per_unit * solo__units_produced
+        solo_labour: solo__direct_labour_per_unit * solo__units_produced
+        solo_overhead: rate * solo__direct_labour_hours
+        solo_unit_cost: solo__direct_materials_per_unit + solo__direct_labour_per_unit + solo_overhead / solo__units_produced
+        solo_stock_change: (solo__units_produced - solo__units_sold) * solo_unit_cost
+        band_materials: band__direct_materials_per_unit * band__units_produced
+        band_labour: band__direct_labour_per_unit * band__units_produced
+        band_overhead: rate * band__direct_labour_hours
+        band_unit_cost: band__direct_materials_per_unit + band__direct_labour_per_unit + band_overhead / band__units_produced
+        band_stock_change: (band__units_produced - band__units_sold) * band_unit_cost
+        orchestra_materials: orchestra__direct_materials_per_unit * orchestra__units_produced
+        orchestra_labour: orchestra__direct_labour_per_unit * orchestra__units_produced
+        orchestra_overhead: rate * orchestra__direct_labour_hours
+        orchestra_unit_cost: orchestra__direct_materials_per_unit + orchestra__direct_labour_per_unit + orchestra_overhead / orchestra__units_produced
+        orchestra_stock_change: (orchestra__units_produced - orchestra__units_sold) * orchestra_unit_cost
+  opening:
+    factory:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    solo_sales:
+      type: offtake
+      parties: {seller: factory}
+      terms: {volume: {generator: src, output: solo__units_sold}, price: {generator: src, output: solo__sales_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    band_sales:
+      type: offtake
+      parties: {seller: factory}
+      terms: {volume: {generator: src, output: band__units_sold}, price: {generator: src, output: band__sales_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    orchestra_sales:
+      type: offtake
+      parties: {seller: factory}
+      terms: {volume: {generator: src, output: orchestra__units_sold}, price: {generator: src, output: orchestra__sales_price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+  rulebooks:
+    manufacture:
+      kind: transfer
+      entity: factory
+      phase: operate
+      declare:
+        overhead_control: asset
+        finished_goods: asset
+        solo_materials: expense
+        solo_labour: expense
+        solo_overhead: expense
+        solo_stock_change: expense
+        band_materials: expense
+        band_labour: expense
+        band_overhead: expense
+        band_stock_change: expense
+        orchestra_materials: expense
+        orchestra_labour: expense
+        orchestra_overhead: expense
+        orchestra_stock_change: expense
+      moves:
+        overhead_incurred: {debit: overhead_control, credit: cash, amount: {generator: src, output: estimated_total_overhead_usd}}
+        solo_materials: {debit: solo_materials, credit: cash, amount: {generator: src, output: solo_materials}}
+        solo_labour: {debit: solo_labour, credit: cash, amount: {generator: src, output: solo_labour}}
+        solo_overhead: {debit: solo_overhead, credit: overhead_control, amount: {generator: src, output: solo_overhead}}
+        solo_stock: {debit: finished_goods, credit: solo_stock_change, amount: {generator: src, output: solo_stock_change}}
+        band_materials: {debit: band_materials, credit: cash, amount: {generator: src, output: band_materials}}
+        band_labour: {debit: band_labour, credit: cash, amount: {generator: src, output: band_labour}}
+        band_overhead: {debit: band_overhead, credit: overhead_control, amount: {generator: src, output: band_overhead}}
+        band_stock: {debit: finished_goods, credit: band_stock_change, amount: {generator: src, output: band_stock_change}}
+        orchestra_materials: {debit: orchestra_materials, credit: cash, amount: {generator: src, output: orchestra_materials}}
+        orchestra_labour: {debit: orchestra_labour, credit: cash, amount: {generator: src, output: orchestra_labour}}
+        orchestra_overhead: {debit: orchestra_overhead, credit: overhead_control, amount: {generator: src, output: orchestra_overhead}}
+        orchestra_stock: {debit: finished_goods, credit: orchestra_stock_change, amount: {generator: src, output: orchestra_stock_change}}
+  schemes:
+    pnl:
+      solo_sales.revenue: solo_sales
+      band_sales.revenue: band_sales
+      orchestra_sales.revenue: orchestra_sales
+      solo_materials: solo_made
+      solo_labour: solo_made
+      solo_overhead: solo_overhead
+      solo_stock_change: solo_stock
+      band_materials: band_made
+      band_labour: band_made
+      band_overhead: band_overhead
+      band_stock_change: band_stock
+      orchestra_materials: orchestra_made
+      orchestra_labour: orchestra_made
+      orchestra_overhead: orchestra_overhead
+      orchestra_stock_change: orchestra_stock
+  cuts:
+    solo_overhead: {kind: pnl, entity: factory, scheme: pnl, include: [solo_overhead]}
+    band_overhead: {kind: pnl, entity: factory, scheme: pnl, include: [band_overhead]}
+    orchestra_overhead: {kind: pnl, entity: factory, scheme: pnl, include: [orchestra_overhead]}
+    overhead: {kind: pnl, entity: factory, scheme: pnl, include: [solo_overhead, band_overhead, orchestra_overhead]}
+    solo_manufactured: {kind: pnl, entity: factory, scheme: pnl, include: [solo_made, solo_overhead]}
+    band_manufactured: {kind: pnl, entity: factory, scheme: pnl, include: [band_made, band_overhead]}
+    orchestra_manufactured: {kind: pnl, entity: factory, scheme: pnl, include: [orchestra_made, orchestra_overhead]}
+    manufactured: {kind: pnl, entity: factory, scheme: pnl,
+                   include: [solo_made, solo_overhead, band_made, band_overhead, orchestra_made, orchestra_overhead]}
+    solo_sales: {kind: pnl, entity: factory, scheme: pnl, include: [solo_sales]}
+    band_sales: {kind: pnl, entity: factory, scheme: pnl, include: [band_sales]}
+    orchestra_sales: {kind: pnl, entity: factory, scheme: pnl, include: [orchestra_sales]}
+    sales: {kind: pnl, entity: factory, scheme: pnl, include: [solo_sales, band_sales, orchestra_sales]}
+    solo_cogs: {kind: pnl, entity: factory, scheme: pnl, include: [solo_made, solo_overhead, solo_stock]}
+    band_cogs: {kind: pnl, entity: factory, scheme: pnl, include: [band_made, band_overhead, band_stock]}
+    orchestra_cogs: {kind: pnl, entity: factory, scheme: pnl, include: [orchestra_made, orchestra_overhead, orchestra_stock]}
+    cogs: {kind: pnl, entity: factory, scheme: pnl,
+           include: [solo_made, solo_overhead, solo_stock, band_made, band_overhead, band_stock,
+                     orchestra_made, orchestra_overhead, orchestra_stock]}
+    solo_gross_profit: {kind: pnl, entity: factory, scheme: pnl, include: [solo_sales, solo_made, solo_overhead, solo_stock]}
+    band_gross_profit: {kind: pnl, entity: factory, scheme: pnl, include: [band_sales, band_made, band_overhead, band_stock]}
+    orchestra_gross_profit: {kind: pnl, entity: factory, scheme: pnl,
+                             include: [orchestra_sales, orchestra_made, orchestra_overhead, orchestra_stock]}
+    gross_profit: {kind: pnl, entity: factory, scheme: pnl,
+                   include: [solo_sales, solo_made, solo_overhead, solo_stock, band_sales, band_made, band_overhead,
+                             band_stock, orchestra_sales, orchestra_made, orchestra_overhead, orchestra_stock]}
+  measures: {}
+figures:
+  direct_labour_hours_per_product.total: {driver: src.hours_total}
+  units_produced.total: {driver: src.units_total}
+  overhead_rate_per_direct_labour_hour: {cut: overhead, sign: -1, per: src.hours_total}
+  overhead_assigned_per_product_usd.solo: {cut: solo_overhead, sign: -1}
+  overhead_assigned_per_product_usd.band: {cut: band_overhead, sign: -1}
+  overhead_assigned_per_product_usd.orchestra: {cut: orchestra_overhead, sign: -1}
+  overhead_assigned_per_product_usd.total: {cut: overhead, sign: -1}
+  overhead_per_unit_usd.solo: {cut: solo_overhead, sign: -1, per: src.solo__units_produced}
+  overhead_per_unit_usd.band: {cut: band_overhead, sign: -1, per: src.band__units_produced}
+  overhead_per_unit_usd.orchestra: {cut: orchestra_overhead, sign: -1, per: src.orchestra__units_produced}
+  total_cost_per_unit_usd.solo: {cut: solo_manufactured, sign: -1, per: src.solo__units_produced}
+  total_cost_per_unit_usd.band: {cut: band_manufactured, sign: -1, per: src.band__units_produced}
+  total_cost_per_unit_usd.orchestra: {cut: orchestra_manufactured, sign: -1, per: src.orchestra__units_produced}
+  gross_profit_by_product_sold_basis_usd.solo.sales: {cut: solo_sales}
+  gross_profit_by_product_sold_basis_usd.solo.cost_of_goods_sold: {cut: solo_cogs, sign: -1}
+  gross_profit_by_product_sold_basis_usd.solo.gross_profit: {cut: solo_gross_profit}
+  gross_profit_by_product_sold_basis_usd.band.sales: {cut: band_sales}
+  gross_profit_by_product_sold_basis_usd.band.cost_of_goods_sold: {cut: band_cogs, sign: -1}
+  gross_profit_by_product_sold_basis_usd.band.gross_profit: {cut: band_gross_profit}
+  gross_profit_by_product_sold_basis_usd.orchestra.sales: {cut: orchestra_sales}
+  gross_profit_by_product_sold_basis_usd.orchestra.cost_of_goods_sold: {cut: orchestra_cogs, sign: -1}
+  gross_profit_by_product_sold_basis_usd.orchestra.gross_profit: {cut: orchestra_gross_profit}
+  gross_profit_by_product_sold_basis_usd.total.sales: {cut: sales}
+  gross_profit_by_product_sold_basis_usd.total.cost_of_goods_sold: {cut: cogs, sign: -1}
+  gross_profit_by_product_sold_basis_usd.total.gross_profit: {cut: gross_profit}
+  total_production_cost_usd: {cut: manufactured, sign: -1}
+not_compared:
+  direct_labour_hours_per_product.solo: &echo >-
+    Fig 6.4's hours and units by product are the source's own inputs (routing.products), printed
+    again as answers; read back they would be compared with themselves. Their totals are compared
+  direct_labour_hours_per_product.band: *echo
+  direct_labour_hours_per_product.orchestra: *echo
+  units_produced.solo: *echo
+  units_produced.band: *echo
+  units_produced.orchestra: *echo

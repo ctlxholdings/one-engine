@@ -1,0 +1,87 @@
+# Published case "tax_fonoa_vat_output_input_credit": one standard-rated sale and one purchase,
+# output VAT less input VAT is what the authority is owed (Fonoa, "Input VAT vs Output VAT";
+# cases/reference/published/tax_fonoa_vat_output_input_credit.yaml).
+#
+# Every amount is an input by name (generator `src`), one period:
+#   * the purchase is an operating_cost of purchase_net with VAT at vat_rate: the contract
+#     charges the input VAT to vat_receivable, pays the supplier the gross in the period, and
+#     the authority credits the input VAT in the same period (vat_refund_lag nil);
+#   * the sale of sale_net is invoiced to a receivable with output VAT at vat_rate credited to
+#     vat_payable (a transfer: offtake carries no output VAT), and collected gross in the period
+#     (the receivable held at nil against cash);
+#   * the output VAT is paid to the authority in the period (settle);
+#   * no income tax: the source is about VAT only.
+# Output VAT is what the sale credited to vat_payable, input VAT what the purchase debited to
+# vat_receivable, and the net payable what the two VAT accounts moved through cash: paid out on
+# vat_payable less credited back on vat_receivable.
+published: tax_fonoa_vat_output_input_credit
+entity: trader
+plant: sale_net
+case:
+  case: published-fonoa-vat
+  periods: 1
+  phases: [operate, settle]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        output_vat: sale_net * vat_rate
+  opening:
+    trader:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    purchase:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: {generator: src, output: purchase_net}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: {generator: src, output: vat_rate},
+              vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks:
+    sale:
+      kind: transfer
+      entity: trader
+      phase: operate
+      declare:
+        receivable: asset
+        vat_payable: liability
+        sales: income
+      moves:
+        net: {debit: receivable, credit: sales, amount: {generator: src, output: sale_net}}
+        vat: {debit: receivable, credit: vat_payable, amount: {generator: src, output: output_vat}}
+    collect:
+      kind: held_balance
+      entity: trader
+      cash: cash
+      phase: settle
+      accounts:
+        receivable: {side: asset, target: 0}
+    pay_vat:
+      kind: settle
+      entity: trader
+      cash: cash
+      phase: settle
+      accounts: [vat_payable]
+  schemes:
+    vat:
+      receivable: charged
+      purchase.payable: charged
+      cash: cash
+    cash_flow:
+      receivable: trade
+      purchase.payable: trade
+      vat_payable: vat
+      vat_receivable: vat
+  cuts:
+    output_vat: {entity: trader, account: vat_payable, scheme: vat, include: [charged]}
+    input_vat: {entity: trader, account: vat_receivable, scheme: vat, include: [charged]}
+    net_vat: {entity: trader, account: cash, scheme: cash_flow, include: [vat]}
+  measures: {}
+figures:
+  output_vat: {cut: output_vat, sign: -1}
+  input_vat: {cut: input_vat}
+  net_vat_payable: {cut: net_vat, sign: -1}

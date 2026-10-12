@@ -1,0 +1,339 @@
+# Miniature — Seattle City Light Energy Efficiency as a Service (EEaS) pilot: Power Purchase Agreement template V1.4 (Jan 2020) and
+# Program Manual V2.1 (Jan 2021), expressed at ESCO LOD 0
+#
+# Batch 5 FINAL (reviewer rev-E, 1 Oct 2026), reconciled from writers E-X and E-Y (near-identical). Base: E-Y; E-X's developer-works arrow
+# and price notes added. Sister of cases/bullitt_meets-lod0.yaml (same utility, MEETS family); not a duplicate: programme template vs the
+# signed Bullitt deal. Differences listed in source.notes.
+# Evidence re-fetched 1 Oct 2026 (both URLs HTTP 200; pdftotext). Quotes exact, 25 words or fewer.
+#   [PPA20] https://consultants.seattle.gov/wp-content/uploads/2020/05/Power-Purchase-Agreement_EEaS....pdf  (template, 13 pages, unsigned)
+#   [MAN21] https://powerlines.seattle.gov/wp-content/uploads/sites/17/2021/01/ProgramManualEEaSV2.1-1.pdf  (40 pages, 'Subject to Change and Not an Offer')
+# EVIDENCE GRADE: primary programme documents; a template, no executed contract.
+
+miniature: seattle_eeas_ppa_template
+lod: 0
+case: batch5.D25
+case_kind: programme   # template for up to 30 buildings; one representative site with a third-party developer
+in_scope: true
+in_scope_why: "'For each billable kilowatt-hour of Efficiency Energy measured by the M&V Consultant and confirmed by City, the City shall pay the EE Developer the PPA Payment Amount' [PPA20 | s.4(b)]: payment on measured savings against a baseline model, the EED energy-performance test. Same payment object as bullitt_meets"
+
+tests_unused:
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The row proposed it ('metered, with minimum performance'). 'PPA Payment = PPA Price x Efficiency Energy' [PPA20 | Appendix A]; Efficiency Energy is avoided energy against a baseline. The 12.5% floor: falling below it means the 'EE Developer will be in breach of this Agreement' [PPA20 | s.4(a)], a breach trigger, not a payment level. Savings, as in bullitt_meets"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "'the City's liability shall be limited to paying only the approved payments' [PPA20 | s.15(c)]; no guarantor of anyone's payments"
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "no vehicle; assignment needs consent [PPA20 | s.21]"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "no financing described"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "title to the measures not stated; no third-party holder"
+
+source:
+  id: PPA20+MAN21
+  title: "Seattle City Light EEaS Pilot: Power Purchase Agreement V1.4 (14 Jan 2020) and Program Manual V2.1 (20 Jan 2021)"
+  publisher: "City of Seattle, Seattle City Light"
+  passage: "https://consultants.seattle.gov/wp-content/uploads/2020/05/Power-Purchase-Agreement_EEaS....pdf | Glossary; s.1-25; Appendix A. https://powerlines.seattle.gov/wp-content/uploads/sites/17/2021/01/ProgramManualEEaSV2.1-1.pdf | s.2-7"
+  oracle: "2021 PPA Price = 0.93 x EEaS Charge in every medium/small row [MAN21 | s.5.2.1, 5.2.2.1], re-computed below"
+  context:
+  - "Seattle City Council Ordinance 125556: 'authorized the execution of agreements with up to 30 buildings for up to 20 years' [MAN21 | s.2]. Rule source"
+  - "Tenants: 'To the extent building tenants will pay for or receive Efficiency Energy, they will do so as a matter of contract with the building owner' [MAN21 | s.5.2]. Outside the programme contracts"
+  notes:
+  - "Cross-check with bullitt_meets (adjudicated batch 4). SAME: payment_basis savings; savings_basis measured; collection_placement on_bill; SCL = [utility_supplier, grid_buyer]; verifier_mnv present; client_sector private; borrower partner default; C1 off (US). DIFFERENT: (1) client role: Bullitt's payer is the master tenant (occupant), here the owner-Participant (host); (2) Partner: Bullitt is the owner itself, here a developer 'hired at the sole discretion of the Participant' [PPA20 | s.9], or the owner (s.25); (3) asset_owner: Bullitt partner (owner of the building, stated), here client (default, title not stated); (4) verifier: EnergyRM named vs an unnamed City-hired M&V consultant, and SCL itself determines (c3); (5) price: Bullitt $0.0591/kWh plus a 2.5c incentive, here one PPA price with a 2.0% escalator and a 7% SCL spread; (6) a 12.5% performance floor here, none at Bullitt; (7) shape: bullitt_meets uses the older header key client_eu_general_government (no '_at_close')"
+  - "Row's 'SCL pays developer from part of participant's service fee': confirmed: SCL 'uses a portion of those payments to buy the energy efficiency benefits' [MAN21 | s.4] (E-X had called it wrong; overruled)"
+  - "Prices: 0.0739/kWh is the 2020 retrofit-medium non-downtown PPA price [PPA20 | Appendix A]; the 2021 Manual gives 0.0747 for the same class"
+
+jurisdiction:
+  country: United States (Seattle, Washington)
+  iso: US-WA
+  eu_member: false
+  client_eu_general_government_at_close: false
+  as_of: "no financial close (template dated 14 Jan 2020)"
+  status: stated
+  why: "'laws of the State of Washington' [PPA20 | s.16]. Not EU"
+
+core_v7:
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the PPA, the Participation Agreement, the M&V contract and the owner-developer arrangement each establish (fibo-fnd-rel-rel:confers) their commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:
+  participant:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'The Participant is the party who owns the Site' [MAN21 | s.5.1.1]; pays the electricity bill and the EE Service Fee. Not named"
+  ee_developer:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "implements the ECMs and 'will typically secure the investment' [MAN21 | s.5.1.2]; selection, design and installation are 'the sole responsibility of the EE Developer' [PPA20 | s.10]. Not named"
+  seattle_city_light:
+    entity: city_of_seattle
+    role: [utility_supplier, grid_buyer]
+    groups: [energy, collection]
+    status: stated
+    name: Seattle City Light (City of Seattle, City Light Department)
+    text: "'the utility responsible for billing the City Light Customer per the PA and paying the EE Developer per the PPA' [MAN21 | s.5.1.3]; buys Efficiency Energy as 'an energy efficiency resource' [PPA20 | Glossary]"
+  mv_consultant:
+    role: verifier_mnv
+    groups: [verification]
+    status: stated
+    text: "'an independent third-party hired and selected by City' building the baseline model [PPA20 | Glossary]. Not named"
+
+contract:
+  ppa:
+    core: contract
+    parties: [ee_developer, seattle_city_light]
+    status: stated
+    note: "'shall remain in effect until 01/22/2040' [PPA20 | s.1]; unsigned template"
+  participation_agreement:
+    core: contract
+    parties: [participant, seattle_city_light]
+    status: stated
+    note: "'the Participant is not a party to this Agreement and the EE Developer is not a party to the Participation Agreement' [PPA20]; PA terms from the Manual"
+  mv_contract:
+    core: contract
+    parties: [seattle_city_light, mv_consultant]
+    status: stated
+    note: "consultant 'operating under a contract with the City' [PPA20]"
+  site_arrangement:
+    core: contract
+    parties: [participant, ee_developer]
+    status: inferred
+    note: "the developer 'must obtain written permission from the Participant for all work' [PPA20 | s.9]; the private agreement itself is outside the programme"
+
+commitments:
+  c1:
+    family: performance_promise
+    from: ee_developer
+    to: seattle_city_light
+    status: stated
+    what: "delivers Efficiency Energy until 22 Jan 2040; after year 1 the rolling 12-month avoided energy 'shall be at least 12.5% of the baseline energy use' [PPA20 | s.4(a)]; cure 30-180 days [PPA20 | s.19(a)]. Floor stays inside this promise"
+    established_by: ppa
+  c2:
+    family: payment_promise
+    from: seattle_city_light
+    to: ee_developer
+    status: stated
+    what: "'PPA Payment = PPA Price x Efficiency Energy' [PPA20 | Appendix A], e.g. $0.0739/kWh (2020 retrofit-medium non-downtown), 2.0% escalator each December; zero or negative avoided energy 'will result in no Efficiency Energy payment for that cycle or debit' [PPA20 | s.4(b)]"
+    established_by: ppa
+  c3:
+    family: determination_promise
+    from: seattle_city_light
+    to: [ee_developer, participant]
+    status: stated
+    determines: savings   # amount of Efficiency Energy (PPA20 s.4(b))
+    what: "'Determination of the amount of Efficiency Energy, and thus PPA Payment, will remain the sole discretion of the City' [PPA20 | s.4(b)] (F21: c2 and c8)"
+    established_by: ppa
+  c4:
+    family: determination_promise
+    from: mv_consultant
+    to: seattle_city_light
+    status: stated
+    determines: savings   # baseline model and avoided energy (PPA20 Glossary)
+    what: "builds and maintains the baseline model and quantifies avoided energy [PPA20 | Glossary; MAN21 | s.5.1.4]"
+    established_by: mv_contract
+  c5:
+    family: payment_promise
+    from: seattle_city_light
+    to: mv_consultant
+    status: stated
+    what: "SCL 'will bear the general program costs ... and the M&V Consultant fees' [MAN21 | s.5.1.3]; amount not published"
+    established_by: mv_contract
+  c6:
+    family: performance_promise
+    from: seattle_city_light
+    to: participant
+    status: stated
+    what: "supplies electricity at retail and bills the Efficiency Energy [MAN21 | s.5.2.1]"
+    established_by: participation_agreement
+  c7:
+    family: payment_promise
+    from: participant
+    to: seattle_city_light
+    status: stated
+    what: "'Seattle City Light will first charge the Customer for actual kWh delivered based on the applicable retail kWh rate' [MAN21 | s.5.2.1]"
+    established_by: participation_agreement
+  c8:
+    family: payment_promise
+    from: participant
+    to: seattle_city_light
+    status: stated
+    what: "'EE Service Fee = (EEaS Charge x Efficiency Energy)' on the utility bill [MAN21 | s.5.2.1, 5.2.3], e.g. $0.0803/kWh (2021 retrofit-medium non-downtown), 2.0% escalator"
+    established_by: participation_agreement
+  c9:
+    family: performance_promise
+    from: participant
+    to: ee_developer
+    status: stated
+    what: "written permission and site access for the ECMs; revocation ends the PPA 'without liability to either Party' [PPA20 | s.9]"
+    established_by: site_arrangement
+  c10:
+    family: performance_promise
+    from: ee_developer
+    to: participant
+    status: inferred
+    what: "implements the ECMs in the Participant's building under the private arrangement [PPA20 | s.9]; any price the owner pays the developer is outside the programme (unstated, not encoded)"
+    established_by: site_arrangement
+
+settings:
+  payment_basis:
+    value: savings
+    status: stated
+    why: "c2 and c8 priced per kWh of Avoided Energy Use = 'Adjusted Baseline Energy - Performance Period Energy +/- Non-Routine Adjustments' [PPA20 | Glossary]. Not performance (floor = breach trigger), not supply (modelled savings, as ruled for bullitt_meets)"
+  client_sector:
+    value: private
+    status: default
+    why: "Participant = 'the party who owns the Site'; commercial buildings targeted [MAN21 | s.3.1]; sector not fixed"
+  partner_form:
+    value: corporate
+    status: default
+    why: "developer form not stated"
+  borrower:
+    value: partner
+    status: default
+    why: "developer 'will typically secure the investment' [MAN21 | s.5.1.2]; no lender named (F04)"
+  receivable_holder:
+    value: partner
+    status: default
+    why: "nothing assigned; assignment needs consent [PPA20 | s.21]. The client pays SCL, SCL pays the Partner, as in bullitt_meets (default there too)"
+  collection_placement:
+    value: on_bill
+    status: stated
+    why: "'Seattle City Light will include the EE Service Fee on the Participant's subsequent bill' [MAN21 | s.5.2.3]"
+  aggregation:
+    value: none
+    status: stated
+    why: "'This Power Purchase Agreement applies to only the EE Developer and the ECMs implemented at the Site' [PPA20 | s.4(d)]"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "no debt"
+  assignment_recourse:
+    value: not_applicable
+    status: default
+    why: "nothing assigned"
+  savings_basis:
+    value: measured
+    status: stated
+    why: "whole-building baseline model on meter data, applied after the fact [PPA20 | s.4(a); MAN21 | s.7]"
+  grant_recipient:
+    value: none
+    status: stated
+    why: "EEaS pays per kWh 'instead of providing an upfront incentive' [MAN21 | s.3.1]"
+  asset_owner:
+    value: client
+    status: default
+    why: "title to the ECMs not stated (differs from bullitt_meets, where the owner is the Partner)"
+  bill_custody:
+    value: client
+    status: stated
+    why: "the Participant is billed 'for actual electricity use' [MAN21 | s.5.2.1]"
+
+rules:
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU at close}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2578-2582)
+    applies_here: false
+    this_case: "US; Participant presumed private"
+    source: E15 L2576-2582, L6930-6943
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1"
+    applies_here: false
+    this_case: "asset_owner client (default); revisit if a developer holds title"
+    source: E02 L3293-3295; RULINGS 7
+
+numbers:
+  term_end: 2040-01-22                           # [PPA20 | s.1]
+  ordinance_cap: {buildings: 30, max_years: 20, second_solicitation_buildings: 10}   # [MAN21 | s.2]
+  ppa_price_2020_usd_per_kwh: {retrofit_medium_non_downtown: 0.0739, retrofit_medium_downtown: 0.0904}   # [PPA20 | Appendix A]
+  ppa_price_2021_usd_per_kwh: {retrofit_medium_non_downtown: 0.0747, retrofit_medium_downtown: 0.0918, retrofit_small: 0.0979}   # [MAN21 | s.5.2.2.1]
+  eeas_charge_2021_usd_per_kwh: {retrofit_medium_non_downtown: 0.0803, retrofit_medium_downtown: 0.0987, retrofit_small: 0.1053}   # [MAN21 | s.5.2.1]
+  price_factor: 0.93                             # 'multiplied by 0.93' [PPA20 | Appendix A; MAN21 | s.5.2.2.1]
+  escalator_pct_per_year: 2.0                    # [PPA20 | Appendix A]
+  performance_floor_pct_of_baseline: 12.5        # [PPA20 | s.4(a)]
+  performance_period_start_pct_savings: 10       # [PPA20 | Glossary]
+  cure_period_days: {min: 30, max: 180}          # [PPA20 | s.19(a)]
+  derived:
+    price_factor_2021: "0.0803 x 0.93 = 0.07468 -> 0.0747; 0.0987 x 0.93 = 0.09179 -> 0.0918; 0.1053 x 0.93 = 0.09793 -> 0.0979 (all close)"
+    spread: "0.0803 - 0.0747 = $0.0056/kWh = 7.0% of the fee retained by SCL"
+    term: "22 Jan 2040 - 20 years = 22 Jan 2020, a week after the template date: a fixed end date matching the 20-year cap (inferred)"
+    escalation: "1.02^19 = 1.457 by year 20 (arithmetic only)"
+
+reciprocity:
+  participant: {gives: [c7, c8, c9], receives: [c3, c6, c10], one_way: false}
+  ee_developer: {gives: [c1, c10], receives: [c2, c3, c9], one_way: false}
+  seattle_city_light: {gives: [c2, c3, c5, c6], receives: [c1, c4, c7, c8], one_way: false}
+  mv_consultant: {gives: [c4], receives: [c5], one_way: false}
+
+lod0_gaps:
+- kind: utility_between_client_and_partner
+  description: "client pays the utility, the utility pays the Partner, linked by one measured quantity with a 7% spread; fits with two payment chains (as bullitt_meets)"
+  classification: "encoding note; no new term"
+- kind: owner_may_be_developer
+  description: "'EE Developer may be the Participant' [PPA20 | s.25]: then host and partner_esco are one party, as at Bullitt"
+  classification: "encoding question (same as bullitt_meets B4-G02)"
+- kind: template_not_executed
+  description: "no named developer, owner or financier"
+  classification: "evidence gap"
+
+conventions_applied:
+- id: F13
+  title: role list
+  convention: "home role first"
+  origin: verdict rule
+  applied_here: "seattle_city_light = [utility_supplier, grid_buyer], as bullitt_meets"
+- id: F21
+  title: determination_promise
+  convention: "from the named party"
+  origin: verdict rule
+  applied_here: "c3 (SCL), c4 (M&V consultant)"
+- id: F04
+  title: borrower default
+  convention: "partner when no lender is named"
+  origin: verdict change 4
+  applied_here: "partner, default"
+- id: B4-MEETS
+  title: MEETS savings purchase
+  convention: "a utility buying metered savings per kWh is grid_buyer; payment_basis savings"
+  origin: batch4 decisions (bullitt_meets)
+  applied_here: "same"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, utility_supplier, grid_buyer, verifier_mnv]
+  roles_count: 5 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 6, inferred: 0, generic: 0, default: 7}
+  commitments_by_status: {stated: 9, inferred: 1, generic: 0, unstated: 0}
+  one_way_parties: []
+  parties_count: 4
+  commitments_count: 10
+  below_lod0: {lod1_adds: 'billing cycle, non-routine adjustments, cure and termination', lod2_adds: 'price tables, 0.93 factor,
+      escalator, baseline model'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "cases/seattle_eeas_ppa_template-lod0.yaml:137", why: "PPA s.4(b): zero or negative avoided energy 'will result in no Efficiency Energy payment for that cycle or debit', and s.4(a) sets a 12.5% floor (case line 130), so the developer carries the shortfall. Equal to the default but stated. A and B agree on the bearer; B's evidence line (s.4(b)) taken over A's (s.10, which is about installation)"}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "cases/seattle_eeas_ppa_template-lod0.yaml:88", why: "PPA s.10: selection, design and installation are 'the sole responsibility of the EE Developer'. Equal to the default but stated. B wrote it; A named it in notes only. Dropped: A's inferred R5a on Seattle City Light, because whether SCL must pay the developer when the Participant does not pay SCL is not stated (the Manual has SCL paying 'a portion of those payments', which reads as pass-through)"}

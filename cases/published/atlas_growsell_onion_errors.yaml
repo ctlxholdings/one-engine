@@ -1,0 +1,67 @@
+# Published case "atlas_growsell_onion_errors": irrigated counter-season onion on one hectare,
+# one cycle (GIZ / PARSE, Métiers Rentables; cases/reference/published/atlas_growsell_onion_errors.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the harvest: sale.quantity sacks at sale.price a sack, sold for cash;
+#   * the seven itemised cost lines the source prints (land rent, field work, irrigation fuel,
+#     fertiliser, herbicide treatment, spreading labour, harvest and transport), each paid and
+#     expensed in the cycle. The source's printed "TOTAL DES CHARGES" (charges_cycle) is its own
+#     total, not an eighth line, and is not posted;
+#   * no equipment, financing or tax: the source carries none.
+# valeur_produit (mapped to revenue) is the cycle's sales, total_des_charges (cost_of_sales) its
+# costs, marge_cycle (gross_margin) its profit.
+#
+# The source contradicts itself twice, and the case keeps both figures read, so both differ:
+#   * its seven lines sum to 560,400, but it prints "TOTAL DES CHARGES" 709,000 (a 148,600 gap no
+#     visible line explains), so total_des_charges reads 560,400;
+#   * its table prints the margin 1,116,000, a transposed-digit typo of its own prose's 1,166,000
+#     (1,875,000 - 709,000); on the itemised lines the margin is 1,314,600, which is what the
+#     books read. No input carries the missing 148,600, so neither printed total can be derived.
+published: atlas_growsell_onion_errors
+entity: farm
+plant: price
+case:
+  case: published-atlas-growsell-onion-errors
+  periods: 1
+  phases: [operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        cycle_costs: >-
+          movements__location_terrain + movements__travaux_culturaux + movements__carburant_arrosage
+          + movements__engrais_et_fumure + movements__traitement_herbicide + movements__main_oeuvre_epandage
+          + movements__recolte_et_transport
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    onions:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: quantity}, price: {generator: src, output: price},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    cycle:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: cycle_costs}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      onions.revenue: revenue
+      cycle.expense: cost_of_sales
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    costs: {kind: pnl, entity: farm, scheme: pnl, include: [cost_of_sales]}
+    margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, cost_of_sales]}
+  measures: {}
+figures:
+  valeur_produit: {cut: revenue}
+  total_des_charges: {cut: costs, sign: -1}
+  marge_cycle: {cut: margin}

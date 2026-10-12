@@ -1,0 +1,257 @@
+# Miniature — JVA Weiden (Justizvollzugsanstalt Weiden i. d. Oberpfalz, DE), guaranteed-savings Energiespar-Contracting with
+# WISAG Energiemanagement, signed 21.01.2010, performance phase 05/2011-04/2021, expressed at ESCO LOD 0.
+#
+# Batch 5 FINAL, pair D (reviewer rev-D, 1 Oct 2026) from writers D-X and D-Y. Base: Y for the figures (Y read the Basisdaten and
+# Weitere Daten correctly), X for the Baukostenzuschuss flag (X read the entry's Merkmale block; Y missed it). Rulings applied:
+# REVIEW_SPEC_5 (advisers to context; Baukostenzuschuss = client payment; unstated verifier; German public client), RULINGS.md, ENCODING.md.
+# Evidence: the shared raw text of the dena page (batch5/dena.txt, entry 'JVA Weiden', lines 1627-1709), cited
+#   [DENA] https://www.dena.de/kompetenzzentrum-contracting/energiespar-contracting/anwendungsbeispiele/ | JVA Weiden, <section>
+# The page lists each entry as: narrative, Basisdaten, Projektbeteiligte, Weitere Daten, Maßnahmen, then that entry's Merkmale
+# (checked on the Gummersbach entry, whose Merkmale names Gummersbach). Quotes are 25 words or fewer. Nothing from memory.
+
+miniature: jva_weiden
+lod: 0
+case: batch5.D16
+case_kind: deal   # one named client, one contractor, one signed contract, one site
+in_scope: true
+in_scope_why: "An Energiespar-Contracting with a contractual savings guarantee: 'Einspargarantie: 97.000 Euro pro Jahr (42,6 Prozent)' [DENA | JVA Weiden, Basisdaten]. The contractor invests and delivers the energy service; payment_basis savings (inferred)"
+
+tests_unused:
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: No vehicle, receivable sale or note issue on the entry; no funding party is named at all.
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: No loan and no hedge is named on the entry.
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "Projektbeteiligte lists only Auftraggeber, Beratung and Contractor; nobody guarantees the client's payments."
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: Title is not stated (fallback client); no third-party holder appears.
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: The guarantee is a money saving in EUR per year, so savings, not a non-savings performance level.
+
+source:
+  id: DENA
+  title: "Anwendungsbeispiele von Energiespar-Contracting (entry 'JVA Weiden')"
+  publisher: dena (Deutsche Energie-Agentur), Kompetenzzentrum Contracting
+  passage: "https://www.dena.de/kompetenzzentrum-contracting/energiespar-contracting/anwendungsbeispiele/ | JVA Weiden: narrative, Basisdaten, Projektbeteiligte, Weitere Daten, Maßnahmen, Merkmale"
+  oracle: "Basisenergiekosten 228.000 EUR/yr, Einspargarantie 97.000 EUR/yr (42,6 %), Investition 495.000 EUR, Haushaltsentlastung 7.000 EUR/yr; Merkmale bands (base 200.000 bis 1 Mio., investment bis 500.000). All re-computed in numbers.derived"
+  context:
+  - "CDM Consult (Bochum): listed under 'Beratung' [DENA | JVA Weiden, Projektbeteiligte]. An adviser with no stated promise: context, not a party (REVIEW_SPEC_5 ruling on advisers; Y had it as facilitator)"
+  - "The Land (Freistaat Bayern by the address): 'Auftraggeber: Land' [DENA | JVA Weiden, Merkmale]. The prison is part of the Land's administration, so one legal person with the client, not a second party"
+  - "dena: publisher of the register; no promise in the deal"
+  notes:
+  - "Contradiction on the page: Merkmale says 'Bundesland: Niedersachsen', while the address is '92637 Weiden i. d. Oberpfalz' with 'www.justizvollzug-bayern.de' [DENA | JVA Weiden, Projektbeteiligte]. Weiden is in Bavaria by the address; the Bundesland field looks like a register error. No LOD 0 value depends on it (country DE either way)"
+  - "Dropped from writer X: 'Vertragslaufzeit 10/2010 bis 09/2022' and 'CO2 128 Tonnen pro Jahr' are not in this entry; '128 Tonnen pro Jahr' belongs to another entry of the page (dena.txt line 912). Fetch-tool cross-contamination"
+  - "'Haushaltsentlastung: 7.000 Euro pro Jahr' [DENA | JVA Weiden, Weitere Daten] is printed but not defined on the page. Read as the client's budget relief during the contract; no fee is derived from it"
+  - "Not on the page: the contracting rate or fee formula, penalties, the M&V method, who finances the 495.000 EUR"
+
+jurisdiction:
+  country: Germany
+  iso: DE
+  eu_member: true
+  client_eu_general_government_at_close: true
+  as_of: "'Vertragsschluss: 21.01.2010' [DENA | JVA Weiden, Weitere Daten]; financial close not stated, signing used"
+  status: stated
+  why: "'Auftraggeber: Land' [DENA | JVA Weiden, Merkmale] and 'Auftraggeber: Justizvollzugsanstalt Weiden' [Projektbeteiligte]: a public body named, so stated (REVIEW_SPEC_5 ruling on German public clients). Germany an EU member in 2010"
+
+core_v7:
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:
+  jva_weiden:
+    entity: freistaat_bayern
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Justizvollzugsanstalt Weiden (for the Land)
+    text: "'Auftraggeber: Justizvollzugsanstalt Weiden' [DENA | JVA Weiden, Projektbeteiligte]; Merkmale 'Auftraggeber: Land'. A state prison contracting for itself: authority"
+  wisag:
+    entity: wisag_energiemanagement
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: WISAG Energiemanagement GmbH & Co. KG
+    text: "'Contractor: WISAG Energiemanagement GmbH & Co. KG, Zollhausstraße 95, 90469 Nürnberg' [DENA | JVA Weiden, Projektbeteiligte]; carries the Einspargarantie. Partner by what it does (RULINGS #2)"
+
+contract:
+  esc_contract:
+    core: contract
+    parties: [jva_weiden, wisag]
+    status: stated
+    note: "'Contracting-Modell: Energiespar-Contracting' [Basisdaten]; 'Vertragsschluss: 21.01.2010'; 'Hauptleistungsphase: 05/2011 bis 04/2021' [Weitere Daten]; 'Verfahren: Zweistufig'. Contract text not published"
+
+commitments:
+  c1:
+    family: performance_promise
+    from: wisag
+    to: jva_weiden
+    status: stated
+    what: "installs the measures ('Gas-BHKW (50 kW_el, 85 kW_therm)', ventilation with heat recovery, T5 lighting, two dryers, GLT [Maßnahmen]) and guarantees 'Einspargarantie: 97.000 Euro pro Jahr (42,6 Prozent)' [Basisdaten] over the Hauptleistungsphase. Investment 495.000 EUR sits inside this promise (no lender named, ENCODING.md); shortfall make-good inside it too, mechanism not on the page"
+    established_by: esc_contract
+  c2:
+    family: payment_promise
+    from: jva_weiden
+    to: wisag
+    status: inferred
+    what: "pays the contractor during the performance phase. Existence inferred from an ESC in which the contractor invests and guarantees savings, and from the printed 'Haushaltsentlastung: 7.000 Euro pro Jahr' (the client keeps part of the saving). Amount and formula not on the page"
+    established_by: esc_contract
+  c3:
+    family: determination_promise
+    from: unstated
+    to: [jva_weiden, wisag]
+    status: unstated
+    determines: savings   # achieved saving against the guarantee
+    what: "establishes the achieved saving against the 97.000 EUR/yr guarantee (F21). The page names no verifier and prints no achieved figure for this entry"
+    established_by: esc_contract
+  c4:
+    family: payment_promise
+    from: jva_weiden
+    to: wisag
+    status: inferred
+    what: "construction-cost contribution: 'mit Baukostenzuschuss: ja' [DENA | JVA Weiden, Merkmale]. The client's own up-front payment to the Partner towards the works (REVIEW_SPEC_5 ruling; inferred because only flagged 'ja'). Amount not printed. Not a grant"
+    established_by: esc_contract
+
+settings:
+  payment_basis:
+    value: savings
+    status: inferred
+    why: "'Contracting-Modell: Energiespar-Contracting' with 'Einspargarantie: 97.000 Euro pro Jahr' [Basisdaten]; how the client's payment is computed is not printed, so inferred. The Baukostenzuschuss (c4) is an asset-type part payment beside it"
+  client_sector:
+    value: public
+    status: stated
+    why: "'Auftraggeber: Land' [Merkmale]"
+  partner_form:
+    value: corporate
+    status: inferred
+    why: WISAG Energiemanagement GmbH & Co. KG is a standing company; no deal vehicle named
+  borrower:
+    value: partner
+    status: default
+    why: no loan, lease or equity named; ENCODING.md fallback partner
+  receivable_holder:
+    value: partner
+    status: default
+    why: no assignment or forfaiting named
+  collection_placement:
+    value: operator_own
+    status: default
+    why: no assignee, escrow or bill route named
+  aggregation:
+    value: none
+    status: stated
+    why: "'Pool-Projekt: nein' [Merkmale] and 'Anzahl Liegenschaften: 1' [Weitere Daten]"
+  debt_seniority:
+    value: senior
+    status: default
+    why: no debt stated
+  assignment_recourse:
+    value: not_applicable
+    status: default
+    why: nothing assigned
+  savings_basis:
+    value: measured
+    status: default
+    why: measured or deemed not stated; vocabulary default
+  grant_recipient:
+    value: none
+    status: inferred
+    why: "the only subsidy flag, 'mit Baukostenzuschuss: ja', is the client's own payment (c4); no third-party giver of non-repayable money is named (REVIEW_SPEC_5 ruling)"
+  asset_owner:
+    value: client
+    status: default
+    why: title not stated; ENCODING.md fallback
+  bill_custody:
+    value: client
+    status: default
+    why: source silent
+
+rules:
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, client_eu_general_government_at_close: true}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2576-2582)
+    applies_here: true
+    this_case: "Applies: a Land prison in an EU member at signing. Outcome undetermined: the operational payments and the Baukostenzuschuss amount are not published. Guarantee side only: 97.000 x 10 = 970.000 EUR nominal (NPV needs a rate the page does not give)"
+    source: E15 L2576-2582, L6930-6943; RULINGS #3
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1
+    applies_here: false
+    this_case: client is public
+    source: E02 L3293-3295; batch2/review/verdict.md change 2
+
+numbers:
+  base_energy_costs_eur_per_year: {value: 228000, quote: "Basisenergiekosten: 228.000 Euro pro Jahr"}
+  guaranteed_savings_eur_per_year: {value: 97000, quote: "Einspargarantie: 97.000 Euro pro Jahr (42,6 Prozent)"}
+  guaranteed_savings_percent: {value: 42.6, unit: percent of base energy costs}
+  investment_eur: {value: 495000, quote: "Investition: 495.000 Euro"}
+  budget_relief_eur_per_year: {value: 7000, quote: "Haushaltsentlastung: 7.000 Euro pro Jahr", note: not defined on the page}
+  contract_signed: '2010-01-21'
+  performance_phase: 05/2011 to 04/2021
+  sites: {value: 1, quote: "Anzahl Liegenschaften: 1"}
+  chp: {value: "50 kW_el, 85 kW_therm", quote: "Gas-BHKW (50 kW_el, 85 kW_therm)"}
+  merkmale_bands: {base_energy_costs: "200.000 bis 1 Mio. Euro pro Jahr", investment: "bis 500.000 Euro", chp: ja, baukostenzuschuss: ja, pool: nein}
+  derived:
+    guarantee_share: "97.000 / 228.000 = 42,54 % vs 42,6 % printed; 0,426 x 228.000 = 97.128. Closes within rounding of the printed thousands. (X's 'implied baseline 227.700' is superseded: the base is printed)"
+    bands_check: "228.000 sits in '200.000 bis 1 Mio.'; 495.000 sits in 'bis 500.000': the Merkmale block is this entry's"
+    performance_phase_length: "05/2011 to 04/2021 = 120 months = 10 years"
+    build_period: "21.01.2010 to 05/2011 = about 15 months from signing to the performance phase (not stated as the build period)"
+    payback_on_guarantee: "495.000 / 97.000 = 5,1 years; 97.000 x 10 = 970.000 EUR nominal = 1,96 x the investment"
+    budget_relief_vs_guarantee: "7.000 / 97.000 = 7,2 %. If the relief is the client's retained share of the guaranteed saving, about 90.000 EUR/yr would go to the contractor (97.000 - 7.000); a reading, not a published figure"
+
+reciprocity:
+  jva_weiden: {gives: [c2, c4], receives: [c1, c3], one_way: false}
+  wisag: {gives: [c1], receives: [c2, c3, c4], one_way: false}
+
+lod0_gaps:
+- kind: payment_mechanics_not_on_page
+  description: contracting rate, penalties, the Baukostenzuschuss amount, the verifier and the funding of 495.000 EUR are not on the page (c2, c4 inferred; c3 unstated; borrower default)
+  classification: evidence gap
+- kind: bundesland_contradiction
+  description: "Merkmale 'Niedersachsen' vs a Bavarian address; no LOD 0 value depends on it"
+  classification: evidence gap
+
+conventions_applied:
+- {id: F02, title: jurisdiction header dated at close; C1 trigger, convention: 'C1 applies_when {client_sector: public, client_eu_general_government_at_close: true}', origin: 'RULINGS #4', applied_here: DE, EU, public body named; C1 applies, outcome undetermined}
+- {id: F04, title: borrower rule, convention: borrower = none only when the source says own funds or equity; else default partner, origin: verdict change 4, applied_here: borrower partner default}
+- {id: F21, title: determination_promise required, convention: from = the named party, else the literal unstated, origin: verdict rule, applied_here: c3 from unstated}
+- {id: R5-BKZ, title: Baukostenzuschuss, convention: client's payment promise to the Partner; stated if paid, inferred if flagged ja; not a grant, origin: REVIEW_SPEC_5, applied_here: c4 inferred; grant_recipient none}
+- {id: R5-ADV, title: advisers to context, convention: advisers and energy agencies are source.context unless the source states a promise, origin: REVIEW_SPEC_5, applied_here: CDM Consult in context}
+- {id: R5-AGG, title: aggregation from the stated flag, convention: pool when the source says pool; none when one building or site, origin: REVIEW_SPEC_5, applied_here: "'Pool-Projekt: nein', one Liegenschaft: none, stated"}
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco]
+  roles_count: 2 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [determination_promise]
+  settings_by_status: {stated: 2, inferred: 3, generic: 0, default: 8}
+  commitments_by_status: {stated: 1, inferred: 2, generic: 0, unstated: 1}
+  one_way_parties: []
+  parties_count: 2
+  commitments_count: 4
+  below_lod0: {lod1_adds: 'annual saving statements, the 2010-2011 build period, the Baukostenzuschuss payment date', lod2_adds: 'contracting-rate
+      formula, baseline, energy prices, guarantee settlement'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "cases/jva_weiden-lod0.yaml:137", why: "the dena page prints the contractor's savings guarantee ('Einspargarantie: 97.000 Euro pro Jahr'), so a technical shortfall falls on the contractor; same bearer as the default but stated, which upgrades it from derived. Adjudicator call: drafts A and B wrote inferred and cited a scratchpad copy; re-anchored to the case-file quote; stated, as for the other dena entries (baw_karlsruhe). Nothing else on the page allocates risk"}

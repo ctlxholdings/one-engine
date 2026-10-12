@@ -1,0 +1,105 @@
+# Published case "cap_ginnery_ethiopia_somali_region": a cotton ginnery project profile for the
+# Somali Region of Ethiopia, Table 7.2's production cost for table year 3, the first operating
+# year at 60% of the 15,000 t lint capacity
+# (cases/reference/published/cap_ginnery_ethiopia_somali_region.yaml). ETB '000 in the books.
+#
+# One period, table year 3. Each amount is one move of a `transfer` journal against cash:
+#   * the ginnery is a toll ginner: it bills a service charge of Birr 20 per quintal of lint
+#     (10 quintals a tonne) on 15,000 t x 60% = 9,000 t, so 1,800 thousand (the profile prints no
+#     sales line: this is the library's own derived revenue, from the profile's two factors);
+#   * the six operating cost lines (raw material and inputs, direct labour, utilities,
+#     maintenance and repair, factory overheads, administration overheads) are the year-3 column,
+#     expensed in the year;
+#   * depreciation and the cost of finance are the profile's own year-3 charges (no asset or loan
+#     register: the inputs carry the charges only). No tax (the profile states a holiday).
+# The year-3 operating costs re-add to 400.06 against a printed 400.00 (the source's own Birr 60
+# gap, inside its tolerance); total production cost is read from the same books.
+# The full-capacity revenue is the year-3 revenue per the year-3 production programme share.
+#
+# Set aside: the other columns of Table 7.2 and the full-capacity lines (the inputs carry the
+# year-3 column only; the full-capacity raw material and utilities equal the standalone-statement
+# inputs themselves), the investment, civil-works and land items and the manpower table (their
+# components are not inputs), and IRR, NPV, break-even and payback (the profile prints no income
+# statement or cash flow they could be derived from).
+published: cap_ginnery_ethiopia_somali_region
+entity: ginnery
+plant: raw_material_and_inputs
+case:
+  case: published-ginnery-somali-year3
+  periods: 1
+  phases: [post]
+  currency: ETB
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        programme: operating_year_1_table_year_3 / 100
+        lint_tonnes: annual_lint_capacity_tonnes * programme
+        # quintals of lint (10 a tonne) at the service charge, in Birr thousand
+        ginning_fees: lint_tonnes * 10 * ginning_service_charge / 1000
+  opening:
+    ginnery:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: ginnery
+      phase: post
+      declare:
+        ginning_revenue: income
+        raw_material_and_inputs: expense
+        labour_direct: expense
+        utilities: expense
+        maintenance_and_repair: expense
+        factory_overheads: expense
+        administration_overheads: expense
+        depreciation: expense
+        cost_of_finance: expense
+      moves:
+        fees: {debit: cash, credit: ginning_revenue, amount: {generator: src, output: ginning_fees}}
+        raw_material: {debit: raw_material_and_inputs, credit: cash, amount: {generator: src, output: raw_material_and_inputs}}
+        labour: {debit: labour_direct, credit: cash, amount: {generator: src, output: labour_direct}}
+        utilities: {debit: utilities, credit: cash, amount: {generator: src, output: utilities}}
+        maintenance: {debit: maintenance_and_repair, credit: cash, amount: {generator: src, output: maintenance_and_repair}}
+        factory: {debit: factory_overheads, credit: cash, amount: {generator: src, output: factory_overheads}}
+        administration: {debit: administration_overheads, credit: cash, amount: {generator: src, output: administration_overheads}}
+        depreciation: {debit: depreciation, credit: cash, amount: {generator: src, output: depreciation}}
+        finance: {debit: cost_of_finance, credit: cash, amount: {generator: src, output: cost_of_finance}}
+  schemes:
+    pnl:
+      ginning_revenue: revenue
+      raw_material_and_inputs: operating
+      labour_direct: operating
+      utilities: operating
+      maintenance_and_repair: operating
+      factory_overheads: operating
+      administration_overheads: operating
+      depreciation: depreciation
+      cost_of_finance: finance
+  cuts:
+    revenue: {kind: pnl, entity: ginnery, scheme: pnl, include: [revenue]}
+    operating_costs: {kind: pnl, entity: ginnery, scheme: pnl, include: [operating]}
+    production_cost: {kind: pnl, entity: ginnery, scheme: pnl, include: [operating, depreciation, finance]}
+  measures: {}
+figures:
+  total_operating_costs_year_3: {cut: operating_costs, sign: -1}
+  total_production_cost_year_3: {cut: production_cost, sign: -1}
+  revenue_at_full_capacity_derived: {cut: revenue, per: src.programme, scale: 0.001}
+  revenue_at_full_capacity_derived.first_operating_year_at_60pct: {cut: revenue, scale: 0.001}
+not_compared:
+  full_capacity_lines_tie_to_their_own_standalone_statements: "full-capacity (table year 7) lines: the case models year 3, and each equals a standalone-statement input itself (auxiliary materials, utilities)"
+  annual_production_cost_table: "the year 4, 7 and 10 columns are not inputs (the inputs carry the year-3 column, read above)"
+  total_investment_cost: "the investment items are not inputs"
+  total_investment_including_working_capital: "the investment items and working capital are not inputs"
+  building_and_civil_works: "the shed areas, costs and contingency are not inputs"
+  land_lease_cost: "the plot area, rate and lease term are not inputs"
+  manpower_annual_cost: "the fifteen salary lines are not inputs; the total is itself an input"
+  irr: "the profile prints no income statement or cash flow, and the inputs carry no year but year 3"
+  npv_at_10_5pct: "the profile prints no cash flow, and the inputs carry no year but year 3"
+  break_even_pct: "the fixed/variable split and sales behind the break-even are not printed"
+  payback_years: "the profile prints no cash flow"

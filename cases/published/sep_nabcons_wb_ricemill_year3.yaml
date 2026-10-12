@@ -1,0 +1,124 @@
+# Published case "sep_nabcons_wb_ricemill_year3": a West Bengal rice mill, 1,800 MT of paddy a
+# year installed, two thirds milled on own account and one third milled for customers, its third
+# year at 90% utilisation (NABCONS for the Government of West Bengal, Model Project on Rice
+# Milling, Sections XI-XIII, pp.7-11; cases/reference/published/sep_nabcons_wb_ricemill_year3.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). Two
+# books, one period each:
+#   * the installed capacity is the hourly capacity times hours a day times operating days; the
+#     outputs at full capacity are the own-account paddy (paddy_own_account_mt_at_100pct) times
+#     the milled rice, bran and husk yields, and the custom paddy times the rice yield: physical
+#     quantities no ledger holds, read as drivers;
+#   * `mill`, year 3: each output at capacity_utilisation_pct of its full-capacity tonnage, sold
+#     for cash at its printed price a MT (the custom line is the milling charge a MT of rice
+#     milled for a customer, whose bran and husk the customer takes away); the year's total
+#     expenditure (costs.total_expenditure_year3, printed as one undifferentiated total) paid and
+#     expensed; PBDIT is income less that expenditure;
+#   * `full`, the source's 100%-capacity sales column: the same four sales at full capacity.
+# Set aside, as the inputs do not carry what they need: profit after depreciation and interest,
+# tax and PADIT (the depreciation, interest and preliminary-expense lines and the 36% rate are
+# not inputs), the break-even (fixed costs), the average DSCR and the IRR (the five-year
+# projection and its financing).
+published: sep_nabcons_wb_ricemill_year3
+entity: mill
+plant: price_milled_rice_inr_per_mt
+case:
+  case: published-nabcons-ricemill-plateau
+  periods: 1
+  phases: [operate]
+  currency: INR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        capacity: installed_capacity_mt_paddy_per_hour * hours_per_day * operating_days_per_year
+        rice_full: paddy_own_account_mt_at_100pct * milled_rice_yield_pct / 100
+        custom_full: paddy_custom_milled_mt_at_100pct * milled_rice_yield_pct / 100
+        bran_full: paddy_own_account_mt_at_100pct * bran_yield_pct / 100
+        husk_full: paddy_own_account_mt_at_100pct * husk_yield_pct / 100
+        util: capacity_utilisation_pct / 100
+        rice_y3: rice_full * util * price_milled_rice_inr_per_mt
+        custom_y3: custom_full * util * price_custom_milling_charge_inr_per_mt
+        bran_y3: bran_full * util * price_bran_inr_per_mt
+        husk_y3: husk_full * util * price_husk_inr_per_mt
+        rice_100: rice_full * price_milled_rice_inr_per_mt
+        custom_100: custom_full * price_custom_milling_charge_inr_per_mt
+        bran_100: bran_full * price_bran_inr_per_mt
+        husk_100: husk_full * price_husk_inr_per_mt
+  opening:
+    mill:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    full:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year3:
+      kind: transfer
+      entity: mill
+      phase: operate
+      declare: {rice_sales: income, milling_charges: income, bran_sales: income, husk_sales: income, expenditure: expense}
+      moves:
+        rice: {debit: cash, credit: rice_sales, amount: {generator: src, output: rice_y3}}
+        custom: {debit: cash, credit: milling_charges, amount: {generator: src, output: custom_y3}}
+        bran: {debit: cash, credit: bran_sales, amount: {generator: src, output: bran_y3}}
+        husk: {debit: cash, credit: husk_sales, amount: {generator: src, output: husk_y3}}
+        expenditure: {debit: expenditure, credit: cash, amount: {generator: src, output: total_expenditure_year3}}
+    full_capacity:
+      kind: transfer
+      entity: full
+      phase: operate
+      declare: {rice_sales: income, milling_charges: income, bran_sales: income, husk_sales: income}
+      moves:
+        rice: {debit: cash, credit: rice_sales, amount: {generator: src, output: rice_100}}
+        custom: {debit: cash, credit: milling_charges, amount: {generator: src, output: custom_100}}
+        bran: {debit: cash, credit: bran_sales, amount: {generator: src, output: bran_100}}
+        husk: {debit: cash, credit: husk_sales, amount: {generator: src, output: husk_100}}
+  schemes:
+    pnl:
+      rice_sales: rice
+      milling_charges: custom
+      bran_sales: bran
+      husk_sales: husk
+      expenditure: expenditure
+  cuts:
+    rice: {kind: pnl, entity: mill, scheme: pnl, include: [rice]}
+    custom: {kind: pnl, entity: mill, scheme: pnl, include: [custom]}
+    bran: {kind: pnl, entity: mill, scheme: pnl, include: [bran]}
+    husk: {kind: pnl, entity: mill, scheme: pnl, include: [husk]}
+    income: {kind: pnl, entity: mill, scheme: pnl, include: [rice, custom, bran, husk]}
+    expenditure: {kind: pnl, entity: mill, scheme: pnl, include: [expenditure]}
+    pbdit: {kind: pnl, entity: mill, scheme: pnl, include: [rice, custom, bran, husk, expenditure]}
+    full_sales: {kind: pnl, entity: full, scheme: pnl, include: [rice, custom, bran, husk]}
+  measures: {}
+figures:
+  installed_capacity_mt_paddy_per_year: {driver: src.capacity}
+  milled_rice_mt_at_100pct: {driver: src.rice_full}
+  custom_milled_rice_mt_at_100pct: {driver: src.custom_full}
+  bran_mt_at_100pct: {driver: src.bran_full}
+  husk_mt_at_100pct: {driver: src.husk_full}
+  total_sales_at_100pct_inr: {cut: full_sales}
+  milled_rice_revenue_inr_year3: {cut: rice}
+  custom_milling_revenue_inr_year3: {cut: custom}
+  bran_revenue_inr_year3: {cut: bran}
+  husk_revenue_inr_year3: {cut: husk}
+  total_income_inr_year3: {cut: income}
+  total_expenditure_inr_year3: {cut: expenditure, sign: -1}
+  pbdit_inr_year3: {cut: pbdit}
+not_compared:
+  profit_after_dep_and_interest_inr_year3: &below >-
+    below PBDIT: the depreciation, term-loan and working-capital interest and preliminary-expense
+    lines (5.55, 7.27, 4.12, 0.40 lakh) and the 36% tax rate are printed, but not among the inputs
+  tax_inr_year3: *below
+  padit_inr_year3: *below
+  break_even_pct_year3: >-
+    needs the year's fixed and variable cost split, which the inputs do not carry (the
+    expenditure is one undifferentiated total)
+  average_dscr: &proj >-
+    a five-year figure: needs the projection's other years, the term loan and its repayments,
+    none among the inputs
+  irr_pct: *proj

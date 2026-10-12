@@ -1,0 +1,111 @@
+# Published case "bld_melia_volkensii_kfs_guide": a one-hectare Melia volkensii woodlot at 5m x 5m
+# spacing, intercropped with cow peas, sold as sawn timber, over its 18-year rotation (KFS / KEFRI /
+# JICA guide 2018, Table 1 and Appendix 1(i); cases/reference/published/bld_melia_volkensii_kfs_guide.yaml).
+#
+# The source's checked totals are for the whole rotation, undiscounted, and the oracle carries no
+# year-by-year timing, so the rotation is one period. Every amount is a published input by name
+# (generator `src`):
+#   * the five output lines (cow-pea grain over six seasons, offcuts, the two thinnings' proceeds,
+#     the final crop of sawn timber), each sold for cash;
+#   * the source's cost sections: (a) inputs (seedlings, cow-pea seed, pesticides, DAP fertiliser),
+#     (b) labour on the trees and (c) labour on the cow peas (each its printed section total),
+#     (d) seedling transport and fencing; all paid and expensed over the rotation, as the source's
+#     own "Total expenditure" counts them. The fence is counted as the source counts it, not
+#     capitalised; the source's memo line for sawing the timber sits outside its section (b)
+#     total and is not posted (its notes);
+#   * no land, financing or tax: the source carries none.
+# gross_income_ksh (mapped to revenue), total_expenditure_ksh (cost_of_sales) and
+# net_income_18years_ksh (gross_margin) are the rotation's sales, costs and profit.
+published: bld_melia_volkensii_kfs_guide
+entity: farm
+plant: final_crop_proceeds_sawn_timber_200_trees
+case:
+  case: published-bld-melia-volkensii-kfs-guide
+  periods: 1
+  phases: [operate]
+  currency: KES
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        lots: 1                                  # each output line is printed as a rotation total
+        inputs_a: seedling + cow_peas_seed + pesticides + fertilizer_dap
+        other_d: transport_of_seedling + fencing
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    cow_peas:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: lots}, price: {generator: src, output: cow_peas_grain_6_seasons},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    offcuts:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: lots}, price: {generator: src, output: sale_of_offcuts},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    thinning_1:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: lots}, price: {generator: src, output: proceeds_1st_thinning_firewood_poles},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    thinning_2:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: lots}, price: {generator: src, output: proceeds_2nd_thinning_timber},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    final_crop:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: lots}, price: {generator: src, output: final_crop_proceeds_sawn_timber_200_trees},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    inputs:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: inputs_a}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    melia_labour:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: melia_labour_section_b}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    cowpea_labour:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: cowpeas_labour_section_c}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    other:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: other_d}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      cow_peas.revenue: revenue
+      offcuts.revenue: revenue
+      thinning_1.revenue: revenue
+      thinning_2.revenue: revenue
+      final_crop.revenue: revenue
+      inputs.expense: expenditure
+      melia_labour.expense: expenditure
+      cowpea_labour.expense: expenditure
+      other.expense: expenditure
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    expenditure: {kind: pnl, entity: farm, scheme: pnl, include: [expenditure]}
+    net_income: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, expenditure]}
+  measures: {}
+figures:
+  gross_income_ksh: {cut: revenue}
+  total_expenditure_ksh: {cut: expenditure, sign: -1}
+  net_income_18years_ksh: {cut: net_income}
+not_compared:
+  round_wood_5x5m_net_income_18years_ksh: "the round-wood option at 5m x 5m, another column of Table 1 whose lines the oracle does not transcribe"
+  round_wood_10x5m_net_income_18years_ksh: "the round-wood option at 10m x 5m, another column of Table 1 whose lines the oracle does not transcribe"
+  timber_10x5m_net_income_18years_ksh: "the sawn-timber option at 10m x 5m, another column of Table 1 whose lines the oracle does not transcribe"

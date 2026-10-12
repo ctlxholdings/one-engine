@@ -1,0 +1,335 @@
+# Miniature — Innowatio and the Humanitas hospitals (Milan and Bergamo, Italy), shared-savings EPC with White Certificates, expressed at ESCO LOD 0.
+# Batch 7, group J, reviewed final (X and Y reconciled, 3 Oct 2026; decisions in ../decisions.json). Evidence: one IEA report, cited by line of the local text (grep -n numbering), quotes <= 25 words (file not under input-licensed/).
+# Every fact carries its status: stated / inferred / default / generic / unstated.
+
+miniature: innowatio_humanitas_hospitals
+lod: 0
+case: batch7.T04
+case_kind: deal   # one EUR 6 million project in two hospitals of one private group, one EPC
+in_scope: true
+in_scope_why: "Innowatio 'identified, designed, financed and coordinated the installation' of efficiency measures and is paid by sharing the savings: 'Innowatio receives half of the monthly energy savings'. The client pays out of measured savings, so payment_basis is savings and this is an ESCO deal. Evidence: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4424-4425 | 'Innowatio identified, designed, financed and coordinated the installation of multiple energy efficiency improvements' ; der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456-4457 | 'Innowatio receives half of the monthly energy savings and half of the White Certificates revenues generated'"
+
+tests_unused:
+- item: certificate_obligated_party
+  kind: role
+  used: true
+  reason: "The second revenue stream is White Certificates. The buyers are the obliged Italian distributors, reached through the certificate market, and the source names none: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4421-4422 | 'White Certificates scheme which obligates Italian energy distributors to meet' ; der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6283-6286 | 'purchase energy efficiency certificates through White Certificates markets operated by the Italian' . Encoded as a generic party. The source never says who bought Innowatio's 900 certificates, so the buyer is the scheme's obligated class, status generic"
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "No receivable is sold and no vehicle appears in the case text"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No hedge or lender is named; the source says only that Innowatio financed the measures"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "The client is a private hospital group; no guarantee of its payments is mentioned"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Title sits with Innowatio during the term (buy-out of its depreciated plant); no third-party owner"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "Pay is a share of savings, not an availability or comfort level"
+
+single_source_exercised:   # terms with one source or none before this batch, used by this deal
+- term: certificate_obligated_party
+  kind: role
+  evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4421-4422 | 'White Certificates scheme which obligates Italian energy distributors to meet'"
+  status: generic
+- term: energy_auditor
+  kind: role
+  evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4445 | 'Innowatio conducted energy audits and cost‐benefit analysis'"
+  status: stated
+
+source:
+  id: IEA13
+  title: Energy Provider-Delivered Energy Efficiency, case study 23, Innowatio (Table 30)
+  publisher: OECD/IEA, 2013 (A global stock-taking based on case studies)
+  passage: "Table 30 and text, local text lines 4390-4486; summary at 1140-1148; Italian obligation scheme described again at 6279-6293 (Studio Bartucci case, generic)"
+  documents:
+    IEA13: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt"
+  oracle: "none; not a published validation target"
+  context:
+  - "Italian energy authorities administer the White Certificates: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4463-4464 | 'Innowatio takes charge of applying for the White Certificates administered by the Italian' . Rule source, no promise in the EPC"
+  - "Energy market operator runs the certificate market: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6285-6286 | 'markets operated by the Italian' . Market infrastructure, outside the deal"
+  - "Technology providers: Innowatio 'specializes in matching up technology providers who can deliver the plant and process improvements identified for a given client' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4420-4421). A description of Innowatio's business in general; no provider, contract or flow is described for the Humanitas project, so context, not a party (batch-6 H ruling on unnamed installers)"
+  - "Italian regulator (AEEG) sets the distributors' targets: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6282-6283 | 'targets determined by the Italian energy regulator' . Rule source"
+  notes:
+  - "Humanitas is a group: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4423-4424 | 'two different hospitals of the privately‐owned Humanitas Group' . The contracting legal entity is not named, so the client party is case-local"
+  - "The document gives no EPC date. Programme 'Ongoing since February 2011' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4403 | 'Ongoing since February 2011'); the White Certificate price quoted is for 2011; the project life is 10 years (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4462 | 'over the 10 year life of the')"
+  - "Innowatio does its own energy audit, so one party carries both partner_esco and energy_auditor"
+
+jurisdiction:
+  country: Italy
+  iso: IT
+  eu_member: true
+  client_eu_general_government_at_close: false
+  as_of: "EPC date not stated; programme since February 2011, first-year results reported"
+  status: stated
+  why: "Italy is an EU member; the client is a 'privately‐owned' group (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4423-4424 | 'privately‐owned Humanitas Group'), so not general government and C1 does not apply"
+
+core_v7:
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:
+  humanitas:
+    role: host
+    groups: [demand]
+    status: stated
+    name: Humanitas Group (two privately owned hospitals, Milan and Bergamo; 900 beds, 28 operating rooms)
+    text: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4423-4424 | 'two different hospitals of the privately‐owned Humanitas Group' ; der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4435-4436 | 'two hospitals in Milan and Bergamo with' ; engineers and managers of both sides shaped the portfolio over a six-month planning period (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4437-4443 | 'over a six month')"
+  innowatio:
+    entity: innowatio
+    role: [partner_esco, energy_auditor]
+    groups: [partner, delivery, verification]
+    status: stated
+    name: Innowatio (Italian ESCO)
+    text: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4418 | 'Innowatio is an Italian ESCO providing energy management services to large energy users.' ; audit: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4445 | 'Innowatio conducted energy audits and cost‐benefit analysis' ; finance: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4447 | 'which were financed by Innowatio:'"
+  certificate_buyers:
+    role: certificate_obligated_party
+    groups: [energy, public]
+    status: generic
+    name: Obliged Italian energy distributors (White Certificate buyers, not named)
+    text: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4421-4422 | 'White Certificates scheme which obligates Italian energy distributors to meet' ; der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4469-4470 | 'Energy providers in Italy are obligated to self‐produce or purchase increasing' ; der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6285-6286 | 'markets operated by the Italian'"
+
+contract:
+  epc:
+    core: contract
+    parties: [humanitas, innowatio]
+    status: stated
+    note: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4454-4455 | 'Innowatio and Humanitas entered into an energy performance contract (EPC) projecting' . Binding and settled by default; it projects 'expected energy and demand savings, price baselines, and WhC revenues' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4455 | 'expected energy and demand savings, price baselines, and WhC revenues'). Term: the benefits are counted over a 10 year project life (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4462 | 'over the 10 year life of the')"
+  certificate_sale:
+    core: contract
+    parties: [innowatio, certificate_buyers]
+    status: generic
+    note: "the certificate market (spot or over the counter) is where the revenue arises: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6291-6293 | 'high levels of certificate trading through the spot and over‐the‐counter markets' . No contract with a named buyer is described"
+
+commitments:
+  c1:
+    family: performance_promise
+    from: innowatio
+    to: humanitas
+    status: stated
+    what: "audit, design, finance and coordinate the installation of the measures: comfort levels, chilled-water cooling with absorption chillers, LED and occupancy sensors, and a CHP revamp 'yet to be executed' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4453 | 'Revamping of existing CHP plants (yet to be executed);'). Shortfall make-good, if any, sits inside this promise (not described). der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4424-4425 | 'Innowatio identified, designed, financed and coordinated the installation of multiple energy efficiency improvements'"
+    established_by: epc
+  c2:
+    family: payment_promise
+    from: humanitas
+    to: innowatio
+    status: stated
+    depends_on_savings: true   # half of the monthly savings
+    savings_arrangement: shared   # half of the monthly savings (IEA13 L4456-4457)
+    what: "'half of the monthly energy savings' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456-4457 | 'Innowatio receives half of the monthly energy savings and half of the White Certificates revenues generated'). The certificate half is not a payment by Humanitas: Innowatio applies for and sells the certificates (c4, c5) and passes half of that revenue to Humanitas (c6)"
+    established_by: epc
+  c3:
+    family: determination_promise
+    from: [innowatio, humanitas]
+    to: [innowatio, humanitas]
+    status: inferred
+    determines: savings   # monthly savings against price baselines
+    what: "a monthly savings figure has to be established against 'price baselines' and an M&V approach: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4477-4478 | 'Contract, including the baseline price and savings estimates and M&V approach.' ; first-year result reported as 'energy savings of 8%, energy bill reductions of 12.5%' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4460-4461 | 'savings of 8%, energy bill reductions of 12.5%, and produced 900 White Certificates.'). Who measures is not stated; both parties named"
+    established_by: epc
+  c4:
+    family: performance_promise
+    from: innowatio
+    to: certificate_buyers
+    status: generic
+    what: "Innowatio applies for and originates the certificates: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4463-4464 | 'Innowatio takes charge of applying for the White Certificates administered by the Italian' ; 900 certificates produced in year one (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4461 | 'savings of 8%, energy bill reductions of 12.5%, and produced 900 White Certificates.'). Delivery to a buyer is inferred from the market (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6288-6289 | 'rely on the revenues provided by originating White')"
+    established_by: certificate_sale
+  c5:
+    family: payment_promise
+    from: certificate_buyers
+    to: innowatio
+    status: generic
+    what: "price of the certificates: 'In 2011 the market value of 1 toe, or 1 TEE, is about EUR 100.' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4464 | 'In 2011 the market value of 1 toe, or 1 TEE, is about EUR 100.'). Obliged distributors 'purchase' certificates (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6283-6286 | 'purchase energy efficiency certificates through White Certificates markets operated by the Italian'). The buyer of Innowatio's own certificates is not named, so the payer is the obligated class (generic); Innowatio is the payee as the applicant (c4)"
+    established_by: certificate_sale
+  c6:
+    family: payment_promise
+    from: innowatio
+    to: humanitas
+    status: inferred
+    what: "half of the White Certificate revenues: Innowatio is the applicant (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4463 | 'Innowatio takes charge of applying for the White Certificates') and shares the revenues with the client (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4426-4427 | 'sharing the operations cost savings and White Certificate (WhC) revenues with Humanitas through an Energy Performance Contract'). The source states the half-split (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456-4457) but not the direction of the flow; Innowatio-to-Humanitas is inferred from the applicant and from 'sharing ... with Humanitas'"
+    established_by: epc
+
+settings:
+  payment_basis:
+    value: savings
+    status: stated
+    why: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456-4457 | 'Innowatio receives half of the monthly energy savings and half of the White Certificates revenues generated' . Not supply (no energy sold) and not asset (not a fixed price)"
+  client_sector:
+    value: private
+    status: stated
+    why: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4423-4424 | 'privately‐owned Humanitas Group'"
+  partner_form:
+    value: corporate
+    status: default
+    why: "Innowatio is an operating ESCO with other clients (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4432-4434 | 'Innowatio works with large'); no deal vehicle mentioned"
+  borrower:
+    value: partner
+    status: default
+    why: "Innowatio financed the measures (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4447 | 'which were financed by Innowatio:'); no lender or equity is named and the source does not say own funds, so the ENCODING fallback applies (borrower partner). Alternative: none, if Innowatio used cash"
+  receivable_holder:
+    value: partner
+    status: default
+    why: "no assignment of Humanitas's payments is mentioned"
+  collection_placement:
+    value: operator_own
+    status: default
+    why: not stated
+  aggregation:
+    value: none
+    status: inferred
+    why: "one client group, one EPC over two hospitals; the sibling 'portfolio' wording is Innowatio's energy portfolio approach, not a pool of clients"
+  debt_seniority:
+    value: senior
+    status: default
+    why: not stated
+  assignment_recourse:
+    value: not_applicable
+    status: inferred
+    why: follows from receivable_holder = partner
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "monthly savings are shared (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456 | 'Innowatio receives half of the monthly energy savings') against 'price baselines' and an M&V approach (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4477-4478 | 'Contract, including the baseline price and savings estimates and M&V approach.'); nothing says stipulated at signing"
+  grant_recipient:
+    value: none
+    status: inferred
+    why: "the extra revenue is a tradable certificate, not a grant; no grant is mentioned (the programme row lists 'financial incentives' in general, der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4401 | 'Advice and assistance, financial incentives, comprehensive')"
+  asset_owner:
+    value: partner
+    status: inferred
+    why: "the EPC lets the customer 'change partners by buying‐out Innowatio’s depreciated plant investments' (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4458-4459 | 'partners by buying‐out Innowatio’s depreciated plant investments.'): Innowatio holds title until bought out"
+  bill_custody:
+    value: client
+    status: default
+    why: "not stated; the bill reduction of 12.5% is on the hospitals' bill (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4461 | 'savings of 8%, energy bill reductions of 12.5%, and produced 900 White Certificates.'). Innowatio also sources energy under its wider contract (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4418-4419 | 'sourcing of energy requirements'), so provider is possible"
+
+rules:
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU general government at close}
+    rule: "NPV at financial close of guaranteed savings over the EPC >= NPV of operational payments + non-repayable government financing, else ON the government balance sheet (E15 L2578-2582)"
+    applies_here: false
+    this_case: "private client"
+    source: E15 L2576-2582, L6930-6943
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: not client}
+    rule: "service agreement or lease under IFRS 16, when a private client pays for assets someone else owns"
+    applies_here: true
+    this_case: "trigger met on recorded values (private client, Innowatio holds title during the term); outcome undetermined: payments are a share of variable savings, the source gives no accounting treatment"
+    source: RULINGS.md ruling 7; E02 L3293-3295
+  white_certificates_obligation:
+    scope: external-sectoral
+    applies_when: {jurisdiction: Italy}
+    rule: "Italian law obliges electricity and gas distributors to reach efficiency targets set by the regulator and lets them buy certificates: der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:6281-6283 | 'Italian law requires electricity and natural gas distributors to pursue end‐use' ; each certificate equals one tonne of oil equivalent (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4487 | 'TEE stands for titoli di efficienza energetica, and is equal to a toe')"
+    applies_here: true
+    source: IEA13 lines 6279-6293, 4466-4470
+  epc_buyback:
+    scope: contractual
+    rule: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4457-4458 | 'The EPC has a buyback provision regarding energy efficiency investments with a payback period longer than three years' : the customer may change partners by buying out the depreciated plant. Termination compensation is LOD 1"
+    applies_here: true
+    source: IEA13 lines 4457-4459
+
+numbers:
+  project_cost: "EUR 6 Million case study project cost (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4410 | 'EUR 6 Million case study project cost')"
+  annual_savings: "1900 toe annual savings (23 GWh) (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4411 | '1900 toe annual savings (23 GWh)')"
+  first_year_energy_savings_pct: "8% (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4461 | 'savings of 8%, energy bill reductions of 12.5%, and produced 900 White Certificates.')"
+  first_year_bill_reduction_pct: "12.5% (same line)"
+  first_year_certificates: "900 White Certificates (same line)"
+  certificate_value: "about EUR 100 per toe (TEE) in 2011 (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4464 | 'is about EUR 100.')"
+  share: "half of monthly energy savings and half of White Certificate revenues to Innowatio (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456-4457)"
+  bill_savings_share_of_benefits: "almost 90% over the 10 year life of the project (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4462 | 'almost 90% over the 10 year life of the')"
+  hospitals: "2 hospitals, 900 beds, 28 operating rooms (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4435-4436)"
+  buyback_threshold: "payback period longer than three years (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4457-4458)"
+  planning_period: "six months (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4437 | 'shaped jointly by engineers and managers from both Innowatio and Humanitas over a six month')"
+  derived:
+    energy_per_toe: "23 GWh / 1900 toe = 12.1 MWh per toe. The source gives no conversion factor; the usual 11.63 MWh per toe (outside the source) would give 22.1 GWh, 4% below the 23 printed. Does not tie exactly"
+    first_year_certificate_value_eur: "900 x EUR 100 = EUR 90,000 at the quoted 2011 price. The source does not say the certificates sold at that price; for orientation only"
+    certificates_vs_annual_savings: "900 certificates (= 900 toe, der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4487) against 1900 toe annual savings: 47%. Year-one figure against a full-run-rate savings figure: not comparable"
+    savings_per_cost: "1900 toe per year on EUR 6 million: EUR 3,158 per toe-year of savings. For orientation, no source comparator"
+
+reciprocity:
+  humanitas: {gives: [c2, c3], receives: [c1, c3, c6], one_way: false}
+  innowatio: {gives: [c1, c3, c4, c6], receives: [c2, c3, c5], one_way: false}
+  certificate_buyers: {gives: [c5], receives: [c4], one_way: false}
+
+lod0_gaps:
+- kind: certificate_revenue_payer_and_split
+  description: "The source says Innowatio 'receives half' of the White Certificate revenues and shares them 'with Humanitas'. It does not say who sells the certificates or which way the half-share flows. Written as c5 (buyers to Innowatio, generic) and c6 (Innowatio passes half to Humanitas, inferred from Innowatio being the applicant, L4463, and from L4426-4427)"
+  classification: evidence gap
+- kind: certificate_buyer_unnamed
+  description: "certificate_obligated_party is used as a generic class. The certificates are traded on a market; no individual obliged party buys Innowatio's certificates in the text"
+  classification: evidence gap
+- kind: buyback_option
+  description: "customer's right to buy out the plant where payback exceeds three years is a termination term"
+  classification: below LOD 0 (termination compensation, LOD 1)
+- kind: baseline_and_mv_terms
+  description: "price baselines, savings baseline and M&V approach exist (der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4477-4478) but are not published"
+  classification: below LOD 0
+
+conventions_applied:
+- id: F06
+  title: one_way form
+  convention: "a party whose counter-promise exists only by duality is one_way with a reason; the counter-promise is recorded as unstated"
+  origin: verdict rule
+  applied_here: "no one-way party: every party gives and receives (technology providers moved to context, see decisions.json)"
+- id: F13
+  title: role list, home role first
+  convention: "a party may hold several roles"
+  origin: verdict rule
+  applied_here: "innowatio [partner_esco, energy_auditor]"
+- id: F21
+  title: determination_promise required
+  convention: "a payment computed on savings needs a determining party; from = the parties the source names"
+  origin: verdict rule
+  applied_here: "c3 from Innowatio and Humanitas, inferred"
+- id: R14
+  title: scope by payment_basis
+  convention: "every efficiency deal counts; ESCO or not is read from payment_basis (ruling 14)"
+  origin: RULINGS.md ruling 14
+  applied_here: "payment_basis savings: an ESCO deal"
+- id: R17
+  title: agreements binding and settled by default
+  convention: "binding: non_binding or terms_settled: unsettled only when the source says so (ruling 17)"
+  origin: RULINGS.md ruling 17
+  applied_here: "no flag: the EPC was entered into"
+- id: R18
+  title: identity per legal entity
+  convention: "entity, entity_new or entity_local on every party (ruling 18)"
+  origin: RULINGS.md ruling 18
+  applied_here: "innowatio entity_new; humanitas and certificate_buyers entity_local"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, energy_auditor, certificate_obligated_party]
+  roles_count: 4 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 2, inferred: 5, generic: 0, default: 6}
+  commitments_by_status: {stated: 2, inferred: 2, generic: 2, unstated: 0}
+  one_way_parties: []
+  parties_count: 3
+  commitments_count: 6
+  below_lod0: {lod1_adds: 'EPC signing, installation, CHP revamp (not yet executed), monthly savings statements, certificate
+      application and sale, buy-out of depreciated plant', lod2_adds: 'baselines, price baselines, savings split by month, M&V
+      method, certificate price mechanism, buy-out price formula'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R6, driver: law, bearer: [partner_esco, host], share: shared, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4456-4457 | Innowatio receives half of the monthly energy savings and half of the White Certificates revenues generated ; der-vpp/spec-run/esco-moneyflow/input/iea-energy-provider-delivered-ee-2013.txt:4467-4469 | creating the additional revenues from White Certificates that make the EPC more desirable for both energy users and ESCOs", why: "the White Certificate revenue is a scheme-driven second stream that both sides split half and half; a change in the scheme or the certificate value therefore reaches both. The source does not discuss change-in-law risk, so inferred. Replaces the flagged default (client)"}
+  # reviewer: X's row kept, Y wrote []. Not written: R1 to R5 and R6 classification and R7 follow the settings (savings measured, Partner financed, client keeps the bill); the source states no allocation for them. The EPC fixes 'price baselines' (L4455) but does not say who bears a price move

@@ -1,0 +1,469 @@
+# Miniature — the SIDBI PRSF deemed-savings ESPC (India) expressed at ESCO LOD 0
+#
+# Purpose: validation case for LOD 0 (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Same shape as bytom-lod0.yaml. Every fact carries its status: stated / inferred / default / generic / unstated.
+# Nothing invented. The primary source is a CONTRACT TEMPLATE (bracketed options, no deal figures), not a closed deal;
+# the PRSF guarantee around it comes from E01's PRSF box and E05 (generic to the facility, not to any one contract).
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: deemed_india
+lod: 0
+case: validation_targets.published.PRSF_deemed_savings_template
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E47
+  title: Energy Savings Performance Contract (ESPC) — template for Deemed Savings Scheme / annuity-based deemed savings scheme
+  publisher: SIDBI (Partial Risk Sharing Facility for Energy Efficiency, World Bank-supported), India
+  passage: whole template (corpus input/sidbi-prsf-deemed-savings.txt L1-566); key clauses L4 (template notice), L37-39 (parties), L45-53 (recitals), L66, L82-84, L103-110, L126-142, L165-177, L209, L225, L275-279, L289, L362-367, L377, L395, L451-461, L484, L510-535
+  supporting:
+  - id: E01
+    file: input/unep-ccc-global-esco-market-2025.txt L1279-1294
+    what: 'PRSF: USD 37m risk-sharing component managed by SIDBI + USD 6m TA; partial credit guarantees to PFIs on loans to ESCOs and client agencies; 77 projects / USD 94m / USD 41m guarantees (Dec 2023); BEE escrow mechanism'
+  - id: E05
+    file: input/gesco-financing-mechanisms-note.txt L12
+    what: "credit/risk guarantees to commercial FIs: 'World Bank PRSF (India)'"
+  - id: E16
+    file: input/wb-super-escos-emerging-possibilities-2018.txt L484-504
+    what: 'EESL SLNP: deemed-savings M&V approach as the basis for ESPC-based contracts (generic support for savings_basis = deemed)'
+  oracle: 'none — no numeric oracle exists for a template (oracle-matrix: PRSF is a structural bed only)'
+  not_in_corpus: "corrected (F16): EESL street lighting IS in the corpus — E16 L484-504 describes EESL's Street Lighting National Program ('the entire up-front investment for street lights is made by EESL and recovered from the energy savings of municipalities ... using the deemed savings M&V approach') and E09 L592-606 EESL's establishment; used below only as a supporting generic passage for savings_basis = deemed (a public, municipal, super-ESCO instance of the same basis), not as this template's data"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: India
+  iso: IN
+  eu_member: false
+  client_eu_general_government: false
+  status: stated
+  why: "parties are companies 'incorporated under the provisions of the Companies Act, 1956/2013' (L37, L39); SIDBI and the State Bank of India base rate (L138, L171); a SIDBI PRSF template (L4)"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the ESPC establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  client:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'[a company incorporated under the provisions of the Companies Act, 1956/2013] or commercial establishment/society' (L39); 'The Client owns and operates the Facilities' (L45); template placeholder"
+  esco:
+    role: [partner_esco, energy_auditor, originator_developer]
+    groups: [partner, delivery, verification]
+    status: stated
+    text: "'[a company incorporated under the provisions of the Companies Act, 1956/2013]' (L37); also performed the pre-contract Technical Energy Audit and Project Development Plan — 'The Client has selected the ESCO to perform a technical energy audit and the ESCO has delivered ... a Technical Energy Audit Report and Project Development Plan' (Recital C, L49) — so it carries energy_auditor and originator_developer as well (role list, F13)"
+  lender:
+    role: lender
+    groups: [capital]
+    status: stated
+    text: "'the [Client]/[ESCO] shall execute loan and security agreements with its lenders' (L103); 'Client's Lender' and 'ESCO's Lender' (L138, L161); 'third party lenders' in Debt Due (L362); E01: 'Participating Financial Institutions (PFIs)' (L1282); unnamed"
+  prsf:
+    role: guarantee_facility
+    groups: [public, risk]
+    status: stated
+    name: Partial Risk Sharing Facility for Energy Efficiency (PRSF)
+    text: "'SIDBI / PRSF Project website' (L377); E01: 'PRSF is a risk-sharing mechanism designed to mitigate client payment risks for ESCO projects ... provides partial credit guarantees to PFIs' (L1280-1287); 'USD 37 million risk-sharing component' (L1285). The facility is the party that guarantees; its manager is a separate party (F10)"
+  sidbi:
+    entity: sidbi
+    role: fund_manager
+    groups: [capital]
+    status: stated
+    name: Small Industries Development Bank of India (SIDBI)
+    text: "'the Small Industries Development Bank of India' with inspection rights (L138, L161); E01: the risk-sharing component is 'managed by SIDBI' (L1285) — fund_manager of the PRSF (F10); SIDBI is also named among the lenders whose loans PRSF covers (E01 L1282), a lender reading not taken here"
+  world_bank:
+    entity: ibrd
+    role: ifi_dfi
+    groups: [public, capital]
+    status: stated
+    text: "'The ESCO shall permit the World Bank ... to inspect' (L138, L161); 'International Bank for Reconstruction and Development, including in its capacity as implementing agency of the Global Environment Facility and/or the Clean Technology Fund' (L395); E05: 'World Bank PRSF (India)'"
+  insurer:
+    role: insurer
+    groups: [risk]
+    status: stated
+    text: "'The ESCO shall take relevant insurance cover for all the equipment covered under the ESPC ... Workmen Compensation Insurance' (L142); unnamed"
+  arbiter:
+    role: arbiter
+    groups: [verification]
+    status: stated
+    text: "'referred to arbitration, which shall be adjudicated by a sole arbitrator' (L275); Arbitration and Conciliation Act, 1996 (L277); 'final and binding' (L279)"
+
+contract:   # the agreements that establish the commitments
+  espc:
+    core: contract
+    parties: [client, esco]
+    term_years: "[●] years from the Commencement Date (L78); '----' Years (L84, L493)"
+    status: stated
+  loan_and_security:
+    core: contract
+    parties: [esco, lender]
+    status: inferred
+    text: "'loan and security agreements with its lenders' (L103) — Closing is a condition of the ESPC; the borrower bracket [Client]/[ESCO] is resolved to the ESCO (see settings.borrower)"
+  prsf_guarantee:
+    core: contract
+    parties: [prsf, lender]
+    status: generic
+    text: 'E01 L1282-1286: risk coverage for loans granted by PFIs to ESCOs and client agencies; the guarantee contract itself is not in the corpus'
+  facility_management:
+    core: contract
+    parties: [sidbi, prsf]
+    status: inferred
+    text: "'managed by SIDBI' (E01 L1285) implies a management arrangement; terms not in the corpus"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: client
+    status: stated
+    what: "design, procure, [install], [finance], maintain, test the Energy Saving Equipment (L66); ECMs that 'will lead to deemed energy saving' (L126) — the deemed saving is 'minimum energy performance guaranteed under the project' (L367); keep at least 95% of each inventory in workable condition throughout the contract period (L108); all services, maintenance and repairs 'without any additional cost to the Client' during the ESCO Maintenance Period (L128); equipment warranties new and fit for purpose (L89); annual performance report (L173); transfer of ownership free of encumbrances when the lenders' security is released (L177)"
+    established_by: espc
+  c2:
+    family: payment_promise
+    from: client
+    to: esco
+    status: stated
+    depends_on_savings: false   # computed on deemed savings fixed at signing, paid without dispute (L459)
+    what: "'Pay-out to ESCO annually', quarterly or monthly, per Schedule G (L526-535), computed on deemed energy cost savings — 'shall form the basis of payment by the client to the ESCO without dispute' (L459); invoices payable within [30] days, default interest at SBI base rate + [●]% (L171); on client default or sale of the premises to an unwilling buyer, [120%] of the ESCO's capital expenditure [plus the Debt Due] (L165, L225)"
+    established_by: espc
+  c3:
+    family: determination_promise
+    from: [client, esco]
+    to: [client, esco]
+    status: stated
+    determines: savings   # deemed savings stipulated at signing (L366-367)
+    what: "the deemed savings are stipulated at signing: 'pre-determined, validated but normative estimates ... mutually agreed energy saving finalised at the time of signing' (L366-367); AES = (W1 - W2) x Hrs x N (L484), CS = AES x T (L510); reworked only 'for reasons beyond control ... on mutual understanding' (L122, L540)"
+    established_by: espc
+  c4:
+    family: determination_promise
+    from: client
+    to: esco
+    status: stated
+    determines: acceptance   # Certificate of Acceptance (L82, L110)
+    what: "Certificate of Acceptance fixing the Commencement Date after the ESCO's Completion Notice and Performance Tests (L82, L110); deemed issued if the client is silent for [●] days (L112)"
+    established_by: espc
+  c5:
+    family: funding_promise
+    from: lender
+    to: esco
+    status: inferred
+    funding_instrument: loan   # loan and security agreements (L103)
+    what: "loan under 'loan and security agreements' executed at Closing (L103); 'debt provided by third party lenders ... for financing the cost of the ECMs and the Energy Saving Equipment' (L362); the template leaves [Client]/[ESCO] open — ESCO chosen (settings.borrower)"
+    established_by: loan_and_security
+  c6:
+    family: payment_promise
+    from: esco
+    to: lender
+    status: inferred
+    what: "debt service: 'the principal ... and all accrued interest, financing fees and charges payable under the financing agreements' (L362); follows from c5"
+    established_by: loan_and_security
+  c7:
+    family: performance_promise
+    from: esco
+    to: lender
+    status: stated
+    what: "security interests over the Energy Saving Equipment in favour of its lenders (L177, L209) and, optionally, 'assignment of its payments and interests under this ESPC to its lenders' (L289, bracketed)"
+    established_by: loan_and_security
+  c8:
+    family: risk_promise
+    covers: [R5a, R5b]
+    from: prsf
+    to: lender
+    status: generic
+    cover_kind: guarantee   # partial credit guarantee (E01 L1286-1287)
+    what: "partial credit guarantee 'covering a share of default risk associated with loans for eligible ESCO projects' (E01 L1286-1287); 'designed to mitigate client payment risks for ESCO projects' (E01 L1280-1281)"
+    established_by: prsf_guarantee
+  c9:
+    family: payment_promise
+    from: unstated
+    to: prsf
+    status: unstated
+    what: 'counter-promise required by duality; source silent; candidates: lender or ESCO; no guarantee fee is stated anywhere in the corpus, and no pass-through of advantage is stated either, so the fee is recorded unstated rather than treated as benefit-like (F20)'
+  c10:
+    family: performance_promise
+    from: [esco, client]
+    to: [world_bank, sidbi, lender]
+    status: stated
+    what: "right of access: 'permit the World Bank, the Small Industries Development Bank of India, and [the other party's] Lender or their nominees to inspect the tasks/works ... and provide such relevant documents and records' (L138, L161); compliance with the ERMF and the Anti-Corruption Guidelines (L132, L159)"
+    established_by: espc
+  c11:
+    family: funding_promise
+    from: world_bank
+    to: prsf
+    status: generic
+    what: "capitalisation of the PRSF (E05 L12 'World Bank PRSF'; E01 L1285 'USD 37 million risk-sharing component managed by SIDBI and a USD 6 million technical assistance component'); whether loan (IBRD) or grant (GEF/CTF, L395) is not stated — if grant, benefit_promise"
+  c12:
+    family: risk_promise
+    covers: [R2]
+    from: insurer
+    to: esco
+    status: stated
+    cover_kind: insurance   # insurance cover for the equipment (L142)
+    what: insurance cover for all equipment under the ESPC for the entire contract period and Workmen Compensation Insurance (L142)
+  c13:
+    family: payment_promise
+    from: esco
+    to: insurer
+    status: inferred
+    what: "premiums: 'the ESCO shall take relevant insurance cover' (L142) and is 'solely and personally liable for all ... insurance' (L300)"
+  c14:
+    family: determination_promise
+    from: arbiter
+    to: [client, esco]
+    status: stated
+    determines: other   # arbitration award (L279)
+    what: "'The arbitration award shall be final and binding on the Parties' (L279)"
+    established_by: espc
+  c15:
+    family: payment_promise
+    from: [client, esco]
+    to: arbiter
+    status: stated
+    what: "'The costs of arbitration and the manner of bearing such costs shall be determined by the arbitrator' (L279)"
+  c16:
+    family: agency_promise
+    from: sidbi
+    to: prsf
+    status: stated
+    what: "management of the facility's money on its behalf — 'USD 37 million risk-sharing component managed by SIDBI' (E01 L1285); fund_manager 'acts under an agency promise toward the fund' (elements_pilot)"
+    established_by: facility_management
+  c17:
+    family: payment_promise
+    from: prsf
+    to: sidbi
+    status: unstated
+    what: counter-promise required by duality; source silent (a management fee is economically necessary for a fund manager)
+    established_by: facility_management
+  c18:
+    family: payment_promise
+    from: prsf
+    to: world_bank
+    status: unstated
+    what: counter-promise required by duality; source silent — repayment if the World Bank money is an IBRD loan; if a GEF/CTF grant (L395), c11 is a benefit_promise with no reciprocal (F07 reciprocal for the capitalisation one level up)
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: pay-out computed on deemed energy cost savings, which 'shall form the basis of payment by the client to the ESCO' (E47 L459, L526-535)."}
+  client_sector:
+    value: private
+    status: stated
+    why: "'a company ... or commercial establishment/society' (L39); E01 notes municipal projects also use PRSF (L1288-1289) but this template's client is a company"
+  partner_form:
+    value: corporate
+    status: stated
+    why: "'a company incorporated under the provisions of the Companies Act' (L37)"
+  borrower:
+    value: partner
+    status: inferred
+    why: "the template brackets '[Client]/[ESCO] shall execute loan and security agreements' (L103) and 'financial assistance by ESCO and/or by Client' (L84); ESCO chosen because the ownership, encumbrance, assignment and Debt Due clauses all presuppose the ESCO's lenders (L177, L209, L289, L362); alternative: client (the guaranteed-savings sibling template has '[Client] shall execute loan...', sidbi-prsf-guaranteed-savings.txt L88)"
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: "assignment of the ESPC payments to the ESCO's lenders is an optional bracketed clause (L289); not exercised in the template text, so the ESCO holds the receivable; alternative: assignee (security assignment) if the bracket is kept"
+  collection_placement:
+    value: operator_own
+    status: default
+    why: not stated; no escrow in this template (E01 L1294 mentions a BEE escrow mechanism for Indian shared-savings contracts generally)
+  aggregation:
+    value: none
+    status: inferred
+    why: "one client, one ESPC over 'the Facilities' (L45); PRSF guarantees projects one by one (E01 L1287: 77 projects)"
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse:
+    value: not_applicable
+    status: inferred
+    why: follows from receivable_holder = partner; if the L289 assignment were exercised, the payments assigned are deemed-savings annuities that do not vary with performance, so the assignee would be close to waiver economically
+  savings_basis:
+    value: deemed
+    status: stated
+    why: "'Deemed Energy Savings: are pre-determined, validated but normative estimates ... finalised at the time of signing' (L366-367); 'The energy savings will be determined using deemed savings approach' (L461); the elements file cites this file L367 for the facet. Supporting generic passage: E16 L484-504, EESL's street-lighting ESPCs use 'the deemed savings M&V approach' (F16)"
+  grant_recipient:
+    value: none
+    status: default
+    why: no grant to either party; the PRSF TA component (E01 L1285) is programme-level
+  asset_owner:
+    value: partner
+    status: inferred
+    why: "'[Ownership of the Energy Saving Equipment shall be transferred by the ESCO to the Client free of all Encumbrances when all security interests created by the ESCO ... in favour of its lenders are released]' (L177) — bracketed, so a template option, not a stated fact: inferred per CASE_SPEC (F18), alternative client if the bracket is dropped; the client keeps pre-existing equipment (L181)"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "the client notifies 'any interruption or alteration to the energy supply to the premises' (L153), savings are valued at the client's tariff (L506), and the ESCO is paid a fixed annuity: the client remains the energy customer"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  deemed_savings:
+    scope: contract-internal (stated in the source, so recorded at LOD 0 per CASE_SPEC)
+    applies_when: {savings_basis: deemed}
+    rule: "AES = (W1 - W2) x Hrs x N; CS = AES x T; the mutually agreed baseline 'shall form the basis of payment by the client to the ESCO without dispute' (L459); the deemed saving is the minimum guaranteed and 'actual savings may be more than or equal' (L367); reworked only for reasons beyond control by written amendment of Schedule G (L122, L540)"
+    source: sidbi-prsf-deemed-savings.txt L364-367, L451-461, L484, L510, L540
+  prsf_partial_credit_guarantee:
+    scope: external-programme (generic)
+    applies_when: {lender_present: true}
+    rule: PRSF provides partial credit guarantees to PFIs covering a share of default risk on loans for eligible ESCO projects; USD 37m risk-sharing component managed by SIDBI
+    source: E01 L1279-1287; E05 L12
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: client_sector = private (an Indian company) and India is outside the EU; the test does not reach it
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: true
+    this_case: "applies on the record: private client, asset owned by the ESCO during the term (L177, inferred). The template says nothing about the client's accounting classification of the annuity; not testable from the corpus"
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  template_parameters:
+    installation_threshold_pct: 95
+    termination_payment_pct_of_capex: '[120]'
+    invoice_due_days: '[30]'
+    default_interest: SBI base rate + [●]% p.a.
+    force_majeure_termination_days: 180
+    client_default_payment_days: '[30]'
+    formulas:
+      AES: (W1 - W2) x Hrs x N (kWh/kVAh)
+      CS: AES x T (Rs)
+      PB: CC / CS (years)
+      CC: capital, O&M, finance, ROE, overheads (Rs)
+    schedule_g_blanks:
+    - annual energy savings
+    - tariff
+    - capital cost
+    - contract period
+    - annual pay-out
+    - savings retained
+    - payment frequency
+  prsf_facility_generic:
+    risk_sharing_component_usd_m: 37
+    technical_assistance_usd_m: 6
+    projects_supported: 77
+    total_project_cost_usd_m: 94
+    guarantees_usd_m: 41
+    projects_completed: 16
+    annual_energy_savings_gwh: 372
+    msme_and_municipal_projects: 60
+  derived:
+    guarantee_cover_of_project_cost: 41 / 94 = 43.6% (programme aggregate, not a per-loan cover ratio)
+    average_project_cost_usd_m: 94 / 77 = 1.22
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  client: {gives: [c2, c3, c4, c10, c15], receives: [c1, c3, c14], one_way: false}
+  esco:
+    gives: [c1, c3, c6, c7, c10, c13, c15]
+    receives: [c2, c3, c4, c5, c12, c14]
+    one_way: false
+  lender: {gives: [c5], receives: [c6, c7, c8, c10], one_way: false}
+  prsf:
+    gives: [c8, c17, c18]
+    receives: [c9, c11, c16]
+    one_way: true
+    reason: "the economic counter-promise for the guarantee (a fee from the lender or the ESCO) is unstated (c9); no pass-through of advantage is stated, so the fee is recorded rather than a benefit-like reason (F20). What it receives — SIDBI's management (c16) and the World Bank's capitalisation (c11) — is not consideration from the guaranteed party"
+  sidbi:
+    gives: [c16]
+    receives: [c10, c17]
+    one_way: true
+    reason: "counter-promise economically necessary but unstated: a fund manager's fee (c17); the inspection right c10 is a covenant, not consideration (F06)"
+  world_bank:
+    gives: [c11]
+    receives: [c10, c18]
+    one_way: true
+    reason: 'the economic reciprocal of its capitalisation (c18: repayment if IBRD loan, nothing if GEF/CTF grant) is unstated; the access covenant c10 is not consideration (F06, F07)'
+  insurer: {gives: [c12], receives: [c13], one_way: false}
+  arbiter: {gives: [c14], receives: [c15], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: template_optionality
+  description: "the source is a template with bracketed alternatives ([Client]/[ESCO] borrows, L103; [finance] in scope, L66; assignment to lenders, L289; ownership clause, L177). LOD 0 statuses are stated/inferred/default/generic; there is no status for 'open option in the source'. Resolved as inferred with the alternative in why, per CASE_SPEC — a reviewer should know these are drafting choices, not facts about a deal"
+  review: 'G10: encoding question (CASE_SPEC statuses); action: note in CASE_SPEC; no LOD 0 change'
+- kind: one_party_several_roles
+  description: the ESCO performed the Technical Energy Audit and PDP before contract (L49) and so fills energy_auditor / originator_developer as well as partner_esco. Expressed here with a role list (F13)
+  review: 'G11: encoding question (miniature shape); action: role may be a list (F13); applied in this file'
+- kind: guarantee_consideration
+  description: the PRSF guarantee (c8) has no stated counter-promise; a guarantee fee is economically expected but absent from E01, E05 and the template. Recorded as c9 unstated. Not a missing element — risk_promise and payment_promise exist — but the corpus cannot close the duality for the facility
+  review: 'G12: evidence gap; action: recorded as unstated; none'
+- kind: programme_funding_family
+  description: "the World Bank's capitalisation of PRSF (c11) is funding_promise if IBRD lending and benefit_promise if a GEF/CTF grant (L395 names both capacities). LOD 0 has both families; the corpus does not say which applies. Picked funding_promise, status generic, with the reciprocal c18 unstated"
+  review: 'G12: evidence gap; action: recorded as unstated; none'
+- kind: deemed_savings_payment_is_unconditional
+  description: "with deemed savings the client's payment does not depend on measured performance; the ESCO's 'guarantee' is an availability floor (95%, L108) rather than a savings guarantee. performance_promise covers it, but the LOD 2 fee_basis values (guaranteed, shared, chauffage) have no slot for a fixed deemed annuity — below LOD 0"
+  review: 'G13: below LOD 0 (LOD 2 fee_basis); action: forward to LOD 2'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction IN added; C1 applies_here false
+- id: F10
+  title: fund and manager are two parties
+  convention: 'When the source names a manager distinct from the fund, record two parties: the fund by its act (lender / forfaiter / guarantee_facility) and the manager as fund_manager with an agency_promise and an unstated fee.'
+  origin: verdict rule; findings F10
+  applied_here: sidbi_prsf split into prsf (guarantee_facility, gives c8) and sidbi (fund_manager, agency_promise c16, unstated fee c17)
+- id: F13
+  title: aggregation super_esco iff the role; role may be a list
+  convention: "aggregation = super_esco iff a party carries aggregator_super_esco. A party's `role` may be a list, home role first, so one party can carry several of the 41 roles."
+  origin: verdict rule; findings F13; gaps G11
+  applied_here: esco carries the role list [partner_esco, energy_auditor, originator_developer] (Recital C, L49)
+- id: F16
+  title: fact correction (deemed_india)
+  convention: "EESL street lighting is in the corpus (E16 L484-504, E09 L592-606); the file's not_in_corpus note was false. Not a convention — a correction applied."
+  origin: findings F16
+  applied_here: not_in_corpus note corrected; E16 L484-504 added as generic support for savings_basis = deemed
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: 'asset_owner partner: status downgraded from stated to inferred (bracketed clause L177)'
+- id: F20
+  title: public guarantee with no fee
+  convention: A risk_promise from a public instrument whose pass-through of advantage is stated (E06 L649-653) is recorded with a benefit-like reason and no unstated fee; otherwise the guarantee fee is recorded as an unstated payment_promise.
+  origin: findings F20
+  applied_here: no pass-through of advantage stated for the PRSF guarantee -> unstated guarantee fee c9 recorded
+- id: F07
+  title: equity / capitalisation reciprocal
+  convention: "Equity or state capitalisation is a funding_promise whose reciprocal is the residual claim, recorded as a payment_promise with status inferred; if the source shows a non-returnable endowment, benefit_promise. Never funding_promise + 'unilateral by nature'."
+  origin: verdict rule; findings F07
+  applied_here: 'World Bank capitalisation (c11) given its reciprocal c18 (unstated: repayment or none)'
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "the ESCO's availability floor and 'without dispute' payment basis stay inside c1/c2; no risk_promise from the ESCO"
+- id: G23
+  title: IFRS16_lease_test rule entry
+  convention: "Rule entry IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner}: whether the client's contract is a service agreement or a lease (IFRS 16) — the private counterpart of C1. A rule beside the tree, not a setting (corpus: E02 L3293-3295)."
+  origin: verdict change 6; gaps G23
+  applied_here: IFRS16_lease_test rule entry added; it bites (private client, asset_owner partner) but is not testable
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, energy_auditor, originator_developer, lender, guarantee_facility, fund_manager, ifi_dfi,
+    insurer, arbiter]
+  roles_count: 10 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, risk_promise, agency_promise, determination_promise]
+  families_absent: [benefit_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 4, inferred: 6, generic: 0, default: 3}
+  commitments_by_status: {stated: 10, inferred: 3, generic: 2, unstated: 3}
+  one_way_parties: [prsf, sidbi, world_bank]
+  parties_count: 8
+  commitments_count: 18
+  below_lod0: {lod1_adds: 'events (Closing, construction, Performance Test, Certificate of Acceptance, periodic annuity payments,
+      title transfer on security release, termination payments), the annuity formula, the 95% availability test, the Schedule
+      G rework', lod2_adds: 'fee_basis = deemed annuity (fixed; no shortfall rule because the savings are stipulated), Debt
+      Due pass-through on termination, security package'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R2, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/sidbi-prsf-deemed-savings.txt:128 | responsible for all services, maintenance, and repairs", why: "clause 9.2: the ESCO maintains and repairs the equipment for the maintenance period at no extra cost; clause 9.3 (L130) carves out repairs caused by the client's misuse or negligence, which the client pays. Equal to the default but stated. A and B agree"}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/sidbi-prsf-deemed-savings.txt:169 | shall not be required to make any payments to the ESCO", why: "clause 11.1: no payment until installation is complete and accepted, and late installation is an ESCO default (L201). Equal to the default; B wrote inferred, A wrote nothing; taken as stated because the clause itself withholds payment until acceptance"}

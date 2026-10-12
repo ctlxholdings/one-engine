@@ -1,0 +1,148 @@
+# Published case "cap_sugarmill_ncdc_solapur_2500tcd": NCDC detailed project report for a
+# 2,500 TCD cooperative sugar mill, Solapur, Annexure II year 2 (the first full 160-day season)
+# (cases/reference/published/cap_sugarmill_ncdc_solapur_2500tcd.yaml).
+#
+# One period, year 2. The books are kept in rupees; the source prints in lakh, so money figures
+# are read at scale 100000 and the cost inputs printed in lakh are posted times 100 x 1000. Each
+# amount is one move of a `transfer` journal against cash:
+#   * cane crushed is the capacity (2,500 TCD) x 160 days x 100% utilisation; sugar is the crush
+#     x the 12.25% recovery, sold in quintals (10 a tonne) at Rs 3,500/qtl;
+#   * molasses is the crush x the 4.5% the annexure states on its quantity row, sold at
+#     Rs 3,000/MT. The source's income row is built on 7.5% instead (900 lakh, against the 540 lakh
+#     its own quantity and price give): a contradiction inside the source, documented in its notes.
+#     income_year_2.molasses is read and DIFFERS by 360 lakh; the library's 7.5% input was
+#     back-solved from the printed income, so it is not used;
+#   * cane at Rs 2,670/MT, harvesting and transport at Rs 550/MT and manufacturing expense at
+#     Rs 60/MT of cane crushed, packing at Rs 500/MT of sugar; repairs, salaries, power and fuel
+#     and administration are the annexure's own year-2 amounts. All expensed in the year.
+# Tonnes of cane, quintals of sugar and tonnes of molasses are physical drivers of the formulas
+# generator. No interest, depreciation or tax: those lines are not inputs.
+#
+# Not read, and why:
+#   * total_income_year_2 is scored by the library, but the cogeneration units (season and
+#     off-season) and other income are not inputs, so total income cannot be derived: it is left
+#     unread ("not reported");
+#   * set aside below: the cogeneration and other income lines and the income total (not inputs),
+#     the four operating lines whose printed value is the input itself (repairs, salaries, power,
+#     administration), interest, depreciation, total expenditure and profit (no loan or asset
+#     schedule in the inputs), the year-1 money lines (year-1 salaries, cogeneration, interest and
+#     depreciation are not inputs), and the DSCRs and IRR (the debt service and cash availability
+#     rows are not inputs).
+published: cap_sugarmill_ncdc_solapur_2500tcd
+entity: mill
+plant: cost_rates__sugarcane
+case:
+  case: published-sugar-mill-solapur-year2
+  periods: 1
+  phases: [post]
+  currency: INR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        lakh: 100 * 1000
+        crush: crushing_capacity_tcd * crushing_days__year_2_to_10 * utilisation_pct__year_2_to_10 / 100
+        crush_year_1: crushing_capacity_tcd * crushing_days__year_1 * utilisation_pct__year_1 / 100
+        sugar_tonnes: crush * recovery_pct__year_2_to_10 / 100
+        sugar_quintals: sugar_tonnes * 10
+        molasses_tonnes: crush * molasses_pct_on_cane_as_stated / 100
+        sugar_income: sugar_quintals * sugar
+        molasses_income: molasses_tonnes * molasses
+        cane_cost: crush * cost_rates__sugarcane
+        harvest_cost: crush * cost_rates__harvesting_and_transport
+        manufacturing_cost: crush * cost_rates__manufacturing_expense
+        packing_cost: sugar_tonnes * cost_rates__packing_material
+        repairs: repair_and_maintenance * lakh
+        salaries: salary_and_wages * lakh
+        power_fuel: power_and_fuel * lakh
+        admin: administration * lakh
+  opening:
+    mill:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: mill
+      phase: post
+      declare:
+        sugar_sales: income
+        molasses_sales: income
+        sugarcane: expense
+        harvesting_and_transport: expense
+        manufacturing_expense: expense
+        repair_and_maintenance: expense
+        packing_material: expense
+        salary_and_wages: expense
+        power_and_fuel: expense
+        administration: expense
+      moves:
+        sugar: {debit: cash, credit: sugar_sales, amount: {generator: src, output: sugar_income}}
+        molasses: {debit: cash, credit: molasses_sales, amount: {generator: src, output: molasses_income}}
+        cane: {debit: sugarcane, credit: cash, amount: {generator: src, output: cane_cost}}
+        harvest: {debit: harvesting_and_transport, credit: cash, amount: {generator: src, output: harvest_cost}}
+        manufacturing: {debit: manufacturing_expense, credit: cash, amount: {generator: src, output: manufacturing_cost}}
+        repairs: {debit: repair_and_maintenance, credit: cash, amount: {generator: src, output: repairs}}
+        packing: {debit: packing_material, credit: cash, amount: {generator: src, output: packing_cost}}
+        salaries: {debit: salary_and_wages, credit: cash, amount: {generator: src, output: salaries}}
+        power: {debit: power_and_fuel, credit: cash, amount: {generator: src, output: power_fuel}}
+        admin: {debit: administration, credit: cash, amount: {generator: src, output: admin}}
+  schemes:
+    pnl:
+      sugar_sales: sugar
+      molasses_sales: molasses
+      sugarcane: cane
+      harvesting_and_transport: harvest
+      manufacturing_expense: manufacturing
+      packing_material: packing
+      repair_and_maintenance: other_operating
+      salary_and_wages: other_operating
+      power_and_fuel: other_operating
+      administration: other_operating
+  cuts:
+    sugar: {kind: pnl, entity: mill, scheme: pnl, include: [sugar]}
+    molasses: {kind: pnl, entity: mill, scheme: pnl, include: [molasses]}
+    cane: {kind: pnl, entity: mill, scheme: pnl, include: [cane]}
+    harvest: {kind: pnl, entity: mill, scheme: pnl, include: [harvest]}
+    manufacturing: {kind: pnl, entity: mill, scheme: pnl, include: [manufacturing]}
+    packing: {kind: pnl, entity: mill, scheme: pnl, include: [packing]}
+    operating_expenditure: {kind: pnl, entity: mill, scheme: pnl,
+                            include: [cane, harvest, manufacturing, packing, other_operating]}
+  measures: {}
+figures:
+  crushing_year_2: {driver: src.crush}
+  sugar_production_year_2: {driver: src.sugar_quintals, scale: 100000}
+  molasses_production_year_2: {driver: src.molasses_tonnes, scale: 100000}
+  income_year_2.sugar: {cut: sugar, scale: 100000}
+  income_year_2.molasses: {cut: molasses, scale: 100000}
+  operating_expenditure_year_2.sugarcane: {cut: cane, sign: -1, scale: 100000}
+  operating_expenditure_year_2.harvesting_and_transport: {cut: harvest, sign: -1, scale: 100000}
+  operating_expenditure_year_2.manufacturing_expense: {cut: manufacturing, sign: -1, scale: 100000}
+  operating_expenditure_year_2.packing_material: {cut: packing, sign: -1, scale: 100000}
+  operating_expenditure_year_2.total: {cut: operating_expenditure, sign: -1, scale: 100000}
+  total_operating_expenditure_year_2: {cut: operating_expenditure, sign: -1, scale: 100000}
+  year_1.crushing_tonnes: {driver: src.crush_year_1}
+not_compared:
+  income_year_2.cogen_season: "the season power units exported are not an input"
+  income_year_2.cogen_off_season: "the off-season power units exported are not an input"
+  income_year_2.other_income: "other income is not an input"
+  income_year_2.total: "needs the cogeneration and other income, which are not inputs"
+  operating_expenditure_year_2.repair_and_maintenance: "the printed amount is itself an input; nothing else derives it"
+  operating_expenditure_year_2.salary_and_wages: "the printed amount is itself an input; nothing else derives it"
+  operating_expenditure_year_2.power_and_fuel: "the printed amount is itself an input; nothing else derives it"
+  operating_expenditure_year_2.administration: "the printed amount is itself an input; nothing else derives it"
+  total_interest_year_2: "the loans and their rates are not inputs"
+  total_depreciation_year_2: "the depreciable assets and their rates are not inputs"
+  total_expenditure_year_2: "needs interest and depreciation, which are not inputs"
+  profit_year_2: "needs income lines, interest and depreciation that are not inputs"
+  year_1.total_income: "the year-1 cogeneration units and other income are not inputs"
+  year_1.total_operating_expenditure: "the year-1 salaries are not an input (the inputs carry year 2's)"
+  year_1.total_expenditure: "year-1 interest and depreciation are not inputs"
+  year_1.profit: "year-1 income lines, interest and depreciation are not inputs"
+  average_dscr: "the funds available and debt service rows are not inputs"
+  annual_dscr: "the funds available and debt service rows are not inputs"
+  irr_as_printed: "the cash availability row is not an input"

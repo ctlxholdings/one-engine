@@ -1,0 +1,125 @@
+# Published case "fc_openstax_cbs_merchandising_income": California Business Solutions, the
+# year ended Dec 31, 2018, its multi-step and simple income statements (OpenStax, Principles of
+# Accounting vol. 1, section 6.6; cases/reference/published/fc_openstax_cbs_merchandising_income.yaml).
+#
+# The source works from eleven lines of the adjusted trial balance, not from dated
+# transactions. Every amount is one of those lines by name (generator `src`):
+#   * each line is posted in the year to its own account, against `settlement`: an asset that
+#     stands for whatever cash, receivables and inventory the year's trade settled through (the
+#     source prints no balance sheet, so nothing is read from it);
+#   * sales discounts and sales returns are contra-revenue: income accounts debited, so they
+#     carry a negative balance and net sales is sales plus both;
+#   * cost of goods sold, the selling expenses (advertising, sales salaries), the general and
+#     administrative expenses (depreciation, office supplies, insurance) and interest expense
+#     are each an expense account, classed as the multi-step statement groups them; interest
+#     revenue is other income;
+#   * no tax: the source's net income is before any tax.
+# The gross profit margin ratio is the books' gross margin divided by net sales (the sales line
+# less both contra lines, the same inputs the books post). The source rounds it to the nearest
+# hundredth (0.39, printed also as 39%); the true ratio is 113,500 / 293,500 = 0.3867. Read as a
+# rate, 0.3867 is within the case's 0.01 tolerance of 0.39; read as the printed percent it is
+# 38.67 against 39, outside it: that figure differs by the source's own rounding of the ratio,
+# which a tolerance stated in whole dollars does not cover.
+published: fc_openstax_cbs_merchandising_income
+entity: cbs
+plant: sales__credit
+case:
+  case: published-cbs-merchandising-income
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        net_sales: sales__credit - sales_discounts__debit - sales_returns_and_allowances__debit
+  opening:
+    cbs:
+      settlement: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: cbs
+      phase: post
+      declare:
+        sales: income
+        sales_discounts: income
+        sales_returns_and_allowances: income
+        interest_revenue: income
+        cost_of_goods_sold: expense
+        advertising_expense: expense
+        sales_salaries_expense: expense
+        depreciation_expense_office_equipment: expense
+        office_supplies_expense: expense
+        insurance_expense: expense
+        interest_expense: expense
+      moves:
+        sales: {debit: settlement, credit: sales, amount: {generator: src, output: sales__credit}}
+        discounts: {debit: sales_discounts, credit: settlement, amount: {generator: src, output: sales_discounts__debit}}
+        returns: {debit: sales_returns_and_allowances, credit: settlement,
+                  amount: {generator: src, output: sales_returns_and_allowances__debit}}
+        interest_in: {debit: settlement, credit: interest_revenue, amount: {generator: src, output: interest_revenue__credit}}
+        cogs: {debit: cost_of_goods_sold, credit: settlement, amount: {generator: src, output: cost_of_goods_sold__debit}}
+        advertising: {debit: advertising_expense, credit: settlement, amount: {generator: src, output: advertising_expense__debit}}
+        sales_salaries: {debit: sales_salaries_expense, credit: settlement,
+                         amount: {generator: src, output: sales_salaries_expense__debit}}
+        depreciation: {debit: depreciation_expense_office_equipment, credit: settlement,
+                       amount: {generator: src, output: depreciation_expense_office_equipment__debit}}
+        office_supplies: {debit: office_supplies_expense, credit: settlement,
+                          amount: {generator: src, output: office_supplies_expense__debit}}
+        insurance: {debit: insurance_expense, credit: settlement, amount: {generator: src, output: insurance_expense__debit}}
+        interest_out: {debit: interest_expense, credit: settlement, amount: {generator: src, output: interest_expense__debit}}
+  schemes:
+    pnl:
+      sales: sales
+      sales_discounts: contra
+      sales_returns_and_allowances: contra
+      cost_of_goods_sold: cogs
+      advertising_expense: selling
+      sales_salaries_expense: selling
+      depreciation_expense_office_equipment: general
+      office_supplies_expense: general
+      insurance_expense: general
+      interest_revenue: interest_in
+      interest_expense: interest_out
+  cuts:
+    net_sales: {kind: pnl, entity: cbs, scheme: pnl, include: [sales, contra]}
+    gross_margin: {kind: pnl, entity: cbs, scheme: pnl, include: [sales, contra, cogs]}
+    selling: {kind: pnl, entity: cbs, scheme: pnl, include: [selling]}
+    general: {kind: pnl, entity: cbs, scheme: pnl, include: [general]}
+    operations: {kind: pnl, entity: cbs, scheme: pnl, include: [sales, contra, cogs, selling, general]}
+    net_income: {kind: pnl, entity: cbs, scheme: pnl, include: [sales, contra, cogs, selling, general, interest_in, interest_out]}
+  measures: {}
+figures:
+  net_income_top: {cut: net_income}
+  multi_step_income_statement_usd.sales: {balance: sales}
+  multi_step_income_statement_usd.less_sales_discounts: {balance: sales_discounts}
+  multi_step_income_statement_usd.less_sales_returns_and_allowances: {balance: sales_returns_and_allowances}
+  multi_step_income_statement_usd.net_sales: {cut: net_sales}
+  multi_step_income_statement_usd.less_cost_of_goods_sold: {balance: cost_of_goods_sold, sign: -1}
+  multi_step_income_statement_usd.gross_margin: {cut: gross_margin}
+  multi_step_income_statement_usd.operating_expenses.selling_expenses.advertising_expense: {balance: advertising_expense}
+  multi_step_income_statement_usd.operating_expenses.selling_expenses.sales_salaries_expense: {balance: sales_salaries_expense}
+  multi_step_income_statement_usd.operating_expenses.selling_expenses.total_selling_expenses: {cut: selling, sign: -1}
+  multi_step_income_statement_usd.operating_expenses.general_and_administrative_expenses.depreciation_expense_office_equipment: {balance: depreciation_expense_office_equipment}
+  multi_step_income_statement_usd.operating_expenses.general_and_administrative_expenses.office_supplies_expense: {balance: office_supplies_expense}
+  multi_step_income_statement_usd.operating_expenses.general_and_administrative_expenses.insurance_expense: {balance: insurance_expense}
+  multi_step_income_statement_usd.operating_expenses.general_and_administrative_expenses.total_general_and_administrative_expenses: {cut: general, sign: -1}
+  multi_step_income_statement_usd.income_from_operations: {cut: operations}
+  multi_step_income_statement_usd.interest_revenue: {balance: interest_revenue}
+  multi_step_income_statement_usd.less_interest_expense: {balance: interest_expense, sign: -1}
+  multi_step_income_statement_usd.net_income: {cut: net_income}
+  simple_income_statement_usd.revenues.net_sales: {cut: net_sales}
+  simple_income_statement_usd.revenues.interest_revenue: {balance: interest_revenue}
+  simple_income_statement_usd.expenses.cost_of_goods_sold: {balance: cost_of_goods_sold}
+  simple_income_statement_usd.expenses.total_selling_expenses: {cut: selling, sign: -1}
+  simple_income_statement_usd.expenses.total_general_and_administrative_expenses: {cut: general, sign: -1}
+  simple_income_statement_usd.expenses.interest_expense: {balance: interest_expense}
+  simple_income_statement_usd.net_income: {cut: net_income}
+  gross_profit_margin_ratio.result_rounded_to_nearest_hundredth: {cut: gross_margin, per: src.net_sales}
+  gross_profit_margin_ratio.result_as_percent: {cut: gross_margin, per: src.net_sales, scale: 0.01}

@@ -1,0 +1,108 @@
+# Published case "ext_feederpig_iowa2024": one feeder pig finished from 40 lb to a 260 lb market
+# hog (Iowa State University Extension, Ag Decision Maker B1-21, Livestock Enterprise Budgets for
+# Iowa 2024, p.7, "Finishing Feeder Pigs - One Pig"; cases/reference/published/
+# ext_feederpig_iowa2024.yaml).
+#
+# One period, one finishing cycle. Every amount is a published input by name (generator `src`),
+# the source's own line costs (the hand-labelled `costs` list), posted by a `transfer` rulebook.
+# The source leaves the hog price blank, so only the cost side is booked:
+#   * the feeder pig is bought for cash and expensed with the cycle (the budget charges it as a
+#     variable cost of the hog sold); its interest, the six feed lines, vet, fuel/repairs/
+#     utilities, manure application, interest on other variable costs, marketing, death loss and
+#     labour are paid in cash and expensed; each interest line is its printed amount;
+#   * the fixed machinery and facilities cost is the owner's buildings and machines charged at
+#     their ownership cost and credited to the owner (no cash moves);
+#   * no tax.
+# Break-even prices per cwt divide a cost total by the sale weight in hundredweights
+# (market_hog_sale_weight_lbs / 100, a physical driver) via `per`.
+published: ext_feederpig_iowa2024
+entity: farm
+plant: corn
+case:
+  case: published-ext-feederpig-iowa2024
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        sale_cwt: market_hog_sale_weight_lbs / 100
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        feeder_pig: expense
+        interest_on_feeder_pig: expense
+        corn: expense
+        soybean_meal: expense
+        dried_distillers_grain: expense
+        vitamin_and_minerals: expense
+        feed_processing_and_delivery: expense
+        feed_additives: expense
+        veterinary_and_medical: expense
+        fuel_repairs_utilities: expense
+        manure_application: expense
+        interest_on_other_variable_costs: expense
+        marketing_miscellaneous: expense
+        death_loss: expense
+        labor: expense
+        machinery_and_facilities: expense
+      moves:
+        pig: {debit: feeder_pig, credit: cash, amount: {generator: src, output: feeder_pig_purchase}}
+        pig_interest: {debit: interest_on_feeder_pig, credit: cash, amount: {generator: src, output: interest_on_feeder_pig}}
+        corn: {debit: corn, credit: cash, amount: {generator: src, output: corn}}
+        soybean_meal: {debit: soybean_meal, credit: cash, amount: {generator: src, output: soybean_meal}}
+        ddgs: {debit: dried_distillers_grain, credit: cash, amount: {generator: src, output: dried_distillers_grain}}
+        vitamins: {debit: vitamin_and_minerals, credit: cash, amount: {generator: src, output: vitamin_and_minerals}}
+        processing: {debit: feed_processing_and_delivery, credit: cash, amount: {generator: src, output: feed_processing_and_delivery}}
+        additives: {debit: feed_additives, credit: cash, amount: {generator: src, output: feed_additives}}
+        vet: {debit: veterinary_and_medical, credit: cash, amount: {generator: src, output: veterinary_and_medical}}
+        fuel: {debit: fuel_repairs_utilities, credit: cash, amount: {generator: src, output: fuel_repairs_utilities}}
+        manure: {debit: manure_application, credit: cash, amount: {generator: src, output: manure_application}}
+        other_interest: {debit: interest_on_other_variable_costs, credit: cash, amount: {generator: src, output: interest_on_other_variable_costs}}
+        marketing: {debit: marketing_miscellaneous, credit: cash, amount: {generator: src, output: marketing_miscellaneous}}
+        death_loss: {debit: death_loss, credit: cash, amount: {generator: src, output: death_loss}}
+        labor: {debit: labor, credit: cash, amount: {generator: src, output: labor}}
+        fixed: {debit: machinery_and_facilities, credit: owner_equity, amount: {generator: src, output: fixed_costs_machinery_facilities}}
+  schemes:
+    pnl:
+      feeder_pig: variable
+      interest_on_feeder_pig: variable
+      corn: feed
+      soybean_meal: feed
+      dried_distillers_grain: feed
+      vitamin_and_minerals: feed
+      feed_processing_and_delivery: feed
+      feed_additives: feed
+      veterinary_and_medical: variable
+      fuel_repairs_utilities: variable
+      manure_application: variable
+      interest_on_other_variable_costs: variable
+      marketing_miscellaneous: variable
+      death_loss: variable
+      labor: variable
+      machinery_and_facilities: fixed
+  cuts:
+    feed: {kind: pnl, entity: farm, scheme: pnl, include: [feed]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [feed, variable]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [fixed]}
+    total: {kind: pnl, entity: farm, scheme: pnl, include: [feed, variable, fixed]}
+  measures: {}
+figures:
+  total_feed_costs_usd: {cut: feed, sign: -1}
+  total_variable_costs_usd: {cut: variable, sign: -1}
+  total_fixed_costs_usd: {cut: fixed, sign: -1}
+  total_of_all_costs_usd: {cut: total, sign: -1}
+  breakeven_selling_price_variable_costs_usd_per_cwt: {cut: variable, sign: -1, per: src.sale_cwt}
+  breakeven_selling_price_all_costs_usd_per_cwt: {cut: total, sign: -1, per: src.sale_cwt}

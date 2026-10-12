@@ -1,0 +1,263 @@
+# Miniature — Eurostat/EIB Guide Box 7 'Government financing multiplier' expressed at ESCO LOD 0
+#
+# Batch 2 (CASE_SPEC_2.md), reconciled by the adjudicator from writers X (base) and Y; changes listed in source.notes.
+# Original writer X. Shape copied from bytom_schools-lod0.yaml (normalised 1 Oct 2026).
+# Frame: model/elements.yaml LOD 0 block (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Every fact carries its status: stated / inferred / default / generic / unstated. Nothing invented; only the corpus.
+# An illustration: Box 7 states an EPC, its capital cost, the Authority's capital contribution and subordinated loan,
+# and the computed share; everything else about the deal is the guide's general EPC description (generic) or default.
+# Line numbers refer to corpus input/eib-eurostat-statistical-treatment-epc.txt (E15).
+
+miniature: eurostat_box7_subordinated
+lod: 0
+case: batch2.eurostat_box7_subordinated
+case_kind: illustration   # worked example in the Eurostat/EIB guide; no real parties
+
+tests_unused:   # which of the 22 unused LOD 0 items this case was chosen to test
+- item: debt_seniority=subordinated
+  kind: setting_value
+  used: true
+  reason: "'the Authority ... provides a subordinated loan of EUR 0.5 million' (L5424-5425), weighted 'subordinated debt x 2.5 multiplier' (L5428); the only loan the example names, so the deal's debt_seniority is subordinated"
+- item: statistical_authority
+  kind: role
+  used: false
+  reason: "Eurostat makes no promise in the deal; it is the rule source (encoding rule: a body that makes no promise is a rule source, not a party). The rule sits in rules.eurostat_government_financing"
+- item: grant_recipient=partner
+  kind: setting_value
+  used: false
+  reason: "the Authority's 'capital contribution of EUR 1 million' (L5424) is the Authority's own lump-sum payment toward the EPC assets (E15 14.1.1 L5436-5459), recorded as a payment_promise, not a grant from a separate giver. Alternative noted under settings.grant_recipient"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E15
+  title: A Guide to the Statistical Treatment of Energy Performance Contracts
+  publisher: Eurostat and EIB (EPEC), 2018
+  passage: "Theme 14.1 'Government financing', thresholds (corpus input/eib-eurostat-statistical-treatment-epc.txt L5329-5359), counting rules (L5361-5414), Box 7 'Government financing multiplier' (L5421-5431); 14.1.1 lump-sum payments (L5434-5471), 14.1.3 shareholder loans as subordinated debt (L5491-5506)"
+  oracle: none (no ORACLE-RESULTS row); the box's own arithmetic is re-computed under numbers.derived
+  notes:
+  - "Adjudication (batch 2): X and Y agreed on both parties, all six commitments and all twelve setting values. Kept X's statuses (Partner inferred from 'an EPC', Y had generic; the determination promise unstated, Y had generic). Arithmetic re-run: 0.5 x 2.5 = 1.25; 1.25 + 1.0 = 2.25; 2.25 / 10 = 22.5% (L5428-5430), 'HIGH importance'. Authority carries [authority, government_financier] by both writers: the same public body pays and lends"
+  - "Box 7 does not say how the remaining EUR 8.5 million of capital cost is financed, nor give the guaranteed savings, the Operational Payments or the term"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: not named (an EU member state)
+  iso: null
+  eu_member: true
+  client_eu_general_government: true
+  status: inferred
+  why: "an example in Eurostat's guide on the statistical treatment of EPCs for EU government accounts; 'the Authority' is the guide's public contracting body inside general government (E15 Main terms; elements.yaml authority definition)"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC and the loan agreement establish (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  authority:
+    role: [authority, government_financier]
+    groups: [demand, public, capital, risk]
+    status: stated
+    text: "'an EPC with capital costs of EUR 10 million, to which the Authority makes a capital contribution of EUR 1 million and provides a subordinated loan of EUR 0.5 million' (L5423-5425). Home role authority; it also acts as government financier, the role whose financing the thresholds count (L5329-5332). Alternative lender as second role (role follows the act); government_financier chosen because it names government as financier"
+  partner:
+    role: partner_esco
+    groups: [partner]
+    status: inferred
+    text: "Box 7 names only 'an EPC' (L5423); an EPC has a Partner (E15 Main terms), who receives the contribution and the loan ('loans to the Partner', 14.1.2 L5475-5476). Unnamed"
+
+contract:   # the agreements that establish the commitments
+  epc:
+    core: contract
+    parties: [authority, partner]
+    status: stated
+    note: "'an EPC with capital costs of EUR 10 million' (L5423); term not given"
+  sub_loan:
+    core: contract
+    parties: [authority, partner]
+    status: stated
+    note: "'provides a subordinated loan of EUR 0.5 million' (L5424-5425)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: partner
+    to: authority
+    status: inferred
+    what: "construction/installation of EPC assets with capital costs of EUR 10 million (L5423) and the savings guarantee that defines an EPC (E15 Theme 4.1, C1 L2576-2588); content beyond the capital cost not given"
+    established_by: epc
+  c2:
+    family: payment_promise
+    from: authority
+    to: partner
+    status: generic
+    what: "Operational Payments over the EPC (the guide's general description, L2580-2588); amounts not given in Box 7"
+    established_by: epc
+  c3:
+    family: payment_promise
+    from: authority
+    to: partner
+    status: stated
+    what: "capital contribution of EUR 1 million (L5424); a lump-sum payment of the 14.1.1 type, whose purpose 'is typically to reduce the amount of financing that the Partner needs to raise' (L5457-5459); not repayable"
+    established_by: epc
+  c4:
+    family: funding_promise
+    from: authority
+    to: partner
+    status: stated
+    funding_instrument: loan   # subordinated loan (L5424-5425)
+    what: "subordinated loan of EUR 0.5 million (L5424-5425); for the government-financing test its amount is weighted x2.5 'subordinated debt x 2.5 multiplier' (L5428), the factor for 'debt that is fully subordinated (i.e. the highest risk debt)' (L5408-5410)"
+    established_by: sub_loan
+  c5:
+    family: payment_promise
+    from: partner
+    to: authority
+    status: inferred
+    what: repayment of the subordinated loan with interest; a loan is by definition repayable (L5425 'loan'); its claim ranks behind senior debt
+    established_by: sub_loan
+  c6:
+    family: determination_promise
+    from: unstated
+    to: [authority, partner]
+    status: unstated
+    determines: savings   # guaranteed savings tested each period (L2585-2588)
+    what: "Operational Payments are tested against guaranteed savings each period (L2585-2588), so someone establishes the savings; Box 7 names no party (F21: from = 'unstated')"
+    established_by: epc
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c2 Operational Payments unstated in Box 7; it is 'an EPC' (E15 L5423), whose guaranteed savings must cover Operational Payments (L2576-2588). c3 lump sum is a capital contribution."}
+  client_sector: {value: public, status: stated, why: "'the Authority' (L5424); the guide's Authority is general government"}
+  partner_form: {value: corporate, status: default, why: not stated}
+  borrower:
+    value: partner
+    status: stated
+    why: "the only loan named is the Authority's subordinated loan to the Partner (L5424-5425; 14.1.2 'loans to the Partner', L5475-5476)"
+  receivable_holder: {value: partner, status: default, why: no assignment mentioned}
+  collection_placement: {value: operator_own, status: default, why: not stated}
+  aggregation: {value: none, status: default, why: not stated (one EPC)}
+  debt_seniority:
+    value: subordinated
+    status: stated
+    why: "'a subordinated loan of EUR 0.5 million' (L5425), multiplied by 2.5 (L5428). No other loan is named; if the Partner also raised senior debt for the remaining EUR 8.5m (not stated), the deal would hold two ranks (lod0_gaps)"
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis: {value: measured, status: default, why: not stated in Box 7}
+  grant_recipient:
+    value: none
+    status: inferred
+    why: "no grant from a separate giver; the EUR 1m capital contribution is the Authority's own payment under the EPC (c3; E15 14.1.1 L5436-5459). Alternative partner: Eurostat treats such contributions as government financing not repayable by the Partner, like a capital grant (L2582-2583, L5467-5471)"
+  asset_owner: {value: client, status: default, why: not stated}
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "not computable: Box 7 gives no guaranteed savings and no Operational Payments. Part (b) is known: the EUR 1m capital contribution is government financing not repayable by the Partner; the EUR 0.5m loan is repayable and so sits outside (b) but inside the government-financing share below"
+    source: E15 L2576-2582, L5363-5380, L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public; the Eurostat test is the public-sector counterpart
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  eurostat_government_financing:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: "government financing commitments as a share of the capital expenditure on the EPC assets: >= 50% automatically ON BALANCE SHEET; > one third and < 50% VERY HIGH importance; > 10% and <= one third HIGH; <= 10% MODERATE (L5334-5359). Loans are weighted by risk: fully subordinated x2.5, senior x1, in between a reasoned multiplier between 1 and 2.5 (L5406-5414); equity carries the same weighting as subordinated debt (L5504-5506); EU and IFI financing are not government financing (L5364-5383)"
+    applies_here: true
+    this_case: "0.5 x 2.5 + 1.0 = EUR 2.25m = 22.5% of EUR 10m capital cost -> HIGH importance (L5428-5431). Check: 22.5% lies in (10%, 33.3%]. Without the multiplier the share would be 1.5 / 10 = 15%, also HIGH; the multiplier moves the figure, not the band, here"
+    source: E15 L5329-5431
+    note: "debt_seniority is the input this rule reads; it is the only LOD 0 setting whose value changes a computed Eurostat figure (elements.yaml debt_seniority definition cites Box 7)"
+
+numbers:   # instance data, not vocabulary
+  capital_cost_eur_m: 10                    # L5423
+  capital_contribution_eur_m: 1             # L5424
+  subordinated_loan_eur_m: 0.5              # L5425
+  subordinated_multiplier: 2.5              # L5409-5410, L5428
+  government_financing_eur_m: 2.25          # L5429
+  government_financing_share_pct: 22.5      # L5430
+  importance_band: HIGH                     # L5431
+  derived:
+    weighted_loan_eur_m: 0.5 x 2.5 = 1.25
+    government_financing_check: 1.25 + 1.0 = 2.25 (matches L5429)
+    share_check: 2.25 / 10 = 22.5% (matches L5430)
+    band_check: 10% < 22.5% <= 33.3% -> HIGH (L5350-5353)
+    unweighted_share: (0.5 + 1.0) / 10 = 15.0%
+    loan_at_which_band_turns_very_high_eur_m: "(10/3 - 1.0) / 2.5 = 0.93 (a fully subordinated loan above EUR 0.93m, with the same EUR 1m contribution, crosses one third)"
+    remaining_capital_cost_unexplained_eur_m: 10 - 1.0 - 0.5 = 8.5
+  links:   # R-A17 (architect, 6 Oct): which recorded figure sizes which promise; configuration, read by oe.census.printability
+  - {evidence: the subordinated loan the partner repays (L5425); its interest rate is not printed, figure: subordinated_loan_eur_m, promise: c5, sizes: principal}
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  authority: {gives: [c2, c3, c4], receives: [c1, c5, c6], one_way: false}
+  partner: {gives: [c1, c5], receives: [c2, c3, c4, c6], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: debt_seniority_per_loan
+  description: "debt_seniority holds one value per deal, but rank belongs to each loan, and the Eurostat weighting is applied loan by loan (x2.5 subordinated, x1 senior, 'a multiplier between 1 and 2.5' in between, L5406-5414). Box 7 names one loan, so one value suffices here; a deal with senior bank debt plus a subordinated public loan needs two values, and the in-between ('mezzanine') rank has no value of its own (the owner ruling folds mezzanine into subordinated, which would apply x2.5 where Eurostat asks for a reasoned 1-2.5)"
+  classification: "encoding question (setting is per loan, i.e. LOD 1 on the funding_promise) plus a definition note for mezzanine"
+- kind: lender_role_for_public_loan
+  description: "the Authority lends to the Partner. Recorded as role list [authority, government_financier]; lender would also fit by the act. The overlap between lender and government_financier for a government loan has no rule; chosen by the more specific definition (government as financier)"
+  classification: "encoding question (role overlap)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 stated on the NPV basis; not computable
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction EU (country not named); C1 applies_here true
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: no one-way party
+- id: F13
+  title: aggregation super_esco iff the role; role may be a list
+  convention: "aggregation = super_esco iff a party carries aggregator_super_esco. A party's `role` may be a list, home role first, so one party can carry several of the 41 roles."
+  origin: verdict rule; findings F13; gaps G11
+  applied_here: "authority = [authority, government_financier]"
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: "c6 from the literal 'unstated'"
+- id: F15
+  title: a body that makes no promise is a rule source, not a party
+  convention: statistical_authority (Eurostat) is listed as a party only when it acts in the deal (e.g. an ex-ante ruling named in the source); otherwise it is the source of rule C1.
+  origin: verdict rule; findings F15
+  applied_here: Eurostat is not a party; its thresholds and multiplier are the rule eurostat_government_financing
+- id: IFRS16
+  title: IFRS16_lease_test rule entry
+  convention: "One rule entry, not a setting: IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner} — the private counterpart of C1."
+  origin: verdict change 6; gaps G23
+  applied_here: rule present; does not apply (public client)
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, government_financier, partner_esco]
+  roles_count: 3 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [determination_promise]
+  settings_by_status: {stated: 3, inferred: 3, generic: 0, default: 7}
+  commitments_by_status: {stated: 2, inferred: 2, generic: 1, unstated: 1}
+  one_way_parties: []
+  parties_count: 2
+  commitments_count: 6
+  below_lod0: {lod1_adds: 'the loan''s rank and multiplier carried on the funding promise itself, the timing of the capital
+      contribution (milestone vs lump sum; E15 says timing does not change the treatment, L5467-5471), the Operational Payment
+      schedule', lod2_adds: the reasoned multiplier for intermediate-rank debt (L5411-5414)}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R5b, driver: null, bearer: [authority], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/eib-eurostat-statistical-treatment-epc.txt:5425 | subordinated loan of EUR 0.5 million", why: "the Authority lends the Partner a subordinated loan, which the guide calls 'the highest risk debt' (L5408-5409), so the Partner's default hits the Authority both as client and as lender. Differs from the default, which would add a generic lender role no party holds here; how the other EUR 8.5m is financed is not stated (a named senior lender would join this row). A and B agree. Dropped: B's R1 technical from the guide's generic EPC definition (L2576), not Box 7, and an inferred duplicate of the default"}

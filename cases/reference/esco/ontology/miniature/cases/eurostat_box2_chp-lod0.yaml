@@ -1,0 +1,273 @@
+# Miniature — Eurostat/EIB Guide Box 2 'Third Party Revenues' (hospital CHP selling surplus power) at ESCO LOD 0
+#
+# Batch 2 (CASE_SPEC_2.md), reconciled by the adjudicator from writers X (base) and Y; changes listed in source.notes.
+# Original writer X. Shape copied from bytom_schools-lod0.yaml (normalised 1 Oct 2026).
+# Frame: model/elements.yaml LOD 0 block (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Every fact carries its status: stated / inferred / default / generic / unstated. Nothing invented; only the corpus.
+# An illustration. Box 2 is the encoded deal; Box 3 (the PV example) is a second illustration in the same guide,
+# used only to show who receives grid revenue there (numbers.box3). Line numbers refer to corpus
+# input/eib-eurostat-statistical-treatment-epc.txt (E15).
+
+miniature: eurostat_box2_chp
+lod: 0
+case: batch2.eurostat_box2_chp
+case_kind: illustration   # worked example in the Eurostat/EIB guide; no real parties
+
+tests_unused:   # which of the 22 unused LOD 0 items this case was chosen to test
+- item: grid_buyer
+  kind: role
+  used: true
+  reason: "'the surplus electricity will be sold to the grid' (L1806); the grid is the buyer of surplus energy produced on site, which is the grid_buyer definition. Unnamed. Box 3 repeats it for PV ('surplus energy being sold to the grid', L2538-2539)"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E15
+  title: A Guide to the Statistical Treatment of Energy Performance Contracts
+  publisher: Eurostat and EIB (EPEC), 2018
+  passage: "'Third party revenues' and Box 2 'Third Party Revenues' (corpus input/eib-eurostat-statistical-treatment-epc.txt L1754-1822; footnotes 32-33 L1791-1796); Box 3 'Guaranteed savings' (L2533-2555)"
+  oracle: none (no ORACLE-RESULTS row); the box's own arithmetic is re-computed under numbers.derived
+  notes:
+  - "Adjudication (batch 2): X and Y agreed on all three parties and the four main commitments. Y's extra generic payment Authority->Partner (fn33's pass-through route, L1795-1796) not adopted: Box 2 sets separate limits for revenue the Partner receives and revenue the Authority receives (L1812-1818), so the illustration keeps both payees on the grid payment and does not assume the pass-through. Arithmetic re-run: EUR 1m x 8 = 8m; 50% x 8m = 4m (L1812-1818)"
+  - "Box 2 does not say who sells the surplus. Footnote 33: 'The revenues from sales of surplus energy to the grid ... might be received by the Partner directly or might be received by the Authority who passes them on to the Partner' (L1795-1796), and the two tests cover both recipients (L1761-1774). The sale and its payment are recorded with both as possible sellers/recipients"
+  - "Box 2 gives no guaranteed savings, capital cost or M&V arrangement; it gives the payment (EUR 1m/yr) and term (8 years)"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: not named (an EU member state)
+  iso: null
+  eu_member: true
+  client_eu_general_government: true
+  status: inferred
+  why: "'A government health authority' (L1803) in Eurostat's guide for EU government accounts; a government health authority is inside general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC and the electricity sale establish (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  health_authority:
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: "'A government health authority enters into a contract for the installation of new combined heat and power (CHP) plant that will improve the energy efficiency of heat supply in a hospital' (L1803-1805)"
+  partner:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'The payments due from the health authority to the Partner are EUR 1 million per year' (L1807); unnamed"
+  grid:
+    role: grid_buyer
+    groups: [energy]
+    status: stated
+    text: "'the surplus electricity will be sold to the grid' (L1806); unnamed"
+
+contract:   # the agreements that establish the commitments
+  epc:
+    core: contract
+    parties: [health_authority, partner]
+    term_years: 8
+    status: stated
+    note: "'the contract has a duration of 8 years' (L1807-1808)"
+  surplus_sale:
+    core: contract
+    parties: [grid, health_authority, partner]
+    status: inferred
+    note: "the sale of surplus electricity to the grid (L1805-1806); seller Partner or Authority (fn 33, L1795-1796); terms not given"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: partner
+    to: health_authority
+    status: stated
+    what: "installation of a new CHP plant improving the energy efficiency of heat supply in a hospital (L1803-1805); the savings guarantee of an EPC is the guide's general description (L2576-2588), not given in Box 2"
+    established_by: epc
+  c2:
+    family: payment_promise
+    from: health_authority
+    to: partner
+    status: stated
+    what: "'EUR 1 million per year' for 8 years (L1807-1808)"
+    established_by: epc
+  c3:
+    family: performance_promise
+    from: [partner, health_authority]
+    to: grid
+    status: stated
+    what: "delivery of the surplus electricity: 'The electricity generated by the CHP plan will exceed the amount consumed in the hospital and the surplus electricity will be sold to the grid' (L1805-1806). Seller not stated: the Partner directly or the Authority (fn 33, L1795-1796)"
+    established_by: surplus_sale
+  c4:
+    family: payment_promise
+    from: grid
+    to: [partner, health_authority]
+    status: stated
+    what: "revenues 'from forecast sales of surplus energy' (L1812-1813, L1816-1817); payee the Partner or the Authority, who may pass them on to the Partner (fn 33, L1795-1796); amounts not given — Box 2 gives only the ceilings (rules.eurostat_third_party_revenue)"
+    established_by: surplus_sale
+  c5:
+    family: determination_promise
+    from: unstated
+    to: [health_authority, partner]
+    status: unstated
+    determines: savings   # guaranteed savings tested each period (L2585-2588)
+    what: "the EPC payment rests on guaranteed savings tested each period (L2585-2588); Box 2 names no party that establishes them (F21: from = 'unstated'). The surplus volume sold is metered by the sale; also unstated"
+    established_by: epc
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c2 fixed EUR 1m/yr (E15 L1807-1808); Box 2 tests it 'as an EPC' (L1809-1810), and a Eurostat EPC must guarantee savings at least equal to Operational Payments (L2576-2588)."}
+  client_sector: {value: public, status: stated, why: "'A government health authority' (L1803)"}
+  partner_form: {value: corporate, status: default, why: not stated}
+  borrower: {value: partner, status: default, why: not stated; no financing is described}
+  receivable_holder: {value: partner, status: default, why: no assignment mentioned}
+  collection_placement: {value: operator_own, status: default, why: not stated}
+  aggregation: {value: none, status: default, why: "not stated (one hospital, one contract)"}
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis: {value: measured, status: default, why: not stated in Box 2}
+  grant_recipient: {value: none, status: default, why: not stated}
+  asset_owner: {value: client, status: default, why: "not stated (a hospital's CHP plant)"}
+  bill_custody:
+    value: client
+    status: default
+    why: "not stated. The CHP plant improves 'heat supply in a hospital' (L1804-1805); whether the Partner buys the fuel (provider) is not said"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "not computable: no guaranteed savings are given. Payments are EUR 1m/yr x 8 = EUR 8m nominal. In Box 3 the guide counts grid revenue inside the guaranteed savings ('Sale of surplus energy (additional revenues) – EUR 15,000' within the EUR 150,000 guarantee, L2551-2555); third-party revenue inside the guarantee is excluded from the 50% test below (L1773-1774)"
+    source: E15 L2576-2582, L5363-5380, L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public; the Eurostat test is the public-sector counterpart
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  eurostat_third_party_revenue:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: "two tests at financial close, on an NPV basis (L1776-1780): (1) if forecast revenues the Partner receives from third parties exceed the contractual payments it is forecast to receive from the Authority, the arrangement is not an EPC (L1761-1766); (2) if third-party revenues the Authority receives exceed 50% of its contractual payments to the Partner, it is not an EPC and is ON BALANCE SHEET (L1768-1772); forecast revenues inside the guarantee are excluded from (2) (L1773-1774). A later change in forecast does not by itself trigger reassessment (L1782-1786)"
+    applies_here: true
+    this_case: "Partner's grid revenue must be < EUR 8m (1m x 8 years) and the Authority's < EUR 4m (50% of 8m) (L1812-1818). The box states the ceilings as nominal sums although the tests are on an NPV basis (L1778-1780); with a level EUR 1m/yr the nominal and discounted comparisons agree only if the revenue profile is also level"
+    source: E15 L1754-1822
+    note: "this is the rule that makes grid_buyer matter at LOD 0: the counterparty's payments are an input to whether the contract is an EPC at all"
+
+numbers:   # instance data, not vocabulary
+  annual_payment_eur_m: 1          # L1807
+  term_years: 8                    # L1808
+  partner_revenue_ceiling_eur_m: 8 # L1813-1814
+  authority_revenue_ceiling_eur_m: 4   # L1817-1818
+  authority_test_share_pct: 50     # L1769-1770
+  derived:
+    total_payments_eur_m: 1 x 8 = 8 (matches L1813-1814)
+    authority_ceiling_check: 50% x 8 = 4 (matches L1817-1818)
+  box3:   # second illustration, PV (L2533-2555), not the encoded deal
+    boiler_saving_eur: 80000
+    lighting_saving_eur: 30000
+    bms_saving_eur: 15000
+    environmental_tax_reduction_eur: 10000
+    surplus_energy_sale_eur: 15000
+    guaranteed_annual_savings_eur: 150000
+    derived:
+      sum_check: 80,000 + 30,000 + 15,000 + 10,000 + 15,000 = 150,000 (matches L2553)
+      grid_revenue_share_of_guarantee: 15,000 / 150,000 = 10%
+    recipient: "'revenues for the government agency' (L2540-2541): in Box 3 the Authority receives the grid revenue"
+  links:   # R-A17 (architect, 6 Oct): which recorded figure sizes which promise; configuration, read by oe.census.printability
+  - {evidence: "annual_payment printed once (annual_payment_eur_m); c2 is the deal's only candidate", figure: annual_payment_eur_m, origin: "linked by rule single fee leg", promise: c2, promise_kind: payment_promise, sizes: amount_per_period, period: year, scale: 1000000, scale_rule: "the key says millions (_m, _mn, million)", currency: EUR}
+  engine_inputs:   # R-A38 (2): written by program from numbers.links; edit the links, then re-run
+    origin: derived from numbers.links by oe.census.inputs_from_links
+    term_years:
+      value: 8
+      from: numbers.term_years
+      rule: printed
+    legs:
+    - promise: c2
+      leg: fee
+      amount:
+        key: annual_payment_eur_m
+        scale: '1000000'
+      evidence: eib-eurostat-statistical-treatment-epc.txt:1807 (linked by rule single fee leg)
+    dated_legs: []
+    not_booked: []
+    not_linked: []
+    missing:
+    - promise: c4
+      what: c4 amount not printed
+      evidence: engine/out/r2_census/census.csv
+    calendar:
+      anchor: '2018-01-01'
+      cycle: P1Y
+      status: default
+      flagged: true
+      why: period 0 = 1 January of the source's publication year (2018); one period = one contract year. A flagged default date names the default used (R-A19); dates change no figure
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  health_authority: {gives: [c2, c3], receives: [c1, c4, c5], one_way: false}
+  partner: {gives: [c1, c3], receives: [c2, c4, c5], one_way: false}
+  grid: {gives: [c4], receives: [c3], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: seller_of_surplus_undetermined
+  description: "the seller and payee of the surplus (c3, c4) are 'the Partner directly or ... the Authority who passes them on' (fn 33). LOD 0 can express either; the illustration leaves it open on purpose, because the tests depend on who receives it. Recorded with both parties listed; a single deal would pick one"
+  classification: "evidence gap (illustration is deliberately open)"
+- kind: no_setting_for_revenue_recipient
+  description: "nothing among the 12 settings records who receives third-party revenue (Partner, Authority, or Authority passing through), although Eurostat's two tests turn on exactly that (L1761-1772). receivable_holder concerns the client's payments only. At LOD 0 it is read from the from/to of the grid's payment promise, which suffices; a setting is not proposed"
+  classification: "encoding question (expressed by the commitment's payee; no new setting)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 stated on the NPV basis; not computable; the third-party-revenue ceilings are nominal in the box and noted as such
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction EU (country not named); C1 applies_here true
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: no one-way party (the grid pays for what it receives)
+- id: F15
+  title: a body that makes no promise is a rule source, not a party
+  convention: statistical_authority (Eurostat) is listed as a party only when it acts in the deal (e.g. an ex-ante ruling named in the source); otherwise it is the source of rule C1.
+  origin: verdict rule; findings F15
+  applied_here: Eurostat's third-party-revenue tests recorded as a rule, not a party
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: "c5 from the literal 'unstated'"
+- id: IFRS16
+  title: IFRS16_lease_test rule entry
+  convention: "One rule entry, not a setting: IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner} — the private counterpart of C1."
+  origin: verdict change 6; gaps G23
+  applied_here: rule present; does not apply (public client)
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, grid_buyer]
+  roles_count: 3 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [determination_promise]
+  settings_by_status: {stated: 1, inferred: 2, generic: 0, default: 10}
+  commitments_by_status: {stated: 4, inferred: 0, generic: 0, unstated: 1}
+  one_way_parties: []
+  parties_count: 3
+  commitments_count: 5
+  below_lod0: {lod1_adds: 'events (financial close and the two forecasts, installation, annual payment, metered surplus sale,
+      pass-through of revenue if the Authority sells), the revenue forecast as an input to the test', lod2_adds: 'the export
+      tariff, whether grid revenue counts inside the guarantee (Box 3) or outside it'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): Box 2 (E15 L1801-1822) is a classification illustration and allocates no risk; who bears the surplus-sale price is open (fn33 L1795-1796). A and B agree. The converter derives every row (ENCODING.md)

@@ -1,0 +1,484 @@
+# Miniature — D29 Sunnova Helios V Issuer, LLC, Solar Loan Backed Notes, Series 2021-A (US), expressed at ESCO LOD 0
+#
+# Batch 5 FINAL, reviewer rev-F (1 Oct 2026), reconciled from writers F-X and F-Y; base Y, Partner and servicer roles from X.
+# Decisions: batch5/rev-F/decisions.json. Source re-fetched by the reviewer (WebFetch binary, pdftotext) and the disputed passages re-read.
+# OUT-OF-SCOPE WITNESS: a pool of residential solar loans (PV, some with batteries); no efficiency asset is
+# in the pool and the homeowner pays a loan, not for an energy service. Kept to show the vocabulary can express a trust-style ABS with a
+# parent performance guaranty and a production guarantee; its uses are not counted.
+# Evidence is one public document, fetched 1 Oct 2026 (WebFetch saved the binary; pdftotext to stdout; nothing kept in the project): [KBRA-NIR] https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955
+# It is hosted on the New Jersey BPU public-access site (the server blocks plain curl; the PDF was obtained through the fetch tool).
+# Kroll Bond Rating Agency 'ABS New Issue Report', 'Sunnova Helios V Issuer, LLC, Solar Loan Backed Notes, Series 2021-A', 16 Feb 2021, 37 pages.
+# The page numbers are the printed 'Page | N' footers, which equal the PDF page. Quotes exact, <= 25 words. Statuses: stated / inferred / default /
+# generic / unstated. The row's text came through a summarising tool; every figure below is re-read in the report.
+
+miniature: sunnova_helios_v_2021a
+lod: 0
+case: batch5.D29_sunnova_helios_v_2021_a
+case_kind: deal   # a named issue with a rating report: 'a $188.641 million residential solar loan ABS transaction' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]; the Easy Own loan below it is the representative (generic) contract
+in_scope: false
+in_scope_why: "The collateral is 'residential solar loans' financing 'Photovoltaic (PV) Systems, Energy Storage Systems (ESS), or both' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]; 'Only solar loan agreements are included in the securitization trust' (p.3). No efficiency measure is in the pool. The nearest energy-service feature is a production guarantee and an operations-and-maintenance (O&M) fee, but the homeowner's payment is a fixed loan instalment, so nobody is paid for an energy service. Out-of-scope witness; uses not counted (B3-scope)"
+
+tests_unused:   # CASE_SPEC_5 list of unused items; a witness, so every item is false even where it fits
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "Structurally it fits and is stated: 'Sunnova Helios V Issuer, LLC' is the Issuer, 'a wholly-owned, direct subsidiary of the Depositor' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4], which buys the solar loans through an 'Omnibus Contribution Agreement' and pledges the 'Trust Estate' to the indenture trustee (diagram, p.30). KBRA reviews 'the bankruptcy remoteness of collateral' as a general factor (p.29) but states no true-sale fact for this deal. Not counted: solar-only pool"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Does not fit for the loans: under an Easy Own loan 'the borrower purchases the PV system from a dealer using financing provided by Sunnova' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.18]; the trust holds the loans, not the systems. The same report says generally that Sunnova 'takes title to the PV system' after commissioning (p.17), which belongs to Sunnova's lease and PPA products. asset_owner = client for this pool"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No hedge, swap or cap is named anywhere in the report (searched the whole text for hedge, swap, cap). The notes carry fixed coupons of 1.80% and 3.15% (p.3) against loans at a weighted average 3.94% (p.12). The only third-party credit item is an unnamed 'Eligible Letter of Credit Bank' in the waterfall (item xviii, p.32): no bank, no amount, no hedge"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No public client; the obligors are homeowners. The only guarantee is the parent's performance guaranty (below), which is an obligation about the originator's duties, not a guarantee of any authority's payments"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The homeowner pays a fixed monthly loan instalment ('a fixed flat monthly payment', [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.8, p.18]). Sunnova's 'Production Guarantee' (p.10) is a make-good to the homeowner if output falls below a minimum, not a payment tied to a performance level: the instalment does not move with output. payment_basis = asset. The production guarantee is the nearest thing to a performance feature in the five deals of this batch; it sits inside c3"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: KBRA-NIR
+  title: "KBRA ABS New Issue Report, Sunnova Helios V Issuer, LLC, Solar Loan Backed Notes, Series 2021-A (16 Feb 2021)"
+  publisher: "Kroll Bond Rating Agency; copy filed on the New Jersey Board of Public Utilities public-access site"
+  passage: "https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3-4 (summary, parties), p.6-7 (structure, interest waiver), p.10-11 (guarantees, parent guaranty), p.12 (transaction summary table), p.17-19 (origination, loan products, production guaranty, servicing), p.20-21 (custodian), p.29-32 (structure diagram, waterfall)"
+  oracle: "none; the credit-enhancement figures can be re-computed from published sizes, shown in numbers"
+  context:
+  - "Sunnova Helios V Depositor, LLC and Sunnova ABS Holdings V, LLC: two intermediate special-purpose entities between Sunnova and the Issuer ('Issuer ... wholly-owned, indirect subsidiary of Sunnova ABS Holdings V, LLC', [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]). They pass the loans down ('Omnibus Contribution Agreement', p.30); the Depositor repurchases defective loans (p.31). Collapsed into the Issuer and Sunnova for LOD 0 (one level of ownership chain, no separate promise to the homeowner or noteholders is described)"
+  - "Reviewer: the transaction parties table (p.4) and the waterfall (p.31) were re-read. Sunnova carries no partner_esco role (as PosiGen's sponsor in posigen_backleverage): the case ruling for solar-only loan pools is 'no energy-service Partner'; its O&M and production guarantee stay inside c3"
+  - "U.S. Bank National Association: 'Custodian' of the loan files [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]; 'will take custody of copies of the solar loan files' (p.21). Holds documents, not accounts, so it does not fit account_bank_trustee ('holds escrow, trust-and-retention and reserve accounts'). Kept in context (lod0_gaps)"
+  - "Credit Suisse Securities (USA) LLC and Popular Securities: 'Initial Purchasers' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]. Transient buyers that resell the notes; outside the deal boundary (as Ramirez in nyserda_green_bonds_2024a)"
+  - "Eligible Letter of Credit Bank: an unnamed bank that may issue a letter of credit, repaid in item (xviii) of the waterfall [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.32]. No amount or purpose is stated in the report; context only"
+  - "Sunnova ABS Holdings V, Sunnova Intermediate Holdings, LLC and Sunnova Energy International Inc. (the public parent): ownership chain on the diagram [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30] and p.3. No promise to the deal beyond the parent guaranty by Sunnova Energy Corporation"
+  - "Federal government (investment tax credit, ITC): 30% of the amount financed for systems placed in service in 2019, 26% for 2020 [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.7]. A tax credit claimed by the borrower; the loans are built around it (interest waiver on the prepaid ITC portion). No government party; recorded as a rule and in grant_recipient"
+  - "Trinity Solar, Inc. and Infinity Energy Inc.: named dealers, 'A single dealer - Trinity Solar, Inc. - accounted for approximately 34% of Sunnova's in-service SSAs' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17]. Two of 270 dealers; the pool's Dealer 1 to 3 are 19.47% / 13.48% / 12.20% by loan count (p.23). Represented by one generic dealer party"
+  notes:
+  - "Row check: 'collateral USD 181.25m' is the statistical pool, $181,254,889 over 5,269 loans [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.12]; the notes are larger ($188.641m) because 'approximately 13% will be prefunded at closing' of an approximately $208.4m pool [p.3, p.9]. 'Class A USD 150.079m 1.80% A-(sf); Class B USD 38.562m 3.15% BB-(sf)' match p.3. 'OC 9.5% initial' and 'reserve 1.0%' match the table on p.12. 'ARD Feb 2028' matches p.30"
+  - "Row caveat 'Residential obligors, not a public authority. No hedge. Sponsor parent performance guarantee only' confirmed: parent guaranty p.10; no hedge in the report. 'Waterfall middle items not extracted': extracted here from p.31-32 (items i to xix)"
+  - "Trustee and backup servicer are the same bank: 'Indenture Trustee/ Backup Servicer/ Transition Manager ... Wells Fargo Bank, National Association' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]. One party with two roles"
+  - "KBRA gives no credit to the parent's guaranty: 'no credit is given to the guaranty as Sunnova, as the guarantor, is an unrated entity' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10]"
+  - "The report notes a holder-in-due-course style exposure: 'a consumer's claim against a seller of goods and services may also be asserted against a lender that finances the purchase' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10]. This shapes assignment_recourse (performance_exposed, inferred)"
+  - "Sunnova's own wording: 'provides low-cost solar electricity to homeowners' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]. In the securitised pool the product is the loan (Easy Own); Sunnova also offers leases and PPAs, which are not in this pool ('Only solar loan agreements', p.3)"
+
+jurisdiction:   # header field, not a setting (F02); dated at financial close
+  country: United States
+  iso: US
+  eu_member: false
+  client_eu_general_government_at_close: false
+  as_of: "report date 16 Feb 2021; transaction date 2/16/2021 ('Transaction Date 2/16/2021*', [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.12])"
+  status: stated
+  why: "obligors are US homeowners: California 38.50%, Puerto Rico 20.97%, Texas 8.74% of the pool [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.12]. Not EU; C1 does not apply"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 37 (a list = several roles, home role first; F13); groups computed from the role(s)
+  homeowners:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'The average borrower in the statistical pool is a homeowner with a weighted average original FICO score of 733' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]; 5,269 loans (p.12). Not named"
+  sunnova:
+    entity: sunnova_energy_corp
+    role: [originator_developer, surety_guarantor]
+    groups: [delivery, risk]
+    status: stated
+    name: Sunnova Energy Corporation
+    text: "'Sponsor/ Originator/ Parent Guarantor ... Sunnova Energy Corporation' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]; 'Sunnova purchases the solar loan agreement from the dealer and agrees to operate and maintain the PV system' (p.18); 'guarantees minimum power production' (p.10). originator_developer: originates the client loans (stated). surety_guarantor: parent guaranty of the vehicle-side obligations (stated, a stretch of the definition: lod0_gaps). Not partner_esco (reviewer): a solar-only loan pool has no energy-service Partner, as in posigen_backleverage; the O&M and production guarantee stay inside c3"
+  sunnova_management:
+    entity: sunnova_abs_management
+    role: [collector_biller, operator_om]
+    groups: [collection, delivery]
+    status: stated
+    name: Sunnova ABS Management, LLC
+    text: "'Manager/ Servicer ... Sunnova ABS Management, LLC ('Sunnova Management'), a wholly owned, direct subsidiary of Sunnova' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]; collection is 'monitored and performed by Sunnova's operations and revenue management teams' (p.19); operator_om: the trust 'will pay a fee to the Manager for performing O&M duties on the PV systems' (p.10)"
+  helios_issuer:
+    entity: sunnova_helios_v_issuer
+    role: securitisation_vehicle
+    groups: [capital]
+    status: stated
+    name: Sunnova Helios V Issuer, LLC
+    text: "'Issuer ... wholly-owned, direct subsidiary of the Depositor' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]; 'Solar Loan Backed Notes, Series 2021-A' (cover)"
+  wells_fargo:
+    entity: wells_fargo_bank_na
+    role: [account_bank_trustee, backup_servicer]
+    groups: [collection]
+    status: stated
+    name: Wells Fargo Bank, National Association
+    text: "'Indenture Trustee/ Backup Servicer/ Transition Manager ... Wells Fargo Bank, National Association' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]; trustee fees and 'Backup Servicer and Transition Manager Fees' rank first in the waterfall (item i, p.31)"
+  noteholders:
+    role: lender
+    groups: [capital]
+    status: stated
+    text: "holders of Class A ($150,079,000, 1.80%, A- (sf)) and Class B ($38,562,000, 3.15%, BB- (sf)) [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]. Not named"
+  dealers:
+    role: epc_contractor
+    groups: [delivery]
+    status: generic
+    text: "'over 270 active dealers and sub-dealers' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17]; 'the borrower purchases the PV system from a dealer' (p.18); dealers install, Sunnova pays them (p.18). Work for the homeowner and for Sunnova's design; not the Partner"
+
+contract:   # the agreements that establish the commitments
+  solar_loan:
+    core: contract
+    parties: [sunnova, homeowners]
+    status: generic
+    note: "the representative contract: the Easy Own loan: 'the borrower purchases the PV system from a dealer using financing provided by Sunnova ... The borrower repays the amount financed plus a finance charge through monthly payments for a typical term of 25 years' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.18]. 70.0% of the statistical pool (p.3)"
+  dealer_sale:
+    core: contract
+    parties: [dealers, homeowners]
+    status: generic
+    note: "the dealer sells and installs the PV system (and ESS) to the homeowner; Sunnova approves the commissioning package and pays the dealer [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17-18]"
+  contribution:
+    core: contract
+    parties: [sunnova, helios_issuer]
+    status: stated
+    note: "'Omnibus Contribution Agreement' and solar loans passed down the chain to the Issuer (diagram, [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30]). Via the Depositor and Holdings V (context)"
+  indenture:
+    core: contract
+    parties: [helios_issuer, wells_fargo, noteholders]
+    status: stated
+    note: "'Indenture' and 'Pledge of Trust Estate' (diagram, [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30]); 'Series 2021-A Notes'; 'Note Purchase Agreement' with the Initial Purchasers (context)"
+  management_servicing:
+    core: contract
+    parties: [helios_issuer, sunnova_management, wells_fargo]
+    status: stated
+    note: "'Management Agreement' and 'Servicing Agreement' with Sunnova Management; backup servicing and transition management by Wells Fargo (diagram, [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30])"
+  parent_guaranty:
+    core: contract
+    parties: [sunnova, helios_issuer]
+    status: stated
+    note: "'Parent Guaranty' (diagram, [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30]): 'Sunnova, as parent guarantor, will agree to cause the due and punctual performance by' the Holdings, Depositor, Manager and Servicer (p.10)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: funding_promise
+    from: sunnova
+    to: homeowners
+    status: generic
+    funding_instrument: loan   # financing of the PV system; the loan balance (p.18)
+    what: "finances the PV system the borrower buys from a dealer: 'financing provided by Sunnova' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.18]; the loan balance is the amount financed, repaid over about 25 years"
+    established_by: solar_loan
+  c2:
+    family: payment_promise
+    from: homeowners
+    to: helios_issuer
+    status: inferred
+    depends_on_savings: false   # a fixed flat monthly payment (p.8)
+    what: "monthly instalment: 'a fixed flat monthly payment' for the first 18 months, then a step-up if the ITC prepayment is not made [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.8]. Payee inferred as the Issuer, which holds the loans after the contribution (c6); ACH is used for 92.8% of payments (p.19)"
+    established_by: solar_loan
+  c3:
+    family: performance_promise
+    from: sunnova
+    to: homeowners
+    status: stated
+    what: "operates and maintains the PV system and guarantees output: 'it will compensate the borrower financially if the PV system does not meet minimum production levels' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10]. 73% of pool loans carry it; about $25,837 of refunds or bill credits had been recorded (p.19). The make-good stays inside this promise (ENCODING)"
+    established_by: solar_loan
+  c4:
+    family: performance_promise
+    from: dealers
+    to: homeowners
+    status: generic
+    what: "designs with Sunnova, sells and installs the PV system and ESS; obtains permits and interconnection [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17]"
+    established_by: dealer_sale
+  c5:
+    family: payment_promise
+    from: sunnova
+    to: dealers
+    status: stated
+    what: "pays the dealer in stages: 'typically makes a payment for the system' on substantial completion and a final payment on interconnection [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17-18]"
+    established_by: dealer_sale
+  c6:
+    family: performance_promise
+    from: sunnova
+    to: helios_issuer
+    status: stated
+    what: "contributes the solar loans down the chain (via the Depositor) and stands behind them: the Depositor repurchases defective loans; 'repurchase of a Defective Solar Loan and payment to Substitution Shortfall Amounts' are covered by the guaranty [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10, p.30]"
+    established_by: contribution
+  c7:
+    family: payment_promise
+    from: helios_issuer
+    to: sunnova
+    status: inferred
+    what: "note proceeds flow back up for the loans ('Solar Loans / $' arrows on the diagram, [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30], a figure, hence inferred); 'Sunnova will use the net proceeds ... to repay a portion of one or more existing financing arrangements' (p.6)"
+    established_by: contribution
+  c8:
+    family: funding_promise
+    from: noteholders
+    to: helios_issuer
+    status: stated
+    funding_instrument: bond   # Class A and B notes (p.3)
+    what: "buy the Class A and Class B notes, $188,641,000 in all [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]"
+    established_by: indenture
+  c9:
+    family: payment_promise
+    from: helios_issuer
+    to: noteholders
+    status: stated
+    what: "interest at 1.80% (A) and 3.15% (B) and principal through the waterfall: interest is sequential, Class B interest deferred while A is outstanding in a Sequential Interest Amortization Period [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3, p.6, p.31]; anticipated repayment date: the Payment Date in February 2028; legal final maturity Feb 20, 2048 (p.3, p.30)"
+    established_by: indenture
+  c10:
+    family: agency_promise
+    from: sunnova_management
+    to: helios_issuer
+    status: stated
+    what: "manager and servicer of the loans and the systems: collects, reports and performs the operations-and-maintenance duties [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4, p.10, p.19]"
+    established_by: management_servicing
+  c11:
+    family: payment_promise
+    from: helios_issuer
+    to: sunnova_management
+    status: stated
+    what: "'Manager Fees and Servicing Fees, pari passu' (waterfall item ii) [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.31]; the trust 'will pay a fee to the Manager for performing O&M duties on the PV systems and/or ESS' (p.10)"
+    established_by: management_servicing
+  c12:
+    family: agency_promise
+    from: wells_fargo
+    to: noteholders
+    status: stated
+    what: "indenture trustee: holds the pledged trust estate for the noteholders ('Pledge of Trust Estate', diagram [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30]). The report lists the Collection, Reserve, Prefunding, Capitalized Interest, Section 25D Interest and Equipment Replacement Reserve accounts (p.30) but does not say who holds them. Direction to the noteholders as for the bond trustee in nyserda_green_bonds_2024a"
+    established_by: indenture
+  c13:
+    family: payment_promise
+    from: helios_issuer
+    to: wells_fargo
+    status: stated
+    what: "'Indenture Trustee Fees, Backup Servicer and Transition Manager Fees' rank first in the waterfall, item (i) [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.31]"
+    established_by: indenture
+  c14:
+    family: agency_promise
+    from: wells_fargo
+    to: helios_issuer
+    status: stated
+    what: "backup servicer and transition manager: takes over servicing if the servicer fails (named as 'Backup Servicer' and 'Transition Manager', [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.4]). Trigger terms are not in the report"
+    established_by: management_servicing
+  c15:
+    family: risk_promise
+    from: sunnova
+    to: helios_issuer
+    status: stated
+    cover_kind: guarantee   # parent performance guaranty (p.10)
+    what: "parent performance guaranty: 'to cause the due and punctual performance by Sunnova ABS Holdings V, the Depositor, the Manager and the Servicer of their respective obligations' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10]. A guaranty of duties, not of the notes; 'no credit is given'. No fee is stated"
+    established_by: parent_guaranty
+  c16:
+    family: determination_promise
+    from: sunnova
+    to: homeowners
+    status: inferred
+    determines: other   # production against expected output (p.17)
+    what: "establishes production against expected output: 'Sunnova verifies interconnection through active monitoring of production, which is also compared to expected output' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17]. The guarantee payment (c3) depends on it (F21 by analogy: a payment computed on a measured performance level); the report does not say Sunnova alone decides a claim"
+    established_by: solar_loan
+
+settings:   # the 13 LOD 0 facets, in vocabulary order
+  payment_basis: {value: asset, status: inferred, why: "the homeowner buys equipment with a 25-year loan and pays a fixed instalment ([https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.18]); no payment depends on savings, output or energy delivered. Fallback savings not used. The production guarantee (c3) is a make-good, not the basis of payment"}
+  client_sector: {value: private, status: stated, why: "'homeowner' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]"}
+  partner_form:
+    value: corporate
+    status: default
+    why: "no Partner (reviewer ruling, as posigen_backleverage); default kept. If Sunnova were read as the Partner it would be corporate: Sunnova Energy Corporation, a standing company ('wholly-owned subsidiary of Sunnova Energy International Inc., a public company', [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]); the Issuer is the vehicle, not the Partner"
+  borrower:
+    value: client
+    status: stated
+    why: "the homeowner takes the loan [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.18]; the Issuer's note debt is funding one level up (c8-c9)"
+  receivable_holder:
+    value: assignee
+    status: inferred
+    why: "the loans are contributed to the Issuer and pledged to the trustee ('Pledge of Trust Estate', diagram [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30]), so the loan payments belong to the Issuer, not to Sunnova. Contribution and pledge are stated; that the Issuer owns (not just holds security over) the loans is inferred from the contribution chain"
+  collection_placement:
+    value: pledged_escrow
+    status: inferred
+    why: "collections go to a trust-controlled account: 'all collections with respect to the Solar Loans ... deposited in or transferred to the Collection Account' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.30]; the account is under the pledge to the indenture trustee. Whether the servicer first receives them is not stated (ACH 92.8%, p.19). Not the ENCODING fallback assignee_direct, since the report shows an account pledged to the trustee"
+  aggregation:
+    value: pool
+    status: stated
+    why: "5,269 loans pooled in one Issuer [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.12]"
+  debt_seniority:
+    value: subordinated
+    status: stated
+    why: "Class B is junior: 'subordination (in the case of Class A Notes)' and Class B interest is deferred behind Class A [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3, p.6]. Recorded as the rank of the most junior debt in the deal"
+  assignment_recourse:
+    value: performance_exposed
+    status: inferred
+    why: "the report shows the assigned leg can vary with Sunnova's performance: 'the borrower with a valid claim may be entitled to stop payment or seek a refund of prior payment' and 'failure by Sunnova to honor the Production Guarantees may lead to selective borrower defaults' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10]. Inferred (KBRA's reading of the FTC rule, not a contract clause in the notes)"
+  savings_basis:
+    value: measured
+    status: default
+    why: "the default; no savings enter the payment (payment_basis = asset). Savings are an underwriting theme ('the value of the customer's estimated savings ... compared to traditional utility rates', [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.17]) and a credit argument ('Solar Loans Result in Savings on Utility Bills', p.10), not a payment basis"
+  grant_recipient:
+    value: client
+    status: inferred
+    why: "the loans are built around the federal ITC: borrowers need not pay interest on the prepaid portion 'equal to the anticipated federal income tax credit' (30% for 2019 systems, 26% for 2020) [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.7]. A tax credit to the homeowner, not a grant by a party in the deal. Alternative none: a credit claimed on a tax return is not a payment by anyone in the deal"
+  asset_owner:
+    value: client
+    status: inferred
+    why: "'the borrower purchases the PV system from a dealer using financing provided by Sunnova' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.18]. The report's general paragraph that Sunnova 'takes title' (p.17) covers Sunnova's whole business; the loan pool is the purchase product"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "'solar loan payments can be viewed as displacing utility payments' [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.11]: the homeowner pays its own utility bill and a separate loan instalment"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2578-2582)
+    applies_here: false
+    this_case: "private US homeowners; not EU"
+    source: E15 L2576-2582, L6930-6943
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1: fires when client_sector is private and asset_owner is not client"
+    applies_here: false
+    this_case: "asset_owner = client (a loan, not a lease); the pool excludes Sunnova's lease and PPA products"
+    source: E02 L3293-3295; elements.yaml IFRS16_lease_test
+  production_guarantee:
+    scope: contractual
+    rule: "Sunnova 'guarantees minimum power production under all of the solar loan agreements where permitted by law' and pays 'the shortfall between expected production and actual production', with surplus carried forward [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10, p.19]"
+    applies_here: true
+    source: "https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10, p.19"
+  ftc_holder_rule:
+    scope: external-sectoral
+    rule: "'a consumer's claim against a seller of goods and services may also be asserted against a lender that finances the purchase' (Federal Trade Commission rules, [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10])"
+    applies_here: true
+    source: "https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.10"
+  itc_interest_waiver:
+    scope: contractual
+    rule: "Under Easy Own and SunSafe Easy Own a borrower pays no interest on the ITC-prepaid portion if the ITC prepayment is made on time; otherwise the instalment steps up [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.7-8]"
+    applies_here: true
+    source: "https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.7-8"
+
+numbers:   # only published figures, as printed, with units; checks shown with arithmetic
+  notes_total_usd: 188641000                    # [https://publicaccess.bpu.state.nj.us/DocumentHandler.ashx?document_id=1241955 | p.3]
+  class_a_usd: 150079000                         # 1.80%, A- (sf), initial CE 29.00% [p.3]
+  class_b_usd: 38562000                          # 3.15%, BB- (sf), initial CE 10.50% [p.3]
+  statistical_pool_usd: 181254889                # 'Current Pool Balance' [p.12]; '$181.255 million' [p.3]
+  loans_in_pool: 5269                            # [p.12]
+  total_collateral_usd_approx: 208400000         # 'approximately $208.4 million' [p.3]; about 13% prefunded
+  avg_loan_balance_usd: 34400                    # [p.3]
+  wa_coupon_pct: 3.94                            # [p.3, p.12]
+  wa_remaining_term_months: 290                  # [p.3]
+  wa_fico: 733                                   # [p.12]
+  initial_oc_pct: 9.50                           # target OC 10.00% [p.12]
+  initial_reserve_pct: 1.00                      # floor 0.10% [p.12]
+  anticipated_repayment_date: "Payment Date in February 2028"    # [p.30]
+  legal_final_maturity: "Feb 20, 2048"           # [p.3, p.30]
+  loan_original_term_pct: "25-year 96.9%; 15-year 1.5%; 10-year 1.6%"   # [p.3]
+  loan_products_pct: "Easy Own 70.0%; SunSafe Easy Own 27.1%; SunSafe 2.9%"   # [p.3]
+  production_guarantee_share_pct: "approximately 73% of loans (PV systems)"   # [p.4]
+  production_guarantee_refunds_usd: 25837        # to 31 Dec 2020 on the statistical pool [p.19]
+  wa_bond_coupon_pct: 2.07                       # [p.12]
+  servicing_and_other_fees_pct: 0.58             # [p.12]
+  annual_excess_spread_pct: 1.29                 # [p.12]
+  base_case_loss_range_pct: "9.80 - 11.80"       # [p.12]
+  itc_pct: "30 (2019 systems); 26 (2020 systems)"   # [p.7]
+  capitalized_interest_account_usd: "approximately 0.15 million"   # [p.6]
+  section_25d_interest_account_usd: "approximately 1.9 million"    # [p.6]
+  derived:
+    notes_sum: "150,079,000 + 38,562,000 = 188,641,000 (closes with the total on p.3)"
+    prefund: "208.4 x (1 - 0.13) = 181.3 million = the statistical pool 181.255 million (closes, 'approximately 13% will be prefunded')"
+    initial_oc: "1 - 188.641 / 208.4 = 9.48%, the published 'Initial OC 9.50%' (closes within rounding of the approximate 208.4)"
+    class_a_ce: "OC 9.48% + class B share (38.562 / 208.4 = 18.5%) + reserve 1.00% = 29.0%, the published 29.00% (closes)"
+    class_b_ce: "OC 9.48% + reserve 1.00% = 10.5%, the published 10.50% (closes)"
+    excess_spread: "WA coupon 3.94% - WA bond coupon 2.07% - fees 0.58% = 1.29%, the published 1.29% (closes)"
+    avg_balance: "181,254,889 / 5,269 = 34,400 USD, the published average loan balance (closes)"
+    wa_bond_coupon: "(150.079 x 1.80% + 38.562 x 3.15%) / 188.641 = (2.701 + 1.215) / 188.641 = 2.076%, which rounds to 2.08% against the published 2.07% (off by 0.6bp; the published figure may truncate or weight by a different basis; not forced to close)"
+    collection_rate_not_derived: "no payment amounts, no instalment schedule and no loss figure beyond KBRA's range are published for this pool; none derived"
+  links:   # R-A17 (architect, 6 Oct): which recorded figure sizes which promise; configuration, read by oe.census.printability
+  - {evidence: 'class A notes, 1.80% [p.3]', figure: class_a_usd, promise: c9, sizes: principal}
+  - {evidence: 'class B notes, 3.15% [p.3]', figure: class_b_usd, promise: c9, sizes: principal}
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  homeowners: {gives: [c2], receives: [c1, c3, c4, c16], one_way: false}
+  sunnova: {gives: [c1, c3, c5, c6, c15, c16], receives: [c7], one_way: false}
+  sunnova_management: {gives: [c10], receives: [c11], one_way: false}
+  helios_issuer: {gives: [c7, c9, c11, c13], receives: [c2, c6, c8, c10, c14, c15], one_way: false}
+  wells_fargo: {gives: [c12, c14], receives: [c13], one_way: false}
+  noteholders: {gives: [c8], receives: [c9, c12], one_way: false}
+  dealers: {gives: [c4], receives: [c5], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: no_efficiency_partner_without_service_payment
+  description: "A solar loan pool with a production guarantee and an O&M fee: Sunnova delivers an energy-service-like package (operate, maintain, guarantee output) but the homeowner pays only a fixed loan instalment. Reviewer: no Partner encoded (payment_basis = asset, as posigen_backleverage); the service content sits in c3 and c10. The case has no efficiency, so it stays out of scope"
+  classification: "scope boundary (out-of-scope witness); no new term"
+- kind: custodian
+  description: "U.S. Bank as custodian of the loan files fits none of the 37 roles: account_bank_trustee is defined as holding accounts, a custodian holds documents. Left in source.context"
+  classification: "encoding question; below LOD 0 (document custody)"
+- kind: parent_guaranty_of_duties
+  description: "The parent guaranty covers the performance of the Depositor, Manager and Servicer (including repurchase of defective loans), not payment of the notes. Encoded as a risk_promise from Sunnova to the Issuer under surety_guarantor ('guaranteeing a financing vehicle's debt' is the closest limb). Not exactly the definition"
+  classification: "definition question (surety_guarantor: 'obligations of the Partner or of the vehicle's service providers'); no new term"
+- kind: tax_credit_as_support
+  description: "The federal ITC is a tax credit the borrower claims; LOD 0 has benefit_promise for 'a forgone charge such as a tax exemption' but requires a giver party, and none is in the deal. Encoded through grant_recipient = client (inferred) with no giver"
+  classification: "encoding question"
+- kind: waterfall_detail
+  description: "Nineteen priority items, with sequential and regular amortisation, interest deferral and a make-whole amount, sit below LOD 0"
+  classification: "below LOD 0 (LOD 1 waterfall, LOD 3 levels)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F02
+  title: "jurisdiction header field, dated at financial close; C1 trigger"
+  convention: "A `jurisdiction` block (country, EU membership at close, whether the client is EU general government at close) sits in the header; C1 applies_when {client_sector: public, jurisdiction: EU at close}."
+  applied_here: "jurisdiction US, dated 16 Feb 2021; C1 applies_here false"
+- id: F04
+  title: "borrower rule"
+  convention: "borrower = none only when the source says own funds or equity; when no loan or equity is named, keep the default partner with status default."
+  applied_here: "borrower = client (the homeowner takes the loan)"
+- id: F06
+  title: "one_way form"
+  convention: "A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated."
+  applied_here: "no party is one_way: every party has a stated or inferred counter-promise"
+- id: F21
+  title: "determination_promise is required"
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  applied_here: "c16 determination_promise (production monitoring), inferred from 'active monitoring of production'; loan instalments are not computed on savings"
+- id: IFRS16
+  title: "IFRS16_lease_test rule entry"
+  convention: "IFRS16_lease_test applies_when {client_sector: private, asset_owner not client}."
+  applied_here: "applies_here false (asset_owner client)"
+- id: B2-R1
+  title: "grant or loan giver by identity"
+  convention: "A government body that lends or grants takes government_financier; grant_provider only for givers that are neither government nor EU funds."
+  applied_here: "not triggered: no public lender; the ITC has no giver party"
+- id: B3-web
+  title: "web evidence"
+  convention: "Evidence cited '<url> | <page or section>' with exact quotes of 25 words or fewer; PDF page = page of the PDF file."
+  applied_here: "one KBRA report, 37 pages; PDF page = printed page"
+- id: B3-scope
+  title: "in_scope decided from the source"
+  convention: "A case counts only if the source shows an efficiency deal; otherwise the file is kept as a witness and its uses do not count."
+  applied_here: "in_scope false: solar-only pool; witness, uses not counted"
+- id: B5-payment_basis
+  title: "payment_basis setting (1 Oct ruling 1)"
+  convention: "payment_basis goes first in settings with a status and a reason; no Partner is possible only when payment_basis is asset."
+  applied_here: "payment_basis asset, inferred (equipment loan); no Partner"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, originator_developer, surety_guarantor, collector_biller, operator_om, securitisation_vehicle, account_bank_trustee,
+    backup_servicer, lender, epc_contractor]
+  roles_count: 10 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, risk_promise, agency_promise, determination_promise]
+  families_absent: [benefit_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 4, inferred: 7, generic: 0, default: 2}
+  commitments_by_status: {stated: 11, inferred: 3, generic: 2, unstated: 0}
+  one_way_parties: []
+  parties_count: 7
+  commitments_count: 16
+  below_lod0: {lod1_adds: 'dealer installation, PTO and interconnection, loan origination and funding, prefunding period of
+      three months, monthly collections and remittance, ITC prepayment and payment step-up, servicer termination and backup
+      takeover, the February 2028 anticipated repayment date', lod2_adds: 'note coupons and the waterfall (19 items), reserve
+      and equipment replacement accounts, OC target and triggers, production-guarantee compensation formula, Post-ARD additional
+      interest'}

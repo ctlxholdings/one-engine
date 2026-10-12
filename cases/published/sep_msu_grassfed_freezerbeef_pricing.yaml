@@ -1,0 +1,64 @@
+# Published case "sep_msu_grassfed_freezerbeef_pricing": the price of a grass-finished steer sold
+# as freezer beef, built up from the carcass value and the processing charges (Michigan State
+# University Extension Beef Team, Grass-Finished Freezer Beef Pricing Worksheet, 3/2018, p.1;
+# cases/reference/published/sep_msu_grassfed_freezerbeef_pricing.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). One
+# book, the packaged beef's, one period:
+#   * the carcass weight is live_weight_lb times dressing_percentage_pct, the packaged weight that
+#     times carcass_yield_pct: physical quantities no ledger holds, read as drivers;
+#   * the carcass is taken in at carcass_price_usd_per_lb a pound of carcass, paid in cash and
+#     held as packaged beef at cost; the packer's flat slaughter fee (slaughter_cost_usd) and the
+#     cut-and-wrap charge (processing_rate_usd_per_lb_carcass a pound of CARCASS) are paid and
+#     capitalised into the same beef, each in its own cost pool (IAS 2 costs of conversion);
+#   * the total packaged carcass value is the beef held at cost; the price a pound is that per
+#     packaged pound, and the live-weight price is the carcass value per live pound (`per`);
+#   * nothing is sold and nothing expensed: the worksheet sets a price, it books no sale; no tax.
+# Source finding: the packaged weight is printed 418 lb in the yield row, but 580.5 x 72% =
+# 417.96, the figure the sheet's own last line divides by (oracle notes); the 0.04 lb is wider
+# than the cent-and-tenth tolerance, so it differs.
+published: sep_msu_grassfed_freezerbeef_pricing
+entity: beef
+plant: carcass_price_usd_per_lb
+case:
+  case: published-msu-freezer-beef
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        carcass_lb: live_weight_lb * dressing_percentage_pct / 100
+        packaged_lb: carcass_lb * carcass_yield_pct / 100
+        carcass_value: carcass_lb * carcass_price_usd_per_lb
+        cut_and_wrap: carcass_lb * processing_rate_usd_per_lb_carcass
+  opening:
+    beef:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    cost_build:
+      kind: transfer
+      entity: beef
+      phase: operate
+      declare: {beef_carcass_cost: asset, beef_slaughter_cost: asset, beef_processing_cost: asset}
+      moves:
+        carcass: {debit: beef_carcass_cost, credit: cash, amount: {generator: src, output: carcass_value}}
+        slaughter: {debit: beef_slaughter_cost, credit: cash, amount: {generator: src, output: slaughter_cost_usd}}
+        cut_and_wrap: {debit: beef_processing_cost, credit: cash, amount: {generator: src, output: cut_and_wrap}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  carcass_weight_lb: {driver: src.carcass_lb}
+  final_carcass_price_usd: {balance: beef_carcass_cost}
+  live_weight_market_price_usd_per_lb: {balance: beef_carcass_cost, per: src.live_weight_lb}
+  final_packaged_weight_lb: {driver: src.packaged_lb}
+  processing_and_packaging_cost_usd: {balance: beef_processing_cost}
+  total_packaged_carcass_value_usd: {balance: beef_carcass_cost + beef_slaughter_cost + beef_processing_cost}
+  final_packaged_price_usd_per_lb: {balance: beef_carcass_cost + beef_slaughter_cost + beef_processing_cost, per: src.packaged_lb}

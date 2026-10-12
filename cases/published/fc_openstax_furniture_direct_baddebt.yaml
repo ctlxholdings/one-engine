@@ -1,0 +1,137 @@
+# Published case "fc_openstax_furniture_direct_baddebt": Furniture Direct's 2018 bad-debt
+# estimate by the three methods of the source (OpenStax, Principles of Accounting vol. 1,
+# section 9.7; cases/reference/published/fc_openstax_furniture_direct_baddebt.yaml).
+#
+# The three methods are alternatives for the same year-end, so each has its own books (entities
+# `income_method`, `balance_method`, `aging`), read through its own cuts. Every amount is a
+# printed figure by name (generator `src`), one period, the year-end adjustment:
+#   * income statement method: bad debt expense is credit_sales times its percent, debited to
+#     expense and credited to the allowance (a transfer: the method is a share of the year's
+#     sales, whatever the allowance already holds);
+#   * balance sheet method: the allowance is held at accounts_receivable times its percent, the
+#     change charged to bad debt expense (held_balance against the expense), from the prior-year
+#     allowance it opens on (prior_year_allowance_for_doubtful_accounts_balance, nil);
+#   * aging method: the receivables open in their three age buckets; each bucket has its own
+#     allowance held at the bucket times its percent, the change charged to bad debt expense.
+#     The source carries the prior-year allowance only as one nil total, so the bucket
+#     allowances open at nil;
+#   * an allowance is the contra to receivables, a credit balance: it is held on the liability
+#     side (held_balance offers asset or liability), read as a positive credit;
+#   * no tax and no other line: the source prints only the estimate.
+# A credit to the allowance is read with sign -1 (the cut counts a debit as positive).
+# Each method's rate is read back from its books: the expense (or a bucket's allowance) over
+# the base it was taken on, printed as a percent.
+published: fc_openstax_furniture_direct_baddebt
+entity: aging
+plant: _31_90_days_past_due
+case:
+  case: published-furniture-direct-baddebt
+  periods: 1
+  phases: [adjust]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        income_estimate: credit_sales * income_statement_method_pct_of_credit_sales / 100
+        balance_target: accounts_receivable * balance_sheet_method_pct_of_accounts_receivable / 100
+        target_0_30: _0_30_days_past_due * _0_30_days / 100
+        target_31_90: _31_90_days_past_due * _31_90_days / 100
+        target_over_90: over_90_days_past_due * over_90_days / 100
+  opening:
+    income_method:
+      allowance: {nature: liability, value: {generator: src, output: prior_year_allowance_for_doubtful_accounts_balance}}
+      equity: {nature: equity, value: balancing}
+    balance_method:
+      receivables: {nature: asset, value: {generator: src, output: accounts_receivable}}
+      allowance: {nature: liability, value: {generator: src, output: prior_year_allowance_for_doubtful_accounts_balance}}
+      equity: {nature: equity, value: balancing}
+    aging:
+      receivables_0_30: {nature: asset, value: {generator: src, output: _0_30_days_past_due}}
+      receivables_31_90: {nature: asset, value: {generator: src, output: _31_90_days_past_due}}
+      receivables_over_90: {nature: asset, value: {generator: src, output: over_90_days_past_due}}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    income_statement_method:
+      kind: transfer
+      entity: income_method
+      phase: adjust
+      declare:
+        bad_debt_expense: expense
+      moves:
+        estimate: {debit: bad_debt_expense, credit: allowance, amount: {generator: src, output: income_estimate}}
+    balance_expense:
+      kind: transfer
+      entity: balance_method
+      phase: adjust
+      declare:
+        bad_debt_expense: expense
+      moves: {}
+    balance_sheet_method:
+      kind: held_balance
+      entity: balance_method
+      cash: receivables
+      phase: adjust
+      accounts:
+        allowance: {side: liability, target: {generator: src, output: balance_target}, against: bad_debt_expense}
+    aging_expense:
+      kind: transfer
+      entity: aging
+      phase: adjust
+      declare:
+        bad_debt_expense: expense
+      moves: {}
+    aging_method:
+      kind: held_balance
+      entity: aging
+      cash: receivables_0_30
+      phase: adjust
+      accounts:
+        allowance_0_30: {side: liability, target: {generator: src, output: target_0_30}, against: bad_debt_expense}
+        allowance_31_90: {side: liability, target: {generator: src, output: target_31_90}, against: bad_debt_expense}
+        allowance_over_90: {side: liability, target: {generator: src, output: target_over_90}, against: bad_debt_expense}
+  schemes:
+    pnl:
+      bad_debt_expense: bad_debt
+    allowance:
+      bad_debt_expense: charge
+  cuts:
+    income_expense: {kind: pnl, entity: income_method, scheme: pnl, include: [bad_debt]}
+    income_allowance: {entity: income_method, account: allowance, scheme: allowance, include: [charge]}
+    balance_expense: {kind: pnl, entity: balance_method, scheme: pnl, include: [bad_debt]}
+    balance_allowance: {entity: balance_method, account: allowance, scheme: allowance, include: [charge]}
+    aging_expense: {kind: pnl, entity: aging, scheme: pnl, include: [bad_debt]}
+  measures: {}
+figures:
+  aging_method_bad_debt_expense: {cut: aging_expense, sign: -1}
+  # income statement method
+  income_statement_method_usd.rate_pct: {cut: income_expense, sign: -1, per: src.credit_sales, scale: 0.01}
+  income_statement_method_usd.bad_debt_expense: {cut: income_expense, sign: -1}
+  income_statement_method_usd.journal_entry.debit_bad_debt_expense: {cut: income_expense, sign: -1}
+  income_statement_method_usd.journal_entry.credit_allowance_for_doubtful_accounts: {cut: income_allowance, sign: -1}
+  # balance sheet method
+  balance_sheet_method_usd.rate_pct: {cut: balance_expense, sign: -1, per: src.accounts_receivable, scale: 0.01}
+  balance_sheet_method_usd.bad_debt_expense: {cut: balance_expense, sign: -1}
+  balance_sheet_method_usd.journal_entry.debit_bad_debt_expense: {cut: balance_expense, sign: -1}
+  balance_sheet_method_usd.journal_entry.credit_allowance_for_doubtful_accounts: {cut: balance_allowance, sign: -1}
+  # aging method
+  balance_sheet_aging_method_usd.detail.0_30_days.amount: {balance: receivables_0_30}
+  balance_sheet_aging_method_usd.detail.0_30_days.rate_pct: {balance: allowance_0_30, per: src._0_30_days_past_due, scale: 0.01}
+  balance_sheet_aging_method_usd.detail.0_30_days.estimated_uncollectible: {balance: allowance_0_30}
+  balance_sheet_aging_method_usd.detail.31_90_days.amount: {balance: receivables_31_90}
+  balance_sheet_aging_method_usd.detail.31_90_days.rate_pct: {balance: allowance_31_90, per: src._31_90_days_past_due, scale: 0.01}
+  balance_sheet_aging_method_usd.detail.31_90_days.estimated_uncollectible: {balance: allowance_31_90}
+  balance_sheet_aging_method_usd.detail.over_90_days.amount: {balance: receivables_over_90}
+  balance_sheet_aging_method_usd.detail.over_90_days.rate_pct: {balance: allowance_over_90, per: src.over_90_days_past_due, scale: 0.01}
+  balance_sheet_aging_method_usd.detail.over_90_days.estimated_uncollectible: {balance: allowance_over_90}
+  balance_sheet_aging_method_usd.total_estimated_uncollectible: {balance: &allowances "allowance_0_30 + allowance_31_90 + allowance_over_90"}
+  balance_sheet_aging_method_usd.journal_entry.debit_bad_debt_expense: {cut: aging_expense, sign: -1}
+  balance_sheet_aging_method_usd.journal_entry.credit_allowance_for_doubtful_accounts: {change: *allowances}
+  # the three methods side by side
+  method_comparison_usd.income_statement_method: {cut: income_expense, sign: -1}
+  method_comparison_usd.balance_sheet_method: {cut: balance_expense, sign: -1}
+  method_comparison_usd.balance_sheet_aging_of_receivables_method: {cut: aging_expense, sign: -1}

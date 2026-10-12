@@ -1,0 +1,254 @@
+# Published case "fc_openstax_propensity_co_cashflow": Propensity Company, the year 2018, its
+# statement of cash flows by the indirect and the direct method (OpenStax, Principles of
+# Accounting vol. 1, sections 16.3 and 16.6;
+# cases/reference/published/fc_openstax_propensity_co_cashflow.yaml).
+#
+# The source gives the comparative balance sheet (2017, 2018), the 2018 income statement and a
+# list of "additional information" in words. The books open on the 2017 balance sheet and are
+# taken to the 2018 one; every amount is a printed number by name (generator `src`), and every
+# cash flow is what the books move, never a typed or listed figure. In one period:
+#   * the income statement is posted as accrued: sales to receivables, cost of goods sold out of
+#     inventory, depreciation to accumulated depreciation, insurance out of prepaid insurance,
+#     salaries to salaries payable; other operating expenses, interest and income tax are paid
+#     in cash (the balance sheet carries no payable for them);
+#   * the working-capital accounts are then held at their 2018 balances (held_balance): the
+#     change in receivables, prepaid insurance, salaries payable and accounts payable moves
+#     cash, and the change in inventory is bought on account (against accounts payable, before
+#     the payables are held), so collections, purchases and payments are the books' own;
+#   * land: the 2017 land is sold for its cost plus the printed gain (the source's text puts the
+#     cost at $10,000, the whole 2017 balance); plant assets are held at their 2018 balance
+#     against cash (no disposal is reported), so their cost is the 60,000 the balance sheet
+#     bears, not the list's misprinted 50,000; notes payable are held at their 2018 balance
+#     against cash, a 10,000 issuance;
+#   * the land the year closes with is the new parcel, acquired without cash. The source says
+#     for a note payable, and also that 20,000 of stock went to employees as a bonus; its own
+#     balance sheet bears neither (notes payable rise only by the 10,000 its statement borrows
+#     in cash, and no bonus is expensed). The one posting the balance sheet and the reconciling
+#     statement both bear is the land against common stock, so it is posted there; the stock
+#     issued for cash is the rest of the rise in common stock;
+#   * the dividend is what retained earnings show was paid: the 2017 balance plus net income
+#     less the 2018 balance, in cash;
+#   * the year's tax is the printed income tax expense, paid in the year.
+# The books land on every printed 2018 balance, so cash lands on 47,500 by itself.
+# Figures that differ, each a contradiction the source's own notes document: the direct
+# method's printed operating total 13,480 (its own lines give 13,840, ERROR 4), its financing
+# 33,560, increase 22,200 and closing cash 46,500 (ERROR 5); the later "payment of notes"
+# version of financing, -10,000 and 34,560 (ERROR 2; the balance sheet shows notes rising); the
+# salaries box's printed answer 42,400 to its own 44,100 - 1,900 (ERROR 3).
+published: fc_openstax_propensity_co_cashflow
+entity: propensity
+plant: sales_revenue
+case:
+  case: published-propensity-co-cashflow
+  periods: 1
+  phases: [post, hold]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        interest_paid: -interest_expense
+        dividend: retained_earnings__y2017 + net_income - retained_earnings__y2018
+        stock_for_cash: common_stock__y2018 - common_stock__y2017 - land__y2018
+  opening:
+    propensity:
+      cash: {nature: asset, value: {generator: src, output: cash__y2017}}
+      accounts_receivable: {nature: asset, value: {generator: src, output: accounts_receivable__y2017}}
+      prepaid_insurance: {nature: asset, value: {generator: src, output: prepaid_insurance__y2017}}
+      inventory: {nature: asset, value: {generator: src, output: inventory__y2017}}
+      land: {nature: asset, value: {generator: src, output: land__y2017}}
+      plant_assets: {nature: asset, value: {generator: src, output: plant_assets__y2017}}
+      accumulated_depreciation: {nature: asset, value: {generator: src, output: accumulated_depreciation__y2017}}
+      accounts_payable: {nature: liability, value: {generator: src, output: accounts_payable__y2017}}
+      salaries_payable: {nature: liability, value: {generator: src, output: salaries_payable__y2017}}
+      notes_payable: {nature: liability, value: {generator: src, output: notes_payable__y2017}}
+      common_stock: {nature: equity, value: {generator: src, output: common_stock__y2017}}
+      retained_earnings: {nature: equity, value: {generator: src, output: retained_earnings__y2017}}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: propensity
+      phase: post
+      declare:
+        dividends: equity
+        sales_revenue: income
+        gain_on_sale_of_land: income
+        cost_of_goods_sold: expense
+        depreciation_expense: expense
+        insurance_expense: expense
+        salaries_expense: expense
+        other_operating_expenses: expense
+        interest_expense: expense
+        income_tax_expense: expense
+      moves:
+        sales: {debit: accounts_receivable, credit: sales_revenue, amount: {generator: src, output: sales_revenue}}
+        cogs: {debit: cost_of_goods_sold, credit: inventory, amount: {generator: src, output: cost_of_goods_sold}}
+        depreciation: {debit: depreciation_expense, credit: accumulated_depreciation, amount: {generator: src, output: depreciation_expense}}
+        insurance: {debit: insurance_expense, credit: prepaid_insurance, amount: {generator: src, output: insurance_expense}}
+        salaries: {debit: salaries_expense, credit: salaries_payable, amount: {generator: src, output: salaries_expense}}
+        other_opex: {debit: other_operating_expenses, credit: cash, amount: {generator: src, output: other_operating_expenses}}
+        interest: {debit: interest_expense, credit: cash, amount: {generator: src, output: interest_paid}}
+        income_tax: {debit: income_tax_expense, credit: cash, amount: {generator: src, output: income_tax_expense}}
+        land_sold_cost: {debit: cash, credit: land, amount: {generator: src, output: land__y2017}}
+        land_sold_gain: {debit: cash, credit: gain_on_sale_of_land, amount: {generator: src, output: gain_on_sale_of_land}}
+        stock_issued: {debit: cash, credit: common_stock, amount: {generator: src, output: stock_for_cash}}
+        dividend: {debit: dividends, credit: cash, amount: {generator: src, output: dividend}}
+    balances:
+      kind: held_balance
+      entity: propensity
+      cash: cash
+      phase: hold
+      accounts:
+        accounts_receivable: {side: asset, target: {generator: src, output: accounts_receivable__y2018}}
+        prepaid_insurance: {side: asset, target: {generator: src, output: prepaid_insurance__y2018}}
+        inventory: {side: asset, target: {generator: src, output: inventory__y2018}, against: accounts_payable}
+        accounts_payable: {side: liability, target: {generator: src, output: accounts_payable__y2018}}
+        salaries_payable: {side: liability, target: {generator: src, output: salaries_payable__y2018}}
+        plant_assets: {side: asset, target: {generator: src, output: plant_assets__y2018}}
+        notes_payable: {side: liability, target: {generator: src, output: notes_payable__y2018}}
+        land: {side: asset, target: {generator: src, output: land__y2018}, against: common_stock}
+  schemes:
+    pnl:
+      sales_revenue: revenue
+      gain_on_sale_of_land: other
+      cost_of_goods_sold: expense
+      depreciation_expense: expense
+      insurance_expense: expense
+      salaries_expense: expense
+      other_operating_expenses: expense
+      interest_expense: other
+      income_tax_expense: tax
+    cash_flow:
+      accounts_receivable: collections
+      accounts_payable: suppliers
+      salaries_payable: salaries
+      prepaid_insurance: insurance
+      interest_expense: interest
+      income_tax_expense: taxes
+      other_operating_expenses: other_opex
+      land: land_sale
+      gain_on_sale_of_land: land_sale
+      plant_assets: plant
+      notes_payable: notes
+      common_stock: stock
+      dividends: dividends
+    moves:
+      accounts_payable: purchases
+      cost_of_goods_sold: used
+      cash: cash
+      common_stock: noncash
+  cuts:
+    net_income: {kind: pnl, entity: propensity, scheme: pnl, include: [revenue, other, expense, tax]}
+    collections: {entity: propensity, account: cash, scheme: cash_flow, include: [collections]}
+    suppliers: {entity: propensity, account: cash, scheme: cash_flow, include: [suppliers]}
+    salaries_paid: {entity: propensity, account: cash, scheme: cash_flow, include: [salaries]}
+    insurance_paid: {entity: propensity, account: cash, scheme: cash_flow, include: [insurance]}
+    interest_paid: {entity: propensity, account: cash, scheme: cash_flow, include: [interest]}
+    taxes_paid: {entity: propensity, account: cash, scheme: cash_flow, include: [taxes]}
+    other_paid: {entity: propensity, account: cash, scheme: cash_flow, include: [other_opex]}
+    payments: {entity: propensity, account: cash, scheme: cash_flow,
+               include: [suppliers, salaries, insurance, interest, taxes, other_opex]}
+    operating: {entity: propensity, account: cash, scheme: cash_flow,
+                include: [collections, suppliers, salaries, insurance, interest, taxes, other_opex]}
+    land_sale: {entity: propensity, account: cash, scheme: cash_flow, include: [land_sale]}
+    plant: {entity: propensity, account: cash, scheme: cash_flow, include: [plant]}
+    investing: {entity: propensity, account: cash, scheme: cash_flow, include: [land_sale, plant]}
+    notes: {entity: propensity, account: cash, scheme: cash_flow, include: [notes]}
+    stock: {entity: propensity, account: cash, scheme: cash_flow, include: [stock]}
+    dividends: {entity: propensity, account: cash, scheme: cash_flow, include: [dividends]}
+    financing: {entity: propensity, account: cash, scheme: cash_flow, include: [notes, stock, dividends]}
+    purchases: {entity: propensity, account: inventory, scheme: moves, include: [purchases]}
+    land_noncash: {entity: propensity, account: land, scheme: moves, include: [noncash]}
+  measures: {}
+figures:
+  net_income_top: {cut: net_income}
+  total_assets_2018_top: {balance: &assets "cash + accounts_receivable + prepaid_insurance + inventory + land + plant_assets + accumulated_depreciation"}
+  total_liabilities_2018_top: {balance: &liabilities "accounts_payable + salaries_payable + notes_payable"}
+  total_equity_2018_top: {balance: "common_stock + retained_earnings + dividends + sales_revenue + gain_on_sale_of_land - cost_of_goods_sold - depreciation_expense - insurance_expense - salaries_expense - other_operating_expenses - interest_expense - income_tax_expense"}
+  cash_closing_2018_top: {balance: cash}
+  net_change_in_cash_top: {change: cash}
+  # indirect method
+  indirect_method_cash_flow_statement_usd.operating_activities.net_income: {cut: net_income}
+  indirect_method_cash_flow_statement_usd.operating_activities.depreciation: {balance: depreciation_expense}
+  indirect_method_cash_flow_statement_usd.operating_activities.gain_on_sale_of_plant_assets: {balance: gain_on_sale_of_land, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.accounts_receivable_decrease: {change: accounts_receivable, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.prepaid_insurance_increase: {change: prepaid_insurance, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.inventory_increase: {change: inventory, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.accounts_payable_decrease: {change: accounts_payable}
+  indirect_method_cash_flow_statement_usd.operating_activities.salaries_payable_increase: {change: salaries_payable}
+  indirect_method_cash_flow_statement_usd.operating_activities.total_adjustments: {sum: [{balance: depreciation_expense}, {balance: gain_on_sale_of_land, sign: -1}, {change: "accounts_payable + salaries_payable - accounts_receivable - prepaid_insurance - inventory"}]}
+  indirect_method_cash_flow_statement_usd.operating_activities.net_cash_flow_operating: {cut: operating}
+  indirect_method_cash_flow_statement_usd.investing_activities.proceeds_from_sale_of_land: {cut: land_sale}
+  indirect_method_cash_flow_statement_usd.investing_activities.cost_of_new_plant_assets: {cut: plant}
+  indirect_method_cash_flow_statement_usd.investing_activities.net_cash_flow_investing: {cut: investing}
+  indirect_method_cash_flow_statement_usd.financing_activities.issuance_of_notes_payable_principal: {cut: notes}
+  indirect_method_cash_flow_statement_usd.financing_activities.issuance_of_common_stock: {cut: stock}
+  indirect_method_cash_flow_statement_usd.financing_activities.payment_of_dividends: {cut: dividends}
+  indirect_method_cash_flow_statement_usd.financing_activities.net_cash_flow_financing: {cut: financing}
+  indirect_method_cash_flow_statement_usd.total_cash_flow_increase: {change: cash}
+  indirect_method_cash_flow_statement_usd.cash_balance_dec_31_2017: {opening: cash}
+  indirect_method_cash_flow_statement_usd.cash_balance_dec_31_2018: {balance: cash}
+  indirect_method_cash_flow_statement_usd.noncash_investing_financing_activities.land_acquired_in_exchange_for_note_payable: {cut: land_noncash}
+  # the later, contradicting financing section (ERROR 2)
+  financing_activities_alternate_as_printed_later_same_page_usd.payment_of_notes_payable_principal: {cut: notes}
+  financing_activities_alternate_as_printed_later_same_page_usd.issuance_of_common_stock: {cut: stock}
+  financing_activities_alternate_as_printed_later_same_page_usd.payment_of_dividends: {cut: dividends}
+  financing_activities_alternate_as_printed_later_same_page_usd.net_cash_flow_financing: {cut: financing}
+  # direct method, as printed
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_collected_from_customers: {cut: collections}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_paid_to_suppliers_for_inventory: {cut: suppliers, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_paid_for_salaries: {cut: salaries_paid, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_paid_for_insurance: {cut: insurance_paid, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_paid_for_interest: {cut: interest_paid, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_paid_for_income_taxes: {cut: taxes_paid, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.cash_paid_for_other_operating_expenses: {cut: other_paid, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.total_cash_payments: {cut: payments, sign: -1}
+  direct_method_cash_flow_statement_as_printed_usd.operating_activities.net_cash_flow_operating_activities: {cut: operating}
+  direct_method_cash_flow_statement_as_printed_usd.investing_activities.proceeds_from_sale_of_land: {cut: land_sale}
+  direct_method_cash_flow_statement_as_printed_usd.investing_activities.cost_of_new_plant_assets: {cut: plant}
+  direct_method_cash_flow_statement_as_printed_usd.investing_activities.net_cash_flow_investing_activities: {cut: investing}
+  direct_method_cash_flow_statement_as_printed_usd.financing_activities.issuance_of_notes_payable_principal: {cut: notes}
+  direct_method_cash_flow_statement_as_printed_usd.financing_activities.issuance_of_common_stock: {cut: stock}
+  direct_method_cash_flow_statement_as_printed_usd.financing_activities.payment_of_dividends: {cut: dividends}
+  direct_method_cash_flow_statement_as_printed_usd.financing_activities.net_cash_flow_financing_activities: {cut: financing}
+  direct_method_cash_flow_statement_as_printed_usd.total_cash_flow_increase: {change: cash}
+  direct_method_cash_flow_statement_as_printed_usd.cash_balance_dec_31_2017: {opening: cash}
+  direct_method_cash_flow_statement_as_printed_usd.cash_balance_dec_31_2018: {balance: cash}
+  direct_method_cash_flow_statement_as_printed_usd.noncash_investing_financing_activities.land_acquired_in_exchange_for_note_payable: {cut: land_noncash}
+  # direct method, reconciled
+  direct_method_cash_flow_statement_reconciled_usd.net_cash_flow_operating_activities: {cut: operating}
+  direct_method_cash_flow_statement_reconciled_usd.net_cash_flow_investing_activities: {cut: investing}
+  direct_method_cash_flow_statement_reconciled_usd.net_cash_flow_financing_activities: {cut: financing}
+  direct_method_cash_flow_statement_reconciled_usd.total_cash_flow_increase: {change: cash}
+  direct_method_cash_flow_statement_reconciled_usd.cash_balance_dec_31_2018: {balance: cash}
+  # direct method supporting calculations
+  direct_method_supporting_calculations_usd.cash_collected_from_customers.beginning_accounts_receivable: {opening: accounts_receivable}
+  direct_method_supporting_calculations_usd.cash_collected_from_customers.plus_accrual_basis_sales: {balance: sales_revenue}
+  direct_method_supporting_calculations_usd.cash_collected_from_customers.equals_potential_cash_collected: {sum: [{opening: accounts_receivable}, {balance: sales_revenue}]}
+  direct_method_supporting_calculations_usd.cash_collected_from_customers.less_ending_accounts_receivable: {balance: accounts_receivable, sign: -1}
+  direct_method_supporting_calculations_usd.cash_collected_from_customers.equals_cash_collected: {cut: collections}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part1_inventory_purchased.ending_inventory: {balance: inventory}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part1_inventory_purchased.plus_cost_of_goods_sold: {balance: cost_of_goods_sold}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part1_inventory_purchased.equals_goods_available_for_sale: {balance: "inventory + cost_of_goods_sold"}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part1_inventory_purchased.less_beginning_inventory: {opening: inventory, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part1_inventory_purchased.equals_inventory_purchased_this_period: {cut: purchases}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part2_cash_paid.beginning_accounts_payable: {opening: accounts_payable}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part2_cash_paid.plus_inventory_purchased: {cut: purchases}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part2_cash_paid.equals_total_obligation: {sum: [{opening: accounts_payable}, {cut: purchases}]}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part2_cash_paid.less_ending_accounts_payable: {balance: accounts_payable, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_inventory_purchases.part2_cash_paid.equals_cash_paid_for_inventory: {cut: suppliers, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_salaries.beginning_salaries_payable: {opening: salaries_payable}
+  direct_method_supporting_calculations_usd.cash_paid_for_salaries.plus_salaries_expense: {balance: salaries_expense}
+  direct_method_supporting_calculations_usd.cash_paid_for_salaries.equals_total_obligation_to_pay_salaries: {sum: [{opening: salaries_payable}, {balance: salaries_expense}]}
+  direct_method_supporting_calculations_usd.cash_paid_for_salaries.less_ending_salaries_payable: {balance: salaries_payable, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_salaries.equals_cash_paid_for_salaries_as_printed: {cut: salaries_paid, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_salaries.equals_cash_paid_for_salaries_correct: {cut: salaries_paid, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_insurance.ending_prepaid_insurance: {balance: prepaid_insurance}
+  direct_method_supporting_calculations_usd.cash_paid_for_insurance.plus_insurance_expense: {balance: insurance_expense}
+  direct_method_supporting_calculations_usd.cash_paid_for_insurance.equals_total_insurance_premiums_expended: {balance: "prepaid_insurance + insurance_expense"}
+  direct_method_supporting_calculations_usd.cash_paid_for_insurance.less_beginning_prepaid_insurance: {opening: prepaid_insurance, sign: -1}
+  direct_method_supporting_calculations_usd.cash_paid_for_insurance.equals_cash_paid_for_insurance: {cut: insurance_paid, sign: -1}

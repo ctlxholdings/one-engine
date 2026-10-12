@@ -1,0 +1,103 @@
+# Published case "agro_sugar_zambia_sugar_2024": Zambia Sugar Plc, the year ended 31 August 2024,
+# the GROUP statement of profit or loss (Annual Report 2024;
+# cases/reference/published/agro_sugar_zambia_sugar_2024.yaml). K'000.
+#
+# One period, the FY2024 Group column. Every line is posted as one move of a `transfer` journal
+# at the amount the source prints, against cash:
+#   * revenue less cost of sales is gross profit;
+#   * the profit on disposal of plant and equipment, distribution expenses, administration
+#     expenses and the expected credit loss expense are the operating lines down to operating
+#     profit;
+#   * the foreign exchange loss on lease liabilities, finance costs and finance income sit between
+#     operating profit and profit before taxation, as printed;
+#   * taxation is the source's own charge for the year.
+#
+# Not read, and why:
+#   * gross_profit.prior_year is scored by the library, but the inputs carry FY2023 revenue and
+#     none of its cost of sales: it cannot be derived, so it is left unread ("not reported");
+#   * total_assets, total_liabilities, total_equity (and prior years) and net_change_in_cash are
+#     scored, but the inputs carry no balance sheet and no cash-flow line: left unread;
+#   * the other FY2023 comparatives, EPS (no share count), the cash-flow subtotals and the
+#     separate Company column (whose cost lines are not inputs) are set aside below.
+published: agro_sugar_zambia_sugar_2024
+entity: zsugar
+plant: revenue
+case:
+  case: published-zambia-sugar-fy2024
+  periods: 1
+  phases: [post]
+  currency: ZMW
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    zsugar:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: zsugar
+      phase: post
+      declare:
+        revenue: income
+        cost_of_sales: expense
+        disposal_profit: income
+        distribution_expenses: expense
+        administration_expenses: expense
+        expected_credit_loss: expense
+        lease_fx_loss: expense
+        finance_costs: expense
+        finance_income: income
+        taxation: expense
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        cost_of_sales: {debit: cost_of_sales, credit: cash, amount: {generator: src, output: cost_of_sales}}
+        disposal: {debit: cash, credit: disposal_profit, amount: {generator: src, output: profit_on_disposal_of_plant_and_equipment}}
+        distribution: {debit: distribution_expenses, credit: cash, amount: {generator: src, output: distribution_expenses}}
+        administration: {debit: administration_expenses, credit: cash, amount: {generator: src, output: administration_expenses}}
+        credit_loss: {debit: expected_credit_loss, credit: cash, amount: {generator: src, output: expected_credit_loss_expense}}
+        lease_fx: {debit: lease_fx_loss, credit: cash, amount: {generator: src, output: lease_liability_foreign_exchange_loss}}
+        finance_costs: {debit: finance_costs, credit: cash, amount: {generator: src, output: finance_costs}}
+        finance_income: {debit: cash, credit: finance_income, amount: {generator: src, output: finance_income}}
+        tax: {debit: taxation, credit: cash, amount: {generator: src, output: taxation_expense}}
+  schemes:
+    pnl:
+      revenue: gross
+      cost_of_sales: gross
+      disposal_profit: operating
+      distribution_expenses: operating
+      administration_expenses: operating
+      expected_credit_loss: operating
+      lease_fx_loss: below_operating
+      finance_costs: below_operating
+      finance_income: below_operating
+      taxation: tax
+  cuts:
+    gross_profit: {kind: pnl, entity: zsugar, scheme: pnl, include: [gross]}
+    operating_profit: {kind: pnl, entity: zsugar, scheme: pnl, include: [gross, operating]}
+    pbt: {kind: pnl, entity: zsugar, scheme: pnl, include: [gross, operating, below_operating]}
+    profit: {kind: pnl, entity: zsugar, scheme: pnl, include: [gross, operating, below_operating, tax]}
+  measures: {}
+figures:
+  gross_profit: {cut: gross_profit}
+  operating_profit: {cut: operating_profit}
+  profit_before_taxation: {cut: pbt}
+  profit_for_the_year: {cut: profit}
+not_compared:
+  operating_profit.prior_year: "FY2023 comparative: the case models FY2024; no FY2023 cost line is an input"
+  profit_before_taxation.prior_year: "FY2023 comparative: no FY2023 cost line is an input"
+  profit_for_the_year.prior_year: "FY2023 comparative: no FY2023 cost line or tax is an input"
+  basic_and_diluted_eps_ngwee: "the number of shares is not an input"
+  cash_operating_profit: "the cash-flow add-backs (depreciation, biological fair value gain, provisions) are not inputs"
+  cash_generated_from_operations: "working-capital movements are not inputs"
+  net_cash_inflows_from_operating_activities: "interest and tax paid are not inputs"
+  net_cash_outflows_from_investing_activities: "no investing line is an input"
+  net_cash_outflows_from_financing_activities: "no financing line (dividends, leases) is an input"
+  net_cash_and_cash_equivalents_at_end_of_period: "opening cash, the cash flow statement and exchange differences are not inputs"
+  company_column: "the separate Company presentation: its cost lines (cost of sales, overheads, dividend income, tax) are not inputs, which carry the Group's"

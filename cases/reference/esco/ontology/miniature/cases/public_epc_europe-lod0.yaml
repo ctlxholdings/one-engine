@@ -1,0 +1,402 @@
+# Miniature — the Czech public-sector EPC model ("Public-EPC Europe" world) expressed at ESCO LOD 0
+#
+# Shape copied from bytom-lod0.yaml. Frame: elements_pilot.yaml (ESCO LOD 0: 41 roles, 7 commitment families,
+# 12 settings; owner rulings 28 Sep 2026). Core v7 = lod0/ (ISO/IEC 15944-4 Figure B.3 + 3.5 + 3.14).
+# This case is a MODEL, not one deal: the Czech public-EPC structure as E07 (Czech-model paragraph) and E02 (JRC
+# Czech chapter) describe it. Status convention here: `stated` = the source says it OF THE CZECH MODEL; `generic` =
+# taken from the sources' description of EPC in general (E07 L129-188) or from E06's forfaiting mechanics;
+# `inferred` follows from a stated fact (named); `default` = setting default, sources silent; `unstated` = a
+# counter-promise required by duality that the sources do not mention. Only the corpus is evidence.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: public_epc_europe_czech_model
+lod: 0
+case: validation_targets.worlds.public_epc_europe
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E07
+  title: Implementing Energy Efficiency projects via Energy Performance Contracting with support from ERDF financial instruments in Poland
+  publisher: fi-compass (EC / EIB), November 2023
+  passage: Czech-model paragraph, p. 8 (corpus input/fic-erdf-epc-poland-factsheet-2023.txt L302-314); forfaiting definition L615-624; Czech grant-agreement practice L537-539
+  second:
+    id: E02
+    title: Energy Performance Contracting in the EU – 2020-2021 (JRC Science for Policy Report)
+    publisher: JRC (Moles-Grueso, Bertoldi, Boza-Kiss), 2023
+    passage: Chapter 6 Czech Republic (corpus input/jrc-epc-in-the-eu-2020-2021.txt L9380-9710); EU-level mentions L370, L2534-2535, L2752, L3295-3296, L3585
+  supporting:
+  - id: E15
+    file: input/eib-eurostat-statistical-treatment-epc.txt
+    passage: L5365-5379 (EU vs government financing), L6932-6943 (guaranteed-savings rule)
+  - id: E06
+    file: input/fic-esif-epc-guide-2020.txt
+    passage: L503-561 (forfaiting mechanics, generic)
+  instance: "instance.yaml L939-940: 'Public-EPC Europe: Poland/Czech - guaranteed savings, bank loan for construction then receivables sold to commercial banks; Eurostat-tested off-balance-sheet'"
+  oracle: "none numeric for this world; structural cell (oracle-matrix.md 'JRC country chapters (E02): modality prevalence, market-level regularities')"
+  notes:
+  - "Hybrid modality 'guaranteed first rank + shared extra savings' (E02 L9511-9512, L2534-2535): at LOD 0 one performance_promise and one payment_promise; at LOD 2 fee_basis has no combined value — flagged for LOD 2 (G13)."
+  - 'Eurostat: statistical_authority is among the 41 roles, but a body that makes no promise is a rule source, not a party (F15); it is cited under rules.C1_eurostat.'
+  - Two-stage financing (construction loan, then sale of receivables) is two simultaneous LOD 0 facts; the ordering is a LOD 1 event (G04).
+  - ELENA technical assistance (two projects, E02 L9646-9647) and the expected EIB forfaiting guarantee scheme (L9647-9649, L9704-9705) are market-level and future; outside the boundary (F23).
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Czech Republic
+  iso: CZ
+  eu_member: true
+  client_eu_general_government: true
+  status: stated
+  why: "'The Czech EPC market' (E07 L302); E02 chapter 6 Czech Republic (L9380-9710), an EU-27 member state; clients are 'public sector entities, mainly local governments, hospitals and universities' (E07 L307) — general government, central government excluded by national rule (E02 L9383-9384)"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the EPC contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  public_client:
+    role: authority
+    groups: [demand, public]
+    status: stated
+    text: "'public sector entities, mainly local governments, hospitals and universities' (E07 L307); 'typical intervention sites in Czechia are public schools, hospitals and theatres' (E02 L9406); 'engaging EnPC is not allowed for central government entities' (E02 L9383-9384)"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'EPC providers finance their projects ...' (E07 L303); E02 Table A42 L9480: 10 providers, sufficiency and quality rated 3/3"
+  construction_lender:
+    role: lender
+    groups: [capital]
+    status: stated
+    text: "'EPC providers finance their projects through a bank loan for the construction period' (E07 L303-304); E02 Table A46 L9604 'Provider funds 0 ... Short-term financing' and L9610 'Debt financing 0' sit in tension with this — the JRC survey does not rate the construction loan as a financing source"
+  forfaiter_bank:
+    role: forfaiter
+    groups: [capital]
+    status: stated
+    text: "'sell future receivables (forfaiting) to commercial banks for the duration of the contract after completion of the works' (E07 L304-305); 'Forfaiting 3 (very common) ... Long-term financing' (E02 Table A46 L9620); 'forfaiting has consolidated ... enabling long term financing' (E02 L9472-9473); 3 financing actors (E02 L9483)"
+  state_environmental_fund:
+    entity: sfzp_cz
+    role: eu_funds
+    groups: [public, capital]
+    status: stated
+    name: State Environmental Fund (operational programme for environmental protection, Cohesion Policy funded)
+    text: "'Grants are provided by the State Environmental Fund from the operational programme for environmental protection to the EPC client' (E07 L311-312); 'combined with investment grants, mainly from Cohesion Policy funding' (E07 L305-306); E02 L9385 'EU and State programs which require an EnPC test for the allocation of Cohesion Funds (Operational Program Environment)'. Role eu_funds per convention F03 (ESIF/Cohesion OP grant -> eu_funds whatever national body administers it); alternative grant_provider for the national co-financing share, which is an amount, not a role"
+  facilitator:
+    role: facilitator
+    groups: [delivery, public]
+    status: stated
+    text: "'the strong role project facilitators play in identifying suitable buildings, preparing projects and support public entities during the procurement process' (E07 L309-311); 11 facilitators (E02 L9481); 'free consultation centres ... (EKIS), the documental preparation of projects is subsidized' (E02 L9394-9395)"
+  verifier:
+    role: verifier_mnv
+    groups: [verification]
+    status: stated
+    text: "'there is a government-organized organized M&V system' (E02 L9395-9396); 'a third party undertakes the commissioning and verifies ...' (E07 L162-163, generic)"
+
+contract:   # the agreements that establish the commitments
+  epc_contract:
+    core: contract
+    parties: [public_client, esco]
+    term_years: "10 typical (E02 Table A40 L9440); 14-18 with subsidy (L9442-9445); 'within a 10-year duration' as driver (L9638-9639)"
+    status: stated
+    text: procured by public tender with facilitator support (E07 L309-311); model contracts rated 3/3 (E02 L9572-9574)
+  construction_loan:
+    core: contract
+    parties: [construction_lender, esco]
+    status: stated
+    text: "'a bank loan for the construction period' (E07 L303-304)"
+  forfaiting_agreement:
+    core: contract
+    parties: [esco, forfaiter_bank]
+    status: stated
+    text: sale of future receivables after completion (E07 L304-305, L616-617)
+  grant_agreement:
+    core: contract
+    parties: [state_environmental_fund, public_client]
+    status: stated
+    text: "'In the Czech Republic, the grant agreement is modified following the signature of the EPC contract to match the grant proposal with the actual project design ... under the condition that the amount of grant does not exceed the original proposal and all measures remain eligible' (E07 L537-539)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: public_client
+    status: stated
+    what: "energy efficiency works and guaranteed savings; Czech public modality: 'the first rank of savings is guaranteed and extra savings are shared' (E02 L9511-9512); interventions: boilers, HVAC, lighting, control systems, integral renovations, on-site generation and storage where repayable (E02 L9412-9415); 'Maintenance is contracted only as a part of the warranty obligations, and maintenance and replacement of equipment is not covered by providers' (E02 L9415-9416)"
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: public_client
+    to: esco
+    status: stated
+    savings_arrangement: guaranteed   # fees not exceeding the guaranteed savings (E07 L308-309)
+    what: "fees to the EPC provider that 'do not exceed the guaranteed savings' (E07 L308-309), giving the client positive cash flow; plus the client's share of extra savings is retained and the provider's share paid (E02 L9511-9512)"
+    established_by: epc_contract
+  c3:
+    family: payment_promise
+    from: public_client
+    to: esco
+    status: stated
+    what: "reimbursement of part of the investment cost out of the grant — 'to the EPC client who reimburses the EPC provider for part of the cost' (E07 L312-313)"
+    established_by: epc_contract
+  c4:
+    family: benefit_promise
+    from: state_environmental_fund
+    to: public_client
+    status: stated
+    what: investment grant from the OP for environmental protection (E07 L311-313), 5 percentage points higher for EPC than for works contracts (E07 L313-314); allocation requires an EnPC test (E02 L9385); subsidies since 2019 made envelope and integral renovations possible (E02 L9418-9419); amount capped at the original proposal (E07 L537-539)
+    established_by: grant_agreement
+  c5:
+    family: funding_promise
+    from: construction_lender
+    to: esco
+    status: stated
+    funding_instrument: loan   # bank loan for construction (E07 L303-304)
+    what: bank loan for the construction period (E07 L303-304)
+    established_by: construction_loan
+  c6:
+    family: payment_promise
+    from: esco
+    to: construction_lender
+    status: inferred
+    what: repayment of the construction loan — a loan implies repayment; the sources do not say when or from what (the forfaiting proceeds after completion are the evident but unstated source)
+    established_by: construction_loan
+  c7:
+    family: funding_promise
+    from: forfaiter_bank
+    to: esco
+    status: stated
+    funding_instrument: receivable_purchase   # payment for the future receivables (E07 L304-305)
+    what: cash payment for the future receivables, after completion of the works, for the duration of the contract (E07 L304-305, L616-617)
+    established_by: forfaiting_agreement
+  c8:
+    family: performance_promise
+    from: esco
+    to: forfaiter_bank
+    status: stated
+    what: "transfer of the right to the client's future payments (the receivables sold) — a right/asset promise under the performance family"
+    established_by: forfaiting_agreement
+  c9:
+    family: benefit_promise
+    from: facilitator
+    to: public_client
+    status: stated
+    facilitator_task: [appraisal, tender]   # identifies buildings, prepares the project, supports procurement (E07 L309-311)
+    what: "identifying suitable buildings, preparing the project, supporting the public entity during procurement (E07 L309-311), without a stated client payment; E02 L9394-9395: free consultation centres (EKIS) and 'the documental preparation of projects is subsidized' — a free or subsidised public-programme service, so benefit_promise (F12)"
+  c11:
+    family: determination_promise
+    from: verifier
+    to: [public_client, esco]
+    status: stated
+    determines: both   # M&V of savings (E02 L9395-9396) and commissioning check (E07 L162-163)
+    what: measurement and verification of savings under the government-organised M&V system (E02 L9395-9396); commissioning check (E07 L162-163)
+  c12:
+    family: payment_promise
+    from: [public_client, esco]
+    to: verifier
+    status: unstated
+    what: counter-promise required by duality; source silent (who pays the verifier under a government-organised M&V system is not said)
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: 'fees to the EPC provider do not exceed the guaranteed savings' (E07 L308-309); extra savings shared (E02 L9511-9512)."}
+  client_sector:
+    value: public
+    status: stated
+    why: local governments, hospitals, universities (E07 L307); public schools, hospitals, theatres (E02 L9406); central government entities excluded (E02 L9383-9384) — a national procurement rule recorded beside the tree (CZ_central_government_exclusion), not a sub-public value (G02)
+  partner_form:
+    value: corporate
+    status: inferred
+    why: "E02 Table A46 L9617 rates 'Special Purpose Vehicles 0' (not in use) in the Czech market and E07 speaks of 'EPC providers' as companies — a market-table inference, not a statement about the model's Partner (F18); default would give the same value"
+  borrower:
+    value: partner
+    status: stated
+    why: "EPC providers take the construction bank loan (E07 L303-304); clients implement 'without the use of own resources' (E07 L307-308). Tension: E02 Table A46 rates 'Debt financing 0' and 'Provider funds 0 — short-term financing' (L9604, L9610); the survey's categories apparently file the construction loan under provider funds"
+  receivable_holder:
+    value: assignee
+    status: stated
+    why: "future receivables sold to commercial banks for the duration of the contract (E07 L304-305); 'Forfaiting is a widespread mechanism, especially in public contracts' (E02 L9589-9590). Alternative split: E06 L506 (same publisher as E07) limits forfaiting to the CAPEX part of the fee; E07 does not restrict it, so assignee chosen"
+  collection_placement:
+    value: assignee_direct
+    status: generic
+    why: 'conditional default (F09): receivables assigned and E07/E02 silent -> assignee_direct, status generic (E06 L558). Alternative operator_own if payments still route via the ESCO'
+  aggregation:
+    value: none
+    status: inferred
+    why: "E02 L9407-9408 'Municipal and regional projects take place in the form of project pools. Public lighting projects are included in these pools.' — read, by the Bytom precedent (17 schools, one city, one contract = none), as several buildings of one owner under one contract. Alternative pool if a regional pool bundles several owners' buildings into one operation; the source does not say which"
+  debt_seniority: {value: senior, status: default, why: "not stated; 'Mezzanine financing 0' (E02 L9614)"}
+  assignment_recourse:
+    value: waiver
+    status: generic
+    why: "conditional default (F08): receivables assigned and the sources silent on the client's defences -> waiver, status generic (E06 L503-505; E08 L3222-3226). Czech support: E02 L9624-9625 names 'Eurostat categorization of receivables as public debt' as the major barrier — the treatment that follows when the client's obligation to the assignee is unconditional — and Czech forfaiting is 'well established, creating an adequate environment for off-balance contracting' (E02 L3295-3296). Alternative performance_exposed (E06 L534-535) only if the source showed the assigned leg varying"
+  savings_basis:
+    value: measured
+    status: inferred
+    why: a government-organised M&V system (E02 L9395-9396) and a predefined M&V protocol (E07 L141-142) measure savings after the fact; no deemed-savings practice mentioned
+  grant_recipient:
+    value: client
+    status: stated
+    why: "'to the EPC client who reimburses the EPC provider for part of the cost' (E07 L311-313)"
+  asset_owner:
+    value: client
+    status: default
+    why: not stated. E02 Table A44 L9529 lists BOOT (provider-owned assets) as a competing model rated 1 (uncommon), which supports client ownership under EnPC but does not state it
+  bill_custody:
+    value: client
+    status: default
+    why: "not stated; 'Contract energy management (chauffage) 0' in the public sector (E02 L9531-9532) means the provider does not take over energy supply"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "fee leg satisfied by design — 'the fees to the EPC provider do not exceed the guaranteed savings' (E07 L308-309). Grant leg: with the OP Environment grant given by eu_funds (F03), E15 L5365-5375 deducts it from capex; only the national co-financing share (E15 L5378-5379), not given, counts as government financing, so the outcome is not computable at LOD 0. E02 reports the ruling as the binding barrier: 'Eurostat categorization of receivables as public debt' (L9624-9625), 'the Eurostat changes in accounting rules had a large negative impact (-2)' (L9627), 'providers are not interested in taking over maintenance risk, which is needed for the contract to be accepted as off-balance within Eurostat rules' (L9629-9630). E02 L3585 (EU-level): statistical treatment 'of little relevance due to favourable financing conditions' in the Czech Republic"
+    rule_source: 'Eurostat (statistical_authority) is the source of this rule, not a party of the model: it makes no promise to any party (F15)'
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  CZ_central_government_exclusion:
+    scope: national
+    applies_when: {client_sector: public}
+    rule: "'engaging EnPC is not allowed for central government entities' (E02 L9383-9384); 'the veto of the MoF on EnPC' (L9469-9470); removal recommended (L9695-9697)"
+    status: stated
+    lod0_effect: restricts which public bodies may hold the authority role; a national rule beside the tree, not a sub-public value of client_sector (G02)
+  CZ_grant_scheme_conditions:
+    scope: programme
+    applies_when: {grant_recipient: client}
+    rule: EnPC test required for allocation of Cohesion Funds under OP Environment (E02 L9385); EPC projects receive a grant 5 percentage points higher than works contracts (E07 L313-314); grant agreement modified after EPC signature, capped at the original proposal, measures must stay eligible (E07 L537-539)
+    status: stated
+    lod0_effect: conditions on the benefit promise c4; LOD 0 records the promise, the conditions are LOD 1 events/rules
+
+numbers:   # instance data, not vocabulary
+  public_contracts_2020_21: 11
+  private_contracts_2020_21: 2
+  public_market_size_eur_m: 27
+  typical_public_contract_eur_m: 1.8
+  typical_contract_size_range_eur_m: 0.2-10
+  typical_duration_years_public: 10
+  typical_payback_years: "8.5; 'Longer projects of 14-18 years are implemented with subsidy support' (E02 L9442-9445); EU-level text: '16 years, when subventions are available' (E02 L2752)"
+  typical_savings_pct_of_baseline: 30
+  typical_savings_eur_m_per_year_public: 0.21
+  providers: 10
+  facilitators: 11
+  financing_actors: 3
+  epc_grant_bonus_pct_points: 5
+  derived:
+    average_public_contract_eur_m: 27 / 11 = 2.45 (vs typical 1.8 — skewed by larger projects)
+    typical_size_over_typical_annual_savings: 1.8 / 0.21 = 8.57 years, consistent with the typical payback of 8.5
+    savings_over_typical_term_eur_m: "0.21 x 10 = 2.1 >= 1.8 typical size — the fee <= savings condition (E07 L308-309) holds on typical figures; projects with 14-18 year paybacks fit a 10-year contract because 'subsidies ... enabling deep renovations whilst keeping contracts within a 10-year duration' (E02 L9638-9639)"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  public_client: {gives: [c2, c3, c12], receives: [c1, c4, c9, c11], one_way: false}
+  esco: {gives: [c1, c6, c8, c12], receives: [c2, c3, c5, c7, c11], one_way: false}
+  construction_lender: {gives: [c5], receives: [c6], one_way: false}
+  forfaiter_bank:
+    gives: [c7]
+    receives: [c8]
+    one_way: false
+    reason: after the sale the forfaiter is the creditor of the assigned part of c2 (receivable_holder = assignee)
+  state_environmental_fund:
+    gives: [c4]
+    receives: []
+    one_way: true
+    reason: benefit promise, unilateral by nature; the EnPC test, eligibility and the proposal cap are conditions, not counter-promises
+  facilitator:
+    gives: [c9]
+    receives: []
+    one_way: true
+    reason: 'benefit promise, unilateral by nature: free or subsidised public-programme service (E02 L9394-9395); the subsidy that pays the facilitators is market-level context (F12)'
+  verifier:
+    gives: [c11]
+    receives: [c12]
+    one_way: true
+    reason: 'counter-promise economically necessary but unstated: who pays the verifier under a government-organised M&V system is not said; recorded as c12 status unstated (F06)'
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: sub_public_distinction
+  description: "client_sector has public / private only. The Czech model needs 'public, excluding central government' (E02 L9383-9384, L9469-9470): the MoF veto bars central government entities from EnPC, while E15's Eurostat test applies to all general government. Review: the veto is a national procurement rule recorded beside the tree (CZ_central_government_exclusion); 'public' is the right LOD 0 value"
+  review: 'G02: below LOD 0; action: keep as national rule; no sub-public value'
+- kind: grant_origin_for_eurostat
+  description: "The Eurostat test needs the grant's origin — EU programme money (deducted from capex) vs national co-financing (government financing), E15 L5365-5379. The OP Environment grant is one payment with both origins. Convention F03 fixes the giver's role (eu_funds); the split is an amount the sources do not give. Same as ctu_prague"
+  review: 'G01: encoding question + evidence gap; action: rule F03; the EU/national split is a LOD 1 amount'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 rule text on the NPV basis; the fee leg holds by design, the grant leg is not computable
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction CZ / EU general government added; C1 applies_here true
+- id: F03
+  title: ESIF/Cohesion grant giver = eu_funds
+  convention: "A grant paid from an ESIF/Cohesion operational programme is given by eu_funds whatever national body administers it (elements_pilot eu_funds = 'EU structural funds and their managing authority'); grant_provider is for national or other non-EU grants. The EU/national co-financing split is an amount (LOD 1), not a role."
+  origin: verdict rule; findings F03; gaps G01
+  applied_here: State Environmental Fund re-encoded from grant_provider to eu_funds (Cohesion-funded OP Environment)
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'facilitator and verifier one_way: true with reasons'
+- id: F08
+  title: 'conditional default: assignment_recourse'
+  convention: "receivable_holder in {assignee, split} and source silent -> assignment_recourse = waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226 'continued payment obligations ... regardless of any disputes'); performance_exposed only when the source shows the assigned leg varying with performance."
+  origin: verdict change 3; findings F08; gaps G28
+  applied_here: assignment_recourse waiver kept, status inferred -> generic (conditional default)
+- id: F09
+  title: 'conditional default: collection_placement'
+  convention: receivable_holder in {assignee, split} and source silent -> collection_placement = assignee_direct, status generic (E06 L558; E08 Fig 30 L3312-3317).
+  origin: verdict change 3; findings F09; gaps G28
+  applied_here: collection_placement assignee_direct, status generic (conditional default)
+- id: F12
+  title: free public-programme service = benefit_promise
+  convention: 'A service a public programme gives free is a benefit_promise (one_way: true, unilateral by nature); performance_promise + unstated payment only when the client plausibly pays.'
+  origin: verdict rule; findings F12
+  applied_here: "facilitators' service re-encoded as benefit_promise (c9); unstated c10 dropped"
+- id: F15
+  title: a body that makes no promise is a rule source, not a party
+  convention: statistical_authority (Eurostat) is listed as a party only when it acts in the deal (e.g. an ex-ante ruling named in the source); otherwise it is the source of rule C1.
+  origin: verdict rule; findings F15
+  applied_here: Eurostat removed from parties; cited as the rule source under C1
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: 'partner_form corporate: status downgraded from stated to inferred (market-table reading)'
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, lender, forfaiter, eu_funds, facilitator, verifier_mnv]
+  roles_count: 7 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, determination_promise]
+  families_absent: [risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 5, inferred: 3, generic: 2, default: 3}
+  commitments_by_status: {stated: 9, inferred: 1, generic: 0, unstated: 1}
+  one_way_parties: [state_environmental_fund, facilitator, verifier]
+  parties_count: 7
+  commitments_count: 11
+  below_lod0: {lod1_adds: 'events (construction loan, works, commissioning, forfaiting sale, loan repayment, grant disbursement
+      and pass-through invoice, annual M&V, annual fee, extra-savings settlement), the fee formula, the shortfall rule, the
+      grant-agreement modification, the EnPC test', lod2_adds: 'fee variant — the Czech public modality combines guaranteed
+      savings with shared extra savings, which the pilot fee_basis values (guaranteed / shared / chauffage) do not cover as
+      one value; M&V option; the forfaited vs retained fee legs; warranty-only maintenance scope'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/jrc-epc-in-the-eu-2020-2021.txt:9511", why: "the case's own source (E02 Czech chapter): 'the first rank of savings is guaranteed and extra savings are shared' (L9511-9512). Same bearer as the default; the shared extra savings are upside, so sole. Adjudicator call: A inferred, B stated; stated, the guarantee is explicit"}
+  - {category: R2, driver: null, bearer: [authority], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/jrc-epc-in-the-eu-2020-2021.txt:9416", why: "'maintenance and replacement of equipment is not covered by providers' (L9415-9416); providers 'are not interested in taking over maintenance risk' (L9629). Departs from the default (Partner). Inferred: no sentence says the client contracts it. A and B agree"}

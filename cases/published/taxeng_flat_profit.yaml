@@ -1,0 +1,75 @@
+# Published case "taxeng_flat_profit": a flat-rate tax on profit, assessed in the year and paid
+# the year after (the old engine's own test, engine/tests/test_tax.py TestTiming;
+# cases/reference/published/taxeng_flat_profit.yaml). Self-graded: the old engine wrote both
+# the question and the answer.
+#
+# Every amount is an input by name (generator `src`), one period a year:
+#   * each year's profit_before_allowances is posted as one income line (`profit`, against
+#     cash); the turnover row (nil) is not a base of this tax and is not posted;
+#   * income tax (income_tax) at `rate` on the profit, from the books' base, charged to tax
+#     expense against tax payable; no loss arises, so no carry-forward is needed (null);
+#   * the payable is paid in the next year (`timing: paid_in: next_period`): it is settled at the
+#     start of each year, before that year's tax is charged, so a year pays what the year before
+#     assessed.
+published: taxeng_flat_profit
+entity: firm
+plant: rate
+case:
+  case: published-taxeng-flat-profit
+  periods: 3
+  phases: [pay, post, tax]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: published
+      values:
+        profit: {each_period: profit_before_allowances}
+  opening:
+    firm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: firm
+      phase: post
+      declare:
+        profit: income
+      moves:
+        profit: {debit: cash, credit: profit, amount: {generator: src, output: profit}}
+    tax:
+      kind: income_tax
+      entity: firm
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: rate}
+      carry_forward_periods: null
+      scheme:
+        profit: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: firm
+      cash: cash
+      phase: pay
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      profit: profit
+      tax_expense: tax
+    cash_flow:
+      profit: trade
+      tax_payable: tax
+  cuts:
+    tax: {kind: pnl, entity: firm, scheme: pnl, include: [tax]}
+    tax_paid: {entity: firm, account: cash, scheme: cash_flow, include: [tax]}
+  measures: {}
+figures:
+  tax_assessed: {cut: tax, sign: -1}
+  cash_tax: {cut: tax_paid, sign: -1}
+  taxes_cit_net: {record: tax.tax}

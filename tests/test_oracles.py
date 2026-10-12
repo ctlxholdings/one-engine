@@ -71,8 +71,15 @@ class _Fake(O.Family):
             raise O.Blocked("the engine has no widget")
         if b == "empty":
             return [], {}
-        if b == "differs":
-            return [O.Check("v", "t0", "1", "1", True), O.Check("v", "t1", "2", "3", False)], {}
+        if b == "series":
+            # a series figure names where it fails ("element 3"), not "all 4 elements": the plant is
+            # still seen on the figure that agreed
+            return [O.Check("s", "element 3" if plant else "all 4 elements", "1", "2" if plant else "1",
+                            not plant)], {"a": 1}
+        if b in ("differs", "differs_seen"):
+            # "differs_seen": the plant also breaks the check that agreed
+            ok = not (plant and b == "differs_seen")
+            return [O.Check("v", "t0", "1", "1" if ok else "2", ok), O.Check("v", "t1", "2", "3", False)], {}
         # "honest" sees the plant; "blind" passes whatever is planted
         ok = not (plant and b == "honest")
         return [O.Check("v", "t0", "1", "1" if ok else "2", ok)], {"a": 1}
@@ -81,9 +88,11 @@ class _Fake(O.Family):
 
 @pytest.mark.parametrize("behaviour, verdict, reason", [
     ("honest", "matches", ""),
+    ("series", "matches", ""),
     ("blind", "blind", "planted error went unseen"),
     ("empty", "blind", "no check"),
     ("differs", "differs", "1 of 2 checks disagree; first: v at t1"),
+    ("differs_seen", "differs", "1 of 2 checks disagree; first: v at t1"),
     ("blocked", "blocked", "the engine has no widget"),
 ])
 def test_each_verdict_is_given_only_when_earned(behaviour, verdict, reason):
@@ -95,6 +104,8 @@ def test_each_verdict_is_given_only_when_earned(behaviour, verdict, reason):
         assert r.planted_caught is True and r.planted_failures == 1 and r.inputs == {"a": 1}
     if verdict == "differs":
         assert r.first_difference == {"name": "v", "at": "t1", "expected": "2", "got": "3", "ok": False}
+        # a case that differs is still planted: the plant must break a check that agreed
+        assert r.planted_caught is (behaviour == "differs_seen")
 
 
 # ── the ACTUS corpus ────────────────────────────────────────────────────────

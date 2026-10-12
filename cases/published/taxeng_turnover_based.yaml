@@ -1,0 +1,75 @@
+# Published case "taxeng_turnover_based": a presumptive tax on turnover, due in a year that made a
+# loss (the old engine's own test, engine/tests/test_tax.py TestBases;
+# cases/reference/published/taxeng_turnover_based.yaml). Self-graded: the old engine wrote both
+# the question and the answer.
+#
+# Every amount is an input by name (generator `src`), one period a year:
+#   * each year's turnover is posted as revenue, and its costs are what turnover less
+#     profit_before_allowances leaves (so the books' profit is the printed one, a loss in year 1);
+#     both are settled in cash;
+#   * income tax (income_tax) at `rate` on a base whose scheme classes the turnover taxable and
+#     the costs non-deductible: the base is turnover, read from the books, whatever the profit;
+#     nothing is carried forward (the base is never negative);
+#   * the tax is paid in the year it is charged (settle).
+published: taxeng_turnover_based
+entity: firm
+plant: rate
+case:
+  case: published-taxeng-turnover-based
+  periods: 2
+  phases: [post, tax, settle]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: published
+      values:
+        sales: {each_period: turnover}
+        costs: {each_period: turnover - profit_before_allowances}
+  opening:
+    firm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: firm
+      phase: post
+      declare:
+        turnover: income
+        costs: expense
+      moves:
+        sales: {debit: cash, credit: turnover, amount: {generator: src, output: sales}}
+        costs: {debit: costs, credit: cash, amount: {generator: src, output: costs}}
+    tax:
+      kind: income_tax
+      entity: firm
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: rate}
+      carry_forward_periods: null
+      scheme:
+        turnover: taxable
+        costs: non_deductible
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: firm
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    cash_flow:
+      turnover: trade
+      costs: trade
+      tax_payable: tax
+  cuts:
+    tax_paid: {entity: firm, account: cash, scheme: cash_flow, include: [tax]}
+  measures: {}
+figures:
+  cash_tax: {cut: tax_paid, sign: -1}
+  taxes_tee_base_amount: {record: tax.base}

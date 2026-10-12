@@ -1,0 +1,87 @@
+# Published case "taxeng_banded_progressive": a profit tax in marginal bands, nil to 100, 10% to
+# 300, 25% above (the old engine's own test, engine/tests/test_tax.py TestRateStructures;
+# cases/reference/published/taxeng_banded_progressive.yaml). Self-graded: the old engine wrote
+# both the question and the answer.
+#
+# Every amount is an input by name (generator `src`), one period a year:
+#   * each year's profit_before_allowances is posted as one income line (`profit`, against cash);
+#     the turnover row (nil) is not a base of this tax and is not posted;
+#   * income tax (income_tax) charges the open band's rate (bands_2__rate) on the books' whole
+#     profit; the lower bands' relief is then credited to the payable (a transfer to
+#     band_relief, as paygo_solar posts its IBICA bands): for each lower band, the gap between
+#     the open band's rate and its own on the slice of the year's profit that falls in it
+#     (min / max on profit_before_allowances against bands_0__upto and bands_1__upto). The
+#     income_tax rulebook takes one rate per period and has no bands, so the band walk is this
+#     relief, read off the profit input (the same amount the books post as profit), not off the
+#     books' base;
+#   * nothing is carried forward (every year's profit is positive); the net tax is paid in the
+#     year (settle).
+published: taxeng_banded_progressive
+entity: firm
+plant: bands_1__rate
+case:
+  case: published-taxeng-banded-progressive
+  periods: 3
+  phases: [post, tax, settle]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: published
+      values:
+        profit: {each_period: profit_before_allowances}
+        relief: >-
+          (bands_2__rate - bands_0__rate) * max(0, min(profit, bands_0__upto))
+          + (bands_2__rate - bands_1__rate) * max(0, min(profit, bands_1__upto) - bands_0__upto)
+  opening:
+    firm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: firm
+      phase: post
+      declare:
+        profit: income
+      moves:
+        profit: {debit: cash, credit: profit, amount: {generator: src, output: profit}}
+    tax:
+      kind: income_tax
+      entity: firm
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: bands_2__rate}
+      carry_forward_periods: null
+      scheme:
+        profit: taxable
+        tax_expense: non_deductible
+        band_relief: non_deductible
+    bands:
+      kind: transfer
+      entity: firm
+      phase: tax
+      declare:
+        band_relief: income
+      moves:
+        relief: {debit: tax_payable, credit: band_relief, amount: {generator: src, output: relief}}
+    pay_tax:
+      kind: settle
+      entity: firm
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    cash_flow:
+      profit: trade
+      tax_payable: tax
+  cuts:
+    tax_paid: {entity: firm, account: cash, scheme: cash_flow, include: [tax]}
+  measures: {}
+figures:
+  cash_tax: {cut: tax_paid, sign: -1}
+  taxes_ibica_base_amount: {record: tax.base}

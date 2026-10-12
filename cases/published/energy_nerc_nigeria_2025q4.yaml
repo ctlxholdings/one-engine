@@ -1,0 +1,115 @@
+# Published case "energy_nerc_nigeria_2025q4": the Nigerian grid for two quarters (2025/Q3 and
+# 2025/Q4, 92 days each): the 28 grid-connected plants' availability, generation and load factor,
+# and the 11 distribution companies' energy, billing and collection chain (NERC Quarterly Report
+# 2025/Q4, equations 1-3 and 7-10, Tables 1, 2, 5, 6, 8;
+# cases/reference/published/energy_nerc_nigeria_2025q4.yaml).
+#
+# Two periods: 0 is 2025/Q3, 1 is 2025/Q4. Every amount is a published input by name (generator
+# `src`), each quarter's input taken in its own period.
+# The money side is the DisCos' (all eleven as one book, `discos`, in N billion):
+#   * the energy received from the grid, valued at the allowed tariff
+#     (naira_value_energy_received_bn), is the revenue the DisCos would earn on it: a claim on
+#     customers (receivable) against energy sales;
+#   * the part never billed (value received less naira_value_energy_billed_bn) is a billing loss:
+#     an expense written off that claim, so the energy sales net of it are the amount billed;
+#   * revenue_collected_bn is collected in its quarter (cash against the receivable); what is
+#     billed and not collected stays a receivable. No cost, no tax: NERC prints none.
+# The billing loss is read from the books (the expense line). Every other figure is a physical
+# quantity or a ratio no ledger holds, read as a driver, each by the regulator's own equation:
+#   * availability = average available capacity / installed capacity (eq.1);
+#   * generation = average hourly generation x 24 h x days, MWh to GWh by 1000 (eq.2);
+#   * load factor = generation / (available capacity x 24 h x days) (eq.3);
+#   * energy accounting efficiency = GWh billed / GWh received (eq.7); billing efficiency = naira
+#     billed / naira value received (eq.8); collection efficiency = collected / billed (eq.9);
+#   * ATC&C loss = 1 - billing efficiency x collection efficiency (eq.10), its components
+#     1 - billing efficiency and 1 - collection efficiency.
+# Percentages are computed as fractions and read with scale 0.01.
+# Set aside: the 2025 allowed ATC&C target (20.54%) is NERC's tariff-order target, not among the
+# inputs, and the N139.193bn revenue loss is measured against that target (the gap to it times the
+# value received), so neither can be derived here.
+published: energy_nerc_nigeria_2025q4
+entity: discos
+plant: naira_value_energy_received_bn__q4_2025
+case:
+  case: published-nerc-nigeria-q4
+  periods: 2
+  phases: [operate]
+  currency: NGN
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 2
+      inputs: published
+      values:
+        q4: t == 1
+        q3: t == 0
+        days: q3 * period_days__q3_2025 + q4 * period_days__q4_2025
+        available_mw: q3 * average_available_capacity_mw__q3_2025 + q4 * average_available_capacity_mw__q4_2025
+        hourly_mwh: q3 * average_hourly_generation_mwh_per_h__q3_2025 + q4 * average_hourly_generation_mwh_per_h__q4_2025
+        offtake_gwh: q3 * energy_offtake_gwh__q3_2025 + q4 * energy_offtake_gwh__q4_2025
+        billed_gwh: q3 * energy_billed_gwh__q3_2025 + q4 * energy_billed_gwh__q4_2025
+        value_received: q3 * naira_value_energy_received_bn__q3_2025 + q4 * naira_value_energy_received_bn__q4_2025
+        value_billed: q3 * naira_value_energy_billed_bn__q3_2025 + q4 * naira_value_energy_billed_bn__q4_2025
+        collected: q3 * revenue_collected_bn__q3_2025 + q4 * revenue_collected_bn__q4_2025
+        not_billed: value_received - value_billed
+        # the regulator's equations
+        paf: available_mw / installed_capacity_mw_total
+        generation_mwh: hourly_mwh * 24 * days
+        generation_gwh: generation_mwh / 1000
+        load_factor: generation_mwh / (available_mw * 24 * days)
+        eae: billed_gwh / offtake_gwh
+        billing_eff: value_billed / value_received
+        collection_eff: collected / value_billed
+        atcc: 1 - billing_eff * collection_eff
+        tc_loss: 1 - billing_eff
+        collection_loss: 1 - collection_eff
+  opening:
+    discos:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    chain:
+      kind: transfer
+      entity: discos
+      phase: operate
+      declare:
+        customer_receivables: asset
+        energy_sales: income
+        billing_loss: expense
+      moves:
+        energy_received: {debit: customer_receivables, credit: energy_sales, amount: {generator: src, output: value_received}}
+        not_billed: {debit: billing_loss, credit: customer_receivables, amount: {generator: src, output: not_billed}}
+        collected: {debit: cash, credit: customer_receivables, amount: {generator: src, output: collected}}
+  schemes:
+    pnl:
+      energy_sales: revenue
+      billing_loss: billing_loss
+  cuts:
+    billing_loss: {kind: pnl, entity: discos, scheme: pnl, include: [billing_loss]}
+  measures: {}
+figures:
+  billing_losses_bn_q4_2025: {cut: billing_loss, sign: -1, at: 1}
+  plant_availability_factor_pct.q3_2025: {driver: src.paf, scale: 0.01, at: 0}
+  plant_availability_factor_pct.q4_2025: {driver: src.paf, scale: 0.01, at: 1}
+  total_generation_gwh.q3_2025: {driver: src.generation_gwh, at: 0}
+  total_generation_gwh.q4_2025: {driver: src.generation_gwh, at: 1}
+  load_factor_pct.q3_2025: {driver: src.load_factor, scale: 0.01, at: 0}
+  load_factor_pct.q4_2025: {driver: src.load_factor, scale: 0.01, at: 1}
+  energy_accounting_efficiency_pct.q3_2025: {driver: src.eae, scale: 0.01, at: 0}
+  energy_accounting_efficiency_pct.q4_2025: {driver: src.eae, scale: 0.01, at: 1}
+  billing_efficiency_pct.q3_2025: {driver: src.billing_eff, scale: 0.01, at: 0}
+  billing_efficiency_pct.q4_2025: {driver: src.billing_eff, scale: 0.01, at: 1}
+  collection_efficiency_pct.q3_2025: {driver: src.collection_eff, scale: 0.01, at: 0}
+  collection_efficiency_pct.q4_2025: {driver: src.collection_eff, scale: 0.01, at: 1}
+  atcc_loss_pct.q3_2025: {driver: src.atcc, scale: 0.01, at: 0}
+  atcc_loss_pct.q4_2025: {driver: src.atcc, scale: 0.01, at: 1}
+  atcc_loss_pct.components_q4_2025.technical_and_commercial_loss_pct: {driver: src.tc_loss, scale: 0.01, at: 1}
+  atcc_loss_pct.components_q4_2025.collection_loss_pct: {driver: src.collection_loss, scale: 0.01, at: 1}
+not_compared:
+  atcc_loss_pct.allowed_target_pct_2025: >-
+    NERC's allowed ATC&C loss target under its tariff order; no input carries it
+  atcc_loss_pct.revenue_loss_bn: >-
+    the revenue lost against the allowed target (the gap between the actual and allowed ATC&C
+    loss, times the value received); the target is not among the inputs

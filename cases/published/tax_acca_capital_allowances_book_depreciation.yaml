@@ -1,0 +1,74 @@
+# Published case "tax_acca_capital_allowances_book_depreciation": one asset written down twice,
+# straight-line in the books and by the statute's capital allowances for tax, over four years
+# (ACCA SBR technical article "Deferred tax";
+# cases/reference/published/tax_acca_capital_allowances_book_depreciation.yaml).
+#
+# Every amount is an input by name (generator `src`), one period a year, four years:
+#   * the asset is carried in at asset_cost and placed in service in year 1, charged from that
+#     year (first_charge: in_service), on one asset register with a book and a tax policy;
+#   * book: the cost spread in proportion to the printed book schedule
+#     (book_depreciation_schedule__year1..4, equal, so straight line);
+#   * tax: the cost spread in proportion to the printed capital allowances
+#     (tax_capital_allowances_schedule__year1..4);
+#   * no disposal within the four years (dispose_at is the period after the last); no revenue,
+#     no tax charge: the source compares the two schedules only.
+# Each year's excess is the register's tax charge less its book charge (or the reverse, as the
+# source prints it); the cumulative figures are each charge summed over the four years.
+published: tax_acca_capital_allowances_book_depreciation
+entity: owner
+plant: asset_cost
+case:
+  case: published-acca-capital-allowances
+  periods: 4
+  phases: [close]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 4
+      inputs: published
+      values:
+        book_weights: >-
+          book_depreciation_schedule__year1 * (t == 0) + book_depreciation_schedule__year2 * (t == 1)
+          + book_depreciation_schedule__year3 * (t == 2) + book_depreciation_schedule__year4 * (t == 3)
+        tax_weights: >-
+          tax_capital_allowances_schedule__year1 * (t == 0) + tax_capital_allowances_schedule__year2 * (t == 1)
+          + tax_capital_allowances_schedule__year3 * (t == 2) + tax_capital_allowances_schedule__year4 * (t == 3)
+  opening:
+    owner:
+      cwip: {nature: asset, value: {generator: src, output: asset_cost}}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    asset:
+      kind: asset_register
+      entity: owner
+      phase: close
+      from: cwip
+      to: fixed_asset
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: 4
+      life_periods: null
+      weights: {generator: src, output: book_weights}
+      first_charge: in_service
+      tax:
+        life_periods: null
+        weights: {generator: src, output: tax_weights}
+        first_charge: in_service
+  schemes:
+    pnl:
+      depreciation: depreciation
+      written_off: depreciation
+  cuts:
+    depreciation: {kind: pnl, entity: owner, scheme: pnl, include: [depreciation]}
+  measures: {}
+figures:
+  year1_excess_of_tax_allowance_over_book_depreciation: {sum: [{record: asset.tax_charge}, {record: asset.charge, sign: -1}], at: 0}
+  year2_excess_of_tax_allowance_over_book_depreciation: {sum: [{record: asset.tax_charge}, {record: asset.charge, sign: -1}], at: 1}
+  year3_excess_of_book_depreciation_over_tax_allowance: {sum: [{record: asset.charge}, {record: asset.tax_charge, sign: -1}], at: 2}
+  year4_excess_of_book_depreciation_over_tax_allowance: {sum: [{record: asset.charge}, {record: asset.tax_charge, sign: -1}], at: 3}
+  cumulative_book_depreciation_over_4_years: {cut: depreciation, sign: -1, total: true}
+  cumulative_tax_allowances_over_4_years: {record: asset.tax_charge, total: true}

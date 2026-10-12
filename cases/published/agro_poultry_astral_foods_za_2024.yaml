@@ -1,0 +1,117 @@
+# Published case "agro_poultry_astral_foods_za_2024": Astral Foods Limited (South Africa), the year
+# ended 30 September 2024, the GROUP income statement and its two-segment note (Integrated Annual
+# Report 2024; cases/reference/published/agro_poultry_astral_foods_za_2024.yaml). R'000.
+#
+# One period, the FY2024 column. Every income-statement line is posted as one move of a
+# `transfer` journal at the amount the source prints, against cash:
+#   * revenue and cost of sales are posted by segment: Poultry at its own external-customer
+#     revenue and external-customer cost of sales (segment inputs), Feed as the group line less
+#     Poultry. The group lines are therefore posted exactly once, and the Feed segment figures test
+#     the source's own claim that the two segments add to the group;
+#   * the operating lines between gross profit and PBIT (administrative, distribution and
+#     marketing expenses less other income and other gains) are posted by segment the same way:
+#     Poultry at its printed net operating expenses, Feed as the group's net of those five lines
+#     less Poultry's. Inter-segment revenue is excluded, as the source strikes segment gross profit
+#     on external revenue only;
+#   * finance income, finance expense and the tax expense are the source's own group charges.
+#
+# Not read, and why:
+#   * gross_profit.prior_year_restated is scored by the library, but the inputs carry the FY2023
+#     revenue and none of its cost of sales: it cannot be derived, so it is left unread
+#     ("not reported");
+#   * total_assets, total_liabilities, total_equity (and prior years) and net_change_in_cash are
+#     scored, but the inputs carry no balance sheet and no cash-flow line: left unread;
+#   * the other FY2023 comparatives (no FY2023 cost lines in the inputs), total comprehensive
+#     income (OCI is not an input), EPS (no share count), and the cash-flow subtotals and closing
+#     cash (no cash-flow line is an input) are set aside below.
+published: agro_poultry_astral_foods_za_2024
+entity: astral
+plant: revenue
+case:
+  case: published-astral-fy2024
+  periods: 1
+  phases: [post]
+  currency: ZAR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        feed_revenue: revenue - poultry__external_customer_revenue
+        feed_cost_of_sales: cost_of_sales - poultry__external_customer_cost_of_sales
+        # the group's net operating expenses between gross profit and PBIT, less Poultry's
+        feed_net_operating: administrative_expenses + distribution_costs + marketing_expenditure - other_income - other_gains - poultry__net_operating_expenses_income_and_gains
+  opening:
+    astral:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: astral
+      phase: post
+      declare:
+        poultry_revenue: income
+        feed_revenue: income
+        poultry_cost_of_sales: expense
+        feed_cost_of_sales: expense
+        poultry_net_operating: expense
+        feed_net_operating: expense
+        finance_income: income
+        finance_expense: expense
+        tax_expense: expense
+      moves:
+        poultry_sales: {debit: cash, credit: poultry_revenue, amount: {generator: src, output: poultry__external_customer_revenue}}
+        feed_sales: {debit: cash, credit: feed_revenue, amount: {generator: src, output: feed_revenue}}
+        poultry_cos: {debit: poultry_cost_of_sales, credit: cash, amount: {generator: src, output: poultry__external_customer_cost_of_sales}}
+        feed_cos: {debit: feed_cost_of_sales, credit: cash, amount: {generator: src, output: feed_cost_of_sales}}
+        poultry_opex: {debit: poultry_net_operating, credit: cash,
+                       amount: {generator: src, output: poultry__net_operating_expenses_income_and_gains}}
+        feed_opex: {debit: feed_net_operating, credit: cash, amount: {generator: src, output: feed_net_operating}}
+        finance_income: {debit: cash, credit: finance_income, amount: {generator: src, output: finance_income}}
+        finance_expense: {debit: finance_expense, credit: cash, amount: {generator: src, output: finance_expense}}
+        tax: {debit: tax_expense, credit: cash, amount: {generator: src, output: tax_expense}}
+  schemes:
+    pnl:
+      poultry_revenue: poultry_gross
+      poultry_cost_of_sales: poultry_gross
+      feed_revenue: feed_gross
+      feed_cost_of_sales: feed_gross
+      poultry_net_operating: poultry_operating
+      feed_net_operating: feed_operating
+      finance_income: finance
+      finance_expense: finance
+      tax_expense: tax
+  cuts:
+    gross_profit: {kind: pnl, entity: astral, scheme: pnl, include: [poultry_gross, feed_gross]}
+    pbit: {kind: pnl, entity: astral, scheme: pnl, include: [poultry_gross, feed_gross, poultry_operating, feed_operating]}
+    pbt: {kind: pnl, entity: astral, scheme: pnl, include: [poultry_gross, feed_gross, poultry_operating, feed_operating, finance]}
+    profit: {kind: pnl, entity: astral, scheme: pnl, include: [poultry_gross, feed_gross, poultry_operating, feed_operating, finance, tax]}
+    poultry_gross_profit: {kind: pnl, entity: astral, scheme: pnl, include: [poultry_gross]}
+    feed_gross_profit: {kind: pnl, entity: astral, scheme: pnl, include: [feed_gross]}
+    poultry_pbit: {kind: pnl, entity: astral, scheme: pnl, include: [poultry_gross, poultry_operating]}
+    feed_pbit: {kind: pnl, entity: astral, scheme: pnl, include: [feed_gross, feed_operating]}
+  measures: {}
+figures:
+  gross_profit: {cut: gross_profit}
+  profit_before_interest_and_tax: {cut: pbit}
+  profit_before_tax: {cut: pbt}
+  profit_for_the_year: {cut: profit}
+  poultry_segment_gross_profit: {cut: poultry_gross_profit}
+  feed_segment_gross_profit: {cut: feed_gross_profit}
+  poultry_segment_pbit: {cut: poultry_pbit}
+  feed_segment_pbit: {cut: feed_pbit}
+not_compared:
+  profit_before_interest_and_tax.prior_year_restated: "FY2023 restated comparative: the case models FY2024; the inputs carry no FY2023 cost line"
+  profit_before_tax.prior_year_restated: "FY2023 restated comparative: no FY2023 cost line is an input"
+  profit_for_the_year.prior_year_restated: "FY2023 restated comparative: no FY2023 cost line or tax is an input"
+  poultry_segment_gross_profit.prior_year_restated: "FY2023 re-presented segment comparative: no FY2023 segment line is an input"
+  feed_segment_gross_profit.prior_year_restated: "FY2023 re-presented segment comparative: no FY2023 segment line is an input"
+  total_comprehensive_income: "other comprehensive income (remeasurements, hedges, translation) is not an input"
+  earnings_per_share_cents: "the share count (and headline earnings adjustments) are not inputs"
+  cash_operating_profit: "the cash-flow add-backs (depreciation, provisions, HPAI items) are not inputs"
+  cash_generated_from_operating_activities: "working-capital movements and tax paid are not inputs"
+  cash_and_cash_equivalents_at_end_of_year: "opening cash, the cash flow statement and exchange effects are not inputs"

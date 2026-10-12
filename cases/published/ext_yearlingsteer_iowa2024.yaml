@@ -1,0 +1,109 @@
+# Published case "ext_yearlingsteer_iowa2024": one yearling steer finished from a 750 lb feeder
+# to 1,350 lb on a corn-and-hay ration (Iowa State University Extension, Ag Decision Maker B1-21,
+# Livestock Enterprise Budgets for Iowa 2024, p.11, "Finishing Yearling Steers - One Head";
+# cases/reference/published/ext_yearlingsteer_iowa2024.yaml).
+#
+# One period, one finishing cycle. Every amount is a published input by name (generator `src`),
+# the source's own line costs (the hand-labelled `costs` list), posted by a `transfer` rulebook.
+# The source leaves the steer price blank, so only the cost side is booked:
+#   * the feeder is bought for cash and expensed with the cycle (the budget charges it as a
+#     variable cost of the steer sold); its interest, the four feed lines, vet, machinery,
+#     marketing, interest on other variable costs, labour and death loss are paid in cash and
+#     expensed, each interest and the death loss at its printed amount;
+#   * the fixed machinery, equipment and housing cost is the owner's buildings and machines
+#     charged at their ownership cost and credited to the owner (no cash moves);
+#   * no tax.
+# Break-even prices per pound divide a cost total by slaughter_weight_lbs (a physical driver)
+# via `per`.
+#
+# Source finding: the nine variable lines sum to 2,657.45, but the source prints its variable
+# total as 2,657.44 and carries it into the total of all costs (2,679.84, mapped). Both are read
+# from the books and differ by one cent, wider than the half-cent tolerance; the oracle's
+# tolerance note says this gap must surface.
+# Set aside: the corn-and-silage ration column, an alternative ration whose line costs are not
+# inputs.
+published: ext_yearlingsteer_iowa2024
+entity: farm
+plant: corn
+case:
+  case: published-ext-yearlingsteer-iowa2024
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        feeder_steer: expense
+        interest_on_feeder: expense
+        corn: expense
+        fair_quality_hay: expense
+        modified_distillers_grain: expense
+        supplement_and_minerals: expense
+        veterinary_and_health: expense
+        machinery_and_equipment: expense
+        marketing_transport_miscellaneous: expense
+        interest_on_other_variable_costs: expense
+        labor: expense
+        death_loss: expense
+        machinery_equipment_housing: expense
+      moves:
+        feeder: {debit: feeder_steer, credit: cash, amount: {generator: src, output: yearling_feeder_purchase}}
+        feeder_interest: {debit: interest_on_feeder, credit: cash, amount: {generator: src, output: interest_on_feeder}}
+        corn: {debit: corn, credit: cash, amount: {generator: src, output: corn}}
+        hay: {debit: fair_quality_hay, credit: cash, amount: {generator: src, output: fair_quality_hay}}
+        mdg: {debit: modified_distillers_grain, credit: cash, amount: {generator: src, output: modified_distillers_grain}}
+        supplement: {debit: supplement_and_minerals, credit: cash, amount: {generator: src, output: supplement_and_minerals}}
+        vet: {debit: veterinary_and_health, credit: cash, amount: {generator: src, output: veterinary_and_health}}
+        machinery: {debit: machinery_and_equipment, credit: cash, amount: {generator: src, output: machinery_and_equipment}}
+        marketing: {debit: marketing_transport_miscellaneous, credit: cash, amount: {generator: src, output: marketing_transport_miscellaneous}}
+        other_interest: {debit: interest_on_other_variable_costs, credit: cash, amount: {generator: src, output: interest_on_other_variable_costs}}
+        labor: {debit: labor, credit: cash, amount: {generator: src, output: labor}}
+        death_loss: {debit: death_loss, credit: cash, amount: {generator: src, output: death_loss}}
+        fixed: {debit: machinery_equipment_housing, credit: owner_equity, amount: {generator: src, output: fixed_costs_machinery_equipment_housing}}
+  schemes:
+    pnl:
+      feeder_steer: variable
+      interest_on_feeder: variable
+      corn: feed
+      fair_quality_hay: feed
+      modified_distillers_grain: feed
+      supplement_and_minerals: feed
+      veterinary_and_health: variable
+      machinery_and_equipment: variable
+      marketing_transport_miscellaneous: variable
+      interest_on_other_variable_costs: variable
+      labor: variable
+      death_loss: variable
+      machinery_equipment_housing: fixed
+  cuts:
+    feed: {kind: pnl, entity: farm, scheme: pnl, include: [feed]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [feed, variable]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [fixed]}
+    total: {kind: pnl, entity: farm, scheme: pnl, include: [feed, variable, fixed]}
+  measures: {}
+figures:
+  total_feed_costs_usd: {cut: feed, sign: -1}
+  total_variable_costs_usd: {cut: variable, sign: -1}
+  total_fixed_costs_usd: {cut: fixed, sign: -1}
+  total_of_all_costs_usd: {cut: total, sign: -1}
+  breakeven_selling_price_variable_costs_usd_per_lb: {cut: variable, sign: -1, per: src.slaughter_weight_lbs}
+  breakeven_selling_price_all_costs_usd_per_lb: {cut: total, sign: -1, per: src.slaughter_weight_lbs}
+not_compared:
+  alternate_scenario_corn_and_silage_ration_same_source_same_page: >-
+    the source's alternative corn-and-silage ration; its line costs are not inputs and the case
+    models the corn-and-hay ration

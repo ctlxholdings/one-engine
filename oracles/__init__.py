@@ -208,14 +208,27 @@ def receipt(family: Family, oid: str, commit: Optional[str] = None) -> Receipt:
         base.verdict = "differs"
         base.first_difference = asdict(failed[0])
         base.reason = f"{len(failed)} of {len(checks)} checks disagree; first: {failed[0].name} at {failed[0].at}"
-        return base
     try:
         planted_checks, _ = family.run(oid, plant=True)
     except Blocked as e:
-        base.reason = f"the planted run could not be made: {e}"
+        if not failed:
+            base.reason = f"the planted run could not be made: {e}"
         return base
-    base.planted_failures = sum(not c.ok for c in planted_checks)
+    except Exception:
+        if failed:                        # the verdict already stands; the plant only cannot be shown
+            return base
+        raise
+    # the plant is seen when it breaks a figure that agreed; on a differing case this shows the
+    # figures that do agree can still fail, so the differences are not the only thing tested.
+    # A check is matched by name and place; a figure that agreed everywhere by name alone, since a
+    # series names where it fails ("element 3"), not where it agreed ("all 4 elements")
+    agreed = {(c.name, c.at) for c in checks if c.ok}
+    whole = {c.name for c in checks if c.ok} - {c.name for c in failed}
+    base.planted_failures = sum(not c.ok and ((c.name, c.at) in agreed or c.name in whole)
+                                for c in planted_checks)
     base.planted_caught = base.planted_failures > 0
+    if failed:
+        return base
     if base.planted_caught:
         base.verdict = "matches"
     else:
@@ -299,5 +312,6 @@ def families() -> List[Family]:
     """Every family the harness knows. Imported lazily so the harness has no engine imports itself."""
     from one_engine.oracles.actus import ActusFamily
     from one_engine.oracles.golds import GoldFamily
+    from one_engine.oracles.esco import EscoFamily
     from one_engine.oracles.published import PublishedFamily
-    return [ActusFamily(), GoldFamily(), PublishedFamily()]
+    return [ActusFamily(), GoldFamily(), PublishedFamily(), EscoFamily()]

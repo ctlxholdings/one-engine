@@ -1,0 +1,111 @@
+# Published case "taxeng_loss_carryforward_expiry": a flat-rate tax on profit with a loss carried
+# forward two years, which expires unused, beside the same facts with no expiry (the old
+# engine's own test, engine/tests/test_tax.py TestLossReliefWithVintage;
+# cases/reference/published/taxeng_loss_carryforward_expiry.yaml). Self-graded: the old engine
+# wrote both the question and the answer.
+#
+# Every amount is an input by name (generator `src`), one period a year. Two books:
+#   * `capped`: each year's profit_before_allowances (tax_declaration__bases__...) is posted as one
+#     income line (`profit`, against cash); income tax (income_tax) at the declared rate on the
+#     books' profit, its losses kept as vintages for carryforward_years periods, first in first
+#     out; the tax is paid in the year (settle);
+#   * `uncapped`: the comparator's own inputs (comparator_indefinite__...), the same posting, its
+#     losses never expiring (carry_forward_periods: null);
+#   * the turnover rows (nil) are not a base of this tax and are not posted.
+# The relief forgone is the losses that expired times the rate, summed over the years.
+# Differs (an engine convention, not the source): the loss from year 0 can be used in years 0
+# and 1 and not in year 2, in the engine and the source alike; the engine's tax record reports
+# the expiry in the last year the loss could be used (year 1, "what this period could still
+# use but the next cannot"), the source in the first year it can no longer be (year 2), so
+# losses_expired reads [0, 100, 0, 0, 0] against the printed [0, 0, 100, 0, 0]. Cash tax, losses
+# used and the relief forgone agree.
+published: taxeng_loss_carryforward_expiry
+entity: capped
+plant: tax_declaration__taxes_0__rate
+case:
+  case: published-taxeng-loss-carryforward-expiry
+  periods: 5
+  phases: [post, tax, settle]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 5
+      inputs: published
+      values:
+        profit: {each_period: tax_declaration__bases__profit_before_allowances}
+        profit_uncapped: {each_period: comparator_indefinite__tax_declaration__bases__profit_before_allowances}
+  opening:
+    capped:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    uncapped:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: capped
+      phase: post
+      declare:
+        profit: income
+      moves:
+        profit: {debit: cash, credit: profit, amount: {generator: src, output: profit}}
+    tax:
+      kind: income_tax
+      entity: capped
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: tax_declaration__taxes_0__rate}
+      carry_forward_periods: {generator: src, output: carryforward_years}
+      scheme:
+        profit: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: capped
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+    year_uncapped:
+      kind: transfer
+      entity: uncapped
+      phase: post
+      declare:
+        profit: income
+      moves:
+        profit: {debit: cash, credit: profit, amount: {generator: src, output: profit_uncapped}}
+    tax_uncapped:
+      kind: income_tax
+      entity: uncapped
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: comparator_indefinite__tax_declaration__taxes_0__rate}
+      carry_forward_periods: null
+      scheme:
+        profit: taxable
+        tax_expense: non_deductible
+    pay_tax_uncapped:
+      kind: settle
+      entity: uncapped
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    cash_flow:
+      profit: trade
+      tax_payable: tax
+  cuts:
+    tax_paid: {entity: capped, account: cash, scheme: cash_flow, include: [tax]}
+    tax_paid_uncapped: {entity: uncapped, account: cash, scheme: cash_flow, include: [tax]}
+  measures: {}
+figures:
+  cash_tax: {cut: tax_paid, sign: -1}
+  losses_expired: {record: tax.expired}
+  losses_used: {record: tax.loss_used}
+  losses_relief_forgone_tax: {record: tax.expired, times: src.tax_declaration__taxes_0__rate, total: true}
+  comparator_indefinite_cash_tax: {cut: tax_paid_uncapped, sign: -1}

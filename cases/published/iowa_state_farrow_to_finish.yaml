@@ -1,0 +1,108 @@
+# Published case "iowa_state_farrow_to_finish": Iowa farrow-to-finish returns per 270 lb finished
+# pig, seven monthly farrowing cohorts (Jun-25 to Dec-25, sold Jan-26 to Jul-26) (Iowa State
+# University Extension, Department of Economics, Estimated Returns to Farrow to Finish, Iowa,
+# rolling monthly report; cases/reference/published/iowa_state_farrow_to_finish.yaml).
+#
+# Seven periods, one per cohort column: each period is one finished pig of that month's cohort,
+# independent of the others (the source's columns are not a roll-forward of one herd, and
+# nothing carries between periods but cash). Every amount is a published input by name
+# (generator `src`), each a series of one value per cohort, posted by a `transfer` rulebook:
+#   * the pig is sold for cash at selling_price_usd_per_live_cwt times its live weight in
+#     hundredweights (finished_weight_lb / 100);
+#   * the five feed lines, non-feed variable costs and operating interest are paid in cash and
+#     expensed;
+#   * the fixed costs are the owner's buildings and equipment charged at their ownership cost,
+#     and the death loss the value of the cohort's pigs that die; both are charged against the
+#     owner (no cash moves);
+#   * no tax.
+# Breakeven per live cwt divides the cohort's total cost by the live hundredweights (a physical
+# driver) via `per`. The source's subtotals carry a one-cent rounding drift (Jun-25 nonfeed
+# 75.08 against 75.09 from its lines), inside the oracle's one-cent tolerance.
+#
+# Source finding: the Jun-25 sales value is printed 167.98, but its own printed selling price
+# times 2.70 cwt is 167.967 (the source multiplies an unrounded price). The sales and profit
+# series are read from the books and differ at that element by 1.3 cents, wider than the
+# one-cent tolerance; the other six cohorts agree.
+# Set aside: the carcass-basis prices (they convert live weight to carcass weight at a dressing
+# yield no input gives), the manure credit (no input carries it) and the total profit, which
+# adds that manure credit.
+published: iowa_state_farrow_to_finish
+entity: farm
+plant: finished_weight_lb
+case:
+  case: published-iowa-state-farrow-to-finish
+  periods: 7
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 7
+      inputs: published
+      values:
+        live_cwt: finished_weight_lb / 100
+        pig_sales: selling_price_usd_per_live_cwt * live_cwt
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    cohorts:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        finished_pigs: income
+        feed_corn: expense
+        feed_soybean_meal: expense
+        feed_dried_distiller_grain: expense
+        feed_complete_and_other: expense
+        feed_processing: expense
+        nonfeed_variable_costs: expense
+        operating_interest: expense
+        fixed_costs: expense
+        death_loss: expense
+      moves:
+        sales: {debit: cash, credit: finished_pigs, amount: {generator: src, output: pig_sales}}
+        corn: {debit: feed_corn, credit: cash, amount: {generator: src, output: feed_corn_usd_per_hd}}
+        soybean_meal: {debit: feed_soybean_meal, credit: cash, amount: {generator: src, output: feed_soybean_meal_usd_per_hd}}
+        ddgs: {debit: feed_dried_distiller_grain, credit: cash, amount: {generator: src, output: feed_dried_distiller_grain_usd_per_hd}}
+        complete: {debit: feed_complete_and_other, credit: cash, amount: {generator: src, output: feed_complete_and_other_usd_per_hd}}
+        processing: {debit: feed_processing, credit: cash, amount: {generator: src, output: feed_processing_usd_per_hd}}
+        nonfeed: {debit: nonfeed_variable_costs, credit: cash, amount: {generator: src, output: nonfeed_variable_costs_usd_per_hd}}
+        interest: {debit: operating_interest, credit: cash, amount: {generator: src, output: operating_interest_usd_per_hd}}
+        fixed: {debit: fixed_costs, credit: owner_equity, amount: {generator: src, output: fixed_costs_usd_per_hd}}
+        death_loss: {debit: death_loss, credit: owner_equity, amount: {generator: src, output: death_loss_usd_per_hd}}
+  schemes:
+    pnl:
+      finished_pigs: revenue
+      feed_corn: feed
+      feed_soybean_meal: feed
+      feed_dried_distiller_grain: feed
+      feed_complete_and_other: feed
+      feed_processing: feed
+      nonfeed_variable_costs: nonfeed
+      operating_interest: nonfeed
+      fixed_costs: nonfeed
+      death_loss: death_loss
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    feed: {kind: pnl, entity: farm, scheme: pnl, include: [feed]}
+    nonfeed: {kind: pnl, entity: farm, scheme: pnl, include: [nonfeed]}
+    total: {kind: pnl, entity: farm, scheme: pnl, include: [feed, nonfeed, death_loss]}
+    profit: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, feed, nonfeed, death_loss]}
+  measures: {}
+figures:
+  feed_total_usd_per_hd: {cut: feed, sign: -1}
+  nonfeed_total_usd_per_hd: {cut: nonfeed, sign: -1}
+  total_costs_usd_per_hd: {cut: total, sign: -1}
+  breakeven_price_usd_per_live_cwt: {cut: total, sign: -1, per: src.live_cwt}
+  sales_value_usd_per_hd: {cut: revenue}
+  profit_loss_usd_per_hd: {cut: profit}
+not_compared:
+  breakeven_price_usd_per_carcass_cwt: a carcass-weight price; the dressing yield that converts live to carcass weight is not an input
+  selling_price_usd_per_carcass_cwt: a carcass-weight price; the dressing yield that converts live to carcass weight is not an input
+  manure_credit_usd_per_hd: the manure credit is not an input; the case books no manure value
+  total_profit_loss_usd_per_hd: the profit after the manure credit, which no input carries

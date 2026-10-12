@@ -1,0 +1,176 @@
+# Published case "rte_embouche_ovine_niger_120j": ram fattening in Niger, one batch of ten head over
+# a 120-day cycle (PRADEL KIYO-ARZIKI, Référentiel technico-économique, embouche ovine, Tableaux 4
+# to 9; cases/reference/published/rte_embouche_ovine_niger_120j.yaml).
+#
+# Every amount is a published input by name, or quantité x PU of a printed line (generator `src`).
+# Two books, one period (the 120-day cycle) each:
+#   * `batch`, the compte d'exploitation (Tableaux 4, 6, 9): the fourteen investment lines of
+#     Tableau 4 bought for cash and capitalised at quantité x PU; the seven charge lines of
+#     Tableau 9 (compte_dexploitation_charges_xof, the intermediate charges CI) paid and expensed;
+#     the sale of the ten rams and the value of the manure (compte_dexploitation_produits_xof
+#     montants) received in cash; the cycle's depreciation is Tableau 6's eleven printed lines
+#     (amort_120j), charged against accumulated depreciation; no tax (the source has none);
+#   * `wc`, the working capital of Tableau 5 (fonds_de_roulement_xof): its six lines, quantité x
+#     PU, paid and expensed; the working capital is that spend.
+# Per-ram figures are batch amounts from the books per head_per_batch (`per`); the proposed price
+# a ram is the ram sales per ram sold (vente_dovin_embouche__quantite). The ratios are read over
+# the same amounts computed from the inputs (`per`).
+# Source findings (read, they differ): Tableau 7 prints the cost price of a ram 45,960 though
+# Tableau 9's charges are 549,600 for ten head, 54,960 (a transposed digit, oracle notes); it
+# charges the batch's whole depreciation (495) to one ram, where the batch's ten rams carry 49.6
+# each; the total price of a ram (45,960 + 495) inherits both.
+published: rte_embouche_ovine_niger_120j
+entity: batch
+plant: compte_dexploitation_charges_xof__achat_dovin_dembouche
+case:
+  case: published-rte-embouche-ovine
+  periods: 1
+  phases: [operate]
+  currency: XOF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        i_etable: etable__quantite * etable__pu
+        i_grange_de_foin: grange_de_foin__quantite * grange_de_foin__pu
+        i_fosse_fumiere: fosse_fumiere__quantite * fosse_fumiere__pu
+        i_mangeoire_abreuvoir: mangeoire_abreuvoir__quantite * mangeoire_abreuvoir__pu
+        i_seau: seau__quantite * seau__pu
+        i_bassine: bassine__quantite * bassine__pu
+        i_fut_vide: fut_vide__quantite * fut_vide__pu
+        i_balance_petites_pesees: balance_petites_pesees__quantite * balance_petites_pesees__pu
+        i_hache_paille_mecanique: hache_paille_mecanique__quantite * hache_paille_mecanique__pu
+        i_brouette: brouette__quantite * brouette__pu
+        i_pelle: pelle__quantite * pelle__pu
+        i_pics: pics__quantite * pics__pu
+        i_fourche: fourche__quantite * fourche__pu
+        i_rateau: rateau__quantite * rateau__pu
+        w_achat_dovin_dembouche: achat_dovin_dembouche__quantite * achat_dovin_dembouche__pu
+        w_fanes_de_niebe: fanes_de_niebe__quantite * fanes_de_niebe__pu
+        w_sons_de_cereales: sons_de_cereales__quantite * sons_de_cereales__pu
+        w_tourteaux_de_coton: tourteaux_de_coton__quantite * tourteaux_de_coton__pu
+        w_soin_veterinaire: soin_veterinaire__quantite * soin_veterinaire__pu
+        w_sels: sels__quantite * sels__pu
+        amortisation: etable__amort_120j + grange_de_foin__amort_120j + mangeoire_abreuvoir__amort_120j + seaux__amort_120j + bassines__amort_120j + futs_vides__amort_120j + balance_petites_pesees__amort_120j + brouettes__amort_120j + pelles__amort_120j + fourches__amort_120j + rateaux__amort_120j
+        ci: compte_dexploitation_charges_xof__achat_dovin_dembouche + compte_dexploitation_charges_xof__fanes_de_niebe + compte_dexploitation_charges_xof__sons_de_cereales + compte_dexploitation_charges_xof__tourteaux_de_coton + compte_dexploitation_charges_xof__soins_veterinaires + compte_dexploitation_charges_xof__sels + compte_dexploitation_charges_xof__main_doeuvre
+        charges: ci + amortisation
+        produits: vente_dovin_embouche__montant + valeur_de_la_fumure_organique__montant
+        marge_brute: produits - ci
+  opening:
+    batch:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+    wc:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    cycle:
+      kind: transfer
+      entity: batch
+      phase: operate
+      declare:
+        investissements: asset
+        accumulated_depreciation: asset
+        vente_ovins: income
+        fumure_organique: income
+        amortissements: expense
+        achat_dovin_dembouche: expense
+        fanes_de_niebe: expense
+        sons_de_cereales: expense
+        tourteaux_de_coton: expense
+        soins_veterinaires: expense
+        sels: expense
+        main_doeuvre: expense
+      moves:
+        etable: {debit: investissements, credit: cash, amount: {generator: src, output: i_etable}}
+        grange_de_foin: {debit: investissements, credit: cash, amount: {generator: src, output: i_grange_de_foin}}
+        fosse_fumiere: {debit: investissements, credit: cash, amount: {generator: src, output: i_fosse_fumiere}}
+        mangeoire_abreuvoir: {debit: investissements, credit: cash, amount: {generator: src, output: i_mangeoire_abreuvoir}}
+        seau: {debit: investissements, credit: cash, amount: {generator: src, output: i_seau}}
+        bassine: {debit: investissements, credit: cash, amount: {generator: src, output: i_bassine}}
+        fut_vide: {debit: investissements, credit: cash, amount: {generator: src, output: i_fut_vide}}
+        balance_petites_pesees: {debit: investissements, credit: cash, amount: {generator: src, output: i_balance_petites_pesees}}
+        hache_paille_mecanique: {debit: investissements, credit: cash, amount: {generator: src, output: i_hache_paille_mecanique}}
+        brouette: {debit: investissements, credit: cash, amount: {generator: src, output: i_brouette}}
+        pelle: {debit: investissements, credit: cash, amount: {generator: src, output: i_pelle}}
+        pics: {debit: investissements, credit: cash, amount: {generator: src, output: i_pics}}
+        fourche: {debit: investissements, credit: cash, amount: {generator: src, output: i_fourche}}
+        rateau: {debit: investissements, credit: cash, amount: {generator: src, output: i_rateau}}
+        rams: {debit: cash, credit: vente_ovins, amount: {generator: src, output: vente_dovin_embouche__montant}}
+        manure: {debit: cash, credit: fumure_organique, amount: {generator: src, output: valeur_de_la_fumure_organique__montant}}
+        achat_dovin_dembouche: {debit: achat_dovin_dembouche, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__achat_dovin_dembouche}}
+        fanes_de_niebe: {debit: fanes_de_niebe, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__fanes_de_niebe}}
+        sons_de_cereales: {debit: sons_de_cereales, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__sons_de_cereales}}
+        tourteaux_de_coton: {debit: tourteaux_de_coton, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__tourteaux_de_coton}}
+        soins_veterinaires: {debit: soins_veterinaires, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__soins_veterinaires}}
+        sels: {debit: sels, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__sels}}
+        main_doeuvre: {debit: main_doeuvre, credit: cash, amount: {generator: src, output: compte_dexploitation_charges_xof__main_doeuvre}}
+        amortissements: {debit: amortissements, credit: accumulated_depreciation, amount: {generator: src, output: amortisation}}
+    working_capital:
+      kind: transfer
+      entity: wc
+      phase: operate
+      declare:
+        achat_dovin_dembouche: expense
+        fanes_de_niebe: expense
+        sons_de_cereales: expense
+        tourteaux_de_coton: expense
+        soin_veterinaire: expense
+        sels: expense
+      moves:
+        achat_dovin_dembouche: {debit: achat_dovin_dembouche, credit: cash, amount: {generator: src, output: w_achat_dovin_dembouche}}
+        fanes_de_niebe: {debit: fanes_de_niebe, credit: cash, amount: {generator: src, output: w_fanes_de_niebe}}
+        sons_de_cereales: {debit: sons_de_cereales, credit: cash, amount: {generator: src, output: w_sons_de_cereales}}
+        tourteaux_de_coton: {debit: tourteaux_de_coton, credit: cash, amount: {generator: src, output: w_tourteaux_de_coton}}
+        soin_veterinaire: {debit: soin_veterinaire, credit: cash, amount: {generator: src, output: w_soin_veterinaire}}
+        sels: {debit: sels, credit: cash, amount: {generator: src, output: w_sels}}
+  schemes:
+    pnl:
+      vente_ovins: rams
+      fumure_organique: manure
+      amortissements: fixed
+      achat_dovin_dembouche: intermediate
+      fanes_de_niebe: intermediate
+      main_doeuvre: intermediate
+      sels: intermediate
+      soin_veterinaire: intermediate
+      soins_veterinaires: intermediate
+      sons_de_cereales: intermediate
+      tourteaux_de_coton: intermediate
+  cuts:
+    rams: {kind: pnl, entity: batch, scheme: pnl, include: [rams]}
+    produits: {kind: pnl, entity: batch, scheme: pnl, include: [rams, manure]}
+    ci: {kind: pnl, entity: batch, scheme: pnl, include: [intermediate]}
+    amortisation: {kind: pnl, entity: batch, scheme: pnl, include: [fixed]}
+    charges: {kind: pnl, entity: batch, scheme: pnl, include: [intermediate, fixed]}
+    marge_brute: {kind: pnl, entity: batch, scheme: pnl, include: [rams, manure, intermediate]}
+    marge_nette: {kind: pnl, entity: batch, scheme: pnl, include: [rams, manure, intermediate, fixed]}
+    working_capital: {kind: pnl, entity: wc, scheme: pnl, include: [intermediate]}
+  measures: {}
+figures:
+  total_investissements_xof: {balance: investissements}
+  total_fonds_de_roulement_xof: {cut: working_capital, sign: -1}
+  total_amortissements_120j_xof: {cut: amortisation, sign: -1}
+  prix_de_revient_dun_ovin_xof: {cut: ci, sign: -1, per: src.head_per_batch}
+  amortissement_par_ovin_xof: {cut: amortisation, sign: -1, per: src.head_per_batch}
+  prix_total_dun_ovin_xof: {cut: charges, sign: -1, per: src.head_per_batch}
+  proposition_prix_dun_ovin_xof: {cut: rams, per: src.vente_dovin_embouche__quantite}
+  charges_intermediaires_CI_xof: {cut: ci, sign: -1}
+  charges_dexploitation_xof: {cut: charges, sign: -1}
+  total_produits_xof: {cut: produits}
+  marge_brute_xof: {cut: marge_brute}
+  marge_nette_xof: {cut: marge_nette}
+  rentabilite: {cut: produits, per: src.charges}
+  productivite_des_charges_variables: {cut: ci, sign: -1, per: src.marge_brute}
+  productivite_brute: {cut: charges, sign: -1, per: src.marge_brute}
+  productivite_charge_fixe: {cut: amortisation, sign: -1, per: src.marge_brute}
+not_compared:
+  marge_de_commercialisation_xof: >-
+    Tableau 7's commercial margin is 30% of the cost price, and that rate is not among the inputs
+  chiffre_daffaire_tableau8_xof: >-
+    Tableau 8 prices the ram at 50,000 a head and the manure at 25 a kg, prices not among the
+    inputs (Tableau 9's sales, the ones the inputs carry, are read as total_produits_xof)

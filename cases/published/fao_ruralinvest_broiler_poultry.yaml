@@ -1,0 +1,68 @@
+# Published case "fao_ruralinvest_broiler_poultry": community broilers, one shed of 1,000 birds,
+# four three-month cycles a year (FAO RuralInvest, Module 2, p.26, in-body cost table;
+# cases/reference/published/fao_ruralinvest_broiler_poultry.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * one period is one production cycle; the case runs cycles_per_year of them (4), the
+#     source's year for one shed (its unit of production);
+#   * each cycle the shed buys its day-old chicks, feed and supplement and pays its labour
+#     (cost_per_cycle__*), all paid in cash and expensed in the cycle; no investment and no
+#     revenue are given by the source, so the books hold costs only; no tax;
+#   * the all-sheds figure is the shed's annual cost times the stated number of sheds (`times`):
+#     the three sheds are identical copies of the unit.
+# Source finding: the annual cost per shed is printed as 10,708 ("2,695 x 4"), but four cycles of
+# the source's own 2,695 are 10,780 (a transposed digit, documented in the oracle's notes); the
+# figure is read and differs. The all-sheds 32,340 is the true 10,780 x 3 and matches.
+published: fao_ruralinvest_broiler_poultry
+entity: shed
+plant: cost_per_cycle__feed
+case:
+  case: published-fao-ruralinvest-broiler
+  periods: 4
+  phases: [operate]
+  currency: LCU
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 4
+      inputs: published
+      values:
+        cycle: (t < cycles_per_year)
+        chicks: {each_period: cost_per_cycle__day_old_chicks * cycle}
+        feed: {each_period: cost_per_cycle__feed * cycle}
+        supplement: {each_period: cost_per_cycle__supplement * cycle}
+        labour: {each_period: cost_per_cycle__labour * cycle}
+  opening:
+    shed:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    costs:
+      kind: transfer
+      entity: shed
+      phase: operate
+      declare:
+        day_old_chicks: expense
+        feed: expense
+        supplement: expense
+        labour: expense
+      moves:
+        chicks: {debit: day_old_chicks, credit: cash, amount: {generator: src, output: chicks}}
+        feed: {debit: feed, credit: cash, amount: {generator: src, output: feed}}
+        supplement: {debit: supplement, credit: cash, amount: {generator: src, output: supplement}}
+        labour: {debit: labour, credit: cash, amount: {generator: src, output: labour}}
+  schemes:
+    pnl:
+      day_old_chicks: cost
+      feed: cost
+      supplement: cost
+      labour: cost
+  cuts:
+    cost: {kind: pnl, entity: shed, scheme: pnl, include: [cost]}
+  measures: {}
+figures:
+  total_cost_per_unit_per_cycle: {cut: cost, sign: -1, at: 0}
+  total_cost_per_unit_per_year: {cut: cost, sign: -1, total: true}
+  total_cost_all_sheds_per_year: {cut: cost, sign: -1, times: src.sheds, total: true}

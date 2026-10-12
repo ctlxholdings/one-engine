@@ -1,0 +1,317 @@
+# Published case "ext_table_olive_establish_ucd2023": one acre of a modern (hedgerow) table olive
+# orchard in the Central Valley, its six establishment years and its mature year 8+ (Fichtner,
+# Sumner, Murdock et al., UC Davis / UCCE, 2023 Sample Costs to Establish an Orchard and Produce
+# Table Olives, Table 1, Table D and Table 3; cases/reference/published/
+# ext_table_olive_establish_ucd2023.yaml).
+#
+# Six periods, orchard years 1 to 6, booked on `orchard`; the mature year 8+ (Table 3) is a
+# steady state, not a seventh step, so it is booked once (period 0) on its own book,
+# `mature_acre`. Every amount is a published input by name (generator `src`), posted by two
+# `transfer` rulebooks:
+#   * income each year: that year's yield (Table D, inputs _1 to _6, nil in years 1-2) times
+#     planting__price_usd_per_ton, received in cash;
+#   * cash costs each year are Table 1's component lines, paid in cash and expensed: pre-plant
+#     (year 1), planting (years 1-2), cultural, harvest, interest on operating capital and cash
+#     overhead; establishment spending is expensed as it falls, as the study's net-cash-cost
+#     ladder treats it;
+#   * capital recovery each year is built from its components (shop building, fuel tank, land,
+#     well/pump/filter, shop tools, equipment at the years 1-2 then years 3+ rate, and the
+#     orchard establishment amortised from year 4): the owner's capital charged at its
+#     recovery cost and credited to the owner (no cash moves);
+#   * mature year: yield_tons_per_acre at mature_year8plus__price_usd_per_ton; the nine
+#     operating and eight cash-overhead lines paid in cash; the seven capital-recovery lines
+#     credited to the owner;
+#   * no tax.
+# Accumulated rows are the running sum of the year's net cut (`cumulative`); the establishment
+# cost is the accumulated net cash cost at year 3, and the 40-acre figure is that times
+# orchard_acres_planted (`times`). Per-ton figures divide by yield_tons_per_acre (`per`).
+#
+# Source findings (figures read, left to differ). The study sums unrounded cells and prints
+# rounded ones, so its printed components do not add to its printed totals (year 1 cash: 8,141
+# + 588 = 8,729 against 8,728 printed; year 2 operating 998 against 997; year 5 and 6 cash one
+# low). Each year is within the oracle's 1.5, but the accumulated rows carry the drift: the
+# accumulated net cash cost of years 2 to 4 and the establishment cost read 2 above the
+# printed values (11,149 against 11,147), the 40-acre establishment cost 80 above, and the
+# total accumulated net cost of year 6 two below. The year-6 capital-recovery cell (2,945,
+# against its own components' 2,963) is an input no figure reads: the books use the
+# components, and year 6's printed total cost (7,203) agrees with them.
+# Set aside: the mature year's non-cash overhead investment per producing acre (39,354): the
+# investment amounts behind the capital-recovery lines are not inputs, only the annual charges.
+published: ext_table_olive_establish_ucd2023
+entity: orchard
+plant: planting__price_usd_per_ton
+case:
+  case: published-ext-table-olive-establish-ucd2023
+  periods: 6
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 6
+      inputs: published
+      values:
+        # ── the six establishment years (t = 0 is year 1) ──
+        tons: _1 * (t == 0) + _2 * (t == 1) + _3 * (t == 2) + _4 * (t == 3) + _5 * (t == 4) + _6 * (t == 5)
+        income: tons * planting__price_usd_per_ton
+        pre_plant: total_pre_plant * (t == 0)
+        planting: year1__total_planting * (t == 0) + year2__total_planting * (t == 1)
+        cultural: >-
+          year1__total_cultural * (t == 0) + year2__total_cultural * (t == 1) + year3__total_cultural * (t == 2)
+          + year4__total_cultural * (t == 3) + year5__total_cultural * (t == 4) + year6__total_cultural * (t == 5)
+        harvest: >-
+          year1__total_harvest * (t == 0) + year2__total_harvest * (t == 1) + year3__total_harvest * (t == 2)
+          + year4__total_harvest * (t == 3) + year5__total_harvest * (t == 4) + year6__total_harvest * (t == 5)
+        operating_interest: >-
+          year1__interest_on_operating_capital * (t == 0) + year2__interest_on_operating_capital * (t == 1)
+          + year3__interest_on_operating_capital * (t == 2) + year4__interest_on_operating_capital * (t == 3)
+          + year5__interest_on_operating_capital * (t == 4) + year6__interest_on_operating_capital * (t == 5)
+        cash_overhead: >-
+          year1__total_cash_overhead * (t == 0) + year2__total_cash_overhead * (t == 1)
+          + year3__total_cash_overhead * (t == 2) + year4__total_cash_overhead * (t == 3)
+          + year5__total_cash_overhead * (t == 4) + year6__total_cash_overhead * (t == 5)
+        recovery_shop_building: {each_period: shop_building}
+        recovery_fuel_tank: {each_period: capital_recovery_components_usd__fuel_tank}
+        recovery_land: {each_period: capital_recovery_components_usd__land}
+        recovery_well: {each_period: capital_recovery_components_usd__well_pump_filter}
+        recovery_shop_tools: {each_period: capital_recovery_components_usd__shop_tools}
+        recovery_equipment: equipment_years1_2 * (t < 2) + equipment_years3plus * (t >= 2)
+        recovery_establishment: orchard_establishment_amortised_from_year4 * (t >= 3)     # from year 4
+        # ── the mature year 8+, booked once (period 0) on its own book ──
+        mature_income: yield_tons_per_acre * mature_year8plus__price_usd_per_ton * (t == 0)
+        m_herbicide: costs__herbicide * (t == 0)
+        m_fungicide: costs__fungicide * (t == 0)
+        m_insecticide: costs__insecticide * (t == 0)
+        m_custom: custom_operations * (t == 0)
+        m_irrigation: costs__irrigation_water * (t == 0)
+        m_fertilizer: costs__fertilizer * (t == 0)
+        m_labor: costs__labor * (t == 0)
+        m_machinery: costs__machinery * (t == 0)
+        m_interest: costs__interest_on_operating_capital * (t == 0)
+        m_liability_insurance: costs__liability_insurance * (t == 0)
+        m_office: costs__office_expense * (t == 0)
+        m_sanitation: costs__sanitation_fee * (t == 0)
+        m_regulatory: costs__regulatory_compliance_fees * (t == 0)
+        m_crop_insurance: costs__crop_insurance * (t == 0)
+        m_property_taxes: costs__property_taxes * (t == 0)
+        m_property_insurance: costs__property_insurance * (t == 0)
+        m_investment_repairs: costs__investment_repairs * (t == 0)
+        m_buildings: buildings * (t == 0)
+        m_fuel_tank: non_cash_overhead_capital_recovery_usd__fuel_tank * (t == 0)
+        m_land: non_cash_overhead_capital_recovery_usd__land * (t == 0)
+        m_shop_tools: non_cash_overhead_capital_recovery_usd__shop_tools * (t == 0)
+        m_well: non_cash_overhead_capital_recovery_usd__well_pump_filter * (t == 0)
+        m_establishment: orchard_establishment_modern * (t == 0)
+        m_equipment: equipment * (t == 0)
+  opening:
+    orchard:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+    mature_acre:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    establishment:
+      kind: transfer
+      entity: orchard
+      phase: post
+      declare:
+        olives: income
+        pre_plant: expense
+        planting: expense
+        cultural: expense
+        harvest: expense
+        operating_interest: expense
+        cash_overhead: expense
+        recovery_shop_building: expense
+        recovery_fuel_tank: expense
+        recovery_land: expense
+        recovery_well: expense
+        recovery_shop_tools: expense
+        recovery_equipment: expense
+        recovery_establishment: expense
+      moves:
+        sales: {debit: cash, credit: olives, amount: {generator: src, output: income}}
+        pre_plant: {debit: pre_plant, credit: cash, amount: {generator: src, output: pre_plant}}
+        planting: {debit: planting, credit: cash, amount: {generator: src, output: planting}}
+        cultural: {debit: cultural, credit: cash, amount: {generator: src, output: cultural}}
+        harvest: {debit: harvest, credit: cash, amount: {generator: src, output: harvest}}
+        interest: {debit: operating_interest, credit: cash, amount: {generator: src, output: operating_interest}}
+        overhead: {debit: cash_overhead, credit: cash, amount: {generator: src, output: cash_overhead}}
+        shop_building: {debit: recovery_shop_building, credit: owner_equity, amount: {generator: src, output: recovery_shop_building}}
+        fuel_tank: {debit: recovery_fuel_tank, credit: owner_equity, amount: {generator: src, output: recovery_fuel_tank}}
+        land: {debit: recovery_land, credit: owner_equity, amount: {generator: src, output: recovery_land}}
+        well: {debit: recovery_well, credit: owner_equity, amount: {generator: src, output: recovery_well}}
+        shop_tools: {debit: recovery_shop_tools, credit: owner_equity, amount: {generator: src, output: recovery_shop_tools}}
+        equipment: {debit: recovery_equipment, credit: owner_equity, amount: {generator: src, output: recovery_equipment}}
+        establishment: {debit: recovery_establishment, credit: owner_equity, amount: {generator: src, output: recovery_establishment}}
+    mature:
+      kind: transfer
+      entity: mature_acre
+      phase: post
+      declare:
+        olives: income
+        herbicide: expense
+        fungicide: expense
+        insecticide: expense
+        custom_operations: expense
+        irrigation_water: expense
+        fertilizer: expense
+        labor: expense
+        machinery: expense
+        operating_interest: expense
+        liability_insurance: expense
+        office_expense: expense
+        sanitation_fee: expense
+        regulatory_compliance_fees: expense
+        crop_insurance: expense
+        property_taxes: expense
+        property_insurance: expense
+        investment_repairs: expense
+        recovery_buildings: expense
+        recovery_fuel_tank: expense
+        recovery_land: expense
+        recovery_shop_tools: expense
+        recovery_well: expense
+        recovery_establishment: expense
+        recovery_equipment: expense
+      moves:
+        sales: {debit: cash, credit: olives, amount: {generator: src, output: mature_income}}
+        herbicide: {debit: herbicide, credit: cash, amount: {generator: src, output: m_herbicide}}
+        fungicide: {debit: fungicide, credit: cash, amount: {generator: src, output: m_fungicide}}
+        insecticide: {debit: insecticide, credit: cash, amount: {generator: src, output: m_insecticide}}
+        custom: {debit: custom_operations, credit: cash, amount: {generator: src, output: m_custom}}
+        irrigation: {debit: irrigation_water, credit: cash, amount: {generator: src, output: m_irrigation}}
+        fertilizer: {debit: fertilizer, credit: cash, amount: {generator: src, output: m_fertilizer}}
+        labor: {debit: labor, credit: cash, amount: {generator: src, output: m_labor}}
+        machinery: {debit: machinery, credit: cash, amount: {generator: src, output: m_machinery}}
+        interest: {debit: operating_interest, credit: cash, amount: {generator: src, output: m_interest}}
+        liability_insurance: {debit: liability_insurance, credit: cash, amount: {generator: src, output: m_liability_insurance}}
+        office: {debit: office_expense, credit: cash, amount: {generator: src, output: m_office}}
+        sanitation: {debit: sanitation_fee, credit: cash, amount: {generator: src, output: m_sanitation}}
+        regulatory: {debit: regulatory_compliance_fees, credit: cash, amount: {generator: src, output: m_regulatory}}
+        crop_insurance: {debit: crop_insurance, credit: cash, amount: {generator: src, output: m_crop_insurance}}
+        property_taxes: {debit: property_taxes, credit: cash, amount: {generator: src, output: m_property_taxes}}
+        property_insurance: {debit: property_insurance, credit: cash, amount: {generator: src, output: m_property_insurance}}
+        investment_repairs: {debit: investment_repairs, credit: cash, amount: {generator: src, output: m_investment_repairs}}
+        buildings: {debit: recovery_buildings, credit: owner_equity, amount: {generator: src, output: m_buildings}}
+        fuel_tank: {debit: recovery_fuel_tank, credit: owner_equity, amount: {generator: src, output: m_fuel_tank}}
+        land: {debit: recovery_land, credit: owner_equity, amount: {generator: src, output: m_land}}
+        shop_tools: {debit: recovery_shop_tools, credit: owner_equity, amount: {generator: src, output: m_shop_tools}}
+        well: {debit: recovery_well, credit: owner_equity, amount: {generator: src, output: m_well}}
+        establishment: {debit: recovery_establishment, credit: owner_equity, amount: {generator: src, output: m_establishment}}
+        equipment: {debit: recovery_equipment, credit: owner_equity, amount: {generator: src, output: m_equipment}}
+  schemes:
+    establishment:
+      olives: revenue
+      pre_plant: cash_cost
+      planting: cash_cost
+      cultural: cash_cost
+      harvest: cash_cost
+      operating_interest: cash_cost
+      cash_overhead: cash_cost
+      recovery_shop_building: capital_recovery
+      recovery_fuel_tank: capital_recovery
+      recovery_land: capital_recovery
+      recovery_well: capital_recovery
+      recovery_shop_tools: capital_recovery
+      recovery_equipment: capital_recovery
+      recovery_establishment: capital_recovery
+    mature:
+      olives: revenue
+      herbicide: operating
+      fungicide: operating
+      insecticide: operating
+      custom_operations: operating
+      irrigation_water: operating
+      fertilizer: operating
+      labor: operating
+      machinery: operating
+      operating_interest: operating
+      liability_insurance: cash_overhead
+      office_expense: cash_overhead
+      sanitation_fee: cash_overhead
+      regulatory_compliance_fees: cash_overhead
+      crop_insurance: cash_overhead
+      property_taxes: cash_overhead
+      property_insurance: cash_overhead
+      investment_repairs: cash_overhead
+      recovery_buildings: non_cash_overhead
+      recovery_fuel_tank: non_cash_overhead
+      recovery_land: non_cash_overhead
+      recovery_shop_tools: non_cash_overhead
+      recovery_well: non_cash_overhead
+      recovery_establishment: non_cash_overhead
+      recovery_equipment: non_cash_overhead
+  cuts:
+    income: {kind: pnl, entity: orchard, scheme: establishment, include: [revenue]}
+    net_cash: {kind: pnl, entity: orchard, scheme: establishment, include: [revenue, cash_cost]}
+    total_cost: {kind: pnl, entity: orchard, scheme: establishment, include: [cash_cost, capital_recovery]}
+    net_total: {kind: pnl, entity: orchard, scheme: establishment, include: [revenue, cash_cost, capital_recovery]}
+    m_revenue: {kind: pnl, entity: mature_acre, scheme: mature, include: [revenue]}
+    m_operating: {kind: pnl, entity: mature_acre, scheme: mature, include: [operating]}
+    m_above_operating: {kind: pnl, entity: mature_acre, scheme: mature, include: [revenue, operating]}
+    m_cash_overhead: {kind: pnl, entity: mature_acre, scheme: mature, include: [cash_overhead]}
+    m_cash_costs: {kind: pnl, entity: mature_acre, scheme: mature, include: [operating, cash_overhead]}
+    m_above_cash: {kind: pnl, entity: mature_acre, scheme: mature, include: [revenue, operating, cash_overhead]}
+    m_non_cash: {kind: pnl, entity: mature_acre, scheme: mature, include: [non_cash_overhead]}
+    m_total: {kind: pnl, entity: mature_acre, scheme: mature, include: [operating, cash_overhead, non_cash_overhead]}
+    m_above_total: {kind: pnl, entity: mature_acre, scheme: mature, include: [revenue, operating, cash_overhead, non_cash_overhead]}
+  measures: {}
+figures:
+  income_per_acre_by_year_usd.year3: {cut: income, at: 2}
+  income_per_acre_by_year_usd.year4: {cut: income, at: 3}
+  income_per_acre_by_year_usd.year5: {cut: income, at: 4}
+  income_per_acre_by_year_usd.year6: {cut: income, at: 5}
+  net_cash_cost_per_acre_by_year_usd.year1: {cut: net_cash, sign: -1, at: 0}
+  net_cash_cost_per_acre_by_year_usd.year2: {cut: net_cash, sign: -1, at: 1}
+  net_cash_cost_per_acre_by_year_usd.year3: {cut: net_cash, sign: -1, at: 2}
+  net_cash_cost_per_acre_by_year_usd.year4: {cut: net_cash, sign: -1, at: 3}
+  profit_per_acre_above_cash_costs_by_year_usd.year5: {cut: net_cash, at: 4}
+  profit_per_acre_above_cash_costs_by_year_usd.year6: {cut: net_cash, at: 5}
+  accumulated_net_cash_costs_per_acre_usd.year1: {cumulative: net_cash, sign: -1, at: 0}
+  accumulated_net_cash_costs_per_acre_usd.year2: {cumulative: net_cash, sign: -1, at: 1}
+  accumulated_net_cash_costs_per_acre_usd.year3: {cumulative: net_cash, sign: -1, at: 2}
+  accumulated_net_cash_costs_per_acre_usd.year4: {cumulative: net_cash, sign: -1, at: 3}
+  accumulated_net_cash_costs_per_acre_usd.year5: {cumulative: net_cash, sign: -1, at: 4}
+  accumulated_net_cash_costs_per_acre_usd.year6: {cumulative: net_cash, sign: -1, at: 5}
+  establishment_cost_per_acre_usd: {cumulative: net_cash, sign: -1, at: 2}
+  establishment_cost_40_acres_usd: {cumulative: net_cash, sign: -1, times: src.orchard_acres_planted, at: 2}
+  total_cost_per_acre_by_year_usd.year1: {cut: total_cost, sign: -1, at: 0}
+  total_cost_per_acre_by_year_usd.year2: {cut: total_cost, sign: -1, at: 1}
+  total_cost_per_acre_by_year_usd.year3: {cut: total_cost, sign: -1, at: 2}
+  total_cost_per_acre_by_year_usd.year4: {cut: total_cost, sign: -1, at: 3}
+  total_cost_per_acre_by_year_usd.year5: {cut: total_cost, sign: -1, at: 4}
+  total_cost_per_acre_by_year_usd.year6: {cut: total_cost, sign: -1, at: 5}
+  total_net_cost_per_acre_by_year_usd.year1: {cut: net_total, sign: -1, at: 0}
+  total_net_cost_per_acre_by_year_usd.year2: {cut: net_total, sign: -1, at: 1}
+  total_net_cost_per_acre_by_year_usd.year3: {cut: net_total, sign: -1, at: 2}
+  total_net_cost_per_acre_by_year_usd.year4: {cut: net_total, sign: -1, at: 3}
+  total_net_cost_per_acre_by_year_usd.year5: {cut: net_total, sign: -1, at: 4}
+  total_net_cost_per_acre_by_year_usd.year6: {cut: net_total, sign: -1, at: 5}
+  total_accumulated_net_cost_per_acre_usd.year1: {cumulative: net_total, sign: -1, at: 0}
+  total_accumulated_net_cost_per_acre_usd.year2: {cumulative: net_total, sign: -1, at: 1}
+  total_accumulated_net_cost_per_acre_usd.year3: {cumulative: net_total, sign: -1, at: 2}
+  total_accumulated_net_cost_per_acre_usd.year4: {cumulative: net_total, sign: -1, at: 3}
+  total_accumulated_net_cost_per_acre_usd.year5: {cumulative: net_total, sign: -1, at: 4}
+  total_accumulated_net_cost_per_acre_usd.year6: {cumulative: net_total, sign: -1, at: 5}
+  expected_mature_year8plus.total_gross_returns_usd: {cut: m_revenue, at: 0}
+  expected_mature_year8plus.total_operating_costs_per_acre_usd: {cut: m_operating, sign: -1, at: 0}
+  expected_mature_year8plus.total_operating_costs_per_ton_usd: {cut: m_operating, sign: -1, per: src.yield_tons_per_acre, at: 0}
+  expected_mature_year8plus.net_returns_above_operating_costs_usd: {cut: m_above_operating, at: 0}
+  expected_mature_year8plus.total_cash_overhead_per_acre_usd: {cut: m_cash_overhead, sign: -1, at: 0}
+  expected_mature_year8plus.total_cash_overhead_per_ton_usd: {cut: m_cash_overhead, sign: -1, per: src.yield_tons_per_acre, at: 0}
+  expected_mature_year8plus.total_cash_costs_per_acre_usd: {cut: m_cash_costs, sign: -1, at: 0}
+  expected_mature_year8plus.total_cash_costs_per_ton_usd: {cut: m_cash_costs, sign: -1, per: src.yield_tons_per_acre, at: 0}
+  expected_mature_year8plus.net_returns_above_cash_costs_usd: {cut: m_above_cash, at: 0}
+  expected_mature_year8plus.total_non_cash_overhead_per_acre_usd: {cut: m_non_cash, sign: -1, at: 0}
+  expected_mature_year8plus.total_non_cash_overhead_per_ton_usd: {cut: m_non_cash, sign: -1, per: src.yield_tons_per_acre, at: 0}
+  expected_mature_year8plus.total_cost_per_acre_usd: {cut: m_total, sign: -1, at: 0}
+  expected_mature_year8plus.total_cost_per_ton_usd: {cut: m_total, sign: -1, per: src.yield_tons_per_acre, at: 0}
+  expected_mature_year8plus.net_returns_above_total_cost_usd: {cut: m_above_total, at: 0}
+not_compared:
+  expected_mature_year8plus.total_non_cash_overhead_investment_per_producing_acre_usd: >-
+    the investment behind the capital-recovery lines (buildings, fuel tank, land, tools, well,
+    equipment) is not an input; only the annual recovery charges are

@@ -1,0 +1,145 @@
+# Published case "landbank_beef_cattle_18month": a 625-cow South African beef herd on an
+# 18-month marketing system, one year (Land Bank, Livestock Enterprise Budget Digital Book
+# 2023/24 v2, "1. Beef Cattle 18 Months Marketing System", p.4; cases/reference/published/
+# landbank_beef_cattle_18month.yaml).
+#
+# One period, the budget year. Every amount is a published input by name (generator `src`),
+# posted by a `transfer` rulebook:
+#   * gross production value: the four income lines, each its slaughter or live mass times the
+#     number of animals times the price per kg (culled males, replacement cows, weaners,
+#     weaning bulls), sold for cash; the aggregate `revenue` input is not used, so the total is
+#     derived from its parts;
+#   * the seven vaccination and dosage lines, the seven directly attributable lines (bull and
+#     heifer purchases expensed as the budget charges them, repairs, predator control, fuel,
+#     vet, labour) and the three feeding/supplement lines are the source's per-annum totals,
+#     paid in cash and expensed;
+#   * no fixed costs or tax (the budget stops at gross margin).
+# Per-LSU figures divide by the farm's large stock units (lsu_contribute_effect_of_farm) and
+# per-cow figures by number_of_cows, both physical drivers, via `per`.
+#
+# Source finding: the weaners line does not reproduce from its own printed quantities: 240 kg x
+# 175 head x R46.51 = R1,953,420.00, but the source prints R1,953,382.54 (that printed value is
+# not an input). The other three lines reproduce exactly. So the derived gross production value
+# is R4,936,492.80 against the printed R4,936,455.34 (mapped), and the per-LSU and per-cow
+# production values and gross margins, all built on it, are read and differ (by R37.46 on the
+# total, 3 to 6 cents on the per-unit figures). Every cost figure matches.
+published: landbank_beef_cattle_18month
+entity: farm
+plant: feeding_winter_lick
+case:
+  case: published-landbank-beef-cattle-18month
+  periods: 1
+  phases: [post]
+  currency: ZAR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        culled_males: culled_males_slaughter_mass_kg * culled_males_slaughter_amount * culled_males_slaughter_price_R_per_kg
+        replacement_cows: replacement_cows_slaughter_mass_kg * replacement_cows_slaughter_amount * replacement_cows_slaughter_price_R_per_kg
+        weaners: weaners_versions_mass_kg * weaners_versions_amount * weaners_versions_price_R_per_kg
+        weaning_bulls: weaning_bulls_mass_kg * weaning_bulls_amount * weaning_bulls_price_R_per_kg
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        culled_males: income
+        replacement_cows: income
+        weaners: income
+        weaning_bulls: income
+        vaccination_spons_lambs_milt: expense
+        vaccination_brucella_s19: expense
+        vaccination_pasteurella: expense
+        vaccination_slendal_fever: expense
+        dosage_albendazole: expense
+        dosage_endoktosiede: expense
+        dip_dip_pour: expense
+        bulls_purchases: expense
+        heifers_purchases: expense
+        repairs_and_maintenance: expense
+        predator_control: expense
+        fuel: expense
+        veterinary: expense
+        fixed_labour: expense
+        feeding_concentration_maize: expense
+        feeding_winter_lick: expense
+        feeding_summer_lick: expense
+      moves:
+        culled_males: {debit: cash, credit: culled_males, amount: {generator: src, output: culled_males}}
+        replacement_cows: {debit: cash, credit: replacement_cows, amount: {generator: src, output: replacement_cows}}
+        weaners: {debit: cash, credit: weaners, amount: {generator: src, output: weaners}}
+        weaning_bulls: {debit: cash, credit: weaning_bulls, amount: {generator: src, output: weaning_bulls}}
+        spons: {debit: vaccination_spons_lambs_milt, credit: cash, amount: {generator: src, output: vaccination_spons_lambs_milt}}
+        brucella: {debit: vaccination_brucella_s19, credit: cash, amount: {generator: src, output: vaccination_brucella_s19}}
+        pasteurella: {debit: vaccination_pasteurella, credit: cash, amount: {generator: src, output: vaccination_pasteurella}}
+        slendal: {debit: vaccination_slendal_fever, credit: cash, amount: {generator: src, output: vaccination_slendal_fever}}
+        albendazole: {debit: dosage_albendazole, credit: cash, amount: {generator: src, output: dosage_albendazole}}
+        endoktosiede: {debit: dosage_endoktosiede, credit: cash, amount: {generator: src, output: dosage_endoktosiede}}
+        dip: {debit: dip_dip_pour, credit: cash, amount: {generator: src, output: dip_dip_pour}}
+        bulls: {debit: bulls_purchases, credit: cash, amount: {generator: src, output: bulls_purchases}}
+        heifers: {debit: heifers_purchases, credit: cash, amount: {generator: src, output: heifers_purchases}}
+        repairs: {debit: repairs_and_maintenance, credit: cash, amount: {generator: src, output: repairs_and_maintenance}}
+        predators: {debit: predator_control, credit: cash, amount: {generator: src, output: dangerous_control}}
+        fuel: {debit: fuel, credit: cash, amount: {generator: src, output: fuel}}
+        vet: {debit: veterinary, credit: cash, amount: {generator: src, output: veterinary}}
+        labour: {debit: fixed_labour, credit: cash, amount: {generator: src, output: fixed_labour}}
+        maize: {debit: feeding_concentration_maize, credit: cash, amount: {generator: src, output: feeding_concentration_maize}}
+        winter_lick: {debit: feeding_winter_lick, credit: cash, amount: {generator: src, output: feeding_winter_lick}}
+        summer_lick: {debit: feeding_summer_lick, credit: cash, amount: {generator: src, output: feeding_summer_lick}}
+  schemes:
+    pnl:
+      culled_males: revenue
+      replacement_cows: revenue
+      weaners: revenue
+      weaning_bulls: revenue
+      vaccination_spons_lambs_milt: vaccination_dosage
+      vaccination_brucella_s19: vaccination_dosage
+      vaccination_pasteurella: vaccination_dosage
+      vaccination_slendal_fever: vaccination_dosage
+      dosage_albendazole: vaccination_dosage
+      dosage_endoktosiede: vaccination_dosage
+      dip_dip_pour: vaccination_dosage
+      bulls_purchases: directly_attributable
+      heifers_purchases: directly_attributable
+      repairs_and_maintenance: directly_attributable
+      predator_control: directly_attributable
+      fuel: directly_attributable
+      veterinary: directly_attributable
+      fixed_labour: directly_attributable
+      feeding_concentration_maize: supplement
+      feeding_winter_lick: supplement
+      feeding_summer_lick: supplement
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    vaccination_dosage: {kind: pnl, entity: farm, scheme: pnl, include: [vaccination_dosage]}
+    directly_attributable: {kind: pnl, entity: farm, scheme: pnl, include: [directly_attributable]}
+    supplement: {kind: pnl, entity: farm, scheme: pnl, include: [supplement]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [vaccination_dosage, directly_attributable, supplement]}
+    margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, vaccination_dosage, directly_attributable, supplement]}
+  measures: {}
+figures:
+  total_vaccination_and_dosage_costs_R: {cut: vaccination_dosage, sign: -1}
+  total_vaccination_and_dosage_costs_R_per_LSU: {cut: vaccination_dosage, sign: -1, per: src.lsu_contribute_effect_of_farm}
+  total_vaccination_and_dosage_costs_R_per_cow: {cut: vaccination_dosage, sign: -1, per: src.number_of_cows}
+  total_directly_attributable_variable_costs_R: {cut: directly_attributable, sign: -1}
+  total_directly_attributable_variable_costs_R_per_LSU: {cut: directly_attributable, sign: -1, per: src.lsu_contribute_effect_of_farm}
+  total_directly_attributable_variable_costs_R_per_cow: {cut: directly_attributable, sign: -1, per: src.number_of_cows}
+  total_cost_supplement_R_per_LSU: {cut: supplement, sign: -1, per: src.lsu_contribute_effect_of_farm}
+  total_cost_supplement_R_per_cow: {cut: supplement, sign: -1, per: src.number_of_cows}
+  total_all_variable_costs_R_per_LSU: {cut: variable, sign: -1, per: src.lsu_contribute_effect_of_farm}
+  total_all_variable_costs_R_per_cow: {cut: variable, sign: -1, per: src.number_of_cows}
+  gross_production_value_R: {cut: revenue}
+  gross_production_value_R_per_LSU: {cut: revenue, per: src.lsu_contribute_effect_of_farm}
+  gross_production_value_R_per_cow: {cut: revenue, per: src.number_of_cows}
+  gross_margin_R_per_LSU: {cut: margin, per: src.lsu_contribute_effect_of_farm}
+  gross_margin_R_per_cow: {cut: margin, per: src.number_of_cows}

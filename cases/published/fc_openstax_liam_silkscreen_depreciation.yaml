@@ -1,0 +1,115 @@
+# Published case "fc_openstax_liam_silkscreen_depreciation": Liam's silk-screen machine
+# depreciated three ways over its first two years (OpenStax, Principles of Accounting vol. 1,
+# section 11.3, "Your Turn: Calculating Depreciation Costs";
+# cases/reference/published/fc_openstax_liam_silkscreen_depreciation.yaml).
+#
+# The three methods are alternatives for the same machine, so each has its own books (entities
+# `sl`, `uop`, `ddb`), read through its own depreciation cut. Every amount is an exercise fact
+# by name (generator `src`), one period a year:
+#   * each machine is carried in at purchase_cost_usd, placed in service in year 1 and charged
+#     from that year (first_charge: in_service);
+#   * straight line: estimated_useful_life_years equal charges of the cost less
+#     estimated_salvage_value_usd (the salvage is the register's residual, never depreciated);
+#   * units of production: the cost less salvage spread in proportion to the presses run,
+#     year_1 and year_2 items produced, then the presses left of estimated_useful_life_presses
+#     in a third period (only there so the whole life is in the weights; nothing reads it). The
+#     rate per press is year 1's charge per item produced that year;
+#   * double declining balance: twice the straight-line rate (2 / estimated_useful_life_years)
+#     on the full net book value, the salvage left out of the base as the source states; the
+#     salvage floor does not bind within the two years read;
+#   * no disposal within the case (dispose_at is the useful life, past the horizon); no tax.
+# The source's "alternate initial purchase" ($5,000 machine, $1,000 cash, $4,000 note) is set
+# aside: none of its three amounts is an input, they appear only in the expected block.
+published: fc_openstax_liam_silkscreen_depreciation
+entity: sl
+plant: purchase_cost_usd
+case:
+  case: published-liam-silkscreen-depreciation
+  periods: 3
+  phases: [close]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: published
+      values:
+        presses: >-
+          year_1_clothing_items_produced * (t == 0) + year_2_clothing_items_produced * (t == 1)
+          + (estimated_useful_life_presses - year_1_clothing_items_produced - year_2_clothing_items_produced) * (t == 2)
+        ddb_rate: 2 / estimated_useful_life_years
+  opening:
+    sl:
+      cwip: {nature: asset, value: {generator: src, output: purchase_cost_usd}}
+      equity: {nature: equity, value: balancing}
+    uop:
+      cwip: {nature: asset, value: {generator: src, output: purchase_cost_usd}}
+      equity: {nature: equity, value: balancing}
+    ddb:
+      cwip: {nature: asset, value: {generator: src, output: purchase_cost_usd}}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    straight_line:
+      kind: asset_register
+      entity: sl
+      phase: close
+      from: cwip
+      to: machine
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: src, output: estimated_useful_life_years}
+      life_periods: {generator: src, output: estimated_useful_life_years}
+      first_charge: in_service
+      residual: {generator: src, output: estimated_salvage_value_usd}
+    units_of_production:
+      kind: asset_register
+      entity: uop
+      phase: close
+      from: cwip
+      to: machine
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: src, output: estimated_useful_life_years}
+      life_periods: null
+      weights: {generator: src, output: presses}
+      first_charge: in_service
+      residual: {generator: src, output: estimated_salvage_value_usd}
+    double_declining:
+      kind: asset_register
+      entity: ddb
+      phase: close
+      from: cwip
+      to: machine
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: src, output: estimated_useful_life_years}
+      life_periods: null
+      declining_rate: {generator: src, output: ddb_rate}
+      first_charge: in_service
+  schemes:
+    pnl:
+      depreciation: depreciation
+      written_off: depreciation
+  cuts:
+    sl_dep: {kind: pnl, entity: sl, scheme: pnl, include: [depreciation]}
+    uop_dep: {kind: pnl, entity: uop, scheme: pnl, include: [depreciation]}
+    ddb_dep: {kind: pnl, entity: ddb, scheme: pnl, include: [depreciation]}
+  measures: {}
+figures:
+  year_1_straight_line_expense: {cut: sl_dep, sign: -1, at: 0}
+  depreciation_schedule_usd.straight_line.year_1_expense: {cut: sl_dep, sign: -1, at: 0}
+  depreciation_schedule_usd.straight_line.year_2_expense: {cut: sl_dep, sign: -1, at: 1}
+  depreciation_schedule_usd.units_of_production.rate_per_press: {cut: uop_dep, sign: -1, per: src.presses, at: 0}
+  depreciation_schedule_usd.units_of_production.year_1_expense: {cut: uop_dep, sign: -1, at: 0}
+  depreciation_schedule_usd.units_of_production.year_2_expense: {cut: uop_dep, sign: -1, at: 1}
+  depreciation_schedule_usd.double_declining_balance.year_1_expense: {cut: ddb_dep, sign: -1, at: 0}
+  depreciation_schedule_usd.double_declining_balance.year_2_expense: {cut: ddb_dep, sign: -1, at: 1}
+not_compared:
+  alternate_initial_purchase_entry_usd: >-
+    the source's other purchase story (a $5,000 machine paid $1,000 cash and a $4,000 note);
+    none of its amounts is an input, they appear only in the expected block

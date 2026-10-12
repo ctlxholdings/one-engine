@@ -1,0 +1,77 @@
+# Published case "cell_momo_agent_cgap_vincent": CGAP's worked daily P&L of "Vincent", an M-PESA
+# mobile-money agent in Kenya (Figure 6; cases/reference/published/cell_momo_agent_cgap_vincent.yaml).
+# USD a day.
+#
+# One period, one average day. Each amount is one move of a `transfer` journal against cash:
+#   * transaction commissions are 40 transactions a day at $0.12 each; registration commissions
+#     are 0.80 registrations a day at $0.63 each (both are the source's period averages);
+#   * the expenses are the source's own daily lines (transportation; space, wages, cost of capital
+#     and insurance all nil), paid in the day. No tax.
+# The source's own multiplications do not close to the cent (40 x 0.12 = 4.80 against a printed
+# 4.73; 0.80 x 0.63 = 0.504 against 0.51), so revenue and profit sit 6-7 cents off the printed
+# figures, inside the source's tolerance of 0.10.
+published: cell_momo_agent_cgap_vincent
+entity: agent
+plant: commission_per_transaction
+case:
+  case: published-momo-agent-vincent
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        transaction_fees: transactions_per_day * commission_per_transaction
+        registration_fees: registrations_per_day * commission_per_registration
+  opening:
+    agent:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: agent
+      phase: post
+      declare:
+        transaction_commissions: income
+        registration_commissions: income
+        transportation: expense
+        space_rent_utilities: expense
+        wages: expense
+        cost_of_capital: expense
+        insurance: expense
+      moves:
+        transactions: {debit: cash, credit: transaction_commissions, amount: {generator: src, output: transaction_fees}}
+        registrations: {debit: cash, credit: registration_commissions, amount: {generator: src, output: registration_fees}}
+        transportation: {debit: transportation, credit: cash, amount: {generator: src, output: transportation}}
+        space: {debit: space_rent_utilities, credit: cash, amount: {generator: src, output: space_rent_utilities}}
+        wages: {debit: wages, credit: cash, amount: {generator: src, output: wages}}
+        capital: {debit: cost_of_capital, credit: cash, amount: {generator: src, output: cost_of_capital}}
+        insurance: {debit: insurance, credit: cash, amount: {generator: src, output: insurance}}
+  schemes:
+    pnl:
+      transaction_commissions: transactions
+      registration_commissions: registrations
+      transportation: expenses
+      space_rent_utilities: expenses
+      wages: expenses
+      cost_of_capital: expenses
+      insurance: expenses
+  cuts:
+    transactions: {kind: pnl, entity: agent, scheme: pnl, include: [transactions]}
+    registrations: {kind: pnl, entity: agent, scheme: pnl, include: [registrations]}
+    revenue: {kind: pnl, entity: agent, scheme: pnl, include: [transactions, registrations]}
+    expenses: {kind: pnl, entity: agent, scheme: pnl, include: [expenses]}
+    profit: {kind: pnl, entity: agent, scheme: pnl, include: [transactions, registrations, expenses]}
+  measures: {}
+figures:
+  transaction_commissions: {cut: transactions}
+  registration_commissions: {cut: registrations}
+  total_revenue: {cut: revenue}
+  total_expenses: {cut: expenses, sign: -1}
+  daily_profit: {cut: profit}

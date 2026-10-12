@@ -1,0 +1,177 @@
+# Published case "ext_freshwater_shrimp_100day_uky": freshwater prawns in one 1-acre Kentucky
+# pond, one 100-day grow-out season (Woods, Murdock and Riggins, University of Kentucky, Freshwater
+# Shrimp Enterprise Cost and Return Estimates for Kentucky, Ag. Econ. Extension Series 98-05,
+# Dec 1998, pp.5-7 and 9-10; cases/reference/published/ext_freshwater_shrimp_100day_uky.yaml).
+#
+# One period, the season. Every amount is a published input by name (generator `src`), posted by
+# a `transfer` rulebook:
+#   * the harvest, total_yield_lb at sale_price_usd_per_lb_whole, sold for cash;
+#   * production costs (stocking, feed, diesel and oil, utilities, aquashade, fertilizer, pond
+#     chemicals, miscellaneous) are the source's own line costs, and harvesting costs (hired
+#     labour, ice, bags: the last two nil) quantity times price; all paid in cash and expensed;
+#   * the interest on variable cost follows the p.4 convention, not the row's mislabelled
+#     operands: printed_rate a year on production costs for four months and on harvesting
+#     costs for two (92.07 against the printed 92), paid;
+#   * the short-term (5-year) and long-term (10-year) fixed costs are the source's printed
+#     depreciation lines, charged against accumulated_depreciation (no cash);
+#   * the operator's own labour (feeding plus harvesting hours at allowance_usd_per_hour) is
+#     charged after the return to operator labour, credited to the owner (no cash moves);
+#   * no land charge (the source omits land) and no tax.
+#
+# Source finding: two long-term fixed-cost lines are printed rounded (pond fertilizer and
+# seeding 8, holding tank 13; priced at 7.50 and 12.50, prices not given as inputs), so the
+# printed lines sum to 722 while the source prints the long-term total as 721. The books sum the
+# printed lines, so total_long_term_fixed_cost_usd, total_fixed_costs_usd, the two returns after
+# fixed costs and the sensitivity table's variable-and-fixed total are read and differ by one
+# dollar, wider than the half-dollar tolerance.
+published: ext_freshwater_shrimp_100day_uky
+entity: farm
+plant: sale_price_usd_per_lb_whole
+case:
+  case: published-ext-freshwater-shrimp-100day-uky
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        prawn_sales: total_yield_lb * sale_price_usd_per_lb_whole
+        operator_labour: (feeding + harvesting) * allowance_usd_per_hour
+        hired_labour: hired_labor__quantity * hired_labor__price
+        ice: ice_for_harvest__quantity * ice_for_harvest__price
+        bags: ziplock_and_styrofoam__quantity * ziplock_and_styrofoam__price
+        production_cost: >-
+          stocking + feed + diesel_and_oil + utilities + aquashade + pond_fertilizer + chemicals_to_kill_pond
+          + miscellaneous
+        # p.4: four months of interest on production expenses, two on harvesting and marketing
+        operating_interest: >-
+          production_cost * printed_rate * 4 / 12 + (hired_labour + ice + bags) * printed_rate * 2 / 12
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        accumulated_depreciation: asset
+        prawns: income
+        stocking: expense
+        feed: expense
+        diesel_and_oil: expense
+        utilities: expense
+        aquashade: expense
+        pond_fertilizer: expense
+        chemicals_to_kill_pond: expense
+        miscellaneous: expense
+        hired_labor: expense
+        ice_for_harvest: expense
+        ziplock_and_styrofoam: expense
+        interest_on_variable_cost: expense
+        paddlewheel_motor: expense
+        seine: expense
+        castnet: expense
+        excavation_incl_piping: expense
+        fertilizer_and_seeding_of_pond: expense
+        electric_paddlewheel: expense
+        oxygen_meter: expense
+        barrel_to_hold_feed: expense
+        water_pump: expense
+        holding_tank: expense
+        scale_for_weighing_shrimp: expense
+        operator_labour: expense
+      moves:
+        sales: {debit: cash, credit: prawns, amount: {generator: src, output: prawn_sales}}
+        stocking: {debit: stocking, credit: cash, amount: {generator: src, output: stocking}}
+        feed: {debit: feed, credit: cash, amount: {generator: src, output: feed}}
+        diesel: {debit: diesel_and_oil, credit: cash, amount: {generator: src, output: diesel_and_oil}}
+        utilities: {debit: utilities, credit: cash, amount: {generator: src, output: utilities}}
+        aquashade: {debit: aquashade, credit: cash, amount: {generator: src, output: aquashade}}
+        fertilizer: {debit: pond_fertilizer, credit: cash, amount: {generator: src, output: pond_fertilizer}}
+        chemicals: {debit: chemicals_to_kill_pond, credit: cash, amount: {generator: src, output: chemicals_to_kill_pond}}
+        miscellaneous: {debit: miscellaneous, credit: cash, amount: {generator: src, output: miscellaneous}}
+        hired_labor: {debit: hired_labor, credit: cash, amount: {generator: src, output: hired_labour}}
+        ice: {debit: ice_for_harvest, credit: cash, amount: {generator: src, output: ice}}
+        bags: {debit: ziplock_and_styrofoam, credit: cash, amount: {generator: src, output: bags}}
+        interest: {debit: interest_on_variable_cost, credit: cash, amount: {generator: src, output: operating_interest}}
+        paddlewheel_motor: {debit: paddlewheel_motor, credit: accumulated_depreciation, amount: {generator: src, output: paddlewheel_motor}}
+        seine: {debit: seine, credit: accumulated_depreciation, amount: {generator: src, output: seine}}
+        castnet: {debit: castnet, credit: accumulated_depreciation, amount: {generator: src, output: castnet}}
+        excavation: {debit: excavation_incl_piping, credit: accumulated_depreciation, amount: {generator: src, output: excavation_incl_piping}}
+        pond_seeding: {debit: fertilizer_and_seeding_of_pond, credit: accumulated_depreciation, amount: {generator: src, output: fertilizer_and_seeding_of_pond}}
+        paddlewheel: {debit: electric_paddlewheel, credit: accumulated_depreciation, amount: {generator: src, output: electric_paddlewheel}}
+        oxygen_meter: {debit: oxygen_meter, credit: accumulated_depreciation, amount: {generator: src, output: oxygen_meter}}
+        barrel: {debit: barrel_to_hold_feed, credit: accumulated_depreciation, amount: {generator: src, output: barrel_to_hold_feed}}
+        pump: {debit: water_pump, credit: accumulated_depreciation, amount: {generator: src, output: five_horse_water_pump_2inch}}
+        holding_tank: {debit: holding_tank, credit: accumulated_depreciation, amount: {generator: src, output: holding_tank}}
+        scale: {debit: scale_for_weighing_shrimp, credit: accumulated_depreciation, amount: {generator: src, output: scale_for_weighing_shrimp}}
+        operator: {debit: operator_labour, credit: owner_equity, amount: {generator: src, output: operator_labour}}
+  schemes:
+    pnl:
+      prawns: revenue
+      stocking: production
+      feed: production
+      diesel_and_oil: production
+      utilities: production
+      aquashade: production
+      pond_fertilizer: production
+      chemicals_to_kill_pond: production
+      miscellaneous: production
+      hired_labor: harvesting
+      ice_for_harvest: harvesting
+      ziplock_and_styrofoam: harvesting
+      interest_on_variable_cost: interest
+      paddlewheel_motor: short_term_fixed
+      seine: short_term_fixed
+      castnet: short_term_fixed
+      excavation_incl_piping: long_term_fixed
+      fertilizer_and_seeding_of_pond: long_term_fixed
+      electric_paddlewheel: long_term_fixed
+      oxygen_meter: long_term_fixed
+      barrel_to_hold_feed: long_term_fixed
+      water_pump: long_term_fixed
+      holding_tank: long_term_fixed
+      scale_for_weighing_shrimp: long_term_fixed
+      operator_labour: operator
+  cuts:
+    revenue: {kind: pnl, entity: farm, scheme: pnl, include: [revenue]}
+    production: {kind: pnl, entity: farm, scheme: pnl, include: [production]}
+    harvesting: {kind: pnl, entity: farm, scheme: pnl, include: [harvesting]}
+    before_interest: {kind: pnl, entity: farm, scheme: pnl, include: [production, harvesting]}
+    interest: {kind: pnl, entity: farm, scheme: pnl, include: [interest]}
+    variable: {kind: pnl, entity: farm, scheme: pnl, include: [production, harvesting, interest]}
+    above_variable: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, production, harvesting, interest]}
+    short_term_fixed: {kind: pnl, entity: farm, scheme: pnl, include: [short_term_fixed]}
+    long_term_fixed: {kind: pnl, entity: farm, scheme: pnl, include: [long_term_fixed]}
+    fixed: {kind: pnl, entity: farm, scheme: pnl, include: [short_term_fixed, long_term_fixed]}
+    to_operator: {kind: pnl, entity: farm, scheme: pnl,
+                  include: [revenue, production, harvesting, interest, short_term_fixed, long_term_fixed]}
+    operator: {kind: pnl, entity: farm, scheme: pnl, include: [operator]}
+    to_land: {kind: pnl, entity: farm, scheme: pnl,
+              include: [revenue, production, harvesting, interest, short_term_fixed, long_term_fixed, operator]}
+    all_costs: {kind: pnl, entity: farm, scheme: pnl,
+                include: [production, harvesting, interest, short_term_fixed, long_term_fixed, operator]}
+  measures: {}
+figures:
+  gross_returns_usd: {cut: revenue}
+  total_production_cost_usd: {cut: production, sign: -1}
+  total_harvesting_and_marketing_cost_usd: {cut: harvesting, sign: -1}
+  total_variable_cost_usd: {cut: before_interest, sign: -1}
+  interest_on_variable_cost_usd: {cut: interest, sign: -1}
+  total_variable_costs_usd: {cut: variable, sign: -1}
+  return_above_variable_costs_usd: {cut: above_variable}
+  total_short_term_fixed_cost_usd: {cut: short_term_fixed, sign: -1}
+  total_long_term_fixed_cost_usd: {cut: long_term_fixed, sign: -1}
+  total_fixed_costs_usd: {cut: fixed, sign: -1}
+  return_to_operator_labor_land_capital_and_management_usd: {cut: to_operator}
+  operator_labour_allowance_usd: {cut: operator, sign: -1}
+  return_to_land_capital_and_management_usd: {cut: to_land}
+  total_variable_cost_in_sensitivity_table_usd: {cut: variable, sign: -1}
+  total_variable_and_fixed_costs_in_sensitivity_table_usd: {cut: all_costs, sign: -1}

@@ -1,0 +1,78 @@
+# Published case "atlas_maketoorder_metalworkshop": a metal-joinery (welding) workshop, Extrême-Nord
+# Cameroon, its three-year business plan, read at year 3 (GIZ / PARSE AGR study, Tableaux 20-22;
+# cases/reference/published/atlas_maketoorder_metalworkshop.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * three years, periods 0 to 2; sales each year are the Tableau 21 total of the six product lines
+#     (revenu_annuel_tableau_21), collected in cash. The source's body text prints a different
+#     annual production (production_annuelle_brute, 5,100,000) that its own business plan never
+#     uses; it is not posted;
+#   * the recurring charges (electricity and rent, movements.charges_recurrentes), paid each year;
+#   * the installation (charges_fixes_installation: training, welding set, tools, power hook-up) is
+#     paid at the start of year 1, capitalised, and depreciated straight-line over the source's own
+#     window (capex_amortissement_years), charged from year 1: by year 3 it is fully recovered;
+#   * no tax on profit. Years 1 and 2 are taken at the year-3 sales and charges (the source's years
+#     1 and 2 are not transcribed); only year 3 is compared.
+# revenu_net_annee_3 (mapped to gross_margin) is year 3's profit: sales less the recurring charges,
+# with no depreciation left to charge.
+published: atlas_maketoorder_metalworkshop
+entity: workshop
+plant: revenu_annuel_tableau_21
+case:
+  case: published-atlas-maketoorder-metalworkshop
+  periods: 3
+  phases: [fund, operate, close]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 3
+      inputs: published
+      values:
+        orders_year: 1                           # Tableau 21's total: the year's orders as one lot
+        installation: {each_period: charges_fixes_installation * (t == 0)}
+  opening:
+    workshop:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    orders:
+      type: offtake
+      parties: {seller: workshop}
+      terms: {volume: {generator: src, output: orders_year}, price: {generator: src, output: revenu_annuel_tableau_21},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 2}
+    recurring:
+      type: operating_cost
+      parties: {payer: workshop}
+      terms: {annual: {generator: src, output: movements__charges_recurrentes}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 2, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    install:
+      type: capex
+      parties: {owner: workshop}
+      terms: {schedule: {generator: src, output: installation}, vat_rate: 0, vat_refund_lag: 0, end: 2}
+  rulebooks:
+    installation_register:
+      kind: asset_register
+      entity: workshop
+      phase: close
+      from: cwip
+      to: installation_nbv
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 3
+      life_periods: {generator: src, output: capex_amortissement_years}
+      first_charge: in_service
+  schemes:
+    pnl:
+      orders.revenue: revenue
+      recurring.expense: opex
+      depreciation: depreciation
+      disposal_loss: depreciation
+  cuts:
+    profit: {kind: pnl, entity: workshop, scheme: pnl, include: [revenue, opex, depreciation]}
+  measures: {}
+figures:
+  revenu_net_annee_3: {cut: profit, at: 2}

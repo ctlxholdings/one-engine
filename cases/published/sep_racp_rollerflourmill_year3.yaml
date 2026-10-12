@@ -1,0 +1,115 @@
+# Published case "sep_racp_rollerflourmill_year3": an integrated Rajasthan wheat mill, a 150 MT/day
+# roller flour mill beside a 30 MT/day chakki atta mill, its third year at 80% utilisation, six
+# products from one wheat stream (RACP Agribusiness Promotion Facility, DPR: Wheat Flour Mill, by
+# Grant Thornton India, section 7.3, pp.82-88;
+# cases/reference/published/sep_racp_rollerflourmill_year3.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). One
+# book, the plant's, one year:
+#   * the wheat each mill grinds is its daily capacity times working_days_per_year times
+#     capacity_utilisation_pct; each product made is that mill's wheat less its other products
+#     (the source's mass balance, which closes to the tonne on both mills: its 2% milling loss is
+#     declared offset by conditioning water); all physical, read as drivers;
+#   * each product is sold for cash, its quantity sold (*_sold_mt) at its price a MT; what is
+#     made and not sold stays as finished stock, which the source values nowhere and which is
+#     not modelled;
+#   * the wheat bought (raw_wheat_purchased_mt at purchase_price_inr_per_mt) and the year's
+#     packaging (costs.packaging_material, printed as a total) are paid in cash and expensed as
+#     purchases; no other cost is printed here and none is modelled; no tax.
+published: sep_racp_rollerflourmill_year3
+entity: plant
+plant: price_maida_inr_per_mt
+case:
+  case: published-racp-flourmill-plateau
+  periods: 1
+  phases: [operate]
+  currency: INR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        roller_wheat: roller_mill_capacity_mt_per_day * working_days_per_year * capacity_utilisation_pct / 100
+        chakki_wheat: chakki_mill_capacity_mt_per_day * working_days_per_year * capacity_utilisation_pct / 100
+        maida_made: roller_wheat - suji_production_mt - roller_flour_production_mt - roller_bran_production_mt
+        suji_made: roller_wheat - maida_production_mt - roller_flour_production_mt - roller_bran_production_mt
+        roller_flour_made: roller_wheat - maida_production_mt - suji_production_mt - roller_bran_production_mt
+        roller_bran_made: roller_wheat - maida_production_mt - suji_production_mt - roller_flour_production_mt
+        chakki_atta_made: chakki_wheat - chakki_bran_production_mt
+        chakki_bran_made: chakki_wheat - chakki_atta_production_mt
+        wheat_bought: raw_wheat_purchased_mt * purchase_price_inr_per_mt
+        maida_sales: maida_sold_mt * price_maida_inr_per_mt
+        suji_sales: suji_sold_mt * price_suji_inr_per_mt
+        roller_flour_sales: roller_flour_sold_mt * price_roller_flour_inr_per_mt
+        roller_bran_sales: roller_bran_sold_mt * price_roller_bran_inr_per_mt
+        chakki_atta_sales: chakki_atta_sold_mt * price_chakki_atta_inr_per_mt
+        chakki_bran_sales: chakki_bran_sold_mt * price_chakki_bran_inr_per_mt
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year3:
+      kind: transfer
+      entity: plant
+      phase: operate
+      declare:
+        wheat_purchases: expense
+        packaging_material: expense
+        maida_sales: income
+        suji_sales: income
+        roller_flour_sales: income
+        roller_bran_sales: income
+        chakki_atta_sales: income
+        chakki_bran_sales: income
+      moves:
+        maida: {debit: cash, credit: maida_sales, amount: {generator: src, output: maida_sales}}
+        suji: {debit: cash, credit: suji_sales, amount: {generator: src, output: suji_sales}}
+        roller_flour: {debit: cash, credit: roller_flour_sales, amount: {generator: src, output: roller_flour_sales}}
+        roller_bran: {debit: cash, credit: roller_bran_sales, amount: {generator: src, output: roller_bran_sales}}
+        chakki_atta: {debit: cash, credit: chakki_atta_sales, amount: {generator: src, output: chakki_atta_sales}}
+        chakki_bran: {debit: cash, credit: chakki_bran_sales, amount: {generator: src, output: chakki_bran_sales}}
+        wheat: {debit: wheat_purchases, credit: cash, amount: {generator: src, output: wheat_bought}}
+        packaging: {debit: packaging_material, credit: cash, amount: {generator: src, output: packaging_material}}
+  schemes:
+    pnl:
+      wheat_purchases: wheat
+      packaging_material: packaging
+      maida_sales: maida
+      suji_sales: suji
+      roller_flour_sales: roller_flour
+      roller_bran_sales: roller_bran
+      chakki_atta_sales: chakki_atta
+      chakki_bran_sales: chakki_bran
+  cuts:
+    maida: {kind: pnl, entity: plant, scheme: pnl, include: [maida]}
+    suji: {kind: pnl, entity: plant, scheme: pnl, include: [suji]}
+    roller_flour: {kind: pnl, entity: plant, scheme: pnl, include: [roller_flour]}
+    roller_bran: {kind: pnl, entity: plant, scheme: pnl, include: [roller_bran]}
+    chakki_atta: {kind: pnl, entity: plant, scheme: pnl, include: [chakki_atta]}
+    chakki_bran: {kind: pnl, entity: plant, scheme: pnl, include: [chakki_bran]}
+    sales: {kind: pnl, entity: plant, scheme: pnl, include: [maida, suji, roller_flour, roller_bran, chakki_atta, chakki_bran]}
+    wheat: {kind: pnl, entity: plant, scheme: pnl, include: [wheat]}
+    packaging: {kind: pnl, entity: plant, scheme: pnl, include: [packaging]}
+  measures: {}
+figures:
+  wheat_input_roller_mt: {driver: src.roller_wheat}
+  wheat_input_chakki_mt: {driver: src.chakki_wheat}
+  maida_production_mt: {driver: src.maida_made}
+  suji_production_mt: {driver: src.suji_made}
+  roller_flour_production_mt: {driver: src.roller_flour_made}
+  roller_bran_production_mt: {driver: src.roller_bran_made}
+  chakki_atta_production_mt: {driver: src.chakki_atta_made}
+  chakki_bran_production_mt: {driver: src.chakki_bran_made}
+  maida_sales_inr: {cut: maida}
+  suji_sales_inr: {cut: suji}
+  roller_flour_sales_inr: {cut: roller_flour}
+  roller_bran_sales_inr: {cut: roller_bran}
+  chakki_atta_sales_inr: {cut: chakki_atta}
+  chakki_bran_sales_inr: {cut: chakki_bran}
+  total_sales_inr: {cut: sales}
+  total_purchases_inr: {cut: wheat, sign: -1}
+  packaging_material_inr: {cut: packaging, sign: -1}

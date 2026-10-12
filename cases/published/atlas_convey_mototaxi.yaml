@@ -1,0 +1,90 @@
+# Published case "atlas_convey_mototaxi": an owner-driven moto-taxi, one representative first
+# year (GIZ / PARSE, Métiers Rentables; cases/reference/published/atlas_convey_mototaxi.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * production_annuelle, the year's fares (printed only as the annual aggregate), collected in
+#     cash;
+#   * the moto (movements.outils_production_moto) is bought for cash at the start of the year and
+#     capitalised, then depreciated straight-line over the source's own stated life
+#     (amortissement_annees), charged from the year it enters service;
+#   * fuel and lubricant, and the other charges (taxes, insurance, vignette), paid in the year;
+#   * no tax on profit: the source's benefice is before any.
+# The source's benefice_proprietaire nets the whole price of the moto against one year's fares
+# ("first-year-cumulative": revenue less capex less charges). That is the year's net cash flow,
+# not its profit, and it is read here as the cash the year leaves: fares in, less fuel, other
+# charges and the moto paid out. The profit (fares less charges less one year's depreciation) is
+# not printed by the source; the notes' 800,000 is the alternative reading the source leaves
+# unreconciled with its own 2-year life, and is not a figure of the case.
+published: atlas_convey_mototaxi
+entity: owner
+plant: production_annuelle
+case:
+  case: published-atlas-convey-mototaxi
+  periods: 1
+  phases: [fund, operate, close]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        fares_year: 1                              # the source prints no ride count: one annual lot
+        moto_spend: {each_period: movements__outils_production_moto * (t == 0)}
+  opening:
+    owner:
+      cash: {nature: asset, value: 0}
+      cwip: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    fares:
+      type: offtake
+      parties: {seller: owner}
+      terms: {volume: {generator: src, output: fares_year}, price: {generator: src, output: production_annuelle},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    fuel:
+      type: operating_cost
+      parties: {payer: owner}
+      terms: {annual: {generator: src, output: movements__carburant_lubrifiant}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    other:
+      type: operating_cost
+      parties: {payer: owner}
+      terms: {annual: {generator: src, output: movements__autres_charges}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    moto:
+      type: capex
+      parties: {owner: owner}
+      terms: {schedule: {generator: src, output: moto_spend}, vat_rate: 0, vat_refund_lag: 0, end: 0}
+  rulebooks:
+    moto_register:
+      kind: asset_register
+      entity: owner
+      phase: close
+      from: cwip
+      to: moto_nbv
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 1
+      life_periods: {generator: src, output: amortissement_annees}
+      first_charge: in_service
+  schemes:
+    pnl:
+      fares.revenue: revenue
+      fuel.expense: opex
+      other.expense: opex
+      depreciation: depreciation
+      disposal_loss: depreciation
+    cash_flow:
+      fares.receivable: operating
+      fuel.payable: operating
+      other.payable: operating
+      cwip: investing
+  cuts:
+    profit: {kind: pnl, entity: owner, scheme: pnl, include: [revenue, opex, depreciation]}
+    net_cash: {entity: owner, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+figures:
+  benefice_proprietaire: {cut: net_cash}

@@ -1,0 +1,76 @@
+# Published case "energy_irena_solar_pv_2023": one kW of utility-scale solar PV for one
+# representative year of its economic life, at IRENA's 2023 global weighted averages, costed the
+# way IRENA's own LCOE formula and Table A1 assumptions cost it (IRENA, Renewable Power
+# Generation Costs in 2023, ch.3 and Annex I; cases/reference/published/energy_irena_solar_pv_2023.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the capital charge: the installed cost (total_installed_cost_usd_per_kw) recovered as a
+#     level annuity over economic_life_years at the real WACC, i.e. installed cost x the capital
+#     recovery factor r(1+r)^n / ((1+r)^n - 1), expensed in the year (the annualised form of
+#     IRENA's discounted LCOE, p.199, with no fuel and a flat capacity factor);
+#   * the WACC is wacc_real.oecd_and_china (5%), the Table A1 band the oracle's own notes show
+#     governs a global 2023 average led by China (63% of global installations); the
+#     rest-of-world band (7.5%) is not used;
+#   * O&M is om_cost_usd_per_kw_yr, expensed in the year; no fuel, no tax, no revenue;
+#   * the year's generation is capacity_factor x the hours of a 365-day year, typed as the unit
+#     conversion 24 x (52 x 7 + 1) hours.
+# The LCOE is the year's total cost per kWh generated: the P&L cost cut divided (`per`) by the
+# year's kWh, a physical count no ledger holds.
+# FINDING (kept, not fitted): the books give 0.0452 $/kWh against IRENA's printed 0.044, outside
+# the 0.001 display tolerance. The oracle's notes reproduce the same 0.0452 by hand and explain
+# the gap: since 2022 IRENA's own LCOE uses a country-by-country WACC benchmark, not the flat
+# Table A1 band, so the WACC behind 0.044 is not among the inputs.
+# Set aside: the 2010 LCOE and the 2010-2023 decline are a prior-year comparison; no input
+# carries 2010 costs, capacity factor or O&M.
+published: energy_irena_solar_pv_2023
+entity: plant
+plant: total_installed_cost_usd_per_kw
+case:
+  case: published-irena-solar-pv
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        growth: (1 + oecd_and_china) ** economic_life_years
+        crf: oecd_and_china * growth / (growth - 1)
+        capital_charge: total_installed_cost_usd_per_kw * crf
+        hours_year: 24 * (52 * 7 + 1)
+        kwh_year: capacity_factor * hours_year
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    capital:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: src, output: capital_charge}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+    om:
+      type: operating_cost
+      parties: {payer: plant}
+      terms: {annual: {generator: src, output: om_cost_usd_per_kw_yr}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      capital.expense: capital_charge
+      om.expense: opex
+  cuts:
+    cost: {kind: pnl, entity: plant, scheme: pnl, include: [capital_charge, opex]}
+  measures: {}
+figures:
+  lcoe_usd_per_kwh_2023: {cut: cost, sign: -1, per: src.kwh_year}
+not_compared:
+  lcoe_usd_per_kwh_2010: >-
+    the 2010 comparative (Fig 3.10); no input carries 2010 installed cost, capacity factor or O&M
+  lcoe_decline_pct_2010_to_2023: >-
+    the 2010-to-2023 decline, a comparison with the 2010 LCOE that no input lets the case derive

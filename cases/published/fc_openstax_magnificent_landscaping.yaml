@@ -1,0 +1,170 @@
+# Published case "fc_openstax_magnificent_landscaping": Magnificent Landscaping Service, the
+# month to April 30, 2018, from its unadjusted trial balance and five lettered adjustments
+# (OpenStax, Principles of Accounting vol. 1, section 4.5, the two "Your Turn" boxes on this
+# company; cases/reference/published/fc_openstax_magnificent_landscaping.yaml).
+#
+# Every amount is a printed figure by name (generator `src`):
+#   * the books open on the unadjusted trial balance's balance-sheet lines (debit__*, credit__*,
+#     common_stock, and dividends as a debit on equity). Those balances already hold the
+#     unadjusted results, so the opening needs one more equity amount to balance: `owner`, a
+#     clearing account (the engine's `balancing`);
+#   * the unadjusted trial balance's own P&L lines (lawn mowing revenue, gas and advertising
+#     expense) are posted in the period against `owner`, which they bring back to nil;
+#   * the five adjustments (a) to (e) are posted as printed: depreciation against accumulated
+#     depreciation, the reclassification out of equipment and the supplies used to supplies
+#     expense, unearned revenue earned, salaries accrued;
+#   * no retained earnings account appears in either trial balance, so the books open none: the
+#     beginning retained earnings (the source's own assumption of nil) is the P&L accounts'
+#     opening, and ending retained earnings is dividends + income - expenses;
+#   * no tax: the source shows none.
+# A debit balance on a credit-natured account (dividends) and the contra asset's credit balance
+# are read with sign -1 where the source prints them as positive amounts. The worksheet's
+# income-statement and balance-sheet columns are the adjusted balances, read the same way.
+published: fc_openstax_magnificent_landscaping
+entity: lawn
+plant: unadjusted_trial_balance_usd__credit__lawn_mowing_revenue
+case:
+  case: published-magnificent-landscaping
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        div: -dividends
+  opening:
+    lawn:
+      cash: {nature: asset, value: {generator: src, output: debit__cash}}
+      accounts_receivable: {nature: asset, value: {generator: src, output: debit__accounts_receivable}}
+      office_supplies: {nature: asset, value: {generator: src, output: debit__office_supplies}}
+      prepaid_insurance: {nature: asset, value: {generator: src, output: debit__prepaid_insurance}}
+      equipment: {nature: asset, value: {generator: src, output: debit__equipment}}
+      accounts_payable: {nature: liability, value: {generator: src, output: credit__accounts_payable}}
+      unearned_lawn_mowing_revenue: {nature: liability, value: {generator: src, output: credit__unearned_lawn_mowing_revenue}}
+      common_stock: {nature: equity, value: {generator: src, output: common_stock}}
+      dividends: {nature: equity, value: {generator: src, output: div}}
+      owner: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: lawn
+      phase: post
+      declare:
+        accumulated_depreciation_equipment: asset
+        salaries_payable: liability
+        lawn_mowing_revenue: income
+        gas_expense: expense
+        advertising_expense: expense
+        depreciation_expense_equipment: expense
+        supplies_expense: expense
+        salaries_expense: expense
+      moves:
+        # the unadjusted trial balance's P&L lines
+        revenue: {debit: owner, credit: lawn_mowing_revenue,
+                  amount: {generator: src, output: unadjusted_trial_balance_usd__credit__lawn_mowing_revenue}}
+        gas: {debit: gas_expense, credit: owner, amount: {generator: src, output: gas_expense}}
+        advertising: {debit: advertising_expense, credit: owner, amount: {generator: src, output: advertising_expense}}
+        # the adjustments
+        a_depreciation: {debit: depreciation_expense_equipment, credit: accumulated_depreciation_equipment,
+                         amount: {generator: src, output: depreciation_expense_equipment}}
+        b_reclassify: {debit: supplies_expense, credit: equipment, amount: {generator: src, output: b__debit__supplies_expense}}
+        c_supplies_used: {debit: supplies_expense, credit: office_supplies, amount: {generator: src, output: c__debit__supplies_expense}}
+        d_earned: {debit: unearned_lawn_mowing_revenue, credit: lawn_mowing_revenue,
+                   amount: {generator: src, output: d__credit__lawn_mowing_revenue}}
+        e_salaries: {debit: salaries_expense, credit: salaries_payable, amount: {generator: src, output: salaries_expense}}
+  schemes:
+    pnl:
+      lawn_mowing_revenue: revenue
+      gas_expense: expense
+      advertising_expense: expense
+      depreciation_expense_equipment: expense
+      supplies_expense: expense
+      salaries_expense: expense
+  cuts:
+    expenses: {kind: pnl, entity: lawn, scheme: pnl, include: [expense]}
+    net_income: {kind: pnl, entity: lawn, scheme: pnl, include: [revenue, expense]}
+  measures: {}
+figures:
+  net_income_top: {cut: net_income}
+  total_assets_top: {balance: &assets "cash + accounts_receivable + office_supplies + prepaid_insurance + equipment + accumulated_depreciation_equipment"}
+  total_liabilities_top: {balance: &liabilities "accounts_payable + unearned_lawn_mowing_revenue + salaries_payable"}
+  total_equity_top: {balance: &equity "common_stock + owner + dividends + lawn_mowing_revenue - gas_expense - advertising_expense - depreciation_expense_equipment - supplies_expense - salaries_expense"}
+  # adjusted trial balance
+  adjusted_trial_balance_usd.debit.cash: {balance: cash}
+  adjusted_trial_balance_usd.debit.accounts_receivable: {balance: accounts_receivable}
+  adjusted_trial_balance_usd.debit.office_supplies: {balance: office_supplies}
+  adjusted_trial_balance_usd.debit.prepaid_insurance: {balance: prepaid_insurance}
+  adjusted_trial_balance_usd.debit.equipment: {balance: equipment}
+  adjusted_trial_balance_usd.debit.dividends: {balance: dividends, sign: -1}
+  adjusted_trial_balance_usd.debit.gas_expense: {balance: gas_expense}
+  adjusted_trial_balance_usd.debit.advertising_expense: {balance: advertising_expense}
+  adjusted_trial_balance_usd.debit.depreciation_expense_equipment: {balance: depreciation_expense_equipment}
+  adjusted_trial_balance_usd.debit.supplies_expense: {balance: supplies_expense}
+  adjusted_trial_balance_usd.debit.salaries_expense: {balance: salaries_expense}
+  adjusted_trial_balance_usd.debit.total_debits: {balance: &debits "cash + accounts_receivable + office_supplies + prepaid_insurance + equipment - dividends + gas_expense + advertising_expense + depreciation_expense_equipment + supplies_expense + salaries_expense"}
+  adjusted_trial_balance_usd.credit.accumulated_depreciation_equipment: {balance: accumulated_depreciation_equipment, sign: -1}
+  adjusted_trial_balance_usd.credit.accounts_payable: {balance: accounts_payable}
+  adjusted_trial_balance_usd.credit.salaries_payable: {balance: salaries_payable}
+  adjusted_trial_balance_usd.credit.unearned_lawn_mowing_revenue: {balance: unearned_lawn_mowing_revenue}
+  adjusted_trial_balance_usd.credit.common_stock: {balance: common_stock}
+  adjusted_trial_balance_usd.credit.lawn_mowing_revenue: {balance: lawn_mowing_revenue}
+  adjusted_trial_balance_usd.credit.total_credits: {balance: "accounts_payable + salaries_payable + unearned_lawn_mowing_revenue + common_stock + lawn_mowing_revenue - accumulated_depreciation_equipment"}
+  # the worksheet's income-statement and balance-sheet columns, as printed (unbalanced)
+  worksheet_columns_as_printed_usd.income_statement_columns.debit.gas_expense: {balance: gas_expense}
+  worksheet_columns_as_printed_usd.income_statement_columns.debit.advertising_expense: {balance: advertising_expense}
+  worksheet_columns_as_printed_usd.income_statement_columns.debit.depreciation_expense_equipment: {balance: depreciation_expense_equipment}
+  worksheet_columns_as_printed_usd.income_statement_columns.debit.supplies_expense: {balance: supplies_expense}
+  worksheet_columns_as_printed_usd.income_statement_columns.debit.salaries_expense: {balance: salaries_expense}
+  worksheet_columns_as_printed_usd.income_statement_columns.debit.total_debits: {cut: expenses, sign: -1}
+  worksheet_columns_as_printed_usd.income_statement_columns.credit.lawn_mowing_revenue: {balance: lawn_mowing_revenue}
+  worksheet_columns_as_printed_usd.income_statement_columns.credit.total_credits: {balance: lawn_mowing_revenue}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.cash: {balance: cash}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.accounts_receivable: {balance: accounts_receivable}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.office_supplies: {balance: office_supplies}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.prepaid_insurance: {balance: prepaid_insurance}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.equipment: {balance: equipment}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.dividends: {balance: dividends, sign: -1}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.debit.total_debits: {balance: "cash + accounts_receivable + office_supplies + prepaid_insurance + equipment - dividends"}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.credit.accounts_payable: {balance: accounts_payable}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.credit.unearned_lawn_mowing_revenue: {balance: unearned_lawn_mowing_revenue}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.credit.common_stock: {balance: common_stock}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.credit.accumulated_depreciation_equipment: {balance: accumulated_depreciation_equipment, sign: -1}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.credit.salaries_payable: {balance: salaries_payable}
+  worksheet_columns_as_printed_usd.balance_sheet_columns.credit.total_credits: {balance: "accounts_payable + unearned_lawn_mowing_revenue + common_stock + salaries_payable - accumulated_depreciation_equipment"}
+  net_income_derived: {cut: net_income}
+  # income statement
+  income_statement_usd.lawn_mowing_revenue: {balance: lawn_mowing_revenue}
+  income_statement_usd.expenses.gas_expense: {balance: gas_expense}
+  income_statement_usd.expenses.advertising_expense: {balance: advertising_expense}
+  income_statement_usd.expenses.depreciation_expense_equipment: {balance: depreciation_expense_equipment}
+  income_statement_usd.expenses.supplies_expense: {balance: supplies_expense}
+  income_statement_usd.expenses.salaries_expense: {balance: salaries_expense}
+  income_statement_usd.expenses.total_expenses: {cut: expenses, sign: -1}
+  income_statement_usd.net_income: {cut: net_income}
+  # statement of retained earnings
+  statement_of_retained_earnings_usd.beginning_retained_earnings_assumed: {opening: &pnl "lawn_mowing_revenue - gas_expense - advertising_expense - depreciation_expense_equipment - supplies_expense - salaries_expense"}
+  statement_of_retained_earnings_usd.plus_net_income: {cut: net_income}
+  statement_of_retained_earnings_usd.less_dividends: {balance: dividends}
+  statement_of_retained_earnings_usd.ending_retained_earnings: {balance: &re "dividends + lawn_mowing_revenue - gas_expense - advertising_expense - depreciation_expense_equipment - supplies_expense - salaries_expense"}
+  # balance sheet
+  balance_sheet_usd.assets.cash: {balance: cash}
+  balance_sheet_usd.assets.accounts_receivable: {balance: accounts_receivable}
+  balance_sheet_usd.assets.office_supplies: {balance: office_supplies}
+  balance_sheet_usd.assets.prepaid_insurance: {balance: prepaid_insurance}
+  balance_sheet_usd.assets.equipment_gross: {balance: equipment}
+  balance_sheet_usd.assets.accumulated_depreciation_equipment: {balance: accumulated_depreciation_equipment}
+  balance_sheet_usd.assets.equipment_net: {balance: "equipment + accumulated_depreciation_equipment"}
+  balance_sheet_usd.assets.total_assets: {balance: *assets}
+  balance_sheet_usd.liabilities.accounts_payable: {balance: accounts_payable}
+  balance_sheet_usd.liabilities.unearned_lawn_mowing_revenue: {balance: unearned_lawn_mowing_revenue}
+  balance_sheet_usd.liabilities.salaries_payable: {balance: salaries_payable}
+  balance_sheet_usd.liabilities.total_liabilities: {balance: *liabilities}
+  balance_sheet_usd.stockholders_equity.common_stock: {balance: common_stock}
+  balance_sheet_usd.stockholders_equity.ending_retained_earnings: {balance: *re}
+  balance_sheet_usd.stockholders_equity.total_stockholders_equity: {balance: *equity}
+  balance_sheet_usd.total_liabilities_and_equity: {balance: "accounts_payable + unearned_lawn_mowing_revenue + salaries_payable + common_stock + owner + dividends + lawn_mowing_revenue - gas_expense - advertising_expense - depreciation_expense_equipment - supplies_expense - salaries_expense"}

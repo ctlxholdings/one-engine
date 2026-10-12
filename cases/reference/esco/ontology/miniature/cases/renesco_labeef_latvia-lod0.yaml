@@ -1,0 +1,945 @@
+# Miniature: RenESCO energy performance contract for Soviet-era apartment blocks in Latvia, refinanced by the LABEEF forfaiting fund, at ESCO LOD 0.
+# Batch 8, group N, deal T16: reviewer's reconciled file (3 Oct 2026) from blind drafts X and Y. Method: REVIEW_SPEC_7 / CASE_SPEC_7.
+# This is the owner's chosen replication deal for LOD 1: every published figure is kept in `numbers` with its line.
+#
+# Evidence: six local texts under der-vpp/spec-run/esco-moneyflow/input/ (none is under input-licensed/), cited <short name> L<line>,
+# line numbers as grep -n counts them; quotes <= 25 words.
+#   A61   iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt   (Appendix A.3 on RenESCO, L4207-4340; Table A-1 caption L4319; L3348-3351; forfeiting L3100-3116)
+#   EUT   eefig-underwriting-toolkit-2017.txt                            (Text Box 2.12 'The Latvian Building Energy Efficiency Fund', L1777-1802)
+#   EE22  eefig-report-on-the-evolution-of-financing-practices-for-energy-effici-2022.txt (sheet D.14 'Factoring funds for EPC', L8617-8645)
+#   JRC17 jrc-energy-service-companies-in-the-eu-2017.txt                (Latvia 8.16, L7563-7580, L7601, L7619-7626, L7739-7751; forfeiting fund L2868-2875)
+#   JRC19 jrc-energy-service-market-eu-2019.txt                          (Latvia 4.16, L5207-5331; Sunshine L8042-8046)
+#   JRC21 jrc-epc-in-the-eu-2020-2021.txt                                (SUNShINE and Accelerate SUNShINE tables, L7008-7043)
+# Table A-1 of A61 ('Real and perceived risks in Latvian housing sector (source: RenESCO)') is an image: the text file holds only its
+# caption (A61 L4319). Both writers read it from der-vpp/esco-model/sources/gesco-wave2/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.pdf,
+# PDF page 111 (printed page 99); the reviewer re-rendered that page and confirmed the cells. Cited "A61 Table A-1 (PDF p.111)":
+# these quotes CANNOT be line-checked against the text corpus. The five rows are reproduced in numbers.risk_table_a1.
+# Every fact carries its status: stated / inferred / default / generic / unstated.
+#
+# Web sources (added 4 Oct 2026; five open documents the corpus does not hold, none licensed). Cited "<URL> | <exact quote>",
+# quotes <= 25 words; CITY20 is in Spanish and quoted in Spanish. Short names (full URLs in source.documents):
+#   EUKI    Ecofys/adelphi for BMU (EUKI BEACON), 'LABEEF in Latvia' fact sheet, 5 Dec 2018 (PDF; page = printed page)
+#   CITY20  CITYnvest model 20 'SUNShINE Letonia' (Spanish; PDF)
+#   EBRD17  EBRD press release 'EBRD supports innovative energy efficiency in Latvia' (2017)
+#   CORDIS  CORDIS Results in Brief on SUNShINE, 'Innovative financial instrument ...' (last update 29 Sep 2020)
+#   GREENH  GREEN-Home good-practice factsheet 'LABEEF' (2022; PDF)
+# What they add: LABEEF buys 80% of the contracting rates, the agent bank, F3's EUR 1m equity, CITY20's 15 buildings at EUR 4m
+# CAPEX and RenESCO's 60/40 bank / Dutch guaranteed credit split. Conflicts with the corpus are flagged in source.notes.
+
+miniature: renesco_labeef_latvia
+lod: 0
+case: batch8.T16
+case_kind: programme   # RenESCO signed one EPC per block (15 blocks, A61 L4270-4271) and LABEEF buys the receivables of several EPCs (6 buildings in the first sale, JRC17 L7746-7747); no individual contract is published, one representative block is written
+in_scope: true
+in_scope_why: "RenESCO 'finances housing modernization through energy conservation' (A61 L4230-4231) and the flat owners 'are obliged to pay the energy cost savings to RenESCO' for 20 years (A61 L4238-4239): payment_basis savings, so an ESCO deal (ruling 14)"
+
+tests_unused:
+- item: collector_biller
+  kind: role
+  used: true
+  reason: "The House Maintenance Company 'bills the same amount as before the renovation works and pays the ESCO a percentage of those bills' (EUT L1786-1787), and after the sale the cash flows go 'via the House Maintenance Company, to LABEEF' (EUT L1793). A party other than the payee bills and collects for the payee: the role's definition. Not a utility, so collector_biller alone"
+- item: occupant
+  kind: role
+  used: true
+  reason: "The flat owners live in the flats: 'Ninety-seven percent of Latvia's building stock is owner occupied' and 'tenants became owners of their flats' (A61 L4224-4225); RenESCO 'guarantees a temperature level of 21.5 °C' to the residents (A61 L4256). Written on the owners' party, home role host first, because payer and user are the same people (T24 splits them only when they differ). JRC17 L7576-7578 also names 'tenants' as beneficiaries: the minority of rented flats is not written as a separate party"
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "LABEEF buys cash flows and is funded by an EBRD loan (EUT L1779, L1797-1798; JRC17 L7745-7746); no source says it issues notes. forfaiter, as in forfaiting_bulgaria"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No hedge or rate instrument is mentioned in any of the six texts; all amounts are in EUR"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No guarantee of the owners' payments exists in the deal. JRC19 L5328-5329 lists 'the lack of state guarantees for ESCO loans' as a barrier; Table A-1 (PDF p.111) says banks talk up payment risk to 'collect extra guarantees from governments' and calls it a red herring"
+- item: backup_servicer
+  kind: role
+  used: false
+  reason: "No standby collector is named; the House Maintenance Company is the only collector"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Title to the installed assets is not stated; the fund buys cash flows, not assets (EUT L1790-1793). JRC19 L5323-5324 names 'title to the installed equipment' as a legal ambiguity in Latvia. Client by default"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The ESCO is paid 'a percentage of those bills, based on the realized savings' (EUT L1787-1788): savings. The 21.5 °C temperature is a service level inside RenESCO's performance promise; no source says the payment varies with it"
+- item: collection_placement=on_tax
+  kind: setting_value
+  used: false
+  reason: "Collection runs on the House Maintenance Company's heating-and-maintenance bill, not a property-tax bill"
+- item: debt_seniority=subordinated
+  kind: setting_value
+  used: false
+  reason: "Neither loan has a stated rank; the bank loan is 'based solely on the EPC contract. No other collateral is used' (A61 L4244-4245). Senior by the fallback"
+- item: borrower=none
+  kind: setting_value
+  used: false
+  reason: "Two loans: 'the ESCO takes on a loan from a financial institution' (EUT L1783; A61 L4243-4244) and LABEEF's 'loan signed with EBRD in December 2016' (JRC17 L7745-7746)"
+
+single_source_exercised:
+- term: collector_biller
+  kind: role
+  evidence: "der-vpp/spec-run/esco-moneyflow/input/eefig-underwriting-toolkit-2017.txt:1786 | the House Maintenance Company, (which maintains the housing block) bills the same amount as"
+  status: stated
+  confirmed: "yes: EUT L1786-1789 and L1793 (bills the owners, pays the ESCO its percentage, after the sale passes the cash flows to LABEEF). Third in-scope source for the role after nyserda_green_bonds_2024a and ahmedabad_capacitor_leasing; the first where the collector is a building manager"
+- term: occupant
+  kind: role
+  evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4256 | RenESCO guarantees a temperature level of 21.5 °C."
+  status: stated
+  confirmed: "partly: the comfort guarantee to the residents is stated (L4256); that the residents are the owners rests on the national share 'Ninety-seven percent ... owner occupied' (L4224), not on a statement about these blocks. Held on the same party as host"
+
+source:
+  id: A61
+  documents:
+    A61: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt"
+    EUT: "der-vpp/spec-run/esco-moneyflow/input/eefig-underwriting-toolkit-2017.txt"
+    EE22: "der-vpp/spec-run/esco-moneyflow/input/eefig-report-on-the-evolution-of-financing-practices-for-energy-effici-2022.txt"
+    JRC17: "der-vpp/spec-run/esco-moneyflow/input/jrc-energy-service-companies-in-the-eu-2017.txt"
+    JRC19: "der-vpp/spec-run/esco-moneyflow/input/jrc-energy-service-market-eu-2019.txt"
+    JRC21: "der-vpp/spec-run/esco-moneyflow/input/jrc-epc-in-the-eu-2020-2021.txt"
+    A61_table_A1: "der-vpp/esco-model/sources/gesco-wave2/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.pdf, PDF p.111 (image; not line-checkable)"
+    EUKI: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf"
+    CITY20: "http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf"
+    EBRD17: "https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html"
+    CORDIS: "https://cordis.europa.eu/article/id/422275-innovative-financial-instrument"
+    GREENH: "https://www.green-home.org/wp-content/uploads/2022/06/5_GREEN-Home_GP-LABEEF-LV_en.pdf"
+  title: "IEA EBC Annex 61 business guide, Appendix A.3 'EPC business models in Latvia's Residential Building Sector' (RenESCO) with Table A-1; EEFIG Underwriting Toolkit Text Box 2.12 (LABEEF)"
+  publisher: "IEA EBC Programme Annex 61 (2017); EEFIG (2017, 2022); European Commission JRC (2017, 2019, 2021)"
+  passage: "A61 L4207-4340 and L3348-3351; EUT L1777-1802; EE22 L8617-8645; JRC17 L7563-7580, L7619-7626, L7739-7751, L2868-2875; JRC19 L5207-5331, L8042-8046; JRC21 L7008-7043"
+  oracle: "none published for this deal; every ratio and split is re-added in numbers.derived"
+  context:
+  - "Ekodoma and Riga Technical University evaluated the RenESCO model (A61 L4287-4289): an ex post study, no promise in the deal"
+  - "ALTUM, the state development finance institution, 'can support the project with grants or guarantees' (JRC17 L7748-7751) and runs a competence centre (JRC19 L5223-5224). No source ties it to RenESCO's grant or to LABEEF: context, not a party"
+  - "SUNShINE and Accelerate SUNShINE (H2020, coordinator Riga Technical University) set up LABEEF and standardised the EPC (JRC21 L7025-7038; JRC19 L5217-5223). Research projects with no payment in the deal: context"
+  - "The Energy Efficiency Law integrates EPC principles and lets ESCOs take part in multifamily renovation 'using the Latvian Baltic Energy Efficiency Fund' (JRC19 L5220-5223). A rule source, not a party"
+  - "ALTUM (web, 4 Oct): EBRD17 says the EU grants for energy efficiency 'are managed by Altum , the state agency for EU grants' and that Altum 'will also provide approvals for those LABEEF investments where EU grants have been previously utilised' (https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | which will also provide approvals for those LABEEF investments where EU grants have been previously utilised.). A statutory gate on grant-funded buildings, not a promise in this deal: context. EUKI p.9 adds that the EBRD 'invited ALTUM to participate and channel the EBRD funds to LABEEF'; whether ALTUM did is not stated, so c19 stays EBRD to LABEEF"
+  - "Latvian government and LGA (web, 4 Oct): EUKI p.9, the EBRD gave a term sheet to the Latvian Guarantee Agency in 2014 and 'the Latvian government set aside EUR 10 million according to the EBRDs term sheet' in 2015; ALTUM 'approved a EUR 160 million Programme' in 2017 (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | the Latvian government set aside EUR 10 million according to the EBRDs term sheet). No source says what the EUR 10m backs or that it reaches LABEEF's deals: context"
+  - "ESEB, the Building and Energy Conservation Bureau, helps convince residents and takes their complaints, forwarding them to LABEEF (EUKI p.12); a facilitating NGO with no stated promise in the deal: context"
+  notes:
+  - "Which ESCO sells to LABEEF: EUT and JRC17 say 'the ESCO' without a name. That it is RenESCO is inferred from A61 L3350 ('The refinancing of RenESCO is provided by the collected and forfeited savings'), EE22 L8638-8640 and JRC17 L2870-2874 (the Latvian ESCO lacking capital)"
+  - "Whether the fund exists: A61 L4314-4316 says a forfeiting fund 'has not yet been put in place'; EUT L1797-1798, JRC17 L7745-7747 and JRC21 L7011-7013 describe LABEEF established, funded by EBRD and buying a first 6 buildings in April 2017. The A61 case text predates the fund; the assignment is written as stated"
+  - "EBRD date and form: EUT L1797-1798 a 'EUR 4 million funding agreement with EBRD' signed in February 2017; JRC17 L7745-7746 'a loan signed with EBRD in December 2016'. Two dates, not reconciled; read as one loan to LABEEF with the EUT amount"
+  - "Funding: A61 L4241-4245 gives 60% from savings financed by RenESCO and 40% from the ERDF-funded national renovation programme, RenESCO's share being 60% bank debt and 40% own equity; A61 L4270 also says 'RenESCO financed 100% of the cost' (read as RenESCO advancing the whole cost); JRC17 L7566-7567 says 'EU Structural Funds and Green Investments Scheme benefits were used' (a second public source, amount not given); A61 L3350-3351 adds 'soft loan programs of the EU'. Kept as printed, not reconciled"
+  - "Fund name: EUT L1777-1779 'Latvian Building Energy Efficiency Fund'; JRC17 L7745, JRC21 L7012 and JRC19 L5223 use 'Latvian Baltic Energy Efficiency Facility' / 'Latvian Building Energy Efficiency Facility' / 'Latvian Baltic Energy Efficiency Fund'. Same acronym; legal form not stated"
+  - "Latvian market context is not a deal figure: kept in numbers.latvian_market_context only"
+  - "Web sources, 4 Oct (conflicts flagged, none reconciled by guessing):"
+  - "CONFLICT 1, the owners' payment. EUKI p.7: owners agree to 'fixed increased energy payments over a timeframe of approximately 18 years, which are about 15% higher than the original energy bill'; EBRD17: 'residents will not have to pay extra'; CITY20: 'el propietario de la vivienda sigue pagando lo mismo'; EUT L1786-1787 and JRC17 L7570-7571 agree with EBRD17 and CITY20. Chosen as a flagged default: the bill stays the same (numbers.owner_payment_pct_of_pre_renovation_bill = 100), because four sources say so and CITY20, EUT and JRC17 describe RenESCO's own programme, while EUKI describes LABEEF's standardised EPC of 2018. Flip to 115 and an 18-year payment term to run EUKI's version"
+  - "CONFLICT 2, RenESCO's second 40%. A61 L4243-4245: 60% Latvian bank debt and 40% RenESCO 'own equity capital'; CITY20 p.2: 60% local commercial banks and 40% 'un crédito garantizado por terceros' from 'el Instituto Holandés de la Vivienda', guaranteed by 'la Corporación Holandesa de la Vivienda'. The 60% bank share agrees. Both kept: the Dutch credit is written as parties dutch_housing_institute and dutch_housing_guarantor with c26-c28 (stated, CITY20), and the engine books A61's equity as a flagged default (the Dutch credit is not booked). One reading reconciles them (RenESCO's equity funded by the Dutch credit), but no source says so"
+  - "CONFLICT 3, the first EPC year: 2008 (JRC17 L7564-7565) vs 'Fecha de creación 2009 (RenEsco)' (CITY20 p.6) and EPC in Latvia 'since around 2009' (EUKI p.6). Not reconciled; numbers.renesco_first_epc_year keeps both"
+  - "CONFLICT 4, who signs the EPC: EUKI p.7 says 'LABEEF enters into a standardised EPC agreement with the building's parties'; EUT L1782, A61 L4236-4239 and CITY20 p.2 ('La ESE firma un contrato CRE de 20 años con la Asociación de Propietarios de Viviendas') say the ESCO signs. Kept: the ESCO signs (contract epc); EUKI's sentence is read as LABEEF's standard form and its later purchase (c15)"
+  - "CONFLICT 5, public or private fund: CITY20 p.4 'Tipo de fondo Fondo público' vs GREENH 'LABEEF did not receive any funding apart from the banks and private investors financing the investment fund' and EUKI (EBRD loan, F3 shareholder, '100% private funding by 2025' as a goal). Not reconciled; no setting depends on it"
+  - "Resolved by CORDIS: the ESCO that sold to LABEEF is RenESCO: 'LABEEF has for instance forfeited a portfolio of six buildings from project partner RenEsco' (https://cordis.europa.eu/article/id/422275-innovative-financial-instrument | LABEEF has for instance forfeited a portfolio of six buildings from project partner RenEsco.). The earlier inference (A61 L3350) now rests on a stated sentence; GREENH also prints six buildings funded"
+  - "LABEEF founded 2016 (EUKI p.1 'The company was founded in 2016') vs GREENH 'Started in 2014, ongoing' (the initiative). Different events, no conflict for the deal"
+
+jurisdiction:
+  country: Latvia
+  iso: LV
+  eu_member: true
+  client_eu_general_government_at_close: false
+  as_of: "financial close of the representative EPC not stated; RenESCO's EPCs from 2008 (JRC17 L7564-7565); LABEEF loan December 2016 / February 2017, first sale April 2017 (JRC17 L7745-7747; EUT L1797-1798)"
+  status: inferred
+  why: "Latvia is an EU member state (JRC17 chapter 8.16 among the EU markets). The clients are private flat owners ('owner occupied', A61 L4224-4225), outside general government, so C1 does not apply"
+
+core_v7:
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:
+  home_owners:
+    role: [host, occupant]
+    groups: [demand]
+    status: stated
+    name: Flat owners of a Soviet-era apartment block, through their Home Owner Association (representative client)
+    text: "'an ESCO signs a 20 year contract with the Home Owner Association' (EUT L1782); 'The flat owners are obliged to pay the energy cost savings to RenESCO' (A61 L4238-4239). Private owners, so host; they live in the flats and receive the comfort guarantee (A61 L4256), so occupant second. Whether the association or each owner is the legal contract party is not stated: one party"
+  renesco:
+    entity: renesco
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: RenESCO (SIA Renesco)
+    text: "'RenESCO is a residential private ESCO and a social enterprise' (A61 L4230); 'The energy service company SIA Renesco' (JRC19 L5212; JRC17 L7601). Responsible for 'planning, implementation, funding, operation, maintenance, and M&V' (A61 L4240)"
+  house_maintenance_company:
+    role: collector_biller
+    groups: [collection]
+    status: stated
+    name: House Maintenance Company of the block
+    text: "bills the owners 'the same amount as before the renovation works', pays the ESCO 'a percentage of those bills' and 'pays the reduced energy bill to the heat providers' (EUT L1786-1789); after the sale the cash flows go 'via the House Maintenance Company, to LABEEF' (EUT L1793). Not a utility and not the payee"
+  heat_providers:
+    role: utility_supplier
+    groups: [energy, collection]
+    status: stated
+    name: Heat providers (district heating suppliers of the block)
+    text: "paid 'the reduced energy bill' by the House Maintenance Company (EUT L1789). They collect for nobody in this deal, so utility_supplier only"
+  latvian_bank:
+    role: lender
+    groups: [capital]
+    status: stated
+    name: Latvian bank lending to RenESCO
+    text: "'Sixty percent of RenESCO's share of the investment currently consists of debt-financing from a Latvian bank' (A61 L4243-4244); 'the ESCO takes on a loan from a financial institution' (EUT L1783)"
+  erdf_programme:
+    role: eu_funds
+    groups: [public, capital]
+    status: stated
+    name: ERDF-funded national renovation programme
+    text: "'40% comes from the ERDF-funded national renovation program' (A61 L4242). ERDF money under a national programme is eu_funds (convention F03). JRC17 L7620-7622 names the 2009-2015 ERDF programme 'Improvement of heat insulation of multi-dwellings buildings'; that it is the one used here is not stated"
+  labeef:
+    entity: labeef
+    role: forfaiter
+    groups: [capital]
+    status: stated
+    name: LABEEF
+    text: "'LABEEF has been established to purchase the cash flows from Energy Performance Contracts' (EUT L1779-1780); 'designed to be a EUR 30 million fund' (EUT L1797). No notes are issued, so forfaiter; no manager is named, so no fund_manager party"
+  ebrd:
+    entity: ebrd
+    role: ifi_dfi
+    groups: [public, capital]
+    status: stated
+    name: European Bank for Reconstruction and Development
+    text: "'EUR 4 million funding agreement with EBRD' (EUT L1798); 'a loan signed with EBRD in December 2016' (JRC17 L7745-7746). The money goes to LABEEF. A multilateral bank: ifi_dfi (ENCODING.md)"
+  subcontractors:
+    role: [epc_contractor, equipment_supplier]
+    groups: [delivery, capital]
+    status: stated
+    name: Construction companies and equipment providers
+    text: "'the ESCO renovates the building ... while sub-contracting to construction companies and equipment providers' (EUT L1784-1785). Bundled; two roles because the source names both functions"
+  agent_bank:
+    role: account_bank_trustee
+    groups: [collection]
+    status: stated
+    name: Agent bank between the management companies and LABEEF (unnamed)
+    text: "'The apartment building management companies collect the EPC receivables from the building’s residents and transfers them to an agent bank' and 'The agent bank is interposed to increase securities for investment institutions such as the EBRD' (EUKI p.8). A bank holding the collections for the creditors: account_bank_trustee with an agency promise (ENCODING P09, two-stage collection). CITY20 p.3 'Un fiduciario se encarga de garantizar la transparencia de las transacciones' is read as the same party (inferred). Case-local: not named"
+  f3:
+    entity: funding_for_future
+    role: equity_investor
+    groups: [capital]
+    status: stated
+    name: Funding For Future BV (F3)
+    text: "'the Dutch company Funding For Future (F3) will invest €1 million to become a shareholder in LABEEF' (EBRD17); 'The company Funding for future (F3) acts as a shareholder for LABEEF' (EUKI p.8); 'FUNDING FOR FUTURE BV' among the SUNShINE partners (CITY20 p.4). Owns the vehicle that buys the receivables: equity_investor (ENCODING T22)"
+  dutch_housing_institute:
+    role: lender
+    groups: [capital]
+    status: stated
+    name: Dutch housing institute lending to RenESCO ('Instituto Holandés de la Vivienda')
+    text: "RenESCO was financed by local banks (60%) and 'de un crédito garantizado por terceros (40 %) del Instituto Holandés de la Vivienda' (CITY20 p.2). A second lender to RenESCO beside latvian_bank. Named only by a Spanish rendering; its Dutch legal name is not printed, so case-local. Conflicts with A61's 40% own equity (source.notes CONFLICT 2)"
+  dutch_housing_guarantor:
+    role: surety_guarantor
+    groups: [risk]
+    status: stated
+    name: Dutch housing corporation guaranteeing the credit ('Corporación Holandesa de la Vivienda')
+    text: "the credit is '(garantizado por la Corporación Holandesa de la Vivienda), en función de los flujos de caja del proyecto' (CITY20 p.2). A third party guaranteeing the Partner's debt: surety_guarantor. Named only by a Spanish rendering: case-local"
+
+contract:
+  epc:
+    core: contract
+    parties: [home_owners, renesco]
+    status: stated
+    note: "'an ESCO signs a 20 year contract with the Home Owner Association' (EUT L1782); 'the EPC period (20 years)' (A61 L4239). Binding and settled by default (ruling 17). JRC21 L7014 gives 15-20 years for SUNShINE contracts"
+  house_maintenance:
+    core: contract
+    parties: [home_owners, house_maintenance_company]
+    status: inferred
+    note: "the company 'maintains the housing block' and bills the owners (EUT L1786); A61 L4299-4300 names 'the heating and maintenance bills'. The contract itself is not described"
+  collection_arrangement:
+    core: contract
+    parties: [house_maintenance_company, renesco, labeef]
+    status: inferred
+    note: "the company pays the ESCO its percentage (EUT L1787) and after the sale passes the cash flows to LABEEF (EUT L1793). Its parties, terms and fee are not described; inferred from the flow"
+  heat_supply:
+    core: contract
+    parties: [house_maintenance_company, heat_providers]
+    status: inferred
+    note: "'pays the reduced energy bill to the heat providers' (EUT L1789); the supply contract is not described"
+  bank_loan:
+    core: contract
+    parties: [latvian_bank, renesco]
+    status: stated
+    note: "'The bank financing is based solely on the EPC contract. No other collateral is used' (A61 L4244-4245); amount and tenor not given; cost of capital '~7%' (A61 L4314)"
+  grant_agreement:
+    core: contract
+    parties: [erdf_programme, home_owners]
+    status: inferred
+    note: "A61 L4242 gives the 40% share, not the recipient. Owners inferred: 2007-2013 programmes 'excluded third parties such as ESCO as borrower or grant receiver' (A61 L4326) and owners 'should have access to public grants' if they engage an ESCO (A61 L4331-4332). Alternative: grant to RenESCO"
+  assignment_agreement:
+    core: contract
+    parties: [renesco, labeef]
+    status: stated
+    note: "'once the project is implemented and savings are proved, an Assignment agreement is signed between the ESCO and LABEEF' (EUT L1790-1791); the owners' acknowledgement is not described"
+  ebrd_funding:
+    core: contract
+    parties: [ebrd, labeef]
+    status: stated
+    note: "EUR 4 million funding agreement, February 2017 (EUT L1797-1798); loan signed December 2016 (JRC17 L7745-7746); terms not given"
+  subcontracts:
+    core: contract
+    parties: [renesco, subcontractors]
+    status: stated
+    note: "'sub-contracting to construction companies and equipment providers' (EUT L1784-1785); terms not given"
+  agent_bank_arrangement:
+    core: contract
+    parties: [agent_bank, labeef, ebrd]
+    status: inferred
+    note: "the agent bank receives the receivables and transfers them to LABEEF, interposed 'to increase securities for investment institutions such as the EBRD' (EUKI p.8). The account or agency agreement itself is not described; parties inferred from the flow"
+  f3_shareholding:
+    core: contract
+    parties: [f3, labeef]
+    status: stated
+    note: "F3 'will invest €1 million to become a shareholder in LABEEF' (EBRD17); 'acts as a shareholder' (EUKI p.8). Share terms not given"
+  dutch_credit:
+    core: contract
+    parties: [dutch_housing_institute, renesco]
+    status: stated
+    note: "'un crédito garantizado por terceros (40 %)' based on the project cash flows, 'No se preveían otras garantías' (CITY20 p.2). Amount, rate and tenor not given"
+  dutch_guarantee:
+    core: contract
+    parties: [dutch_housing_guarantor, dutch_housing_institute]
+    status: stated
+    note: "the credit is 'garantizado por la Corporación Holandesa de la Vivienda' (CITY20 p.2); form and fee not given"
+  labeef_takeout:
+    core: contract
+    parties: [labeef, latvian_bank, renesco]
+    status: inferred
+    note: "'The agreement with the bank is supported by LABEEF, which guarantees to assume the financing risks after the measures are completed, monitored and verified' (EUKI p.7). Whether this is a separate document or a clause of the bank loan is not stated"
+
+commitments:
+  c1:
+    family: performance_promise
+    from: renesco
+    to: home_owners
+    status: stated
+    what: "takes over 'the whole conservation and modernization process' and 'responsibility for operation and maintenance for 20 years' (A61 L4236-4238); envelope insulation (TICS, 10 cm average), new hot-water and heating networks, ventilation with 90% heat recovery (A61 L4272-4283); 'a temperature level of 21.5 °C' (L4256); 'a 20-year guarantee on all construction' (L4259); energy-saving guarantees (L4288). Shortfall make-good stays inside this promise (G18)"
+    established_by: epc
+  c2:
+    family: payment_promise
+    from: home_owners
+    to: renesco
+    status: stated
+    depends_on_savings: true   # a percentage of the bills based on the realised savings (EUT L1787-1788)
+    what: "'The flat owners are obliged to pay the energy cost savings to RenESCO during the EPC period (20 years)' (A61 L4238-4239); in the billing flow the company pays the ESCO 'a percentage of those bills, based on the realized savings' (EUT L1787-1788); the heating payment 'has remained unchanged' (JRC17 L7570-7571). The percentage is not published. Web, 4 Oct: CITY20 p.2 'el propietario de la vivienda sigue pagando lo mismo' and EBRD17 'residents will not have to pay extra' agree; EUKI p.7 says about 15% above the original bill for about 18 years (source.notes CONFLICT 1; same bill kept as the flagged default)"
+    established_by: epc
+  c3:
+    family: determination_promise
+    from: renesco
+    to: [home_owners, labeef]
+    status: stated
+    determines: savings   # M&V of savings (A61 L4240; EUT L1790)
+    what: "RenESCO is responsible for 'M&V' (A61 L4240); the assignment needs savings 'proved' (EUT L1790). No independent verifier is named, so the performing party determines (P21). Expected and performed savings 'within a 2-5% range of error' (A61 L4307-4308)"
+    established_by: epc
+  c4:
+    family: payment_promise
+    from: home_owners
+    to: renesco
+    status: inferred
+    what: "the 40% grant reaches the funder of the works: owners 'incur no additional refurbishment costs' (A61 L4258) and 'RenESCO financed 100% of the cost' (A61 L4270). Same shape as ctu_prague c3. Alternative: the grant is paid to RenESCO directly (grant_recipient partner, c4 then drops)"
+    established_by: epc
+  c5:
+    family: payment_promise
+    from: renesco
+    to: home_owners
+    status: stated
+    what: "'a 25% profit share of RenESCO's net result' offered to the owners as an incentive 'to keep the energy consumption as low as possible' (A61 L4263-4265)"
+    established_by: epc
+  c6:
+    family: payment_promise
+    from: home_owners
+    to: house_maintenance_company
+    status: inferred
+    what: "the heating and maintenance bill, billed at 'the same amount as before the renovation works' (EUT L1786-1787); A61 L4299-4300 'the heating and maintenance bills'. The owners' obligation follows from the company billing them"
+    established_by: house_maintenance
+  c7:
+    family: performance_promise
+    from: house_maintenance_company
+    to: home_owners
+    status: stated
+    what: "maintains the housing block (EUT L1786) and buys its heat, paying the reduced energy bill (EUT L1789)"
+    established_by: house_maintenance
+  c8:
+    family: agency_promise
+    from: house_maintenance_company
+    to: [renesco, labeef]
+    status: stated
+    what: "collects the owners' payments, pays the ESCO its percentage (EUT L1786-1788) and, after the sale, passes the cash flows to LABEEF (EUT L1793). Its fee, if any, is not stated. EUKI p.8 adds a step: the management companies 'collect the EPC receivables from the building’s residents and transfers them to an agent bank' (c23)"
+    established_by: collection_arrangement
+  c9:
+    family: payment_promise
+    from: house_maintenance_company
+    to: heat_providers
+    status: stated
+    what: "'pays the reduced energy bill to the heat providers' (EUT L1789)"
+    established_by: heat_supply
+  c10:
+    family: performance_promise
+    from: heat_providers
+    to: house_maintenance_company
+    status: inferred
+    what: "heat to the block, 'typically city heating' (A61 L4285); the counter-performance to c9, not described as a promise"
+    established_by: heat_supply
+  c11:
+    family: funding_promise
+    from: latvian_bank
+    to: renesco
+    status: stated
+    funding_instrument: loan   # bank debt (A61 L4243-4244)
+    what: "debt for 60% of RenESCO's share of the investment (A61 L4243-4244), 'based solely on the EPC contract' (A61 L4244-4245); the contracts 'bankable by a local financier' (A61 L4288-4289). Amount not published"
+    established_by: bank_loan
+  c12:
+    family: payment_promise
+    from: renesco
+    to: latvian_bank
+    status: inferred
+    what: "repayment with interest (a loan is repayable); RenESCO's 'cost of capital is still much too high (~7%)' (A61 L4313-4314), 7-10% in Table A-1 (PDF p.111). Whether the LABEEF price repays it is not stated (LOD 1). EUKI p.7: 'Through forfeiting, the payment risk as well as the ESCO’s debt are transferred to LABEEF instead of banks' (and c30): the debt leaves the bank at the sale; how (prepayment or transfer) is LOD 1"
+    established_by: bank_loan
+  c13:
+    family: benefit_promise
+    from: erdf_programme
+    to: home_owners
+    status: inferred
+    what: "'40% comes from the ERDF-funded national renovation program' (A61 L4242); recipient inferred (see grant_agreement). Non-repayable, so no payment back"
+    established_by: grant_agreement
+  c14:
+    family: performance_promise
+    from: renesco
+    to: labeef
+    status: stated
+    what: "assigns the future receivables once savings are proved (EUT L1790-1791); 'the ESCO has forfaited the cash flows from 6 buildings' (JRC17 L7746-7747). Web, 4 Oct: a share, 80%: 'LABEEF therefore forfeits an 80% share of the ESCOs future contracting rates' (EUKI p.2); CORDIS names the seller, 'six buildings from project partner RenEsco'"
+    established_by: assignment_agreement
+  c15:
+    family: funding_promise
+    from: labeef
+    to: renesco
+    status: stated
+    funding_instrument: receivable_purchase   # discounted cash flow for the future receivables (EUT L1791-1792)
+    what: "'The ESCO received discounted cash flow for the future receivables, minus an amount for Operations and Maintenance and a performance guarantee' (EUT L1791-1792). Price and discount rate not published. Web, 4 Oct: 80% of the contracting rates (EUKI p.2); bought after completion, 'approximately 1.5–2 years' (EUKI p.2; CITY20 p.2 'después de 1 o 2 años'), once savings are verified over 'a winter season' (EUKI p.7); forfaiting 'on a non-recourse basis' (EUKI p.7); CITY20 p.3 repeats the holdbacks ('una vez deducidos los gastos de operaciones y mantenimiento (O&M) y la garantía')"
+    established_by: assignment_agreement
+  c16:
+    family: payment_promise
+    from: home_owners
+    to: labeef
+    status: inferred
+    what: "the ceded cash flows run 'from the homeowners, via the House Maintenance Company, to LABEEF' (EUT L1793): c2's money after the transfer, not a second payment"
+    established_by: [epc, assignment_agreement]
+  c17:
+    family: performance_promise
+    from: renesco
+    to: labeef
+    status: stated
+    what: "keeps operating and maintaining against LABEEF's continuing payments (EUT L1793-1794) and stands behind the savings with 'a performance guarantee' held back from the price (EUT L1792). Make-good stays inside this promise (G18)"
+    established_by: assignment_agreement
+  c18:
+    family: payment_promise
+    from: labeef
+    to: renesco
+    status: stated
+    what: "LABEEF 'keeps paying the ESCO for Operations & Maintenance' (EUT L1793-1794), out of the amount held back in c15; amount and schedule not published"
+    established_by: assignment_agreement
+  c19:
+    family: funding_promise
+    from: ebrd
+    to: labeef
+    status: stated
+    funding_instrument: loan   # EBRD loan (JRC17 L7745-7746)
+    what: "EUR 4 million funding agreement (EUT L1797-1798); 'a loan signed with EBRD in December 2016' (JRC17 L7745-7746), towards a fund 'designed to be a EUR 30 million fund' (EUT L1797)"
+    established_by: ebrd_funding
+  c20:
+    family: payment_promise
+    from: labeef
+    to: ebrd
+    status: inferred
+    what: "repayment of the loan (JRC17 L7745 'a loan'); terms not given"
+    established_by: ebrd_funding
+  c21:
+    family: performance_promise
+    from: subcontractors
+    to: renesco
+    status: stated
+    what: "construction and equipment supply for the renovation (EUT L1784-1785)"
+    established_by: subcontracts
+  c22:
+    family: payment_promise
+    from: renesco
+    to: subcontractors
+    status: inferred
+    what: "price of the works and equipment; a subcontract is paid. Amount not published"
+    established_by: subcontracts
+  # c23-c30 added 4 Oct 2026 from the web sources (header; source.documents)
+  c23:
+    family: agency_promise
+    from: agent_bank
+    to: [labeef, ebrd]
+    status: stated
+    what: "receives the EPC receivables the management companies collect and 'then transfers the receivables to LABEEF' (EUKI p.8); 'interposed to increase securities for investment institutions such as the EBRD' (EUKI p.8), hence EBRD as a second beneficiary. CITY20 p.3: a trustee ensures 'la transparencia de las transacciones'"
+    established_by: agent_bank_arrangement
+  c24:
+    family: funding_promise
+    from: f3
+    to: labeef
+    status: stated
+    funding_instrument: equity   # 'invest €1 million to become a shareholder' (EBRD17)
+    what: "EUR 1 million of equity: 'the Dutch company Funding For Future (F3) will invest €1 million to become a shareholder in LABEEF' (EBRD17), 'In parallel' with the EBRD loan"
+    established_by: f3_shareholding
+  c25:
+    family: payment_promise
+    from: labeef
+    to: f3
+    status: inferred
+    what: "residual claim of the shareholder (ENCODING: equity carries an inferred residual-claim payment back); LABEEF repays its loans, transfers 20% to the ESCO 'and retain a low margin' (EUKI p.8). Amount not published"
+    established_by: f3_shareholding
+  c26:
+    family: funding_promise
+    from: dutch_housing_institute
+    to: renesco
+    status: stated
+    funding_instrument: loan   # 'un crédito garantizado por terceros' (CITY20 p.2)
+    what: "40% of RenESCO's financing as 'un crédito garantizado por terceros (40 %) del Instituto Holandés de la Vivienda', 'en función de los flujos de caja del proyecto' (CITY20 p.2). Conflicts with A61's 40% own equity (source.notes CONFLICT 2); not booked by the engine"
+    established_by: dutch_credit
+  c27:
+    family: payment_promise
+    from: renesco
+    to: dutch_housing_institute
+    status: inferred
+    what: "repayment of the credit (a credit is repayable); terms not given"
+    established_by: dutch_credit
+  c28:
+    family: risk_promise
+    from: dutch_housing_guarantor
+    to: dutch_housing_institute
+    status: stated
+    covers: [R5b]   # guarantees RenESCO's credit: the lender's exposure to the Partner
+    cover_kind: guarantee   # 'garantizado por la Corporación Holandesa de la Vivienda' (CITY20 p.2)
+    what: "guarantees the credit to RenESCO: 'garantizado por la Corporación Holandesa de la Vivienda' (CITY20 p.2). Amount and trigger not given"
+    established_by: dutch_guarantee
+  c29:
+    family: payment_promise
+    from: labeef
+    to: renesco
+    status: stated
+    what: "LABEEF receives the receivables and uses them 'to repay its loans, transfer 20% to the ESCO, and retain a low margin' (EUKI p.8): the 20% of the contracting rates LABEEF does not buy (80% bought, EUKI p.2). Whether this 20% is the same money as EUT's O&M payments (c18) is not stated; kept separate"
+    established_by: assignment_agreement
+  c30:
+    family: risk_promise
+    from: labeef
+    to: latvian_bank
+    status: stated
+    covers: [R7, R5b]   # R7 refinancing: the bank is taken out once the works are verified; R5b: after the take-out the bank no longer depends on RenESCO's credit ('the ESCO’s debt are transferred to LABEEF', EUKI p.7)
+    what: "LABEEF supports the ESCO's bank agreement and 'guarantees to assume the financing risks after the measures are completed, monitored and verified' (EUKI p.7); 'Through forfeiting, the payment risk as well as the ESCO’s debt are transferred to LABEEF instead of banks' (EUKI p.7). A take-out commitment, put-like (ENCODING M28); cover_kind left unstated (not one of the listed forms)"
+    established_by: labeef_takeout
+  c31:
+    family: payment_promise
+    from: labeef
+    to: agent_bank
+    status: unstated
+    what: "counter-promise required by duality; source silent (the agent bank's fee is not stated)"
+  c32:
+    family: payment_promise
+    from: unstated
+    to: dutch_housing_guarantor
+    status: unstated
+    what: "counter-promise required by duality; source silent (who pays the guarantee fee, if any, is not stated)"
+
+settings:
+  payment_basis:
+    value: savings
+    status: stated
+    why: "'The flat owners are obliged to pay the energy cost savings to RenESCO' (A61 L4238-4239); the ESCO is paid 'a percentage of those bills, based on the realized savings' (EUT L1787-1788)"
+  client_sector:
+    value: private
+    status: inferred
+    why: "privately owned, owner-occupied flats (A61 L4224-4225); a Home Owner Association is not a public body in any source"
+  partner_form:
+    value: corporate
+    status: inferred
+    why: "'a residential private ESCO and a social enterprise' (A61 L4230) with EPCs since 2008 and 15 blocks (JRC17 L7564-7566): a standing company, not a deal vehicle"
+  borrower:
+    value: [partner, vehicle]
+    status: stated
+    why: "two loans in one deal (ruling OI-7): RenESCO's bank loan, 'debt-financing from a Latvian bank' (A61 L4243-4244; EUT L1783), and LABEEF's 'loan signed with EBRD in December 2016' (JRC17 L7745-7746). vehicle = a fund that is not the Partner (elements.yaml); the converter maps it to LABEEF's role, forfaiter"
+  receivable_holder:
+    value: split
+    status: stated
+    why: "changed 4 Oct from assignee: EUKI prints the split. 'LABEEF therefore forfeits an 80% share of the ESCOs future contracting rates' (EUKI p.2) and LABEEF passes '20% to the ESCO' (EUKI p.8): 80% to the assignee, 20% kept by RenESCO, the setting's split value. Before: 'an Assignment agreement is signed between the ESCO and LABEEF' (EUT L1790-1791) and 'the ESCO has forfaited the cash flows from 6 buildings' (JRC17 L7746-7747) read as the whole stream. collection_placement records the assigned leg (definition). Back to assignee only if a source shows LABEEF buying 100%"
+  collection_placement:
+    value: on_bill
+    status: inferred
+    why: "the owners pay on the House Maintenance Company's bill ('bills the same amount as before', EUT L1786), which carries the heat charges, and the money moves on 'via the House Maintenance Company, to LABEEF' (EUT L1793). Not a utility bill (see lod0_gaps). Alternative assignee_direct, the fallback when receivables are assigned. Web, 4 Oct: EUKI p.8 adds an agent bank between the management companies and LABEEF; per ENCODING (two-stage collection) the setting records the bill and the agent bank is a rule entry plus its agency promise c23. CITY20 p.6 lists 'Recurso Cobros pignorados' (pledged collections)"
+  aggregation:
+    value: pool
+    status: inferred
+    why: "one fund buys the cash flows of several owners' EPCs: 'purchase the cash flows from Energy Performance Contracts' (EUT L1779-1780), first sale 'cash flows from 6 buildings' (JRC17 L7746-7747). Each EPC alone would be none"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "no rank stated for the bank loan or the EBRD loan"
+  assignment_recourse:
+    value: performance_exposed
+    status: inferred
+    why: "the ESCO is paid the discounted flow 'minus an amount for Operations and Maintenance and a performance guarantee' (EUT L1791-1792): the assignee holds back money against the ESCO's performance, ENCODING.md's case for performance_exposed. Alternative waiver, the generic forfeiting form in A61 L3109-3112, if the owners waive defences (not described). Web, 4 Oct: EUKI p.7 calls the purchase forfaiting 'on a non-recourse basis' (no recourse to the ESCO for the owners' credit, a different question) and has LABEEF verify the savings over a winter before it buys: consistent with performance_exposed"
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "RenESCO does 'M&V' (A61 L4240); payment follows 'the realized savings' (EUT L1787-1788) and savings are 'proved' before the sale (EUT L1790); 'expected and performed savings' are compared (A61 L4307)"
+  grant_recipient:
+    value: client
+    status: inferred
+    why: "40% ERDF money (A61 L4242), recipient not stated; programmes 'excluded third parties such as ESCO as borrower or grant receiver' (A61 L4326) and owners 'should have access to public grants' when they engage an ESCO (A61 L4331-4332). Alternative partner"
+  asset_owner:
+    value: client
+    status: default
+    why: "title not stated; the building belongs to the owners (A61 L4224-4225) and the fund buys cash flows, not assets. JRC19 L5323-5324: title to installed equipment is legally ambiguous in Latvia"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "the House Maintenance Company, acting for the owners, 'pays the reduced energy bill to the heat providers' (EUT L1789); the ESCO does not pay the energy bill"
+
+rules:
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU general government at close}
+    rule: "NPV at financial close of guaranteed savings over the EPC >= NPV of operational payments + non-repayable government financing (upfront grant at face value), else ON the government balance sheet (E15 L2578-2582)"
+    applies_here: false
+    this_case: "Latvia is an EU member but the clients are private owners (client_sector private). The 40% ERDF grant would count as government financing only for a public client"
+    source: E15 L2576-2582, L6930-6943
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: not client}
+    rule: "service agreement or lease under IFRS 16, when a private client pays for assets someone else owns"
+    applies_here: false
+    this_case: "asset_owner is client by default, so the trigger is not met; if RenESCO held title during the 20 years the owners' payments would need the test"
+    source: RULINGS.md ruling 7; E02 L3293-3295
+  assignment_after_proof:
+    scope: contractual
+    rule: "the assignment is signed only 'once the project is implemented and savings are proved' (EUT L1790); the price is the discounted cash flow minus an O&M amount and a performance guarantee (EUT L1791-1792)"
+    applies_here: true
+    this_case: "stated for LABEEF; before the sale RenESCO carries the project on its bank loan and equity"
+    source: EUT L1790-1792
+  bank_security_epc_only:
+    scope: contractual
+    rule: "the bank financing 'is based solely on the EPC contract. No other collateral is used' (A61 L4244-4245)"
+    applies_here: true
+    source: A61 L4244-4245
+  owner_payment_incentive:
+    scope: external-sectoral
+    rule: "payment is tied to ownership: 'Poor owners have a strong incentive to pay their utility bills because they will otherwise be forced to sell their renovated flats' (A61 L4300-4301)"
+    applies_here: true
+    this_case: "a credit mitigant for R5a reported from RenESCO's record (97% on time, 0% non-payment over 6 years, A61 L4298-4299); no contract clause is given"
+    source: A61 L4294-4302; JRC17 L7578-7579
+  agent_bank_collection:
+    scope: contractual
+    rule: "after the sale the receivables run management company -> agent bank -> LABEEF; LABEEF repays its loans, transfers 20% to the ESCO and keeps a low margin (EUKI p.8)"
+    applies_here: true
+    this_case: "the second stage of a two-stage collection (ENCODING: collection_placement keeps on_bill; the escrow-like stage is this rule plus the agent bank's agency promise c23). The order of LABEEF's three uses is as printed; whether it is a ranked waterfall is not stated (LOD 2)"
+    source: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF, which uses them to repay its loans, transfer 20% to the ESCO, and retain a low margin"
+  purchase_after_winter_verification:
+    scope: contractual
+    rule: "LABEEF buys only after the works are completed (about 1.5-2 years) and the guaranteed savings are verified through one winter (EUKI p.2, p.7); CITY20 p.2: after savings are shown, usually 1 or 2 years"
+    applies_here: true
+    this_case: "sharpens assignment_after_proof (EUT L1790): the proof is one heating season of M&V. Dates are LOD 1"
+    source: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | The monitoring and verification process is initiated once the measures are completed and lasts through a winter season."
+
+numbers:
+  # Every figure the sources print for this deal, with its line. Derived figures only under `derived`.
+  epc_term_years: "20 (EUT L1782; A61 L4239); SUNShINE contracts 15-20 (JRC21 L7014); multi-family EnPC projects 'can take up to 20 years' (JRC19 L5280-5281)"
+  renesco_blocks: "15 typical Soviet-era apartment buildings 'Within 5 years' (A61 L4270-4271); 'at least 15 projects' (JRC19 L5212-5213); 'more than 15 multi-apartment buildings' (JRC17 L7565-7566); 'invested over €4m in 15 Soviet-era blocks' (EE22 L8638)"
+  renesco_first_epc_year: "2008 (JRC17 L7564-7565); '6 years of operation' at the time of A61's payment record (A61 L4298-4299)"
+  funding_split_pct_of_project: "roughly 60 from the energy cost savings financed by RenESCO, 40 from the ERDF-funded national renovation programme (A61 L4241-4242); RenESCO 'financed 100% of the cost' (A61 L4270)"
+  renesco_share_split_pct: "60 bank debt from a Latvian bank, 40 RenESCO own equity (A61 L4243-4245)"
+  renesco_cost_of_capital_pct: "~7 (A61 L4314); 7-10 (A61 Table A-1, PDF p.111)"
+  interest_vs_subsidy: "'1% lower interest over 20 years = 9% investment subsidy' (A61 Table A-1, PDF p.111)"
+  programme_transaction_cost: "support-programme transaction costs consume at least 70% of RenESCO staff time and add 10-15% to total project costs (A61 Table A-1, PDF p.111)"
+  programme_lead_times_years: "1-2 to develop projects, 3-5 to develop capable organisations (A61 Table A-1, PDF p.111)"
+  owner_payment_record_pct: "97 on time, 0 non-payment over 6 years (A61 L4298-4299); 'In 97% cases the apartment owners fulfil their financial obligation on time' (JRC17 L7578-7579)"
+  savings_accuracy_pct: "expected vs performed savings within 2-5 error, constant over time (A61 L4307-4308; Table A-1 'usually within 2-5% margin of error')"
+  energy_savings_pct: "45 to 65 typical (EUT L1784); owners' savings estimated 50-80 (A61 L4261-4262); typical Latvian EnPC 50 to 70 (JRC19 L5281-5282); SUNShINE 30-60 secured (JRC21 L7018); energy costs expected to drop 50 after the contracts (JRC17 L7576-7577)"
+  specific_consumption_kwh_m2_year: "from 200-240 to 70-80 for heating and hot water (JRC17 L7573-7575)"
+  renovation_cost_to_owners_eur_m2: "150 on average, '1/7 of the price of new buildings' (JRC17 L7572-7573)"
+  market_value_uplift_pct: "20-40 (A61 L4253-4254); 10-20 (JRC17 L7577-7578)"
+  heat_payment_level: "unchanged after renovation (JRC17 L7570-7571); billed 'the same amount as before the renovation works' (EUT L1786-1787)"
+  comfort_and_guarantees: "21.5 °C guaranteed (A61 L4256); 20-year guarantee on all construction (A61 L4259)"
+  envelope_and_systems: "TICS insulation average 10 cm (A61 L4273-4274); ventilation heat recovery 90% (A61 L4282); leakage cut to 10% of the pre-renovation value (A61 L4283-4284)"
+  owner_profit_share_pct: "25 of RenESCO's net result (A61 L4263-4265)"
+  labeef_fund_size_eur_m: "30 designed (EUT L1797); SUNShINE 'total expected investment is €30 million' (JRC17 L7743)"
+  labeef_ebrd: "EUR 4 million funding agreement, February 2017 (EUT L1797-1798); loan signed December 2016 (JRC17 L7745-7746)"
+  labeef_first_transaction: "agreed April 2017; cash flows from 6 buildings forfaited (JRC17 L7746-7747)"
+  assignment_price_terms: "discounted cash flow minus an amount for O&M and a performance guarantee (EUT L1791-1792); discount rate and amounts not published"
+  sunshine_pipeline: "SUNShINE: EUR 30m energy-related investments, 202020 m2 of public and multi-family buildings, 30-60% secured savings, 26 GWh/year (JRC21 L7016-7019; JRC19 L8042-8046); Accelerate SUNShINE: 31 projects, EUR 25.5m guaranteed savings, 27 million of investments (planned), 27 GWh/year (JRC21 L7042), EU contribution EUR 1,577,140 (JRC21 L7030)"
+  typical_latvian_epc: "most apartment-block EnPC EUR 150,000 to 350,000 (JRC19 L5274-5276); 88% under EUR 500,000, 50% under EUR 200,000 (JRC19 L5277-5279)"
+  latvian_programme_context: "ERDF EUR 89 million for 'Improvement of heat insulation of multi-dwellings buildings' and EUR 6.9 million for social residential buildings, 2009-2015; average savings 30-57% (JRC17 L7619-7624). Not tied to RenESCO in the source"
+  latvian_market_context: "EUR 1-1.2 billion potential over 35,000-38,000 multifamily buildings, about 5,000,000 m2, 200-250 EUR/m2 (JRC19 L5226-5229). Context, not a deal figure"
+  risk_table_a1:
+    source: "A61 Table A-1 'Real and perceived risks in Latvian housing sector (source: RenESCO)', PDF p.111 (printed p.99), image; not line-checkable. Re-rendered and read by the reviewer 3 Oct"
+    performance_1: "Perceived: low and medium income people cannot pay the bills. Verdict: 'Proven Red Herring'; banks talk it up to raise rates or 'collect extra guarantees from governments'; track record excellent in Eastern Europe"
+    performance_2: "Perceived: expected savings not achieved or dropping. Verdict: 'Proven Red Herring'; thousands of similar buildings; savings usually within 2-5% margin of error and do not decrease"
+    policy_1: "Perceived: lack of consistent policy, start/stopping of programmes. Verdict: 'Major problem'; 1-2 years to develop projects, 3-5 years to develop capable organisations; stopping programmes destroys projects and renovation companies"
+    policy_2: "Perceived: transaction costs, complexity of support programmes, procurement rules. Verdict: 'Real'; at least 70% of RenESCO staff time; adds 10-15% to total project costs; creates unnecessary risks and project failures"
+    policy_3: "Perceived: no financing available ('subsidy yes, finance no'), especially for small private companies. Verdict: 'Real'; many approved projects cancelled for lack of finance; 1% lower interest over 20 years = 9% investment subsidy; ESCO cost of capital 7-10%"
+  derived:
+    funding_split_of_total: "RenESCO share 60%: debt 60% x 60% = 36%, equity 40% x 60% = 24% of total; 36 + 24 + 40 grant = 100 (ties)"
+    financed_100_pct: "A61 L4270 '100% of the cost' vs L4241-4242 (60% RenESCO, 40% grant): ties only if RenESCO advances the whole cost and is repaid the 40% from the grant (c4); not stated"
+    investment_per_block_floor: "'over €4m' / 15 blocks = over EUR 0.267m per block (EE22 L8638); inside JRC19's EUR 150,000-350,000 band; a floor, since the 4 is 'over'"
+    ebrd_share_of_fund: "EUR 4m / EUR 30m = 13.3% of the designed fund size (EUT L1797-1798)"
+    ebrd_date: "February 2017 (EUT) vs December 2016 (JRC17): does NOT tie, two months apart; not reconciled"
+    savings_from_kwh: "1 - 80/200 = 60.0%; 1 - 70/200 = 65.0%; 1 - 80/240 = 66.7%; 1 - 70/240 = 70.8% (JRC17 L7573-7575): 60-71%. Overlaps JRC19's 50-70% and A61's 50-80%; touches EUT's 45-65% only at 65%. Sample and baseline differences are not stated"
+    payment_record: "97% on time and 0% non-payment (A61 L4298-4299) imply the 3% late payments were paid eventually; not stated"
+    interest_vs_subsidy_check: "level annuity, 20 years: the payment saved by a 1-point lower rate is worth 7.6% of the loan at 7% vs 6% (8.3% if discounted at 6%), 7.3% at 8% vs 7%; 14.4% undiscounted. Table A-1's 9% sits between and does not tie exactly; its basis is not stated"
+    accelerate_sunshine_ratios: "EUR 27m / 31 projects = EUR 0.87m per project; EUR 25.5m guaranteed savings / EUR 27m = 94.4% (JRC21 L7042; term of the savings not given). Includes public buildings, so not comparable to the per-block figure"
+    market_potential_check: "5,000,000 m2 x 200 = EUR 1.0bn; x 250 = EUR 1.25bn vs 'EUR 1-1,2 billion' (JRC19 L5226-5229): ties at the low end, top rounded down"
+    # added 4 Oct 2026 from the web sources; every line below is derived (arithmetic on printed figures), none is printed
+    capex_per_block_avg: "derived: EUR 4,000,000 / 15 buildings = EUR 266,667 per building (CITY20 p.5); equals EE22's 'over €4m'/15 floor (0.267m) and sits inside JRC19's EUR 150,000-350,000 band. An average over the programme, not a printed block cost"
+    capex_stack_eur: "derived: on EUR 4.0m, ERDF 40% = 1.60m; RenESCO 60% = 2.40m, of which bank 60% = 1.44m and the second 40% = 0.96m (A61 equity or CITY20's Dutch credit, CONFLICT 2); 1.44 + 0.96 + 1.60 = 4.00 (ties)"
+    payback_implied_savings: "derived: simple payback 9-10 years 'incluidas las ayudas de FEDER' (CITY20 p.5). If the grant is netted first: 2.40m / 10 to 2.40m / 9 = EUR 240,000-266,667 a year for 15 buildings (EUR 16,000-17,778 per building); on the gross CAPEX: 4.0m / 10 to 4.0m / 9 = EUR 400,000-444,444 (EUR 26,667-29,630 per building). The basis is not stated: a range for checks, not an engine input"
+    labeef_capital_printed: "derived: EBRD EUR 4.0m loan + F3 EUR 1.0m equity = EUR 5.0m printed capital, 80% debt / 20% equity; 5.0 / 30 = 16.7% of the EUR 30m design size (EUT L1797)"
+    labeef_split_check: "derived: 80% bought (EUKI p.2) + 20% passed to the ESCO (EUKI p.8) = 100% of the contracting rates (ties); risk and rewards 80 / 20 (EUKI p.8) match the cash split"
+    labeef_portfolio_ratios: "derived: EUR 50m / 110 buildings = EUR 0.455m per building; EUR 50m / 300,000 m2 = EUR 167/m2 vs EUKI's own 140 + 20 structural = EUR 160/m2 (4% above) and JRC17's 150 (11% above); 300,000 / 110 = 2,727 m2 per building (EUKI p.10-11)"
+    sunshine_target_ratios: "derived: EUR 30m / 80 buildings = EUR 0.375m per building; 200,000 m2 / 80 = 2,500 m2 per building; EUR 30m / 200,000 m2 = EUR 150/m2, ties with JRC17's 150 (CITY20 p.1)"
+    owner_bill_conflict_size: "derived: EUKI's 115% of the old bill for ~18 years = 20.7 old-bill-years vs 100% for 20 years = 20.0 (CITY20, EBRD17, EUT, JRC17): totals within 3.5%, shapes differ (higher and shorter vs flat and longer). Not reconciled; CONFLICT 1"
+  # R1 step 6 (3 Oct): the printed figures above that size a promise, as plain numbers for the engine (no new figure).
+  # The sources print the funding stack as shares, never as euros for one block, so the representative block's
+  # project cost is the unit: project_cost_pct 100 = the whole cost (A61 L4270 '100% of the cost').
+  epc_term_years_value: 20                         # EUT L1782 'a 20 year contract'; A61 L4239 '(20 years)'
+  project_cost_pct: 100                            # A61 L4270 'financed 100% of the cost'; the unit of the shares below
+  renesco_share_pct_of_project: 60                 # A61 L4241 'Roughly 60% of the funding'
+  grant_pct_of_project: 40                         # A61 L4242 '40% comes from the ERDF-funded'
+  bank_debt_pct_of_renesco_share: 60               # A61 L4243 'Sixty percent of RenESCO's share'
+  equity_pct_of_renesco_share: 40                  # A61 L4245 'the remaining 40% ... own equity'
+  ebrd_funding_eur: 4000000                        # EUT L1798 'EUR 4 million funding agreement with EBRD'
+  # --- Web sources, added 4 Oct 2026 (header; source.documents). Evidence "<URL> | <exact quote>"; Spanish quoted in Spanish.
+  labeef_purchased_share: "80% of the ESCO's future contracting rates; risk and rewards 80% LABEEF, 20% ESCO (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF therefore forfeits an 80% share of the ESCOs future contracting rates ; https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF takes over 80% of the risk and rewards, leaving 20% with the ESCO)"
+  labeef_purchase_timing: "after completion, about 1.5-2 years, and verification through one winter (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | Once the measures are completed after approximately 1.5–2 years, LABEEF conducts a verification of the measures and promised savings and then purchases the forfeiting contract); 1 or 2 years (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | después de 1 o 2 años, este fondo de descuento sin recurso, o \"forfaiting\", compra a la ESE las cuentas por cobrar)"
+  labeef_non_recourse: "purchase without recourse (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | discounting individual bills of exchange or promissory notes originating from commercial business transactions on a non-recourse basis); CITY20 calls LABEEF 'fondo de descuento sin recurso'"
+  labeef_cash_waterfall: "management companies -> agent bank -> LABEEF -> loans repaid, 20% to the ESCO, low margin kept (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | The apartment building management companies collect the EPC receivables from the building’s residents and transfers them to an agent bank. ; https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF, which uses them to repay its loans, transfer 20% to the ESCO, and retain a low margin)"
+  owner_payment_vs_old_bill: "CONFLICT 1 (source.notes). Same as before: (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | el propietario de la vivienda sigue pagando lo mismo, la ESE recupera la cantidad ahorrada a través de la Empresa de mantenimiento de viviendas ; https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | residents will not have to pay extra for refurbishment and insulation works.); about 15% higher for about 18 years: (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | fixed increased energy payments over a timeframe of approximately 18 years, which are about 15% higher than the original energy bill). After about 20 years residents pay the reduced costs (EUKI p.2)"
+  f3_equity: "EUR 1 million for a shareholding in LABEEF, in parallel with the EBRD loan (https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | the Dutch company Funding For Future (F3) will invest €1 million to become a shareholder in LABEEF.)"
+  ebrd_loan_web: "'Up to €4 million loan to LABEEF' (subtitle) and (https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | A €4 million loan will be provided to the Latvian Baltic Energy Efficiency Facility (LABEEF), a company founded by energy efficiency specialists.); a loan, agreeing with JRC17 L7745-7746; EUKI p.1 'LABEEF has collected loans from the European Bank for Reconstruction and Development'"
+  renesco_programme_citynvest: "15 buildings, CAPEX EUR 4m, ERDF 40%, simple payback 9-10 years incl. ERDF, savings 45-65% (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | reformas sustanciales en 15 edificios multifamiliares con un gasto de capital (CAPEX) o una inversión de 4 M EUR ; http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | FEDER (Fondo Europeo de Desarrollo Regional) cofinancia el 40 % de los proyectos, con un periodo de amortización simple de 9 a 10 años.). Agrees with A61's 15 blocks and 40% ERDF and with EE22's 'over €4m'"
+  renesco_financing_citynvest: "CONFLICT 2 (source.notes) with renesco_share_split_pct: 60% local commercial banks, 40% third-party guaranteed credit from a Dutch housing institute (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | RenEsco obtuvo financiación de los bancos comerciales locales (60 %) y de un crédito garantizado por terceros (40 %) del Instituto Holandés de la Vivienda)"
+  owner_payment_record_citynvest: "97% on time, 0% default over the programme's 6 years (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | con un 97 % de los pagos realizados a tiempo y un 0 % de impagos durante los 6 años de existencia del programa); same as A61 L4298-4299"
+  risk_profile_citynvest: "execution risk ESCO, recourse pledged collections, financial risk the investment fund (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | Riesgo de ejecución ESE Recurso Cobros pignorados Riesgo financiero Fondos de inversión) (table cells, whitespace collapsed)"
+  altum_approvals: "Altum approves LABEEF investments in buildings that used EU grants (https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | which will also provide approvals for those LABEEF investments where EU grants have been previously utilised.); context, source.context"
+  labeef_buildings_first_sale_web: "six, from RenESCO (https://cordis.europa.eu/article/id/422275-innovative-financial-instrument | LABEEF has for instance forfeited a portfolio of six buildings from project partner RenEsco.); (https://www.green-home.org/wp-content/uploads/2022/06/5_GREEN-Home_GP-LABEEF-LV_en.pdf | Six buildings in Latvian cities were funded through LABEEF); agrees with JRC17 L7746-7747"
+  labeef_portfolio_2018: "15 buildings renovated to date; financing about 110 buildings, 300,000 m2, about EUR 50m (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | To date, the renovation of 15 buildings has been completed. ; https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | Currently, LABEEF is financing about 110 buildings, amounting to 300,000 m 2 floor space and around EUR 50 million of investment.). LABEEF-wide, not the RenESCO programme"
+  renovation_cost_eur_m2_euki: "130-155, average 140, plus about 20 for structural repairs (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | On average, about EUR 140/m2 need to be invested. In addition, about 20 EUR/m2 is needed for structural repairs); JRC17 L7572-7573 prints 150"
+  labeef_breakeven_year: "cumulative savings exceed the investment in year 14, 2030, on LABEEF's long-term cash flow (https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | the energy cost savings will be larger than the investment for the first time in the 14th year, which will be in 2030.); a programme projection (Figure 7, Sunshine 2015), not a block figure"
+  sunshine_target_citynvest: "200,000 m2, about 80 buildings, about EUR 30m; fund size EUR 30m (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | Modernizaciones sustanciales de un mínimo de 200.000 m2 de edificios multifamiliares (unos 80 edificios) con una inversión de alrededor de 30 M EUR.)"
+  value_uplift_citynvest: "20-30% right after renovation (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | que se revaloriza entre un 20 % y un 30 % inmediatamente después de la renovación); a third range beside A61's 20-40 and JRC17's 10-20"
+  first_epc_year_web: "CONFLICT 3 (source.notes): 2009 (http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | Fecha de creación 2009 (RenEsco)/2015 (SUNShINE)) vs 2008 in JRC17 L7564-7565"
+  sunshine_outcome_cordis: "31 projects, EUR 25.5m of investments scheduled; yearly M&V report per EPC (https://cordis.europa.eu/article/id/422275-innovative-financial-instrument | The project successfully enabled 31 projects across Latvia, totalling EUR 25.5 million of investments, to be scheduled for implementation.); JRC21 L7042 prints EUR 25.5m as guaranteed savings, not investment: a wording difference, kept as printed"
+  # plain numbers for the engine and the tests (each printed above; one flagged default)
+  programme_capex_eur: 4000000                     # CITY20 p.5 'una inversión de 4 M EUR' for 15 buildings (renesco_programme_citynvest)
+  renesco_buildings_count: 15                      # CITY20 p.1 '15 edificios'; A61 L4270-4271; EE22 L8638
+  labeef_purchased_share_pct: 80                   # EUKI p.2 'forfeits an 80% share of the ESCOs future contracting rates'
+  esco_retained_share_pct: 20                      # EUKI p.8 'transfer 20% to the ESCO'
+  f3_equity_eur: 1000000                           # EBRD17 'will invest €1 million to become a shareholder in LABEEF'
+  owner_payment_pct_of_pre_renovation_bill: 100    # FLAGGED DEFAULT (CONFLICT 1): CITY20 'sigue pagando lo mismo', EBRD17, EUT L1786-1787, JRC17 L7570-7571; EUKI p.7 prints about 115 for about 18 years
+  engine_inputs:   # read by engine/oe/engine/from_case.py. Since 4 Oct the unit is EUR: the engine runs RenESCO's 15-building programme at its printed CAPEX (CITY20), the funding stack as A61's shares of it; EBRD and F3 in EUR
+    term_years: epc_term_years_value
+    legs:
+    - {promise: c1, leg: outlay, amount: programme_capex_eur, start_year: 0, evidence: "http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | reformas sustanciales en 15 edificios multifamiliares con un gasto de capital (CAPEX) o una inversión de 4 M EUR (was project_cost_pct, A61 L4270: shares of one block)"}
+    - {promise: c11, leg: funding, amount: {product: [programme_capex_eur, renesco_share_pct_of_project, bank_debt_pct_of_renesco_share]}, start_year: 0, evidence: "iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4241-4244; CITY20 p.2 also prints 60% from local banks"}
+    - {promise: c13, leg: funding, amount: {product: [programme_capex_eur, grant_pct_of_project]}, start_year: 0, evidence: "iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4242 (recipient inferred: owners); http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | FEDER (Fondo Europeo de Desarrollo Regional) cofinancia el 40 % de los proyectos"}
+    - {promise: c4, leg: funding, amount: {product: [programme_capex_eur, grant_pct_of_project]}, start_year: 0, evidence: "iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4258,4270 (pass-through inferred)"}
+    - {promise: c19, leg: funding, amount: ebrd_funding_eur, start_year: 0, evidence: "eefig-underwriting-toolkit-2017.txt:1797-1798"}
+    - {promise: c24, leg: funding, amount: f3_equity_eur, start_year: 0, evidence: "https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | the Dutch company Funding For Future (F3) will invest €1 million to become a shareholder in LABEEF."}
+    # LOD 1 (R2, 5 Oct; read by engine/oe/engine/lod1.py, not by from_case.py). No calendar: no source prints a period 0 or a
+    # payment cycle for this programme, so rows are dated only where a source prints a date for that promise's cash, at the
+    # precision printed; every other row stays undated and the generator reports it (ruling 30: never invent)
+    event_dates:
+    - promise: c19
+      date: "2017-02"
+      event: "EBRD EUR 4m funding agreement signed with LABEEF"
+      status: default
+      flagged: true
+      why: "two printed dates for one loan, not reconciled: EUT's February 2017 chosen because EUT also prints the EUR 4m this leg books (ebrd_funding_eur); flip to 2016-12 to run JRC17's date"
+      conflict: {EUT: "2017-02", JRC17: "2016-12"}
+      evidence:
+      - "der-vpp/spec-run/esco-moneyflow/input/eefig-underwriting-toolkit-2017.txt:1797-1798 | in February 2017 signed a EUR 4 million funding agreement with EBRD"
+      - "der-vpp/spec-run/esco-moneyflow/input/jrc-energy-service-companies-in-the-eu-2017.txt:7745-7746 | a loan signed with EBRD in December 2016"
+    - promise: c15
+      date: "2017-04"
+      event: "first forfaiting transaction agreed: LABEEF buys the cash flows of RenESCO's 6 buildings (no price printed, so no row)"
+      evidence: "der-vpp/spec-run/esco-moneyflow/input/jrc-energy-service-companies-in-the-eu-2017.txt:7746-7747 | The first transaction was agreed in April 2017, and the ESCO has forfaited the cash flows from 6 buildings"
+    - promise: c15
+      by: "2020-09-29"
+      event: "still six buildings forfaited from RenESCO (CORDIS page last updated 29 September 2020): a bound, dates no row"
+      evidence:
+      - "https://cordis.europa.eu/article/id/422275-innovative-financial-instrument | LABEEF has for instance forfeited a portfolio of six buildings from project partner RenEsco."
+      - "https://cordis.europa.eu/article/id/422275-innovative-financial-instrument | Last update: 29 September 2020"
+    # Filled 4 Oct from the web sources (printed now; held in numbers, not booked as legs because the stream they apply to has no EUR size):
+    filled:
+    - {promise: c15, what: "the share bought: 80% of the contracting rates (labeef_purchased_share_pct); timing: after completion, about 1.5-2 years, verified through one winter (labeef_purchase_timing); non-recourse", evidence: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF therefore forfeits an 80% share of the ESCOs future contracting rates"}
+    - {promise: c29, what: "the ESCO's 20% of the collected receivables (esco_retained_share_pct)", evidence: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF, which uses them to repay its loans, transfer 20% to the ESCO, and retain a low margin"}
+    - {promise: c2, what: "the owners' payment relative to the old bill: 100% (owner_payment_pct_of_pre_renovation_bill), a FLAGGED DEFAULT chosen against EUKI's about 115% for about 18 years (source.notes CONFLICT 1)", evidence: "http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | el propietario de la vivienda sigue pagando lo mismo"}
+    - {promise: c1, what: "the programme's CAPEX in EUR (programme_capex_eur, 15 buildings); the per-building cost stays an average (numbers.derived.capex_per_block_avg)", evidence: "http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | reformas sustanciales en 15 edificios multifamiliares con un gasto de capital (CAPEX) o una inversión de 4 M EUR"}
+    - {promise: c24, what: "F3's equity in LABEEF, EUR 1m (f3_equity_eur), booked", evidence: "https://www.ebrd.com/news/2017/ebrd-supports-innovative-energy-efficiency-in-latvia.html | will invest €1 million to become a shareholder in LABEEF."}
+    missing:
+    - {promise: c1, what: "one block's cost in EUR: only the programme total (EUR 4m for 15 buildings, CITY20) and EE22's 'over EUR 4m' are printed; 266,667 is an average", evidence: "eefig-report-on-the-evolution-of-financing-practices-for-energy-effici-2022.txt:8638; http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | 15 edificios multifamiliares con un gasto de capital (CAPEX) o una inversión de 4 M EUR"}
+    - {promise: c2, what: "the pre-renovation bill in EUR and the percentage of it paid to the ESCO (the bill's level relative to before is now filled, as a flagged default)", evidence: "eefig-underwriting-toolkit-2017.txt:1786-1788"}
+    - {promise: c1, what: "the energy savings in money per year (only percentage ranges 45-65, 50-80, 50-70 and kWh/m2 ranges are printed; CITY20's simple payback of 9-10 years gives only a derived range whose basis is unstated, numbers.derived.payback_implied_savings)", evidence: "eefig-underwriting-toolkit-2017.txt:1784; jrc-energy-service-companies-in-the-eu-2017.txt:7573-7575; http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | El tiempo de amortización simple (incluidas las ayudas de FEDER) suele ser de entre 9 y 10 años."}
+    - {promise: c12, what: "bank loan amount in EUR, rate (only cost of capital ~7%, 7-10%) and tenor", evidence: "iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4243-4245,4314"}
+    - {promise: c27, what: "the Dutch housing institute's credit: amount, rate, tenor, and whether it replaces A61's equity (CONFLICT 2)", evidence: "http://citynvest.eu/sites/default/files/library-documents/ES_Model%2020_SUNShINE_final.pdf | RenEsco obtuvo financiación de los bancos comerciales locales (60 %) y de un crédito garantizado por terceros (40 %) del Instituto Holandés de la Vivienda"}
+    - {promise: c15, what: "the sale price: discount rate, which years' receivables, and the O&M and guarantee holdbacks (the share, 80%, and the timing after completion are now filled)", evidence: "eefig-underwriting-toolkit-2017.txt:1790-1792"}
+    - {promise: c18, what: "LABEEF's O&M payments to the ESCO (amount, schedule), and whether they are the 20% of c29", evidence: "eefig-underwriting-toolkit-2017.txt:1793-1794"}
+    - {promise: c20, what: "EBRD loan rate, tenor and repayment", evidence: "jrc-energy-service-companies-in-the-eu-2017.txt:7745-7746"}
+    - {promise: c25, what: "LABEEF's 'low margin' and F3's return", evidence: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF, which uses them to repay its loans, transfer 20% to the ESCO, and retain a low margin"}
+    - {promise: c5, what: "RenESCO's net result, the base of the 25% profit share", evidence: "iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4263-4265"}
+    - {promise: c8, what: "the House Maintenance Company's fee, if any, and the agent bank's (c31)", evidence: "eefig-underwriting-toolkit-2017.txt:1786-1793"}
+
+reciprocity:
+  home_owners: {gives: [c2, c4, c6, c16], receives: [c1, c3, c5, c7, c13], one_way: false}
+  renesco: {gives: [c1, c3, c5, c12, c14, c17, c22, c27], receives: [c2, c4, c8, c11, c15, c18, c21, c26, c29], one_way: false}
+  house_maintenance_company: {gives: [c7, c8, c9], receives: [c6, c10], one_way: false}
+  heat_providers: {gives: [c10], receives: [c9], one_way: false}
+  latvian_bank: {gives: [c11], receives: [c12, c30], one_way: false}
+  erdf_programme:
+    gives: [c13]
+    receives: []
+    one_way: true
+    reason: "benefit promise, unilateral by nature: a non-repayable grant"
+  labeef: {gives: [c15, c18, c20, c25, c29, c30, c31], receives: [c3, c8, c14, c16, c17, c19, c23, c24], one_way: false}
+  ebrd: {gives: [c19], receives: [c20, c23], one_way: false}
+  subcontractors: {gives: [c21], receives: [c22], one_way: false}
+  agent_bank:
+    gives: [c23]
+    receives: [c31]
+    one_way: true
+    reason: "counter-promise economically necessary but unstated: an agent bank acts against a fee, which no source mentions; recorded as c31 status unstated (F06)"
+  f3: {gives: [c24], receives: [c25], one_way: false}
+  dutch_housing_institute: {gives: [c26], receives: [c27, c28], one_way: false}
+  dutch_housing_guarantor:
+    gives: [c28]
+    receives: [c32]
+    one_way: true
+    reason: "counter-promise economically necessary but unstated: a guarantee is given against a fee or a relationship the source does not describe; recorded as c32 status unstated, payer unstated (F06)"
+
+lod0_gaps:
+- kind: collector_not_utility
+  description: "on_bill is defined as 'via the utility bill'; here the money travels on a building manager's heating-and-maintenance bill and is passed to the fund. on_bill is the nearest value; the collector is carried by collector_biller and agency promise c8"
+  classification: "encoding question (G-B8N-01)"
+- kind: two_stage_finance
+  description: "the same cash flow first backs RenESCO's bank loan and is then sold to LABEEF once savings are proved; R5a and R7 bearers change at the sale date, LOD 0 holds one row per category. Whether the sale price repays the bank loan is not stated. Web, 4 Oct: EUKI p.7 says LABEEF commits ahead to 'assume the financing risks' once the works are verified (c30) and that the ESCO's debt moves to LABEEF at the forfaiting; the mechanics stay LOD 1"
+  classification: "below LOD 0: LOD 1 events (G-B8N-02)"
+- kind: table_a1_outside_text_corpus
+  description: "Table A-1, the per-risk statement for this deal, is an image (A61 L4319 caption only); its cells are cited from the PDF and cannot be line-checked. It names risk types and verdicts, not bearers"
+  classification: "evidence gap (G-B8N-03)"
+- kind: grant_route_and_recipient
+  description: "A61 gives the 40% ERDF share but not who receives it; JRC17 adds the Green Investment Scheme with no amount. Owners inferred, with the pass-through c4"
+  classification: "evidence gap (G-B8N-04)"
+- kind: esco_identity_and_dates
+  description: "EUT and JRC17 do not name the ESCO selling to LABEEF (RenESCO inferred from A61 L3350, EE22 L8638); A61 says the fund 'has not yet been put in place'; EBRD date December 2016 vs February 2017. Web, 4 Oct: identity resolved, CORDIS 'forfeited a portfolio of six buildings from project partner RenEsco'; EBRD17 (2017) gives no signing date"
+  classification: "evidence gap (G-B8N-05)"
+- kind: figures_unpublished
+  description: "percentage of bills paid to the ESCO, discount rate, held-back O&M and guarantee amounts, bank and EBRD loan terms, grant per block, the House Maintenance Company's fee, and whether the association or each owner signs the EPC"
+  classification: "evidence gap (G-B8N-06); the formulas are LOD 2. Web, 4 Oct: the share sold (80%), the ESCO's 20%, the purchase timing, F3's EUR 1m and the programme CAPEX (EUR 4m, 15 buildings) are now printed; the rest stays unpublished"
+- kind: web_sources_conflict
+  description: "five web sources (header) disagree with the corpus on three money terms: the owners' payment (EUKI about 15% above the old bill for about 18 years vs the same bill for 20 years), RenESCO's second 40% (A61 own equity vs CITY20 Dutch guaranteed credit) and the first EPC year (2008 vs 2009); also who signs the EPC and whether the fund is public. Each is kept as printed with a flagged default chosen (source.notes CONFLICT 1-5)"
+  classification: "evidence gap (G-B8N-07); a modeller flips the flagged defaults to run the other version"
+
+conventions_applied:
+- id: F02
+  title: jurisdiction header, dated at close
+  convention: "country, EU membership, client EU general government at close"
+  origin: RULINGS.md ruling 4
+  applied_here: "LV, EU member, client not general government; C1 off"
+- id: F03
+  title: ESIF/Cohesion grant giver = eu_funds
+  convention: "a grant from an ERDF-funded programme is given by eu_funds, whatever national body administers it"
+  origin: batch 1-4 review; ENCODING.md
+  applied_here: "erdf_programme eu_funds, entity_local (paying body unnamed)"
+- id: F06
+  title: one_way form
+  convention: "a grant giver is one_way by nature"
+  origin: verdict rule
+  applied_here: erdf_programme
+- id: F10
+  title: fund and manager are two parties
+  convention: "a fund by its act (forfaiter), its funder by its act (ifi_dfi); a manager only when named"
+  origin: verdict rule
+  applied_here: "labeef forfaiter; ebrd ifi_dfi; no fund_manager"
+- id: F13
+  title: role list, home role first
+  convention: "a party may hold several roles"
+  origin: verdict rule
+  applied_here: "home_owners [host, occupant]; subcontractors [epc_contractor, equipment_supplier]"
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "the performing party's own guarantee is part of its performance_promise; risk_promise is for third parties"
+  origin: verdict rule
+  applied_here: "RenESCO's savings and construction guarantees in c1; the performance guarantee held back by LABEEF in c17; no risk_promise from RenESCO. The two risk promises added 4 Oct are third parties': the Dutch guarantor (c28) and LABEEF's take-out of the bank (c30)"
+- id: P21
+  title: determination by whoever establishes the fact
+  convention: "verifier_mnv only when independent of both sides"
+  origin: ENCODING.md pass 2 fallbacks
+  applied_here: "c3 from renesco"
+- id: OI-7
+  title: two loans, two borrowers
+  convention: "borrower may be a list when a deal has two loans"
+  origin: RULINGS.md OI-7; ENCODING.md other conventions
+  applied_here: "[partner, vehicle]: bank to RenESCO, EBRD to LABEEF"
+- id: R1516
+  title: risk record, stated and inferred rows only
+  convention: "risk_allocation lists rows the source states or clearly implies; the converter derives the rest"
+  origin: RULINGS.md rulings 15-16
+  applied_here: "R1 technical, R1 usage, R2, R3, R5a, R6 law, R7 interest_rate, R7 refinancing written; R4, R5b, R6 classification, R7 fx left to the converter"
+- id: R17
+  title: contracts binding and settled by default
+  convention: "binding / terms_settled flags only when the source says so"
+  origin: RULINGS.md ruling 17
+  applied_here: "no contract is described as non-binding or open"
+- id: R18
+  title: one identity per legal entity
+  convention: "entity for registry hits, entity_new for named new entities, entity_local when no legal person is named"
+  origin: RULINGS.md ruling 18
+  applied_here: "ebrd -> ebrd; renesco and labeef entity_new; owners, company, heat providers, bank, programme, subcontractors entity_local. 4 Oct: f3 -> funding_for_future (new registry entry, named by EBRD17 and CITY20); agent_bank, dutch_housing_institute, dutch_housing_guarantor case-local (unnamed, or named only in a Spanish rendering)"
+- id: P09
+  title: security agent or trustee for creditors
+  convention: "a collateral or security agent or trustee for creditors takes account_bank_trustee, with an agency promise to the creditors; with two-stage collection, collection_placement records the bill"
+  origin: ENCODING.md pass 2 fallbacks; batch 7 conventions (G-B7M-01)
+  applied_here: "agent_bank account_bank_trustee, agency promise c23 to LABEEF and EBRD; rule agent_bank_collection; collection_placement stays on_bill (added 4 Oct)"
+- id: T22
+  title: owner of the vehicle is an equity_investor
+  convention: "equity is a funding_promise with an inferred residual-claim payment back"
+  origin: ENCODING.md pass 2 fallbacks; Equity convention
+  applied_here: "f3 equity_investor: c24 equity EUR 1m, c25 residual claim inferred (added 4 Oct)"
+- id: M28
+  title: a put option is a risk promise
+  convention: "a termination payment is a payment promise; a put option is a risk promise"
+  origin: ENCODING.md mitigants
+  applied_here: "LABEEF's commitment to take the bank out after verification is a risk promise c30 covering R7 (added 4 Oct)"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, occupant, partner_esco, collector_biller, utility_supplier, lender, eu_funds, forfaiter, ifi_dfi, epc_contractor,
+    equipment_supplier, account_bank_trustee, equity_investor, surety_guarantor]
+  roles_count: 14 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, risk_promise, agency_promise, determination_promise]
+  families_absent: []
+  families_unstated_only: []
+  settings_by_status: {stated: 3, inferred: 8, generic: 0, default: 2}
+  commitments_by_status: {stated: 20, inferred: 10, generic: 0, unstated: 2}
+  one_way_parties: [erdf_programme, agent_bank, dutch_housing_guarantor]
+  parties_count: 13
+  commitments_count: 32
+  below_lod0: {lod1_adds: 'EPC signature per block, works acceptance, grant disbursement, bank drawdown, savings proof, assignment
+      and purchase-price payment, EBRD signature (December 2016 or February 2017), monthly billing and passing-on by the House
+      Maintenance Company, O&M payments from the fund, 20-year term and its end', lod2_adds: 'percentage of bills paid to the
+      ESCO, baseline and M&V method, 25 percent profit share formula, discount rate and the O&M and guarantee holdbacks, bank
+      and EBRD loan terms'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the sources state or clearly imply; the converter derives the rest (ENCODING.md). Replication deal: rows equal to a default are kept when a sentence supports them for this deal
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4240 | responsibility for the planning, implementation, funding, operation, maintenance, and M&V", why: "RenESCO carries M&V and gives the energy-saving guarantees (A61 L4288); LABEEF holds back 'a performance guarantee' from the price (EUT L1792), so the ESCO keeps performance after the sale; JRC19 L5283-5284: Latvian ESCOs 'guarantee the savings'. Table A-1 calls the savings fear a 'Proven Red Herring' (2-5% error): size, not bearer. Equal to the derived row; stated. X and Y agree"}
+  - {category: R1, driver: usage, bearer: [partner_esco, host], share: shared, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4264 | owners to contribute to keep the energy consumption as low as possible", why: "RenESCO guarantees 21.5 °C (L4256), is paid on 'realized savings' (EUT L1787-1788) with no baseline adjustment described, and gives the owners 25% of its net result so they keep consumption low (L4263-4265): consumption moves RenESCO's result, and a quarter of that comes back to the owners. Differs from the default (client). Reviewer's reading: Y had partner_esco sole, X the default"}
+  - {category: R2, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4238 | responsibility for operation and maintenance for 20 years", why: "A61 L4236-4238 and L4259-4260; after the sale LABEEF 'keeps paying the ESCO for Operations & Maintenance' (EUT L1793-1794); 'the ESCO is obliged to provide maintenance' (JRC17 L7579-7580). Equal to the derived row; stated. X and Y agree"}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4258 | The flat owners incur no additional refurbishment costs.", why: "RenESCO has 'planning, implementation, funding' (A61 L4240) and subcontracts the works (EUT L1784-1785); the owners carry no extra cost, so overruns fall on RenESCO. Equal to the derived row; stated. X and Y agree. Web, 4 Oct: 'the execution risk stays with the ESCO while the financing risk is transferred to LABEEF' (EUKI p.1); CITY20 p.6 'Riesgo de ejecución ESE'"}
+  - {category: R5a, driver: null, bearer: [forfaiter, partner_esco], share: shared, status: stated, evidence: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | LABEEF takes over 80% of the risk and rewards, leaving 20% with the ESCO ; https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | Through forfeiting, the payment risk as well as the ESCO’s debt are transferred to LABEEF instead of banks. ; der-vpp/spec-run/esco-moneyflow/input/eefig-report-on-the-evolution-of-financing-practices-for-energy-effici-2022.txt:8621 | Through forfaiting, the funds would take over the credit of the clients", why: "on the sheet that lists LABEEF and RenESCO (EE22 L8634-8640); A61 L3114-3115 (generic): in an EPC forfeiting 'the bank then assumes the credit risk'. Before the sale RenESCO holds the payments; LOD 0 keeps one row, the post-sale holder. The bank lends to RenESCO, so owner default reaches it only through RenESCO (R5b): X's added lender dropped. Credit rated low: 97% on time, 0% non-payment (A61 L4298-4299). Equal to the derived row. Changed 4 Oct from forfaiter sole (inferred) to forfaiter 80% / partner_esco 20%, stated: EUKI p.8 prints the 80/20 split of risk and rewards and the cash (LABEEF passes 20% of the receivables to the ESCO, so owner default reaches RenESCO's 20%); EUKI p.7 moves 'the payment risk' to LABEEF. Matches receivable_holder split (derived row: assignee + Partner, shared). Shares are LOD 2"}
+  - {category: R6, driver: law, bearer: [partner_esco], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4335 | the lack of consistent policies from governments and", why: "Table A-1 (PDF p.111, not line-checkable): start-stop of programmes is a 'Major problem' that 'destroys projects and renovation companies'; programme rules consume '70% of RenESCO staff time' and add 10-15% to project cost. RenESCO advances the whole cost (A61 L4270) and relies on the 40% programme money (L4241-4242) while the owners bear no extra cost (L4258): a subsidy change lands on RenESCO. Differs from the default (client). X and Y agree on the bearer; Y's evidence line (L4311, lack of finance) replaced"}
+  - {category: R7, driver: interest_rate, bearer: [partner_esco, forfaiter], share: shared, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4314 | cost of capital is still much too high (~7%)", why: "RenESCO carries its own cost of capital (A61 L4313-4314; Table A-1 '7-10%'); LABEEF borrows from EBRD (JRC17 L7745-7746) and pays a price fixed at the sale, so the rate on its funding is its own. Each borrower, as the derived row; written to carry the stated RenESCO half. X had partner_esco alone, Y none"}
+  - {category: R7, driver: refinancing, bearer: [partner_esco, forfaiter], share: shared, status: stated, via: [c30], evidence: "https://www.euki.de/wp-content/uploads/2018/12/Fact-Sheet-LABEEF-Latvian-Energy-Efficiency-Facility-LV.pdf | The agreement with the bank is supported by LABEEF, which guarantees to assume the financing risks after the measures are completed, monitored and verified. ; der-vpp/spec-run/esco-moneyflow/input/iea-ebc-annex61-deep-energy-retrofit-business-guide-2017.txt:4311 | Nevertheless, there is no suitable financing available.", why: "A61 L4311-4316: approved projects cancelled for lack of finance, and a forfeiting fund to lower 'RenESCO's financing costs and to enable a quicker recapitalization'; JRC21 L7011-7013: 'refinancing is enabled by sales of future cash flows' to LABEEF. RenESCO bears the refinancing need until the fund buys. X inferred, Y stated; stated, the sentences name RenESCO. Changed 4 Oct from partner_esco sole: RenESCO carries refinancing until the works are verified (A61), then LABEEF has committed to take the financing over (EUKI p.7, risk promise c30; EUKI p.1 'the financing risk is transferred to LABEEF'; CITY20 p.6 'Riesgo financiero Fondos de inversión'). Two holders over time, one LOD 0 row: shared; the switch date is LOD 1"}
+  # not written: R4 energy price (owners billed 'the same amount as before', EUT L1786-1787, heating payment 'unchanged', JRC17 L7570-7571, but no source says who gains or loses when the heat tariff moves; default client stands, flagged); R5b Partner credit (bank secured only on the EPC, A61 L4244-4245, and LABEEF's guarantee holdback fit the derived client + lender + forfaiter row); R6 classification (Y's row dropped: LABEEF 'reducing the debts on ESCOs' balance sheets', JRC21 L7037-7038, is the ESCO's purpose, not an allocation of a classification risk; no accounting rule fires for private owners); R7 fx (all amounts in EUR, no currency mismatch described)

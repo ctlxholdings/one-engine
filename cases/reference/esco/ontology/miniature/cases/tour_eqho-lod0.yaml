@@ -1,0 +1,237 @@
+# Miniature — the Tour EQHO EEaaS instance (Powesco, France) expressed at ESCO LOD 0
+#
+# Purpose: one deal at the coarsest zoom, written to the Bytom template.
+# SOURCE WARNING: the primary for this case (the Powesco reference page, powesco.fr/nos-references) is NOT in the
+# corpus and was NOT read. The only deal-level facts available are the three figures the owner's oracle record
+# carries from a 21 Sep verification trail: a 5-year provider-financed ESCO contract, EUR 5.8m financed, -24%/year
+# energy (plus -32% CO2 in ORACLE-RESULTS). Everything structural below is either (a) default, or (b) generic from
+# E03's description of the Powesco model — and E03 is AI-generated secondary text (source_reliability: secondary,
+# AI-generated). No fact is added from memory. The counterparty, the building owner, the baseline and the fee are
+# unknown.
+# Frame: elements_pilot.yaml (ESCO LOD 0: 41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: tour_eqho
+lod: 0
+case: validation_targets.published.Tour_EQHO
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: none in corpus (primary page not read)
+  title: Powesco reference page, Tour EQHO (powesco.fr/nos-references) — NOT in the corpus, NOT read
+  publisher: "Powesco (company case page); the oracle record calls it 'primary (company case page)'"
+  passage: "deal-level facts are taken only from the owner's records: oracle-matrix.md L24 ('EEaaS instance end-to-end: 5y ESCO, EUR 5.8m financed, -24%/y'); ORACLE-RESULTS.md L28-32 ('a 5-year provider-financed ESCO at -24%/yr energy / -32% CO2 vs baseline ... The public page publishes no baseline or amounts ... the EUR 5.8m figure lives in the E03 primary-verification trail, not on the page'); SOURCES.md L9 (E03 row: 'Tour EQHO case: 5y ESCO, EUR 5.8m financed, -24%/y (oracle candidate)'); instance.yaml L2253-2257 (card4_powesco: 'Tour EQHO added as oracle candidate', no numbers)"
+  structural_source:
+    id: E03
+    title: ai-powesco-deal-anatomy
+    source_reliability: secondary, AI-generated
+    use: status generic only — the general Powesco model, not this deal; see cases/eeaas_france_powesco-lod0.yaml for the line references
+  oracle: "ORACLE-RESULTS.md L28-32: 'expressibility PASS' — structural acceptance only; R-orc-3 (L52) 'EQHO oracle thinness: primary page publishes ratios only'. No derived metric exists to reproduce"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: France
+  iso: FR
+  eu_member: true
+  client_eu_general_government: false
+  status: inferred
+  why: "Powesco operates in France (E03 L47 WSC release slug '...projects-in-france-through-powesco'; L110 'Commercial building owners in France'); the tower's own location is not in the corpus (the primary page was not read). France is an EU member state; the client is inferred private (an office tower with a C&I-focused provider), so not EU general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the ESCO contract establishes (fibo-fnd-rel-rel:confers) the commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  eqho_client:
+    role: host
+    groups: [demand]
+    status: inferred
+    name: not recorded (the owner or occupier of Tour EQHO)
+    text: "an 'EEaaS instance' (oracle-matrix.md L24) needs a client; who contracted for the tower (owner, manager or tenant) is not in the owner's records. Role host (private) follows from Powesco's C&I client base in E03 (generic); if the client were a public body the role would be authority"
+  powesco:
+    entity: powesco
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: Powesco
+    text: "'5y ESCO' (oracle-matrix.md L24); 'provider-financed ESCO ... the provider holds the financing role' (ORACLE-RESULTS.md L28-31). Stated in the owner's record, not read from the page"
+
+contract:   # the agreements that establish the commitments
+  esco_contract:
+    core: contract
+    parties: [eqho_client, powesco]
+    term_years: 5
+    status: stated
+    text: "'5y ESCO' (oracle-matrix.md L24); 'a 5-year provider-financed ESCO' (ORACLE-RESULTS.md L28-29)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: powesco
+    to: eqho_client
+    status: stated
+    what: "finance and carry out the energy works (EUR 5.8m financed, oracle-matrix.md L24) and deliver -24%/year energy and -32% CO2 against the baseline (ORACLE-RESULTS.md L29-30) over 5 years. Whether the -24% is a guarantee or an achieved result is not recorded"
+    established_by: esco_contract
+  c2:
+    family: payment_promise
+    from: eqho_client
+    to: powesco
+    status: unstated
+    what: 'counter-promise required by duality; source silent. A provider-financed 5-year contract must be paid for by the client (E03 generic: a service fee below historical energy spend); neither the fee, its basis nor its total is recorded'
+    established_by: esco_contract
+  c3:
+    family: determination_promise
+    from: unstated
+    to: [eqho_client, powesco]
+    status: unstated
+    determines: savings   # savings figures against a baseline
+    what: "the savings figures (-24%/yr, -32% CO2) presuppose that someone establishes them against a baseline; the determining party is not recorded, so from = 'unstated' (F21); E03 generic: Powesco's own monitoring (L473). Recorded because the published ratios cannot exist without it"
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: default, why: "c2 unstated: the owner's records give no fee, basis or total (oracle-matrix.md L24; ORACLE-RESULTS.md L28-32)."}
+  client_sector:
+    value: private
+    status: inferred
+    why: an office tower contracting with a C&I-focused provider (E03 L16, generic). Not recorded for this deal; alternative public if the occupier is a public body
+  partner_form:
+    value: corporate
+    status: default
+    why: "not recorded for this deal. E03 L583 casts Powesco as an SPV (secondary, AI-generated, and contradicted at L128 vs L877), but E03 never mentions Tour EQHO, so it cannot supply a 'generic' value for this deal (F14): default corporate, with E03's spv reading as the alternative"
+  borrower:
+    value: partner
+    status: default
+    why: "'provider-financed' (ORACLE-RESULTS.md L28) says the Partner funds the works, not whether from equity or debt — 'financed' in the record does not say. Convention F04: no loan or equity named -> default partner, status default. Alternative none if the EUR 5.8m is equity (E03 generic: platform equity funds capex, L692, secondary)"
+  receivable_holder:
+    value: partner
+    status: default
+    why: nothing recorded about assignment; E03 generic says Powesco holds its contracts (L594)
+  collection_placement: {value: operator_own, status: default, why: not recorded}
+  aggregation:
+    value: none
+    status: default
+    why: "not recorded for this deal (a single tower). E03 L499 describes Powesco's contracts as pooled on the platform (secondary, AI-generated) but never mentions Tour EQHO (F14): default none; alternative pool if the deal sits in the platform's pool"
+  debt_seniority: {value: senior, status: default, why: no debt recorded}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "'-24%/yr energy / -32% CO2 vs baseline' (ORACLE-RESULTS.md L29-30) are results against a baseline, which implies measurement; whether the contract pays on measured or stipulated savings is not recorded"
+  grant_recipient:
+    value: none
+    status: default
+    why: no grant recorded; E03 generic mentions CEE monetisation by Powesco, not recorded for this deal
+  asset_owner:
+    value: client
+    status: default
+    why: "not recorded for this deal. E03 L612, L671 say Powesco keeps title during the term (secondary, AI-generated) but never mentions Tour EQHO (F14): default client; alternative partner under E03's generic model"
+  bill_custody:
+    value: client
+    status: default
+    why: not recorded; E03 generic (fee below historical spend) also points to client
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: client_sector = private (inferred); France is an EU member state, so if the occupier were a public body the test would apply and nothing in the record could run it (no payments, no guaranteed-savings value)
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: "does not bite on the record: asset_owner is the default client (F14). Under E03's generic reading (Powesco keeps title, L612, L671) it would bite, and E03's off-balance claim (L666-677) is secondary and not testable"
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  term_years: 5
+  financed_eur_m: 5.8
+  energy_reduction_pct_per_year: 24
+  co2_reduction_pct: 32
+  baseline: not published (ORACLE-RESULTS.md L30-31)
+  fee_or_payments: not published
+  derived:
+    financed_per_year_eur_m: 5.8 / 5 = 1.16 — arithmetic only (straight-line over the term); not a published metric, and the record says no derived metric exists to reproduce (R-orc-3)
+  not_in_record: the EUR 5.8m is not on the public page per ORACLE-RESULTS.md L31-32; the page itself was not read, so this miniature cannot say what the page does publish beyond the ratios
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  eqho_client:
+    gives: [c2]
+    receives: [c1, c3]
+    one_way: true
+    reason: the only promise it gives (c2) is unstated — required by duality; nothing about the fee is recorded (F06)
+  powesco:
+    gives: [c1]
+    receives: [c2, c3]
+    one_way: true
+    reason: "its counter-promise (the client's payment, c2) exists only by duality and is unstated: on the recorded facts alone Powesco would give and receive nothing back, which is economically impossible for a provider financing EUR 5.8m (F06)"
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: evidence_not_vocabulary
+  description: "the record supports a two-party map (host, partner_esco) and one stated promise; the client-side payment (c2) and the determination (c3) exist only by duality. An evidence gap, not a LOD 0 gap: the vocabulary expresses the deal (ORACLE-RESULTS.md L28 'expressibility PASS'), the source does not fill it"
+  review: 'G25: evidence gap; action: none'
+- kind: provider_financed_not_a_value
+  description: "'provider-financed' is not a borrower value; the record says the provider financed EUR 5.8m but not whether from equity (none) or debt (partner). Convention F04 answers: default partner, status default"
+  review: 'G24: encoding question; action: rule F04 (default partner, status default)'
+- kind: status_vocabulary
+  description: "this file needs a status for 'stated in the owner's provenance record, taken from a primary not in the corpus and not read'. Used stated with the record cited; per the review (G10) ORACLE-RESULTS and oracle-matrix are admitted evidence, so 'stated' with the record cited is acceptable"
+  review: 'G10: encoding question (CASE_SPEC statuses); action: note in CASE_SPEC; no LOD 0 change'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction FR added (tower location not in corpus); C1 applies_here false (private client)
+- id: F04
+  title: borrower rule for provider-financed deals
+  convention: borrower = none only when the source says own funds or equity; when the Partner finances the works and no loan or equity is named, keep the default partner with status default.
+  origin: verdict change 4; findings F04; gaps G24
+  applied_here: borrower none/inferred -> partner/default
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: "both parties one_way: true (the client's payment exists only by duality)"
+- id: F14
+  title: "'generic' is the deal's own source"
+  convention: "'generic' means the deal's own source's general description; another document's description does not override a setting default (status default, with the other document's reading noted in why)."
+  origin: verdict rule; findings F14
+  applied_here: "partner_form spv/generic -> corporate/default; aggregation pool/generic -> none/default; asset_owner partner/generic -> client/default — E03 never mentions Tour EQHO, so it cannot be this deal's 'generic'"
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: "determination_promise c3 from the literal 'unstated' instead of null"
+- id: G23
+  title: IFRS16_lease_test rule entry
+  convention: "Rule entry IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner}: whether the client's contract is a service agreement or a lease (IFRS 16) — the private counterpart of C1. A rule beside the tree, not a setting (corpus: E02 L3293-3295)."
+  origin: verdict change 6; gaps G23
+  applied_here: IFRS16_lease_test rule entry added; does not bite on the record (asset_owner client by default)
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco]
+  roles_count: 2 of 41
+  families_used: [payment_promise, performance_promise, determination_promise]
+  families_absent: [funding_promise, benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [payment_promise, determination_promise]
+  settings_by_status: {stated: 0, inferred: 3, generic: 0, default: 10}
+  commitments_by_status: {stated: 1, inferred: 0, generic: 0, unstated: 2}
+  one_way_parties: [eqho_client, powesco]
+  parties_count: 2
+  commitments_count: 3
+  below_lod0: {lod1_adds: 'the fee and its schedule, the baseline, annual savings events, who determines them, title at term
+      end — all currently unknown', lod2_adds: 'fee variant, M&V option, shortfall rule, indexation — unknown'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): the owner's records state no risk bearer; the primary page was not read; the converter derives every row (ENCODING.md)

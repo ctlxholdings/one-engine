@@ -1,0 +1,327 @@
+# Miniature — KaWarna biomass energy supply contracting with IDAE credit (Spain) expressed at ESCO LOD 0
+#
+# Batch 2 (CASE_SPEC_2.md), reconciled by the adjudicator from writers X (base) and Y; changes listed in source.notes.
+# Original writer X. Shape copied from bytom_schools-lod0.yaml (normalised 1 Oct 2026).
+# Frame: model/elements.yaml LOD 0 block (41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Every fact carries its status: stated / inferred / default / generic / unstated. Nothing invented; only the corpus.
+# A programme: 'Experience of more than 200 project implementations on a national basis' (L1482); encoded as one
+# representative energy supply contract. Line numbers refer to corpus input/iea-dsm-financing-options-manual.txt (E08).
+# Figures 8-9 (L1530-1572) carry part of the structure; figure-derived facts are inferred (F18).
+
+miniature: kawarna_biomass
+lod: 0
+case: batch2.kawarna_biomass
+case_kind: programme   # KaWarna's biomass ESC model across 200+ projects (L1482), projects from EUR 12,000 to 350,000 (L1522-1523)
+
+tests_unused:   # the spec chose the case for epc_contractor and the IDAE role decision (government_financier; see parties.idae); the three unused items below were checked (from writer Y)
+- item: grant_provider
+  kind: role
+  used: false
+  reason: "the only public support besides the IDAE loan is the 'public sponsored preparation by initial and comprehensive energy audit' (L1488-1489) and 'Sponsored by the local authority' (L1580): a free programme service, encoded as the facilitator's benefit_promise (ctu_prague, espc_us precedent), not a grant; no grant amount or arrow appears in Figures 8-9. A public giver would in any case be government_financier (rule B2-R1)"
+- item: grant_recipient=partner
+  kind: setting_value
+  used: false
+  reason: "no grant to KaWarna is stated; IDAE's money is a loan with '100% Amortization' at 'Euribor + 1%' (L1566-1567)"
+- item: debt_seniority=subordinated
+  kind: setting_value
+  used: false
+  reason: "the IDAE credit is the only debt ('Finance almost in every project comes from IDAE (100%)', L1521); no rank is stated, so senior by default"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E08
+  title: Financing of ESCo Projects — Financing Options for Energy-Contracting Projects (IEA DSM Task XVI)
+  publisher: Bleyl & Schinnerl, Grazer Energieagentur (IEA DSM Task XVI), ~2008-10; case reported by Andrés L. Sainz, Red Eléctrica de España, and KaWarna (L1473-1476)
+  passage: "§4.3.1 'Biomass Energy Supply Contracting with Interest-Subsidized Credit through ESCo, Spain' (corpus input/iea-dsm-financing-options-manual.txt L1469-1582); Figures 8-9 (L1530-1572)"
+  oracle: none
+  notes:
+  - "Adjudication (batch 2): X and Y agreed on all five roles, IDAE included (government_financier: a 'Public entity' lending 100% at 'Euribor + 1%', L1531-1533, L1566-1567; E15 L5385-5391 counts public-entity financing as government financing; lender is the alternative by the act, ifi_dfi excluded as IDAE is not international). Statuses kept from X; tests_unused taken from Y"
+  - "IDAE's role, decided from the definitions: ifi_dfi is an 'International or development finance institution (EIB, World Bank, EBRD)' — IDAE is labelled 'Public entity' (L1531; L1626) and nothing says it is international, so no. lender ('Lends to the Partner or to the client') fits the act. government_financier ('Government acting as financier or guarantor (grants, loans, equity, guarantees of the Partner's debt)') fits the act and the public identity. Chosen government_financier, the more specific; lender is the alternative. The Eurostat count that government_financier's definition mentions does not bite (private clients)"
+  - "The title says 'Interest-Subsidized Credit' (L1469-1471) and Figure 9 gives 'Interest: Euribor + 1%' (L1567): the subsidy is the rate; no separate benefit promise is recorded"
+  - "Figure 8 'Contract' labels read 'ESC Contract' and 'EPC Contract' between KaWarna and the Client (L1541-1542); the text calls it an 'Energy Supply Contract' (L1514). Encoded as one energy supply contract"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Spain
+  iso: ES
+  eu_member: true
+  client_eu_general_government: false
+  status: inferred
+  why: "'Biomass Energy Supply Contracting ... Spain' (L1469-1471); clients are 'residential buildings, factories, leisure facilities' in a 'Private initiative' (L1479-1481), so not general government. E02 (jrc-epc-in-the-eu-2020-2021.txt L332-333) counts Spain among the Member States. Inferred because individual clients could include public bodies (the 'Public entity' in Figure 8 is a sponsor, L1531-1536)"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the energy supply contract, the IDAE credit and the subcontracts each establish (fibo-fnd-rel-rel:confers) their commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  client:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'Several facilities: residential buildings, factories, leisure facilities to provide heating' (L1479-1480); Figure 8 'Client' (L1542); 'Customer makes no investment and receives the installation after 10 years' (L1577)"
+  kawarna:
+    entity: kawarna
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: KaWarna
+    text: "'KaWarna as the ESCo audits the initial situation, designs and implements the engineering project and subcontracts local implementation companies. The operation and maintenance is controlled and managed by the ESCo' (L1515-1517)"
+  idae:
+    entity: idae
+    role: government_financier
+    groups: [public, capital, risk]
+    status: stated
+    name: IDAE
+    text: "'Finance almost in every project comes from IDAE (100%)' (L1521); Figure 8 'Public entity ... Financing IDAE' (L1531-1533); Figure 9 'IDAE: 100% Amortization, Interest: Euribor + 1%' (L1566-1567). Role decision in source.notes; alternative lender"
+  local_authority:
+    role: facilitator
+    groups: [delivery, public]
+    status: stated
+    text: "'Sponsored by the local authority' (L1580); 'The first steps of these projects are a public sponsored preparation by initial and comprehensive energy audit' (L1488-1489); Figure 8 'Public entity ... Information Sponsor ... Overall project information' (L1531-1538). Not named"
+  local_implementers:
+    role: epc_contractor
+    groups: [delivery]
+    status: stated
+    text: "'subcontracts local implementation companies' (L1516); Figure 8 'Subcontractors: Implementation and maintenance by installation firms; Technical risks of good function' (L1547-1550); not named"
+
+contract:   # the agreements that establish the commitments
+  energy_supply_contract:
+    core: contract
+    parties: [client, kawarna]
+    term_years: 10
+    status: stated
+    note: "'Energy Supply Contract' (L1514); 'Contract period 10 years - the client gets the property rights of the installation after that period' (L1524-1525)"
+  idae_credit:
+    core: contract
+    parties: [idae, kawarna]
+    status: stated
+    note: "'Interest-Subsidized Credit through ESCo' (title, L1469-1471); 'Finance ... comes from IDAE (100%)' (L1521)"
+  subcontracts:
+    core: contract
+    parties: [kawarna, local_implementers]
+    status: stated
+    note: "'subcontracts local implementation companies' (L1516)"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: kawarna
+    to: client
+    status: stated
+    what: "energy audit, design, turnkey biomass heat generation, energy management, logistics and procurement (L1497-1511), O&M (L1517); 'KaWarna takes total care: implementation, fuel, maintenance, measurement, invoicing, paying' (L1575-1576); 'guarantees at least a 10% reduction indexed to initial energy source' (L1527-1528); installation 'guaranteed for the contract period of 10 years' (L1581); property rights pass to the client after 10 years (L1524-1525). KaWarna's financing of the client's installation is inside this promise (F05)"
+    established_by: energy_supply_contract
+  c2:
+    family: payment_promise
+    from: client
+    to: kawarna
+    status: stated
+    what: "'Client pays energy invoice always with a reduction of 10% compared with the initial situation' (Figure 9, L1568-1570); 'Reduce energy costs by 10 %' (L1578)"
+    established_by: energy_supply_contract
+  c3:
+    family: funding_promise
+    from: idae
+    to: kawarna
+    status: stated
+    funding_instrument: loan   # IDAE credit (L1521, L1567)
+    what: "credit for 100% of the project ('Finance almost in every project comes from IDAE (100%)', L1521) at 'Euribor + 1%' (Figure 9, L1567); the savings guarantee 'is mandatory to access the finance' (L1528)"
+    established_by: idae_credit
+  c4:
+    family: payment_promise
+    from: kawarna
+    to: idae
+    status: inferred
+    what: "'100% Amortization' at 'Euribor + 1%' (Figure 9, L1566-1567; figure label)"
+    established_by: idae_credit
+  c5:
+    family: performance_promise
+    from: local_implementers
+    to: kawarna
+    status: stated
+    what: "implementation (and, per Figure 8, maintenance) by local installation firms, bearing 'Technical risks of good function' (L1516, L1547-1550)"
+    established_by: subcontracts
+  c6:
+    family: payment_promise
+    from: kawarna
+    to: local_implementers
+    status: inferred
+    what: "'Implementation costs' to the 'Subcontractor' (Figure 9, L1568-1570; figure arrow)"
+    established_by: subcontracts
+  c7:
+    family: benefit_promise
+    from: local_authority
+    to: [client, kawarna]
+    status: stated
+    facilitator_task: [appraisal]   # sponsored energy audits (L1488-1489)
+    what: "'public sponsored preparation by initial and comprehensive energy audit' (L1488-1489), 'Information', 'Sponsor', 'Overall project information' (Figure 8, L1535-1538), 'Sponsored by the local authority' (L1580): a free public service, so benefit_promise (F12)"
+  c8:
+    family: determination_promise
+    from: kawarna
+    to: client
+    status: stated
+    determines: other   # metered energy produced (supply, L1518-1519)
+    what: "'Measures of the energy produced are centrally managed by remote devices for all implemented projects' (L1518-1519); KaWarna does the 'measurement, invoicing' (L1575-1576). The invoice (c2) is computed against the initial situation, so the measured supply drives it"
+    established_by: energy_supply_contract
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: supply, status: stated, why: "c2: 'Client pays energy invoice always with a reduction of 10% compared with the initial situation' (E08 L1568-1570); biomass Energy Supply Contracting (L1469)."}
+  client_sector:
+    value: private
+    status: inferred
+    why: "'residential buildings, factories, leisure facilities' (L1479-1480); 'Private initiative funded both by private and public funds' (L1481). Inferred: some leisure facilities may be public; none is said to be"
+  partner_form: {value: corporate, status: default, why: "not stated; 'KaWarna as the ESCo' (L1515)"}
+  borrower:
+    value: partner
+    status: stated
+    why: "'Interest-Subsidized Credit through ESCo' (title, L1469-1471); IDAE finances 100% (L1521) and KaWarna 'takes total care: ... paying' (L1575-1576); 'Customer makes no investment' (L1577)"
+  receivable_holder: {value: partner, status: inferred, why: "the client pays its energy invoice to KaWarna, which does the invoicing (L1568-1570, L1575-1576); no assignment mentioned"}
+  collection_placement: {value: operator_own, status: default, why: not stated}
+  aggregation:
+    value: none
+    status: inferred
+    why: "each project is its own energy supply contract (projects from EUR 12,000 to 350,000, L1522-1523); 'Measures ... centrally managed ... for all implemented projects' (L1518-1519) is operations, not a pool or super-ESCO. Alternative pool if IDAE's financing is read as a portfolio line — not stated"
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "energy produced is measured by remote devices (L1518-1519). The 10% reduction is fixed against the initial energy source price ('indexed to initial energy source', L1527-1528) — price stipulation is LOD 2 (G16), not deemed quantity"
+  grant_recipient:
+    value: none
+    status: inferred
+    why: "no grant to the client or KaWarna; the public support is a sponsored audit (c7, benefit in kind) and an interest-subsidised rate inside the IDAE credit (L1469-1471, L1567). Alternative client, if the sponsored audit is read as non-repayable support to the client"
+  asset_owner:
+    value: partner
+    status: inferred
+    why: "'Contract period 10 years - the client gets the property rights of the installation after that period' (L1524-1525); 'Customer ... receives the installation after 10 years' (L1577): during the term KaWarna holds title"
+  bill_custody:
+    value: provider
+    status: inferred
+    why: "KaWarna supplies the energy and buys the fuel ('KaWarna takes total care: implementation, fuel, ... invoicing, paying', L1575-1576); the client pays KaWarna's energy invoice (L1568-1570), not a utility's"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: "private clients; the test does not reach them. Had a client been public, IDAE's 100% credit to the Partner would count as government financing (E15 L5329-5338: 50% or more -> automatically ON BALANCE SHEET), weighted senior x1 by default"
+    source: E15 L2576-2582, L5329-5414 (government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: true
+    this_case: "private client, KaWarna owns the installation for 10 years and the client then receives it (L1524-1525, L1577): the trigger is met. The client pays an energy invoice (a price per energy supplied, L1568-1570), which points to a supply contract rather than a lease; the source does not discuss accounting. Not computable"
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  projects_implemented: "> 200"            # L1482
+  largest_project_eur: 350000              # L1522
+  smallest_project_eur: 12000              # L1523
+  idae_financing_share_pct: 100            # L1521 ('almost in every project')
+  idae_rate: Euribor + 1%                  # L1567
+  contract_term_years: 10                  # L1524
+  guaranteed_cost_reduction_pct: 10        # 'at least a 10% reduction' (L1527); 'Reduce energy costs by 10 %' (L1578)
+  installation_lifetime_years: 25          # L1582
+  derived:
+    client_payment_vs_baseline: 1 - 0.10 = 0.90 of the initial energy cost (at least)
+    term_vs_lifetime: 10 / 25 = 40% of the expected lifetime under KaWarna's ownership; 15 years with the client
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  client: {gives: [c2], receives: [c1, c7, c8], one_way: false}
+  kawarna: {gives: [c1, c4, c6, c8], receives: [c2, c3, c5, c7], one_way: false}
+  idae: {gives: [c3], receives: [c4], one_way: false}
+  local_authority:
+    gives: [c7]
+    receives: []
+    one_way: true
+    reason: "benefit promise, unilateral by nature: a publicly sponsored audit and information (L1488-1489, L1580; F12)"
+  local_implementers: {gives: [c5], receives: [c6], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: role_overlap_public_lender
+  description: "IDAE lends 100% to the Partner as a public entity: lender (by the act) and government_financier (by the act and the public identity) both fit, and ifi_dfi is excluded only because IDAE is not international. No rule says which wins; chosen government_financier as the more specific. The same choice is made for ICO-IDAE in light_motril and the Authority's loan in eurostat_box7_subordinated"
+  classification: "encoding question (definition overlap lender / government_financier)"
+- kind: guarantee_as_finance_condition
+  description: "'KaWarna guarantees at least a 10% reduction ... This requirement is mandatory to access the finance' (L1527-1528): the savings guarantee to the client is a condition of IDAE's credit. LOD 0 records both promises but not the condition linking them"
+  classification: "below LOD 0 (LOD 1 condition on the funding promise)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction ES; C1 applies_here false (private clients)
+- id: F05
+  title: "provider's own capital is inside performance_promise"
+  convention: "Under one service contract the provider's own capital is part of its performance_promise; funding_promise requires a distinct claim between distinct parties (loan, equity, receivable purchase, lease)."
+  origin: verdict rule; findings F05; gaps G07
+  applied_here: "KaWarna's financing of the installation stays inside c1; IDAE's credit to KaWarna is the funding_promise c3"
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: "local_authority one_way: true (sponsored audit)"
+- id: F12
+  title: free public-programme service = benefit_promise
+  convention: 'A service a public programme gives free is a benefit_promise (one_way: true, unilateral by nature); performance_promise + unstated payment only when the client plausibly pays.'
+  origin: verdict rule; findings F12
+  applied_here: "the local authority's sponsored audit and information are a benefit_promise (c7)"
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: "Figure 9 labels (amortisation, implementation costs) give inferred commitments c4, c6"
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: c8 from KaWarna (remote measurement, L1518-1519)
+- id: G16
+  title: savings_basis is about the quantity
+  convention: savings_basis (measured / deemed) concerns how the energy quantity is established; price stipulation or escalation is LOD 2 indexation.
+  origin: verdict change 5; gaps G16
+  applied_here: savings_basis measured; the 10% reduction indexed to the initial energy source is LOD 2 price stipulation
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "KaWarna's 10% guarantee stays inside c1"
+- id: IFRS16
+  title: IFRS16_lease_test rule entry
+  convention: "One rule entry, not a setting: IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner} — the private counterpart of C1."
+  origin: verdict change 6; gaps G23
+  applied_here: rule fires (private client, KaWarna owns the installation during the term); not computable
+- id: B2-R1
+  title: grant giver by identity (batch-2 adjudication)
+  convention: "A grant or subsidy from general government or a public entity acting for it is given by government_financier (its definition lists grants; it is what the Eurostat thresholds count, E15 L5361-5391); from EU structural funds by eu_funds (F03); grant_provider only for givers that are neither (GEF and other multilateral grant windows, foundations, utility rebate programmes). Corrects F03's last clause ('grant_provider is for national or other non-EU grants')."
+  origin: batch-2 adjudication; audit proposal unused/final.json grant_provider (rename_redefine)
+  applied_here: "no grant; IDAE's public credit -> government_financier"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, government_financier, facilitator, epc_contractor]
+  roles_count: 5 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, determination_promise]
+  families_absent: [risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 2, inferred: 8, generic: 0, default: 3}
+  commitments_by_status: {stated: 6, inferred: 2, generic: 0, unstated: 0}
+  one_way_parties: [local_authority]
+  parties_count: 5
+  commitments_count: 8
+  below_lod0: {lod1_adds: 'events (sponsored audit, design, IDAE credit approval conditioned on the guarantee, works by subcontractors,
+      monthly/annual energy invoice, amortisation, transfer of the installation at year 10), the condition linking guarantee
+      and credit', lod2_adds: 'fee variant (chauffage-like; energy invoice at initial cost minus 10%, indexed to the initial
+      energy source), the Euribor-linked rate'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco, epc_contractor], share: shared, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:1550", why: "'KaWarna guarantees at least a 10% reduction' to the client (L1527) while Figure 8 puts 'Technical risks of good function' on the subcontracted installation firms (L1547-1550): KaWarna faces the client, the installers carry it towards KaWarna. Departs from the default (Partner alone). A and B agree"}
+  - {category: R2, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:1517", why: "'The operation and maintenance is controlled and managed by the ESCo' (L1517). Same bearer as the default, kept because stated. Only B wrote it"}
+  # dropped: draft A R4 (KaWarna buys the fuel, client pays 90% of the old cost) and R7 interest_rate (Euribor + 1% on the IDAE loan): inferred, equal to the defaults

@@ -1,0 +1,347 @@
+# Miniature — D38 Ecosave Contract Assets LLC multi-draw term loan from NY Green Bank (New York, US), expressed at ESCO LOD 0
+#
+# Batch 5 FINAL, reviewer rev-F (1 Oct 2026), reconciled from writers F-X and F-Y; base Y, project-acquisition price and setting statuses from X.
+# Reviewer ruling: securitisation_vehicle is the nearest role for the borrower LLC but is NOT counted as tested (tests_unused).
+# Decisions: batch5/rev-F/decisions.json. Profile re-fetched by the reviewer (curl, pdftotext) and read in full.
+# Evidence is one public primary document, fetched 1 Oct 2026 (curl to stdout, pdftotext to stdout; nothing
+# saved): [NYGB-EC] https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf
+# 'Transaction Profile, Ecosave - Commercial Energy Efficiency', NY Green Bank, revised June 2020, 4 pages. PDF page numbers = page of the PDF file.
+# Cited as '<url> | <page>' with exact quotes of 25 words or fewer. Statuses: stated / inferred (follows from a stated fact, said which) /
+# default (source silent) / generic (the source's description of the kind of contract, not a named contract) / unstated (counter-promise
+# required by duality). The profile is NYGB's own reporting document; it names no loan terms, no tenor, no pricing and no customer.
+# The representative contract is one Energy Savings Agreement or guaranteed-savings EPC between Ecosave and an unnamed commercial or
+# institutional customer, whose receivables back the loan. Not in the folder before: no earlier file covers this deal (ls cases/ checked).
+
+miniature: ecosave_nygb_term_loan
+lod: 0
+case: batch5.D38_ecosave_nygb_term_loan
+case_kind: deal   # a named, signed financing: 'entered into on June 27, 2019 and amended and restated on June 4, 2020'; the ESA/EPC below it is the representative (generic) contract
+in_scope: true
+in_scope_why: "The loan finances an ESCO's efficiency contracts: 'The Term Loan is supported by receivables from EE projects completed under Energy Savings Agreements (\"ESAs\") and Energy Performance Contracts (\"EPCs\")' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; 'financing for guaranteed savings projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]. Mixed with DER ('Various: LEDs; HVAC; Solar; CHP; etc.', p.2), so in scope. The ESCO is a named Partner, unlike light_motril"
+
+tests_unused:   # CASE_SPEC_5 list of unused items; each judged on this deal's text
+- item: securitisation_vehicle
+  kind: role
+  used: false
+  reason: "REVIEWER: nearest role, NOT counted (both writers had true). The definition's two distinguishing limbs fail: the source states no bankruptcy remoteness and no notes, and never calls the structure a securitisation; the LLC is the single named borrower of a bilateral term loan from one lender. Counting it would mark the role tested on a plain subsidiary borrowing. Writers' case: The borrower is a single-purpose affiliate that holds the contract receivables: 'Subsidiaries of Ecosave will acquire projects throughout NYS' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; the loan is 'supported by receivables from EE projects' [p.1]. NYGB says the structure 'enables aggregation of commercial efficiency projects into a larger pool that can be refinanced with institutional capital' [p.2]. Fits the 'buys receivables or holds asset title' limb of the definition. Does not fit two things: bankruptcy-remoteness is not stated, and it borrows under a term loan rather than issuing notes. Encoded as inferred (lod0_gaps). Alternative if a reviewer disagrees: the LLC is part of the Partner group and borrower = partner"
+- item: asset_owner=vehicle
+  kind: setting_value
+  used: false
+  reason: "Title to the installed assets is not stated. 'acquire projects' could mean title or only the ESA/EPC contracts; under an EPC the client normally owns the works. Fallback asset_owner = client (default) applied. Not forced: the vehicle holds the receivables, which is receivable_holder = assignee, not asset title"
+- item: hedge_counterparty
+  kind: role
+  used: false
+  reason: "No hedge, swap or rate cap is named in the 4-page profile; loan pricing and tenor are not stated either. Searched the whole text"
+- item: authority_guarantor
+  kind: role
+  used: false
+  reason: "No guarantee of a public client's payments is mentioned. The customers are 'medium-sized, unrated commercial and institutional customers' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; no authority is named. The parent Ecosave Holdings Inc. is listed as 'Sponsor(s) ... Parent' [p.2]; no guarantee by it is stated"
+- item: payment_basis=performance
+  kind: setting_value
+  used: false
+  reason: "The profile speaks of 'guaranteed savings projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2] and 'ESAs' and 'EPCs' [p.1]; guaranteed-savings contracts are payment_basis = savings. An ESA could be a pay-for-performance contract, but no contract term is shown"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: NYGB-EC
+  title: "NY Green Bank Transaction Profile, Ecosave - Commercial Energy Efficiency (revised June 2020)"
+  publisher: "NY Green Bank (NYGB), filed under the Metrics, Reporting & Evaluation Plan Version 3.0 (Public Service Commission Case 13-M-0412)"
+  passage: "https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1 (opening, Transaction Description, Form of NYGB Investment, Location); p.2 (participants table, Market Barriers table, Technologies, Planned Metrics); p.3 (impact table, evaluation); p.4 (evaluation, double counting)"
+  oracle: "none; the only published figures are the commitment and the savings estimates in the impact table, both re-computed in numbers"
+  context:
+  - "Ecosave Holdings Inc.: listed as 'Sponsor(s) ... Parent' of the borrower [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]. Makes no stated promise (no equity, no guarantee), so outside the deal boundary (F23). Prior ties: 'NYGB's previous $2.0 million participation in a construction-to-term loan for the Hebrew Home project with NYCEEC' [p.1], a separate earlier loan"
+  - "NYSERDA: 'NYSERDA will evaluate the direct and indirect impacts that this transaction has on the clean energy finance markets' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.3]. An evaluator, no promise in the deal"
+  - "NYS Public Service Commission and Department of Public Service: the Metrics Plan was 'filed with the NYS Public Service Commission' on June 20, 2016 [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]. A rule source (reporting duty), not a party"
+  - "Utility and other NYSERDA incentives: 'Ecosave projects that receive an incentive or funding from other entities (e.g., utility, other NYSERDA program)' are tracked to avoid double counting [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.4]. Generic; no giver named, no amount"
+  - "Possible later refinancing by 'institutional capital' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]: an aim of the structure, not a promise"
+  notes:
+  - "Naming trap: the profile's participant table lists Ecosave Contract Assets, LLC as 'Client ... Borrower' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]. 'Client' there means NYGB's client, the borrower. In LOD 0 the client is the ESCO's customer (host); the borrower is a vehicle"
+  - "Who is the Partner: Ecosave Inc. 'provides turnkey design, engineering, procurement, construction, utility management and maintenance solutions' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1] and the portfolio is 'operated by Ecosave Inc.' [p.1]. The borrower LLC is a different entity ('Subsidiaries of Ecosave will acquire projects', p.1)"
+  - "The profile does not say which entity signs the ESA or EPC with the customer. Encoded: Ecosave Inc. contracts with the customer; the subsidiary acquires the project and its receivables (inferred from 'acquire' and 'supported by receivables')"
+  - "Row caveat confirmed: no loan tenor, margin, amortisation, security package, draw conditions or repayment terms are in the document. The commitment, the dates and the type ('Multi-Draw Term Loan') are the only terms"
+  - "The commitment doubled: $15.0 million (June 2019) to $30.0 million (4 June 2020). 'NYGB increased the loan size to $30.0 million' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]"
+  - "Partial duplicate of the NYSERDA/NYGB source family (RULINGS and row caveat): no overlap with cases/nyserda_green_bonds_2024a, which is a different financing"
+
+jurisdiction:   # header field, not a setting (F02); dated at financial close
+  country: United States (New York State)
+  iso: US
+  eu_member: false
+  client_eu_general_government_at_close: false
+  as_of: "financial close 27 June 2019, amended and restated 4 June 2020 [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]"
+  status: stated
+  why: "'Supporting Commercial Energy Efficiency in New York State'; 'Statewide ... projects throughout NYS' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; customers are commercial and institutional. Outside the EU, so C1 does not apply"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 37 (a list = several roles, home role first; F13); groups computed from the role(s)
+  customer:
+    role: host
+    groups: [demand]
+    status: generic
+    text: "'medium-sized, unrated commercial and institutional customers' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; not named, number not stated. Encoded as private (a mix of commercial and institutional; an institutional customer could be public, see settings)"
+  ecosave_inc:
+    entity: ecosave_inc
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: Ecosave Inc.
+    text: "'Ecosave is a Philadelphia-based energy services company that provides turnkey design, engineering, procurement, construction, utility management and maintenance solutions' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; 'projects operated by Ecosave Inc.' [p.1]"
+  contract_assets:
+    entity: ecosave_contract_assets_llc
+    role: securitisation_vehicle
+    groups: [capital]
+    status: inferred
+    name: Ecosave Contract Assets, LLC
+    text: "Nearest role, not counted as a test of securitisation_vehicle (reviewer). 'Client ... Ecosave Contract Assets, LLC ... Borrower' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]; the loan is 'supported by receivables from EE projects completed under' ESAs and EPCs [p.1]. Role inferred, weak fit (see tests_unused and lod0_gaps)"
+  nygb:
+    entity: ny_green_bank
+    role: government_financier
+    groups: [public, capital, risk]
+    status: inferred
+    name: NY Green Bank (NYGB)
+    text: "'NY Green Bank ('NYGB') committed $15.0 million to finance a portfolio of energy efficiency projects operated by Ecosave Inc.' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]. A state green bank 'established' by a Commission order ('Order Establishing New York Green Bank and Providing Initial Capitalization', fn.4, p.2); public status inferred from that title. Lender, so government_financier by rule B2-R1"
+
+contract:   # the agreements that establish the commitments
+  term_loan:
+    core: contract
+    parties: [nygb, contract_assets]
+    status: stated
+    note: "the 'Term Loan', a $30.0 million 'Multi-Draw Term Loan' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1], 'entered into on June 27, 2019 and amended and restated on June 4, 2020' [p.1]. The agreement itself is not public in this document"
+  esa_epc:
+    core: contract
+    parties: [ecosave_inc, customer]
+    status: generic
+    note: "the representative contract: an Energy Savings Agreement or Energy Performance Contract with a guaranteed-savings feature ('guaranteed savings projects', https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2). Neither a customer nor a term is named"
+  project_acquisition:
+    core: contract
+    parties: [ecosave_inc, contract_assets]
+    status: inferred
+    note: "'Subsidiaries of Ecosave will acquire projects throughout NYS' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1], paid for with 'the proceeds of the $30 million credit facility' used 'to support the deployment of new EE or DER projects' [p.1]. The acquisition agreement and its price are not described"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: funding_promise
+    from: nygb
+    to: contract_assets
+    status: stated
+    funding_instrument: loan   # multi-draw term loan
+    what: "multi-draw term loan of up to $30.0 million ($15.0 million committed June 2019, raised 4 June 2020) [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; 'Committed Capital $30.0 million' [p.1]"
+    established_by: term_loan
+  c2:
+    family: payment_promise
+    from: contract_assets
+    to: nygb
+    status: inferred
+    what: "repays the Term Loan; repayment terms, interest and tenor are not stated. Inferred from 'Term Loan' and 'Asset Loan & Investment' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]"
+    established_by: term_loan
+  c3:
+    family: performance_promise
+    from: ecosave_inc
+    to: customer
+    status: generic
+    what: "designs, builds and operates the efficiency project, with guaranteed savings: 'turnkey design, engineering, procurement, construction, utility management and maintenance' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; 'financing for guaranteed savings projects' [p.2]. Shortfall make-good stays inside this promise"
+    established_by: esa_epc
+  c4:
+    family: payment_promise
+    from: customer
+    to: contract_assets
+    status: inferred
+    what: "pays under the ESA or EPC; the receivables 'support' the loan [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]. Payee inferred as the borrower (it holds the receivables); amounts, tenor and basis not stated"
+    established_by: esa_epc
+  c5:
+    family: determination_promise
+    from: unstated
+    to: [customer, ecosave_inc]
+    status: unstated
+    determines: savings   # savings under the guaranteed-savings contract
+    what: "F21: payments under a guaranteed-savings contract are computed on savings, so someone must establish them; the profile does not say who. Not the NYSERDA evaluation, which is 'Impact evaluation ... annual review and analysis of actual energy savings data collected by Ecosave' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.3] for market reporting, not for payment"
+    established_by: esa_epc
+  c6:
+    family: payment_promise
+    from: contract_assets
+    to: ecosave_inc
+    status: inferred
+    what: "price for the acquired projects (a purchase price, not a loan: no future claim back, so payment_promise as writer X) with draws on the Term Loan: 'Ecosave is expected to use the proceeds of the $30 million credit facility ... to support the deployment of new EE or DER projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]. Price and timing not stated"
+    established_by: project_acquisition
+  c7:
+    family: performance_promise
+    from: ecosave_inc
+    to: contract_assets
+    status: inferred
+    what: "conveys completed projects and their ESA/EPC receivables: 'Subsidiaries of Ecosave will acquire projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; 'supported by receivables from EE projects completed under' ESAs and EPCs [p.1]"
+    established_by: project_acquisition
+
+settings:   # the 13 LOD 0 facets, in vocabulary order
+  payment_basis: {value: savings, status: inferred, why: "reviewer: inferred, not stated, since neither contract type is defined in the profile and an ESA can be priced on service or supply. 'financing for guaranteed savings projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]; receivables from 'Energy Savings Agreements' and 'Energy Performance Contracts' [p.1]. No contract is shown, so a pay-for-performance ESA would be the alternative (value performance)"}
+  client_sector:
+    value: private
+    status: inferred
+    why: "'commercial and institutional customers' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]: private for the commercial share; an institutional customer (hospital, school, a public body) could be public. Not split. If public in the EU the Eurostat test would apply; here the US so C1 is off whatever the mix"
+  partner_form:
+    value: corporate
+    status: stated
+    why: "Ecosave Inc., 'a Philadelphia-based energy services company' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1], is a standing company, not a deal SPV. The borrower LLC is the separate vehicle"
+  borrower:
+    value: vehicle
+    status: stated
+    why: "stated: the participants table names the LLC 'Borrower', distinct from the Partner Ecosave Inc. 'Borrower' is Ecosave Contract Assets, LLC [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2], an affiliate that is not the Partner (a fund or intermediary that is not the Partner). The vehicle reading is inferred from 'Subsidiaries of Ecosave will acquire projects' (p.1)"
+  receivable_holder:
+    value: assignee
+    status: inferred
+    why: "the loan is 'supported by receivables from EE projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1] and the subsidiary acquires the projects, so the client's payments go to the borrower, not to Ecosave Inc. Whether by assignment or pledge is not stated"
+  collection_placement:
+    value: assignee_direct
+    status: default
+    why: "source silent on where customer payments land; ENCODING fallback for receivable_holder = assignee. Alternative pledged_escrow (a lender-controlled account is typical, but nothing is stated)"
+  aggregation:
+    value: pool
+    status: stated
+    why: "'committed $15.0 million to finance a portfolio of energy efficiency projects' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; 'enables aggregation of commercial efficiency projects into a larger pool' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.2]; the facility funds many projects under one set of loan documents ('avoiding the need for separate loan documentation for each project', p.2)"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "no rank is stated; one lender and one loan are named"
+  assignment_recourse:
+    value: waiver
+    status: default
+    why: "receivable_holder = assignee and the source is silent on the assignee's exposure to Ecosave's performance; ENCODING fallback waiver. Note the loan stays with the borrower, so the real exposure of NYGB is to the receivables of guaranteed-savings contracts, which depend on performance (alternative performance_exposed)"
+  savings_basis:
+    value: measured
+    status: default
+    why: "source silent on how savings are measured for payment. 'Impact evaluation will use actual performance data' [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.3] concerns NYSERDA's market evaluation, not the contract"
+  grant_recipient:
+    value: none
+    status: default
+    why: "no grant to the customer or the Partner is stated for this loan. Utility and NYSERDA incentives on some projects are only tracked for double counting [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.4] (generic)"
+  asset_owner:
+    value: client
+    status: default
+    why: "title to the installed assets is not stated; ENCODING fallback client. Alternatives: partner or vehicle if the subsidiary holds title (see tests_unused)"
+  bill_custody:
+    value: client
+    status: default
+    why: "source silent; an ESA/EPC with 'utility management' (p.1) may change this, but no bill arrangement is described"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments + (b) non-repayable government financing, else ON BALANCE SHEET for government (E15 L2578-2582)
+    applies_here: false
+    this_case: "US customers (New York); not EU at close; the customer mix is not split"
+    source: E15 L2576-2582, L6930-6943
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: [partner, lessor, vehicle]}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? Private counterpart of C1: fires when client_sector is private and asset_owner is not client"
+    applies_here: false
+    this_case: "asset_owner = client by fallback (title unstated). It would fire if the subsidiary owns the assets under ESAs; the profile says nothing on accounting"
+    source: E02 L3293-3295; elements.yaml IFRS16_lease_test
+  nygb_metrics_plan:
+    scope: external-sectoral
+    rule: "Reporting under the 'Metrics, Reporting & Evaluation Plan, Version 3.0', filed with the NYS Public Service Commission on 20 June 2016 [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]; NYGB 'minimum investment criteria specifically require that transactions will have the potential for energy savings and/or clean energy generation' [p.2]"
+    applies_here: true
+    source: "https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1-2"
+
+numbers:   # only published figures, as printed, with units; checks shown with arithmetic
+  commitment_june_2019_usd: 15.0 million            # [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]
+  commitment_after_4_june_2020_usd: 30.0 million     # [https://greenbank.ny.gov/-/media/greenbanknew/files/NYGB-Transaction-Profile_Ecosave.pdf | p.1]
+  loan_signed: 2019-06-27                            # 'entered into on June 27, 2019' [p.1]
+  amended_and_restated: 2020-06-04                   # [p.1]
+  ecosave_goal: "over $30.0 million of EE and DER projects in New York by 2029; New York office opened April 2019 [p.1]"
+  hebrew_home_prior_participation_usd: 2.0 million   # NYGB's earlier participation with NYCEEC [p.1]
+  impacts:   # 'Estimated gross lifetime and first-year' impacts of the Term Loan [p.3]
+    electricity_mwh: {lifetime_low: 158471, lifetime_high: 198089, annual_low: 10565, annual_high: 13206}
+    natural_gas_mmbtu: {lifetime_low: 486108, lifetime_high: 607635, annual_low: 32407, annual_high: 40509}
+    ghg_metric_tons: {lifetime_low: 105114, lifetime_high: 131393, annual_low: 7008, annual_high: 8760}
+  derived:
+    commitment_step: "30.0 - 15.0 = 15.0 million (the June 2020 increase doubles the commitment; the profile says 'increased the loan size to $30.0 million', consistent)"
+    lifetime_over_annual: "lifetime / annual = 158,471 / 10,565 = 15.00; 198,089 / 13,206 = 15.00; 486,108 / 32,407 = 15.00; 607,635 / 40,509 = 15.00; 105,114 / 7,008 = 15.00; 131,393 / 8,760 = 15.00 (each within 7 units of annual x 15, rounding). The profile does not state a project life; a 15-year basis is implied by the table, not published"
+    low_high_ratio: "198,089 / 158,471 = 1.25 for electricity; 607,635 / 486,108 = 1.25 for gas; 131,393 / 105,114 = 1.25 for GHG (the high case is 25% above the low case in all three, not stated by the source)"
+    not_published: "interest rate, margin, tenor, amortisation, fees, draw schedule, number or size of projects, receivable volumes: none are in the document, so none are derived"
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  customer: {gives: [c4], receives: [c3, c5], one_way: false}
+  ecosave_inc: {gives: [c3, c7], receives: [c5, c6], one_way: false}
+  contract_assets: {gives: [c2, c6], receives: [c1, c4, c7], one_way: false}
+  nygb: {gives: [c1], receives: [c2], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with a classification
+- kind: borrowing_vehicle_is_not_a_note_issuer
+  description: "securitisation_vehicle is defined as a 'bankruptcy-remote entity, not the Partner, that buys receivables or holds asset title and issues notes against them'. Ecosave Contract Assets, LLC buys (acquires) projects and holds receivables but takes a bank-style term loan from one lender and issues no notes; bankruptcy-remoteness is not stated. It fits the role only on two limbs of three. Encoded as inferred. Not proposed: a new term. Possible definition reading ('borrows against' as well as 'issues notes against') is the owner's call"
+  classification: "encoding question (definition touch-up, owner's call); the deal can be written with the current role; reviewer: not counted as a use of securitisation_vehicle"
+- kind: customer_mix
+  description: "'commercial and institutional customers' without a split. client_sector takes one value; a pool mixing private and public clients has no value. C1 (public, EU) and IFRS16 (private) depend on it"
+  classification: "evidence gap here; encoding question if a real mixed pool turns up"
+- kind: loan_terms
+  description: "Tenor, pricing, amortisation, security and draw conditions of the Term Loan are absent from the profile"
+  classification: "evidence gap"
+- kind: contract_form
+  description: "ESA versus EPC with guaranteed savings is not shown at contract level, so payment_basis and fee structure rest on the profile's two words"
+  classification: "evidence gap (LOD 2 fee_basis)"
+
+conventions_applied:   # what this file assumes beyond elements.yaml (owner rules on the vocabulary)
+- id: F02
+  title: "jurisdiction header field, dated at financial close; C1 trigger"
+  convention: "A `jurisdiction` block (country, EU membership at close, whether the client is EU general government at close) sits in the header; C1 applies_when {client_sector: public, jurisdiction: EU at close}."
+  applied_here: "jurisdiction US-NY, dated close 27 Jun 2019 / 4 Jun 2020; C1 applies_here false"
+- id: F04
+  title: "borrower rule"
+  convention: "borrower = none only when the source says own funds or equity; when no loan or equity is named, keep the default partner with status default."
+  applied_here: "borrower = vehicle (named borrower that is not the Partner), not the default"
+- id: F06
+  title: "one_way form"
+  convention: "A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated."
+  applied_here: "none one_way: every party has a stated or inferred counter-promise; c5 is unstated but has no party of its own"
+- id: F21
+  title: "determination_promise is required"
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  applied_here: "c5 determination_promise, from 'unstated' (the profile names no party)"
+- id: IFRS16
+  title: "IFRS16_lease_test rule entry"
+  convention: "IFRS16_lease_test applies_when {client_sector: private, asset_owner not client}."
+  applied_here: "applies_here false (asset_owner client by fallback); would fire if title sits with the subsidiary"
+- id: B2-R1
+  title: "grant or loan giver by identity"
+  convention: "A government body that lends or grants takes government_financier; grant_provider only for givers that are neither government nor EU funds."
+  applied_here: "NYGB, a state green bank that lends -> government_financier"
+- id: B3-web
+  title: "web evidence"
+  convention: "Evidence cited '<url> | <page or section>' with exact quotes of 25 words or fewer; PDF page = page of the PDF file."
+  applied_here: "one primary 4-page PDF"
+- id: B3-scope
+  title: "in_scope decided from the source"
+  convention: "A case counts only if the source shows an efficiency deal; otherwise the file is kept as a witness and its uses do not count."
+  applied_here: "in_scope true: guaranteed-savings ESA/EPC receivables back the loan"
+- id: B5-payment_basis
+  title: "payment_basis setting (1 Oct ruling 1)"
+  convention: "payment_basis goes first in settings with a status and a reason; no Partner is possible only when payment_basis is asset."
+  applied_here: "payment_basis savings, inferred (reviewer)"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, securitisation_vehicle, government_financier]
+  roles_count: 4 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: [determination_promise]
+  settings_by_status: {stated: 3, inferred: 3, generic: 0, default: 7}
+  commitments_by_status: {stated: 1, inferred: 4, generic: 1, unstated: 1}
+  one_way_parties: []
+  parties_count: 4
+  commitments_count: 7
+  below_lod0: {lod1_adds: 'draws on the facility, project acquisitions, ESA/EPC signings and completions, quarterly or monthly
+      repayment, the 4 June 2020 amendment and restatement', lod2_adds: 'interest margin and tenor, ESA fee and guaranteed-savings
+      level per project, eligibility criteria for projects financed (the profile says projects must meet pre-defined criteria,
+      p.2, but does not list them)'}
+risk_allocation: []   # owner rulings 15-16 (3 Oct): the NYGB profile states no risk split; A's inferred R1 row equals the default and is dropped; the converter derives every row (ENCODING.md)

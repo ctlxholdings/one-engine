@@ -1,0 +1,369 @@
+# Miniature — Sittard city hall EPC with ING finance lease (Netherlands) expressed at ESCO LOD 0
+#
+# Batch 2, reconciled by the adjudicator from writers Y (base) and X; changes listed in source.notes. Original writer Y. Shape copied from bytom_schools-lod0.yaml (normalised
+# 1 Oct 2026). Every fact carries its status: stated, inferred (follows from a stated fact — said which), default
+# (source silent), generic (the source's general description of leasing, not this deal), unstated (counter-promise
+# required by duality). Nothing invented. Figures 22-23 are text-extracted diagrams; which edge a contract label
+# sits on is read from the layout and marked inferred.
+
+miniature: sittard_cityhall
+lod: 0
+case: corpus_batch2.sittard_cityhall
+case_kind: deal
+tests_unused:   # the 22 items (16 roles + 6 values) unused in the first 13 files; CASE_SPEC_2 names this case's tests
+- item: lessor
+  kind: role
+  used: true
+  reason: "'Intermittent financing 100 % through ESCO, Financial lease by ING bank' (E08 L2888); Fig 23 'FIN ... 2. Financial lease' (L2932-2934). Lessor = 'Owns the equipment until the lease is paid'"
+- item: asset_owner=lessor
+  kind: setting_value
+  used: true
+  reason: "inferred, not stated for Sittard: in leasing 'Lessor is legal owner' and 'Lessee is economic owner => has to capitalize investment' (finance-lease table L2408-2409; L1963-1970). The setting asks who owns the installed assets during the term; legal title sits with ING. The economic owner is the lessee (the city, see borrower), which the value does not capture"
+- item: grant_provider
+  kind: role
+  used: false
+  reason: "'Government subsidy € 13,000' (L2889): the giver is government, so government_financier, whose definition lists grants and which is 'what the Eurostat thresholds count' — and C1 applies here (Dutch municipality). grant_provider is kept for givers that are neither government nor EU funds (adjudication rule B2-R1)"
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E08
+  title: Financing of ESCo Projects — IEA DSM Task XVI manual (Bleyl & Schinnerl, Grazer Energieagentur)
+  publisher: IEA DSM Task XVI / Grazer Energieagentur, c. 2008-10
+  passage: "§5.5.4 'City Hall in Sittard uses EPC with Finance Leasing for HVAC, Lighting and Energy Management, Netherlands', Figures 22-23 (corpus input/iea-dsm-financing-options-manual.txt L2829-2959); leasing features §5.2 and §5.4 (L1926-2010, L2287-2446, fn27 L2445-2446)"
+  oracle: none — not a published validation target; acceptance is structural
+  context:
+  - "Ger Kempen of Essent Local Energy Solutions reported the case (L2833-2835)"
+  - "'Covering agreement between ING bank and Essent: Target groups A+B defined for further EC-projects; Certain interest-conditions for target groups defined' (L2956-2958); Fig 22 'General agreement about finance-leasing' (L2913-2914): a framework between financier and ESCO above this deal, recorded as the framework contract below"
+  notes:
+  - "CASE_SPEC_2 asks for the subcontractor flow if the source names one: Fig 22 names 'Subcontractors: Implementation and maintenance by installation firms according design Essent / Technical risks of good function' (L2922-2926) under 'GC – Essent' with 'Procurement of subcontracts' (L2917-2919)"
+  - "Who the lessee is: Fig 23 places '1. Framework contract / 2. Financial lease' between FIN (top) and CLIENT (right), and '1. EPC Contract / 2. Financing and pledge agreement' between CLIENT and ESCO (L2932-2944); the cash-flow side shows 'ESCO forwards leasing rates 15 years' and 'Client pays contracting rates 15 years' (L2937-2943). Read as: the city is lessee, pays all-in contracting rates to Essent, which forwards the leasing rates to ING. Alternative: Essent is lessee (Fig 22 'General agreement about finance-leasing' sits between ING and Essent, L2911-2914)"
+  - "'pledge agreement' (L2942): what is pledged is not said"
+  - "Adjudication (batch 2): lessee = the city (Y) kept over Essent (X). Fig 23 is a triangle: the label '1. Framework contract 2. Financial lease' sits on the FIN-CLIENT diagonal and 'Total investment (260,000 €)' on the FIN-CLIENT side of the cash-flow triangle; ING carries the 'Risk of non payment' (L2910), which is the client's risk; and 'ESCO forwards leasing rates' (L2937) reads as passing on, not paying. What would change it: a text sentence naming Essent as lessee. Subsidy giver changed from grant_provider (Y) to government_financier (X, rule B2-R1). Agency promise c5 downgraded stated -> inferred (its family depends on the lessee reading). Y's c6 (unstated ING fee to Essent for forwarding) dropped: neither party is one-way, so F06 does not require it"
+  - "Interim financing: 'Intermittent financing 100 % through ESCO' (L2888) during construction stays inside c1 (F05); time-phased financing is below LOD 0 (G04)"
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: Netherlands
+  iso: NL
+  eu_member: true
+  client_eu_general_government: true
+  status: stated
+  why: "'The municipality Sittard Geleen in the south of the Netherlands' (L2836); the Netherlands is surveyed as a member state in E02 (L169). A municipality is general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: each contract establishes (fibo-fnd-rel-rel:confers) its commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  city_of_sittard:
+    entity: gemeente_sittard_geleen
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Municipality of Sittard-Geleen (city hall)
+    text: "'The municipality Sittard Geleen ... One of the first projects was realized in the city hall' (L2836-2838); 'building owner (city of Sittard)' (L2886)"
+  essent:
+    entity: essent_energy_services
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: Essent Energy Services
+    text: "'design and project management by Essent Energy Services (works as ESCO)' (L2886-2887); 'ESCO as a general contractor' (L2890); Fig 22 'GC – Essent': design, project management, procurement of subcontracts, monitoring, 'Economic risk of guaranties' (L2914-2921)"
+  ing_bank:
+    entity: ing_bank
+    role: lessor
+    groups: [capital]
+    status: stated
+    name: ING bank
+    text: "'Financial lease by ING bank' (L2888); Fig 22 'FI – ING bank': 'Financing', 'Risk of non payment' (L2909-2911); Fig 23 'FIN ... Financial lease' (L2932-2934). lender is the alternative (a finance lease 'can be seen as a mixture between a conventional credit and an operate lease', L2288-2289)"
+  government:
+    role: government_financier
+    groups: [public, capital, risk]
+    status: stated
+    text: "'Government subsidy € 13,000' (L2889); the granting body is not named. government_financier, not grant_provider: the definition lists grants and is what the Eurostat thresholds count (E15 L5361-5380: only EU financing is excluded)"
+  subcontractors:
+    role: epc_contractor
+    groups: [delivery]
+    status: stated
+    text: "Fig 22 'Subcontractors: Implementation and maintenance by installation firms according design Essent / Technical risks of good function' (L2922-2926). Separate companies from Essent, not named"
+
+contract:   # the agreements that establish the commitments
+  epc_contract:
+    core: contract
+    parties: [city_of_sittard, essent]
+    term_years: 15
+    status: stated
+    note: "'Energy Performance Contract' (L2885); 'Contract period 15 years' (L2891); Fig 23 '1. EPC Contract 2. Financing and pledge agreement' (L2940-2942)"
+  finance_lease:
+    core: contract
+    parties: [ing_bank, city_of_sittard]
+    term_years: 15
+    status: inferred
+    note: "Fig 23 '1. Framework contract 2. Financial lease' on the FIN-CLIENT edge (L2932-2934, layout reading); leasing rates over 15 years (L2937-2938)"
+  framework_ing_essent:
+    core: contract
+    parties: [ing_bank, essent]
+    status: stated
+    note: "Fig 22 'General agreement about finance-leasing' (L2913-2914); 'Covering agreement between ING bank and Essent' (L2956-2958)"
+  subcontracts:
+    core: contract
+    parties: [essent, subcontractors]
+    status: stated
+    note: "Fig 22 'Procurement of subcontracts' (L2917-2919)"
+  subsidy:
+    core: contract
+    parties: [government, city_of_sittard]
+    status: inferred
+    note: "'Government subsidy € 13,000' (L2889); recipient not stated"
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: essent
+    to: city_of_sittard
+    status: stated
+    what: "design and project management, energy management and controlling system, 10 high-efficiency boilers, refrigeration with 70% free cooling, high-efficiency lighting (L2874-2879, L2886-2887); guaranteed savings heat 293 MWh/a and electricity 150 MWh/a (L2893-2894); 'ESCo takes total care' (L2950). Essent's 'Intermittent financing 100 % through ESCO' during construction (L2888) is inside this promise (F05)"
+    established_by: epc_contract
+  c2:
+    family: payment_promise
+    from: city_of_sittard
+    to: essent
+    status: stated
+    what: "'Client pays contracting rates 15 years' (Fig 23 L2940-2943); 'Sharing of extra savings: 50 % / 50 % to ESCO/Client' (L2895)"
+    established_by: epc_contract
+  c3:
+    family: funding_promise
+    from: ing_bank
+    to: city_of_sittard
+    status: inferred
+    funding_instrument: lease   # finance lease of the installation (Fig 23)
+    what: "finance lease of the installation, 'Total investment (260,000 €)' (Fig 23 L2934-2935); ING carries the 'Risk of non payment' (L2910). Lessee read from the Fig 23 layout (see source.notes); alternative to: essent"
+    established_by: finance_lease
+  c4:
+    family: payment_promise
+    from: city_of_sittard
+    to: ing_bank
+    status: inferred
+    what: "leasing rates over 15 years (Fig 23 L2937-2938), paid inside the contracting rates and forwarded by Essent (c5)"
+    established_by: finance_lease
+  c5:
+    family: agency_promise
+    from: essent
+    to: ing_bank
+    status: inferred
+    what: "'ESCO forwards leasing rates 15 years' (Fig 23 L2937-2938): Essent collects the client's contracting rates and passes the leasing part to ING"
+    established_by: framework_ing_essent
+  c6:
+    family: performance_promise
+    from: subcontractors
+    to: essent
+    status: stated
+    what: "'Implementation and maintenance by installation firms according design Essent'; they carry the 'Technical risks of good function' (L2923-2926)"
+    established_by: subcontracts
+  c7:
+    family: payment_promise
+    from: essent
+    to: subcontractors
+    status: inferred
+    what: payment for the subcontracted works; Essent procures the subcontracts as general contractor (L2890, L2917-2919)
+    established_by: subcontracts
+  c8:
+    family: determination_promise
+    from: essent
+    to: city_of_sittard
+    status: stated
+    determines: savings   # monitoring of savings above the guarantee (L2895, L2920)
+    what: "Fig 22 'Monitoring' by GC – Essent (L2920); needed because 'extra savings' above the guarantee are shared 50/50 (L2895) (F21)"
+    established_by: epc_contract
+  c9:
+    family: benefit_promise
+    from: government
+    to: city_of_sittard
+    status: inferred
+    what: "'Government subsidy € 13,000' (L2889); recipient inferred — the city owns the building (L2886) and is the lessee; alternative essent"
+    established_by: subsidy
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: contracting rates over 15 years (E08 L2940-2943) against guaranteed savings 293/150 MWh/a, 'Sharing of extra savings: 50 % / 50 % to ESCO/Client' (L2893-2895)."}
+  client_sector: {value: public, status: stated, why: "the municipality / 'city of Sittard' (L2836, L2886)"}
+  partner_form: {value: corporate, status: default, why: "Essent Energy Services, part of Essent (L2835, L2887); no project SPV mentioned"}
+  borrower:
+    value: client
+    status: inferred
+    why: "the city is read as lessee of the finance lease (Fig 23 layout, see source.notes); a finance lease is 'closer to the credit' (L2288-2290) and the lessee 'has to capitalize investment' (L2409). Alternative partner if Essent is the lessee; Essent's own 'Intermittent financing' (L2888) covers the construction period only"
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: "'Client pays contracting rates' to the ESCO and the ESCO 'forwards leasing rates' (Fig 23 L2937-2943): the claim stays with Essent, which acts as collector for ING; no cession is mentioned (contrast the pharma case's 'cession of claims', L2558)"
+  collection_placement:
+    value: operator_own
+    status: inferred
+    why: "the client pays Essent, which forwards (L2937-2943). Alternative pledged_escrow: a 'Financing and pledge agreement' exists (L2941-2942) but what is pledged and where payments land is not said"
+  aggregation:
+    value: none
+    status: inferred
+    why: "one building, one EPC (L2838). The ING-Essent covering agreement for 'further EC-projects' (L2956-2958) is a financing framework, not a client-side framework or pool"
+  debt_seniority: {value: senior, status: default, why: not stated; one financier}
+  assignment_recourse: {value: not_applicable, status: inferred, why: follows from receivable_holder = partner}
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "guaranteed savings in MWh/a (L2893-2894) with 50/50 sharing of 'extra savings' (L2895) and 'Monitoring' (L2920)"
+  grant_recipient:
+    value: client
+    status: inferred
+    why: "'Government subsidy € 13,000' (L2889); recipient not stated — the city as building owner and lessee is the likelier; alternative partner"
+  asset_owner:
+    value: lessor
+    status: inferred
+    why: "'Lessor is legal owner' / 'Lessee is economic owner' (L2408-2409; L1963-1970) applied to 'Financial lease by ING bank' (L2888). The economic owner (the city) carries the asset on its books (fn27 L2445-2446)"
+  bill_custody: {value: client, status: default, why: not stated}
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: true
+    this_case: "applies; not computable — the guarantee is in MWh (L2893-2894), not EUR, and contracting rates are not given. Term (b) includes the EUR 13,000 government subsidy (E15 L5361-5380; giver = government_financier): 13,000 / 260,000 = 5.0% of capital cost, 'of MODERATE importance' (10% or less, E15 L5356-5359). Independently, the source says finance leasing puts the asset on the lessee's books: 'Lessee is economic proprietary and has to account for the investment in his balance sheet. Thus finance leasing is not Maastricht neutral' (E08 fn27 L2445-2446). With the city as lessee that points ON BALANCE whatever C1 gives"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat; E08 fn27 L2445-2446
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public; the Eurostat test and the fn27 statement cover the public side
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+
+numbers:   # instance data, not vocabulary
+  contract_costs_eur: 260000 (L2889; Fig 23 'Total investment (260,000 €)' L2935)
+  government_subsidy_eur: 13000 (L2889)
+  term_years: 15 (L2891)
+  floor_area_m2: 5600 (L2847)
+  volume_m3: 16750 (L2848)
+  energy_costs_eur_per_year: 200000 (L2849, '0.2 million €/a')
+  guaranteed_heat_mwh_per_year: 293 (L2894)
+  guaranteed_electricity_mwh_per_year: 150 (L2894)
+  extra_savings_split_esco_client_pct: 50 / 50 (L2895)
+  total_operating_cost_reduction_pct: 4 (L2954)
+  emission_reduction_pct: 17 (L2955)
+  boilers: 10 high-efficiency (L2875-2876)
+  free_cooling_pct: 70 (L2877)
+  derived:
+    guaranteed_energy_mwh_per_year: 293 + 150 = 443
+    subsidy_share_of_contract_cost_pct: 13,000 / 260,000 = 5.0
+    net_of_subsidy_eur: 260,000 - 13,000 = 247,000 (only if the subsidy reduced the leased amount; Fig 23 shows the full 260,000 as the investment)
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  city_of_sittard: {gives: [c2, c4], receives: [c1, c3, c8, c9], one_way: false}
+  essent: {gives: [c1, c5, c7, c8], receives: [c2, c6], one_way: false}
+  ing_bank: {gives: [c3], receives: [c4, c5], one_way: false}
+  government:
+    gives: [c9]
+    receives: []
+    one_way: true
+    reason: benefit promise, unilateral by nature (subsidy, L2889)
+  subcontractors: {gives: [c6], receives: [c7], one_way: false}
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks
+- kind: legal_vs_economic_owner
+  description: "asset_owner records one owner during the term. In a finance lease the source separates legal ownership (lessor) from economic ownership (lessee, who capitalises): L1963-1970, L2408-2409, fn27 L2445-2446. The balance-sheet consequence the setting exists for follows the economic owner, so asset_owner = lessor alone hides that the city carries the asset. Candidate classification: definition touch-up (say which ownership asset_owner records), no new value"
+  classification: "encoding question (definition touch-up of asset_owner: legal owner during the term; the economic-owner split is LOD 1)"
+- kind: lessee_not_a_setting
+  description: "LOD 0 has no way to say who is the lessee: borrower takes 'client' by analogy (a finance lease as credit). Workable for Sittard; with an operate lease to the Partner (austria_pharma_lease) borrower = partner reads oddly because the source says the lease keeps the investment off the ESCO's balance sheet. Candidate classification: encoding question — extend borrower's definition to 'takes the project loan or lease'"
+  classification: "encoding question (definition touch-up of borrower; no new value)"
+- kind: grant_giver_overlap
+  description: "A national government subsidy fits both grant_provider ('Gives non-repayable support') and government_financier ('grants, loans, equity, guarantees'). Batch 1's F03 text says 'grant_provider is for national or other non-EU grants', which contradicts government_financier's definition and would take the subsidy out of the Eurostat count C1 needs here. Resolved by rule B2-R1 (government giver -> government_financier); the grant_provider definition must say so"
+  classification: "real LOD 0 gap (definition change of grant_provider; correct the F03 convention text)"
+- kind: interim_financing
+  description: "'Intermittent financing 100 % through ESCO' (L2888) during construction, then the ING lease: two financiers in sequence"
+  classification: "below LOD 0 (G04 time-phased financing)"
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F01
+  title: C1 rule text states the NPV basis
+  convention: 'C1_eurostat: NPV at financial close of guaranteed savings >= NPV of operational payments + non-repayable government financing, else on the government balance sheet (E15 L2578-2582; summary box L6932-6943 omits the basis). Files that computed nominal sums say so; with level annual flows the direction does not change.'
+  origin: verdict change 1; findings F01
+  applied_here: C1 rule text carries the NPV basis; not computable (guarantee in MWh)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction NL / EU general government; C1 applies_here true
+- id: F04
+  title: borrower rule for provider-financed deals
+  convention: borrower = none only when the source says own funds or equity; when the Partner finances the works and no loan or equity is named, keep the default partner with status default.
+  origin: verdict change 4; findings F04; gaps G24
+  applied_here: a lease to the client is read from Fig 23, so borrower = client (inferred), not the provider-financed default
+- id: F08
+  title: 'conditional default: assignment_recourse'
+  convention: "receivable_holder in {assignee, split} and source silent -> assignment_recourse = waiver, status generic (E06 L503-505 'without recourse against the seller'; E08 L3222-3226 'continued payment obligations ... regardless of any disputes'); performance_exposed only when the source shows the assigned leg varying with performance."
+  origin: verdict change 3; findings F08; gaps G28
+  applied_here: not triggered — Essent collects and forwards; nothing is assigned
+- id: F09
+  title: 'conditional default: collection_placement'
+  convention: receivable_holder in {assignee, split} and source silent -> collection_placement = assignee_direct, status generic (E06 L558; E08 Fig 30 L3312-3317).
+  origin: verdict change 3; findings F09; gaps G28
+  applied_here: not triggered
+- id: G23
+  title: IFRS16_lease_test rule entry
+  convention: "Rule entry IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner}: whether the client's contract is a service agreement or a lease (IFRS 16) — the private counterpart of C1. A rule beside the tree, not a setting (corpus: E02 L3293-3295)."
+  origin: verdict change 6; gaps G23
+  applied_here: applies_here false (public client)
+- id: F03
+  title: ESIF/Cohesion grant giver = eu_funds
+  convention: A grant paid from an ESIF/Cohesion operational programme is given by eu_funds whatever national body administers it (elements_pilot eu_funds = 'EU structural funds and their managing authority'); grant_provider is for national or other non-EU grants. The EU/national co-financing split is an amount (LOD 1), not a role.
+  origin: verdict rule; findings F03; gaps G01
+  applied_here: "'Government subsidy' with no EU programme named -> not eu_funds; giver is government -> government_financier (rule B2-R1, which corrects this convention's last clause: grant_provider is for non-government, non-EU givers)"
+- id: F05
+  title: "provider's own capital is inside performance_promise"
+  convention: "Under one service contract the provider's own capital is part of its performance_promise; funding_promise requires a distinct claim between distinct parties (loan, equity, receivable purchase, lease)."
+  origin: verdict rule; findings F05; gaps G07
+  applied_here: Essent's construction-period financing (L2888) is inside c1; ING's lease is the distinct funding c3
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'government one_way: true (benefit). Essent and ING each have stated or inferred reciprocals, so neither is one_way and no unstated forwarding fee is recorded'
+- id: F21
+  title: determination_promise is required
+  convention: "A determination_promise is required whenever a payment is computed on savings or completion; from = the party the source names, else the literal 'unstated'."
+  origin: verdict rule; findings F21; gaps G08
+  applied_here: c8 from Essent ('Monitoring', L2920)
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "Essent's 'Economic risk of guaranties' (L2921-2922) and the subcontractors' 'Technical risks of good function' (L2926) stay inside c1 and c6"
+- id: B2-R1
+  title: grant giver by identity (batch-2 adjudication)
+  convention: "A grant or subsidy from general government or a public entity acting for it is given by government_financier (its definition lists grants; it is what the Eurostat thresholds count, E15 L5361-5391); from EU structural funds by eu_funds (F03); grant_provider only for givers that are neither (GEF and other multilateral grant windows, foundations, utility rebate programmes). Corrects F03's last clause ('grant_provider is for national or other non-EU grants')."
+  origin: batch-2 adjudication; audit proposal unused/final.json grant_provider (rename_redefine)
+  applied_here: "the EUR 13,000 'Government subsidy' (L2889) -> government_financier"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, lessor, government_financier, epc_contractor]
+  roles_count: 5 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, agency_promise, determination_promise]
+  families_absent: [risk_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 2, inferred: 8, generic: 0, default: 3}
+  commitments_by_status: {stated: 4, inferred: 5, generic: 0, unstated: 0}
+  one_way_parties: [government]
+  parties_count: 5
+  commitments_count: 9
+  below_lod0: {lod1_adds: 'events (functional specification, EPC award, subcontracted works with Essent''s interim financing,
+      lease start, monthly or periodic contracting rates, forwarding of leasing rates, monitoring, extra-savings settlement),
+      the leasing-rate and contracting-rate formulas', lod2_adds: the 50/50 extra-savings sharing as a fee variant on top of
+      the guarantee; ING's interest conditions for target groups A+B}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [epc_contractor, partner_esco], share: shared, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:2921 | Economic risk of", why: "Figure 22 puts 'Economic risk of guaranties' under GC-Essent (L2921-2922; guaranteed heat and electricity savings L2893-2894) and 'Technical risks of good function' under the installation subcontractors (L2926): Essent carries the shortfall toward the city, the firms carry function risk toward Essent. Adjudicator call: B's shared row taken; A split the firms' bullet into an R2 row, dropped because the same bullet would then count twice and maintenance (L2923-2925) is listed as a task, not a risk"}
+  - {category: R5a, driver: null, bearer: [lessor], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/iea-dsm-financing-options-manual.txt:2910 | Risk of non payment", why: "Figure 22 puts 'Risk of non payment' under FI - ING bank, the finance lessor; holds whichever of city or Essent is the lessee (case source.notes). Replaces the default, which names a lender role no party holds here. A and B agree (B had written the party id ing_bank, corrected to the role). Dropped: R6 classification on the city (A stated, B inferred): fn27 (L2445-2446) is the manual's general leasing note and reaches the city only through the inferred lessee reading; equal to the default, so an inferred duplicate"}

@@ -1,0 +1,364 @@
+# Miniature — the Powesco "Energy Efficiency as a Service" structure (France) expressed at ESCO LOD 0
+#
+# Purpose: one deal shape at the coarsest zoom (who promises what to whom, the twelve settings, the rules that
+# bite, the published numbers), written to the Bytom template.
+# SOURCE WARNING: the only corpus text for this case is E03, an AI-generated chat dump (Perplexity). Every fact
+# taken from it carries `source_reliability: secondary, AI-generated` (set once below and inherited by every
+# entry whose source is E03). The owner's review (instance.yaml L2253-2257, card4_powesco) permanently demoted
+# E03's worked example (EUR 100k / 40% / 75-25), its 8-level waterfall, the CEE EUR 10-20m and IRR 7->10% figures
+# as AI constructions; they are excluded from `numbers` and listed under `numbers.excluded_demoted`.
+# E03 contradicts itself in places (noted inline). Nothing is added from memory or from primaries outside the corpus.
+# Frame: elements_pilot.yaml (ESCO LOD 0: 41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: eeaas_france_powesco
+lod: 0
+case: validation_targets.published.EEaaS_France_Powesco
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E03
+  title: "ai-powesco-deal-anatomy (Perplexity chat dump around the owner's prompts)"
+  publisher: AI chat output, 2025 events; corpus file date 2026-09-20
+  source_reliability: secondary, AI-generated
+  passage: 'corpus input/ai-powesco-deal-anatomy.txt: deal summary L5-L16, model L108-L139, granular innovation L452-L499, first-principles layers L558-L750, AssetCo/OperCo diagram L872-L879'
+  oracle: "oracle-matrix.md L23: '[P] Powesco anatomy (E03) — AI-derived — never an oracle; cross-check only'. No number in this file is reproduced by an oracle"
+  provenance_note: "instance.yaml L2253-2257 (card4_powesco) records that a 21 Sep check against primaries outside the corpus upgraded the deal skeleton, the CEE-via-delegate channel, the savings guarantee, the off-balance wording and IPMVP M&V, corrected the CEE partner name (E03's Loris.enr -> Axioris), and demoted the worked example, waterfall and IRR figures. Those primaries are not in the corpus and are not used here; the correction is recorded as provenance only"
+  context:
+  - "Nautilus Energy (nautilus.earth): 'venture builder and structuring partner' and 'Financial Advisor (Conseil financier)' on the WSC transaction (E03 L274-284); adviser to the shareholders' deal, makes no promise in the energy-service deal — outside the boundary (F19, F23), not a missing role (G20)."
+  - 'Paul Hastings: legal adviser to Enerlis on the transaction (E03 L25); same treatment.'
+  - "Senior lenders ('Senior Debt (if any)', L650, L691) and insurers appear only in the demoted waterfall; no independent verifier is named — Powesco 'manage[s] this via active O&M and monitoring' (L473)."
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: France
+  iso: FR
+  eu_member: true
+  client_eu_general_government: false
+  status: inferred
+  why: "E03 (secondary, AI-generated): 'Commercial building owners in France' and the Decret Tertiaire (L110); WSC release slug 'energy-efficiency-as-a-service-projects-in-france-through-powesco' (L47). France is an EU member state; the typical client is private (client_sector), so the client is not EU general government — for the 'public entities' E03 mentions (L119) the flag would be true per deal"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the CPE / turnkey service agreement establishes (fibo-fnd-rel-rel:confers) the client-side commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  client:
+    role: host
+    groups: [demand]
+    status: stated
+    text: "'helps commercial and industrial clients renovate buildings ... without upfront capital, using a service-fee model' (L16); 'the building owner signs a long-term contract' (L111). E03 also says 'companies and public entities' (L119), so some clients may be authorities; the typical client is a private owner"
+  powesco:
+    entity: powesco
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    name: Powesco
+    text: "'Powesco pays for 100% of the renovation costs upfront' (L111); 'often guaranteeing the energy savings' (L120); 'Powesco owns equipment -> Client pays service fee over 5-10 years' (L612). E03 also casts Powesco as the AssetCo / SPV that 'owns only the contracts' (L583, L877); at LOD 0 it is the Partner (the contracting and guaranteeing party), the AssetCo reading carried by partner_form = spv (inferred), not by a separate securitisation_vehicle"
+  enerlis:
+    entity: enerlis
+    role: [epc_contractor, operator_om]
+    groups: [delivery]
+    status: stated
+    name: Enerlis
+    text: "'Enerlis retains the operations (employees, project management, installation risk)' (L593); 'Enerlis (as O&M contractor)' (L648); 'OperCo (Enerlis): Does the dirty work (installation, maintenance)' (L878). Parent that incubated Powesco (L9, L127); the spin-out story is unverified per SOURCES.md"
+  white_summit:
+    entity: wsc_decarbonisation_infrastructure_fund_ii
+    role: equity_investor
+    groups: [capital]
+    status: stated
+    name: White Summit Capital (WSC Decarbonisation Infrastructure Fund II)
+    text: "'EUR 150 million investment by White Summit Capital to acquire a controlling stake in Powesco' (L5); 'Acquirer: White Summit Capital (via its WSC Decarbonisation Infrastructure Fund II)' (L13). WSC manages the fund that holds the stake; the fund_manager role is implied but the text does not separate fund and manager"
+  cee_delegate:
+    role: certificate_obligated_party
+    groups: [energy, public]
+    status: stated
+    name: Loris.enr per E03 L491 (instance.yaml L2256 records a correction to Axioris from a primary not in the corpus)
+    text: "'Powesco (via its partner Loris.enr) captures and monetizes these certificates upfront to subsidize the CAPEX' (L491); the delegate buys or places the white certificates (CEE) generated by the savings"
+
+contract:   # the agreements that establish the commitments
+  cpe_service_agreement:
+    core: contract
+    parties: [client, powesco]
+    term_years: 5-10 (typical, L111, L462); E03 L817 gives 7-12 in its generic template
+    status: stated
+    text: "'standardized a Turnkey Service Agreement that mimics a utility contract'; 'includes a binding Energy Performance Contract (CPE)' (L458-463)"
+  opex_contract:
+    core: contract
+    parties: [powesco, enerlis]
+    status: generic
+    text: "'Physical Assets <- Opex Contracts -> OPERCO LLC (Enerlis equivalent)' (L874); 'AssetCo pays them fixed Opex fees' (L878) — from E03's generic AssetCo/OperCo template, not stated for a specific Powesco contract"
+  equity_investment:
+    core: contract
+    parties: [white_summit, powesco]
+    status: stated
+    text: controlling stake for EUR 150m (L5, L13-15); platform-level, not deal-level
+  cee_arrangement:
+    core: contract
+    parties: [powesco, cee_delegate]
+    status: stated
+    text: certificate monetisation via partner (L491)
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: powesco
+    to: client
+    status: stated
+    what: "finance 100% of the CAPEX (equipment, installation, engineering) (L461); own and keep title to the equipment during the term (L612, L671); guarantee the energy savings under the CPE — 'If the energy savings (e.g., 40% reduction) are not met, Powesco pays a penalty or reduces the service fee' (L463) or 'must upgrade or repair equipment at its own cost' (L708); 'contractually guarantees compliance with the law' (Decret Tertiaire, L475); ongoing O&M included in the fee (L492)"
+    established_by: cpe_service_agreement
+  c2:
+    family: payment_promise
+    from: client
+    to: powesco
+    status: stated
+    what: "'Service Fee (Redevance): The client pays a fixed or variable fee over a long duration (typically 5-10 years). This fee is calculated to be lower than the client's historical energy spend' (L462); 'Recurring monthly service fee' (L138). The fee level and the savings split are not published (E03's 75/25 example is demoted)"
+    established_by: cpe_service_agreement
+  c3:
+    family: funding_promise
+    from: white_summit
+    to: powesco
+    status: stated
+    funding_instrument: equity   # controlling stake (L5, L15, L692)
+    what: "EUR 150m for a controlling stake (L5, L15); the equity funds the capex of the renovations — 'Equity: White Summit's EUR 150m investment' (L692); 'deploy capital rapidly across hundreds of buildings' (L128)"
+    established_by: equity_investment
+  c4:
+    family: payment_promise
+    from: powesco
+    to: white_summit
+    status: inferred
+    what: "residual (equity) returns on the controlling stake; follows from c3 being equity, not a loan. E03's preferred-return / 8% IRR / excess-cash levels (L654-655) are demoted and not relied on"
+    established_by: equity_investment
+  c5:
+    family: performance_promise
+    from: enerlis
+    to: powesco
+    status: stated
+    what: "installation of the works and ongoing O&M — 'Powesco hires contractor (Enerlis)' (L612); 'Technical Risk: Enerlis (as the O&M contractor ...)' (L712)"
+    established_by: opex_contract
+  c6:
+    family: payment_promise
+    from: powesco
+    to: enerlis
+    status: generic
+    what: "'AssetCo pays them fixed Opex fees' (L878, generic AssetCo/OperCo template); construction payment for the works is implied by Powesco financing 100% of CAPEX (L461) but not described"
+    established_by: opex_contract
+  c7:
+    family: performance_promise
+    from: powesco
+    to: cee_delegate
+    status: stated
+    what: "delivery of the white certificates (CEE) generated by the savings — 'Powesco ... captures and monetizes these certificates upfront' via its partner (L491); certificates are a performance_promise object in the LOD 0 definition"
+    established_by: cee_arrangement
+  c8:
+    family: payment_promise
+    from: cee_delegate
+    to: powesco
+    status: stated
+    what: "upfront monetisation of the certificates 'to subsidize the CAPEX, reducing the capital White Summit needs to deploy per project' (L491); amount not published (EUR 10-20m is demoted)"
+    established_by: cee_arrangement
+  c9:
+    family: determination_promise
+    from: powesco
+    to: client
+    status: generic
+    determines: savings   # savings against the baseline (L473, L672)
+    what: "savings against the baseline are established by Powesco's own monitoring — 'They manage this via active O&M and monitoring' (L473); 'Payments are variable (linked to actual energy savings)' (L672). No independent verifier is named in E03"
+    established_by: cpe_service_agreement
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: stated, why: "c2: service fee set below historical energy spend, reduced or penalised if savings are missed (E03 L462-463); 'Payments are variable (linked to actual energy savings)' (E03 L672). Secondary source."}
+  client_sector:
+    value: private
+    status: inferred
+    why: "'commercial and industrial clients' (L16), 'building owner' (L111), 'REITs and listed companies' (L476). Alternative: public — E03 also says 'companies and public entities' (L119) and 'municipalities' (L677); per deal the value would differ. Picked private as the described typical client"
+  partner_form:
+    value: spv
+    status: inferred
+    why: "'Nautilus created Powesco as a Special Purpose Vehicle (SPV)' (L583); 'likely a Societe par Actions Simplifiee' (L587). E03 contradicts itself — 'a fully operational platform with 60 employees' (L128) vs 'AssetCo (Powesco): ... No employees' (L877) — so two values are arguable: spv picked, status inferred, alternative corporate (CASE_SPEC L53; F18). Secondary, AI-generated"
+  borrower:
+    value: none
+    status: inferred
+    why: "the capex is funded by WSC's equity (L461, L692); debt is mentioned only hypothetically — 'Senior Debt (if any)' (L650, L691). Alternative: partner, if Powesco raised debt at platform level; the default (partner) is not taken because the source does speak to the funding"
+  receivable_holder:
+    value: partner
+    status: stated
+    why: "'Powesco owns the contracts (the asset that generates recurring revenue)' (L594); 'Contract Receivables: Present value of future service fees' on Powesco's balance sheet (L686); securitisation is a future exit option only (L727-731)"
+  collection_placement:
+    value: operator_own
+    status: default
+    why: not stated; the pledged DSRA (L651) belongs to the demoted waterfall
+  aggregation:
+    value: pool
+    status: stated
+    why: "'aggregate hundreds of small renovations into a single EUR 150m investable pool, with standardized contracts' (L499); 'Most energy efficiency projects are too small (EUR 50k-EUR 200k) for infrastructure funds' (L498); 'hundreds of buildings' (L128)"
+  debt_seniority:
+    value: senior
+    status: default
+    why: "no debt is stated (borrower = none); the senior / mezzanine tranche talk (L844-846, L888) is E03's generic template"
+  assignment_recourse:
+    value: not_applicable
+    status: inferred
+    why: follows from receivable_holder = partner; nothing is assigned. Would become relevant at the securitisation exit E03 sketches (L731)
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "'Payments are variable (linked to actual energy savings), not fixed' (L672) and the penalty / fee reduction on shortfall (L463) require savings to be established after the fact. Alternative: deemed — the fee may be 'fixed or variable' (L462); a fixed fee against a guaranteed percentage would be deemed in effect. instance.yaml L2254 records IPMVP-based M&V from a primary not in the corpus (provenance only)"
+  grant_recipient:
+    value: none
+    status: inferred
+    why: "no grant is named; the CEE proceeds are a sale of certificates to the delegate (c7/c8) — an exchange, not a benefit (G22). Alternative: partner — E03 labels CEE 'Government subsidies (France CEE ...)' that 'reduce equity deployed 20-30%' (L911); if the scheme were read as giving the certificates free the value would be partner. See lod0_gaps"
+  asset_owner:
+    value: partner
+    status: stated
+    why: "'Powesco owns equipment' (L612); 'The building owner never takes ownership of the energy equipment; Powesco retains legal title throughout the contract term' (L671); 'Physical Equipment: Boilers, solar panels, insulation systems (owned, not leased)' (L687)"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "the fee is 'lower than the client's historical energy spend, ensuring day-one cash flow positivity' (L462): the client keeps paying its energy bill and pays the fee out of the saving. Alternative: provider — not suggested anywhere in E03"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: "client_sector = private for the typical client (France is an EU member state, so for the 'public entities' E03 mentions at L119 the test would apply per deal; E03 gives nothing to run it)"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules'); E03 L666-677 (secondary, AI-generated: variable payments linked to savings 'not fixed (which would trigger lease accounting)')"
+    applies_here: true
+    this_case: "applies on the record: private client, Powesco owns the equipment (L612, L671). E03's claim: the CPE is 'classified as a service agreement ... not an asset purchase or financing arrangement'; 'Payments are variable (linked to actual energy savings), not fixed (which would trigger lease accounting)' -> OPEX, 'No impact on debt ratios' (L666-677). Status secondary, AI-generated; not verified in the corpus"
+    source: gaps G23; E02 L3293-3295; E03 L666-677 (secondary); register.yaml L301 ifrs_16 flag
+  decret_tertiaire:
+    scope: external-sectoral
+    rule: "French tertiary-building energy-reduction mandate: E03 gives both '60% consumption reduction by 2050' (L16) and '40% by 2030' (L110, L475) for 'all tertiary buildings over 1,000 m2' (L117); Powesco 'contractually guarantees compliance with the law' (L475)"
+    note: SOURCES.md L9 records the 40%-by-2030 claim as not confirmed by primaries; the 60%-by-2050 driver as verified (primaries not in corpus)
+    source: E03 L16, L110, L117, L475
+
+numbers:   # instance data, not vocabulary
+  wsc_investment_eur_m: 150
+  platform_staff: 60
+  contract_term_years: 5-10 (typical)
+  project_ticket_eur_k: 50-200 per renovation
+  tertiary_threshold_m2: 1000
+  reduction_target_pct: 40 by 2030 (L110) / 60 by 2050 (L16) — E03 inconsistent
+  wsc_fund_size_eur_m: "fund target 500, first close > 350 — appears only in cited URL slugs (L49, L161), not in E03's prose; platform-level, not deal-level"
+  derived:
+    pool_count_at_midpoint: "150m / 125k (midpoint of 50k-200k) = 1,200 renovations if all equity went to capex; arithmetic only, E03 says 'hundreds' (L128, L499)"
+  excluded_demoted:
+  - EUR 100,000 baseline / 40% savings / fee EUR 30,000 = 75% of savings / client keeps 25% / 10 y = EUR 300,000 (L624-628)
+  - 8-level cash-flow waterfall with DSRA 6 months and 8% preferred return (L646-655)
+  - CEE monetisation EUR 10-20m lifting equity IRR from ~7% to ~10% (L720-721)
+  - EUR 500m portfolio of 10-year contracts (L686); 6-8% PPA yields; 5-6% exit yield (L697, L733)
+  - 'generic pool economics: 1,000 retrofits, senior 4% / mezzanine 7% / equity 12%, 3x leverage (L885-889)'
+  links:   # R-A17 (architect, 6 Oct): which recorded figure sizes which promise; configuration, read by oe.census.printability
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  client: {gives: [c2], receives: [c1, c9], one_way: false}
+  powesco: {gives: [c1, c4, c6, c7, c9], receives: [c2, c3, c5, c8], one_way: false}
+  enerlis: {gives: [c5], receives: [c6], one_way: false}
+  white_summit:
+    gives: [c3]
+    receives: [c4]
+    one_way: false
+    reason: c4 (residual returns) is inferred from the stated equity stake (L5, L15, L692), the F07 form; the text names the stake but never the return
+  cee_delegate:
+    gives: [c8]
+    receives: [c7]
+    one_way: false
+    reason: "the delegate's own obligation to the French scheme (the obligated party's compliance) is outside this deal"
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: adviser_outside_boundary
+  description: "a platform-level structuring / transaction adviser (Nautilus, L274-284; legal advisers Paul Hastings L25) has no role among the 41. Per the boundary rule (F23) an adviser to the shareholders' transaction makes no promise in the deal and is recorded under source.context, not as a party — not a role gap"
+  review: 'G20: encoding question (deal boundary); action: boundary rule F23; adviser moved to source.context; no new role'
+- kind: layer_boundary
+  description: "LOD 0 describes one deal. E03's economics live at two layers: the deal (client <-> Powesco <-> Enerlis <-> CEE delegate) and the platform (WSC <-> Powesco equity, the pool, the future securitisation exit L727-733). aggregation = pool records that the deal sits in a pool; the platform's own funding (c3, c4) is the Partner's funding one level up and stays in (F23)"
+  review: 'G21: encoding question (deal boundary); action: rule F23: one level up stays in'
+- kind: family_boundary_certificates
+  description: "white-certificate (CEE) monetisation: the delegate pays for certificates the savings generate (an exchange, c7/c8 — performance + payment), while the scheme that gives the certificates value is a public policy E03 calls a 'subsidy' (L911). LOD 0 can express the exchange but not the public-scheme leg behind it; grant_recipient none/partner is undecidable from E03"
+  review: 'G22: encoding question + evidence gap; action: rule G22: certificate sale is an exchange'
+- kind: role_fit_assetco
+  description: "Powesco is at once the Partner (contracting, guaranteeing) and E03's bankruptcy-remote AssetCo (holder of contracts and equipment). LOD 0 resolves this as partner_esco with partner_form = spv (inferred), leaving securitisation_vehicle unused; the AssetCo/OperCo split (L872-879) is carried by Enerlis's role list [epc_contractor, operator_om]"
+  review: 'G11: encoding question (miniature shape); action: role may be a list (F13); applied in this file'
+- kind: self_determination
+  description: determination_promise is given by Powesco to the client about its own performance (L473, L672); no independent verifier_mnv is named. The from-party of c9 already says who determines (G08); no independence marker is added
+  review: "G08: encoding question; action: rule F21; the determination_promise's from-party says who determines; no setting"
+- kind: client_accounting_classification
+  description: "the client-side accounting classification (service agreement vs lease, IFRS 16, L666-677) is the structure's selling point ('Compliance without Debt', L119) and has no LOD 0 setting; recorded as the rule entry IFRS16_lease_test (G23)"
+  review: 'G23: encoding question (rule, not setting); action: rule entry IFRS16_lease_test added'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction FR added; C1 applies_here false (private client)
+- id: F07
+  title: equity / capitalisation reciprocal
+  convention: "Equity or state capitalisation is a funding_promise whose reciprocal is the residual claim, recorded as a payment_promise with status inferred; if the source shows a non-returnable endowment, benefit_promise. Never funding_promise + 'unilateral by nature'."
+  origin: verdict rule; findings F07
+  applied_here: WSC equity (c3) with inferred residual-return reciprocal (c4) — the form the other files now follow
+- id: F13
+  title: aggregation super_esco iff the role; role may be a list
+  convention: "aggregation = super_esco iff a party carries aggregator_super_esco. A party's `role` may be a list, home role first, so one party can carry several of the 41 roles."
+  origin: verdict rule; findings F13; gaps G11
+  applied_here: enerlis carries the role list [epc_contractor, operator_om]
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: 'partner_form spv: status downgraded from stated to inferred, alternative corporate (E03 L128 vs L877)'
+- id: F23
+  title: deal boundary
+  convention: "Include the funding of any party to the deal one level up (the Partner's lenders and shareholders, a fund's lenders and capitaliser); exclude programme-design support and advisers to shareholder transactions, which are recorded under source.context, not as parties."
+  origin: verdict rule; findings F19, F23; gaps G03, G20, G21
+  applied_here: Nautilus (and Paul Hastings) moved from parties to source.context; the unstated advisory fee c10 dropped
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "Powesco's own savings guarantee (penalty / fee reduction, L463) stays inside c1"
+- id: G22
+  title: certificate sale is an exchange
+  convention: A white-certificate sale is an exchange (performance_promise for certificates + payment_promise), never a benefit_promise unless the state gives the certificates free.
+  origin: gaps G22
+  applied_here: CEE monetisation kept as an exchange (c7/c8), not a benefit_promise
+- id: G23
+  title: IFRS16_lease_test rule entry
+  convention: "Rule entry IFRS16_lease_test, applies_when {client_sector: private, asset_owner: partner}: whether the client's contract is a service agreement or a lease (IFRS 16) — the private counterpart of C1. A rule beside the tree, not a setting (corpus: E02 L3293-3295; E03 L666-677 secondary)."
+  origin: verdict change 6; gaps G23
+  applied_here: 'IFRS16_lease_test rule entry (renamed from client_lease_classification_ifrs16) with applies_when {private, asset_owner: partner}; bites here'
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [host, partner_esco, epc_contractor, operator_om, equity_investor, certificate_obligated_party]
+  roles_count: 6 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, determination_promise]
+  families_absent: [benefit_promise, risk_promise, agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 4, inferred: 7, generic: 0, default: 2}
+  commitments_by_status: {stated: 6, inferred: 1, generic: 2, unstated: 0}
+  one_way_parties: []
+  parties_count: 5
+  commitments_count: 9
+  below_lod0: {lod1_adds: 'events (installation, acceptance, monthly fee, annual savings determination, penalty/fee reduction,
+      certificate issue and sale, title transfer or removal at term end), the fee formula (fixed vs variable, indexation L613,
+      L818), the opex fee to the OperCo', lod2_adds: 'fee variant, M&V option, the shortfall rule (penalty vs fee reduction
+      vs repair, L463, L707-708), the client''s lease-classification test'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R3, driver: null, bearer: [epc_contractor], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/ai-powesco-deal-anatomy.txt:593 | Enerlis retains the *operations* (employees, project management, installation risk)", why: "Inferred only: E03 is an AI-generated text. Enerlis, the works contractor, keeps installation risk; Powesco only holds contracts. Bearer epc_contractor (A wrote operator_om; installation is the contractor's hat)."}
+  - {category: R5a, driver: null, bearer: [equity_investor, partner_esco], share: shared, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/ai-powesco-deal-anatomy.txt:474 | Takes long-term corporate credit risk on blue-chip clients", why: "Inferred only: E03 is an AI-generated text. Both drafts wrote White Summit (equity_investor) sole; adjudicated shared because Powesco holds the receivables and White Summit carries the loss through its equity in Powesco."}
+  - {category: R6, driver: law, bearer: [partner_esco], share: sole, status: inferred, evidence: "der-vpp/spec-run/esco-moneyflow/input/ai-powesco-deal-anatomy.txt:475 | Contractually guarantees compliance with the law", why: "Inferred only: E03 is an AI-generated text. Powesco is said to shield the client from Décret Tertiaire penalties, the regulatory risk closest to R6 law. A and B agree."}

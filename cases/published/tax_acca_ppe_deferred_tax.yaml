@@ -1,0 +1,86 @@
+# Published case "tax_acca_ppe_deferred_tax": the deferred tax liability on one asset whose
+# capital allowances run ahead of its straight-line book depreciation, at the end of years 1
+# and 2 (ACCA SBR technical article "Deferred tax", IAS 12;
+# cases/reference/published/tax_acca_ppe_deferred_tax.yaml).
+#
+# Every amount is an input by name (generator `src`), one period a year:
+#   * the asset is carried in at asset_cost and placed in service in year 1, charged from that
+#     year (first_charge: in_service), on one asset register: book straight line over
+#     book_useful_life_years, tax in proportion to the printed capital allowances
+#     (year1..year4). The case runs the four years of the allowances so the tax register
+#     spreads the whole cost; only years 1 and 2 are read;
+#   * income tax (income_tax) at tax_rate, the register's book depreciation classed `timing`
+#     (replaced by the tax charge in the base), with deferred tax on the temporary difference
+#     between the register's carrying amount and its tax base (IAS 12 balance-sheet method);
+#   * the source states no revenue or profit, only the asset: on its own the allowances make a
+#     tax loss, so a deferred tax asset on unused losses is not recognised (recognise_losses:
+#     false), leaving the liability on the asset's temporary difference alone, as the source
+#     measures it; no current tax arises.
+published: tax_acca_ppe_deferred_tax
+entity: owner
+plant: tax_rate
+case:
+  case: published-acca-ppe-deferred-tax
+  periods: 4
+  phases: [close, tax]
+  currency: XXX
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 4
+      inputs: published
+      values:
+        tax_weights: year1 * (t == 0) + year2 * (t == 1) + year3 * (t == 2) + year4 * (t == 3)
+  opening:
+    owner:
+      cwip: {nature: asset, value: {generator: src, output: asset_cost}}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    asset:
+      kind: asset_register
+      entity: owner
+      phase: close
+      from: cwip
+      to: fixed_asset
+      expense: depreciation
+      disposal: written_off
+      in_service: 0
+      dispose_at: {generator: src, output: book_useful_life_years}
+      life_periods: {generator: src, output: book_useful_life_years}
+      first_charge: in_service
+      tax:
+        life_periods: null
+        weights: {generator: src, output: tax_weights}
+        first_charge: in_service
+    tax:
+      kind: income_tax
+      entity: owner
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: tax_rate}
+      carry_forward_periods: null
+      timing: asset
+      deferred:
+        account: deferred_tax_liability
+        expense: deferred_tax_expense
+        recognise_losses: false
+      scheme:
+        depreciation: timing
+        written_off: timing
+        tax_expense: non_deductible
+        deferred_tax_expense: non_deductible
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  year1_carrying_amount: {balance: fixed_asset, at: 0}
+  year1_tax_base: {record: asset.tax_nbv, at: 0}
+  year1_temporary_difference: {sum: [{balance: fixed_asset}, {record: asset.tax_nbv, sign: -1}], at: 0}
+  year1_deferred_tax_liability: {balance: deferred_tax_liability, at: 0}
+  year2_carrying_amount: {balance: fixed_asset, at: 1}
+  year2_tax_base: {record: asset.tax_nbv, at: 1}
+  year2_temporary_difference: {sum: [{balance: fixed_asset}, {record: asset.tax_nbv, sign: -1}], at: 1}
+  year2_deferred_tax_liability: {balance: deferred_tax_liability, at: 1}

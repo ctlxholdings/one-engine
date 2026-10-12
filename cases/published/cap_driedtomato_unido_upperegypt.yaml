@@ -1,0 +1,111 @@
+# Published case "cap_driedtomato_unido_upperegypt": UNIDO pre-feasibility study, Upper Egypt,
+# dried tomatoes: the five-year "Revenues & Costs" table (p.129) down to gross margin
+# (cases/reference/published/cap_driedtomato_unido_upperegypt.yaml).
+#
+# Five periods, the study's years 1 to 5. The books are kept in Egyptian pounds; the source prints
+# its table in LE thousand, so the money figures are read at scale 1000 and the year-1 cost inputs
+# (printed in LE thousand) are used only as the ratios they state. Each amount is one move of a
+# `transfer` journal against cash:
+#   * 600 t of fresh tomatoes are bought and dried every year (the model's own throughput, not the
+#     2,000 t nameplate), at 11 kg fresh per kg dried, so 600/11 t of dried tomato are sold each
+#     year at the printed price for that year (LE 22,000/t, escalating);
+#   * the fresh tomatoes cost 600 t times the printed cost per tonne for that year (direct cost);
+#   * packaging and transport are each the share of direct cost the year-1 lines state (90 of
+#     600), every year; all three are expensed in the year (no stock is carried).
+# Physical rows (dried tonnes, the output percentage) are drivers of the formulas generator,
+# derived from the throughput and the 11:1 conversion.
+#
+# Set aside: labour, depreciation, land rent, amortisation of pre-opening expenses, the investment
+# items and the 3% / 7% / 2% / 20% administrative, marketing, energy and tax rates are not numeric
+# inputs (the rates are stated only as text), so every line below gross margin is not modelled.
+published: cap_driedtomato_unido_upperegypt
+entity: plant
+plant: fresh_tomatoes_t_per_annum
+case:
+  case: published-dried-tomato-unido
+  periods: 5
+  phases: [post]
+  currency: EGP
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 5
+      inputs: published
+      values:
+        fresh: {each_period: fresh_tomatoes_t_per_annum}
+        dried: {each_period: fresh_tomatoes_t_per_annum / fresh_per_dried_kg}
+        output_pct: {each_period: 100 / fresh_per_dried_kg}
+        sales: dried * dried_tomato_selling_price_per_ton__values_by_year
+        direct: fresh * fresh_tomato_cost_per_ton__values_by_year
+        packaging: direct * packaging_cost / direct_cost
+        transport: direct * transportation_cost / direct_cost
+  opening:
+    plant:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: plant
+      phase: post
+      declare:
+        revenue: income
+        direct_cost: expense
+        packaging_cost: expense
+        transportation_cost: expense
+      moves:
+        sales: {debit: cash, credit: revenue, amount: {generator: src, output: sales}}
+        direct: {debit: direct_cost, credit: cash, amount: {generator: src, output: direct}}
+        packaging: {debit: packaging_cost, credit: cash, amount: {generator: src, output: packaging}}
+        transport: {debit: transportation_cost, credit: cash, amount: {generator: src, output: transport}}
+  schemes:
+    pnl:
+      revenue: revenue
+      direct_cost: direct
+      packaging_cost: packaging
+      transportation_cost: transport
+  cuts:
+    revenue: {kind: pnl, entity: plant, scheme: pnl, include: [revenue]}
+    direct: {kind: pnl, entity: plant, scheme: pnl, include: [direct]}
+    packaging: {kind: pnl, entity: plant, scheme: pnl, include: [packaging]}
+    transport: {kind: pnl, entity: plant, scheme: pnl, include: [transport]}
+    total_cost: {kind: pnl, entity: plant, scheme: pnl, include: [direct, packaging, transport]}
+    gross_margin: {kind: pnl, entity: plant, scheme: pnl, include: [revenue, direct, packaging, transport]}
+  measures: {}
+figures:
+  net_dried_tomato_quantity_year_1: {driver: src.dried, at: 0}
+  total_revenue_year_1: {cut: revenue, scale: 1000, at: 0}
+  total_cost_year_1: {cut: total_cost, sign: -1, scale: 1000, at: 0}
+  gross_margin_year_1: {cut: gross_margin, scale: 1000, at: 0}
+  five_year_table.output_percentage: {driver: src.output_pct}
+  five_year_table.net_dried_quantity_ton: {driver: src.dried}
+  five_year_table.total_revenue: {cut: revenue, scale: 1000}
+  five_year_table.direct_cost: {cut: direct, sign: -1, scale: 1000}
+  five_year_table.packaging_cost: {cut: packaging, sign: -1, scale: 1000}
+  five_year_table.transportation_cost: {cut: transport, sign: -1, scale: 1000}
+  five_year_table.total_cost: {cut: total_cost, sign: -1, scale: 1000}
+  five_year_table.gross_profit: {cut: gross_margin, scale: 1000}
+not_compared:
+  five_year_table.fresh_tomatoes_ton: "the printed throughput is itself an input (fresh_tomatoes_t_per_annum); no other input derives it"
+  five_year_table.cost_per_ton: "the printed cost per tonne is itself the input series; no other input derives it"
+  five_year_table.selling_price_per_ton: "the printed price is itself the input series; no other input derives it"
+  total_operating_expenses_year_1: "labour, depreciation and land rent are not inputs, and the administrative, marketing and energy rates are stated only as text"
+  profit_before_interest_and_tax_year_1: "needs the operating expenses, which are not inputs"
+  net_profit_before_tax_year_1: "needs the operating expenses and the pre-opening amortisation, which are not inputs"
+  net_profit_year_1: "needs the operating expenses and amortisation; the 20% tax rate is stated only as text"
+  total_depreciation_per_year: "the building and equipment costs and their rates are not inputs"
+  total_investment: "the investment items (land, building, equipment, pre-opening, working capital) are not inputs"
+  five_year_table.labor_cost: "the labour basis is stated only as text"
+  five_year_table.depreciation: "the depreciable assets are not inputs"
+  five_year_table.administrative_expenses: "the 3% rate is stated only as text"
+  five_year_table.marketing_expenses: "the 7% rate is stated only as text"
+  five_year_table.land_rent: "the land rent is not an input"
+  five_year_table.energy_and_utilities: "the 2% rate is stated only as text"
+  five_year_table.total_operating_expenses: "its lines are not inputs"
+  five_year_table.profit_before_interest_tax: "needs the operating expenses, which are not inputs"
+  five_year_table.amortization: "the pre-opening expenses are not inputs"
+  five_year_table.net_profit_before_tax: "needs the operating expenses and amortisation, which are not inputs"
+  five_year_table.taxes: "the 20% rate is stated only as text, and the taxable profit needs lines that are not inputs"
+  five_year_table.net_profit: "needs the operating expenses, amortisation and tax, which are not inputs"

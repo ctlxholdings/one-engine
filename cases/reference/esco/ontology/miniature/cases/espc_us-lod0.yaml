@@ -1,0 +1,362 @@
+# Miniature — the US ESPC (Montezuma-Cortez School District, Colorado) expressed at ESCO LOD 0
+#
+# Purpose: one deal at the coarsest zoom (who promises what to whom, the twelve settings, the rules that bite,
+# the published numbers), written to the Bytom template. The instance deal is the Montezuma-Cortez School District
+# case box in the DOE small-projects guide (E12); the generic two-contract structure comes from the same guide's
+# chapter 5; the federal DOE-IDIQ / task-order variant (E11) is recorded where it differs, status generic.
+# Frame: elements_pilot.yaml (ESCO LOD 0: 41 roles, 7 commitment families, 12 settings; owner rulings 28 Sep 2026).
+# Every fact carries its status: stated / inferred / default / generic. Nothing invented. Only the corpus is evidence.
+
+# Normalised 1 Oct 2026 per FIX_SPEC.md: review findings F01-F23 and the verdict's encoding rules applied;
+# structure identical across the 13 files; coverage computed; conventions_applied lists what this file assumes.
+
+miniature: espc_us_montezuma_cortez
+lod: 0
+case: validation_targets.published.ESPC_US
+
+source:   # where the facts come from; context = actors outside the deal boundary (F23); notes = observations that are not gaps
+  id: E12
+  title: Energy Savings Performance Contracting for Small Projects
+  publisher: U.S. DOE / Better Buildings (LBNL, 9Kft Strategies), May 2021
+  passage: "'Montezuma-Cortez School District, Colorado', p. 21 (corpus input/femp-espc-small-projects-2021.txt L1349-1385); generic structure ch. 5 'Financing', 'Guarantee of Projected Cost Savings', 'Measurement and Verification' (L1684-1829)"
+  secondary_source:
+    id: E11
+    title: A Guide to FEMP Resources and Deliverables for DOE-IDIQ ESPC Project Development
+    publisher: U.S. DOE FEMP, 2019
+    passage: "Task Order RFP Template: F.3 period of performance (input/femp-espc-project-development-guide-2019.txt L3571-3575); G.5 shortfall (L3809-3830); H.2 title (L4050-4056); H.6 competitive financing (L4440-4480); H.7 bonds (L4505-4530); H.8 financier's interest (L4550-4575); PA checklist Sch1 (L1955)"
+  oracle: "ORACLE-RESULTS.md: no ESPC_US oracle row; register.yaml L305 added ESPC_US 28 Sep from instance L7.futures ('Montezuma-Cortez 10-year payback worked case; contracts up to 30 years (disputed value)'); the corpus gives 25 years federal / 15-25 years state, not 30"
+  note: "The case box gives cost, guaranteed savings and payback only; it has no FINANCING line (the neighbouring cases do), so the financing facts below are generic to the guide's model, not stated for this district."
+
+jurisdiction:   # header field, not a setting (F02): drives the C1 trigger
+  country: United States
+  iso: US-CO
+  eu_member: false
+  client_eu_general_government: false
+  status: stated
+  why: "'Montezuma-Cortez School District, Colorado' (E12 L87, L1349); Colorado Energy Office programme (L1381-1385); a US public body, outside EU general government"
+
+core_v7:   # level 2 — what every LOD 0 element is an instance or kind of
+  partner: {term: 'vf:Agent', iso: 3.51 partner}
+  role:
+    term: cmns-cls:Classifier
+    iso: 3.30 economic role (Partner Type)
+    note: a role is a value the partner exemplifies, never a type of the partner
+  commitment: {term: 'vf:Commitment', iso: 3.22 economic commitment}
+  contract:
+    term: vf:Agreement
+    iso: 3.23 economic contract
+    note: the ESPC and the financing agreement each establish (fibo-fnd-rel-rel:confers) their commitments
+  constraint: {term: 'cmns-doc:Specification', iso: 3.14 constraint; external 3.33}
+  business_transaction: {term: 'lod0:BusinessTransaction', iso: '3.8'}
+
+parties:   # role from the 41 (a list = several roles, home role first; F13); groups computed from the role(s)
+  school_district:
+    entity: montezuma_cortez_school_district
+    role: authority
+    groups: [demand, public]
+    status: stated
+    name: Montezuma-Cortez School District, Colorado
+    text: "'The $1 million ESPC project accomplished the district's goal of increasing energy and operational efficiencies across its facilities' (L1354-1357); ten buildings, 500,000 sq ft"
+  esco:
+    role: partner_esco
+    groups: [partner]
+    status: stated
+    text: "'The district selected an ESCO that focuses on the western part of the nation with a strong base in the state' (L1380-1381); name not given; 'An ESCO develops and implements the ESPC project and guarantees projected results' (L350)"
+  financier:
+    role: lender
+    groups: [capital]
+    status: generic
+    text: "'A third party finances the total project cost based on the guaranteed annual savings' (L351); 'The facility owner has a performance contract with the ESCO and a separate contract with a financing company' (L1687-1689). Not named for this district. Under a TELP (L1718) the financier is formally a lessor; role kept as lender because the guide treats the TELP as financing paid 'from projected savings in annual utility and operating budgets' (L1746) and does not say who holds title"
+  state_program:
+    entity: state_of_colorado
+    role: facilitator
+    groups: [delivery, public]
+    status: stated
+    name: Colorado Energy Office, Public Energy Performance Contracting Program
+    text: "'provided one-on-one technical assistance throughout the process, tested procurement and contract documents, and prequalified ESCOs for consideration' (L1381-1385)"
+  surety:
+    role: surety_guarantor
+    groups: [risk]
+    status: generic
+    text: "[federal DOE-IDIQ variant, E11; not a party to the Montezuma deal] 'performance bond, with project financier as co-beneficiary along with the ordering agency ... 100 percent of the total bonded amount' (E11 L4514-4520); payment bond for laborers, suppliers and subcontractors (L4522-4525)"
+
+contract:   # the agreements that establish the commitments
+  espc_contract:
+    core: contract
+    parties: [school_district, esco]
+    term_years: not stated for this district (simple payback 10 y; state law allows 15-25 y, L1739)
+    status: stated
+  financing_agreement:
+    core: contract
+    parties: [school_district, financier]
+    status: generic
+    text: "'a separate contract with a financing company' (L1688-1689); 'The energy savings performance contract and financing agreement are signed at the same time' (L2159)"
+  federal_variant:
+    core: contract
+    note: "DOE IDIQ ESPC: 'The TO incorporates the TO-RFP, the ESCO's IGA/proposal, and the IDIQ' (E11 L1317-1318); the task order sits under a standing framework contract; period of performance <= 25 years (E11 L3573-3575)"
+    status: generic
+    variant: federal_idiq
+
+commitments:   # the arrows of the LOD 0 map; family = one of the 7; unstated = required by duality, source silent
+  c1:
+    family: performance_promise
+    from: esco
+    to: school_district
+    status: stated
+    what: "lighting upgrades; new HVAC controls with remote access and diagnostics; controls on 13 refrigerated vending machines; retro-commissioning; staff/student education programme with online dashboard; guaranteed annual savings $100,000 (estimated) on a $1 million project (L1354-1378). Generic: the ESCO 'provides a fixed-cost project, carrying the risk and cost of change orders' (L1512-1513) and 'If projected annual cost savings do not meet the guaranteed amount in any year, the ESCO will make up the cost difference' (L1752-1753)"
+    established_by: espc_contract
+  c2:
+    family: payment_promise
+    from: school_district
+    to: esco
+    status: inferred
+    what: "payment of the fixed project cost ($1 million) for the works; funded from the financing proceeds. Inferred from 'A third party finances the total project cost' (L351) and the fixed-cost project (L1512); the guide does not show the construction payment explicitly"
+    established_by: espc_contract
+  c3:
+    family: funding_promise
+    from: financier
+    to: school_district
+    status: generic
+    what: "finances the total project cost (L351); TELP is 'one of the most common financing mechanisms for a government ESPC project' (L1718-1719); financing not stated for this district"
+    established_by: financing_agreement
+  c4:
+    family: payment_promise
+    from: school_district
+    to: financier
+    status: generic
+    depends_on_savings: false   # finance payments from appropriated budgets (L1849)
+    what: "'Annual finance payments are paid out of annually appropriated utility and operating budgets' (L1849); 'Projected annual cost savings are guaranteed to meet or exceed the annual financing obligation' (L1751-1752)"
+    established_by: financing_agreement
+  c5:
+    family: determination_promise
+    from: esco
+    to: school_district
+    status: generic
+    determines: savings   # annual M&V report (L1810-1814)
+    what: "'The ESCO will develop an M&V plan ... Each year that a guarantee is required, the ESCO will verify performance with respect to the M&V plan and deliver an annual M&V report' (L1810-1814); for this district 'The ESCO tracked the district's progress, provided an online dashboard to share results' (L1372-1373). The determining party is the performing party; the client (federal: the agency) witnesses (E11 L2470-2472)"
+    established_by: espc_contract
+  c6:
+    family: benefit_promise
+    from: state_program
+    to: school_district
+    status: stated
+    facilitator_task: [tender]   # procurement and contract documents, prequalified ESCOs (L1381-1385)
+    what: "one-on-one technical assistance, tested procurement and contract documents, prequalified ESCOs (L1381-1385); given free of charge — 'ESPC programs offered by SEOs provided free resources and often direct technical assistance for projects in ... Colorado' (L915-916): a free public-programme service, so benefit_promise (F12)"
+  c7:
+    family: risk_promise
+    covers: [R3]
+    from: surety
+    to: [school_district, financier]
+    status: generic
+    cover_kind: surety   # performance and payment bonds (E11 L4514-4525)
+    what: '[federal DOE-IDIQ variant, E11] performance and payment bonds, 100% of the bonded amount, financier co-beneficiary (E11 L4514-4525)'
+  c8:
+    family: funding_promise
+    from: financier
+    to: esco
+    status: generic
+    funding_instrument: loan   # TO project loan agreements (E11 L4467-4472)
+    what: "[federal DOE-IDIQ variant, E11] under the DOE IDIQ the Contractor (ESCO) procures the financing competitively and holds 'its TO project loan agreements'; 'the Government is not a contractual party to such financing agreements' (E11 L4467-4472)"
+  c9:
+    family: payment_promise
+    from: esco
+    to: surety
+    status: unstated
+    what: '[federal DOE-IDIQ variant, E11] counter-promise required by duality; source silent (the bond premium paid by the ESCO is not stated in E11)'
+  c10:
+    family: payment_promise
+    from: esco
+    to: financier
+    status: generic
+    what: "[federal DOE-IDIQ variant, E11] debt service under the Contractor's 'TO project loan agreements' (E11 L4467-4472); a loan is by definition repayable — the reciprocal of c8 (F07); the Government 'is not a contractual party to such financing agreements'"
+
+settings:   # the 13 LOD 0 facets, in vocabulary order (payment_basis added 1 Oct, owner ruling)
+  payment_basis: {value: savings, status: inferred, why: "c2 is a fixed $1m project price (alternative: asset), but c1 guarantees savings cover the annual financing and 'the ESCO will make up the cost difference' (E12 L351, L1751-1753)."}
+  client_sector:
+    value: public
+    status: stated
+    why: "a school district; the guide's scope is 'state and local governments' (L173)"
+  partner_form:
+    value: corporate
+    status: default
+    why: "not stated; 'a regional ESCO' (L919-920) suggests an operating company, but the legal form is not given"
+  borrower:
+    value: client
+    status: generic
+    why: "from the guide's generic two-contract model, not the case box (which has no financing line, source.note): the owner has 'a separate contract with a financing company' and 'The ESCO typically does not provide project financing for governments' (L1687-1706). Status generic, like c3/c4 (F18). Alternative: partner — under the federal DOE IDIQ the Contractor holds the project loan (E11 L4467-4472)"
+  receivable_holder:
+    value: partner
+    status: inferred
+    why: "the ESPC payment (fixed project cost) is due to the ESCO; the annual finance payments are owed under the owner's own financing agreement, not as an assigned ESPC receivable. Convention G17: receivable_holder concerns payments under the EPC, so partner is right and borrower = client signals the two-contract model. Federal alternative: assignee — 'the ESCO may be required to assign to its lenders some or all of its rights under a TO' (E11 L4565-4566)"
+  collection_placement: {value: operator_own, status: default, why: not stated}
+  aggregation:
+    value: none
+    status: inferred
+    why: 'one district, one ESPC covering all 10 buildings (L1354). Alternatives in the same sources: pool — group procurement by neighbouring governments (L1538-1539, Massachusetts and Hamilton County cases L928-932); framework — a task order under the DOE IDIQ (E11 L1317-1320)'
+  debt_seniority: {value: senior, status: default, why: not stated}
+  assignment_recourse:
+    value: not_applicable
+    status: inferred
+    why: 'follows from receivable_holder = partner (nothing assigned). Federal variant: assignment of monies under the Assignment of Claims Act with agency approval (E11 L4568-4570); whether the assignee is exposed to performance is not stated'
+  savings_basis:
+    value: measured
+    status: inferred
+    why: "'A measurement or calculation process is preferred over stipulated (agreed to in advance) savings for all measures' (L1820-1822); the ESCO delivers an annual M&V report (L1812-1814); for this district 'the district reduced energy use by 25%' is a tracked result (L1376-1377). The unit price is stipulated — 'escalated unit rates ... determine the guaranteed cost savings' (L1768-1775) — which is LOD 2 indexation, not the savings_basis (G16)"
+  grant_recipient:
+    value: none
+    status: default
+    why: "the case box lists 'Leverage funding streams' as a strategy (L1382) without naming a grant or rebate; the guide's generic buy-downs (rebates, grants, credits, L1678-1682) go to the owner, so if one existed the value would be client"
+  asset_owner:
+    value: client
+    status: inferred
+    why: "'after the financing term is complete, the equipment owner continues to accrue savings' (L347-348) and the owner's facilities are upgraded; title during a TELP is not discussed (alternative: lessor). Federal: 'title to all equipment installed by the Contractor shall be vested in the Government after acceptance', though 'during the term of the TO, title may be vested in the Contractor or a third party' (E11 L4050-4053)"
+  bill_custody:
+    value: client
+    status: inferred
+    why: "finance payments come 'out of annually appropriated utility and operating budgets' (L1849): the district keeps paying its utility bills and redirects the savings (Figure 1, L313-348)"
+
+rules:   # beside the tree; C1_eurostat and IFRS16_lease_test appear in every file with applies_here
+  C1_eurostat:
+    scope: external-sectoral
+    applies_when: {client_sector: public, jurisdiction: EU}
+    rule: NPV at financial close of guaranteed savings over the EPC >= NPV of (a) the Operational Payments forecast over the EPC + (b) any government financing not repayable by the Partner (e.g. capital grant), else the EPC is ON BALANCE SHEET for government (E15 L2578-2582; the summary box L6932-6943 states the sum without the basis)
+    applies_here: false
+    this_case: "the client is public but a US school district, outside EU general government; the test does not reach it (jurisdiction). The source's own analogue is the appropriation test below"
+    source: E15 L2576-2582, L5363-5380 (EU vs government financing), L6930-6943; register constraints.entries.C1_eurostat
+  IFRS16_lease_test:
+    scope: accounting
+    applies_when: {client_sector: private, asset_owner: partner}
+    rule: "Is the client's contract a service agreement or a lease under IFRS 16? The private-sector counterpart of C1: when the Partner owns the installed assets during the term and the client pays for their use, the payments may be a lease liability on the client's balance sheet. Corpus: E02 L3293-3295 ('renewed interest for EnPC and EEaaS after leasing has been categorized as on-balance in the IFRS rules')"
+    applies_here: false
+    this_case: client_sector public
+    source: gaps G23; E02 L3293-3295; register.yaml L301 ifrs_16 flag
+  US_annual_appropriation_debt_test:
+    scope: external-sectoral
+    applies_when: {client_sector: public, borrower: client}
+    rule: "TELP payments are 'subject to annual appropriations, so the payment obligations may not be considered debt and may not impact your debt ceiling according to state statutes and rulings' (L1745-1748)"
+    montezuma: financing not stated; not testable
+    source: E12 L1745-1748
+  US_payments_within_guaranteed_savings:
+    scope: contractual
+    applies_when: {client_sector: public}
+    rule: "guaranteed annual cost savings >= annual financing obligation: 'Projected annual cost savings are guaranteed to meet or exceed the annual financing obligation' (E12 L1751-1752); federal checklist 'Sch1: All annual payments are less than guaranteed annual savings (required)' (E11 L1955); on shortfall 'the ordering agency shall adjust the payment schedule ... to recover the ordering agency's overpayments' (E11 L3827-3830)"
+    montezuma: guaranteed savings $100,000/y; the annual payment is not published (no term, no rate), so the test cannot be run; at the published 10-year simple payback the undiscounted payment equals the savings exactly
+    source: E12 L1751-1753; E11 L1955, L3827-3830
+  US_term_cap:
+    scope: external-sectoral
+    rule: "federal: 'ESPC multiyear TOs for a period not to exceed 25 years' under 42 U.S.C. 8287 (E11 L3573-3575); state and local: 'Legislation in most states allows a financing term of 15-25 years' and the term 'should not exceed the average useful life of the equipment' (E12 L1739-1741)"
+    note: "instance L7.futures records 'contracts up to 30 years (disputed value)'; the corpus supports 25, not 30"
+    source: E11 L3571-3575; E12 L1735-1743
+
+numbers:   # instance data, not vocabulary
+  project_cost_usd: 1000000
+  guaranteed_annual_savings_usd: 100000
+  simple_payback_years: 10
+  buildings: 10
+  schools: 6
+  students: almost 3,000
+  floor_area_sqft: 500000
+  energy_use_reduction_pct: 25
+  mesa_elementary_reduction_pct: 32
+  vending_machines_controlled: 13
+  financing_term_years: not stated for this district; generic 15-25 (E12 L1739); federal cap 25 (E11 L3575)
+  guarantee_level_generic: typically 85% or more of expected unit savings (E12 L1763)
+  telp_minimum_generic_usd: often 500,000 or more (E12 L1730)
+  derived:
+    simple_payback_check: 1,000,000 / 100,000 = 10.0 y (matches the published 10 years)
+    cost_per_sqft_usd: 1,000,000 / 500,000 = 2.00
+    savings_to_cost_pct: 100,000 / 1,000,000 = 10% per year
+
+reciprocity:   # gives/receives computed from commitments; one_way per convention F06
+  school_district: {gives: [c2, c4], receives: [c1, c3, c5, c6, c7], one_way: false}
+  esco:
+    gives: [c1, c5, c9, c10]
+    receives: [c2, c8]
+    one_way: false
+    reason: the shortfall make-good inside c1 runs esco -> district; the guide treats it as part of the guarantee, not a separate promise (G18)
+  financier: {gives: [c3, c8], receives: [c4, c7, c10], one_way: false}
+  state_program:
+    gives: [c6]
+    receives: []
+    one_way: true
+    reason: "benefit promise, unilateral by nature: a public programme's free technical assistance (L915-916); the programme is funded by the state, outside this deal (F12)"
+  surety:
+    gives: [c7]
+    receives: [c9]
+    one_way: true
+    reason: '[federal variant] counter-promise required by duality: the bond premium paid by the ESCO is not stated in E11; recorded as c9 status unstated (F06)'
+
+lod0_gaps:   # what the deal needs that LOD 0 lacks, each with the review's classification (gaps.json)
+- kind: setting_semantics_receivable_holder
+  description: "receivable_holder presumes the client's periodic payments are the Partner's receivable. In the US two-contract model the client borrows directly and pays the financier under its own financing agreement; the Partner is paid once for the works. Convention G17 (payments under the EPC; borrower = client carries the two-contract meaning) settles the reading: partner"
+  review: 'G17: encoding question (definition); action: definition note (G17)'
+- kind: self_determination_witnessed
+  description: determination_promise is given by the performing party (the ESCO prepares the M&V plan and the annual M&V report, E12 L1810-1818) with the client witnessing (E11 L2470-2472). Expressed through the from-party of c5 (G08); no independence marker is added
+  review: "G08: encoding question; action: rule F21; the determination_promise's from-party says who determines; no setting"
+- kind: family_boundary_shortfall
+  description: "the savings-shortfall make-good ('the ESCO will make up the cost difference', E12 L1753; federal schedule adjustment E11 L3827-3830) matches the risk_promise definition in form, yet the sources treat it as the guarantee inside the performance promise. Convention G18: the performing party's own make-good stays in performance_promise; folded into c1"
+  review: 'G18: encoding question; action: rule G18 written down'
+- kind: savings_basis_mixed
+  description: 'the US guarantee is mixed: measured units at stipulated (escalated) unit prices (E12 L1765-1779). Convention G16: savings_basis concerns the quantity (measured); price stipulation is LOD 2 indexation'
+  review: 'G16: below LOD 0; action: definition note (G16); no new value'
+- kind: telp_financier_form
+  description: the TELP financier is a lessor in form (tax-exempt lease-purchase) and a lender in substance; the guide never says who holds title during the lease, so neither lender nor lessor can be chosen with status stated. Evidence gap
+  review: 'G19: evidence gap; action: none'
+
+conventions_applied:   # what this file assumes beyond elements_pilot.yaml (owner rules on the vocabulary)
+- id: F02
+  title: jurisdiction header field; C1 trigger
+  convention: 'A `jurisdiction` block (country, EU membership, whether the client is EU general government) sits in the miniature header, not among the settings; C1 applies_when {client_sector: public, jurisdiction: EU}.'
+  origin: verdict change 2; findings F02; gaps G27
+  applied_here: jurisdiction US-CO added; C1 applies_here false (public, non-EU) — the US appropriation test stays a national rule
+- id: F06
+  title: one_way form (CASE_SPEC)
+  convention: 'A party whose counter-promise exists only by duality is one_way: true with a reason, and the counter-promise is recorded with status unstated; one_way: false is reserved for parties whose counter-promise is stated or inferred from a stated fact.'
+  origin: verdict rule; findings F06
+  applied_here: 'state_program and surety (federal variant) one_way: true with reasons; c9 unstated premium moved into commitments'
+- id: F12
+  title: free public-programme service = benefit_promise
+  convention: 'A service a public programme gives free is a benefit_promise (one_way: true, unilateral by nature); performance_promise + unstated payment only when the client plausibly pays.'
+  origin: verdict rule; findings F12
+  applied_here: "Colorado Energy Office's free assistance re-encoded as benefit_promise (c6)"
+- id: F18
+  title: status discipline
+  convention: stated = the source says it of this deal. A value read from a market table, a figure arrow, a bracketed template option or a contradicted AI passage is inferred (alternative in why) or generic, per CASE_SPEC.
+  origin: findings F18
+  applied_here: 'borrower client: status downgraded from inferred to generic (the case box has no financing line)'
+- id: G16
+  title: savings_basis is about the quantity
+  convention: savings_basis (measured / deemed) concerns how the energy quantity is established; price stipulation or escalation is LOD 2 indexation.
+  origin: verdict change 5; gaps G16
+  applied_here: savings_basis measured; stipulated unit prices noted as LOD 2 indexation
+- id: G17
+  title: receivable_holder = payments under the EPC
+  convention: "receivable_holder concerns the client's payments under the EPC contract; with borrower = client (two-contract model) the Partner's receivable is the works price and the value is partner."
+  origin: verdict change 5; gaps G17
+  applied_here: receivable_holder partner read as the works price under the EPC (two-contract model)
+- id: G18
+  title: shortfall make-good stays in performance_promise
+  convention: "The performing party's own savings-shortfall make-good is part of its performance_promise; risk_promise is a third party's promise to pay if a named risk occurs."
+  origin: verdict rule; gaps G18
+  applied_here: "the ESCO's shortfall make-good stays inside c1"
+
+coverage:   # computed from the blocks above, not typed; below_lod0 is the writer's note
+  roles_used: [authority, partner_esco, lender, facilitator, surety_guarantor]
+  roles_count: 5 of 41
+  families_used: [payment_promise, performance_promise, funding_promise, benefit_promise, risk_promise, determination_promise]
+  families_absent: [agency_promise]
+  families_unstated_only: []
+  settings_by_status: {stated: 1, inferred: 7, generic: 1, default: 4}
+  commitments_by_status: {stated: 2, inferred: 1, generic: 6, unstated: 1}
+  one_way_parties: [state_program, surety]
+  parties_count: 5
+  commitments_count: 10
+  below_lod0: {lod1_adds: 'events (IGA, award, construction, acceptance, annual M&V report, annual appropriation and finance
+      payment, shortfall make-good), the TELP payment schedule, the escalation rate, the guarantee period', lod2_adds: 'fee
+      variant (guaranteed savings with ESCO covering the shortfall), M&V option per measure (Option A for most measures, L1843-1844),
+      rate stipulation, refinancing/debt-modification review every 3-5 years (E11 L4467-4469)'}
+risk_allocation:   # owner rulings 15-16 (3 Oct): rows the source states or implies; the converter derives the rest (ENCODING.md)
+  - {category: R1, driver: technical, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-small-projects-2021.txt:1519 | both the technical design risk and system performance risk", why: "E12, the source this case's generic structure is taken from, says the ESCO assumes design and performance risk and guarantees the savings (L1750-1753). Equal to the default but stated. A and B agree"}
+  - {category: R1, driver: usage, bearer: [authority], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-small-projects-2021.txt:1850 | atypical weather, changes in facility operating hours", why: "weather, operating hours and facility use are outside the ESCO's control and land on the district's budget (L1849-1852). Stated in E12; A had inferred, B stated; stated taken because the sentence names the budget that absorbs them"}
+  - {category: R3, driver: null, bearer: [partner_esco], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-small-projects-2021.txt:1512 | Provides a fixed-cost project, carrying the risk and cost of", why: "the ESCO delivers a fixed-cost project and carries change-order risk. Equal to the default but stated. A and B agree"}
+  - {category: R4, driver: null, bearer: [authority], share: sole, status: stated, evidence: "der-vpp/spec-run/esco-moneyflow/input/femp-espc-small-projects-2021.txt:1851 | unexpected changes in utility rates", why: "the guarantee uses stipulated escalated rates, so the ESCO is not at risk if actual rates differ (L1775-1778); utility-rate changes hit the district's budget (L1850-1852). Replaces the flagged default with a sourced row. A inferred, B stated; stated taken on L1850"}

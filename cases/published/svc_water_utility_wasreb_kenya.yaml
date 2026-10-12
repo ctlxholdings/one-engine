@@ -1,0 +1,58 @@
+# Published case "svc_water_utility_wasreb_kenya": Kenya's water services sector, the aggregate of
+# the 95 regulated water service providers, fiscal year 2023/24 (WASREB, IMPACT Report No. 17,
+# Table 3.8, p.62; cases/reference/published/svc_water_utility_wasreb_kenya.yaml).
+#
+# Every amount is a published input by name (generator `src`), in Ksh millions. One book, the
+# sector's, one year:
+#   * the sector's total revenue (the oracle's `revenue`, Table 3.8's "Total Revenue"), earned
+#     for cash;
+#   * the total operation and maintenance expenditure (costs.total_om_expenditure), paid and
+#     expensed; no depreciation, finance cost or tax (the table has none).
+# Set aside, as the inputs do not carry them: the split of revenue into operating revenue, other
+# incomes and O+M subsidies (only the total is an input).
+published: svc_water_utility_wasreb_kenya
+entity: sector
+plant: total_om_expenditure
+case:
+  case: published-wasreb-kenya-water
+  periods: 1
+  phases: [operate]
+  currency: KES
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    sector:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: sector
+      phase: operate
+      declare: {revenue: income, om_expenditure: expense}
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        om: {debit: om_expenditure, credit: cash, amount: {generator: src, output: total_om_expenditure}}
+  schemes:
+    pnl:
+      revenue: revenue
+      om_expenditure: om
+  cuts:
+    revenue: {kind: pnl, entity: sector, scheme: pnl, include: [revenue]}
+    om: {kind: pnl, entity: sector, scheme: pnl, include: [om]}
+  measures: {}
+figures:
+  total_revenue_ksh_m: {cut: revenue}
+  total_om_expenditure_ksh_m: {cut: om, sign: -1}
+not_compared:
+  total_operating_revenue_ksh_m: &split >-
+    a component of total revenue; the inputs carry only the total, not its split into operating
+    revenue, other incomes and O+M subsidies
+  total_subsidies_and_grants_ksh_m: *split
+  total_other_incomes_ksh_m: *split

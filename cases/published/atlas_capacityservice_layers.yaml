@@ -1,0 +1,93 @@
+# Published case "atlas_capacityservice_layers": a 500-cage layer unit in South Africa, one laying
+# batch a year (Land Bank, Livestock Enterprise Budget 2023/24 v2, p.20;
+# cases/reference/published/atlas_capacityservice_layers.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * the batch's income is the source's section-3 (gross-margin) total income
+#     (movements.total_income_gm_section), the figure the source itself performs its margin
+#     subtraction with, sold for cash. The source contradicts itself here: its section 1c prints
+#     a different total (cull hens 18,709.46 + eggs 142,500.00 = 161,209.46); the oracle's
+#     expected margin is built from section 3, and so is this case. With section 1c the margin
+#     would be -77,595.32 instead;
+#   * the six cost lines (pullets, feed, sanitation, transport, egg trays, contingencies), each the
+#     source's printed amount, paid and expensed in the batch; the source's two subtotals
+#     (cost_subtotal, total_costs) are its own rollups and are not posted again;
+#   * no cages, labour, financing or tax: the source carries none.
+# gross_margin_section_3 (mapped to gross_margin) is the batch's profit. The three per-unit
+# margins are that profit divided by the source's own physical counts (birds culled and sold,
+# dozens of eggs, eggs as dozens x 12): they are money read from the books, divided by a count.
+published: atlas_capacityservice_layers
+entity: farm
+plant: total_income_gm_section
+case:
+  case: published-atlas-capacityservice-layers
+  periods: 1
+  phases: [operate]
+  currency: ZAR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        batches: 1                                   # one laying batch: the income is the batch's total
+        eggs_per_batch: eggs_per_batch_dozens * 12
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    batch:
+      type: offtake
+      parties: {seller: farm}
+      terms: {volume: {generator: src, output: batches}, price: {generator: src, output: total_income_gm_section},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    pullets:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: movements__cost_purchase_pullets}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    feed:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: movements__cost_feed_all_mash}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    sanitation:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: movements__cost_sanitation}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    transport:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: movements__cost_transport_pullets}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    trays:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: movements__cost_egg_trays}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+    contingencies:
+      type: operating_cost
+      parties: {payer: farm}
+      terms: {annual: {generator: src, output: movements__cost_contingencies}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      batch.revenue: revenue
+      pullets.expense: variable_cost
+      feed.expense: variable_cost
+      sanitation.expense: variable_cost
+      transport.expense: variable_cost
+      trays.expense: variable_cost
+      contingencies.expense: variable_cost
+  cuts:
+    gross_margin: {kind: pnl, entity: farm, scheme: pnl, include: [revenue, variable_cost]}
+  measures: {}
+figures:
+  gross_margin_section_3: {cut: gross_margin}
+  gross_margin_per_bird_sold: {cut: gross_margin, per: src.cull_hens_per_batch}
+  gross_margin_per_doz_eggs: {cut: gross_margin, per: src.eggs_per_batch_dozens}
+  gross_margin_per_egg_sold: {cut: gross_margin, per: src.eggs_per_batch}

@@ -1,0 +1,57 @@
+# Published case "cell_hotel_home2suites_graham": a hotel feasibility study for a 90-room Home2
+# Suites, Year III (2026) of its ten-year projection (p.4;
+# cases/reference/published/cell_hotel_home2suites_graham.yaml). USD.
+#
+# One period, Year III. Room revenue is one move of a `transfer` journal against cash:
+#   * room-nights available are the 90 rooms x 365 nights; room-nights sold are those times the
+#     74.0% occupancy (demand binds below the room count); each sold at the $168.59 ADR;
+#   * REVPAR is the room revenue per room-night available.
+# The source's three printed figures are each display-rounded, so the engine's room revenue
+# (24,309 x 168.59 = 4,098,254.31) sits $1,633 above the printed 4,096,621, inside the source's
+# own tolerance.
+#
+# Set aside: total revenue includes non-room (food and beverage) revenue the inputs do not carry.
+# No cost side: the study prints none.
+published: cell_hotel_home2suites_graham
+entity: hotel
+plant: adr
+case:
+  case: published-home2suites-year3
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        available: rooms * nights_per_year
+        sold: available * occupancy_pct / 100
+        room_sales: sold * adr
+  opening:
+    hotel:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: hotel
+      phase: post
+      declare:
+        room_revenue: income
+      moves:
+        rooms: {debit: cash, credit: room_revenue, amount: {generator: src, output: room_sales}}
+  schemes:
+    pnl:
+      room_revenue: rooms
+  cuts:
+    room_revenue: {kind: pnl, entity: hotel, scheme: pnl, include: [rooms]}
+  measures: {}
+figures:
+  room_revenue: {cut: room_revenue}
+  revpar: {cut: room_revenue, per: src.available}
+not_compared:
+  total_revenue: "includes non-room (food and beverage) revenue, which is not an input"

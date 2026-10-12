@@ -1,0 +1,85 @@
+# Published case "svc_clinic_ruralinvest": a nurse-run community health clinic, its investment and
+# a year of steady operation, costed per beneficiary (FAO RuralInvest, Module 2, Tables A and B,
+# pp.29-30; cases/reference/published/svc_clinic_ruralinvest.yaml).
+#
+# Every amount is a published input by name (generator `src`). One book, the clinic's, one year:
+#   * the investment (total_investment_cost_usd) is paid in cash and capitalised; it is funded
+#     by the community's own resources (community_resources_to_investment_usd) and a donation
+#     (donation_required_usd), each received as capital (equity);
+#   * the year's fixed cost (the nurse, upkeep) and variable cost (medicines, linen) are paid and
+#     expensed (costs.*); the clinic bills nothing (the source's fees are suggestions); no tax;
+#   * a per-beneficiary figure is a balance or cost from the books per the beneficiaries counted
+#     (`per`): per direct beneficiary, direct_beneficiaries_per_year; per all beneficiaries,
+#     direct plus indirect_beneficiaries_per_year, as the source's "(d+e)" labels state;
+#   * the minimum fee "to cover these variable expenses" is the variable cost per direct
+#     beneficiary.
+# Source findings (read, they differ; oracle notes): every "per all beneficiaries" row divides
+# by 200 + 800 = 1,000 though item (e) states 1,000 indirect beneficiaries (d + e = 1,200); the
+# own-resources and donated rows per direct beneficiary divide by 250 (the dollar result of the
+# row above) instead of d = 200 (printed 40 and 160 against 50 and 200); and the operating cost
+# per all beneficiaries is 5,000 / 800.
+published: svc_clinic_ruralinvest
+entity: clinic
+plant: fixed_cost_maintenance_overheads
+case:
+  case: published-ruralinvest-clinic
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        all_beneficiaries: direct_beneficiaries_per_year + indirect_beneficiaries_per_year
+  opening:
+    clinic:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: clinic
+      phase: operate
+      declare:
+        clinic_assets: asset
+        community_resources: equity
+        donated_capital: equity
+        fixed_cost: expense
+        variable_cost: expense
+      moves:
+        community: {debit: cash, credit: community_resources, amount: {generator: src, output: community_resources_to_investment_usd}}
+        donation: {debit: cash, credit: donated_capital, amount: {generator: src, output: donation_required_usd}}
+        investment: {debit: clinic_assets, credit: cash, amount: {generator: src, output: total_investment_cost_usd}}
+        fixed: {debit: fixed_cost, credit: cash, amount: {generator: src, output: fixed_cost_maintenance_overheads}}
+        variable: {debit: variable_cost, credit: cash, amount: {generator: src, output: variable_cost_patient_dependent}}
+  schemes:
+    pnl:
+      fixed_cost: fixed
+      variable_cost: variable
+  cuts:
+    operating: {kind: pnl, entity: clinic, scheme: pnl, include: [fixed, variable]}
+    fixed: {kind: pnl, entity: clinic, scheme: pnl, include: [fixed]}
+    variable: {kind: pnl, entity: clinic, scheme: pnl, include: [variable]}
+  measures: {}
+figures:
+  total_estimated_cost_of_clinic_functioning_usd: {cut: operating, sign: -1}
+  total_investment_per_direct_beneficiary_usd: {balance: clinic_assets, per: src.direct_beneficiaries_per_year}
+  total_investment_per_all_beneficiaries_usd: {balance: clinic_assets, per: src.all_beneficiaries}
+  investment_own_resources_per_direct_beneficiary_usd: {balance: community_resources, per: src.direct_beneficiaries_per_year}
+  investment_donated_per_direct_beneficiary_usd: {balance: donated_capital, per: src.direct_beneficiaries_per_year}
+  investment_own_resources_per_all_beneficiaries_usd: {balance: community_resources, per: src.all_beneficiaries}
+  investment_donated_per_all_beneficiaries_usd: {balance: donated_capital, per: src.all_beneficiaries}
+  annual_operating_cost_per_direct_beneficiary_usd: {cut: operating, sign: -1, per: src.direct_beneficiaries_per_year}
+  annual_operating_cost_per_all_beneficiaries_usd: {cut: operating, sign: -1, per: src.all_beneficiaries}
+  fixed_cost_per_direct_beneficiary_usd: {cut: fixed, sign: -1, per: src.direct_beneficiaries_per_year}
+  variable_cost_per_direct_beneficiary_usd: {cut: variable, sign: -1, per: src.direct_beneficiaries_per_year}
+  fixed_cost_per_all_beneficiaries_usd: {cut: fixed, sign: -1, per: src.all_beneficiaries}
+  variable_cost_per_all_beneficiaries_usd: {cut: variable, sign: -1, per: src.all_beneficiaries}
+  suggested_user_fee_minimum_usd_per_visit: {cut: variable, sign: -1, per: src.direct_beneficiaries_per_year}
+not_compared:
+  suggested_user_fee_affordable_usd_per_visit: >-
+    a fee the source floats as an option ("say $10 per visit"); nothing in the inputs derives it

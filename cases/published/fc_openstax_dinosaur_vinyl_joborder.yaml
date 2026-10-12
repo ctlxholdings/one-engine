@@ -1,0 +1,202 @@
+# Published case "fc_openstax_dinosaur_vinyl_joborder": Dinosaur Vinyl, Inc., Job MAC001 taken
+# from raw materials through work in process and finished goods to its sale (OpenStax,
+# Principles of Accounting vol. 2, sections 4.5 and 4.7;
+# cases/reference/published/fc_openstax_dinosaur_vinyl_joborder.yaml).
+#
+# The source's journal (section 4.7, inputs.journal_entries_mac001) is Job MAC001's own walk
+# through the month. Every journal amount is posted as printed, one move per debit or credit
+# line of a compound entry (generator `src`), in one period:
+#   * raw materials are one account, opened at beginning_raw_materials_inventory; the purchase
+#     of vinyl and black ink is debited to it against accounts payable, and the six materials
+#     requisitioned for MAC001 are credited from it to work in process;
+#   * MAC001's direct labour (production and finishing) is debited to work in process against
+#     factory wages payable; the indirect labour and the month's actual overhead (supplies,
+#     utilities, depreciation, insurance, interest) are debited to manufacturing overhead, a
+#     clearing asset, against the accounts the source credits; the overhead applied to MAC001
+#     is credited from it to work in process;
+#   * the completed job moves to finished goods, its cost to cost of goods sold, and its sale is
+#     billed to accounts receivable;
+#   * the journal carries Job MAC001 only, so work in process and finished goods hold MAC001's
+#     cost alone: their opening balances are MAC001's beginning balances (nil), and what each
+#     received is read by the account it came from (a cut on the account, classed by the other
+#     end: materials, labour, overhead, completed, sold);
+#   * the supplies, prepaid insurance and payables the overhead entry credits open at nil (the
+#     source prints no balance for them), so supplies and prepaid insurance close below nil;
+#     nothing reads them;
+#   * no tax: the source's statement stops at gross profit.
+# Set aside: the other three jobs (POR143, TRJ441, SWM505) and the shop-wide totals. The
+# inputs carry those jobs only as narrative text (jobs_narrative), no number, and the source
+# journals none of their entries, so the books hold nothing of them. The job cost sheet's
+# printed overhead rate (1.50, against its own 66 x 2.50 = 165) is not a figure here; the
+# journal's 165 is what is posted.
+published: fc_openstax_dinosaur_vinyl_joborder
+entity: vinyl
+plant: sales
+case:
+  case: published-dinosaur-vinyl-joborder
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    vinyl:
+      raw_materials: {nature: asset, value: {generator: src, output: beginning_raw_materials_inventory}}
+      work_in_process_mac001: {nature: asset, value: 0}
+      finished_goods: {nature: asset, value: 0}
+      equity: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    journal:
+      kind: transfer
+      entity: vinyl
+      phase: post
+      declare:
+        manufacturing_overhead: asset
+        supplies_inventory: asset
+        prepaid_insurance: asset
+        accumulated_depreciation: asset
+        accounts_receivable: asset
+        accounts_payable: liability
+        factory_wages_payable: liability
+        utilities_payable: liability
+        interest_payable: liability
+        sales: income
+        cost_of_goods_sold: expense
+      moves:
+        # 1. purchase of raw materials on account
+        buy_vinyl: {debit: raw_materials, credit: accounts_payable, amount: {generator: src, output: debit__raw_materials_vinyl}}
+        buy_black_ink: {debit: raw_materials, credit: accounts_payable, amount: {generator: src, output: debit__raw_materials_black_ink}}
+        # 2. materials requisitioned for MAC001
+        use_vinyl: {debit: work_in_process_mac001, credit: raw_materials, amount: {generator: src, output: credit__raw_materials_vinyl}}
+        use_black_ink: {debit: work_in_process_mac001, credit: raw_materials, amount: {generator: src, output: credit__raw_materials_black_ink}}
+        use_red_ink: {debit: work_in_process_mac001, credit: raw_materials, amount: {generator: src, output: raw_materials_red_ink}}
+        use_gold_ink: {debit: work_in_process_mac001, credit: raw_materials, amount: {generator: src, output: raw_materials_gold_ink}}
+        use_grommets: {debit: work_in_process_mac001, credit: raw_materials, amount: {generator: src, output: raw_materials_grommets}}
+        use_wood: {debit: work_in_process_mac001, credit: raw_materials, amount: {generator: src, output: raw_materials_finishing_wood}}
+        # 3, 4. MAC001's direct labour
+        labour_production: {debit: work_in_process_mac001, credit: factory_wages_payable,
+                            amount: {generator: src, output: work_in_process_inventory_mac001}}
+        labour_finishing: {debit: work_in_process_mac001, credit: factory_wages_payable,
+                           amount: {generator: src, output: journal_entries_mac001_3__debit__work_in_process_inventory}}
+        # 5. indirect labour
+        indirect_labour: {debit: manufacturing_overhead, credit: factory_wages_payable,
+                          amount: {generator: src, output: journal_entries_mac001_4__debit__manufacturing_overhead}}
+        # 6. the month's actual overhead
+        overhead_supplies: {debit: manufacturing_overhead, credit: supplies_inventory, amount: {generator: src, output: supplies_inventory}}
+        overhead_utilities: {debit: manufacturing_overhead, credit: utilities_payable, amount: {generator: src, output: utilities_payable}}
+        overhead_depreciation: {debit: manufacturing_overhead, credit: accumulated_depreciation,
+                                amount: {generator: src, output: accumulated_depreciation}}
+        overhead_insurance: {debit: manufacturing_overhead, credit: prepaid_insurance, amount: {generator: src, output: prepaid_insurance}}
+        overhead_interest: {debit: manufacturing_overhead, credit: interest_payable, amount: {generator: src, output: interest_payable}}
+        # 7. overhead applied to MAC001
+        apply_overhead: {debit: work_in_process_mac001, credit: manufacturing_overhead, amount: {generator: src, output: credit__manufacturing_overhead}}
+        # 8. MAC001 completed
+        complete: {debit: finished_goods, credit: work_in_process_mac001, amount: {generator: src, output: credit__work_in_process_inventory}}
+        # 9. cost of MAC001's sale
+        cost_of_sale: {debit: cost_of_goods_sold, credit: finished_goods, amount: {generator: src, output: credit__finished_goods_inventory}}
+        # 10. MAC001's sale
+        sale: {debit: accounts_receivable, credit: sales, amount: {generator: src, output: sales}}
+  schemes:
+    pnl:
+      sales: revenue
+      cost_of_goods_sold: cogs
+    flows:
+      raw_materials: materials
+      factory_wages_payable: labour
+      manufacturing_overhead: overhead
+      finished_goods: completed
+      work_in_process_mac001: manufactured
+      cost_of_goods_sold: sold
+  cuts:
+    revenue: {kind: pnl, entity: vinyl, scheme: pnl, include: [revenue]}
+    cogs: {kind: pnl, entity: vinyl, scheme: pnl, include: [cogs]}
+    gross_profit: {kind: pnl, entity: vinyl, scheme: pnl, include: [revenue, cogs]}
+    wip_materials: {entity: vinyl, account: work_in_process_mac001, scheme: flows, include: [materials]}
+    wip_labour: {entity: vinyl, account: work_in_process_mac001, scheme: flows, include: [labour]}
+    wip_overhead: {entity: vinyl, account: work_in_process_mac001, scheme: flows, include: [overhead]}
+    wip_added: {entity: vinyl, account: work_in_process_mac001, scheme: flows, include: [materials, labour, overhead]}
+    wip_completed: {entity: vinyl, account: work_in_process_mac001, scheme: flows, include: [completed]}
+    fg_manufactured: {entity: vinyl, account: finished_goods, scheme: flows, include: [manufactured]}
+  measures: {}
+figures:
+  mac001_sales: {cut: revenue}
+  mac001_cost_of_goods_sold: {cut: cogs, sign: -1}
+  mac001_gross_profit: {cut: gross_profit}
+  materials_used_by_job_usd.MAC001: {cut: wip_materials}
+  direct_labor_by_job_usd.MAC001: {cut: wip_labour}
+  overhead_applied_by_job_usd.MAC001: {cut: wip_overhead}
+  total_added_during_month_by_job_usd.MAC001: {cut: wip_added}
+  cost_of_goods_manufactured_usd.beginning_wip_by_job.MAC001: {opening: work_in_process_mac001}
+  cost_of_goods_manufactured_usd.manufacturing_costs_incurred_by_job.MAC001: {sum: [{opening: work_in_process_mac001}, {cut: wip_added}]}
+  cost_of_goods_manufactured_usd.ending_wip_by_job.MAC001: {balance: work_in_process_mac001}
+  cost_of_goods_manufactured_usd.cost_of_goods_manufactured_by_job.MAC001: {cut: wip_completed, sign: -1}
+  cost_of_goods_sold_usd.beginning_finished_goods_by_job.MAC001: {opening: finished_goods}
+  cost_of_goods_sold_usd.plus_cost_of_goods_manufactured.MAC001: {cut: fg_manufactured}
+  cost_of_goods_sold_usd.equals_goods_available_for_sale.MAC001: {sum: [{opening: finished_goods}, {cut: fg_manufactured}]}
+  cost_of_goods_sold_usd.less_ending_finished_goods.MAC001: {balance: finished_goods}
+  cost_of_goods_sold_usd.equals_cost_of_goods_sold.MAC001: {cut: cogs, sign: -1}
+  job_summary_usd.MAC001.beginning_balance: {opening: "work_in_process_mac001 + finished_goods"}
+  job_summary_usd.MAC001.direct_materials: {cut: wip_materials}
+  job_summary_usd.MAC001.direct_labor: {cut: wip_labour}
+  job_summary_usd.MAC001.overhead_applied: {cut: wip_overhead}
+  job_summary_usd.MAC001.total_cost: {sum: [{opening: "work_in_process_mac001 + finished_goods"}, {cut: wip_added}]}
+  income_statement_mac001_usd.sales: {cut: revenue}
+  income_statement_mac001_usd.cost_of_goods_sold: {cut: cogs, sign: -1}
+  income_statement_mac001_usd.gross_profit: {cut: gross_profit}
+not_compared:
+  materials_used_by_job_usd.POR143: &other >-
+    another job or the shop-wide total: the inputs carry POR143, TRJ441 and SWM505 only as narrative
+    text (jobs_narrative), and the journal posts none of their entries
+  materials_used_by_job_usd.TRJ441: *other
+  materials_used_by_job_usd.total: *other
+  direct_labor_by_job_usd.POR143: *other
+  direct_labor_by_job_usd.TRJ441: *other
+  direct_labor_by_job_usd.total: *other
+  overhead_applied_by_job_usd.POR143: *other
+  overhead_applied_by_job_usd.TRJ441: *other
+  overhead_applied_by_job_usd.total: *other
+  total_added_during_month_by_job_usd.POR143: *other
+  total_added_during_month_by_job_usd.TRJ441: *other
+  total_added_during_month_by_job_usd.total: *other
+  cost_of_goods_manufactured_usd.beginning_wip_by_job.POR143: *other
+  cost_of_goods_manufactured_usd.beginning_wip_by_job.TRJ441: *other
+  cost_of_goods_manufactured_usd.beginning_wip_by_job.total: *other
+  cost_of_goods_manufactured_usd.manufacturing_costs_incurred_by_job.POR143: *other
+  cost_of_goods_manufactured_usd.manufacturing_costs_incurred_by_job.TRJ441: *other
+  cost_of_goods_manufactured_usd.manufacturing_costs_incurred_by_job.total: *other
+  cost_of_goods_manufactured_usd.ending_wip_by_job.POR143: *other
+  cost_of_goods_manufactured_usd.ending_wip_by_job.TRJ441: *other
+  cost_of_goods_manufactured_usd.ending_wip_by_job.total: *other
+  cost_of_goods_manufactured_usd.cost_of_goods_manufactured_by_job.POR143: *other
+  cost_of_goods_manufactured_usd.cost_of_goods_manufactured_by_job.TRJ441: *other
+  cost_of_goods_manufactured_usd.cost_of_goods_manufactured_by_job.total: *other
+  cost_of_goods_sold_usd.beginning_finished_goods_by_job.SWM505: *other
+  cost_of_goods_sold_usd.beginning_finished_goods_by_job.POR143: *other
+  cost_of_goods_sold_usd.beginning_finished_goods_by_job.TRJ441: *other
+  cost_of_goods_sold_usd.beginning_finished_goods_by_job.total: *other
+  cost_of_goods_sold_usd.plus_cost_of_goods_manufactured.SWM505: *other
+  cost_of_goods_sold_usd.plus_cost_of_goods_manufactured.POR143: *other
+  cost_of_goods_sold_usd.plus_cost_of_goods_manufactured.TRJ441: *other
+  cost_of_goods_sold_usd.plus_cost_of_goods_manufactured.total: *other
+  cost_of_goods_sold_usd.equals_goods_available_for_sale.SWM505: *other
+  cost_of_goods_sold_usd.equals_goods_available_for_sale.POR143: *other
+  cost_of_goods_sold_usd.equals_goods_available_for_sale.TRJ441: *other
+  cost_of_goods_sold_usd.equals_goods_available_for_sale.total: *other
+  cost_of_goods_sold_usd.less_ending_finished_goods.SWM505: *other
+  cost_of_goods_sold_usd.less_ending_finished_goods.POR143: *other
+  cost_of_goods_sold_usd.less_ending_finished_goods.TRJ441: *other
+  cost_of_goods_sold_usd.less_ending_finished_goods.total: *other
+  cost_of_goods_sold_usd.equals_cost_of_goods_sold.SWM505: *other
+  cost_of_goods_sold_usd.equals_cost_of_goods_sold.POR143: *other
+  cost_of_goods_sold_usd.equals_cost_of_goods_sold.TRJ441: *other
+  cost_of_goods_sold_usd.equals_cost_of_goods_sold.total: *other
+  job_summary_usd.SWM505: *other
+  job_summary_usd.POR143: *other
+  job_summary_usd.TRJ441: *other
+  job_summary_usd.total: *other

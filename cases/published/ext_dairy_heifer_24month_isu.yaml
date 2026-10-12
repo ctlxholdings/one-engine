@@ -1,0 +1,169 @@
+# Published case "ext_dairy_heifer_24month_isu": one dairy replacement heifer raised 24 months
+# from birth to calving (Tranel, Iowa State University Extension, Heifer Raising Costs in 2019,
+# LT-18-01, budget panel "1 Heifer for 24 months"; cases/reference/published/
+# ext_dairy_heifer_24month_isu.yaml).
+#
+# One period, the heifer's 24 months. Every amount is a published input by name (generator
+# `src`), posted by a `transfer` rulebook; the source prints costs only (its $2,241 is a
+# break-even value, not a sale), so only the cost side is booked:
+#   * feed (the six priced feed lines), livestock costs (ten lines) and facilities and
+#     equipment (three lines) are the source's own line costs (the hand-labelled `costs` list),
+#     paid in cash and expensed; labour is its printed cost (cost_usd), paid;
+#   * the cow ownership cost (interest on investment) and the initial calf value are the
+#     owner's capital and the owner's newborn calf charged to the heifer, credited to the owner
+#     (no cash moves);
+#   * the source's birth-to-weaning estimate (birth_to_weaning_cost_usd, the first 56 days) is a
+#     share of those same itemised costs, not an extra one: it is booked as a reclassification
+#     inside the rearing costs (a pre-weaning stage account debited, a contra account credited),
+#     so the total is unchanged and the rearing cost after weaning is the rest;
+#   * no tax.
+# Per-day figures divide by total_rearing_days or weaning_to_calving_days (calendar drivers)
+# via `per`.
+#
+# Source findings (figures read from the books, left to differ):
+#   * total_feed_cost_usd: the six feed lines sum to 1,166.60; the source prints the whole
+#     dollar 1,167, outside the one-cent tolerance;
+#   * subtotal_before_ownership_and_labour_usd: printed 1,672.02, but its own three section
+#     totals add to 1,676.02 (1,675.62 from the feed lines); the source's own per-day figures
+#     use the larger number;
+#   * total_cost_24_months_usd (mapped): printed 2,241, but feed + livestock + facilities +
+#     labour + ownership + calf value add to 2,235.62 (2,236.02 with the rounded feed total);
+#     the gap cannot be located from what is printed;
+#   * weaning_to_calving_cost_usd: printed 1,620 = 2,241 - 336 - 110 - 175, so it carries the
+#     same gap (the books give 1,614.62).
+# Set aside: the feed dry-matter tonnage (a physical statistic the source states three
+# different ways, from quantities in tons, bushels and pounds with no bushel weight given), and
+# the source's two sensitivity scenarios (a 23-month heifer, a 10% lower cull rate), which the
+# case does not run.
+published: ext_dairy_heifer_24month_isu
+entity: farm
+plant: hay_haylage_dm
+case:
+  case: published-ext-dairy-heifer-24month-isu
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values: {}
+  opening:
+    farm:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    budget:
+      kind: transfer
+      entity: farm
+      phase: post
+      declare:
+        hay_haylage: expense
+        corn_silage: expense
+        corn: expense
+        protein_supplement: expense
+        salt_and_minerals: expense
+        milk_replacer_calf_feed: expense
+        dairy_supplies: expense
+        freight_trucking_hauling: expense
+        veterinary_and_medicine: expense
+        breeding_fees: expense
+        dhia_accounting_legal: expense
+        marketing: expense
+        bedding: expense
+        gas_fuel_oil: expense
+        electricity: expense
+        other_operating_interest_phone: expense
+        manure_storage: expense
+        heifer_housing: expense
+        machinery_and_equipment: expense
+        labour: expense
+        cow_ownership_interest: expense
+        initial_calf_value: expense
+        rearing_birth_to_weaning: expense
+        rearing_moved_to_weaning_stage: expense
+      moves:
+        hay: {debit: hay_haylage, credit: cash, amount: {generator: src, output: hay_haylage_dm}}
+        silage: {debit: corn_silage, credit: cash, amount: {generator: src, output: corn_silage_dm}}
+        corn: {debit: corn, credit: cash, amount: {generator: src, output: corn_equivalent}}
+        protein: {debit: protein_supplement, credit: cash, amount: {generator: src, output: protein_supplement}}
+        salt: {debit: salt_and_minerals, credit: cash, amount: {generator: src, output: salt_and_minerals}}
+        milk_replacer: {debit: milk_replacer_calf_feed, credit: cash, amount: {generator: src, output: milk_replacer_calf_feed}}
+        supplies: {debit: dairy_supplies, credit: cash, amount: {generator: src, output: costs__dairy_supplies}}
+        freight: {debit: freight_trucking_hauling, credit: cash, amount: {generator: src, output: costs__freight_trucking_hauling}}
+        vet: {debit: veterinary_and_medicine, credit: cash, amount: {generator: src, output: costs__veterinary_and_medicine}}
+        breeding: {debit: breeding_fees, credit: cash, amount: {generator: src, output: costs__breeding_fees}}
+        dhia: {debit: dhia_accounting_legal, credit: cash, amount: {generator: src, output: costs__dhia_accounting_legal}}
+        marketing: {debit: marketing, credit: cash, amount: {generator: src, output: costs__marketing}}
+        bedding: {debit: bedding, credit: cash, amount: {generator: src, output: costs__bedding}}
+        fuel: {debit: gas_fuel_oil, credit: cash, amount: {generator: src, output: costs__gas_fuel_oil}}
+        electricity: {debit: electricity, credit: cash, amount: {generator: src, output: costs__electricity}}
+        other: {debit: other_operating_interest_phone, credit: cash, amount: {generator: src, output: costs__other_operating_interest_phone}}
+        manure: {debit: manure_storage, credit: cash, amount: {generator: src, output: costs__manure_storage}}
+        housing: {debit: heifer_housing, credit: cash, amount: {generator: src, output: costs__heifer_housing}}
+        machinery: {debit: machinery_and_equipment, credit: cash, amount: {generator: src, output: costs__machinery_and_equipment}}
+        labour: {debit: labour, credit: cash, amount: {generator: src, output: cost_usd}}
+        ownership: {debit: cow_ownership_interest, credit: owner_equity, amount: {generator: src, output: cow_ownership_cost_interest_on_investment}}
+        calf: {debit: initial_calf_value, credit: owner_equity, amount: {generator: src, output: initial_calf_value}}
+        pre_weaning_stage: {debit: rearing_birth_to_weaning, credit: rearing_moved_to_weaning_stage, amount: {generator: src, output: birth_to_weaning_cost_usd}}
+  schemes:
+    pnl:
+      hay_haylage: feed
+      corn_silage: feed
+      corn: feed
+      protein_supplement: feed
+      salt_and_minerals: feed
+      milk_replacer_calf_feed: feed
+      dairy_supplies: livestock
+      freight_trucking_hauling: livestock
+      veterinary_and_medicine: livestock
+      breeding_fees: livestock
+      dhia_accounting_legal: livestock
+      marketing: livestock
+      bedding: livestock
+      gas_fuel_oil: livestock
+      electricity: livestock
+      other_operating_interest_phone: livestock
+      manure_storage: facilities
+      heifer_housing: facilities
+      machinery_and_equipment: facilities
+      labour: labour
+      cow_ownership_interest: ownership
+      initial_calf_value: calf
+      rearing_birth_to_weaning: pre_weaning
+      rearing_moved_to_weaning_stage: stage_split
+  cuts:
+    feed: {kind: pnl, entity: farm, scheme: pnl, include: [feed]}
+    livestock: {kind: pnl, entity: farm, scheme: pnl, include: [livestock]}
+    facilities: {kind: pnl, entity: farm, scheme: pnl, include: [facilities]}
+    labour: {kind: pnl, entity: farm, scheme: pnl, include: [labour]}
+    before_ownership_and_labour: {kind: pnl, entity: farm, scheme: pnl, include: [feed, livestock, facilities]}
+    with_labour: {kind: pnl, entity: farm, scheme: pnl, include: [feed, livestock, facilities, labour]}
+    total: {kind: pnl, entity: farm, scheme: pnl,
+            include: [feed, livestock, facilities, labour, ownership, calf, pre_weaning, stage_split]}
+    weaning_to_calving: {kind: pnl, entity: farm, scheme: pnl, include: [feed, livestock, facilities, labour, stage_split]}
+  measures: {}
+figures:
+  total_feed_cost_usd: {cut: feed, sign: -1}
+  total_livestock_costs_usd: {cut: livestock, sign: -1}
+  total_facilities_and_equipment_costs_usd: {cut: facilities, sign: -1}
+  subtotal_before_ownership_and_labour_usd: {cut: before_ownership_and_labour, sign: -1}
+  cost_per_head_per_day_without_labour_usd: {cut: before_ownership_and_labour, sign: -1, per: src.total_rearing_days}
+  cost_per_head_per_day_with_labour_usd: {cut: with_labour, sign: -1, per: src.total_rearing_days}
+  labour_cost_usd: {cut: labour, sign: -1}
+  total_cost_24_months_usd: {cut: total, sign: -1}
+  weaning_to_calving_cost_usd: {cut: weaning_to_calving, sign: -1}
+  weaning_to_calving_cost_per_day_usd: {cut: weaning_to_calving, sign: -1, per: src.weaning_to_calving_days}
+not_compared:
+  total_feed_dm_ton_per_head: >-
+    a physical statistic (dry-matter tons) the source states three different ways; the printed
+    quantities are in tons, bushels and pounds and no bushel weight is given, so nothing in the
+    inputs derives it
+  saving_from_23_month_instead_of_24_month_usd: the source's 23-month sensitivity scenario; the case models the 24-month budget
+  saving_for_100_cow_herd_usd: the source's 23-month sensitivity scenario scaled to the herd; not modelled
+  cost_of_a_23_month_heifer_usd: the source's 23-month sensitivity scenario; not modelled
+  saving_from_10pct_lower_cull_rate_usd: the source's lower-cull-rate sensitivity scenario; not modelled
+  saving_per_head_as_printed_usd: an intermediate of the lower-cull-rate sensitivity scenario; not modelled

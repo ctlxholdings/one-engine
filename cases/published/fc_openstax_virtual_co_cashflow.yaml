@@ -1,0 +1,167 @@
+# Published case "fc_openstax_virtual_co_cashflow": Virtual Co., the year 2018, its statement
+# of cash flows by the indirect method (OpenStax, Principles of Accounting vol. 1, section 16.4,
+# review problem; cases/reference/published/fc_openstax_virtual_co_cashflow.yaml).
+#
+# The source gives the comparative balance sheet (2017, 2018), the 2018 income statement and a
+# list of "additional information" in words. The books open on the 2017 balance sheet and are
+# taken to the 2018 one; every amount is a printed number by name (generator `src`), and every
+# cash flow is what the books move. In one period:
+#   * two 2017 cells are misprinted (the source's own notes, ERRORS 1 and 2): accumulated
+#     depreciation without its minus sign and notes payable 85,000 short. Each is taken instead
+#     from the 2017 totals the source prints beside it: accumulated depreciation is total assets
+#     less the other assets, notes payable is total liabilities less accounts payable;
+#   * the income statement is posted as accrued: sales to receivables, cost of goods sold to
+#     accounts payable (the balance sheet has no inventory, so goods are bought as they are
+#     sold), insurance out of prepaid insurance, depreciation to accumulated depreciation;
+#     other operating expenses and income tax are paid in cash (no payable for them);
+#   * receivables, prepaid insurance and accounts payable are then held at their 2018 balances
+#     (held_balance), the change moving cash: collections and payments are the books' own;
+#   * investments, plant assets and notes payable are held at their 2018 balances against cash;
+#     the gain on the investments sold (printed "on sale of land") is received in cash. The
+#     stock issued for cash is the rise in common stock; the dividend is what retained earnings
+#     show was paid (2017 balance plus net income less the 2018 balance);
+#   * no inventory, no tax payable: the year's tax is the printed expense, paid in the year.
+# The books land on every printed 2018 balance, so cash lands on 66,700 by itself.
+# Set aside: the split of investing into sale proceeds (47,500) and purchases (50,000). It rests
+# on the cost of the investments sold ($30,000) and the purchase ($50,000), which the source
+# gives only in words; its numbers carry only the net change, read as the investing total.
+# Differs: the receivables line "as labeled", 1,180, printed as a decrease added back; the
+# books' adjustment for a 1,180 rise in receivables is -1,180, which is what the source's own
+# operating total uses (ERROR 3, and the reconciled line -1,180 matches).
+published: fc_openstax_virtual_co_cashflow
+entity: virtual
+plant: sales_revenue
+case:
+  case: published-virtual-co-cashflow
+  periods: 1
+  phases: [post, hold]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        acc_dep_2017: >-
+          total_assets__y2017 - cash__y2017 - accounts_receivable__y2017 - prepaid_insurance__y2017
+          - investments__y2017 - plant_assets__y2017
+        notes_2017: total_liabilities__y2017 - accounts_payable__y2017
+        stock_for_cash: common_stock__y2018 - common_stock__y2017
+        dividend: retained_earnings__y2017 + net_income - retained_earnings__y2018
+  opening:
+    virtual:
+      cash: {nature: asset, value: {generator: src, output: cash__y2017}}
+      accounts_receivable: {nature: asset, value: {generator: src, output: accounts_receivable__y2017}}
+      prepaid_insurance: {nature: asset, value: {generator: src, output: prepaid_insurance__y2017}}
+      investments: {nature: asset, value: {generator: src, output: investments__y2017}}
+      plant_assets: {nature: asset, value: {generator: src, output: plant_assets__y2017}}
+      accumulated_depreciation: {nature: asset, value: {generator: src, output: acc_dep_2017}}
+      accounts_payable: {nature: liability, value: {generator: src, output: accounts_payable__y2017}}
+      notes_payable: {nature: liability, value: {generator: src, output: notes_2017}}
+      common_stock: {nature: equity, value: {generator: src, output: common_stock__y2017}}
+      retained_earnings: {nature: equity, value: {generator: src, output: retained_earnings__y2017}}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: virtual
+      phase: post
+      declare:
+        dividends: equity
+        sales_revenue: income
+        gain_on_sale: income
+        cost_of_goods_sold: expense
+        depreciation_expense: expense
+        insurance_expense: expense
+        other_operating_expenses: expense
+        income_tax_expense: expense
+      moves:
+        sales: {debit: accounts_receivable, credit: sales_revenue, amount: {generator: src, output: sales_revenue}}
+        cogs: {debit: cost_of_goods_sold, credit: accounts_payable, amount: {generator: src, output: cost_of_goods_sold}}
+        depreciation: {debit: depreciation_expense, credit: accumulated_depreciation, amount: {generator: src, output: depreciation_expense}}
+        insurance: {debit: insurance_expense, credit: prepaid_insurance, amount: {generator: src, output: insurance_expense}}
+        other_opex: {debit: other_operating_expenses, credit: cash, amount: {generator: src, output: other_operating_expenses}}
+        income_tax: {debit: income_tax_expense, credit: cash, amount: {generator: src, output: income_tax_expense}}
+        gain: {debit: cash, credit: gain_on_sale, amount: {generator: src, output: gain_on_sale_of_land_as_labeled}}
+        stock_issued: {debit: cash, credit: common_stock, amount: {generator: src, output: stock_for_cash}}
+        dividend: {debit: dividends, credit: cash, amount: {generator: src, output: dividend}}
+    balances:
+      kind: held_balance
+      entity: virtual
+      cash: cash
+      phase: hold
+      accounts:
+        accounts_receivable: {side: asset, target: {generator: src, output: accounts_receivable__y2018}}
+        prepaid_insurance: {side: asset, target: {generator: src, output: prepaid_insurance__y2018}}
+        accounts_payable: {side: liability, target: {generator: src, output: accounts_payable__y2018}}
+        investments: {side: asset, target: {generator: src, output: investments__y2018}}
+        plant_assets: {side: asset, target: {generator: src, output: plant_assets__y2018}}
+        notes_payable: {side: liability, target: {generator: src, output: notes_payable__y2018}}
+  schemes:
+    pnl:
+      sales_revenue: revenue
+      gain_on_sale: other
+      cost_of_goods_sold: expense
+      depreciation_expense: expense
+      insurance_expense: expense
+      other_operating_expenses: expense
+      income_tax_expense: tax
+    cash_flow:
+      accounts_receivable: operating
+      accounts_payable: operating
+      prepaid_insurance: operating
+      other_operating_expenses: operating
+      income_tax_expense: operating
+      gain_on_sale: investing
+      investments: investing
+      plant_assets: plant
+      notes_payable: notes
+      common_stock: stock
+      dividends: dividends
+  cuts:
+    net_income: {kind: pnl, entity: virtual, scheme: pnl, include: [revenue, other, expense, tax]}
+    operating: {entity: virtual, account: cash, scheme: cash_flow, include: [operating]}
+    plant: {entity: virtual, account: cash, scheme: cash_flow, include: [plant]}
+    investing: {entity: virtual, account: cash, scheme: cash_flow, include: [investing, plant]}
+    notes: {entity: virtual, account: cash, scheme: cash_flow, include: [notes]}
+    stock: {entity: virtual, account: cash, scheme: cash_flow, include: [stock]}
+    dividends: {entity: virtual, account: cash, scheme: cash_flow, include: [dividends]}
+    financing: {entity: virtual, account: cash, scheme: cash_flow, include: [notes, stock, dividends]}
+  measures: {}
+figures:
+  net_income_top: {cut: net_income}
+  total_assets_2018_top: {balance: "cash + accounts_receivable + prepaid_insurance + investments + plant_assets + accumulated_depreciation"}
+  total_liabilities_2018_top: {balance: "accounts_payable + notes_payable"}
+  total_equity_2018_top: {balance: "common_stock + retained_earnings + dividends + sales_revenue + gain_on_sale - cost_of_goods_sold - depreciation_expense - insurance_expense - other_operating_expenses - income_tax_expense"}
+  cash_closing_2018_top: {balance: cash}
+  net_change_in_cash_top: {change: cash}
+  indirect_method_cash_flow_statement_usd.operating_activities.net_income: {cut: net_income}
+  indirect_method_cash_flow_statement_usd.operating_activities.depreciation: {balance: depreciation_expense}
+  indirect_method_cash_flow_statement_usd.operating_activities.gain_on_sale_of_plant_assets_as_labeled: {balance: gain_on_sale, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.accounts_receivable_change_as_labeled: {change: accounts_receivable, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.prepaid_insurance_decrease: {change: prepaid_insurance, sign: -1}
+  indirect_method_cash_flow_statement_usd.operating_activities.accounts_payable_increase: {change: accounts_payable}
+  indirect_method_cash_flow_statement_usd.operating_activities.net_cash_flow_operating_activities: {cut: operating}
+  indirect_method_cash_flow_statement_usd.investing_activities.cost_of_new_plant_assets: {cut: plant}
+  indirect_method_cash_flow_statement_usd.investing_activities.net_cash_flow_investing_activities: {cut: investing}
+  indirect_method_cash_flow_statement_usd.financing_activities.payment_of_notes_payable_principal: {cut: notes}
+  indirect_method_cash_flow_statement_usd.financing_activities.issuance_of_common_stock: {cut: stock}
+  indirect_method_cash_flow_statement_usd.financing_activities.payment_of_dividends: {cut: dividends}
+  indirect_method_cash_flow_statement_usd.financing_activities.net_cash_flow_financing_activities: {cut: financing}
+  indirect_method_cash_flow_statement_usd.total_cash_flow_decrease: {change: cash}
+  indirect_method_cash_flow_statement_usd.cash_balance_dec_31_2017: {opening: cash}
+  indirect_method_cash_flow_statement_usd.cash_balance_dec_31_2018: {balance: cash}
+  operating_activities_reconciled_usd.net_income: {cut: net_income}
+  operating_activities_reconciled_usd.depreciation: {balance: depreciation_expense}
+  operating_activities_reconciled_usd.gain_on_sale_reversal: {balance: gain_on_sale, sign: -1}
+  operating_activities_reconciled_usd.accounts_receivable_increase: {change: accounts_receivable, sign: -1}
+  operating_activities_reconciled_usd.prepaid_insurance_decrease: {change: prepaid_insurance, sign: -1}
+  operating_activities_reconciled_usd.accounts_payable_increase: {change: accounts_payable}
+  operating_activities_reconciled_usd.net_cash_flow_operating_activities: {cut: operating}
+not_compared:
+  indirect_method_cash_flow_statement_usd.investing_activities.proceeds_from_sale_of_investments: &split >-
+    the cost of the investments sold ($30,000) and the purchase ($50,000) are given only in words
+    (additional_information); the inputs carry only the net change in investments, read as the
+    investing total
+  indirect_method_cash_flow_statement_usd.investing_activities.cost_of_investments_purchased: *split

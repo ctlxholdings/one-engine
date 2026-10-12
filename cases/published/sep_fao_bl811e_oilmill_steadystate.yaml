@@ -1,0 +1,90 @@
+# Published case "sep_fao_bl811e_oilmill_steadystate": Beta Ltd, a vegetable oil mill crushing
+# oilseed into oil and meal, its first year at full capacity, 1992 (FAO, Financial analysis in
+# agricultural project preparation, 1991, Comprehensive Illustration, Schedules 2, 3 and 5, Year 3;
+# cases/reference/published/sep_fao_bl811e_oilmill_steadystate.yaml).
+#
+# Every amount is a published input by name, or a formula over inputs (generator `src`). One
+# book, the mill's, one year:
+#   * the oil and meal made are the oilseed crushed (oilseed_processed_tons) times their yields
+#     (oil_yield_pct_of_oilseed, meal_yield_pct_of_oilseed, percents): physical quantities no
+#     ledger holds, read as drivers; the processing loss makes nothing;
+#   * both products are sold in the year, for cash, at sale_price_oil_usd_per_ton and
+#     sale_price_meal_usd_per_ton; nothing is stocked;
+#   * the oilseed is bought at raw_material_price_oilseed_usd_per_ton a tonne crushed, and the
+#     packing, labour and fuel (costs.*) are paid; all expensed as cost of sales;
+#   * the year's depreciation (costs.depreciation, the Schedule 1 total) is charged against
+#     accumulated depreciation, in cost of sales, as the source's gross profit nets it;
+#   * administration and marketing overheads and tax sit below gross profit: not modelled.
+published: sep_fao_bl811e_oilmill_steadystate
+entity: mill
+plant: sale_price_meal_usd_per_ton
+case:
+  case: published-fao-betaltd-oilmill-steady
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        oil_tons: oilseed_processed_tons * oil_yield_pct_of_oilseed / 100
+        meal_tons: oilseed_processed_tons * meal_yield_pct_of_oilseed / 100
+        oil_sales: oil_tons * sale_price_oil_usd_per_ton
+        meal_sales: meal_tons * sale_price_meal_usd_per_ton
+        oilseed_cost: oilseed_processed_tons * raw_material_price_oilseed_usd_per_ton
+  opening:
+    mill:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: mill
+      phase: operate
+      declare:
+        accumulated_depreciation: asset
+        oil_sales: income
+        meal_sales: income
+        oilseed: expense
+        packing_material: expense
+        labour: expense
+        fuel: expense
+        depreciation: expense
+      moves:
+        oil: {debit: cash, credit: oil_sales, amount: {generator: src, output: oil_sales}}
+        meal: {debit: cash, credit: meal_sales, amount: {generator: src, output: meal_sales}}
+        oilseed: {debit: oilseed, credit: cash, amount: {generator: src, output: oilseed_cost}}
+        packing: {debit: packing_material, credit: cash, amount: {generator: src, output: packing_material}}
+        labour: {debit: labour, credit: cash, amount: {generator: src, output: labour}}
+        fuel: {debit: fuel, credit: cash, amount: {generator: src, output: fuel}}
+        depreciation: {debit: depreciation, credit: accumulated_depreciation, amount: {generator: src, output: depreciation}}
+  schemes:
+    pnl:
+      oil_sales: oil
+      meal_sales: meal
+      oilseed: direct
+      packing_material: direct
+      labour: direct
+      fuel: direct
+      depreciation: da
+  cuts:
+    oil: {kind: pnl, entity: mill, scheme: pnl, include: [oil]}
+    meal: {kind: pnl, entity: mill, scheme: pnl, include: [meal]}
+    revenue: {kind: pnl, entity: mill, scheme: pnl, include: [oil, meal]}
+    direct: {kind: pnl, entity: mill, scheme: pnl, include: [direct]}
+    cost_of_sales: {kind: pnl, entity: mill, scheme: pnl, include: [direct, da]}
+    gross_profit: {kind: pnl, entity: mill, scheme: pnl, include: [oil, meal, direct, da]}
+  measures: {}
+figures:
+  oil_produced_tons: {driver: src.oil_tons}
+  meal_produced_tons: {driver: src.meal_tons}
+  oil_sales_revenue_usd: {cut: oil}
+  meal_sales_revenue_usd: {cut: meal}
+  total_revenue_usd: {cut: revenue}
+  cost_of_sales_before_depreciation_usd: {cut: direct, sign: -1}
+  cost_of_sales_incl_depreciation_usd: {cut: cost_of_sales, sign: -1}
+  gross_profit_usd: {cut: gross_profit}

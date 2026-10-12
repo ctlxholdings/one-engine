@@ -1,0 +1,61 @@
+# Published case "ext_machinery_rental_iowa2024": the worked tandem-disk example of estimating a
+# machinery rental rate, one acre (Iowa State University Extension, Ag Decision Maker A3-10,
+# 2024 Iowa Farm Custom Rate Survey, p.6 box "Estimating a machinery rental rate for items not
+# surveyed"; cases/reference/published/ext_machinery_rental_iowa2024.yaml).
+#
+# One period, one acre disked, read as the oracle's mapping reads it: an implement owner rents
+# out a tractor-and-disk package and pays for the tractor's share. Every amount is a published
+# input by name (generator `src`), posted by a `transfer` rulebook:
+#   * rental income (step 3): the survey's average custom charge
+#     (step1_custom_charge_usd_per_acre) times the ownership share of it (value_pct, a percent),
+#     received in cash;
+#   * the tractor's rental value (step 4): tractor_hp times rate_usd_per_hp_hour over
+#     acres_covered_per_hour, paid in cash and expensed;
+#   * the implement's rental value (step 5) is what is left: income less the tractor's cost;
+#   * no fuel, labour or tax (the worksheet's rental value excludes them).
+published: ext_machinery_rental_iowa2024
+entity: owner
+plant: step1_custom_charge_usd_per_acre
+case:
+  case: published-ext-machinery-rental-iowa2024
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        package_rental: step1_custom_charge_usd_per_acre * value_pct / 100
+        tractor_rental: tractor_hp * rate_usd_per_hp_hour / acres_covered_per_hour
+  opening:
+    owner:
+      cash: {nature: asset, value: 0}
+      owner_equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    rental:
+      kind: transfer
+      entity: owner
+      phase: post
+      declare:
+        rental_income: income
+        tractor_rental: expense
+      moves:
+        package: {debit: cash, credit: rental_income, amount: {generator: src, output: package_rental}}
+        tractor: {debit: tractor_rental, credit: cash, amount: {generator: src, output: tractor_rental}}
+  schemes:
+    pnl:
+      rental_income: revenue
+      tractor_rental: cost
+  cuts:
+    revenue: {kind: pnl, entity: owner, scheme: pnl, include: [revenue]}
+    cost: {kind: pnl, entity: owner, scheme: pnl, include: [cost]}
+    margin: {kind: pnl, entity: owner, scheme: pnl, include: [revenue, cost]}
+  measures: {}
+figures:
+  step3_rental_value_with_tractor_usd_per_acre: {cut: revenue}
+  step4_tractor_rental_value_usd_per_acre: {cut: cost, sign: -1}
+  step5_implement_rental_value_without_tractor_usd_per_acre: {cut: margin}

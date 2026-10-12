@@ -1,0 +1,128 @@
+# Published case "fc_openstax_frank_investment_advisers": Frank Investment Advisers, the
+# year to Dec 31, 2016, from its 10-column worksheet (OpenStax, Principles of Accounting vol. 1,
+# section 4.5, "Your Turn: Frank's Net Income and Loss";
+# cases/reference/published/fc_openstax_frank_investment_advisers.yaml).
+#
+# The source is one point in time: the worksheet's balance-sheet and income-statement columns,
+# both after every adjustment and before closing. Every amount is a worksheet figure by name:
+#   * the books open on the worksheet's balance-sheet columns (debit_column__*, credit_column__*,
+#     common_stock, retained_earnings, and dividends as a debit on equity). Those balances
+#     already hold the year's results, so the opening needs one more equity amount to balance:
+#     `owner`, a clearing account (the engine's `balancing`, the year's net result);
+#   * the year's six expenses and its service revenue (the income-statement columns) are posted
+#     in the period against `owner`, which they bring back to nil. Nothing is assumed about
+#     which asset or liability each settled against: the balances are the worksheet's own;
+#   * retained earnings stays at its pre-closing 52,000 (the worksheet is struck before closing);
+#     ending retained earnings is read as retained_earnings + dividends + income - expenses;
+#   * no tax: the source shows none.
+# A debit balance on a credit-natured account (dividends) and the contra asset's credit balance
+# are read with sign -1 where the source prints them as positive amounts.
+published: fc_openstax_frank_investment_advisers
+entity: frank
+plant: service_revenue
+case:
+  case: published-frank-investment-advisers
+  periods: 1
+  phases: [post]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        acc_dep: -credit_column__accumulated_depreciation_equipment
+        div: -dividends
+  opening:
+    frank:
+      cash: {nature: asset, value: {generator: src, output: debit_column__cash}}
+      accounts_receivable: {nature: asset, value: {generator: src, output: debit_column__accounts_receivable}}
+      office_supplies: {nature: asset, value: {generator: src, output: debit_column__office_supplies}}
+      equipment: {nature: asset, value: {generator: src, output: debit_column__equipment}}
+      accumulated_depreciation_equipment: {nature: asset, value: {generator: src, output: acc_dep}}
+      accounts_payable: {nature: liability, value: {generator: src, output: credit_column__accounts_payable}}
+      salaries_payable: {nature: liability, value: {generator: src, output: credit_column__salaries_payable}}
+      unearned_revenue: {nature: liability, value: {generator: src, output: credit_column__unearned_revenue}}
+      notes_payable_long_term: {nature: liability, value: {generator: src, output: credit_column__notes_payable_long_term}}
+      common_stock: {nature: equity, value: {generator: src, output: common_stock}}
+      retained_earnings: {nature: equity, value: {generator: src, output: retained_earnings}}
+      dividends: {nature: equity, value: {generator: src, output: div}}
+      owner: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: frank
+      phase: post
+      declare:
+        service_revenue: income
+        insurance_expense: expense
+        salaries_expense: expense
+        supplies_expense: expense
+        interest_expense: expense
+        rent_expense: expense
+        depreciation_expense_equipment: expense
+      moves:
+        revenue: {debit: owner, credit: service_revenue, amount: {generator: src, output: service_revenue}}
+        insurance: {debit: insurance_expense, credit: owner, amount: {generator: src, output: insurance_expense}}
+        salaries: {debit: salaries_expense, credit: owner, amount: {generator: src, output: salaries_expense}}
+        supplies: {debit: supplies_expense, credit: owner, amount: {generator: src, output: supplies_expense}}
+        interest: {debit: interest_expense, credit: owner, amount: {generator: src, output: interest_expense}}
+        rent: {debit: rent_expense, credit: owner, amount: {generator: src, output: rent_expense}}
+        depreciation: {debit: depreciation_expense_equipment, credit: owner,
+                       amount: {generator: src, output: depreciation_expense_equipment}}
+  schemes:
+    pnl:
+      service_revenue: revenue
+      insurance_expense: expense
+      salaries_expense: expense
+      supplies_expense: expense
+      interest_expense: expense
+      rent_expense: expense
+      depreciation_expense_equipment: expense
+  cuts:
+    expenses: {kind: pnl, entity: frank, scheme: pnl, include: [expense]}
+    net_income: {kind: pnl, entity: frank, scheme: pnl, include: [revenue, expense]}
+  measures: {}
+figures:
+  net_income_top: {cut: net_income}
+  total_assets_top: {balance: &assets "cash + accounts_receivable + office_supplies + equipment + accumulated_depreciation_equipment"}
+  total_liabilities_top: {balance: &liabilities "accounts_payable + salaries_payable + unearned_revenue + notes_payable_long_term"}
+  total_equity_top: {balance: &equity "common_stock + retained_earnings + dividends + owner + service_revenue - insurance_expense - salaries_expense - supplies_expense - interest_expense - rent_expense - depreciation_expense_equipment"}
+  # the worksheet as printed
+  worksheet_result_as_printed.net_loss_usd: {cut: net_income, sign: -1}
+  worksheet_result_as_printed.income_statement_total_both_columns_usd: {cut: expenses, sign: -1}
+  worksheet_result_as_printed.balance_sheet_total_both_columns_usd: {balance: "accounts_payable + salaries_payable + unearned_revenue + notes_payable_long_term + common_stock + retained_earnings - accumulated_depreciation_equipment"}
+  # income statement
+  income_statement_usd.service_revenue: {balance: service_revenue}
+  income_statement_usd.expenses.insurance_expense: {balance: insurance_expense}
+  income_statement_usd.expenses.salaries_expense: {balance: salaries_expense}
+  income_statement_usd.expenses.supplies_expense: {balance: supplies_expense}
+  income_statement_usd.expenses.interest_expense: {balance: interest_expense}
+  income_statement_usd.expenses.rent_expense: {balance: rent_expense}
+  income_statement_usd.expenses.depreciation_expense_equipment: {balance: depreciation_expense_equipment}
+  income_statement_usd.expenses.total_expenses: {cut: expenses, sign: -1}
+  income_statement_usd.net_loss: {cut: net_income}
+  # statement of retained earnings
+  statement_of_retained_earnings_usd.beginning_retained_earnings: {opening: retained_earnings}
+  statement_of_retained_earnings_usd.less_net_loss: {cut: net_income}
+  statement_of_retained_earnings_usd.less_dividends: {balance: dividends}
+  statement_of_retained_earnings_usd.ending_retained_earnings: {balance: &re "retained_earnings + dividends + service_revenue - insurance_expense - salaries_expense - supplies_expense - interest_expense - rent_expense - depreciation_expense_equipment"}
+  # balance sheet
+  balance_sheet_usd.assets.cash: {balance: cash}
+  balance_sheet_usd.assets.accounts_receivable: {balance: accounts_receivable}
+  balance_sheet_usd.assets.office_supplies: {balance: office_supplies}
+  balance_sheet_usd.assets.equipment_gross: {balance: equipment}
+  balance_sheet_usd.assets.accumulated_depreciation_equipment: {balance: accumulated_depreciation_equipment}
+  balance_sheet_usd.assets.equipment_net: {balance: "equipment + accumulated_depreciation_equipment"}
+  balance_sheet_usd.assets.total_assets: {balance: *assets}
+  balance_sheet_usd.liabilities.accounts_payable: {balance: accounts_payable}
+  balance_sheet_usd.liabilities.salaries_payable: {balance: salaries_payable}
+  balance_sheet_usd.liabilities.unearned_revenue: {balance: unearned_revenue}
+  balance_sheet_usd.liabilities.notes_payable_long_term: {balance: notes_payable_long_term}
+  balance_sheet_usd.liabilities.total_liabilities: {balance: *liabilities}
+  balance_sheet_usd.stockholders_equity.common_stock: {balance: common_stock}
+  balance_sheet_usd.stockholders_equity.ending_retained_earnings: {balance: *re}
+  balance_sheet_usd.stockholders_equity.total_stockholders_equity: {balance: *equity}
+  balance_sheet_usd.total_liabilities_and_equity: {balance: "accounts_payable + salaries_payable + unearned_revenue + notes_payable_long_term + common_stock + retained_earnings + dividends + owner + service_revenue - insurance_expense - salaries_expense - supplies_expense - interest_expense - rent_expense - depreciation_expense_equipment"}
