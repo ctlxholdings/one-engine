@@ -70,6 +70,10 @@ Added for ModelOff 2014 "Time is Money" (step 7p): the ``npv`` measure
 (an annual ``rate`` and ``dates``, one per period). Either may take
 ``through``, the last period it values (the paper values the first ten
 years of a 23-year forecast); without it the whole stream is valued.
+
+Added for the golds library (:mod:`one_engine.oracles.golds`): the
+techno-economic pack (:mod:`one_engine.packs.tea`), its ``formulas``
+generator and its ``held_balance``, ``settle`` and ``asset_pool`` rulebooks.
 """
 from __future__ import annotations
 
@@ -88,7 +92,7 @@ from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.loops import Loop, LoopReport, close
 from one_engine.kernel import Nature
-from one_engine.packs import contracts as _contracts, corporate as _corporate, pf as _pf, solar as _solar
+from one_engine.packs import contracts as _contracts, corporate as _corporate, pf as _pf, solar as _solar, tea as _tea
 from one_engine.packs.pf import LOOP_RULES
 from one_engine.units import exact
 
@@ -107,7 +111,7 @@ def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 REGISTRY = _merge(_contracts.REGISTRY, _corporate.TYPES)
-RULEBOOKS = _merge(_pf.RULEBOOKS, _corporate.RULEBOOKS)
+RULEBOOKS = _merge(_pf.RULEBOOKS, _corporate.RULEBOOKS, _tea.RULEBOOKS)
 LENSES = _merge(_corporate.LENSES)
 CASES = pathlib.Path(__file__).resolve().parent
 
@@ -135,7 +139,7 @@ def _run_template(name: str, overrides: Mapping[str, Any]) -> "CaseResult":
     return run_case(data)
 
 
-GENERATORS = _merge(_solar.GENERATORS, _pf.GENERATORS,
+GENERATORS = _merge(_solar.GENERATORS, _pf.GENERATORS, _tea.GENERATORS,
                     {"cohorts": lambda r: _portfolio.cohorts(r, _run_template),
                      "instalments": _portfolio.instalments_generator})
 

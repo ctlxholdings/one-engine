@@ -1,0 +1,301 @@
+id: moto_taxi_cotonou_fcff
+title: Zémidjan (moto-taxi) à Cotonou — Unlevered FCFF via NOPAT over the moto's 4-year life
+currency: XOF   # West African CFA franc; the "francs"/"F CFA" of Cotonou, Benin
+grid:
+  periods: 5          # t=0 = acquisition instant; t=1..4 = the four operating years
+  freq: annual
+
+utterance:
+  fr: |
+    Moi je fais zémidjan à Cotonou. J'ai acheté ma moto six cent mille francs, elle me tient quatre
+    bonnes années. Je fais vingt courses par jour, en moyenne. Y a le court à 200, le moyen à 300,
+    le long à 500. L'essence c'est 725 le litre, je consomme deux litres et demi par cent bornes.
+    Je travaille tous les jours, sauf dimanche.
+  en: |
+    I run a moto-taxi in Cotonou. I bought my moto for 600,000 francs; it lasts me a good four years.
+    About twenty trips a day on average. Short trips 200, medium 300, long 500. Fuel is 725 a litre,
+    the bike does two and a half litres per hundred kilometres. I work every day except Sunday.
+
+inputs:
+  business_type:
+    value: moto-taxi (zémidjan), single owner-operated motorcycle
+    unit: text
+    prov: STATED
+    source: "\"Moi je fais zémidjan à Cotonou\""
+    date: 2026-07-24
+  location_currency:
+    value: Cotonou, Benin -> XOF
+    unit: text
+    prov: DEFAULTED
+    source: "location stated (\"à Cotonou\"); Benin's legal tender is the XOF (BCEAO/UEMOA franc)"
+    date: 2026-07-24
+  moto_cost:
+    value: 600000
+    unit: XOF
+    prov: STATED
+    source: "\"J'ai acheté ma moto six cent mille francs\""
+    date: 2026-07-24
+  moto_life:
+    value: 4
+    unit: years
+    prov: STATED
+    source: "\"elle me tient quatre bonnes années\" — sets both depreciation life and model horizon"
+    date: 2026-07-24
+  trips_per_day:
+    value: 20
+    unit: trips/day
+    prov: STATED
+    source: "\"Je fais vingt courses par jour, en moyenne\" (the \"en moyenne\" already smooths busy/slack days)"
+    date: 2026-07-24
+  rest_day:
+    value: Sunday
+    unit: text
+    prov: STATED
+    source: "\"Je travaille tous les jours, sauf dimanche\" -> 6 working days per week"
+    date: 2026-07-24
+  working_days:
+    value: 312
+    unit: days/year
+    prov: DEFAULTED
+    source: "6 days/week (stated) x 52-week year (convention); a 365-52 Sundays count gives 313, immaterial"
+    date: 2026-07-24
+  fare_short:
+    value: 200
+    unit: XOF/trip
+    prov: STATED
+    source: "\"le court à 200\""
+    date: 2026-07-24
+  fare_medium:
+    value: 300
+    unit: XOF/trip
+    prov: STATED
+    source: "\"le moyen à 300\""
+    date: 2026-07-24
+  fare_long:
+    value: 500
+    unit: XOF/trip
+    prov: STATED
+    source: "\"le long à 500\""
+    date: 2026-07-24
+  mix_each:
+    value: "1/3 short, 1/3 medium, 1/3 long (uniform)"
+    unit: share of trips
+    prov: ASSUMED
+    source: "mix not stated; uniform prior applied. ELICIT: \"what share of your trips are short / medium / long?\""
+    date: 2026-07-24
+  dist_short:
+    value: 2
+    unit: km/trip (loaded)
+    prov: ASSUMED
+    source: "representative short-hop distance; fares given but not distances. ELICIT typical km per fare tier"
+    date: 2026-07-24
+  dist_medium:
+    value: 4
+    unit: km/trip (loaded)
+    prov: ASSUMED
+    source: "representative medium-trip distance; ELICIT"
+    date: 2026-07-24
+  dist_long:
+    value: 6
+    unit: km/trip (loaded)
+    prov: ASSUMED
+    source: "representative long-trip distance; ELICIT"
+    date: 2026-07-24
+  deadhead_factor:
+    value: 1.25
+    unit: total_km / loaded_km
+    prov: ASSUMED
+    source: "moto-taxis run empty between fares; +25% uplift. ELICIT total km/day (this + distances give ~100 km/day)"
+    date: 2026-07-24
+  fuel_price:
+    value: 725
+    unit: XOF/litre
+    prov: STATED
+    source: "\"L'essence c'est 725 le litre\""
+    date: 2026-07-24
+  fuel_consumption_100km:
+    value: 2.5
+    unit: litres/100 km
+    prov: STATED
+    source: "\"je consomme deux litres et demi par cent bornes\""
+    date: 2026-07-24
+  fuel_consumption_l_per_km:
+    value: 0.025
+    unit: litres/km
+    prov: INFERRED
+    source: "2.5 L / 100 km = 0.025 L/km (from fuel_consumption_100km)"
+    date: 2026-07-24
+  maint_rate_per_km:
+    value: 5
+    unit: XOF/km
+    prov: ASSUMED
+    source: "oil/chain/tyres/brakes/repairs on ~31,200 km/yr; nothing stated. ELICIT annual upkeep spend"
+    date: 2026-07-24
+  tax_rate:
+    value: 0.30
+    unit: fraction of EBIT
+    prov: DEFAULTED
+    source: "Benin statutory business income tax (IS) general rate 30%. FLAG: an informal zémidjan realistically pays the synthetic Taxe Professionnelle Unique (small turnover levy), not 30% — conservative reference"
+    date: 2026-07-24
+  depreciation_method:
+    value: straight-line to nil salvage over moto_life
+    unit: text
+    prov: DEFAULTED
+    source: "standard convention; useful life = stated 4 years"
+    date: 2026-07-24
+  salvage:
+    value: 0
+    unit: XOF
+    prov: ASSUMED
+    source: "\"quatre bonnes années\" implies worn out at t=4; scrap/resale value ignored (conservative)"
+    date: 2026-07-24
+  nwc:
+    value: 0
+    unit: XOF
+    prov: INFERRED
+    source: "pure cash trade — fares collected on the spot, fuel paid cash, no receivables/payables/inventory of consequence -> ΔNWC = 0"
+    date: 2026-07-24
+  ops_start:
+    value: 1
+    unit: period index
+    prov: DEFAULTED
+    source: "period-0 acquisition convention: capex at t=0, operations and depreciation over t=1..4"
+    date: 2026-07-24
+  owner_wage:
+    value: 0
+    unit: XOF/year
+    prov: DEFAULTED
+    source: "owner-operator micro-enterprise convention: proprietor's labour not expensed; FCFF is struck pre-owner-compensation. FLAG in notes"
+    date: 2026-07-24
+
+passage: |
+  SETTING & CURRENCY. A single owner-operated zémidjan (moto-taxi) in Cotonou, Benin; the domestic
+  currency is the West African CFA franc (XOF), the "francs" of the utterance. The stated useful life —
+  "quatre bonnes années" — fixes both the depreciation life and the natural horizon: an acquisition
+  instant (t=0) followed by four operating years (t=1..4). With no growth or price change stated, the
+  four operating years are identical in flow; only the moto's book value rolls down.
+
+  STEP 1 — ACTIVITY (trips per year). He works every day except Sunday, i.e. 6 days/week; on a 52-week
+  convention that is 6 x 52 = 312 working days/year (DEFAULTED; a 365-52 Sundays count gives 313 —
+  immaterial). At 20 trips/day on average, annual volume = 20 x 312 = 6,240 trips.
+
+  STEP 2 — FARE MIX & REVENUE. Fares are tiered: short 200, medium 300, long 500 XOF. The mix was not
+  given, so I apply a uniform 1/3-1/3-1/3 split (ASSUMED; natural elicitation: "what share of your trips
+  are short / medium / long?"). Because 6,240 divides evenly by three, each tier carries exactly 2,080
+  trips. Revenue = 2,080x200 + 2,080x300 + 2,080x500 = 416,000 + 624,000 + 1,040,000 = 2,080,000 XOF/yr
+  (equivalently average fare 1,000/3 ≈ 333.3 x 6,240).
+
+  STEP 3 — DISTANCE (the trips->km friction). Fuel is metered per kilometre, but the founder speaks in
+  trips and flat fares, not kilometres — a genuine friction that must be bridged. I assign representative
+  loaded distances per tier (ASSUMED): short 2 km, medium 4 km, long 6 km. Loaded distance =
+  2,080x2 + 2,080x4 + 2,080x6 = 24,960 km/yr. A moto-taxi also runs empty between fares, so I gross up by
+  a dead-head factor of 1.25 (ASSUMED) -> 31,200 total km/yr (≈100 km/day — plausible for a full urban day).
+
+  STEP 4 — FUEL COST. Stated consumption 2.5 L/100 km = 0.025 L/km (INFERRED). Litres = 31,200 x 0.025 =
+  780 L/yr. At 725 XOF/L, fuel = 780 x 725 = 565,500 XOF/yr (27% of revenue).
+
+  STEP 5 — MAINTENANCE. Nothing was said about upkeep, yet a moto covering 31,200 km/yr needs oil, chain,
+  tyres, brakes and repairs; a zero figure would flatter the result. I charge 5 XOF/km (ASSUMED; elicit
+  "what do you spend on repairs, oil and tyres?") -> 31,200 x 5 = 156,000 XOF/yr.
+
+  STEP 6 — EBITDA. Revenue - fuel - maintenance = 2,080,000 - 565,500 - 156,000 = 1,358,500 XOF/yr.
+
+  STEP 7 — DEPRECIATION. Moto costs 600,000, lasts 4 years; straight-line to nil salvage (DEFAULTED) =
+  600,000 / 4 = 150,000 XOF/yr, booked each operating year. Net book value: 600,000 (t0) -> 450,000 ->
+  300,000 -> 150,000 -> 0 (t4); accumulated depreciation 0 -> 150,000 -> 300,000 -> 450,000 -> 600,000.
+
+  STEP 8 — EBIT & TAX. EBIT = 1,358,500 - 150,000 = 1,208,500. For NOPAT I apply Benin's statutory
+  business income-tax rate of 30% (DEFAULTED) -> tax 362,550; NOPAT = 845,950 XOF/yr. JUDGMENT/FLAG: a
+  real informal zémidjan almost certainly falls under Benin's synthetic micro-regime (Taxe
+  Professionnelle Unique), a small turnover-based levy, not 30% IS — so 30% is a conservative
+  formal-sector reference that understates after-tax cash. This is the single largest elicitation.
+
+  STEP 9 — WORKING CAPITAL. Pure cash trade: fares on the spot, fuel in cash, no receivables/payables/
+  inventory of consequence. NWC = 0 every period, so ΔNWC = 0 (INFERRED).
+
+  STEP 10 — CAPEX. The 600,000 outflow occurs once, at acquisition (t=0); no reinvestment within the
+  4-year life; salvage assumed nil at t=4.
+
+  STEP 11 — FCFF BUILD. Operating years (t=1..4, all identical):
+    FCFF = NOPAT 845,950 + D&A 150,000 - ΔNWC 0 - capex 0 = 995,950 XOF.
+    (CFO = 845,950 + 150,000 = 995,950; CFI = -0; FCFF = CFO + CFI = 995,950.)
+  Acquisition (t=0): NOPAT 0 + D&A 0 - ΔNWC 0 - capex 600,000 = -600,000 (CFO 0 + CFI -600,000).
+
+  HORIZON RESULT. FCFF = [-600,000; 995,950; 995,950; 995,950; 995,950]; undiscounted sum = 3,383,800 XOF
+  over the moto's life. Operating cash of ~996,000/yr against a 600,000 machine implies a payback of
+  roughly seven months — characteristic moto-taxi economics, where the truly scarce input is the owner's
+  own labour. This FCFF is struck BEFORE any charge for the proprietor's labour; imputing a market driver's
+  wage (order 0.5-0.7 m XOF/yr) would roughly halve the residual return to capital.
+
+trace:
+  trips_per_year:      [0, 6240, 6240, 6240, 6240]
+  trips_short:         [0, 2080, 2080, 2080, 2080]
+  trips_medium:        [0, 2080, 2080, 2080, 2080]
+  trips_long:          [0, 2080, 2080, 2080, 2080]
+  revenue:             [0, 2080000, 2080000, 2080000, 2080000]
+  km_loaded:           [0, 24960, 24960, 24960, 24960]
+  km_total:            [0, 31200, 31200, 31200, 31200]
+  fuel_litres:         [0, 780, 780, 780, 780]
+  fuel_cost:           [0, 565500, 565500, 565500, 565500]
+  maintenance:         [0, 156000, 156000, 156000, 156000]
+  ebitda:              [0, 1358500, 1358500, 1358500, 1358500]
+  depreciation:        [0, 150000, 150000, 150000, 150000]
+  ebit:                [0, 1208500, 1208500, 1208500, 1208500]
+  tax:                 [0, 362550, 362550, 362550, 362550]
+  nopat:               [0, 845950, 845950, 845950, 845950]
+  capex:               [600000, 0, 0, 0, 0]
+  accum_depreciation:  [0, 150000, 300000, 450000, 600000]
+  book_value:          [600000, 450000, 300000, 150000, 0]
+  nwc:                 [0, 0, 0, 0, 0]
+  delta_nwc:           [0, 0, 0, 0, 0]
+  cfo:                 [0, 995950, 995950, 995950, 995950]
+  cfi:                 [-600000, 0, 0, 0, 0]
+  fcff:                [-600000, 995950, 995950, 995950, 995950]
+
+fcff: [-600000, 995950, 995950, 995950, 995950]
+
+checks:
+  # --- conservation ---
+  - "trace.book_value[t] == trace.book_value[t-1] + trace.capex[t] - trace.depreciation[t]"
+  - "trace.accum_depreciation[t] == trace.accum_depreciation[t-1] + trace.depreciation[t]"
+  - "trace.book_value[t] + trace.accum_depreciation[t] == cumsum(trace.capex)[t]"
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "trace.trips_short[t] + trace.trips_medium[t] + trace.trips_long[t] == trace.trips_per_year[t]"
+  # --- definition (the ladder) ---
+  - "trace.ebitda == trace.revenue - trace.fuel_cost - trace.maintenance"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc"
+  - "trace.cfi == -trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex"
+  # --- driver-bridge ---
+  - "trace.trips_per_year == trips_per_day * working_days for t >= ops_start"
+  - "trace.revenue == trace.trips_short*fare_short + trace.trips_medium*fare_medium + trace.trips_long*fare_long"
+  - "trace.km_loaded == trace.trips_short*dist_short + trace.trips_medium*dist_medium + trace.trips_long*dist_long"
+  - "trace.km_total == trace.km_loaded * deadhead_factor"
+  - "trace.fuel_litres == trace.km_total * fuel_consumption_l_per_km"
+  - "trace.fuel_cost == trace.fuel_litres * fuel_price"
+  - "trace.maintenance == trace.km_total * maint_rate_per_km"
+  - "trace.depreciation == moto_cost / moto_life for t >= ops_start"
+  - "trace.tax == trace.ebit * tax_rate"
+  - "trace.capex[first] == moto_cost"
+  - "sum(trace.capex) == moto_cost"
+  # --- non-negativity ---
+  - "trace.book_value[t] >= 0"
+  - "trace.fuel_litres[t] >= 0"
+  - "trace.ebitda[t] >= 0"
+  - "trace.nopat[t] >= 0"
+
+notes:
+  - "OWNER'S LABOUR is not costed. As a sole owner-operator taking the residual, no wage is expensed, so this FCFF is pre-proprietor-compensation — it rewards BOTH the capital and the owner's own labour. Imputing a market driver's wage (~0.5-0.7 m XOF/yr) would cut the return to capital roughly in half. Standard micro-enterprise convention; flagged as the key interpretive caveat."
+  - "TAX is the biggest single lever. 30% Benin corporate income tax (IS) is applied for a standard formal reference, but an informal Cotonou zémidjan realistically pays the synthetic Taxe Professionnelle Unique (a small turnover-based levy) and little formal income tax. Under that regime after-tax FCFF would be materially higher (approaching EBITDA less a small fixed levy)."
+  - "FARE MIX assumed uniform (1/3 each) because unstated. Revenue is linear in the mix: a long-trip-heavy day raises revenue (max 500/trip = 3.12 m/yr if all long; min 200/trip = 1.248 m/yr if all short). ELICIT the actual split."
+  - "TRIPS->KM BRIDGE is the main fuel/maintenance uncertainty. Per-tier distances (2/4/6 km) and the 1.25 dead-head factor are assumed to convert trips into the km that fuel and upkeep depend on. ELICIT typical km/day (currently ≈100 km/day). Fuel and maintenance scale directly with total km."
+  - "MAINTENANCE at 5 XOF/km (156,000/yr) is a domain prior; unstated. ELICIT actual spend on oil, chain, tyres, brakes, repairs."
+  - "WORKING DAYS = 312 (52x6). A 365-52 count gives 313 (immaterial). Unplanned downtime (illness, heavy rain, days the moto is in the shop, public holidays) is NOT modelled and would scale revenue, fuel and maintenance together; the stated '20 trips/day on average' partly absorbs this."
+  - "NO GROWTH / NO INFLATION: fares and the 725 XOF/L fuel price are held flat in nominal terms across all four years. In practice Benin petrol prices swing (incl. cheaper informal 'kpayo' cross-border fuel, which would lower the fuel line) while fares are sticky. Deferred."
+  - "SALVAGE assumed nil at t=4 ('quatre bonnes années' => worn out). A modest scrap/resale value would add a small positive terminal inflow."
+  - "OTHER SMALL COSTS not separately modelled: union/'syndicat' dues, plate/registration, phone airtime. Each could add a small fixed annual charge. ELICIT."
+  - "FINANCING excluded by construction (unlevered FCFF). Many drivers acquire the moto on credit or a work-to-own arrangement; that affects equity cash flow and the acquisition timing, not asset-side FCFF."
+  - "GRID CONVENTION: t=0 is the acquisition instant (capex only); t=1..4 are the four operating years, over which depreciation is booked and the book value runs 600,000 -> 0. Undiscounted lifetime FCFF = 3,383,800 XOF; no discount rate was applied (none is derivable from the utterance)."

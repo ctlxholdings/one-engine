@@ -1,0 +1,714 @@
+id: bakery-woodfired-oven-fcff-11y
+title: "Wood-fired village bakery — unlevered free cash flow to the firm over the oven's remaining life"
+currency: XOF
+grid:
+  periods: 11
+  freq: annual
+
+utterance:
+  fr: >-
+    Je tiens une boulangerie. Je fais cinq cents pains par jour, vendus deux cent cinquante francs
+    pièce. La farine me revient à cent cinquante francs le pain. Je paie deux boulangers cent mille
+    francs par mois chacun. Le loyer de la boutique, c'est huit cent mille par mois. Je travaille
+    tous les jours. Le four est à moi — je l'ai fait construire il y a quatre ans, un vrai four à
+    bois, et il m'a coûté trois millions deux cent mille francs. Le maçon qui construit ces fours
+    dit qu'il tient quinze ans si on l'entretient. L'entretenir, ce n'est pas gratuit : chaque année
+    à la fin des pluies il vient refaire la sole et reprendre le mortier, et ça me coûte cent
+    quatre-vingt mille francs. Et le bois — je brûle à peu près huit cents francs de bois par jour
+    pour le garder chaud.
+  en: >-
+    I run a bakery. I make five hundred loaves a day, sold at two hundred fifty francs each. Flour
+    costs me one hundred fifty francs per loaf. I pay two bakers a hundred thousand a month each.
+    The shop rent is eight hundred thousand a month. I work every day. The oven is mine — I had it
+    built four years ago, a proper wood-fired one, and it cost me three million two hundred thousand
+    francs. The mason who builds those ovens says it will go fifteen years if you look after it.
+    Looking after it is not free: every year at the end of the rains he comes and relines the hearth
+    and redoes the mortar, and that runs me a hundred and eighty thousand francs. And the wood — I
+    burn about eight hundred francs of wood a day to keep it hot.
+
+inputs:
+
+  loaves_per_day:
+    value: 500
+    unit: loaves/day
+    prov: STATED
+    source: "utterance span 'I make five hundred loaves a day'"
+    date: "2026-07-25"
+
+  price_per_loaf:
+    value: 250
+    unit: XOF/loaf
+    prov: STATED
+    source: "utterance span 'sold at two hundred fifty francs each'"
+    date: "2026-07-25"
+
+  flour_cost_per_loaf:
+    value: 150
+    unit: XOF/loaf
+    prov: STATED
+    source: "utterance span 'Flour costs me one hundred fifty francs per loaf'"
+    date: "2026-07-25"
+
+  wood_cost_per_day:
+    value: 800
+    unit: XOF/day
+    prov: STATED
+    source: "utterance span 'I burn about eight hundred francs of wood a day to keep it hot' — note the founder's own hedge 'about', so this is his central estimate, not a metered figure"
+    date: "2026-07-25"
+
+  n_bakers:
+    value: 2
+    unit: headcount
+    prov: STATED
+    source: "utterance span 'I pay two bakers'"
+    date: "2026-07-25"
+
+  baker_wage_monthly:
+    value: 100000
+    unit: XOF/baker/month
+    prov: STATED
+    source: "utterance span 'a hundred thousand a month each' — 'each' fixes this as per-baker, not the pooled payroll"
+    date: "2026-07-25"
+
+  rent_monthly:
+    value: 800000
+    unit: XOF/month
+    prov: STATED
+    source: "utterance span 'The shop rent is eight hundred thousand a month'"
+    date: "2026-07-25"
+
+  reline_cost_annual:
+    value: 180000
+    unit: XOF/year
+    prov: STATED
+    source: "utterance span 'every year at the end of the rains he comes and relines the hearth and redoes the mortar, and that runs me a hundred and eighty thousand francs' — 'every year' fixes both the amount and the annual frequency"
+    date: "2026-07-25"
+
+  oven_cost:
+    value: 3200000
+    unit: XOF
+    prov: STATED
+    source: "utterance span 'it cost me three million two hundred thousand francs'"
+    date: "2026-07-25"
+
+  oven_life_years:
+    value: 15
+    unit: years
+    prov: STATED
+    source: "utterance span 'it will go fifteen years if you look after it' — total useful life from commissioning, conditional on the maintenance the founder confirms he performs"
+    date: "2026-07-25"
+
+  oven_age_years:
+    value: 4
+    unit: years
+    prov: STATED
+    source: "utterance span 'I had it built four years ago'"
+    date: "2026-07-25"
+
+  oven_remaining_life_years:
+    value: 11
+    unit: years
+    prov: INFERRED
+    source: "oven_life_years - oven_age_years = 15 - 4 = 11; deductive, no new information"
+    date: "2026-07-25"
+
+  days_per_year:
+    value: 365
+    unit: days/year
+    prov: ASSUMED
+    source: "PRIOR — 365 baking days. The calendar year (365, leap days ignored) is a DEFAULTED convention, but the number of BAKING days is not entailed by the utterance and carries an unstated premise about the oven's availability, so the input as a whole is ASSUMED. 'Je travaille tous les jours' / 'I work every day' is a statement about the FOUNDER's working pattern, not the oven's: he can work every day — buying flour, keeping accounts, supervising the mason — while the oven is cold. Two STATED facts collide here and this input resolves the collision silently in favour of one: the founder also states that every year 'il vient refaire la sole et reprendre le mortier' / the mason relines the hearth and redoes the mortar. A relined hearth cannot be taken to baking temperature until the fresh mortar and refractory have been re-cured over a graduated series of sub-baking-temperature fires, so some baking days are lost every year to the very maintenance this gold is built to isolate. The premise supplied here — that the reline costs money but no baking days — is a prior, not a deduction. ELICITED, and the first question to put: how many days is the oven out of service when the mason relines it, and do you bake at all during the re-cure? Direction only: any downtime lowers volume and therefore revenue and FCFF, while wood, rent and wages are unaffected."
+    date: "2026-07-25"
+    correction: "2026-07-26 — PROVENANCE CORRECTED after physical audit (tag only; no number changed). Was DEFAULTED, with source claiming the utterance 'entails zero closure days'. That is an over-claimed entailment smuggling an unstated world-assumption under a stronger label — a CORRECT-class defect per FEEDBACK_TRIAGE.md, the same class as grain's zero-shrinkage tag, and repaired the same way: re-tag and name the premise, do not invent a downtime figure the founder never gave. The 365 stands as the author's disclosed prior; what was wrong was calling it a deduction. Maintenance-downtime is queued as a SPAWN sibling."
+
+  months_per_year:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: "convention — calendar year; converts the stated monthly wage and rent obligations to an annual grid"
+    date: "2026-07-25"
+
+  depreciation_method:
+    value: straight_line
+    unit: method
+    prov: DEFAULTED
+    source: "IAS 16.60 — the method must reflect the pattern in which the asset's economic benefits are consumed; a masonry oven fired to the same duty every single day consumes its life evenly, so straight-line is the applicable convention"
+    date: "2026-07-25"
+
+  oven_residual_value:
+    value: 0
+    unit: XOF
+    prov: ASSUMED
+    source: "domain prior — a fixed masonry wood-fired oven is demolished in place at end of life; brick and mortar have no realisable resale value net of removal. ELICITED question not yet put to the founder: 'when the oven finally goes, is any of it worth anything, or is it just knocked down?'"
+    date: "2026-07-25"
+
+  accum_dep_opening:
+    value: 853333.3333333333
+    unit: XOF
+    prov: ASSUMED
+    source: "arithmetically oven_age_years * (oven_cost - oven_residual_value) / oven_life_years = 4 * 213333.33333333334; the arithmetic step is deductive but it inherits the ASSUMED nil residual and the DEFAULTED straight-line method, so by the propagation rule the result is tagged ASSUMED, not INFERRED"
+    date: "2026-07-25"
+
+  oven_nbv_opening:
+    value: 2346666.6666666665
+    unit: XOF
+    prov: ASSUMED
+    source: "oven_cost - accum_dep_opening = 3200000 - 853333.3333333333; inherits the ASSUMED residual, hence ASSUMED by propagation"
+    date: "2026-07-25"
+
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: ASSUMED
+    source: "domain prior — modal statutory corporate income tax rate across the CFA-franc zone (rates in the band 25%-35%). ELICITED question not yet put to the founder: 'are you taxed under the régime réel at the corporate rate, or under a synthetic/presumptive regime, and what did you actually pay last year?'"
+    date: "2026-07-25"
+
+  flour_days_on_hand:
+    value: 7
+    unit: days
+    prov: ASSUMED
+    source: "domain prior — a one-week flour purchasing cycle is the standard holding for a small bakery buying sacks from a wholesaler rather than taking daily delivery. ELICITED question not yet put to the founder: 'how often do you buy flour, and how many sacks do you keep in the store?'"
+    date: "2026-07-25"
+
+  receivables_days:
+    value: 0
+    unit: days
+    prov: ASSUMED
+    source: "domain prior — counter-trade bread retail is settled in cash at the point of sale; no trade receivable arises. ELICITED question not yet put to the founder: 'does anyone take bread on account — a school, a canteen, a hotel?'"
+    date: "2026-07-25"
+
+  payables_days:
+    value: 0
+    unit: days
+    prov: ASSUMED
+    source: "domain prior — a small bakery without a formal credit line pays the flour wholesaler on collection. ELICITED question not yet put to the founder: 'do you pay the flour man on the spot or at the end of the month?'"
+    date: "2026-07-25"
+
+  nwc_opening_balance:
+    value: 525000
+    unit: XOF
+    prov: ASSUMED
+    source: "flour_days_on_hand * flour_cost_per_loaf * loaves_per_day = 7 * 150 * 500; the business is four years old so this stock already exists at t=0. ASSUMED by propagation from flour_days_on_hand"
+    date: "2026-07-25"
+
+  capex_in_horizon:
+    value: 0
+    unit: XOF/year
+    prov: ASSUMED
+    source: "domain prior — the founder names exactly one durable asset, already in service, and the grid closes at the end of its stated life, so its replacement falls in period 12, outside the grid. Peels, benches, sacks, scales and the like are not mentioned. ELICITED question not yet put to the founder: 'apart from the oven, do you buy or replace anything that lasts more than a year — a mixer, benches, a delivery bike?'"
+    date: "2026-07-25"
+
+  owner_salary:
+    value: 0
+    unit: XOF/year
+    prov: DEFAULTED
+    source: "IFRS recognition convention — no expense is recognised absent a transaction. The founder states 'I work every day' but names no wage for himself; owner-operator withdrawals are distributions of profit, not operating costs, and do not enter EBIT"
+    date: "2026-07-25"
+
+  horizon_periods:
+    value: 11
+    unit: periods
+    prov: INFERRED
+    source: "set equal to oven_remaining_life_years so the grid closes exactly when the sole durable asset is written down to nil; = oven_life_years - oven_age_years"
+    date: "2026-07-25"
+
+passage: |
+  0. FRAME AND GRID
+
+  The currency is the CFA franc; the founder simply says 'francs'. I write it XOF. Nothing in the
+  derivation depends on which of the two CFA francs it is.
+
+  This is not a project appraisal. The bakery has been trading for at least four years — the oven
+  was built four years ago and is in service — so what I am valuing is the forward cash generation
+  of an existing asset base. There is therefore no day-zero capital outlay in the grid; the outlay
+  happened four years before t=0 and is sunk.
+
+  Periodicity: annual. Every economic event the founder names has an annual rhythm or shorter — he
+  bakes daily, pays wages and rent monthly, and receives the mason once a year 'at the end of the
+  rains'. The single long-dated item, the oven, is quoted in years. An annual grid is the coarsest
+  grid that loses no stated structure, and it is the grid on which depreciation and tax are actually
+  assessed.
+
+  Horizon: eleven periods. The mason gives the oven fifteen years; four have been consumed; eleven
+  remain. I close the grid there. That choice is deliberate and it buys two things: the model ends
+  with the only durable asset exactly written down to nil, so no terminal book value has to be
+  disposed of; and no replacement price for a new oven has to be invented inside the grid, because
+  the replacement decision falls in period twelve. Period t=0 is the coming twelve months, which is
+  the oven's fifth year of service; period t=10 is the oven's fifteenth and last.
+
+  1. THE NATURAL OPERATING UNIT — THE BAKING DAY
+
+  The founder's own quantities are the loaf and the day. He does not think in tonnes of flour or in
+  batches; he thinks 'five hundred loaves a day'. I keep that. The bridge from his units to the
+  annual grid is a single operating driver: the baking day.
+
+  He says 'I work every day'. That is an unusually strong statement and it entails no rest day, no
+  market-day closure, no annual leave. Combined with the calendar convention of a 365-day year:
+
+      days operated per period = 365
+
+  Leap days are not modelled; the effect is one day in four years and is immaterial against every
+  other uncertainty in the picture.
+
+  Annual loaf volume follows directly:
+
+      loaves sold per period = 500 loaves/day x 365 days = 182,500 loaves
+
+  A note on the step from production to sales. The founder says 'I make five hundred loaves a day,
+  sold at two hundred fifty francs each'. The participle 'sold' attaches to the five hundred; he is
+  describing one flow of loaves, not two. I therefore take output equal to sales, with no stale
+  returns and no waste. This is the founder's own framing rather than a prior I supplied, but it is
+  worth a question: whether he ever ends a day with unsold bread, and whether volume swings with
+  Ramadan, harvest or school terms. Nothing in the utterance supports seasonality, so volume is flat
+  at 182,500 loaves in each of the eleven periods.
+
+  2. REVENUE
+
+      revenue = 250 XOF/loaf x 182,500 loaves = 45,625,000 XOF per period
+
+  Both the price and the volume are stated and neither is given any growth, escalation or inflation
+  path. I hold both flat in nominal terms across all eleven periods, because inventing an escalator
+  would be supplying information the founder did not give. Revenue is recognised at the point of
+  sale over the counter (IFRS 15: control of the loaf passes to the customer when handed over), which
+  for a cash bakery coincides with cash receipt.
+
+  3. THE COST STACK, IN THE FOUNDER'S OWN CATEGORIES
+
+  He gives four cash costs and one durable asset. I keep his categories rather than folding them
+  into a generic COGS/SG&A split, because the split that matters operationally here is
+  per-loaf / per-day / per-month / per-year, and that is exactly how he stated them.
+
+  (a) Flour — a per-loaf cost. 'Flour costs me one hundred fifty francs per loaf.' This is already
+  a unit cost, so no yield or extraction-rate calculation is needed; the founder has done that
+  conversion himself.
+
+      flour cost = 150 XOF/loaf x 182,500 loaves = 27,375,000 XOF per period
+
+  The gross margin over flour is 250 - 150 = 100 XOF per loaf, i.e. 18,250,000 XOF per period. That
+  100 francs per loaf is the entire fund out of which wood, wages, rent, the mason and the oven's
+  own consumption must be paid.
+
+  (b) Wood — a per-day cost, not a per-loaf cost. This distinction is real and I preserve it. He
+  says he burns wood 'to keep it hot': a masonry oven is fired to bring the thermal mass up and then
+  held, so the fuel is a function of firing days, not of how many loaves pass through. On his stated
+  volumes the two are indistinguishable, but the causal structure matters if volumes ever change.
+
+      wood cost = 800 XOF/day x 365 days = 292,000 XOF per period
+
+  (c) Bakers — a per-month cost, two heads.
+
+      labour cost = 2 bakers x 100,000 XOF/month x 12 months = 2,400,000 XOF per period
+
+  The founder's own labour is not in here. He works every day and names no wage for himself. Under
+  IFRS no expense is recognised where no transaction occurs, so EBIT carries no owner wage. The
+  consequence is recorded in the notes.
+
+  (d) Shop rent — a per-month cost.
+
+      rent cost = 800,000 XOF/month x 12 months = 9,600,000 XOF per period
+
+  There is an IFRS friction here that I flag rather than paper over. IFRS 16 would ordinarily
+  require a right-of-use asset and a lease liability for the shop. But nothing in the utterance
+  establishes an enforceable term beyond a month — he says only that the rent 'is eight hundred
+  thousand a month' — so the short-term-lease recognition exemption (IFRS 16.5-6) applies and the
+  rent goes straight to profit or loss as an operating expense. That is also the treatment that
+  keeps the unlevered cash flow honest for a month-to-month informal tenancy.
+
+  (e) The mason's annual reline — a per-year cost. 'Every year at the end of the rains he comes and
+  relines the hearth and redoes the mortar, and that runs me a hundred and eighty thousand francs.'
+
+      maintenance cost = 180,000 XOF per period
+
+  This is the most interesting accounting judgment in the whole business, so I will set it out.
+  IAS 16.12 expenses the costs of day-to-day servicing — repairs and maintenance — as incurred.
+  IAS 16.13 instead capitalises the cost of replacing a part of an item of property, plant and
+  equipment when that part is consumed on its own cycle, derecognising the carrying amount of the
+  part replaced. A relined hearth genuinely looks like the second: it is a physical component with
+  its own service cycle. The reason the choice does not matter here is that the cycle is exactly one
+  year, equal to the reporting period. Capitalising 180,000 at the start of a period and depreciating
+  it fully within that same period produces identical EBIT (180,000 of depreciation displaces 180,000
+  of opex) and identical free cash flow (the +D&A add-back of 180,000 is exactly cancelled by
+  180,000 of capex). The two treatments are arithmetically indistinguishable in both NOPAT and FCFF.
+  I therefore expense it, which is the simpler presentation, and record the equivalence.
+
+  What is NOT immaterial is the link the founder himself draws: fifteen years holds 'if you look
+  after it', and looking after it costs 180,000 a year. The maintenance line and the fifteen-year
+  life are one package, not two independent assumptions. They must be varied together or not at all.
+
+  Total cash operating expense per period:
+
+      flour        27,375,000
+      wood            292,000
+      bakers        2,400,000
+      rent          9,600,000
+      maintenance     180,000
+      -----------------------
+      cash opex    39,847,000
+
+  EBITDA:
+
+      EBITDA = 45,625,000 - 39,847,000 = 5,778,000 XOF per period
+
+  That is a 12.67% EBITDA margin, and it recurs unchanged in all eleven periods because every driver
+  behind it is flat.
+
+  4. THE OVEN — CAPITALISATION, ELAPSED LIFE, AND THE DEPRECIATION SCHEDULE
+
+  The oven is a self-constructed item of property, plant and equipment: 'I had it built'. Under
+  IAS 16.22 its cost is the cost of construction, which the founder states as 3,200,000 XOF. That is
+  the gross carrying amount and it does not change over the horizon — no additions, no disposals,
+  no revaluation.
+
+  Useful life is stated at fifteen years by the tradesman who builds these ovens; that is a
+  competent-source estimate and I adopt it. Residual value is not stated. A fixed masonry oven is
+  knocked down in place at end of life and its bricks are not worth the labour of recovering them,
+  so I set residual to nil — a prior I supplied, flagged as such.
+
+  Straight-line is the right pattern, not merely the lazy one: the oven is fired to the same duty
+  every single day of its life, so the consumption of its economic benefits is even (IAS 16.60).
+
+      annual depreciation = (3,200,000 - 0) / 15 = 213,333.33 XOF per year
+
+  The oven is not new. Four years of that charge have already run:
+
+      accumulated depreciation at start of t=0 = 4 x 213,333.33 = 853,333.33
+      net book value at start of t=0           = 3,200,000 - 853,333.33 = 2,346,666.67
+
+  This opening state is what makes the depreciation schedule non-trivial, and it is where a careless
+  engine goes wrong: starting the clock at t=0 would leave the oven half-written-down at the end of
+  the grid. The roll-forward per period, oven service-year in brackets:
+
+      t=0  (yr 5)  open 2,346,666.67  - 213,333.33  = close 2,133,333.33   accum 1,066,666.67
+      t=1  (yr 6)  open 2,133,333.33  - 213,333.33  = close 1,920,000.00   accum 1,280,000.00
+      t=2  (yr 7)  open 1,920,000.00  - 213,333.33  = close 1,706,666.67   accum 1,493,333.33
+      t=3  (yr 8)  open 1,706,666.67  - 213,333.33  = close 1,493,333.33   accum 1,706,666.67
+      t=4  (yr 9)  open 1,493,333.33  - 213,333.33  = close 1,280,000.00   accum 1,920,000.00
+      t=5  (yr 10) open 1,280,000.00  - 213,333.33  = close 1,066,666.67   accum 2,133,333.33
+      t=6  (yr 11) open 1,066,666.67  - 213,333.33  = close   853,333.33   accum 2,346,666.67
+      t=7  (yr 12) open   853,333.33  - 213,333.33  = close   640,000.00   accum 2,560,000.00
+      t=8  (yr 13) open   640,000.00  - 213,333.33  = close   426,666.67   accum 2,773,333.33
+      t=9  (yr 14) open   426,666.67  - 213,333.33  = close   213,333.33   accum 2,986,666.67
+      t=10 (yr 15) open   213,333.33  - 213,333.33  = close         0.00   accum 3,200,000.00
+
+  The horizon is validated by its own terminal state: accumulated depreciation lands exactly on the
+  3,200,000 construction cost, net book value lands exactly on nil, and the sum of the eleven
+  depreciation charges equals the 2,346,666.67 of net book value standing at t=0. Nothing is left
+  stranded on the balance sheet at the end of the grid.
+
+  I keep the reline in the final period. The mason comes at the end of the rains, roughly
+  three-quarters of the way through the year, and that reline is what carries the oven through to
+  the end of its fifteenth year; skipping it would not leave the year's output intact.
+
+  5. EBIT, TAX AND NOPAT
+
+      EBIT = EBITDA - depreciation = 5,778,000 - 213,333.33 = 5,564,666.67 XOF per period
+
+  Tax. Nothing is stated. This is a genuine gap and the question I would put first is which regime
+  he files under, because at roughly 45.6m of turnover a bakery in a CFA-zone jurisdiction may well
+  sit under a synthetic or presumptive regime — a lump sum or a turnover levy — rather than the
+  corporate rate on profit. Lacking that, I apply the modal statutory corporate income tax rate of
+  the zone, 30%, to EBIT. That is the correct unlevered construction: the tax charged in an FCFF
+  build is the tax the business would bear with no debt, so it is computed on EBIT and not on any
+  post-interest figure.
+
+      tax on EBIT = 0.30 x 5,564,666.67 = 1,669,400.00
+      NOPAT       = 5,564,666.67 - 1,669,400.00 = 3,895,266.67 XOF per period
+
+  6. WORKING CAPITAL
+
+  The founder says nothing about stock, credit given or credit taken, so all three are priors I
+  supply and flag.
+
+  Receivables: nil. Bread over a counter is a cash trade; control and cash pass at the same instant.
+  Inventory: one week of flour, the standard holding for a bakery that buys sacks from a wholesaler
+  rather than taking daily delivery.
+
+      inventory = 7 days x (150 XOF/loaf x 500 loaves/day) = 7 x 75,000 = 525,000 XOF
+
+  Payables: nil, on the prior that a small bakery without a credit line pays the flour man on
+  collection.
+
+      NWC = 525,000 + 0 - 0 = 525,000 XOF, in every period
+
+  Now the point that actually matters for the cash flow. This business has flat volumes, flat prices
+  and flat input costs across all eleven periods, so its working capital requirement never moves.
+  The 525,000 was tied up years ago, in the ordinary course of a business that has been trading for
+  four years; it is part of the opening balance sheet, not a forward investment. Consequently:
+
+      change in NWC = 0 in every period, t=0 through t=10
+
+  The FCFF stream over this horizon is therefore insensitive to the level of the working capital
+  priors. Only the opening tie-up depends on them, and that is already sunk. This is a finding, not
+  a convenience: it says the answer to 'how much flour do you keep?' cannot change the forward
+  unlevered cash flow of a flat business, only the amount of capital already standing in it.
+
+  7. CAPITAL EXPENDITURE
+
+  Zero in every period. The oven, the sole durable asset the founder names, is already built and
+  paid for; its replacement falls at the boundary of the grid and therefore in period twelve, which
+  the horizon deliberately excludes. The annual reline is expensed, per section 3(e), and would in
+  any case wash out against its own add-back if capitalised. No other capital item is mentioned, and
+  I have recorded the question that would test that.
+
+  8. FREE CASH FLOW TO THE FIRM
+
+      FCFF = NOPAT + D&A - change in NWC - capex
+           = 3,895,266.67 + 213,333.33 - 0 - 0
+           = 4,108,600.00 XOF per period
+
+  Cross-check by the short route, which must agree by construction:
+
+      FCFF = EBITDA - cash tax on EBIT - change in NWC - capex
+           = 5,778,000 - 1,669,400 - 0 - 0
+           = 4,108,600.00  ✓
+
+  And by the statement route:
+
+      CFO = NOPAT + D&A - change in NWC = 4,108,600.00
+      CFI = -capex                      =         0.00
+      FCFF = CFO + CFI                  = 4,108,600.00  ✓
+
+  Every period is numerically identical, and this is not laziness but the direct consequence of the
+  founder's own description: he gives no growth, no price path, no escalation, no seasonality, and
+  no step in the cost base, and the depreciation charge runs unbroken from the oven's fifth year to
+  its fifteenth. The only quantities that move across the grid are the two stock accounts — the
+  oven's accumulated depreciation and its net book value — and those move by exactly the same
+  213,333.33 each year.
+
+  Over the eleven-period horizon the bakery throws off 45,194,600 XOF of unlevered free cash flow,
+  against an oven that cost 3,200,000 to build. No discounting is applied: the brief asks for the
+  cash flow stream on the asset side, and nothing in the utterance identifies a cost of capital.
+
+  9. WHAT THE NUMBER IS AND IS NOT
+
+  It is the cash the assets of this bakery generate, before any financing and before any distribution
+  to the founder, over the remaining life of the oven, on the founder's stated prices, volumes and
+  costs. It is not the return to the founder's capital alone, because it is earned partly by his own
+  unpaid daily labour, which carries no expense line. And it is not a complete cost picture: yeast,
+  salt, water, packaging, the trading licence and any electricity are absent from what he told me,
+  so this is the top of the range rather than the middle of it.
+
+trace:
+  oven_year:        [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  days_operated:    [365, 365, 365, 365, 365, 365, 365, 365, 365, 365, 365]
+  loaves_sold:      [182500, 182500, 182500, 182500, 182500, 182500, 182500, 182500, 182500, 182500, 182500]
+  revenue:          [45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0, 45625000.0]
+  flour_cost:       [27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0, 27375000.0]
+  wood_cost:        [292000.0, 292000.0, 292000.0, 292000.0, 292000.0, 292000.0, 292000.0, 292000.0, 292000.0, 292000.0, 292000.0]
+  labour_cost:      [2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0, 2400000.0]
+  rent_cost:        [9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0, 9600000.0]
+  maintenance_cost: [180000.0, 180000.0, 180000.0, 180000.0, 180000.0, 180000.0, 180000.0, 180000.0, 180000.0, 180000.0, 180000.0]
+  cash_opex:        [39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0, 39847000.0]
+  ebitda:           [5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0, 5778000.0]
+  oven_gross:       [3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0, 3200000.0]
+  capex:            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  depreciation:     [213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334, 213333.33333333334]
+  accum_dep:        [1066666.6666666667, 1280000.0, 1493333.3333333333, 1706666.6666666667, 1920000.0, 2133333.3333333333, 2346666.6666666667, 2560000.0, 2773333.3333333333, 2986666.6666666667, 3200000.0]
+  oven_nbv:         [2133333.3333333333, 1920000.0, 1706666.6666666667, 1493333.3333333333, 1280000.0, 1066666.6666666667, 853333.3333333333, 640000.0, 426666.6666666667, 213333.33333333334, 0.0]
+  ebit:             [5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667, 5564666.666666667]
+  tax_on_ebit:      [1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0, 1669400.0]
+  nopat:            [3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667, 3895266.666666667]
+  inventory:        [525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0]
+  receivables:      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  payables:         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  nwc:              [525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0, 525000.0]
+  delta_nwc:        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  cfo:              [4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0]
+  cfi:              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  fcff:             [4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0]
+
+fcff: [4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0, 4108600.0]
+
+checks:
+  - "grid.periods == oven_life_years - oven_age_years"
+  - "grid.periods == oven_remaining_life_years"
+  - "trace.oven_year[first] == oven_age_years + 1"
+  - "trace.oven_year[t] == trace.oven_year[t-1] + 1 for t >= 1"
+  - "trace.oven_year[last] == oven_life_years"
+  - "trace.days_operated[t] == days_per_year"
+  - "trace.loaves_sold[t] == loaves_per_day * trace.days_operated[t]"
+  - "trace.loaves_sold[t] >= 0"
+  - "trace.revenue[t] == price_per_loaf * trace.loaves_sold[t]"
+  - "trace.flour_cost[t] == flour_cost_per_loaf * trace.loaves_sold[t]"
+  - "trace.wood_cost[t] == wood_cost_per_day * trace.days_operated[t]"
+  - "trace.labour_cost[t] == n_bakers * baker_wage_monthly * months_per_year"
+  - "trace.rent_cost[t] == rent_monthly * months_per_year"
+  - "trace.maintenance_cost[t] == reline_cost_annual"
+  - "sum(trace.maintenance_cost) == reline_cost_annual * grid.periods"
+  - "trace.cash_opex[t] == trace.flour_cost[t] + trace.wood_cost[t] + trace.labour_cost[t] + trace.rent_cost[t] + trace.maintenance_cost[t]"
+  - "trace.ebitda[t] == trace.revenue[t] - trace.cash_opex[t]"
+  - "trace.oven_gross[t] == oven_cost"
+  - "trace.capex[t] == capex_in_horizon"
+  - "trace.depreciation[t] == (oven_cost - oven_residual_value) / oven_life_years"
+  - "trace.accum_dep[first] == accum_dep_opening + trace.depreciation[first]"
+  - "trace.accum_dep[t] == trace.accum_dep[t-1] + trace.depreciation[t] for t >= 1"
+  - "trace.accum_dep[t] <= oven_cost"
+  - "trace.accum_dep[last] == oven_cost"
+  - "trace.oven_nbv[first] == oven_nbv_opening - trace.depreciation[first] + trace.capex[first]"
+  - "trace.oven_nbv[t] == trace.oven_nbv[t-1] - trace.depreciation[t] + trace.capex[t] for t >= 1"
+  - "trace.oven_nbv[t] == trace.oven_gross[t] - trace.accum_dep[t]"
+  - "trace.oven_nbv[t] >= 0"
+  - "trace.oven_nbv[last] == oven_residual_value"
+  - "oven_nbv_opening == oven_cost - accum_dep_opening"
+  - "sum(trace.depreciation) == oven_nbv_opening - oven_residual_value"
+  - "trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]"
+  - "trace.ebitda[t] >= trace.ebit[t]"
+  - "trace.tax_on_ebit[t] == tax_rate * trace.ebit[t]"
+  - "trace.nopat[t] == trace.ebit[t] - trace.tax_on_ebit[t]"
+  - "trace.inventory[t] == flour_days_on_hand * flour_cost_per_loaf * loaves_per_day"
+  - "trace.receivables[t] == receivables_days * price_per_loaf * loaves_per_day"
+  - "trace.payables[t] == payables_days * flour_cost_per_loaf * loaves_per_day"
+  - "trace.inventory[t] >= 0"
+  - "trace.nwc[t] == trace.inventory[t] + trace.receivables[t] - trace.payables[t]"
+  - "trace.nwc[t] >= 0"
+  - "trace.nwc[first] == nwc_opening_balance + trace.delta_nwc[first]"
+  - "trace.nwc[t] == trace.nwc[t-1] + trace.delta_nwc[t] for t >= 1"
+  - "cumsum(trace.delta_nwc) == trace.nwc - nwc_opening_balance"
+  - "trace.cfo[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t]"
+  - "trace.cfi[t] == 0 - trace.capex[t]"
+  - "trace.fcff[t] == trace.cfo[t] + trace.cfi[t]"
+  - "trace.fcff[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "trace.fcff[t] == trace.ebitda[t] - trace.tax_on_ebit[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "sum(trace.fcff) == sum(trace.ebitda) - sum(trace.tax_on_ebit) - sum(trace.delta_nwc) - sum(trace.capex)"
+
+notes:
+
+  - >-
+    HORIZON. Eleven annual periods, set equal to the oven's remaining useful life. The grid closes
+    with the sole durable asset written down exactly to nil, which means no terminal book value has
+    to be disposed of and no replacement price for a new oven has to be invented inside the model.
+    Extending past period eleven would require an ASSUMED replacement cost, which the utterance does
+    not supply — that is deferred, with the elicitation question 'if you had to build that oven
+    again today, what would the mason charge?'
+
+  - >-
+    THE RELINE — IAS 16.12 VERSUS IAS 16.13. I expense the annual 180,000 as day-to-day servicing
+    (IAS 16.12). The competing reading — that the hearth lining is a replaced component to be
+    capitalised and derecognised under IAS 16.13 — is defensible on the physics, but it makes no
+    arithmetic difference here because the replacement cycle is exactly one reporting period:
+    capitalising and fully depreciating within the same year displaces an identical amount of opex
+    in EBIT, and the resulting D&A add-back is exactly cancelled by the resulting capex in FCFF. The
+    friction is noted rather than resolved, because it would matter immediately if the mason's cycle
+    were ever other than annual.
+
+  - >-
+    MAINTENANCE AND LIFE ARE ONE PACKAGE. The fifteen-year life is stated conditionally — 'if you
+    look after it' — and the 180,000 a year is the price of that condition. They are not two
+    independent assumptions and must never be flexed independently. Dropping the maintenance line
+    would shorten the life, shorten the horizon, and raise the depreciation rate simultaneously.
+
+  - >-
+    RENT AND IFRS 16. Expensed in full under the short-term-lease recognition exemption, because
+    nothing in the utterance establishes an enforceable lease term beyond one month. ELICITED: is
+    there a written lease, and for how long? If a multi-year lease exists, the rent leaves operating
+    expense and reappears as right-of-use depreciation plus lease interest — which would raise
+    EBITDA and move part of the outflow below the unlevered line, changing the composition of the
+    answer even where it does not change the underlying cash.
+
+  - >-
+    UNPAID OWNER LABOUR. The founder works every day and draws no stated salary. IFRS recognises no
+    expense absent a transaction, so EBIT and hence FCFF carry no charge for his time. The
+    consequence is directional and should be stated plainly to any reader of the number: the FCFF
+    computed here is the return to the assets plus the founder's uncompensated labour, so the return
+    to capital standing alone is lower than the figure shown. ELICITED: what would he have to pay a
+    manager to do what he does?
+
+  - >-
+    COST COMPLETENESS. Yeast, salt, water, packaging, the trading licence or patente, any
+    electricity, transport of flour, and spoilage are all absent from the utterance. A bakery
+    incurs at least some of these. The cost base as stated is therefore probably incomplete and the
+    FCFF derived from it should be read as the upper end of the range rather than the centre.
+    BOUND 2026-07-26 (physical audit; disclosure completed, no number changed). This list omitted the
+    single largest omitted STATUTORY cost: EMPLOYER SOCIAL CONTRIBUTIONS on the two bakers. Payroll is
+    carried at the stated cash wage with nothing on top, but a declared employee in a CFA-zone
+    jurisdiction carries employer-side pension, family-benefit, work-accident and payroll-levy
+    contributions above the wage. Whether they apply here is genuinely conditional — an informal
+    village bakery very likely does not declare its bakers, and "je paie deux boulangers cent mille
+    francs par mois chacun" plausibly describes total cash out — so no charge is taken. The defect
+    corrected here is not the omission but the disclosure gap: a note enumerating eight missing costs
+    silently passed over the one that would exceed most of them combined. Direction only: if the
+    bakers are declared, labour cost rises and FCFF falls, and it falls further under a
+    turnover-based tax regime, where the extra cost is not deductible against the levy.
+    Note also that under a presumptive regime such as a contribution globale unique the patente
+    listed above is subsumed into the levy rather than being a separate missing cost — so the two
+    disclosures are conditional on regime and not simultaneously true.
+
+  - >-
+    TAX REGIME. The 30% on EBIT is a supplied prior — the modal CFA-zone statutory corporate rate —
+    not something the founder said. At roughly forty-six million of annual turnover this business may
+    well sit under a synthetic or presumptive regime, where the charge would be a lump sum or a levy
+    on turnover rather than a percentage of profit, and would not respond to the depreciation
+    shield at all. This is the single input most likely to be wrong and the first question I would
+    put. A minimum-tax floor of the impôt-minimum-forfaitaire type is not modelled; the business is
+    profitable throughout, so such a floor would not be expected to bind.
+    BOUND 2026-07-26 (physical audit; reasoning corrected, no number changed). Three repairs to the
+    argument above, none of which moves the trace. (a) The threshold test was ANSWERABLE from stated
+    inputs and should not have been left at "may well": annual turnover is derived in §2 from STATED
+    quantities alone, and a turnover of that size falls inside the presumptive band in the major
+    WAEMU jurisdictions — Senegal's contribution globale unique (goods, ceiling 50,000,000) and Côte
+    d'Ivoire's taxe d'État de l'entreprenant (band 5,000,001–50,000,000). Which one applies is NOT
+    determinable, because the utterance names no country; that ambiguity is why no rate is changed
+    here. (b) The wrong tax HEAD is applied before the rate is even reached: "je tiens une
+    boulangerie" describes an entreprise individuelle, and a CORPORATE income tax rate is not the
+    right instrument for a sole trader in any of these jurisdictions. (c) The minimum-tax argument is
+    a non sequitur — profitability is not what makes a turnover-based floor bind or not bind; a floor
+    binds when tax computed on profit falls below it, which happens to profitable thin-margin
+    businesses routinely, and some jurisdictions set the floor as a lump sum that is invisible to a
+    profitability test altogether. Retained as generated per the library rule that an honestly
+    disclosed ASSUMED value is not a defect; logged as evidence in docs/CAPTURE_FINDINGS.md
+    Finding 1, whose whole subject is this systematic default.
+
+  - >-
+    VAT. Basic foodstuffs including bread are commonly exempt or zero-rated in CFA-zone VAT regimes.
+    I have taken the stated 250 and 150 as the actual cash amounts received and paid, which is the
+    right treatment under exemption. If the business were registered and bread standard-rated, both
+    revenue and flour would need restating net of tax and the arithmetic would have to be redone
+    from the top.
+
+  - >-
+    WORKING CAPITAL IS INERT HERE — CONDITIONAL ON THE HORIZON BEING A TRUNCATION, NOT A WIND-UP.
+    Flat volumes, flat prices and flat input costs mean the working capital requirement never moves
+    across the grid, so the change in net working capital is zero in every period and the FCFF stream
+    is insensitive to the level of the inventory, receivable and payable priors. Only the opening
+    tie-up — already sunk, four years into trading — depends on them. The three priors are still
+    flagged and their elicitation questions recorded, because they matter for the opening balance
+    sheet and would matter immediately if volumes ever changed.
+    BOUND 2026-07-26 (physical audit; scope of the claim narrowed, no number changed). As first
+    written this said "AND THAT IS A FINDING", asserting unconditionally that the level of the
+    working-capital priors cannot change the forward cash flow. That is true only under a
+    going-concern TRUNCATION reading, in which the grid stops but the bakery does not. It is false
+    under the WIND-UP reading that §0 leans on to justify the horizon ("the model ends with the only
+    durable asset exactly written down to nil"): if the business genuinely ceases at t=10 the flour
+    stock is realised and the terminal period carries a working-capital release, at which point the
+    answer does depend on flour_days_on_hand. The trace is built on the truncation reading, which is
+    the economically right one for a bakery whose oven would simply be rebuilt — but the horizon
+    justification and the cash flows were drawn from two different readings, and the claim was stated
+    with a confidence only one of them supports. Numbers stand; the over-claim is withdrawn.
+
+  - >-
+    NO GROWTH AND NO INFLATION. Nothing in the utterance supports a price path, a volume path, a
+    wage escalator or a rent review, so everything is held flat in nominal terms. Directionally, if
+    nominal inflation is positive and the founder cannot pass it through to a socially sensitive
+    bread price, the real cash flow declines across the horizon and the flour and wage lines
+    compress the hundred-franc gross margin per loaf. ELICITED: has the loaf price moved in the last
+    four years, and has the landlord raised the rent?
+
+  - >-
+    VOLUME EQUALS PRODUCTION. All five hundred loaves are taken to sell every day, which follows the
+    founder's own phrasing rather than a supplied prior, but no waste, no stale returns and no
+    seasonality (Ramadan, harvest, school terms) are modelled. Directionally, any unsold bread
+    reduces revenue without reducing flour, wood or labour, so it bites the margin twice as hard as
+    it bites the top line.
+
+  - >-
+    CALENDAR. 365 days flat in every period; leap days are not modelled. 'I work every day' is taken
+    at face value as zero closure days, which is a strong statement and worth confirming.
+
+  - >-
+    CURRENCY. Taken as the CFA franc, written XOF. The derivation is unit-agnostic and nothing
+    depends on which of the two CFA francs applies. ELICITED: which country is this?
+
+  - >-
+    NO DISCOUNTING AND NO VALUATION. The brief asks for the asset-side cash flow stream, and nothing
+    in the utterance identifies a cost of capital, a capital structure or a required return, so no
+    WACC is derivable and none is applied. Turning this stream into an enterprise value is deferred
+    and would require inputs the founder has not given.

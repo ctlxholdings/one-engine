@@ -1,0 +1,148 @@
+# Gold "moto": one owner-operated moto-taxi in Cotonou, five years (cases/reference/golds/moto.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * the moto (moto_cost) is bought in period 0 and works from ops_start; nothing is earned or
+#     burnt before;
+#   * fares: trips_per_day x working_days trips a year, a third each short, medium and long (the
+#     gold's mix_each), at the average of the three fares;
+#   * kilometres: the loaded distance of that mix times deadhead_factor; fuel at
+#     fuel_consumption_l_per_km x fuel_price a kilometre, maintenance at maint_rate_per_km;
+#   * book and tax depreciation straight-line over moto_life from the period after purchase,
+#     to nil salvage; nothing is left to dispose of at the end;
+#   * tax at tax_rate on profit, paid within the year; no working capital (nwc 0, all cash).
+gold: moto
+entity: moto
+plant: fare_long
+case:
+  case: gold-moto
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        working: t >= ops_start
+        trips: trips_per_day * working_days * working
+        trips_each: trips / 3
+        average_fare: (fare_short + fare_medium + fare_long) / 3
+        km_loaded: trips_each * (dist_short + dist_medium + dist_long)
+        km_total: km_loaded * deadhead_factor
+        fuel_litres: km_total * fuel_consumption_l_per_km
+        fuel_per_km: fuel_consumption_l_per_km * fuel_price
+        capex: "moto_cost * (t == 0)"
+  opening:
+    moto:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    fares:
+      type: offtake
+      parties: {seller: moto}
+      terms: {volume: {generator: gold, output: trips}, price: {generator: gold, output: average_fare},
+              payment_days: 0, days_per_year: {generator: gold, output: working_days}, periods_per_year: 1, end: 4}
+    fuel:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: 0, unit_rate: {generator: gold, output: fuel_per_km}, volume: {generator: gold, output: km_total},
+              index: 1, periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: working_days}}
+    maintenance:
+      type: operating_cost
+      parties: {payer: moto}
+      terms: {annual: 0, unit_rate: {generator: gold, output: maint_rate_per_km},
+              volume: {generator: gold, output: km_total}, index: 1, periods_per_year: 1, start: 0, end: 4,
+              vat_rate: 0, vat_refund_lag: 0, payment_days: 0, days_per_year: {generator: gold, output: working_days}}
+    purchase:
+      type: capex
+      parties: {owner: moto}
+      terms: {schedule: {generator: gold, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 4}
+  rulebooks:
+    assets:
+      kind: asset_register
+      entity: moto
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: 0
+      dispose_at: 4
+      life_periods: {generator: gold, output: moto_life}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: moto
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        fares.revenue: taxable
+        fuel.expense: taxable
+        maintenance.expense: taxable
+        depreciation: taxable
+        disposal_loss: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: moto
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      fares.revenue: revenue
+      fuel.expense: fuel
+      maintenance.expense: maintenance
+      depreciation: depreciation
+      disposal_loss: depreciation
+      tax_expense: tax
+    cash_flow:
+      fares.receivable: operating
+      fuel.payable: operating
+      maintenance.payable: operating
+      vat_receivable: operating
+      tax_payable: operating
+      cwip: investing
+  cuts:
+    revenue: {kind: pnl, entity: moto, scheme: pnl, include: [revenue]}
+    fuel: {kind: pnl, entity: moto, scheme: pnl, include: [fuel]}
+    maintenance: {kind: pnl, entity: moto, scheme: pnl, include: [maintenance]}
+    ebitda: {kind: pnl, entity: moto, scheme: pnl, include: [revenue, fuel, maintenance]}
+    depreciation: {kind: pnl, entity: moto, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: moto, scheme: pnl, include: [revenue, fuel, maintenance, depreciation]}
+    tax: {kind: pnl, entity: moto, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: moto, scheme: pnl, include: [revenue, fuel, maintenance, depreciation, tax]}
+    cfo: {entity: moto, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: moto, account: cash, scheme: cash_flow, include: [investing]}
+    fcff: {entity: moto, account: cash, scheme: cash_flow, include: [operating, investing]}
+  measures: {}
+trace:
+  trips_per_year: {driver: gold.trips}
+  trips_short: {driver: gold.trips_each}
+  trips_medium: {driver: gold.trips_each}
+  trips_long: {driver: gold.trips_each}
+  revenue: {cut: revenue}
+  km_loaded: {driver: gold.km_loaded}
+  km_total: {driver: gold.km_total}
+  fuel_litres: {driver: gold.fuel_litres}
+  fuel_cost: {cut: fuel, sign: -1}
+  maintenance: {cut: maintenance, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {cut: depreciation, sign: -1}
+  ebit: {cut: ebit}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  capex: {cut: cfi, sign: -1}
+  accum_depreciation: {cumulative: depreciation, sign: -1}
+  book_value: {balance: fixed_assets}
+  nwc: {balance: fares.receivable - fuel.payable - maintenance.payable}
+  delta_nwc: {change: fares.receivable - fuel.payable - maintenance.payable}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

@@ -1,0 +1,263 @@
+id: bakery_fcff_unlevered_v1
+title: "Unlevered free cash flow (FCFF via NOPAT) for a neighbourhood bakery on a linear volume ramp"
+currency: XOF
+grid:
+  periods: 5
+  freq: annual
+  note: "t is 0-based. t=0 is the founding/current year at 500 loaves/day; t=4 is year five at 700 loaves/day. Horizon chosen to stay inside the 'two bakers' regime the founder describes (see notes)."
+
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Le pain je le vends deux cent cinquante francs
+    pièce, et la farine me coûte cent cinquante francs par pain. Je paie deux
+    boulangers à cent mille par mois chacun, le loyer c'est huit cent mille par
+    mois. Je travaille tous les jours. Au début je faisais cinq cents pains par
+    jour, mais le quartier grandit et ma clientèle avec — chaque année je fais à
+    peu près cinquante pains de plus par jour. Pour l'instant je tiens avec mes
+    deux boulangers ; le prix du pain, lui, ne bouge pas.
+  en: |
+    I run a bakery. I sell the bread at two hundred fifty francs each, and flour
+    costs me one hundred fifty francs per loaf. I pay two bakers a hundred
+    thousand a month each, and the rent is eight hundred thousand a month. I work
+    every day. When I started I made five hundred loaves a day, but the
+    neighbourhood is growing and my customers with it — every year I make about
+    fifty more loaves a day. For now I manage with my two bakers; the price of
+    bread doesn't move.
+
+inputs:
+  price_per_loaf:
+    value: 250
+    unit: XOF/loaf
+    prov: STATED
+    source: "Le pain je le vends deux cent cinquante francs pièce"
+    date: 2026-07-25
+  flour_cost_per_loaf:
+    value: 150
+    unit: XOF/loaf
+    prov: STATED
+    source: "la farine me coûte cent cinquante francs par pain"
+    date: 2026-07-25
+  bakers_count:
+    value: 2
+    unit: bakers
+    prov: STATED
+    source: "deux boulangers ... je tiens avec mes deux boulangers"
+    date: 2026-07-25
+  baker_wage_monthly:
+    value: 100000
+    unit: XOF/baker/month
+    prov: STATED
+    source: "deux boulangers à cent mille par mois chacun"
+    date: 2026-07-25
+  rent_monthly:
+    value: 800000
+    unit: XOF/month
+    prov: STATED
+    source: "le loyer c'est huit cent mille par mois"
+    date: 2026-07-25
+  loaves_per_day_start:
+    value: 500
+    unit: loaves/day
+    prov: STATED
+    source: "Au début je faisais cinq cents pains par jour"
+    date: 2026-07-25
+  loaves_per_day_growth:
+    value: 50
+    unit: loaves/day/year
+    prov: STATED
+    source: "chaque année je fais à peu près cinquante pains de plus par jour (linear ramp)"
+    date: 2026-07-25
+  days_per_year:
+    value: 365
+    unit: days/year
+    prov: DEFAULTED
+    source: "STATED 'Je travaille tous les jours' (open 7/7); 365-day-year convention applied, leap days ignored"
+    date: 2026-07-25
+  months_per_year:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: "calendar convention for annualising monthly wage and rent"
+    date: 2026-07-25
+  tax_rate:
+    value: 0.25
+    unit: fraction
+    prov: ASSUMED
+    source: "flagged domain prior — representative corporate income-tax rate for a franc-CFA (WAEMU/CEMAC) jurisdiction (statutory band ~25-30%). Applied to EBIT for the unlevered NOPAT. ELICIT actual regime; a small bakery may fall under a simplified/presumptive tax."
+    date: 2026-07-25
+  oven_cost:
+    value: 10000000
+    unit: XOF
+    prov: ASSUMED
+    source: "flagged domain prior — a bakery at 500-700 loaves/day requires an owned commercial oven/equipment; founder is silent on any asset. Order-of-magnitude for a rotary/deck oven in a CFA market. The ENTIRE D&A + t=0 capex block rests on this prior (see notes: rented-furnished fork)."
+    date: 2026-07-25
+  oven_useful_life:
+    value: 10
+    unit: years
+    prov: DEFAULTED
+    source: "IAS 16 straight-line depreciation, zero residual, 10-year useful life convention for commercial baking equipment"
+    date: 2026-07-25
+  inventory_days:
+    value: 7
+    unit: days
+    prov: ASSUMED
+    source: "flagged domain prior — one week of flour (raw-material) stock held; founder is silent on inventory policy. Bread itself is perishable and sold same-day, so finished-goods stock ~ 0."
+    date: 2026-07-25
+
+passage: |
+  ORACLE / PROVENANCE DISCIPLINE
+  ------------------------------
+  Everything STATED is priced and volumed directly from the founder's words. The
+  operation's natural quantity is loaves/day; every money line is built from it.
+  The FCFF build requires depreciation, capex and working capital — none of which
+  the founder mentions. Where a number had to be created (oven, tax, flour-stock)
+  it is tagged ASSUMED and flagged; the instant such a prior enters, the affected
+  line is ASSUMED, not INFERRED.
+
+  STEP 0 — VOLUME RAMP (natural quantity)
+  Linear: loaves_per_day[t] = 500 + 50*t.
+    t=0: 500   t=1: 550   t=2: 600   t=3: 650   t=4: 700   (loaves/day)
+  Annualise on a 365-day, open-every-day year:
+    loaves_per_year[t] = loaves_per_day[t] * 365
+    t=0: 500*365 = 182,500
+    t=1: 550*365 = 200,750
+    t=2: 600*365 = 219,000
+    t=3: 650*365 = 237,250
+    t=4: 700*365 = 255,500   (loaves/year)
+
+  STEP 1 — REVENUE (IAS 18/IFRS 15: recognise at point of sale, cash retail)
+    revenue[t] = loaves_per_year[t] * 250
+    t=0: 182,500*250 = 45,625,000
+    t=1: 200,750*250 = 50,187,500
+    t=2: 219,000*250 = 54,750,000
+    t=3: 237,250*250 = 59,312,500
+    t=4: 255,500*250 = 63,875,000   (XOF)
+  Price held flat: "le prix du pain, lui, ne bouge pas."
+
+  STEP 2 — DIRECT MATERIAL (flour), matched to loaves sold
+    flour_cost[t] = loaves_per_year[t] * 150
+    t=0: 27,375,000  t=1: 30,112,500  t=2: 32,850,000
+    t=3: 35,587,500  t=4: 38,325,000   (XOF)
+  Contribution per loaf = 250 - 150 = 100.
+    gross_contribution[t] = loaves_per_year[t] * 100
+    t=0: 18,250,000  t=1: 20,075,000  t=2: 21,900,000
+    t=3: 23,725,000  t=4: 25,550,000   (XOF)
+
+  STEP 3 — FIXED OPERATING COSTS (period costs, held constant)
+    labor_cost[t]  = bakers_count * baker_wage_monthly * 12
+                   = 2 * 100,000 * 12 = 2,400,000/yr  (constant: "je tiens avec mes deux boulangers")
+    rent_cost[t]   = 800,000 * 12 = 9,600,000/yr
+    fixed_opex[t]  = 2,400,000 + 9,600,000 = 12,000,000/yr
+  (No owner salary is stated; none is imputed here — see notes, an ELICIT item.)
+
+  STEP 4 — DEPRECIATION (ASSUMED oven; IAS 16 straight-line)
+    depreciation[t] = oven_cost / oven_useful_life = 10,000,000 / 10 = 1,000,000/yr
+  Asset in service from year 0 (full-year convention). NBV roll-forward:
+    ppe_nbv[t] = ppe_nbv[t-1] + capex[t] - depreciation[t],  pre-t=0 NBV = 0
+    t=0: 0 + 10,000,000 - 1,000,000 = 9,000,000
+    t=1: 9,000,000 - 1,000,000 = 8,000,000
+    t=2: 7,000,000   t=3: 6,000,000   t=4: 5,000,000   (XOF)
+
+  STEP 5 — EBIT then NOPAT (unlevered: no interest, so EBT = EBIT)
+    ebit[t] = gross_contribution[t] - fixed_opex[t] - depreciation[t]
+            = gross_contribution[t] - 13,000,000
+    t=0: 18,250,000 - 13,000,000 = 5,250,000
+    t=1: 20,075,000 - 13,000,000 = 7,075,000
+    t=2: 21,900,000 - 13,000,000 = 8,900,000
+    t=3: 23,725,000 - 13,000,000 = 10,725,000
+    t=4: 25,550,000 - 13,000,000 = 12,550,000   (XOF)
+    tax[t]   = ebit[t] * 0.25
+    t=0: 1,312,500  t=1: 1,768,750  t=2: 2,225,000  t=3: 2,681,250  t=4: 3,137,500
+    nopat[t] = ebit[t] - tax[t] = ebit[t] * 0.75
+    t=0: 3,937,500  t=1: 5,306,250  t=2: 6,675,000  t=3: 8,043,750  t=4: 9,412,500  (XOF)
+
+  STEP 6 — NET WORKING CAPITAL (retail cash bakery)
+  Receivables ~ 0 (cash sales); finished-goods ~ 0 (perishable, sold same day).
+  Only raw-material flour stock, 7 days of flour cost; supplier credit assumed 0.
+    inventory[t] = flour_cost[t] / 365 * 7 = (loaves_per_day[t]*150) * 7
+    t=0: 75,000*7 = 525,000
+    t=1: 82,500*7 = 577,500
+    t=2: 90,000*7 = 630,000
+    t=3: 97,500*7 = 682,500
+    t=4: 105,000*7 = 735,000   (XOF)
+    nwc[t] = inventory[t] (AR = 0, AP = 0)
+    delta_nwc[t] = nwc[t] - nwc[t-1], pre-t=0 = 0
+    t=0: 525,000 - 0 = 525,000   (initial stock-up)
+    t>=1: 52,500 each = 50 more loaves/day * 150 * 7 days (constant increment)
+
+  STEP 7 — CAPEX
+    capex[0] = oven_cost = 10,000,000 (founding purchase); capex[t>=1] = 0
+    (oven's 10-yr life exceeds the 5-yr horizon, so no replacement inside grid).
+
+  STEP 8 — UNLEVERED FCFF
+    fcff[t] = nopat[t] + depreciation[t] - delta_nwc[t] - capex[t]
+    t=0: 3,937,500 + 1,000,000 - 525,000 - 10,000,000 = -5,587,500
+    t=1: 5,306,250 + 1,000,000 -  52,500 -          0 =  6,253,750
+    t=2: 6,675,000 + 1,000,000 -  52,500 -          0 =  7,622,500
+    t=3: 8,043,750 + 1,000,000 -  52,500 -          0 =  8,991,250
+    t=4: 9,412,500 + 1,000,000 -  52,500 -          0 = 10,360,000   (XOF)
+  Year 0 is a net cash outflow (oven + first flour stock exceed first-year NOPAT);
+  the asset then generates rising positive unlevered cash flow as volume ramps.
+
+trace:
+  loaves_per_day:     [500, 550, 600, 650, 700]
+  loaves_per_year:    [182500, 200750, 219000, 237250, 255500]
+  revenue:            [45625000, 50187500, 54750000, 59312500, 63875000]
+  flour_cost:         [27375000, 30112500, 32850000, 35587500, 38325000]
+  gross_contribution: [18250000, 20075000, 21900000, 23725000, 25550000]
+  labor_cost:         [2400000, 2400000, 2400000, 2400000, 2400000]
+  rent_cost:          [9600000, 9600000, 9600000, 9600000, 9600000]
+  fixed_opex:         [12000000, 12000000, 12000000, 12000000, 12000000]
+  depreciation:       [1000000, 1000000, 1000000, 1000000, 1000000]
+  ebit:               [5250000, 7075000, 8900000, 10725000, 12550000]
+  tax:                [1312500, 1768750, 2225000, 2681250, 3137500]
+  nopat:              [3937500, 5306250, 6675000, 8043750, 9412500]
+  inventory:          [525000, 577500, 630000, 682500, 735000]
+  nwc:                [525000, 577500, 630000, 682500, 735000]
+  delta_nwc:          [525000, 52500, 52500, 52500, 52500]
+  capex:              [10000000, 0, 0, 0, 0]
+  ppe_nbv:            [9000000, 8000000, 7000000, 6000000, 5000000]
+  fcff:               [-5587500, 6253750, 7622500, 8991250, 10360000]
+
+fcff: [-5587500, 6253750, 7622500, 8991250, 10360000]
+
+checks:
+  - trace.loaves_per_day[first] == loaves_per_day_start
+  - trace.loaves_per_day[t] - trace.loaves_per_day[t-1] == loaves_per_day_growth for t >= 1
+  - trace.loaves_per_day[t] >= 0
+  - trace.loaves_per_year[t] == trace.loaves_per_day[t] * days_per_year
+  - trace.revenue[t] == trace.loaves_per_year[t] * price_per_loaf
+  - trace.flour_cost[t] == trace.loaves_per_year[t] * flour_cost_per_loaf
+  - trace.gross_contribution[t] == trace.revenue[t] - trace.flour_cost[t]
+  - trace.gross_contribution[t] == trace.loaves_per_year[t] * (price_per_loaf - flour_cost_per_loaf)
+  - trace.gross_contribution[t] >= 0
+  - trace.labor_cost[t] == bakers_count * baker_wage_monthly * months_per_year
+  - trace.rent_cost[t] == rent_monthly * months_per_year
+  - trace.fixed_opex[t] == trace.labor_cost[t] + trace.rent_cost[t]
+  - trace.depreciation[t] == oven_cost / oven_useful_life
+  - trace.ebit[t] == trace.gross_contribution[t] - trace.fixed_opex[t] - trace.depreciation[t]
+  - trace.ebit[t] >= 0
+  - trace.tax[t] == trace.ebit[t] * tax_rate
+  - trace.nopat[t] == trace.ebit[t] - trace.tax[t]
+  - trace.capex[first] == oven_cost
+  - trace.capex[t] == 0 for t >= 1
+  - trace.ppe_nbv[t] == trace.ppe_nbv[t-1] + trace.capex[t] - trace.depreciation[t]
+  - trace.ppe_nbv[last] == sum(trace.capex) - sum(trace.depreciation)
+  - trace.ppe_nbv[t] >= 0
+  - trace.inventory[t] == trace.flour_cost[t] / days_per_year * inventory_days
+  - trace.nwc[t] == trace.inventory[t]
+  - trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1]
+  - trace.delta_nwc[t] == loaves_per_day_growth * flour_cost_per_loaf * inventory_days for t >= 1
+  - trace.nwc[last] == sum(trace.delta_nwc)
+  - trace.fcff[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t]
+  - fcff[t] == trace.fcff[t]
+
+notes:
+  - "HORIZON is a judgment call (logged): 5 years keeps the model inside the regime the founder actually describes — 'pour l'instant je tiens avec mes deux boulangers.' Per-baker load rises from 250 loaves/day (t=0) to 350 loaves/day (t=4); 'pour l'instant' flags that the two-baker capacity has a ceiling beyond which a labour step-up (and its cost) would break the flat labour line. DEFERRED/ELICIT: the two-baker maximum daily output, which bounds the ramp."
+  - "OVEN is the load-bearing ASSUMED prior. The founder mentions no asset, only rent. FORK (ELICIT): if the premises are rented furnished / the oven is leased, then depreciation = 0, t=0 capex = 0, the equipment cost already sits inside rent, and the large negative FCFF at t=0 disappears. The base case assumes an owned oven so the FCFF build has a genuine D&A and capex block as required."
+  - "OWNER LABOUR not stated: the founder works every day ('je travaille tous les jours') but draws no stated salary. None is imputed in the base case. ELICIT owner compensation; imputing one would lower EBIT/NOPAT and every FCFF line qualitatively (a fixed annual reduction)."
+  - "TAX rate ASSUMED 25% (representative CFA-zone statutory band 25-30%). A neighbourhood bakery may instead fall under a simplified/presumptive regime (a turnover-based patente/synthetic tax), which would change the tax line entirely. ELICIT the applicable regime."
+  - "WORKING CAPITAL: AR = 0 (retail cash sales) and finished-goods = 0 (bread perishable, sold same day) are well-supported. Flour raw-material stock (7 days) and supplier credit (AP = 0, i.e. cash-on-delivery flour) are ASSUMED/DEFAULTED — conservative for FCFF. ELICIT flour purchasing terms; any supplier credit would reduce ΔNWC and lift early FCFF."
+  - "FLOUR COST held flat at 150/loaf across the horizon is DEFAULTED — the founder fixed only the bread PRICE ('le prix du pain ne bouge pas'), not input cost. Flour-price inflation would compress the 100/loaf contribution; not modelled. ELICIT input-cost outlook."
+  - "CURRENCY: 'francs' in an African retail context read as CFA franc; XOF (WAEMU) used as representative, XAF (CEMAC) equally consistent. Choice does not affect the arithmetic."
+  - "INDEX ANCHOR: t=0 is treated as the founding year at 500 loaves/day, the only fully-anchored point. If 'now' sits further along the ramp, shift the index; the formulas, drivers and checks are unchanged."

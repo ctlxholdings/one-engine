@@ -1,0 +1,267 @@
+id: bakery_fcff_unlevered
+title: "Boulangerie (francophone-African bakery) — unlevered FCFF via NOPAT over the oven's remaining life"
+currency: XOF
+grid:
+  periods: 9
+  freq: annual
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Je fais cinq cents pains par jour, vendus à deux cent cinquante francs pièce. La farine me coûte cent cinquante francs par pain. Je paie deux boulangers à cent mille par mois chacun. Le loyer du local est à huit cent mille par mois. Je travaille tous les jours. Avant je louais le four du voisin, mais l'année dernière j'ai acheté mon propre four, six millions comptant. On me dit qu'un four comme ça tient une dizaine d'années si on l'entretient bien. Le gaz pour le four, ça me fait deux cent mille francs par mois.
+  en: |
+    I run a bakery. I make five hundred loaves a day, sold at two hundred fifty francs each. Flour costs me one hundred fifty francs per loaf. I pay two bakers a hundred thousand a month each. The shop rent is eight hundred thousand a month. I work every day. I used to rent the neighbour's oven, but last year I bought my own oven, six million cash. They tell me an oven like that lasts about ten years if you look after it. The gas for the oven runs me two hundred thousand francs a month.
+
+inputs:
+  loaves_per_day:
+    value: 500
+    unit: loaves/day
+    prov: STATED
+    source: "Je fais cinq cents pains par jour"
+    date: 2026-07-25
+  price_per_loaf:
+    value: 250
+    unit: XOF/loaf
+    prov: STATED
+    source: "vendus à deux cent cinquante francs pièce"
+    date: 2026-07-25
+  flour_cost_per_loaf:
+    value: 150
+    unit: XOF/loaf
+    prov: STATED
+    source: "La farine me coûte cent cinquante francs par pain"
+    date: 2026-07-25
+  bakers:
+    value: 2
+    unit: persons
+    prov: STATED
+    source: "Je paie deux boulangers ... chacun"
+    date: 2026-07-25
+  baker_wage_month:
+    value: 100000
+    unit: XOF/month/person
+    prov: STATED
+    source: "à cent mille par mois chacun"
+    date: 2026-07-25
+  rent_month:
+    value: 800000
+    unit: XOF/month
+    prov: STATED
+    source: "Le loyer du local est à huit cent mille par mois"
+    date: 2026-07-25
+  gas_month:
+    value: 200000
+    unit: XOF/month
+    prov: STATED
+    source: "Le gaz pour le four, ça me fait deux cent mille francs par mois"
+    date: 2026-07-25
+  oven_cost:
+    value: 6000000
+    unit: XOF
+    prov: STATED
+    source: "j'ai acheté mon propre four, six millions comptant"
+    date: 2026-07-25
+  oven_life:
+    value: 10
+    unit: years
+    prov: STATED
+    source: "un four comme ça tient une dizaine d'années — taken as exactly 10 (DEFAULTED point estimate of 'dizaine')"
+    date: 2026-07-25
+  oven_elapsed:
+    value: 1
+    unit: years
+    prov: STATED
+    source: "l'année dernière j'ai acheté mon propre four — 1 year already elapsed at valuation date"
+    date: 2026-07-25
+  operating_days:
+    value: 365
+    unit: days/year
+    prov: INFERRED
+    source: "'Je travaille tous les jours' (STATED) => 365 operating days; 365-day year is a DEFAULTED convention (ignores leap years and any closures)"
+    date: 2026-07-25
+  months:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: "calendar year — 12 months"
+    date: 2026-07-25
+  tax_rate:
+    value: 0.25
+    unit: fraction
+    prov: ASSUMED
+    source: "Unstated. Domain prior: harmonised WAEMU/CFA-franc-zone corporate income tax (~25%). Base case. The moment this unstated prior enters, NOPAT/FCFF become ASSUMED-grade."
+    date: 2026-07-25
+  tax_rate_hi:
+    value: 0.30
+    unit: fraction
+    prov: ASSUMED
+    source: "Unstated. Upper CFA-zone corporate rate; scenario column to materialise the tax sensitivity."
+    date: 2026-07-25
+  residual_value:
+    value: 0
+    unit: XOF
+    prov: DEFAULTED
+    source: "No salvage stated — nil-residual convention (IAS 16)"
+    date: 2026-07-25
+  horizon:
+    value: 9
+    unit: years
+    prov: INFERRED
+    source: "oven_life - oven_elapsed = 10 - 1 = 9 remaining years of oven life"
+    date: 2026-07-25
+
+passage: |
+  All figures in XOF. The oven is the only fixed asset; every operating driver is
+  worked in the business's own quantities (loaves, days, months). Every line except
+  the oven book-value roll-forward is identical across t=0..8 because volumes, prices
+  and costs are held nominally flat (DEFAULTED: nothing stated on growth or inflation).
+
+  STEP 0 — Horizon and grid
+    Oven bought last year (STATED), useful life ~10 years (STATED "une dizaine"),
+    taken as exactly 10 (DEFAULTED). 1 year already elapsed (STATED).
+    Forward horizon = remaining life = 10 - 1 = 9 years. Annual grid, t = 0..8.
+    The 6,000,000 oven outflow occurred LAST YEAR (pre-horizon, sunk) — it is not a
+    cash flow of the forward horizon; only its ongoing depreciation is.
+
+  STEP 1 — Annual volume (identical each year)
+    Loaves/day = 500 (STATED). Works every day (STATED) => operating days = 365
+    (DEFAULTED 365-day year).
+    Loaves/year = 500 * 365 = 182,500.
+
+  STEP 2 — Revenue (IAS 18/IFRS 15 — recognised as loaves are sold, cash retail)
+    Price = 250/loaf (STATED).
+    Revenue = 182,500 * 250 = 45,625,000 per year.
+
+  STEP 3 — Flour (variable COGS, matched to loaves sold)
+    Flour = 150/loaf (STATED).
+    Flour cost = 182,500 * 150 = 27,375,000 per year.
+    Flour margin = 45,625,000 - 27,375,000 = 18,250,000 (= 100/loaf * 182,500). ✓
+
+  STEP 4 — Fixed cash operating costs (period costs)
+    Labour = 2 bakers * 100,000/month * 12 = 2,400,000 per year (STATED).
+    Rent   = 800,000/month * 12 = 9,600,000 per year (STATED; expensed as an operating
+             cost, NOT capitalised as an IFRS 16 right-of-use asset — DEFAULTED
+             IFRS-for-SMEs / micro-entity treatment).
+    Gas    = 200,000/month * 12 = 2,400,000 per year (STATED).
+    Owner's own labour: he works daily but draws no STATED wage => 0 in the accounts
+    (DEFAULTED: only cash costs incurred are recognised). Economic memo only — see notes.
+
+  STEP 5 — EBITDA
+    Cash opex = 27,375,000 + 2,400,000 + 9,600,000 + 2,400,000 = 41,775,000.
+    EBITDA = 45,625,000 - 41,775,000 = 3,850,000 per year.
+
+  STEP 6 — Depreciation (IAS 16, straight-line DEFAULTED; nil residual DEFAULTED)
+    Dep = (6,000,000 - 0) / 10 = 600,000 per year.
+    Oven NBV roll-forward. Opening NBV at valuation date = cost less 1 year already
+    run = 6,000,000 - 600,000 = 5,400,000.
+      t=0: 5,400,000 - 600,000 = 4,800,000
+      t=1: 4,800,000 - 600,000 = 4,200,000
+      t=2: 4,200,000 - 600,000 = 3,600,000
+      t=3: 3,600,000 - 600,000 = 3,000,000
+      t=4: 3,000,000 - 600,000 = 2,400,000
+      t=5: 2,400,000 - 600,000 = 1,800,000
+      t=6: 1,800,000 - 600,000 = 1,200,000
+      t=7: 1,200,000 - 600,000 =   600,000
+      t=8:   600,000 - 600,000 =         0   (fully depreciated at end of horizon)
+    Sum depreciation = 9 * 600,000 = 5,400,000 = opening NBV. ✓
+
+  STEP 7 — EBIT (operating profit)
+    EBIT = EBITDA - Dep = 3,850,000 - 600,000 = 3,250,000 per year.
+    (EBITDA and EBIT are INFERRED-grade: built from STATED inputs plus named
+    DEFAULTED conventions only — no substantive unstated economic prior yet.)
+
+  STEP 8 — Tax and NOPAT (ASSUMED tax prior enters => result ASSUMED-grade)
+    Base tax rate = 25% (ASSUMED — WAEMU/CFA-zone corporate income tax prior).
+    Tax   = 3,250,000 * 0.25 = 812,500.
+    NOPAT = 3,250,000 - 812,500 = 2,437,500 per year.
+    Scenario at 30%: tax = 3,250,000 * 0.30 = 975,000; NOPAT_hi = 2,275,000.
+
+  STEP 9 — Reinvestment
+    ΔNWC = 0 each year. Bread is sold for cash daily (no receivables — DEFAULTED cash
+    retail). No inventory or supplier-credit terms were stated, so the NWC LEVEL is
+    taken ≈ 0; and because volumes/prices are flat the CHANGE is 0 regardless of the
+    level (INFERRED from flatness). Capex = 0 within the horizon: the oven was already
+    bought last year and its life covers all 9 years (INFERRED). A replacement
+    (~6,000,000) would fall at the end of the oven's life, beyond this horizon (memo).
+
+  STEP 10 — Unlevered FCFF
+    FCFF = NOPAT + D&A - ΔNWC - capex
+         = 2,437,500 + 600,000 - 0 - 0 = 3,037,500 per year (t = 0..8).
+    Cumulative FCFF over 9 years = 9 * 3,037,500 = 27,337,500.
+    Oven bought "comptant" (cash) => no debt, no interest: unlevered = actual here.
+    NOTE: forward FCFF exceeds NOPAT by the full 600,000/yr D&A add-back with no
+    matching capex, precisely because the 6,000,000 outflow was already incurred last
+    year (sunk, pre-horizon). A full-cycle view would carry either that past outflow
+    or a year-10 replacement.
+
+trace:
+  loaves_produced: [182500, 182500, 182500, 182500, 182500, 182500, 182500, 182500, 182500]
+  revenue:         [45625000, 45625000, 45625000, 45625000, 45625000, 45625000, 45625000, 45625000, 45625000]
+  flour_cost:      [27375000, 27375000, 27375000, 27375000, 27375000, 27375000, 27375000, 27375000, 27375000]
+  labor_cost:      [2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000]
+  rent_cost:       [9600000, 9600000, 9600000, 9600000, 9600000, 9600000, 9600000, 9600000, 9600000]
+  gas_cost:        [2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000, 2400000]
+  ebitda:          [3850000, 3850000, 3850000, 3850000, 3850000, 3850000, 3850000, 3850000, 3850000]
+  depreciation:    [600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000]
+  ebit:            [3250000, 3250000, 3250000, 3250000, 3250000, 3250000, 3250000, 3250000, 3250000]
+  tax:             [812500, 812500, 812500, 812500, 812500, 812500, 812500, 812500, 812500]
+  nopat:           [2437500, 2437500, 2437500, 2437500, 2437500, 2437500, 2437500, 2437500, 2437500]
+  dna_addback:     [600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000]
+  nwc:             [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  delta_nwc:       [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  capex:           [0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff:            [3037500, 3037500, 3037500, 3037500, 3037500, 3037500, 3037500, 3037500, 3037500]
+  oven_nbv_open:   [5400000, 4800000, 4200000, 3600000, 3000000, 2400000, 1800000, 1200000, 600000]
+  oven_nbv_close:  [4800000, 4200000, 3600000, 3000000, 2400000, 1800000, 1200000, 600000, 0]
+  tax_hi:          [975000, 975000, 975000, 975000, 975000, 975000, 975000, 975000, 975000]
+  nopat_hi_tax:    [2275000, 2275000, 2275000, 2275000, 2275000, 2275000, 2275000, 2275000, 2275000]
+  fcff_hi_tax:     [2875000, 2875000, 2875000, 2875000, 2875000, 2875000, 2875000, 2875000, 2875000]
+
+fcff: [3037500, 3037500, 3037500, 3037500, 3037500, 3037500, 3037500, 3037500, 3037500]
+
+checks:
+  - "grid.periods == oven_life - oven_elapsed"
+  - "grid.periods == horizon"
+  - "trace.loaves_produced[t] == loaves_per_day * operating_days"
+  - "trace.revenue[t] == trace.loaves_produced[t] * price_per_loaf"
+  - "trace.flour_cost[t] == trace.loaves_produced[t] * flour_cost_per_loaf"
+  - "trace.labor_cost[t] == bakers * baker_wage_month * months"
+  - "trace.rent_cost[t] == rent_month * months"
+  - "trace.gas_cost[t] == gas_month * months"
+  - "trace.ebitda[t] == trace.revenue[t] - trace.flour_cost[t] - trace.labor_cost[t] - trace.rent_cost[t] - trace.gas_cost[t]"
+  - "trace.depreciation[t] == (oven_cost - residual_value) / oven_life"
+  - "trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]"
+  - "trace.tax[t] == trace.ebit[t] * tax_rate"
+  - "trace.nopat[t] == trace.ebit[t] - trace.tax[t]"
+  - "trace.dna_addback[t] == trace.depreciation[t]"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1]"
+  - "trace.capex[t] == 0"
+  - "trace.fcff[t] == trace.nopat[t] + trace.dna_addback[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "fcff[t] == trace.fcff[t]"
+  - "trace.oven_nbv_close[t] == trace.oven_nbv_open[t] - trace.depreciation[t]"
+  - "trace.oven_nbv_open[t] == trace.oven_nbv_close[t-1] for t >= 1"
+  - "trace.oven_nbv_open[first] == oven_cost - (oven_cost - residual_value) / oven_life * oven_elapsed"
+  - "trace.oven_nbv_close[last] == residual_value"
+  - "sum(trace.depreciation) == trace.oven_nbv_open[first] - residual_value"
+  - "trace.ebit[t] >= 0"
+  - "trace.nopat[t] >= 0"
+  - "trace.nwc[t] >= 0"
+  - "trace.oven_nbv_close[t] >= 0"
+  - "trace.fcff[t] >= 0"
+  - "trace.revenue[t] == trace.revenue[first]"
+  - "trace.fcff[t] == trace.fcff[first]"
+  - "sum(trace.fcff) == trace.fcff[first] * grid.periods"
+  - "trace.tax_hi[t] == trace.ebit[t] * tax_rate_hi"
+  - "trace.nopat_hi_tax[t] == trace.ebit[t] - trace.tax_hi[t]"
+  - "trace.fcff_hi_tax[t] == trace.nopat_hi_tax[t] + trace.dna_addback[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "trace.fcff_hi_tax[t] <= trace.fcff[t]"
+
+notes:
+  - "Provenance grade of the result: everything down to EBIT (45,625,000 revenue, 41,775,000 cash opex, 3,850,000 EBITDA, 600,000 depreciation, 3,250,000 EBIT) is INFERRED — built purely from STATED inputs plus named DEFAULTED conventions (365-day year, 12 months, straight-line depreciation, nil residual, rent expensed not IFRS-16-capitalised). NOPAT and FCFF are ASSUMED-grade: the single substantive unstated prior is the tax rate."
+  - "Tax is the dominant lever and is ASSUMED, not knowable from the utterance. Base 25% -> FCFF 3,037,500/yr; the materialised 30% scenario (trace.fcff_hi_tax) gives 2,875,000/yr. A micro sole-proprietorship in the CFA zone would more likely fall under a presumptive / synthetic tax regime (impôt synthétique) or personal income-tax schedule rather than standard corporate income tax — this could move the effective rate substantially in either direction. ELICIT the country and applicable regime."
+  - "Currency: the founder says only 'francs'. Coded as XOF (West African CFA franc) but it could be XAF (Central African CFA franc); the two share parity to the euro but differ by country/tax regime. ELICIT the country to pin currency and tax."
+  - "Horizon choice: I model the 9 REMAINING years of oven life, forward from the valuation date, because the FCFF asked for is the cash the asset base generates going forward. The 6,000,000 purchase is a prior-year sunk outflow and is deliberately outside the horizon; consequently the D&A add-back appears with zero matching capex and forward FCFF (3,037,500) sits above NOPAT (2,437,500) by the full 600,000 depreciation. This is correct but flattering — a full oven-cycle view would include either the past 6,000,000 or a ~6,000,000 replacement at year 10. ELICIT whether a like-for-like replacement is intended."
+  - "Working capital: treated as nil-level and zero-change. Bread is cash retail (no A/R). No flour-inventory days or supplier-credit terms were stated, so the NWC level is indeterminate — but with flat volumes/prices the CHANGE is zero regardless, so ΔNWC = 0 does not depend on the level. If flour is bought on supplier credit, there would be a one-off favourable WC release on entry (not modelled). ELICIT inventory-holding and payable terms."
+  - "Owner's labour is not expensed: he works every day but draws no stated wage, so under accrual accounting only actual cash costs are recognised. Economically his time is a real opportunity cost; charging a market bakery-manager wage would reduce EBIT and NOPAT. Left as a memo because any figure would be ASSUMED. ELICIT any owner salary or regular drawings."
+  - "No growth or inflation is modelled (nominal lines held flat) — a DEFAULTED hold-flat convention given nothing was stated. CFA-zone inflation is real: over 9 years it would lift nominal revenue and all input costs. Direction of FCFF impact is qualitatively ambiguous — margin holds only if the loaf price is repriced in step with flour and gas; if flour outpaces price, the 100/loaf gross margin compresses. Not quantified here (no data)."
+  - "Maintenance: the oven lasts ten years 'si on l'entretient bien' — routine maintenance/servicing is implied but no amount was stated. If material and recurring it belongs in cash opex (lowering EBITDA/FCFF) or, if it extends life, in capex. Omitted as unquantified. ELICIT an annual maintenance figure."
+  - "The historical rental of the neighbour's oven is pre-horizon and no longer a cost; correctly excluded."
+  - "Unlevered = levered here: the oven was bought cash, so there is no debt and no interest expense; NOPAT/FCFF need no financing adjustment."

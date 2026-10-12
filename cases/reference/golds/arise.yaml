@@ -1,0 +1,302 @@
+id: arise-kenya-solar-fcff
+title: "Arise Kenya — 234 MW AC solar IPP: unlevered FCFF (NOPAT build) over a 20-year USD PPA"
+currency: USD
+grid: {periods: 21, freq: annual}
+
+utterance:
+  fr: ""
+  en: |
+    We are Arise Kenya — a solar platform with six grid-connected plants totaling 234 megawatts AC,
+    across the Rift Valley. We have a 20-year PPA with Kenya Power at 9.56 US cents per kilowatt-hour,
+    USD-denominated. The plants run at a 20% capacity factor — about 410,000 megawatt-hours per year.
+    Total construction capex is 510 million US dollars. Every five years we replace inverters and do a
+    major overhaul — that costs about 8% of the original capex each time. Annual operating cost is 1%
+    of capex — equipment O&M in USD, land and labor in shillings. Corporate tax is 30%. At year 20 the
+    PPA ends; we expect a salvage value of 10% of original capex.
+
+inputs:
+  num_plants:
+    value: 6
+    unit: plants
+    prov: STATED
+    source: "\"six grid-connected plants\""
+    date: 2026-07-24
+  total_capacity_mw_ac:
+    value: 234
+    unit: MW_AC
+    prov: STATED
+    source: "\"totaling 234 megawatts AC\""
+    date: 2026-07-24
+  ppa_term_years:
+    value: 20
+    unit: years
+    prov: STATED
+    source: "\"a 20-year PPA with Kenya Power\""
+    date: 2026-07-24
+  tariff_c_per_kwh:
+    value: 9.56
+    unit: US_cents/kWh
+    prov: STATED
+    source: "\"9.56 US cents per kilowatt-hour, USD-denominated\""
+    date: 2026-07-24
+  tariff_usd_per_mwh:
+    value: 95.60
+    unit: USD/MWh
+    prov: INFERRED
+    source: "tariff_c_per_kwh: 9.56 c/kWh x (1 USD/100 c) x (1000 kWh/MWh) = x10 = 95.60 USD/MWh"
+    date: 2026-07-24
+  capacity_factor:
+    value: 0.20
+    unit: fraction
+    prov: STATED
+    source: "\"run at a 20% capacity factor\""
+    date: 2026-07-24
+  energy_mwh:
+    value: 410000
+    unit: MWh/year
+    prov: STATED
+    source: "\"about 410,000 megawatt-hours per year\" (cross-check INFERRED: 234 MW x 8760 h x 0.20 = 409,968 MWh, ~410,000)"
+    date: 2026-07-24
+  capex_construction:
+    value: 510000000
+    unit: USD
+    prov: STATED
+    source: "\"Total construction capex is 510 million US dollars\""
+    date: 2026-07-24
+  overhaul_pct:
+    value: 0.08
+    unit: fraction_of_capex
+    prov: STATED
+    source: "\"about 8% of the original capex each time\""
+    date: 2026-07-24
+  overhaul_capex:
+    value: 40800000
+    unit: USD
+    prov: INFERRED
+    source: "overhaul_pct * capex_construction = 0.08 * 510,000,000"
+    date: 2026-07-24
+  overhaul_interval_years:
+    value: 5
+    unit: years
+    prov: STATED
+    source: "\"Every five years we replace inverters and do a major overhaul\""
+    date: 2026-07-24
+  num_overhauls:
+    value: 3
+    unit: events
+    prov: ASSUMED
+    source: "prior: no rational overhaul in the final PPA year. Original inverters (in construction capex) run yrs 1-5; replacements at end of yrs 5/10/15; a 4th event would fall at yr 20 when the PPA ends and the plant is salvaged, so it is omitted. ELICIT: is a year-20 overhaul actually skipped?"
+    date: 2026-07-24
+  overhaul_life_years:
+    value: 5
+    unit: years
+    prov: DEFAULTED
+    source: "IAS 16 component approach — a major inspection/overhaul is capitalised and depreciated over the period to the next overhaul (5 years)"
+    date: 2026-07-24
+  overhaul_dep_annual:
+    value: 8160000
+    unit: USD/year
+    prov: INFERRED
+    source: "overhaul_capex / overhaul_life_years = 40,800,000 / 5"
+    date: 2026-07-24
+  opex_pct:
+    value: 0.01
+    unit: fraction_of_capex
+    prov: STATED
+    source: "\"Annual operating cost is 1% of capex\""
+    date: 2026-07-24
+  opex_annual:
+    value: 5100000
+    unit: USD/year
+    prov: INFERRED
+    source: "opex_pct * capex_construction = 0.01 * 510,000,000 (KES land/labour leg noted as FX risk; total quantified in USD)"
+    date: 2026-07-24
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: STATED
+    source: "\"Corporate tax is 30%\""
+    date: 2026-07-24
+  salvage_pct:
+    value: 0.10
+    unit: fraction
+    prov: STATED
+    source: "\"a salvage value of 10% of original capex\""
+    date: 2026-07-24
+  salvage_value:
+    value: 51000000
+    unit: USD
+    prov: INFERRED
+    source: "salvage_pct * capex_construction = 0.10 * 510,000,000"
+    date: 2026-07-24
+  depreciation_years:
+    value: 20
+    unit: years
+    prov: DEFAULTED
+    source: "useful life set equal to PPA term (20y); straight-line — economic life is bounded by the 20-year offtake"
+    date: 2026-07-24
+  depreciable_base:
+    value: 459000000
+    unit: USD
+    prov: INFERRED
+    source: "IAS 16 depreciable amount = cost - residual = capex_construction - salvage_value = 510,000,000 - 51,000,000"
+    date: 2026-07-24
+  construction_dep_annual:
+    value: 22950000
+    unit: USD/year
+    prov: INFERRED
+    source: "depreciable_base / depreciation_years = 459,000,000 / 20"
+    date: 2026-07-24
+  dso_days:
+    value: 30
+    unit: days
+    prov: ASSUMED
+    source: "offtaker payment term not stated; standard 30-day settlement prior applied to build the receivable. ELICIT: what are Kenya Power's actual PPA payment terms / DSO?"
+    date: 2026-07-24
+  days_per_year:
+    value: 365
+    unit: days
+    prov: DEFAULTED
+    source: "365-day year convention for receivables"
+    date: 2026-07-24
+  ops_start:
+    value: 1
+    unit: period_index
+    prov: DEFAULTED
+    source: "t=0 is the construction year; operations begin at t=1"
+    date: 2026-07-24
+  terminal_period:
+    value: 20
+    unit: period_index
+    prov: INFERRED
+    source: "ppa_term_years = 20 => last operating period is t=20"
+    date: 2026-07-24
+
+passage: |
+  HORIZON & FRAME. Arise Kenya is six operating solar PV plants (234 MW AC) selling all output to
+  Kenya Power under a 20-year USD-denominated PPA. I model the asset unlevered (project view) over 21
+  annual periods: t=0 is the construction year (capital outlay, no production) and t=1..20 are the
+  operating years under the PPA. FCFF is built as NOPAT + D&A - dNWC - capex, plus after-tax disposal
+  proceeds at close. Everything is carried in USD: tariff, capex and salvage are USD, and although the
+  operator pays land and labour O&M in shillings, that O&M is quantified as 1% of USD capex, so the KES
+  leg is an FX-risk note rather than a separate cash line.
+
+  REVENUE (t=1..20). Output is the operator's stated ~410,000 MWh/yr, which reconciles with
+  234 MW x 8,760 h x 20% = 409,968 MWh (rounding). The tariff 9.56 US cents/kWh = 9.56 x 10 = $95.60/MWh.
+  Revenue = 410,000 MWh x $95.60/MWh = $39,196,000/yr, flat in nominal USD (USD-fixed tariff, no stated
+  escalation; output held flat, no degradation modelled). t=0 revenue = 0.
+
+  OPERATING COST (t=1..20). O&M = 1% x $510m = $5,100,000/yr, flat. t=0 opex = 0.
+
+  EBITDA = revenue - opex = 39,196,000 - 5,100,000 = $34,096,000/yr (t=1..20); 0 at t=0.
+
+  CAPITAL & DEPRECIATION. Construction capex $510m is placed in service at t=0 and depreciated
+  straight-line over the 20-year PPA life on its depreciable amount = cost - residual = 510 - 51 = $459m,
+  i.e. 459/20 = $22,950,000/yr in t=1..20, which leaves book value of exactly $51m (=salvage) at t=20.
+  Every five years the inverters are replaced and a major overhaul performed at 8% x 510 = $40.8m; under
+  the IAS 16 component approach each overhaul is capitalised and depreciated over the five years to the
+  next overhaul (40.8/5 = $8.16m/yr). The original inverters (inside construction capex) serve years 1-5;
+  replacements are installed at the end of years 5, 10 and 15 — three overhauls — depreciated over t=6-10,
+  t=11-15 and t=16-20 respectively. No overhaul is undertaken at year 20 because the PPA then ends and the
+  plant is disposed. Total depreciation is therefore $22.95m/yr in t=1-5 and 22.95 + 8.16 = $31.11m/yr in
+  t=6-20. The fixed-asset roll-forward NBV[t] = NBV[t-1] + capex[t] - dep[t] - disposal[t] runs
+  510.00 -> 487.05 -> 464.10 -> 441.15 -> 418.20 -> (overhaul) 436.05 -> ... -> 82.11m at t=19, then at
+  t=20 the final 31.11m of depreciation brings it to 51.0m and disposal takes it to 0.
+
+  EBIT, TAX, NOPAT. EBIT = EBITDA - D&A. t=1-5: 34.096 - 22.95 = $11.146m; t=6-20: 34.096 - 31.11 =
+  $2.986m (positive throughout, so tax is always due and there are no loss carry-forwards). Tax at 30% =
+  $3,343,800 (t=1-5) and $895,800 (t=6-20). NOPAT = EBIT x 0.70 = $7,802,200 (t=1-5) and $2,090,200 (t=6-20).
+
+  WORKING CAPITAL. Electricity is not storable, so there is no inventory; the only material working-capital
+  item is the trade receivable from the single offtaker, Kenya Power. Payment terms were not stated, so I
+  apply a standard 30-day settlement: receivables = revenue x 30/365 = 39,196,000 x 30/365 = $3,221,589.04,
+  established in t=1 (dNWC = +3,221,589.04, a cash outflow) and held flat while revenue is flat, so dNWC = 0
+  in t=2..19. At t=20 the PPA ends and the balance is collected out, releasing working capital
+  (NWC -> 0, dNWC = -3,221,589.04). Over the life dNWC nets to zero. Payables on the small O&M line are
+  ignored as immaterial.
+
+  SALVAGE / DISPOSAL (t=20). Expected residual = 10% x 510 = $51,000,000. Because the plant's book value at
+  t=20 equals exactly this $51m, disposal yields zero accounting gain and hence no salvage tax; the $51m is
+  a clean investing inflow.
+
+  FCFF BUILD (per period), FCFF = NOPAT + D&A - dNWC - capex + salvage = CFO (NOPAT + D&A - dNWC) + CFI
+  (salvage - capex):
+    t=0 (construction): 0 + 0 - 0 - 510,000,000 + 0 = -$510,000,000.
+    t=1 (first year, WC build): 7,802,200 + 22,950,000 - 3,221,589.04 - 0 = $27,530,610.96.
+    t=2,3,4 (steady, pre-overhaul): 7,802,200 + 22,950,000 = $30,752,200.
+    t=5 (overhaul): 7,802,200 + 22,950,000 - 40,800,000 = -$10,047,800.
+    t=6-9, 11-14, 16-19 (steady, post-overhaul dep): 2,090,200 + 31,110,000 = $33,200,200.
+    t=10 and t=15 (overhaul years): 33,200,200 - 40,800,000 = -$7,599,800.
+    t=20 (terminal: operations + WC release + salvage): 2,090,200 + 31,110,000 + 3,221,589.04 + 51,000,000
+      = $87,421,789.04.
+  Undiscounted, the 21-period FCFF sums to +$70,364,000, which by construction equals cumulative NOPAT:
+  total depreciation $581.4m + salvage $51m = total capex $632.4m, so the D&A/capex/salvage terms cancel —
+  an internal consistency check on the build.
+
+trace:
+  revenue:      [0, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000, 39196000]
+  opex:         [0, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000, 5100000]
+  ebitda:       [0, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000, 34096000]
+  depreciation: [0, 22950000, 22950000, 22950000, 22950000, 22950000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000, 31110000]
+  ebit:         [0, 11146000, 11146000, 11146000, 11146000, 11146000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000, 2986000]
+  tax:          [0, 3343800, 3343800, 3343800, 3343800, 3343800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800, 895800]
+  nopat:        [0, 7802200, 7802200, 7802200, 7802200, 7802200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200, 2090200]
+  capex:        [510000000, 0, 0, 0, 0, 40800000, 0, 0, 0, 0, 40800000, 0, 0, 0, 0, 40800000, 0, 0, 0, 0, 0]
+  disposal_bv:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51000000]
+  nbv:          [510000000, 487050000, 464100000, 441150000, 418200000, 436050000, 404940000, 373830000, 342720000, 311610000, 321300000, 290190000, 259080000, 227970000, 196860000, 206550000, 175440000, 144330000, 113220000, 82110000, 0]
+  salvage:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51000000]
+  receivables:  [0, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 3221589.0410958904, 0]
+  delta_nwc:    [0, 3221589.0410958904, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3221589.0410958904]
+  cfo:          [0, 27530610.958904110, 30752200, 30752200, 30752200, 30752200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 33200200, 36421789.041095890]
+  cfi:          [-510000000, 0, 0, 0, 0, -40800000, 0, 0, 0, 0, -40800000, 0, 0, 0, 0, -40800000, 0, 0, 0, 0, 51000000]
+  fcff:         [-510000000, 27530610.958904110, 30752200, 30752200, 30752200, -10047800, 33200200, 33200200, 33200200, 33200200, -7599800, 33200200, 33200200, 33200200, 33200200, -7599800, 33200200, 33200200, 33200200, 33200200, 87421789.041095890]
+
+fcff: [-510000000, 27530610.958904110, 30752200, 30752200, 30752200, -10047800, 33200200, 33200200, 33200200, 33200200, -7599800, 33200200, 33200200, 33200200, 33200200, -7599800, 33200200, 33200200, 33200200, 33200200, 87421789.041095890]
+
+checks:
+  # conservation
+  - trace.nbv[t] == trace.nbv[t-1] + trace.capex[t] - trace.depreciation[t] - trace.disposal_bv[t]
+  - cumsum(trace.delta_nwc) == trace.receivables
+  - trace.delta_nwc[t] == trace.receivables[t] - trace.receivables[t-1]
+  - trace.nbv[last] == 0
+  - sum(trace.depreciation) == sum(trace.capex) - sum(trace.salvage)
+  # definition
+  - trace.ebitda[t] == trace.revenue[t] - trace.opex[t]
+  - trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]
+  - trace.nopat[t] == trace.ebit[t] - trace.tax[t]
+  - trace.cfo[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t]
+  - trace.cfi[t] == trace.salvage[t] - trace.capex[t]
+  - trace.fcff[t] == trace.cfo[t] + trace.cfi[t]
+  - trace.fcff[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t] + trace.salvage[t]
+  # driver-bridge
+  - trace.revenue[t] == energy_mwh * tariff_usd_per_mwh for t >= ops_start
+  - trace.revenue[t] == 0 for t < ops_start
+  - trace.opex[t] == opex_annual for t >= ops_start
+  - trace.opex[t] == 0 for t < ops_start
+  - trace.tax[t] == tax_rate * trace.ebit[t]
+  - trace.receivables[t] == trace.revenue[t] * dso_days / 365 for t < terminal_period
+  - sum(trace.capex) == capex_construction + 3 * overhaul_capex
+  - sum(trace.salvage) == salvage_value
+  - trace.salvage[last] == salvage_value
+  - trace.fcff[first] == -capex_construction
+  # non-negativity
+  - trace.nbv[t] >= 0
+  - trace.receivables[t] >= 0
+  - trace.ebitda[t] >= 0
+  - trace.ebit[t] >= 0
+  - trace.revenue[t] >= 0
+
+notes:
+  - "Frame: unlevered (asset-side) FCFF including construction capex at t=0, so the stream is directly discountable to an enterprise/NPV. Financing (any debt on the plants) is deliberately excluded — this is FCFF, not FCFE."
+  - "Revenue held flat in nominal USD: the PPA tariff is USD-fixed with no stated escalation, and output is held at the stated ~410,000 MWh with no degradation. Real PV output degrades ~0.3-0.7%/yr; ignoring it makes late-year revenue (and FCFF) modestly optimistic. ELICIT: contractual escalation and a degradation curve."
+  - "Capacity-factor cross-check (234 x 8760 x 0.20 = 409,968 MWh) confirms the operator's ~410,000; I used the stated 410,000 as the driver."
+  - "Overhauls modelled as IAS 16 major-component capex ($40.8m) depreciated over the 5 years to the next overhaul, installed end of yrs 5/10/15 (original inverters, inside construction capex, serve yrs 1-5). Judgment call: the whole 8% is capitalised — if part of the 'major overhaul' is really routine maintenance it should be opex; ELICIT the capex/opex split. Second judgment call: NO overhaul at year 20 (PPA ends, plant disposed); a 4-overhaul reading (yrs 5/10/15/20) would add $40.8m capex at t=20 with no depreciable life."
+  - "Depreciation: straight-line over the 20-yr PPA life on cost less residual (depreciable base $459m), leaving book value = salvage $51m at t=20. Book depreciation is assumed to equal tax depreciation (no deferred tax). Kenya offers investment deductions / accelerated allowances for power assets that would front-load the tax shield and change the tax profile; not modelled. ELICIT tax-depreciation basis and any investment deduction / capital allowance."
+  - "Salvage treated as disposal proceeds equal to book value -> zero gain -> no salvage tax. If tax written-down value differs from $51m, a balancing charge/allowance would arise at disposal; not modelled."
+  - "EBIT is positive in every operating year (min $2.986m in yrs 6-20), so cash tax is always payable and there are no loss carry-forwards to track."
+  - "Working capital: only a trade receivable from the single offtaker (Kenya Power) at an ASSUMED 30-day DSO; no inventory (electricity is not storable); O&M payables ignored as immaterial. Full WC release booked in the terminal year. dNWC nets to zero over the life. ELICIT actual PPA settlement terms."
+  - "FX: the KES land/labour portion of O&M and the KES cost base sit against a USD revenue and USD tariff — a real currency mismatch/risk, but the operator quantifies total O&M as 1% of USD capex, so it enters as a single USD line; the FX exposure is flagged, not separately cashflowed."
+  - "Counterparty/credit: 100% offtake concentration on Kenya Power (sovereign-adjacent utility). This does not change the cash mechanics here but is first-order for the discount rate / risk premium applied to this FCFF stream."
+  - "Undiscounted FCFF sums to +$70,364,000 = cumulative NOPAT (because total depreciation $581.4m + salvage $51m = total capex $632.4m). No WACC/discounting was requested, so only the FCFF stream is delivered; discounting would require a project cost of capital."
+  - "Deferred/ELICIT list: PPA escalation & degradation; O&M escalation and KES/USD split; overhaul capex-vs-opex split and exact timing; offtaker DSO; tax depreciation basis, investment allowances, VAT/withholding; whether construction capex is a single-year outlay or a multi-year draw (modelled as single t=0 outlay)."
+  - "PROVENANCE NOTE 2026-07-26 (canonicalization, metadata only). Four arise golds were generated blind and independently and each emitted this same id. This gold — the base overhaul-component-capex variant — retains `arise-kenya-solar-fcff`; the three tax-depreciation siblings were disambiguated to -ida / -5050 / -wt. No number changed in any of the four."

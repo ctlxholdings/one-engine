@@ -298,4 +298,5 @@ def scoreboard(receipts: Mapping[str, List[Receipt]], families: Iterable[Family]
 def families() -> List[Family]:
     """Every family the harness knows. Imported lazily so the harness has no engine imports itself."""
     from one_engine.oracles.actus import ActusFamily
-    return [ActusFamily()]
+    from one_engine.oracles.golds import GoldFamily
+    return [ActusFamily(), GoldFamily()]

@@ -1,0 +1,798 @@
+id: ml-bamako-sorghum-storage-trade-fcff-v1
+title: "Bamako sorghum storage trade (achat récolte novembre / vente soudure juin-août) — unlevered FCFF over one full crop cycle"
+currency: XOF
+grid:
+  periods: 12
+  freq: monthly
+
+utterance:
+  fr: |-
+    Je suis commerçant, je fais le sorgho à Bamako. À la récolte, en novembre, j'achète deux cents sacs
+    à quatorze mille cinq cents le sac. Le transport depuis les zones de production, c'est soixante-quinze
+    francs le sac. Je les stocke dans mon propre magasin à Bamako — trente mille par mois de loyer. Mais
+    le grain ne sort pas comme il rentre. Les charançons s'y mettent, les rats prennent leur part, et les
+    sacs se dessèchent et perdent du poids pendant la saison chaude. Chaque année c'est la même histoire :
+    sur cent sacs que je mets au magasin, j'en récupère à peu près quatre-vingt-dix que je peux réellement
+    vendre. C'est ce que ça coûte, stocker le sorgho. Je fais aussi la fumigation — les comprimés de
+    phostoxin, c'est quinze mille francs pour tout le magasin, une fois quand je remplis en novembre et
+    une deuxième fois vers mars. Ce qui sort, je le vends pendant la soudure, de juin à août, à vingt mille
+    le sac, et je vide le magasin sur ces trois mois. Je travaille seul.
+  en: |-
+    I'm a trader, I deal in sorghum in Bamako. At harvest, in November, I buy two hundred bags at fourteen
+    thousand five hundred a bag. Transport from the production zones is seventy-five francs a bag. I store
+    them in my own warehouse in Bamako — thirty thousand a month rent. But the grain doesn't come out the
+    way it goes in. The weevils get into it, the rats take their share, and the bags dry down and lose
+    weight sitting there through the hot season. Every year it's the same story: out of a hundred bags I
+    put in the store, I get about ninety back out that I can actually sell. That's just what storing
+    sorghum costs you. I also fumigate — the phostoxin tablets are fifteen thousand francs for the whole
+    store, once when I fill it in November and once again around March. What comes out I sell during the
+    lean season, June to August, at twenty thousand a bag, and I clear the store over those three months.
+    I work alone.
+
+inputs:
+
+  bags_purchased_at_harvest:
+    value: 200
+    unit: bags
+    prov: STATED
+    source: "utterance span: 'At harvest, in November, I buy two hundred bags'"
+    date: "2026-07-25"
+
+  purchase_price_per_bag:
+    value: 14500
+    unit: XOF per bag
+    prov: STATED
+    source: "utterance span: 'at fourteen thousand five hundred a bag'"
+    date: "2026-07-25"
+
+  transport_cost_per_bag:
+    value: 75
+    unit: XOF per bag
+    prov: STATED
+    source: "utterance span: 'Transport from the production zones is seventy-five francs a bag'"
+    date: "2026-07-25"
+
+  warehouse_rent_per_month:
+    value: 30000
+    unit: XOF per month
+    prov: STATED
+    source: "utterance span: 'thirty thousand a month rent'"
+    date: "2026-07-25"
+
+  premises_are_leased_not_owned:
+    value: 1
+    unit: boolean flag
+    prov: ASSUMED
+    source: "PRIOR. The founder's words are in tension: 'mon propre magasin' / 'my own warehouse' AND 'trente mille par mois de loyer' / 'thirty thousand a month rent'. Reconciling them requires an idiomatic prior about how a Bamako trader uses 'mon propre' -- read here as exclusive use of the store rather than title. That is an interpretive act, not a deduction. ELICIT: do you own the magasin or rent it, and from whom? RE-TAGGED 2026-07-26 (physical audit): was INFERRED, whose own source string convicted it -- \"'My own' IS READ AS exclusive use\" is a reading, and a reading is ASSUMED. This is the highest-stakes tag in the file: if he owns the premises the 30,000 is an imputed cost rather than a cash outflow, and cycle FCFF rises materially."
+    date: "2026-07-25"
+
+  outturn_ratio:
+    value: 0.90
+    unit: ratio (sellable bags out per bag in)
+    prov: STATED
+    source: "utterance span: 'out of a hundred bags I put in the store, I get about ninety back out that I can actually sell'"
+    date: "2026-07-25"
+
+  fumigation_cost_per_treatment:
+    value: 15000
+    unit: XOF per treatment
+    prov: STATED
+    source: "utterance span: 'the phostoxin tablets are fifteen thousand francs for the whole store'"
+    date: "2026-07-25"
+
+  fumigation_treatments_per_cycle:
+    value: 2
+    unit: treatments per crop cycle
+    prov: STATED
+    source: "utterance span: 'once when I fill it in November and once again around March'"
+    date: "2026-07-25"
+
+  sale_price_per_bag:
+    value: 20000
+    unit: XOF per bag
+    prov: STATED
+    source: "utterance span: 'I sell during the lean season, June to August, at twenty thousand a bag'"
+    date: "2026-07-25"
+
+  selling_months:
+    value: 3
+    unit: months
+    prov: STATED
+    source: "utterance span: 'June to August ... I clear the store over those three months'"
+    date: "2026-07-25"
+
+  works_alone_paid_headcount:
+    value: 0
+    unit: employees
+    prov: INFERRED
+    source: "From the utterance span 'Je travaille seul' / 'I work alone': zero PAID headcount follows deductively, with no added premise. RE-TAGGED 2026-07-26 (physical audit): was STATED, but the founder states a fact about working alone, not the number 0; the number is the entailment of it."
+    date: "2026-07-25"
+
+  bags_sellable:
+    value: 180
+    unit: bags
+    prov: INFERRED
+    source: "bags_purchased_at_harvest * outturn_ratio = 200 * 0.90 = 180. No new information: the founder gives the ratio per hundred bags and the number of bags put in."
+    date: "2026-07-25"
+
+  bags_lost_in_storage:
+    value: 20
+    unit: bags
+    prov: INFERRED
+    source: "bags_purchased_at_harvest - bags_sellable = 200 - 180 = 20"
+    date: "2026-07-25"
+
+  storage_months:
+    value: 10
+    unit: months
+    prov: DEFAULTED
+    source: "Rule: whole-calendar-month counting between the stated fill and clearance dates. Grain is in store November through August = 10 months. RE-TAGGED 2026-07-26 (physical audit): was INFERRED, but the count is not entailed by the two stated dates -- it silently adds two conventions, that November counts as a full storage month (the founder says only 'at harvest, in November', not the fill date) and that August does too (the store is being emptied through it). Load-bearing: this is the denominator of bags_shrunk_per_month."
+    date: "2026-07-25"
+
+  bags_shrunk_per_month:
+    value: 2
+    unit: bags per month
+    prov: DEFAULTED
+    source: "Rule: straight-line accrual of a loss over the period that generates it, absent a stated pattern. bags_lost_in_storage / storage_months = 20 / 10 = 2. The founder states a total outturn ratio, not a monthly rate; the allocation is the convention, the total is inferred."
+    date: "2026-07-25"
+
+  bags_sold_per_selling_month:
+    value: 60
+    unit: bags per month
+    prov: DEFAULTED
+    source: "Rule: uniform allocation over a stated clearance window absent a stated within-season pattern. bags_sellable / selling_months = 180 / 3 = 60. ELICIT: do sales skew to July-August when lean-season prices peak?"
+    date: "2026-07-25"
+
+  unit_inventory_cost_per_bag:
+    value: 14575
+    unit: XOF per bag
+    prov: DEFAULTED
+    source: "Rule: IAS 2.11 — cost of purchase comprises the purchase price plus transport, handling and other costs directly attributable to acquisition. purchase_price_per_bag + transport_cost_per_bag = 14500 + 75 = 14575."
+    date: "2026-07-25"
+
+  storage_costs_capitalised_into_inventory:
+    value: 0
+    unit: boolean flag
+    prov: DEFAULTED
+    source: "Rule: IAS 2.16(b) — storage costs are excluded from the cost of inventories unless necessary in the production process before a further production stage. This is a pure trading operation with no further processing stage, so warehouse rent and fumigation are period costs expensed as incurred."
+    date: "2026-07-25"
+
+  rent_months_per_cycle:
+    value: 12
+    unit: months per cycle
+    prov: ASSUMED
+    source: "PRIOR: a trader who describes the store as 'my own warehouse' and repeats the cycle annually ('every year it's the same story') holds a continuous tenancy rather than a 10-month seasonal let. ELICIT: do you pay the 30,000 in September and October when the store is empty, or only for the months you occupy it?"
+    date: "2026-07-25"
+
+  tax_rate:
+    value: 0.30
+    unit: ratio
+    prov: ASSUMED
+    source: "PRIOR: Mali standard corporate income tax rate (impôt sur les sociétés), 30%, applied as a notional unlevered tax on EBIT. ELICIT: are you registered, and are you assessed under the impôt synthétique lump-sum regime for micro-enterprises rather than on profit? At this turnover the synthetic regime is the likely one. A zero-tax variant is materialised as trace.fcff_no_tax."
+    date: "2026-07-25"
+
+  tax_symmetry_on_losses:
+    value: 1
+    unit: boolean flag
+    prov: DEFAULTED
+    source: "Rule: standard unlevered FCFF construction applies NOPAT = EBIT * (1 - t) symmetrically in every period, negative EBIT generating a notional credit, within a single fiscal cycle that closes in profit."
+    date: "2026-07-25"
+
+  capex_per_period:
+    value: 0
+    unit: XOF per month
+    prov: ASSUMED
+    source: "PRIOR: no durable asset is named anywhere in the utterance. Transport is procured on a per-bag basis (a service, not a vehicle), premises are rented, fumigation is a consumable, and there is no paid headcount or equipment. ELICIT: do you own a cart, a scale, pallets, tarpaulins or an insecticide sprayer that you replace periodically?"
+    date: "2026-07-25"
+
+  depreciation_per_period:
+    value: 0
+    unit: XOF per month
+    prov: INFERRED
+    source: "From capex_per_period = 0 and no opening fixed asset: with no depreciable asset in service there is no depreciation charge."
+    date: "2026-07-25"
+
+  receivable_days:
+    value: 0
+    unit: days
+    prov: ASSUMED
+    source: "PRIOR: lean-season grain sales out of a Bamako store are settled in cash on collection. ELICIT: do you give credit to any buyers, and how long do they take to pay?"
+    date: "2026-07-25"
+
+  payable_days:
+    value: 0
+    unit: days
+    prov: ASSUMED
+    source: "PRIOR: harvest-time purchases from producers and collectors in the production zones are paid on the spot; transport and rent are paid as incurred. ELICIT: do you buy any of the 200 bags on credit, or pay the warehouse rent in arrears?"
+    date: "2026-07-25"
+
+  owner_wage_per_month:
+    value: 0
+    unit: XOF per month
+    prov: DEFAULTED
+    source: "Rule: a sole proprietor's own labour is not an expense of the entity; the return to it is contained in profit. Consistent with the stated 'I work alone' (no payroll). See notes for the interpretive consequence."
+    date: "2026-07-25"
+
+  first_selling_period_index:
+    value: 7
+    unit: period index (0-based)
+    prov: INFERRED
+    source: "Grid starts at November = index 0. December 1, January 2, February 3, March 4, April 5, May 6, June 7. Selling starts in June."
+    date: "2026-07-25"
+
+  store_cleared_period_index:
+    value: 9
+    unit: period index (0-based)
+    prov: INFERRED
+    source: "August = index 9; 'I clear the store over those three months' entails zero stock at the close of August and thereafter."
+    date: "2026-07-25"
+
+  first_empty_store_period_index:
+    value: 10
+    unit: period index (0-based)
+    prov: INFERRED
+    source: "September = index 10, the first month with no grain in store, hence the first month with no storage shrinkage."
+    date: "2026-07-25"
+
+  fumigation_1_period_index:
+    value: 0
+    unit: period index (0-based)
+    prov: INFERRED
+    source: "'once when I fill it in November' and November = index 0."
+    date: "2026-07-25"
+
+  fumigation_2_period_index:
+    value: 4
+    unit: period index (0-based)
+    prov: INFERRED
+    source: "'once again around March' and March = index 4 counting from November = 0."
+    date: "2026-07-25"
+
+passage: |
+  ===================================================================================
+  0. WHAT KIND OF BUSINESS THIS IS, AND WHAT THAT IMPLIES FOR THE ASSET SIDE
+  ===================================================================================
+  This is not a manufacturer and not a service firm. It is a seasonal carry trade in a
+  storable staple: the founder buys the physical commodity at the harvest trough, holds
+  it through the dry season, and liquidates into the lean-season ("soudure") price peak.
+  The natural quantities are HIS quantities: the sac (bag) of sorghum, the campagne
+  (crop cycle) running from the November harvest to the August clearance, and the
+  outturn ratio (bags out that are sellable, per bag in). I keep those and do not force
+  the model onto a tonnage or a calendar year.
+
+  The consequence for the asset side, and it is the single most important structural
+  finding: NOTHING IN THE UTTERANCE IS A DURABLE ASSET. Transport is bought per bag, so
+  there is no truck. The warehouse carries a monthly rent, so there is no building on
+  balance sheet. Phostoxin is a consumable. He works alone, so there is no payroll and
+  no tooling. Therefore capex = 0 and D&A = 0 in every period, and the unlevered build
+
+      FCFF = NOPAT + D&A - dNWC - capex
+
+  collapses to
+
+      FCFF = NOPAT - dNWC.
+
+  The entire asset side of this business IS its working capital. Modelling it properly
+  means modelling the bag stock and its carrying value month by month; there is nothing
+  else on the asset side to model.
+
+  ===================================================================================
+  1. THE GRID
+  ===================================================================================
+  The business is a single annual round trip. Its whole economics is the carry: money
+  goes out in one month and comes back seven to nine months later. An annual grid would
+  destroy exactly the information that matters, so the grid is MONTHLY, and the horizon
+  is one complete crop cycle:
+
+      t = 0  November (purchase, fill, first fumigation)
+      t = 1  December
+      t = 2  January
+      t = 3  February
+      t = 4  March (second fumigation)
+      t = 5  April
+      t = 6  May
+      t = 7  June   (selling month 1)
+      t = 8  July   (selling month 2)
+      t = 9  August (selling month 3, store cleared)
+      t = 10 September (store empty)
+      t = 11 October (store empty; cycle closes)
+
+  12 periods. The founder says "every year it's the same story", so this cycle is the
+  steady state and subsequent cycles replicate it period for period. Choosing a horizon
+  that is exactly one closed cycle has an analytic payoff: inventory opens at zero and
+  closes at zero, so cumulative dNWC over the horizon must be exactly zero and cumulative
+  FCFF must equal cumulative NOPAT. That is a conservation identity the model must satisfy,
+  and it is asserted in checks.
+
+  ===================================================================================
+  2. THE PHYSICAL BAG FLOW (the operations layer)
+  ===================================================================================
+  Bags in:  200 in November.       (STATED)
+  Bags out that can be sold: 200 x 0.90 = 180.   (INFERRED from the outturn ratio)
+  Bags lost:                200 - 180 = 20.      (INFERRED)
+
+  The 20 lost bags are the physical consequence of three distinct mechanisms the founder
+  names — weevil (charancon) infestation, rodent predation, and moisture loss as the bags
+  dry down through the hot season. He does not separate them, and he does not need to:
+  he gives the aggregate outturn, which is exactly the operating parameter a storage
+  trader carries in his head. I keep it aggregated.
+
+  TIMING OF THE LOSS. This is a real judgment call and I flag it. The founder states a
+  ratio (a stock-to-stock outturn), not a rate. Two defensible conventions exist: recognise
+  the loss progressively while the grain sits, or recognise it at outturn when bags are
+  weighed out. The physical mechanisms are all continuous-in-time (insects breed, rats
+  feed, moisture leaves), so I accrue the loss straight-line over the ten months the grain
+  is actually in store:
+
+      bags_shrunk_per_month = 20 bags / 10 storage months = 2 bags per month, Nov..Aug.
+
+  Sales: 180 sellable bags cleared over the three stated selling months, uniformly:
+
+      bags_sold_per_selling_month = 180 / 3 = 60 bags per month, Jun / Jul / Aug.
+
+  PHYSICAL STOCK ROLL-FORWARD, stock[t] = stock[t-1] + purchased[t] - shrunk[t] - sold[t]:
+
+      t=0  Nov: 0   + 200 - 2 - 0   = 198
+      t=1  Dec: 198 + 0   - 2 - 0   = 196
+      t=2  Jan: 196 - 2             = 194
+      t=3  Feb: 194 - 2             = 192
+      t=4  Mar: 192 - 2             = 190
+      t=5  Apr: 190 - 2             = 188
+      t=6  May: 188 - 2             = 186
+      t=7  Jun: 186 - 2 - 60        = 124
+      t=8  Jul: 124 - 2 - 60        = 62
+      t=9  Aug: 62  - 2 - 60        = 0
+      t=10 Sep: 0                   = 0
+      t=11 Oct: 0                   = 0
+
+  The store empties to exactly zero at the end of August, which is what "I clear the store
+  over those three months" requires. Total shrunk 10 x 2 = 20; total sold 3 x 60 = 180;
+  20 + 180 = 200 = bags in. Physical conservation holds.
+
+  ===================================================================================
+  3. UNIT COST OF INVENTORY
+  ===================================================================================
+  Under IAS 2.11 the cost of purchase comprises the purchase price plus transport and
+  handling directly attributable to acquisition:
+
+      unit cost = 14,500 (price) + 75 (transport to Bamako) = 14,575 XOF per physical bag.
+
+  Total cost of the November intake:
+      200 x 14,575 = 2,915,000 XOF
+      (cross-check: 200 x 14,500 = 2,900,000 goods, plus 200 x 75 = 15,000 freight,
+       2,900,000 + 15,000 = 2,915,000).
+
+  NOT capitalised: warehouse rent and fumigation. IAS 2.16(b) excludes storage costs from
+  the cost of inventories unless they are necessary in a production process before a
+  further production stage. This is pure trading with no processing stage, so rent and
+  phostoxin are period costs, expensed as incurred.
+
+  FRICTION, STATED PLAINLY. The trader does not think this way. In his head the cost of a
+  bag out of the store includes the rent and the tablets and the bags the rats ate — that
+  is precisely what he means by "that's just what storing sorghum costs you". The IFRS
+  presentation splits that single economic idea across three lines (COGS, shrinkage loss,
+  storage opex). Section 11 below reconciles the two views. Over the closed cycle they
+  give the identical profit; they differ only in how the monthly total is split between
+  carrying value and expense.
+
+  SHRINKAGE MEASUREMENT. The 20 lost bags are written off at their carrying cost,
+  14,575 each; the cost of the lost bags is NOT reallocated onto the survivors. CORRECTED
+  2026-07-26 (physical audit): this was justified by the claim that 'IAS 2 does not permit
+  stepping up the carrying amount of remaining inventory for losses'. IAS 2 contains no such
+  prohibition. IAS 2.16(a) excludes only ABNORMAL waste from the cost of inventories; normal,
+  expected, unavoidable waste is ordinarily absorbed into the cost of the good units under
+  IAS 2.10. And this loss is normal on the founder's own evidence -- 'chaque annee c'est la meme
+  histoire ... c'est ce que ca coute, stocker le sorgho'. So absorption at 2,915,000/180 =
+  16,194.44 per sellable bag, which section 11 computes and files under 'the trader's frame', is
+  a defensible IFRS treatment and arguably the better one. What is retained here is a POLICY
+  CHOICE, disclosed as such; what is withdrawn is the false claim that the standard forbids the
+  alternative. No trace number changes: the two bases give the same cycle total and differ only
+  in the monthly split, and that difference reaches FCFF solely through the notional tax shield
+  on a non-cash charge. NOTE the coverage consequence, logged rather than papered over: the
+  check trace.cogs[t] == unit_inventory_cost_per_bag * trace.bags_sold[t] hard-codes this basis
+  into an invariant, so the alternative cannot be tested against this gold. The 180
+  survivors stay at 14,575. NRV test: 14,575 cost against a 20,000 expected selling price,
+  so no write-down to NRV is required at any point in the cycle.
+
+  ===================================================================================
+  4. INVENTORY CARRYING VALUE AND NET WORKING CAPITAL
+  ===================================================================================
+  inventory_value[t] = 14,575 x bags_in_store[t]:
+
+      t=0  198 x 14,575 = 2,885,850
+      t=1  196 x 14,575 = 2,856,700
+      t=2  194 x 14,575 = 2,827,550
+      t=3  192 x 14,575 = 2,798,400
+      t=4  190 x 14,575 = 2,769,250
+      t=5  188 x 14,575 = 2,740,100
+      t=6  186 x 14,575 = 2,710,950
+      t=7  124 x 14,575 = 1,807,300
+      t=8   62 x 14,575 =   903,650
+      t=9    0          =         0
+      t=10   0          =         0
+      t=11   0          =         0
+
+  Value roll-forward, inventory[t] = inventory[t-1] + purchases_at_cost[t] - cogs[t]
+  - shrinkage_loss[t], verified at the two structural points:
+      t=0:  0 + 2,915,000 - 0 - 29,150 = 2,885,850   OK
+      t=7:  2,710,950 - 874,500 - 29,150 = 1,807,300 OK
+
+  Receivables: zero. He sells for cash off the store floor in the lean season (ASSUMED,
+  flagged; elicitation question recorded).
+  Payables: zero. Harvest purchases are settled on the spot, rent monthly, tablets cash
+  (ASSUMED, flagged).
+
+  Therefore NWC[t] = inventory_value[t], and
+
+      dNWC[t] = NWC[t] - NWC[t-1], with NWC[-1] = 0:
+
+      t=0  2,885,850 - 0         = +2,885,850   <-- the whole capital requirement, in one month
+      t=1  2,856,700 - 2,885,850 =    -29,150
+      t=2                        =    -29,150
+      t=3                        =    -29,150
+      t=4                        =    -29,150
+      t=5                        =    -29,150
+      t=6                        =    -29,150
+      t=7  1,807,300 - 2,710,950 =   -903,650
+      t=8    903,650 - 1,807,300 =   -903,650
+      t=9          0 -   903,650 =   -903,650
+      t=10                       =          0
+      t=11                       =          0
+
+  Sum: 2,885,850 - 6 x 29,150 - 3 x 903,650 = 2,885,850 - 174,900 - 2,710,950 = 0. The
+  cycle is closed and working capital is fully released, as it must be.
+
+  Note the shape: peak invested capital is 2,885,850 XOF in November, against a full-cycle
+  operating profit derived below. This is a capital-intensive-in-inventory, thin-margin
+  trade. The cash conversion cycle is seven months from outlay to first receipt.
+
+  ===================================================================================
+  5. REVENUE AND COST OF GOODS SOLD, PER PERIOD
+  ===================================================================================
+  Revenue[t] = 20,000 x bags_sold[t]:
+      t=0..6   0
+      t=7   60 x 20,000 = 1,200,000
+      t=8   60 x 20,000 = 1,200,000
+      t=9   60 x 20,000 = 1,200,000
+      t=10,11  0
+      Total revenue = 3,600,000.
+
+  Revenue recognition (IFRS 15): control of the bags passes on delivery at the store; each
+  monthly tranche is recognised in the month sold. No performance obligation extends past
+  delivery, no financing component.
+
+  COGS[t] = 14,575 x bags_sold[t]:
+      t=7,8,9  60 x 14,575 = 874,500 each
+      Total COGS = 2,623,500.
+
+  Gross profit on bags actually sold:
+      t=7,8,9  1,200,000 - 874,500 = 325,500 each
+      Total = 976,500.
+
+  Shrinkage loss[t] = 14,575 x bags_shrunk[t] = 2 x 14,575 = 29,150 per month, t=0..9.
+      Total shrinkage = 10 x 29,150 = 291,500.
+
+  Cost conservation: 2,623,500 (COGS) + 291,500 (shrinkage) = 2,915,000 = total purchases
+  at cost. Every franc that went into the store leaves the balance sheet exactly once,
+  either through the till or through the rats. Asserted in checks.
+
+  ===================================================================================
+  6. STORAGE COSTS, PER PERIOD
+  ===================================================================================
+  Rent: 30,000 per month. I model a continuous 12-month tenancy (ASSUMED, flagged): he
+  calls it "my own warehouse" and runs the cycle every year, which points to a standing
+  lease rather than a seasonal let released in September. Under IFRS 16 a lease of this
+  size and duration was justified here by the short-term / low-value practical expedient. THAT
+  JUSTIFICATION IS WITHDRAWN 2026-07-26 (physical audit): the low-value exemption is aimed at
+  small items of the tablet/office-furniture kind and cannot reach a warehouse, and the short-term
+  limb is defeated by this gold's OWN argument for a 12-month rent cycle -- a standing, annually
+  renewed tenancy is precisely the fact pattern that takes a lease out of the short-term exemption.
+  The two arguments destroyed each other. The TREATMENT stands and no number changes: expensing the
+  rent is the right presentation for an unlevered operating FCFF on a month-to-month informal
+  tenancy whose enforceable term is not established by the utterance. What is withdrawn is the
+  reasoning offered for it, which was load-bearing and wrong. The rent is therefore
+  expensed straight-line rather than capitalised as a right-of-use asset — which is also
+  why no ROU asset or lease liability appears, and why D&A stays at zero.
+      rent_expense[t] = 30,000 for t = 0..11. Total = 360,000.
+
+  Fumigation: 15,000 per treatment, two treatments.
+      t=0  (November, on filling) 15,000
+      t=4  (March)                15,000
+      all other months            0
+      Total = 30,000.
+
+  storage_opex[t] = rent + fumigation:
+      t=0  45,000
+      t=1  30,000
+      t=2  30,000
+      t=3  30,000
+      t=4  45,000
+      t=5  30,000
+      t=6  30,000
+      t=7  30,000
+      t=8  30,000
+      t=9  30,000
+      t=10 30,000
+      t=11 30,000
+      Total = 390,000.
+
+  Labour: zero. "I work alone" and there is no payroll. See notes for what this does to
+  the interpretation of the answer.
+
+  ===================================================================================
+  7. EBITDA AND EBIT, PER PERIOD
+  ===================================================================================
+  EBITDA[t] = revenue[t] - COGS[t] - shrinkage_loss[t] - storage_opex[t]
+
+      t=0  Nov:      0 -       0 - 29,150 - 45,000 =  -74,150
+      t=1  Dec:      0 -       0 - 29,150 - 30,000 =  -59,150
+      t=2  Jan:                                    =  -59,150
+      t=3  Feb:                                    =  -59,150
+      t=4  Mar:      0 -       0 - 29,150 - 45,000 =  -74,150
+      t=5  Apr:                                    =  -59,150
+      t=6  May:                                    =  -59,150
+      t=7  Jun: 1,200,000 - 874,500 - 29,150 - 30,000 = 266,350
+      t=8  Jul:                                       = 266,350
+      t=9  Aug:                                       = 266,350
+      t=10 Sep:      0 -       0 -      0 - 30,000 =  -30,000
+      t=11 Oct:                                    =  -30,000
+
+  With D&A = 0 in every period, EBIT[t] = EBITDA[t] identically.
+
+  Full-cycle EBIT, two independent routes:
+    (a) by month: -(74,150) - 3 x 59,150 - 74,150 - 2 x 59,150 + 3 x 266,350 - 2 x 30,000
+        = -74,150 - 177,450 - 74,150 - 118,300 + 799,050 - 60,000 = 295,000
+    (b) by line:  3,600,000 - 2,623,500 - 291,500 - 360,000 - 30,000 = 295,000
+    Agreement. EBIT for the cycle = 295,000 XOF.
+
+  ===================================================================================
+  8. TAX AND NOPAT, PER PERIOD
+  ===================================================================================
+  Tax rate 30% (Mali corporate rate), ASSUMED and flagged — see notes, because a trader
+  of this size is very likely assessed under the impôt synthétique lump-sum regime and
+  not on profit at all. I apply the standard unlevered convention: notional tax on EBIT
+  in every period, symmetric, so pre-season loss months carry a credit; the cycle closes
+  in profit so the credits are absorbed within it.
+
+      tax[t] = 0.30 x EBIT[t] ; NOPAT[t] = 0.70 x EBIT[t]
+
+      t=0  EBIT  -74,150  tax  -22,245  NOPAT  -51,905
+      t=1  EBIT  -59,150  tax  -17,745  NOPAT  -41,405
+      t=2  EBIT  -59,150  tax  -17,745  NOPAT  -41,405
+      t=3  EBIT  -59,150  tax  -17,745  NOPAT  -41,405
+      t=4  EBIT  -74,150  tax  -22,245  NOPAT  -51,905
+      t=5  EBIT  -59,150  tax  -17,745  NOPAT  -41,405
+      t=6  EBIT  -59,150  tax  -17,745  NOPAT  -41,405
+      t=7  EBIT  266,350  tax   79,905  NOPAT  186,445
+      t=8  EBIT  266,350  tax   79,905  NOPAT  186,445
+      t=9  EBIT  266,350  tax   79,905  NOPAT  186,445
+      t=10 EBIT  -30,000  tax   -9,000  NOPAT  -21,000
+      t=11 EBIT  -30,000  tax   -9,000  NOPAT  -21,000
+
+  Cycle NOPAT: 0.70 x 295,000 = 206,500. By month:
+      3 x 186,445 = 559,335 ; less 2 x 51,905 = 103,810 ; less 5 x 41,405 = 207,025 ;
+      less 2 x 21,000 = 42,000 ; 559,335 - 352,835 = 206,500. Agreement.
+
+  ===================================================================================
+  9. CAPEX AND D&A
+  ===================================================================================
+  capex[t] = 0 and depreciation[t] = 0 for all t, for the reasons set out in section 0.
+  This is asserted, not assumed away silently: the utterance names a per-bag freight
+  charge (a service), a monthly rent (a lease), a consumable fumigant and no employees.
+  There is no asset to place in service and therefore nothing to depreciate. Elicitation
+  question recorded (cart, scales, tarpaulins, sprayer).
+
+  ===================================================================================
+  10. FCFF, PER PERIOD
+  ===================================================================================
+      CFO[t]  = NOPAT[t] + D&A[t] - dNWC[t]
+      CFI[t]  = -capex[t] = 0
+      FCFF[t] = CFO[t] + CFI[t] = NOPAT[t] + 0 - dNWC[t] - 0
+
+      t=0  Nov:  -51,905 - 2,885,850 = -2,937,755
+      t=1  Dec:  -41,405 +    29,150 =    -12,255
+      t=2  Jan:  -41,405 +    29,150 =    -12,255
+      t=3  Feb:  -41,405 +    29,150 =    -12,255
+      t=4  Mar:  -51,905 +    29,150 =    -22,755
+      t=5  Apr:  -41,405 +    29,150 =    -12,255
+      t=6  May:  -41,405 +    29,150 =    -12,255
+      t=7  Jun:  186,445 +   903,650 =  1,090,095
+      t=8  Jul:  186,445 +   903,650 =  1,090,095
+      t=9  Aug:  186,445 +   903,650 =  1,090,095
+      t=10 Sep:  -21,000 -         0 =    -21,000
+      t=11 Oct:  -21,000 -         0 =    -21,000
+
+  Full-cycle FCFF:
+      -2,937,755 - 5 x 12,255 - 22,755 + 3 x 1,090,095 - 2 x 21,000
+      = -2,937,755 - 61,275 - 22,755 + 3,270,285 - 42,000
+      = 206,500.
+  Equal to cycle NOPAT, exactly as the closed-cycle conservation identity requires
+  (cumulative dNWC = 0, capex = 0, D&A = 0). Asserted in checks.
+
+  PRE-TAX SANITY CROSS-CHECK (the fcff_no_tax column). Strip the notional tax and FCFF
+  must equal literal cash in and out of the till:
+      t=0  Nov: -(200 x 14,575) - 15,000 fumigation - 30,000 rent = -2,915,000 - 45,000
+                = -2,960,000. Model: -74,150 - 2,885,850 = -2,960,000. OK.
+      t=4  Mar: -(30,000 rent + 15,000 fumigation) = -45,000. Model: -74,150 + 29,150
+                = -45,000. OK.
+      t=7  Jun: +1,200,000 receipts - 30,000 rent = 1,170,000. Model: 266,350 + 903,650
+                = 1,170,000. OK.
+      t=10 Sep: -30,000 rent. Model: -30,000. OK.
+  Every pre-tax period equals observable cash movement to the franc. The shrinkage charge
+  and the inventory release are exact mirror images and cancel, which is the correct
+  behaviour for a non-cash write-off inside a working-capital build, and confirms the
+  ladder is not double-counting the storage loss.
+  Pre-tax cycle total: -2,960,000 - 5 x 30,000 - 45,000 + 3 x 1,170,000 - 2 x 30,000
+      = -2,960,000 - 150,000 - 45,000 + 3,510,000 - 60,000 = 295,000 = cycle EBIT. OK.
+
+  ===================================================================================
+  11. THE TRADER'S OWN VIEW, RECONCILED
+  ===================================================================================
+  The founder would not describe any of the above as three separate lines. He would say:
+  what does a bag cost me by the time I sell it? Answer, from the same inputs:
+
+      total cash cost of the campagne
+        = 2,915,000 (200 bags landed at 14,575)
+        +   360,000 (12 months x 30,000 rent)
+        +    30,000 (2 x 15,000 phostoxin)
+        = 3,305,000 XOF
+
+      bags actually sold = 180
+
+      all-in cost per SELLABLE bag = 3,305,000 / 180 = 18,361.11 XOF
+      selling price                =                   20,000.00 XOF
+      margin per sellable bag      =                    1,638.89 XOF
+      x 180 bags                   =                  295,000    XOF  = cycle EBIT. OK.
+
+  The 10% outturn loss is what does the damage. Landed cost per bag IN is 14,575; cost per
+  bag OUT, before a franc of rent, is 2,915,000 / 180 = 16,194.44. The shrinkage alone
+  moves the unit cost by 1,619.44 per sellable bag — very nearly the entire per-bag margin.
+  Storage overhead (390,000 / 180 = 2,166.67 per sellable bag) does the rest.
+
+  Breakeven outturn at the stated prices and costs: he needs
+      3,305,000 / 20,000 = 165.25 sellable bags out of 200, i.e. an outturn of
+      165.25 / 200 = 82.625%.
+  He is running at 90%. The entire trade sits on 7.4 percentage points of outturn. That is
+  the operating risk of the business stated in the founder's own unit, and it is why the
+  phostoxin is not optional.
+
+  Breakeven lean-season price at the stated 90% outturn is the 18,361.11 computed above,
+  against a harvest price of 14,500 — the trade needs the seasonal spread to be at least
+  26.6% (18,361.11 / 14,500 - 1) gross of nothing else, and it is running at 37.9%.
+
+  ===================================================================================
+  12. WHAT THE ANSWER IS
+  ===================================================================================
+  Unlevered FCFF over one complete crop cycle, monthly, is the array in `fcff`: a single
+  large outflow of 2,937,755 in November, a thin drip of roughly 12,000 to 23,000 a month
+  through the carry, three inflows of 1,090,095 in June, July and August, and two 21,000
+  outflows in the empty months. Cycle total 206,500 XOF.
+  CORRECTED 2026-07-26 (physical audit): this paragraph previously quoted "peak invested capital of
+  2,885,850 XOF - a return of about 7.2%". Both figures were wrong, and wrong in the unsafe
+  direction. Peak invested capital is the deepest point of CUMULATIVE cash outflow, not the peak
+  inventory/NWC balance: the NWC balance omits the storage opex carried through the season, which is
+  funded month after month and never capitalised. Read off this gold's own fcff row, cumulative cash
+  troughs at the end of the carry, below the NWC peak, so both the funding requirement and the
+  return on it were misstated - the capital tied up was understated and the return correspondingly
+  overstated. The trace was always right; the sentence describing it was not. No trace number
+  changed. STRENGTHENED: trace.cum_fcff is materialised and checked, so the funding requirement is
+  now readable as a machine-verified row rather than a prose assertion - it is the
+  single most decision-relevant number for a trader deciding whether he can fund the campagne.
+
+trace:
+  bags_purchased:      [200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  bags_shrunk:         [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0]
+  bags_sold:           [0, 0, 0, 0, 0, 0, 0, 60, 60, 60, 0, 0]
+  bags_in_store:       [198, 196, 194, 192, 190, 188, 186, 124, 62, 0, 0, 0]
+
+  purchases_at_cost:   [2915000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  cogs:                [0, 0, 0, 0, 0, 0, 0, 874500, 874500, 874500, 0, 0]
+  shrinkage_loss:      [29150, 29150, 29150, 29150, 29150, 29150, 29150, 29150, 29150, 29150, 0, 0]
+  inventory_value:     [2885850, 2856700, 2827550, 2798400, 2769250, 2740100, 2710950, 1807300, 903650, 0, 0, 0]
+
+  accounts_receivable: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  accounts_payable:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  nwc:                 [2885850, 2856700, 2827550, 2798400, 2769250, 2740100, 2710950, 1807300, 903650, 0, 0, 0]
+  delta_nwc:           [2885850, -29150, -29150, -29150, -29150, -29150, -29150, -903650, -903650, -903650, 0, 0]
+
+  revenue:             [0, 0, 0, 0, 0, 0, 0, 1200000, 1200000, 1200000, 0, 0]
+  gross_profit:        [0, 0, 0, 0, 0, 0, 0, 325500, 325500, 325500, 0, 0]
+  rent_expense:        [30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]
+  fumigation_expense:  [15000, 0, 0, 0, 15000, 0, 0, 0, 0, 0, 0, 0]
+  storage_opex:        [45000, 30000, 30000, 30000, 45000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]
+
+  ebitda:              [-74150, -59150, -59150, -59150, -74150, -59150, -59150, 266350, 266350, 266350, -30000, -30000]
+  depreciation:        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ebit:                [-74150, -59150, -59150, -59150, -74150, -59150, -59150, 266350, 266350, 266350, -30000, -30000]
+  tax_on_ebit:         [-22245, -17745, -17745, -17745, -22245, -17745, -17745, 79905, 79905, 79905, -9000, -9000]
+  nopat:               [-51905, -41405, -41405, -41405, -51905, -41405, -41405, 186445, 186445, 186445, -21000, -21000]
+
+  capex:               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  cfo:                 [-2937755, -12255, -12255, -12255, -22755, -12255, -12255, 1090095, 1090095, 1090095, -21000, -21000]
+  cfi:                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff:                [-2937755, -12255, -12255, -12255, -22755, -12255, -12255, 1090095, 1090095, 1090095, -21000, -21000]
+  fcff_no_tax:         [-2960000, -30000, -30000, -30000, -45000, -30000, -30000, 1170000, 1170000, 1170000, -30000, -30000]
+
+  cum_fcff:            [-2937755, -2950010, -2962265, -2974520, -2997275, -3009530, -3021785, -1931690, -841595, 248500, 227500, 206500]
+
+fcff: [-2937755, -12255, -12255, -12255, -22755, -12255, -12255, 1090095, 1090095, 1090095, -21000, -21000]
+
+checks:
+  - "trace.bags_in_store[t] == trace.bags_in_store[t-1] + trace.bags_purchased[t] - trace.bags_shrunk[t] - trace.bags_sold[t]"
+  - "trace.inventory_value[t] == trace.inventory_value[t-1] + trace.purchases_at_cost[t] - trace.cogs[t] - trace.shrinkage_loss[t]"
+  - "trace.inventory_value[t] == unit_inventory_cost_per_bag * trace.bags_in_store[t]"
+  - "trace.nwc[t] == trace.inventory_value[t] + trace.accounts_receivable[t] - trace.accounts_payable[t]"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1]"
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "sum(trace.delta_nwc) == 0"
+  - "trace.nwc[last] == 0"
+  - "trace.bags_in_store[last] == 0"
+  - "sum(trace.bags_purchased) == bags_purchased_at_harvest"
+  # STRENGTHEN 2026-07-26 (physical audit). Only the SUM of purchases was constrained, so an
+  # engine splitting the intake across November and December satisfied every check while getting
+  # fcff[0] -- the largest single number in the answer -- badly wrong. Same hole for the two
+  # fumigation months, whose period-index inputs were referenced by no check at all.
+  - "trace.bags_purchased[first] == bags_purchased_at_harvest"
+  - "trace.bags_purchased[t] == 0 for t >= 1"
+  - "trace.purchases_at_cost[t] == 0 for t >= 1"
+  - "trace.fumigation_expense[t] == fumigation_cost_per_treatment for t < 1"
+  - "trace.cum_fcff == cumsum(trace.fcff)"
+  - "trace.cum_fcff[last] == sum(trace.nopat)"
+  - "sum(trace.bags_sold) == sum(trace.bags_purchased) * outturn_ratio"
+  - "sum(trace.bags_shrunk) == sum(trace.bags_purchased) * (1 - outturn_ratio)"
+  - "sum(trace.bags_sold) == bags_sold_per_selling_month * selling_months"
+  - "sum(trace.bags_purchased) == sum(trace.bags_sold) + sum(trace.bags_shrunk)"
+  - "trace.bags_shrunk[t] == bags_shrunk_per_month for t < first_empty_store_period_index"
+  - "trace.bags_shrunk[t] == 0 for t >= first_empty_store_period_index"
+  - "trace.bags_sold[t] == 0 for t < first_selling_period_index"
+  - "trace.revenue[t] == 0 for t < first_selling_period_index"
+  - "trace.bags_in_store[t] == 0 for t >= store_cleared_period_index"
+  - "trace.nwc[t] == 0 for t >= store_cleared_period_index"
+  - "trace.purchases_at_cost[t] == unit_inventory_cost_per_bag * trace.bags_purchased[t]"
+  - "unit_inventory_cost_per_bag == purchase_price_per_bag + transport_cost_per_bag"
+  - "trace.revenue[t] == sale_price_per_bag * trace.bags_sold[t]"
+  - "trace.cogs[t] == unit_inventory_cost_per_bag * trace.bags_sold[t]"
+  - "trace.shrinkage_loss[t] == unit_inventory_cost_per_bag * trace.bags_shrunk[t]"
+  - "sum(trace.cogs) + sum(trace.shrinkage_loss) == sum(trace.purchases_at_cost)"
+  - "sum(trace.revenue) == sale_price_per_bag * bags_sellable"
+  - "trace.gross_profit[t] == trace.revenue[t] - trace.cogs[t]"
+  - "trace.rent_expense[t] == warehouse_rent_per_month"
+  - "sum(trace.rent_expense) == warehouse_rent_per_month * rent_months_per_cycle"
+  - "sum(trace.fumigation_expense) == fumigation_cost_per_treatment * fumigation_treatments_per_cycle"
+  - "trace.storage_opex[t] == trace.rent_expense[t] + trace.fumigation_expense[t]"
+  - "trace.ebitda[t] == trace.revenue[t] - trace.cogs[t] - trace.shrinkage_loss[t] - trace.storage_opex[t]"
+  - "trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]"
+  - "trace.tax_on_ebit[t] == trace.ebit[t] * tax_rate"
+  - "trace.nopat[t] == trace.ebit[t] - trace.tax_on_ebit[t]"
+  - "trace.depreciation[t] == depreciation_per_period"
+  - "trace.capex[t] == capex_per_period"
+  - "sum(trace.capex) == 0"
+  - "trace.cfo[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t]"
+  - "trace.cfi[t] == 0 - trace.capex[t]"
+  - "trace.fcff[t] == trace.cfo[t] + trace.cfi[t]"
+  - "trace.fcff[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "sum(trace.fcff) == sum(trace.nopat)"
+  - "trace.fcff_no_tax[t] == trace.fcff[t] + trace.tax_on_ebit[t]"
+  - "trace.fcff_no_tax[t] == trace.ebit[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "sum(trace.fcff_no_tax) == sum(trace.ebit)"
+  - "trace.bags_in_store[t] >= 0"
+  - "trace.inventory_value[t] >= 0"
+  - "trace.nwc[t] >= 0"
+  - "trace.revenue[t] >= 0"
+  - "trace.shrinkage_loss[t] >= 0"
+
+notes:
+  - "STRUCTURAL FINDING. Nothing in the utterance is a durable asset: freight is bought per bag, the premises are rented, phostoxin is a consumable, and there is no payroll. Capex and D&A are therefore structurally zero and the unlevered build reduces to FCFF = NOPAT - dNWC. The asset side of this business is entirely its bag inventory. Any model that manufactures a depreciation schedule here is inventing a business the founder did not describe."
+  - "HORIZON. One complete crop cycle, monthly, November (t=0) to October (t=11). The founder says every year is the same story, so this is the steady state and later cycles replicate it period for period. Closing the horizon on a full cycle forces inventory and NWC to open and close at zero, which makes cumulative FCFF equal cumulative NOPAT a conservation identity rather than a coincidence."
+  - "IAS 2 FRICTION, KEPT VISIBLE. Warehouse rent and fumigation are storage costs and are excluded from the cost of inventory under IAS 2.16(b) because there is no further production stage; they are expensed as incurred. The trader's own frame loads them into a cost per bag out of the store. Both views are reconciled arithmetically in the passage and give the identical cycle profit; they differ only in the monthly split between carrying value and expense. I did not force the trader's frame into the IFRS lines or the reverse."
+  - "SHRINKAGE TIMING IS A JUDGMENT CALL. The founder gives an outturn ratio, not a rate. I accrued the loss straight-line over the ten months the grain is physically in store, because all three mechanisms he names (weevils, rats, drying down) are continuous in time. Direction only: recognising the loss at outturn instead would push the expense out of the pre-season months into the selling months and hold inventory at a higher carrying value in the interim. Full-cycle profit and full-cycle FCFF are unchanged either way; only the monthly profile moves."
+  - "RENT MONTHS. Modelled as a continuous 12-month tenancy on the reading that 'my own warehouse' plus an annually repeating cycle means a standing lease. ELICIT: do you pay the 30,000 in September and October when the store is empty? Direction only: a tenancy confined to the occupied months would lower operating cost and raise cycle FCFF, and the effect is not trivial relative to the margin."
+  - "TRANSPORT AT 75 XOF PER BAG IS TAKEN AS STATED but sits an order of magnitude below observed inter-regional bag freight into Bamako. ELICIT: is that 75 per bag all-in from the production zone, or per bag per some distance unit, or a loading fee on top of a separate lorry charge? Direction only: at the stated rate freight is a rounding error in the unit cost; at a realistic inter-regional rate it would compress the margin materially. This is the single input I would verify first."
+  - "TAX REGIME IS THE LARGEST UNRESOLVED ITEM. I applied 30% (Mali impot sur les societes) as a notional unlevered tax on EBIT, flagged ASSUMED. A sole trader at this turnover almost certainly falls under Mali's impot synthetique, the regime for small individual operators. Direction only: moving off a profit base removes the loss-month credits and decouples the charge from margin. Rather than assert an unverified alternative number, the zero-tax boundary is materialised as trace.fcff_no_tax and checked."
+  - "CORRECTION 2026-07-26 (physical audit; two FALSE PROSE CLAIMS withdrawn from the tax note above, no trace number changed). (a) REGIME SHAPE was mischaracterised as 'a fixed annual amount by activity bracket'. Verified against the Direction Generale des Impots du Mali: the impot synthetique is levied at 3% of annual turnover excluding tax, on individual operators up to 30,000,000 XOF of turnover, payable annually, and it discharges the BIC together with the direct and indirect taxes of Titles I and II of the CGI. It is a single discharging levy, but its BASE IS TURNOVER-PROPORTIONAL, not a bracket forfait -- 'invariant to margin' was right, 'fixed annual amount' was not. (b) THE BOUND WAS FALSE AND POINTED THE WRONG WAY. The note asserted that the synthetic-regime answer 'lies between that column and the base case', i.e. between the zero-tax cycle total and the modelled one. It does not: at 3% of this cycle's turnover the levy exceeds the modelled notional tax, so the true cycle FCFF falls BELOW the modelled base case, outside the claimed bracket. That was an unverified quantified bracket asserted in prose, which the machine gate cannot see -- exactly the failure mode contract v2.3 forbids -- and it was wrong. THE 30% IS RETAINED as generated: tax_rate is honestly tagged ASSUMED with its elicitation question recorded, and per docs/CAPTURE_FINDINGS.md Finding 1 an honestly-disclosed default is not a gold defect but capture evidence. The sibling gold on the same utterance carries the identical treatment; changing one and not the other would split a convention rather than fix a defect. What was defective was claiming a bound this gold had not verified."
+  - "LOSS-MONTH TAX SYMMETRY. Notional tax is accrued on EBIT in every period including the seven negative ones. This is the standard unlevered convention and the cycle closes in profit so the credits are absorbed within it. Real cash tax is settled annually, and the crop cycle straddles two Malian fiscal (calendar) years. This is a within-cycle timing convention, not a value difference over the closed cycle."
+  - "OWNER'S LABOUR IS UNPRICED. 'I work alone', so no wage is booked and none should be under standard accounting for a sole proprietorship. The consequence must be stated: the cycle NOPAT is the joint return to the founder's capital AND to twelve months of his own labour, not a clean return on capital. Any imputed wage would reduce it, and at this scale of margin the imputation is not academic."
+  - "FINANCING IS OUT OF SCOPE BY CONSTRUCTION. Warrantage / tierce detention (inventory-collateralised credit against stored grain) is widespread in Mali and would transform the November cash requirement. It changes the equity cash profile and the levered picture entirely, but it does not touch unlevered FCFF, which is what was asked for."
+  - "WORKING CAPITAL POLICY IS ASSUMED, NOT STATED. Zero receivables and zero payables. ELICIT: do you give credit to any lean-season buyers, and do you buy any of the 200 bags on credit from producers or collectors? Either would change the monthly FCFF shape without changing the cycle total."
+  - "SALES PROFILE WITHIN THE SEASON IS A CONVENTION. The founder says he clears the store over June-August, which entails the total but not the split. I allocated 60 bags a month uniformly. ELICIT: does volume or price skew toward July-August as the soudure deepens? A single sale price of 20,000 across all three months is what he stated and is what I used."
+  - "DEFERRED, NOT MODELLED: patente and municipal or market levies; any insurance; bag replacement, restacking or rebagging costs; losses to theft as distinct from rodents; any residual value in the 20 lost bags (damaged grain is sometimes sold on for animal feed rather than being a total loss); and whether the 200-bag volume is capital-constrained or store-constrained. The last of these is the one that matters for any growth question."

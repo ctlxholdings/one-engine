@@ -1,0 +1,270 @@
+id: arise-kenya-solar-fcff-wt
+title: "Arise Kenya - 234 MW AC Rift Valley solar portfolio: unlevered FCFF over the 20-year PPA life"
+currency: USD
+grid:
+  periods: 21
+  freq: annual
+utterance:
+  fr: ""
+  en: |
+    We are Arise Kenya - six grid-connected solar plants totalling 234 megawatts AC in the Rift Valley.
+    We have a 20-year USD-denominated PPA with Kenya Power at 9.56 US cents per kilowatt-hour; the plants
+    run at a 20 percent capacity factor, about 410,000 megawatt-hours a year. Construction cost 510 million
+    US dollars. In our financial accounts we depreciate the plant straight-line over the 20-year PPA life.
+    For tax we claim wear-and-tear allowances at 12.5 percent on a reducing-balance basis - the tax written-down
+    value falls by 12.5 percent of the remaining balance each year and never quite reaches zero. Operating cost
+    is 1 percent of capex a year. Corporate tax is 30 percent. At year 20 the PPA ends; we expect a salvage of
+    10 percent of the original cost, and the difference between the sale proceeds and the tax written-down value
+    is settled as a balancing charge or allowance.
+
+inputs:
+  capacity_mw:
+    value: 234
+    unit: MW_AC
+    prov: STATED
+    source: "'six grid-connected solar plants totalling 234 megawatts AC'"
+    date: 2026-07-25
+  capacity_factor:
+    value: 0.20
+    unit: fraction
+    prov: STATED
+    source: "'the plants run at a 20 percent capacity factor'"
+    date: 2026-07-25
+  energy_mwh:
+    value: 410000
+    unit: MWh_per_year
+    prov: STATED
+    source: "'about 410,000 megawatt-hours a year'; cross-checks to 234*8760*0.20 = 409,968 MWh (0.008% below), so the stated figure is used"
+    date: 2026-07-25
+  tariff_usd_per_kwh:
+    value: 0.0956
+    unit: USD_per_kWh
+    prov: STATED
+    source: "'9.56 US cents per kilowatt-hour'"
+    date: 2026-07-25
+  capex_usd_m:
+    value: 510
+    unit: USD_million
+    prov: STATED
+    source: "'Construction cost 510 million US dollars'"
+    date: 2026-07-25
+  book_life_yrs:
+    value: 20
+    unit: years
+    prov: STATED
+    source: "'we depreciate the plant straight-line over the 20-year PPA life'"
+    date: 2026-07-25
+  ppa_yrs:
+    value: 20
+    unit: years
+    prov: STATED
+    source: "'20-year USD-denominated PPA'"
+    date: 2026-07-25
+  wda_rate:
+    value: 0.125
+    unit: fraction_reducing_balance
+    prov: STATED
+    source: "'wear-and-tear allowances at 12.5 percent on a reducing-balance basis'"
+    date: 2026-07-25
+  opcost_pct:
+    value: 0.01
+    unit: fraction_of_capex_per_year
+    prov: STATED
+    source: "'Operating cost is 1 percent of capex a year'"
+    date: 2026-07-25
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: STATED
+    source: "'Corporate tax is 30 percent'"
+    date: 2026-07-25
+  salvage_pct:
+    value: 0.10
+    unit: fraction_of_original_cost
+    prov: STATED
+    source: "'a salvage of 10 percent of the original cost'"
+    date: 2026-07-25
+  op_start:
+    value: 1
+    unit: period_index_0based
+    prov: DEFAULTED
+    source: "Greenfield IPP convention: full capex incurred in construction year t=0 (no operation), commercial operation and all revenue/opex/allowances run t=1..20. 0-based index of first operating period."
+    date: 2026-07-25
+  disposal_t:
+    value: 20
+    unit: period_index_0based
+    prov: INFERRED
+    source: "'At year 20 the PPA ends' -> disposal in the last operating period; with t=0 = construction, operating year 20 is array position t=20 = grid.periods-1."
+    date: 2026-07-25
+  delta_nwc_all:
+    value: 0
+    unit: USD_million
+    prov: ASSUMED
+    source: "No receivable/payable terms stated. PPA offtake (Kenya Power) and 1%-of-capex O&M assumed settled within the period; net working-capital change treated as immaterial. ELICITED question: what are Kenya Power's payment terms / receivable days on the USD PPA, and are there O&M payables? A material DSO would shift cash within the horizon but not lifetime FCFF."
+    date: 2026-07-25
+  loss_cf_regime:
+    value: indefinite
+    unit: regime
+    prov: ASSUMED
+    source: "Tax losses from the allowance-heavy early years assumed carried forward and fully usable (neutral prior). Under FIFO the year-1 loss is absorbed within 9 subsequent years (by year 10) and the pool is exhausted in year 12, so a limited carryforward window would only just bind on the earliest loss - flagged qualitatively in notes."
+    date: 2026-07-25
+
+passage: |
+  UNITS: money in USD millions unless stated; energy in MWh; tariff in USD/kWh. Grid = 21 annual periods,
+  t=0 (construction) then t=1..20 (operation, 20-year PPA). Salvage/disposal at t=20.
+
+  STAGE 0 - CAPEX AND TIMELINE
+  Full construction cost is incurred at t=0: capex[0] = 510. No revenue, opex, depreciation or allowance in t=0.
+  Operations, straight-line book depreciation and wear-and-tear allowances all begin in the first operating
+  year t=1 (asset brought into use).
+
+  STAGE 1 - REVENUE (IFRS 15, energy delivered x tariff)
+  Annual energy = 410,000 MWh (stated; matches 234 MW * 8,760 h * 0.20 = 409,968 MWh to within 0.01%).
+  Revenue = 410,000 MWh * 1,000 kWh/MWh * 0.0956 USD/kWh = 39,196,000 USD = 39.196 per year (t=1..20).
+  The PPA is a flat USD tariff with no escalation stated; revenue is constant.
+
+  STAGE 2 - OPERATING COST (cost matching)
+  Opcost = 1% * 510 = 5.100 per year (t=1..20), flat (no escalation stated).
+
+  STAGE 3 - BOOK DEPRECIATION (accounting ladder; does NOT drive cash tax)
+  Straight-line over 20 years: book_dep = 510 / 20 = 25.500 per year (t=1..20).
+  The operator states straight-line over the PPA life with no residual carved out of the book charge, so the
+  book base runs to zero: NBV rolls 510 -> 0 over t=1..20 (book_nbv_close[t] = 510 - 25.5*t). At t=20 book NBV
+  is 0; the salvage sale would post a book gain, but book gain is not used anywhere in the unlevered cash build
+  (cash tax uses the tax base; proceeds enter FCFF as cash), so there is no double count.
+
+  STAGE 4 - BOOK EBIT (kept in the accounting ladder)
+  EBIT = Revenue - Opcost - Book depreciation = 39.196 - 5.100 - 25.500 = 8.596 per year (t=1..20).
+
+  STAGE 5 - TAX WRITTEN-DOWN VALUE, 12.5% REDUCING BALANCE (drives cash tax)
+  Tax base opens at 510. Each operating year: allowance = 0.125 * opening TWDV; closing = opening - allowance
+  (closing = opening * 0.875). The balance never reaches zero.
+    t : opening        allowance       closing
+    1 : 510.000000000  63.750000000  446.250000000
+    2 : 446.250000000  55.781250000  390.468750000
+    3 : 390.468750000  48.808593750  341.660156250
+    4 : 341.660156250  42.707519531  298.952636719
+    5 : 298.952636719  37.369079590  261.583557129
+    6 : 261.583557129  32.697944641  228.885612488
+    7 : 228.885612488  28.610701561  200.274910927
+    8 : 200.274910927  25.034363866  175.240547061
+    9 : 175.240547061  21.905068383  153.335478678
+   10 : 153.335478678  19.166934835  134.168543844
+   11 : 134.168543844  16.771067980  117.397475863
+   12 : 117.397475863  14.674684483  102.722791380
+   13 : 102.722791380  12.840348923   89.882442458
+   14 :  89.882442458  11.235305307   78.647137150
+   15 :  78.647137150   9.830892144   68.816245007
+   16 :  68.816245007   8.602030626   60.214214381
+   17 :  60.214214381   7.526776798   52.687437583
+   18 :  52.687437583   6.585929698   46.101507885
+   19 :  46.101507885   5.762688486   40.338819400
+   20 :  40.338819400   5.042352425   35.296466975
+  Total allowances t=1..20 = 510 - 35.296466975 = 474.703533025 (= cost - closing TWDV).
+
+  STAGE 6 - DISPOSAL / BALANCING ADJUSTMENT at t=20
+  Salvage proceeds = 10% * 510 = 51.000. TWDV at disposal (after the year-20 allowance) = 35.296466975.
+  Proceeds (51.000) > TWDV (35.296466975) -> BALANCING CHARGE (taxable) = 51.000 - 35.296466975 = 15.703533025,
+  added to year-20 taxable income. (Proceeds are far below original cost, so this is an ordinary balancing charge,
+  not a capital gain.) Note the timing convention is immaterial: had the year-20 allowance (5.042352425) been
+  skipped in the disposal year, the balancing charge would rise by exactly the same 5.042352425 to 10.661180600
+  on a TWDV of 40.338819400 - year-20 taxable income, and every period's cash tax, is identical either way.
+
+  STAGE 7 - TAXABLE INCOME, LOSS CARRYFORWARD, CASH TAX
+  Pre-allowance operating margin for tax = Revenue - Opcost = 39.196 - 5.100 = 34.096 per year.
+  Raw taxable = 34.096 - allowance (+ 15.703533025 balancing charge in t=20).
+  Early years the allowance exceeds 34.096, so t=1..5 generate tax losses that pool and carry forward:
+    pool end t1..t5 = 29.654, 51.339250, 66.051844, 74.663363, 77.936443.
+  From t=6 positive taxable income is absorbed by the pool (zero cash tax) until the pool is exhausted:
+    pool end t6..t11 = 76.538388, 71.053089, 61.991453, 49.800521, 34.871456, 17.546524; pool = 0 from t12.
+  First cash tax is in t=12 on the un-absorbed remainder 19.421316 - 17.546524 = 1.874791 -> tax 0.562437.
+  t=13..20 are fully taxable (pool empty). Cash tax = 30% * taxable-after-offset.
+  Lifetime tie: total taxable = 20*34.096 - 474.703533025 + 15.703533025 = 681.920 - 459.000 = 222.920;
+  total cash tax = 66.876 (= 30% * 222.920). The net lifetime tax deduction equals cost - proceeds = 459.000.
+
+  STAGE 8 - NOPAT (EBIT minus CASH tax) AND UNLEVERED FCFF
+  NOPAT = EBIT - cash tax. FCFF = NOPAT + D&A(book) - dNWC - net capex, with dNWC = 0 and
+  net capex = capex - disposal proceeds (disposal proceeds treated as an asset-side inflow / negative capex).
+  Because the book D&A add-back cancels the book depreciation inside EBIT, operating FCFF collapses to
+  FCFF[t] = (Revenue - Opcost) - cash tax - dNWC - net capex = 34.096 - cash tax (+51.000 disposal at t=20).
+  t=1..11: FCFF = 34.096 (no cash tax). t=12..19: FCFF = 34.096 - cash tax. t=20: 34.096 - 13.427154180
+  + 51.000 = 71.668845820. t=0: FCFF = -510.
+  Lifetime FCFF = -510 + 20*34.096 - 66.876 + 51.000 = -510 + 681.920 - 66.876 + 51.000 = 156.044.
+
+trace:
+  energy_mwh:           [0, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000, 410000]
+  revenue:              [0, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196, 39.196]
+  opcost:               [0, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1]
+  book_dep:             [0, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5]
+  book_nbv_open:        [0, 510, 484.5, 459, 433.5, 408, 382.5, 357, 331.5, 306, 280.5, 255, 229.5, 204, 178.5, 153, 127.5, 102, 76.5, 51, 25.5]
+  book_nbv_close:       [510, 484.5, 459, 433.5, 408, 382.5, 357, 331.5, 306, 280.5, 255, 229.5, 204, 178.5, 153, 127.5, 102, 76.5, 51, 25.5, 0]
+  ebit:                 [0, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596]
+  twdv_open:            [0, 510, 446.25, 390.46875, 341.66015625, 298.95263671875, 261.583557128906, 228.885612487793, 200.274910926819, 175.240547060966, 153.335478678346, 134.168543843553, 117.397475863109, 102.722791380221, 89.882442457693, 78.647137150481, 68.816245006671, 60.214214380837, 52.687437583232, 46.101507885328, 40.338819399662]
+  capital_allowance:    [0, 63.75, 55.78125, 48.80859375, 42.70751953125, 37.369079589844, 32.697944641113, 28.610701560974, 25.034363865852, 21.905068382621, 19.166934834793, 16.771067980444, 14.674684482889, 12.840348922528, 11.235305307212, 9.830892143810, 8.602030625834, 7.526776797605, 6.585929697904, 5.762688485666, 5.042352424958]
+  twdv_close:           [510, 446.25, 390.46875, 341.66015625, 298.95263671875, 261.583557128906, 228.885612487793, 200.274910926819, 175.240547060966, 153.335478678346, 134.168543843553, 117.397475863109, 102.722791380221, 89.882442457693, 78.647137150481, 68.816245006671, 60.214214380837, 52.687437583232, 46.101507885328, 40.338819399662, 35.296466974705]
+  balancing_charge:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15.703533025295]
+  taxable_raw:          [0, -29.654, -21.68525, -14.71259375, -8.61151953125, -3.273079589844, 1.398055358887, 5.485298439026, 9.061636134148, 12.190931617379, 14.929065165207, 17.324932019556, 19.421315517111, 21.255651077472, 22.860694692788, 24.265107856190, 25.493969374166, 26.569223202395, 27.510070302096, 28.333311514334, 44.757180600337]
+  loss_pool_close:      [0, 29.654, 51.33925, 66.05184375, 74.66336328125, 77.936442871094, 76.538387512207, 71.053089073181, 61.991452939033, 49.800521321654, 34.871456156447, 17.546524136891, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  taxable_after_offset: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.874791380220, 21.255651077472, 22.860694692788, 24.265107856190, 25.493969374166, 26.569223202395, 27.510070302096, 28.333311514334, 44.757180600337]
+  cash_tax:             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.562437414066, 6.376695323242, 6.858208407836, 7.279532356857, 7.648190812250, 7.970766960719, 8.253021090629, 8.499993454300, 13.427154180101]
+  nopat:                [0, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.596, 8.033562585934, 2.219304676758, 1.737791592164, 1.316467643143, 0.947809187750, 0.625233039281, 0.342978909371, 0.096006545700, -4.831154180101]
+  dna:                  [0, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5]
+  delta_nwc:            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  capex:                [510, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  disposal_proceeds:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51.0]
+  net_capex:            [510, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -51.0]
+  fcff:                 [-510, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 33.533562585934, 27.719304676758, 27.237791592164, 26.816467643143, 26.447809187750, 26.125233039281, 25.842978909371, 25.596006545700, 71.668845819899]
+
+fcff: [-510, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 34.096, 33.533562585934, 27.719304676758, 27.237791592164, 26.816467643143, 26.447809187750, 26.125233039281, 25.842978909371, 25.596006545700, 71.668845819899]
+
+checks:
+  - revenue[t] == energy_mwh[t] * tariff_usd_per_kwh / 1000
+  - opcost[t] == opcost_pct * capex_usd_m for t >= op_start
+  - opcost[t] == 0 for t < op_start
+  - book_dep[t] == capex_usd_m / book_life_yrs for t >= op_start
+  - book_nbv_close[first] == capex_usd_m
+  - book_nbv_open[t] == book_nbv_close[t-1] for t >= op_start
+  - book_nbv_close[t] == book_nbv_open[t] - book_dep[t] for t >= op_start
+  - book_nbv_close[last] == 0
+  - ebit[t] == revenue[t] - opcost[t] - book_dep[t]
+  - twdv_close[first] == capex_usd_m
+  - twdv_open[t] == twdv_close[t-1] for t >= op_start
+  - capital_allowance[t] == wda_rate * twdv_open[t] for t >= op_start
+  - twdv_close[t] == twdv_open[t] - capital_allowance[t] for t >= op_start
+  - twdv_close[t] > 0
+  - sum(capital_allowance) == capex_usd_m - twdv_close[last]
+  - balancing_charge[t] == 0 for t < disposal_t
+  - balancing_charge[last] == disposal_proceeds[last] - twdv_close[last]
+  - disposal_proceeds[last] > twdv_close[last]
+  - disposal_proceeds[last] == salvage_pct * capex_usd_m
+  - taxable_raw[t] == revenue[t] - opcost[t] - capital_allowance[t] + balancing_charge[t]
+  - loss_pool_close[t] == max(loss_pool_close[t-1] - taxable_raw[t], 0)
+  - loss_pool_close[t] >= 0
+  - taxable_after_offset[t] == max(taxable_raw[t] - loss_pool_close[t-1], 0)
+  - taxable_after_offset[t] >= 0
+  - cash_tax[t] == tax_rate * taxable_after_offset[t]
+  - cash_tax[t] >= 0
+  - sum(cash_tax) == tax_rate * (sum(revenue) - sum(opcost) - (capex_usd_m - twdv_close[last]) + balancing_charge[last])
+  - nopat[t] == ebit[t] - cash_tax[t]
+  - dna[t] == book_dep[t]
+  - net_capex[t] == capex[t] - disposal_proceeds[t]
+  - capex[first] == capex_usd_m
+  - capex[t] == 0 for t >= op_start
+  - fcff[t] == nopat[t] + dna[t] - delta_nwc[t] - net_capex[t]
+  - fcff[t] == revenue[t] - opcost[t] - cash_tax[t] - delta_nwc[t] - net_capex[t] for t >= op_start
+  - fcff[first] == -capex_usd_m
+  - sum(fcff) == sum(revenue) - sum(opcost) - sum(cash_tax) + disposal_proceeds[last] - capex[first]
+
+notes:
+  - "Horizon: 21 periods, t=0 construction (capex 510) then t=1..20 operation over the 20-year PPA. Money in USD millions."
+  - "Currency is USD because the PPA is explicitly USD-denominated; no FX exposure on revenue is modelled."
+  - "Cash tax is built on the TAX base (taxable income after 12.5% reducing-balance capital allowances), not on book depreciation, per instruction. Book straight-line depreciation (25.5/yr) is retained only in the accounting ladder (EBIT and the NBV roll-forward) and is added back as D&A in the FCFF build, so it nets out of unlevered cash flow."
+  - "Front-loaded capital allowances exceed the operating margin (34.096) in years 1-5, creating tax losses that pool to 77.936443 by end-year 5. Assuming carryforward is available, the pool absorbs profits through year 11 and is exhausted mid-year 12; first cash tax (0.562437) falls in year 12. Lifetime cash tax = 66.876 = 30% of lifetime taxable income 222.920, and the net lifetime tax deduction equals cost minus proceeds (459.000) - both hard ties."
+  - "Loss-carryforward regime is the main judgment call. Base case assumes indefinite carryforward. Under FIFO the earliest (year-1) loss of 29.654 is fully absorbed only during year 10 - nine years after it arose - and the pool clears in year 12. CURRENT-LAW CORRECTION 2026-07-25 (physical audit): Kenya's loss carryforward was indefinite only from 1 Jan 2022 to 30 Jun 2025. The Finance Act 2025 reinstated a FIVE-YEAR cap (extendable on application to the Cabinet Secretary), effective 1 Jul 2025 — i.e. before this gold's date. The trace faithfully models the operator's stated 'carried forward until absorbed' premise, so the numbers stand as an indefinite-carryforward oracle, but that premise is NOT current law. Under a 5-year cap much of the front-loaded relief is forfeited and cash tax starts far earlier (materially lower FCFF). The loss-expiry mechanism is a SPAWN sibling, not an edit here. This is a discrete regime question, not a smooth sensitivity, so it is left qualitative here rather than materialised as a scenario column."
+  - "Disposal timing convention is immaterial to every period's tax. Claiming the year-20 wear-and-tear allowance (TWDV -> 35.296467, balancing charge 15.703533) versus skipping it in the disposal year (TWDV 40.338819, balancing charge 10.661181) leaves year-20 taxable income - and thus cash tax - identical, because the forgone allowance exactly equals the increase in the balancing charge. The literal reading of the utterance (value 'falls by 12.5% each year' across the life, then 'difference between sale proceeds and the tax written-down value') is used: 20 annual allowances, then a balancing charge on the 35.296467 residual."
+  - "Book depreciation uses the full 510 base to zero, matching the operator's 'straight-line over the 20-year PPA life' with no residual carved out. At year 20 book NBV is 0 while proceeds are 51, i.e. a book gain of 51; this book gain never enters the cash build (cash tax is on the tax base; the 51 enters FCFF as a cash inflow), so there is no double count. An IAS 16 residual-aware book charge would lower annual book depreciation but is irrelevant to FCFF."
+  - "Working capital: no receivable/payable terms were given, so dNWC = 0 throughout (ASSUMED immaterial). ELICITED: Kenya Power's USD-PPA payment lag and any O&M payables. A material receivable balance would shift cash between periods (a one-off build in year 1 and release at year 20) without changing lifetime FCFF."
+  - "Revenue holds the stated 410,000 MWh/yr, which reconciles to 234 MW * 8,760 h * 0.20 = 409,968 MWh (0.008% lower); the ~32 MWh gap is rounding in the operator's figure and is left as-is rather than forced. No tariff escalation, no O&M escalation, and no degradation of output were stated, so all three are held flat - each would, if present, lower later-year FCFF."
+  - "Lifetime unlevered FCFF (undiscounted) = 156.044. This is an asset-side FCFF only; no discount rate, financing, debt service, or DSCR is computed, per the unlevered mandate."
+  - "Six checks form the conservation backbone: the reducing-balance TWDV roll-forward, the loss-pool roll-forward (max-based), the two lifetime ties (sum of allowances = cost - closing TWDV; sum of cash tax = 30% of lifetime taxable), the balancing-charge definition at disposal, and the FCFF identity restated two ways (build-up and the D&A-cancelled operating bridge)."
+  - "PROVENANCE CORRECTION 2026-07-26 (canonicalization, metadata only — no number changed). All four arise golds were generated blind and independently, and each emitted the same id `arise-kenya-solar-fcff`, a 4-way primary-key collision that only became visible when the siblings were promoted into one library. Ids disambiguated to arise-kenya-solar-fcff-wt; filenames, titles, inputs, passage, trace, fcff and checks are untouched."

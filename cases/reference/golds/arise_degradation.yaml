@@ -1,0 +1,639 @@
+id: arise-kenya-solar-234mw-ppa-fcff
+title: "Arise Kenya - 234 MW AC solar portfolio, Rift Valley: unlevered FCFF over the 20-year Kenya Power PPA"
+currency: USD
+grid:
+  periods: 20
+  freq: annual
+
+utterance:
+  en: >-
+    We are Arise Kenya - six grid-connected solar plants totalling 234 megawatts AC in the Rift
+    Valley. We have a 20-year USD-denominated PPA with Kenya Power at 9.56 US cents per
+    kilowatt-hour, and construction cost 510 million US dollars. In the first full year the plants
+    give us about 410,000 megawatt-hours. But panels do not hold their output. The manufacturer's
+    warranty says we lose about half a percent of production every year, and after eight years of
+    running our own plants that is exactly what we see - each year comes in a little under the one
+    before, and it compounds. So 410,000 is the first year; every year after that is half a percent
+    below the year before it. Operating cost is 1 percent of capex a year. Corporate tax is 30
+    percent, and any tax loss carries forward until it is absorbed. At year 20 the PPA ends and we
+    expect a salvage of 10 percent of the original cost.
+  fr: >-
+    Nous sommes Arise Kenya - six centrales solaires raccordees au reseau totalisant 234 megawatts
+    AC dans la Vallee du Rift. Nous avons un contrat d'achat d'electricite (PPA) de 20 ans libelle
+    en dollars americains avec Kenya Power a 9,56 cents US le kilowattheure, et la construction a
+    coute 510 millions de dollars americains. La premiere annee pleine, les centrales nous donnent
+    environ 410 000 megawattheures. Mais les panneaux ne conservent pas leur production. La garantie
+    du fabricant indique que nous perdons environ un demi pour cent de production chaque annee, et
+    apres huit ans d'exploitation de nos propres centrales, c'est exactement ce que nous constatons -
+    chaque annee arrive un peu en dessous de la precedente, et cela se compose. Donc 410 000 pour la
+    premiere annee ; chaque annee suivante est inferieure de un demi pour cent a l'annee precedente.
+    Le cout d'exploitation represente 1 pour cent du capex par an. L'impot sur les societes est de 30
+    pour cent, et toute perte fiscale est reportee jusqu'a son absorption. A l'annee 20, le PPA prend
+    fin et nous attendons une valeur residuelle de 10 pour cent du cout d'origine.
+
+inputs:
+
+  capacity_mw_ac:
+    value: 234
+    unit: MW_AC
+    prov: STATED
+    source: "utterance span: 'six grid-connected solar plants totalling 234 megawatts AC in the Rift Valley'"
+    date: "2026-07-25"
+
+  plant_count:
+    value: 6
+    unit: plants
+    prov: STATED
+    source: "utterance span: 'six grid-connected solar plants'"
+    date: "2026-07-25"
+
+  hours_per_year:
+    value: 8760
+    unit: hours_per_year
+    prov: DEFAULTED
+    source: "calendar convention: 365 d x 24 h = 8760 h; non-leap standard year used for capacity-factor normalisation"
+    date: "2026-07-25"
+
+  capacity_factor:
+    value: 0.200015611
+    unit: fraction
+    prov: INFERRED
+    source: "inferred from generation_year1_mwh (410000) / (capacity_mw_ac 234 x hours_per_year 8760 = 2049840). No new information; used only as an operations sanity bridge, not as a revenue driver."
+    date: "2026-07-25"
+
+  generation_year1_mwh:
+    value: 410000
+    unit: MWh
+    prov: STATED
+    source: "utterance span: 'In the first full year the plants give us about 410,000 megawatt-hours' and 'So 410,000 is the first year'"
+    date: "2026-07-25"
+
+  degradation_rate:
+    value: 0.005
+    unit: fraction_per_year
+    prov: STATED
+    source: "utterance span: 'we lose about half a percent of production every year' + 'it compounds' + 'every year after that is half a percent below the year before it'. Compounding and the year-1 exclusion are both stated explicitly."
+    date: "2026-07-25"
+
+  tariff_usd_cents_per_kwh:
+    value: 9.56
+    unit: US_cents_per_kWh
+    prov: STATED
+    source: "utterance span: 'a 20-year USD-denominated PPA with Kenya Power at 9.56 US cents per kilowatt-hour'"
+    date: "2026-07-25"
+
+  tariff_usd_per_mwh:
+    value: 95.6
+    unit: USD_per_MWh
+    prov: INFERRED
+    source: "unit conversion of tariff_usd_cents_per_kwh: 9.56 c/kWh = 0.0956 USD/kWh; 1 MWh = 1000 kWh; therefore 95.60 USD/MWh. Pure dimensional identity, no new information."
+    date: "2026-07-25"
+
+  tariff_escalation:
+    value: 0.0
+    unit: fraction_per_year
+    prov: ASSUMED
+    source: "PRIOR. One tariff number is quoted for the whole stated term and no index is mentioned, so the contract price is held flat in nominal USD. RE-TAGGED 2026-07-26 (physical audit): was INFERRED, but 'no index is mentioned' is an ARGUMENT FROM SILENCE - concluding zero escalation imports the unstated prior that unmentioned terms are absent, which is ASSUMED, not entailment. The proof it is a defect rather than a judgement call is internal: two other zero-valued inputs in this same file rest on identical silence reasoning (nwc_level_usd, replacement_capex) and are both correctly tagged ASSUMED. One standard, applied twice one way and once the other. ELICIT: does the PPA carry an escalator or any indexation? Escalation is a first-order driver of a 20-year stream."
+    date: "2026-07-25"
+
+  capex_total:
+    value: 510000000
+    unit: USD
+    prov: STATED
+    source: "utterance span: 'construction cost 510 million US dollars'"
+    date: "2026-07-25"
+
+  capex_period_index:
+    value: 0
+    unit: period_index_0based
+    prov: DEFAULTED
+    source: "project-FCFF convention: the whole initial investment is charged to the first modelled period. The founder uses the past tense ('cost') and gives no draw schedule; construction is collapsed into period 0 alongside the first full operating year."
+    date: "2026-07-25"
+
+  opex_pct_of_capex:
+    value: 0.01
+    unit: fraction_of_capex_per_year
+    prov: STATED
+    source: "utterance span: 'Operating cost is 1 percent of capex a year'"
+    date: "2026-07-25"
+
+  opex_annual:
+    value: 5100000
+    unit: USD_per_year
+    prov: INFERRED
+    source: "inferred from opex_pct_of_capex (0.01) x capex_total (510,000,000). Flat because both the rate and the base are fixed."
+    date: "2026-07-25"
+
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: STATED
+    source: "utterance span: 'Corporate tax is 30 percent'"
+    date: "2026-07-25"
+
+  nol_carryforward_years:
+    value: 999
+    unit: years
+    prov: INFERRED
+    source: "From the utterance span 'any tax loss carries forward until it is absorbed': indefinite carryforward is STATED; the numeral 999 is an ENCODING of it, and over a 20-period grid any bound >= 20 is equivalent to indefinite, so the value follows arithmetically. RE-TAGGED 2026-07-26 (physical audit): was STATED, but 999 appears nowhere in the utterance and a STATED tag must quote the founder's actual words. Never binds here (taxable income positive in all 20 periods; minimum 7,585,288.83). SEPARATELY, on the world rather than the tag: indefinite carryforward reflects the position the founder asserts, but Kenya reinstated a five-year cap in the Finance Act 2025. The gold correctly models what the founder states; the sibling gold arise_expiry isolates the capped regime, and the contrast between them is the point."
+    date: "2026-07-25"
+
+  salvage_pct_of_capex:
+    value: 0.10
+    unit: fraction_of_capex
+    prov: STATED
+    source: "utterance span: 'we expect a salvage of 10 percent of the original cost'"
+    date: "2026-07-25"
+
+  salvage_value:
+    value: 51000000
+    unit: USD
+    prov: INFERRED
+    source: "inferred from salvage_pct_of_capex (0.10) x capex_total (510,000,000)"
+    date: "2026-07-25"
+
+  salvage_period_index:
+    value: 19
+    unit: period_index_0based
+    prov: INFERRED
+    source: "utterance span: 'At year 20 the PPA ends and we expect a salvage' - PPA year 20 is the 20th of 20 annual periods, i.e. 0-based index 19"
+    date: "2026-07-25"
+
+  ppa_term_years:
+    value: 20
+    unit: years
+    prov: STATED
+    source: "utterance span: 'a 20-year USD-denominated PPA' and 'At year 20 the PPA ends'"
+    date: "2026-07-25"
+
+  useful_life_years:
+    value: 20
+    unit: years
+    prov: ASSUMED
+    source: "PRIOR: IAS 16.6/16.57 useful life is entity-specific - the period over which the asset is expected to be available for use BY THE ENTITY. The founder states the PPA ends and the plants are disposed of for salvage at year 20, so the entity's expected use ends at 20 years. The panels' technical life is longer; that is why this is ASSUMED, not INFERRED. ELICITED question not asked: 'Do you intend to keep and re-contract the plants after year 20, or sell them?'"
+    date: "2026-07-25"
+
+  depreciation_method:
+    value: "straight_line"
+    unit: method
+    prov: DEFAULTED
+    source: "IAS 16.62 - straight line where the pattern of consumption of economic benefits is even. A PV plant's service potential is consumed broadly evenly per available year."
+    date: "2026-07-25"
+
+  residual_value_for_depreciation:
+    value: 51000000
+    unit: USD
+    prov: DEFAULTED
+    source: "IAS 16.53 - depreciable amount = cost less residual value. The founder states an expected disposal amount at end of useful life, which is exactly the IAS 16.6 definition of residual value, so it must be deducted from the depreciable base."
+    date: "2026-07-25"
+
+  depreciation_annual:
+    value: 22950000
+    unit: USD_per_year
+    prov: INFERRED
+    source: "inferred from (capex_total 510,000,000 - residual_value_for_depreciation 51,000,000) / useful_life_years 20"
+    date: "2026-07-25"
+
+  tax_depreciation_equals_book:
+    value: 1
+    unit: flag
+    prov: DEFAULTED
+    source: "convention: absent a stated capital-allowance regime, the tax base is taken equal to the book base, so current tax = statutory rate x book EBIT and no deferred tax arises. ELICITED question not asked: 'Which Kenyan investment deduction / wear-and-tear allowance applies to the plants, and at what rate?'"
+    date: "2026-07-25"
+
+  nwc_level_usd:
+    value: 0
+    unit: USD
+    prov: ASSUMED
+    source: "PRIOR: no payment terms, receivable ageing, arrears position, consumables inventory or payables policy appear anywhere in the utterance, and a PV plant carries no fuel inventory. Net working capital is set to zero in every period so cash conversion of NOPAT is one-for-one. ELICITED question not asked: 'What are Kenya Power's contractual payment terms under the PPA, and what is the current arrears / days-sales-outstanding position?'"
+    date: "2026-07-25"
+
+  replacement_capex:
+    value: 0
+    unit: USD
+    prov: ASSUMED
+    source: "PRIOR: the founder folds all recurring spend into 'Operating cost is 1 percent of capex a year' and names no replacement capex. Utility-scale PV normally carries a mid-life inverter replacement; taken at face value here. ELICITED question not asked: 'Does the 1% of capex include mid-life inverter / transformer replacement, or is that separate capex?'"
+    date: "2026-07-25"
+
+passage: |
+  SCOPE, HORIZON AND GRID
+
+  The asset is a portfolio of six grid-connected PV plants in the Kenyan Rift Valley, 234 MW AC in
+  aggregate, selling its entire output to a single offtaker (Kenya Power) under a 20-year
+  USD-denominated PPA. The only economic terminus the founder supplies is the end of that contract
+  ("At year 20 the PPA ends and we expect a salvage of 10 percent of the original cost"), so the
+  sensible horizon is exactly the PPA term: 20 annual periods, t = 0 .. 19, mapping to operating /
+  PPA years 1 .. 20. Period t = 0 is the first FULL operating year, and the entire 510,000,000
+  construction cost is charged to t = 0 as the initial investment. That is a modelling convention,
+  not a claim about the build programme - it collapses construction into the same annual bucket as
+  the first year of production. The alternative (a separate construction period ahead of t = 0)
+  would shift the whole operating stream one period later without changing any operating figure.
+
+  The build is UNLEVERED throughout: no debt, no interest, no financing flows. That is what makes
+  the result asset-side. No discount rate is stated, so no NPV or IRR is computed; the deliverable
+  is the FCFF stream itself.
+
+  STEP 1 - PHYSICAL PRODUCTION (natural unit: MWh delivered per portfolio-year)
+
+  Nameplate reference: 234 MW AC x 8,760 h/yr = 2,049,840 MWh at a theoretical 100% capacity
+  factor. The founder's stated first-full-year energy is 410,000 MWh, which implies an AC capacity
+  factor of 410,000 / 2,049,840 = 20.0%, i.e. a specific yield of about 1,752 MWh per MW-AC per
+  year. For Rift Valley irradiation that is an ordinary, unremarkable number, so the utterance is
+  internally consistent on its own terms and no re-basing of the energy figure is warranted.
+  Averaged across six plants that is 39 MW and roughly 68,333 MWh per plant-year, but the founder
+  never says the six plants are equal, so everything below runs at portfolio level only. The
+  410,000 MWh is treated as NET energy delivered at the metering point - it is what "the plants
+  give us", i.e. already after auxiliary consumption, transformer losses and availability.
+
+  Degradation is stated twice and unambiguously, including the compounding and the exclusion of
+  year 1: "410,000 is the first year; every year after that is half a percent below the year before
+  it", and "it compounds". So the production recursion is
+
+      G(0) = 410,000 MWh
+      G(t) = G(t-1) x (1 - 0.005)  for t >= 1,  equivalently  G(t) = 410,000 x 0.995^t
+
+  Eight years of the founder's own operating history are cited as confirming the rate, so 0.5%/yr
+  is treated as an OBSERVED AC-side portfolio degradation - not a nameplate DC warranty step that
+  would need translating into plant output.
+
+      G(0)  = 410,000.00 MWh
+      G(1)  = 410,000 x 0.995            = 407,950.00 MWh
+      G(2)  = 407,950 x 0.995            = 405,910.25 MWh
+      G(3)  = 405,910.25 x 0.995         = 403,880.70 MWh
+      G(9)  = 410,000 x 0.995^9          = 391,914.73 MWh
+      G(19) = 410,000 x 0.995^19         = 372,754.07 MWh
+
+  Cumulative output loss over the PPA is 1 - 0.995^19 = 9.08%. Total energy delivered over the 20
+  years is 410,000 x (1 - 0.995^20)/0.005 = 7,821,940.62 MWh.
+  CORRECTED 2026-07-26 (physical audit): this line previously evaluated to 7,822,987 MWh. The FORMULA
+  was right and the ARITHMETIC was wrong, overstating lifetime output by about 1,046 MWh. It is
+  refuted twice by this gold's own numbers - the sum of trace.generation_mwh, and the passage's own
+  lifetime revenue divided by the tariff, both give 7,821,940.62. No trace value changed; only this
+  sentence was wrong. Note the general lesson it illustrates: NO CHECK BINDS PASSAGE PROSE TO THE
+  TRACE, so a number written only in prose is outside the machine gate entirely - which is why
+  contract v2.3 forbids putting quantified results there in the first place.
+
+  STEP 2 - REVENUE (IFRS 15)
+
+  Tariff unit bridge: 9.56 US cents/kWh = 0.0956 USD/kWh; 1 MWh = 1,000 kWh; therefore the tariff
+  is 95.60 USD/MWh. The PPA is USD-denominated and one tariff number is quoted for the entire
+  20-year term with no index mentioned, so the price is FLAT in nominal USD across all 20 periods.
+
+  Revenue is recognised as electricity is delivered - a performance obligation satisfied over time,
+  measured by an output method (MWh metered), which is the natural measure here and requires no
+  estimation.
+
+      Revenue(t) = 95.60 x G(t)
+
+      Revenue(0)  = 95.60 x 410,000.00     = 39,196,000.00
+      Revenue(1)  = 95.60 x 407,950.00     = 39,000,020.00
+      Revenue(2)  = 95.60 x 405,910.25     = 38,805,019.90
+      Revenue(3)  = 95.60 x 403,880.70     = 38,610,994.80
+      Revenue(9)  = 95.60 x 391,914.73     = 37,467,047.91
+      Revenue(19) = 95.60 x 372,754.07     = 35,635,288.83
+
+  Because the tariff is flat, revenue inherits the degradation recursion exactly:
+  Revenue(t) = Revenue(t-1) x 0.995. Both routes agree to the cent, which is the first internal
+  cross-check of the build. Total revenue over 20 years = 39,196,000 x (1 - 0.995^20)/0.005 =
+  747,777,523.
+
+  STEP 3 - OPERATING COST
+
+  "Operating cost is 1 percent of capex a year" gives 0.01 x 510,000,000 = 5,100,000 per year, in
+  every one of the 20 periods. Because both the rate and the base are fixed, this is a FLAT nominal
+  figure and is not indexed. It is a period cost, expensed as incurred and matched to the year of
+  generation. Taken as covering O&M, land, insurance, security, grid/regulatory charges and admin -
+  the founder itemises nothing separately, and adding items would be invention.
+
+  STEP 4 - EBITDA
+
+      EBITDA(t) = Revenue(t) - 5,100,000
+
+      EBITDA(0)  = 39,196,000.00 - 5,100,000 = 34,096,000.00
+      EBITDA(1)  = 39,000,020.00 - 5,100,000 = 33,900,020.00
+      EBITDA(9)  = 37,467,047.91 - 5,100,000 = 32,367,047.91
+      EBITDA(19) = 35,635,288.83 - 5,100,000 = 30,535,288.83
+
+  Total EBITDA over the horizon = 747,777,523 - 102,000,000 = 645,777,523. Note the operating
+  geometry: revenue decays 0.5%/yr but the cost base is flat, so EBITDA decays slightly faster in
+  percentage terms - 34,096,000 to 30,535,289 is -10.4%, against -9.1% on revenue. This is the
+  fixed-cost drag that degradation creates, and it is the reason the physical decay matters more to
+  cash than the headline 0.5% suggests.
+
+  STEP 5 - CAPITAL BASE, DEPRECIATION AND THE PP&E ROLL-FORWARD (IAS 16)
+
+  Cost of the PP&E = 510,000,000. The founder expects to realise 10% of original cost = 51,000,000
+  at the end of the PPA. An expected disposal amount at the end of the asset's useful life to the
+  entity IS the IAS 16.6 residual value, so under IAS 16.53 it must be deducted from the
+  depreciable amount:
+
+      depreciable amount = 510,000,000 - 51,000,000 = 459,000,000
+
+  Useful life to this entity = 20 years. IAS 16 defines useful life entity-specifically: the period
+  over which the asset is expected to be available for use BY THE ENTITY. The PPA ends at year 20
+  and the plants are expected to be disposed of then, so 20 years is the relevant life even though
+  the panels' technical life is longer. Method: straight line.
+
+      annual depreciation = 459,000,000 / 20 = 22,950,000
+
+  Roll-forward. Gross cost is held at 510,000,000 for t = 0 .. 18. Accumulated depreciation builds
+  at 22,950,000/yr: 22,950,000 at t = 0, 229,500,000 at t = 9, 436,050,000 at t = 18. Net book
+  value therefore runs 487,050,000 at t = 0, down 22,950,000 per year, to 73,950,000 at t = 18. In
+  t = 19 the final 22,950,000 charge takes NBV to exactly 51,000,000 immediately before disposal;
+  the disposal then derecognises cost 510,000,000 and accumulated depreciation 459,000,000, so
+  gross, accumulated and net all close at zero. The books close clean, with no stub asset left
+  behind - a direct consequence of matching the depreciable base to the stated residual.
+
+  Consequence for tax: proceeds of 51,000,000 equal NBV of 51,000,000, so the gain on disposal is
+  exactly zero and the terminal cash carries no tax. This falls out of applying IAS 16.53 to a
+  residual the founder himself stated; it is not an additional assumption.
+
+  STEP 6 - EBIT
+
+      EBIT(t) = EBITDA(t) - 22,950,000
+
+      EBIT(0)  = 34,096,000.00 - 22,950,000 = 11,146,000.00
+      EBIT(1)  = 33,900,020.00 - 22,950,000 = 10,950,020.00
+      EBIT(9)  = 32,367,047.91 - 22,950,000 =  9,417,047.91
+      EBIT(19) = 30,535,288.83 - 22,950,000 =  7,585,288.83
+
+  Total EBIT = 645,777,523 - 459,000,000 = 186,777,523. EBIT is positive in every one of the 20
+  periods; the depreciation shield never exceeds EBITDA.
+
+  STEP 7 - TAX AND THE LOSS CARRYFORWARD
+
+  Unlevered build, so no interest enters taxable income. Gain on disposal is zero. Therefore
+  taxable income before losses = EBIT in every period.
+
+  The founder specifically flagged that "any tax loss carries forward until it is absorbed", so the
+  mechanism is modelled explicitly rather than asserted away: an opening pool, an addition equal to
+  the loss whenever pre-loss taxable income is negative, a utilisation capped at the lesser of the
+  opening pool and positive taxable income, and a closing pool carried into the next period.
+
+  FINDING: on the founder's own numbers the pool is never created, never drawn and closes at zero
+  in all 20 periods, because EBIT is positive throughout. The carryforward feature he emphasised is
+  inert in this business plan. It would only start to bite if EBIT went negative, and the stated
+  0.5%/yr decay does not come close - EBIT is still above 7.5m in the final year, some 27% above (corrected 2026-07-26, physical audit)
+  the annual depreciation-plus-opex floor it would have to fall through. This is worth telling him:
+  the loss-relief provision he is relying on is protection he does not currently need, and its
+  presence should not be read as slack in the plan.
+
+      Tax(t) = 0.30 x EBIT(t)
+
+      Tax(0)  = 0.30 x 11,146,000.00 = 3,343,800.00
+      Tax(1)  = 0.30 x 10,950,020.00 = 3,285,006.00
+      Tax(9)  = 0.30 x  9,417,047.91 = 2,825,114.37
+      Tax(19) = 0.30 x  7,585,288.83 = 2,275,586.65
+
+  Total tax = 0.30 x 186,777,523 = 56,033,257. Tax base is taken equal to the book base, so current
+  tax is 30% of book EBIT and no deferred tax arises.
+
+  STEP 8 - NOPAT
+
+      NOPAT(t) = EBIT(t) - Tax(t)
+
+      NOPAT(0)  = 11,146,000.00 - 3,343,800.00 =  7,802,200.00
+      NOPAT(1)  = 10,950,020.00 - 3,285,006.00 =  7,665,014.00
+      NOPAT(9)  =  9,417,047.91 - 2,825,114.37 =  6,591,933.54
+      NOPAT(19) =  7,585,288.83 - 2,275,586.65 =  5,309,702.18
+
+  Total NOPAT over the horizon = 130,744,266.
+
+  STEP 9 - WORKING CAPITAL
+
+  The utterance contains no payment terms, no receivable ageing, no arrears figure, no consumables
+  inventory and no payables policy. A PV plant carries no fuel inventory and its spare parts sit
+  inside the 1%-of-capex line. The single real working-capital item is the offtaker receivable, and
+  its size depends entirely on Kenya Power's payment behaviour, which was not stated and cannot be
+  deduced. Net working capital is therefore set to zero in every period, so delta NWC = 0
+  throughout and NOPAT converts to cash one-for-one. Receivables, payables, NWC and delta NWC are
+  still carried as explicit rows so the choice is visible and the roll-forward is checkable. This
+  is a flagged modelling decision, not a finding about the business.
+
+  STEP 10 - CAPEX AND SALVAGE
+
+  Capex: 510,000,000 in period 0, zero in every subsequent period. The founder names no replacement
+  or major-maintenance capex and folds all recurring spend into the operating line; that is taken
+  at face value.
+
+  Salvage: 51,000,000 received in period 19 (PPA year 20). It is an investing inflow from the
+  disposal of PP&E, NOT revenue, and it is presented that way - it never touches EBITDA, EBIT or
+  the tax computation. Because NBV at disposal is also exactly 51,000,000, the gain is zero and the
+  proceeds arrive untaxed.
+
+  STEP 11 - FCFF, PER PERIOD
+
+      CFO(t)  = NOPAT(t) + D&A(t) - delta NWC(t) = NOPAT(t) + 22,950,000 - 0
+      CFI(t)  = salvage(t) - capex(t)
+      FCFF(t) = CFO(t) + CFI(t) = NOPAT(t) + D&A(t) - delta NWC(t) - capex(t) + salvage(t)
+
+      t = 0:  7,802,200.00 + 22,950,000 - 0 - 510,000,000 + 0 = -479,247,800.00
+      t = 1:  7,665,014.00 + 22,950,000                       =   30,615,014.00
+      t = 2:  7,528,513.93 + 22,950,000                       =   30,478,513.93
+      t = 3:  7,392,696.36 + 22,950,000                       =   30,342,696.36
+      t = 9:  6,591,933.54 + 22,950,000                       =   29,541,933.54
+      t = 18: 5,435,052.44 + 22,950,000                       =   28,385,052.44
+      t = 19: 5,309,702.18 + 22,950,000 - 0 - 0 + 51,000,000  =   79,259,702.18
+
+  The operating-phase FCFF steps down by a fixed, checkable amount each year. Since delta NWC,
+  capex and depreciation are all constant in t = 1 .. 18, the year-on-year fall in FCFF is exactly
+  the after-tax fall in revenue: (1 - 0.30) x 0.005 x Revenue(t-1) = 0.0035 x Revenue(t-1). At the
+  start of the decline that is 0.0035 x 39,000,020 = 136,500.07, matching FCFF(1) - FCFF(2)
+  = 30,615,014.00 - 30,478,513.93 exactly; at the end it is 0.0035 x 35,814,360.63 = 125,350.26,
+  matching CFO(18) - CFO(19). The whole operating profile is a linear-in-revenue, geometrically
+  decaying annuity, and this identity is the cheapest way to audit it.
+
+  AGGREGATES AND SHAPE
+
+  Total FCFF over the 20 periods = 130,744,266. That figure is identically equal to total NOPAT,
+  because total depreciation (459,000,000) exactly equals capex (510,000,000) less salvage
+  (51,000,000), and delta NWC sums to zero over the horizon. That identity is asserted in `checks`
+  and is the single strongest audit hook on the whole build: any engine that gets the ladder right
+  but the capital account wrong will break it.
+
+  Cumulative FCFF runs -479,247,800 at t = 0, is still -179,158,975 at t = 10, -5,411,521 at t = 16,
+  and turns positive at t = 17 (operating year 18) at 23,099,511. Undiscounted payback therefore
+  falls inside the PPA term, but only just - roughly the last three years of the contract, plus the
+  salvage, carry the entire undiscounted return. That is the central risk shape of this asset: the
+  economics are back-loaded onto the tail of a single-offtaker contract, and any event that
+  truncates or impairs the last few PPA years destroys a disproportionate share of the whole return.
+
+  Finally, a companion row `fcff_ex_initial_capex` is carried, showing the same stream with the
+  period-0 construction outflow removed. It answers the going-concern question directly - what the
+  installed asset base throws off per year if the 510,000,000 is treated as already sunk - and it is
+  checked against `fcff` and `capex` rather than being asserted in prose.
+
+trace:
+
+  generation_mwh: [410000.0, 407950.0, 405910.25, 403880.69875, 401861.295256, 399851.988780, 397852.728836, 395863.465192, 393884.147866, 391914.727127, 389955.153491, 388005.377724, 386065.350835, 384135.024081, 382214.348960, 380303.277216, 378401.760829, 376509.752025, 374627.203265, 372754.067249]
+
+  revenue: [39196000.0, 39000020.0, 38805019.9, 38610994.8005, 38417939.826498, 38225850.127365, 38034720.876728, 37844547.272345, 37655324.535983, 37467047.913303, 37279712.673736, 37093314.110368, 36907847.539816, 36723308.302117, 36539691.760606, 36356993.301803, 36175208.335294, 35994332.293618, 35814360.63215, 35635288.828989]
+
+  opex: [5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0, 5100000.0]
+
+  ebitda: [34096000.0, 33900020.0, 33705019.9, 33510994.8005, 33317939.826498, 33125850.127365, 32934720.876728, 32744547.272345, 32555324.535983, 32367047.913303, 32179712.673736, 31993314.110368, 31807847.539816, 31623308.302117, 31439691.760606, 31256993.301803, 31075208.335294, 30894332.293618, 30714360.63215, 30535288.828989]
+
+  depreciation: [22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0, 22950000.0]
+
+  ebit: [11146000.0, 10950020.0, 10755019.9, 10560994.8005, 10367939.826498, 10175850.127365, 9984720.876728, 9794547.272345, 9605324.535983, 9417047.913303, 9229712.673736, 9043314.110368, 8857847.539816, 8673308.302117, 8489691.760606, 8306993.301803, 8125208.335294, 7944332.293618, 7764360.63215, 7585288.828989]
+
+  gain_on_disposal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  taxable_income_pre_nol: [11146000.0, 10950020.0, 10755019.9, 10560994.8005, 10367939.826498, 10175850.127365, 9984720.876728, 9794547.272345, 9605324.535983, 9417047.913303, 9229712.673736, 9043314.110368, 8857847.539816, 8673308.302117, 8489691.760606, 8306993.301803, 8125208.335294, 7944332.293618, 7764360.63215, 7585288.828989]
+
+  nol_opening: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  nol_addition: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  nol_utilised: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  nol_closing: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  taxable_income: [11146000.0, 10950020.0, 10755019.9, 10560994.8005, 10367939.826498, 10175850.127365, 9984720.876728, 9794547.272345, 9605324.535983, 9417047.913303, 9229712.673736, 9043314.110368, 8857847.539816, 8673308.302117, 8489691.760606, 8306993.301803, 8125208.335294, 7944332.293618, 7764360.63215, 7585288.828989]
+
+  tax: [3343800.0, 3285006.0, 3226505.97, 3168298.44015, 3110381.947949, 3052755.03821, 2995416.263018, 2938364.181704, 2881597.360795, 2825114.373991, 2768913.802121, 2712994.23311, 2657354.261945, 2601992.490635, 2546907.528182, 2492097.990541, 2437562.500588, 2383299.688085, 2329308.189645, 2275586.648697]
+
+  nopat: [7802200.0, 7665014.0, 7528513.93, 7392696.36035, 7257557.878549, 7123095.089156, 6989304.61371, 6856183.090642, 6723727.175188, 6591933.539312, 6460798.871615, 6330319.877258, 6200493.277871, 6071315.811482, 5942784.232424, 5814895.311262, 5687645.834706, 5561032.605533, 5435052.442505, 5309702.180292]
+
+  capex: [510000000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  cost_disposed: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 510000000.0]
+
+  accum_dep_disposed: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 459000000.0]
+
+  nbv_disposed: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 51000000.0]
+
+  salvage_proceeds: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 51000000.0]
+
+  ppe_gross: [510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 510000000.0, 0.0]
+
+  accum_dep: [22950000.0, 45900000.0, 68850000.0, 91800000.0, 114750000.0, 137700000.0, 160650000.0, 183600000.0, 206550000.0, 229500000.0, 252450000.0, 275400000.0, 298350000.0, 321300000.0, 344250000.0, 367200000.0, 390150000.0, 413100000.0, 436050000.0, 0.0]
+
+  ppe_nbv: [487050000.0, 464100000.0, 441150000.0, 418200000.0, 395250000.0, 372300000.0, 349350000.0, 326400000.0, 303450000.0, 280500000.0, 257550000.0, 234600000.0, 211650000.0, 188700000.0, 165750000.0, 142800000.0, 119850000.0, 96900000.0, 73950000.0, 0.0]
+
+  receivables: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  payables: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  nwc: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  delta_nwc: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  cfo: [30752200.0, 30615014.0, 30478513.93, 30342696.36035, 30207557.878549, 30073095.089156, 29939304.61371, 29806183.090642, 29673727.175188, 29541933.539312, 29410798.871615, 29280319.877258, 29150493.277871, 29021315.811482, 28892784.232424, 28764895.311262, 28637645.834706, 28511032.605533, 28385052.442505, 28259702.180292]
+
+  cfi: [-510000000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 51000000.0]
+
+  fcff: [-479247800.0, 30615014.0, 30478513.93, 30342696.36035, 30207557.878549, 30073095.089156, 29939304.61371, 29806183.090642, 29673727.175188, 29541933.539312, 29410798.871615, 29280319.877258, 29150493.277871, 29021315.811482, 28892784.232424, 28764895.311262, 28637645.834706, 28511032.605533, 28385052.442505, 79259702.180292]
+
+  cum_fcff: [-479247800.0, -448632786.0, -418154272.07, -387811575.70965, -357604017.831101, -327530922.741945, -297591618.128235, -267785435.037593, -238111707.862405, -208569774.323093, -179158975.451478, -149878655.574220, -120728162.296349, -91706846.484867, -62814062.252443, -34049166.941181, -5411521.106475, 23099511.499058, 51484563.941563, 130744266.121855]
+
+  fcff_ex_initial_capex: [30752200.0, 30615014.0, 30478513.93, 30342696.36035, 30207557.878549, 30073095.089156, 29939304.61371, 29806183.090642, 29673727.175188, 29541933.539312, 29410798.871615, 29280319.877258, 29150493.277871, 29021315.811482, 28892784.232424, 28764895.311262, 28637645.834706, 28511032.605533, 28385052.442505, 79259702.180292]
+
+fcff: [-479247800.0, 30615014.0, 30478513.93, 30342696.36035, 30207557.878549, 30073095.089156, 29939304.61371, 29806183.090642, 29673727.175188, 29541933.539312, 29410798.871615, 29280319.877258, 29150493.277871, 29021315.811482, 28892784.232424, 28764895.311262, 28637645.834706, 28511032.605533, 28385052.442505, 79259702.180292]
+
+checks:
+  - "trace.ppe_gross[t] == trace.ppe_gross[t-1] + trace.capex[t] - trace.cost_disposed[t]"
+  - "trace.accum_dep[t] == trace.accum_dep[t-1] + trace.depreciation[t] - trace.accum_dep_disposed[t]"
+  - "trace.ppe_nbv[t] == trace.ppe_gross[t] - trace.accum_dep[t]"
+  - "trace.nbv_disposed[t] == trace.cost_disposed[t] - trace.accum_dep_disposed[t]"
+  - "trace.nol_opening[t] == trace.nol_closing[t-1]"
+  - "trace.nol_closing[t] == trace.nol_opening[t] + trace.nol_addition[t] - trace.nol_utilised[t]"
+  - "trace.nol_utilised[t] <= trace.nol_opening[t]"
+  - "trace.nwc[t] == trace.receivables[t] - trace.payables[t]"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1]"
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "trace.cum_fcff == cumsum(trace.fcff)"
+  - "sum(trace.depreciation) == capex_total - salvage_value"
+  - "sum(trace.capex) == capex_total"
+  - "sum(trace.salvage_proceeds) == salvage_value"
+  - "sum(trace.fcff) == sum(trace.nopat)"
+  - "trace.ppe_gross[last] == 0"
+  - "trace.accum_dep[last] == 0"
+  - "trace.ppe_nbv[last] == 0"
+  - "trace.ebitda == trace.revenue - trace.opex"
+  - "trace.ebit == trace.ebitda - trace.depreciation"
+  - "trace.gain_on_disposal == trace.salvage_proceeds - trace.nbv_disposed"
+  - "trace.taxable_income_pre_nol == trace.ebit + trace.gain_on_disposal"
+  - "trace.taxable_income == trace.taxable_income_pre_nol + trace.nol_addition - trace.nol_utilised"
+  - "trace.tax == tax_rate * trace.taxable_income"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc"
+  - "trace.cfi == trace.salvage_proceeds - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex + trace.salvage_proceeds"
+  - "trace.fcff_ex_initial_capex == trace.fcff + trace.capex"
+  - "trace.revenue == tariff_usd_per_mwh * trace.generation_mwh"
+  - "tariff_usd_per_mwh == tariff_usd_cents_per_kwh * 10"
+  - "trace.generation_mwh[t] == generation_year1_mwh for t < 1"
+  - "trace.generation_mwh[t] == trace.generation_mwh[t-1] * (1 - degradation_rate) for t >= 1"
+  - "trace.generation_mwh[first] == capacity_mw_ac * hours_per_year * capacity_factor"
+  - "trace.generation_mwh[t] <= trace.generation_mwh[t-1] for t >= 1"
+  - "trace.opex == capex_total * opex_pct_of_capex"
+  - "opex_annual == opex_pct_of_capex * capex_total"
+  - "trace.depreciation == (capex_total - residual_value_for_depreciation) / useful_life_years"
+  - "depreciation_annual == (capex_total - residual_value_for_depreciation) / useful_life_years"
+  - "residual_value_for_depreciation == salvage_value"
+  - "salvage_value == salvage_pct_of_capex * capex_total"
+  - "trace.capex[t] == capex_total for t < 1"
+  - "trace.capex[t] == 0 for t >= 1"
+  - "trace.salvage_proceeds[t] == 0 for t < 19"
+  - "trace.salvage_proceeds[t] == salvage_pct_of_capex * capex_total for t >= 19"
+  - "trace.cost_disposed[t] == 0 for t < 19"
+  - "trace.cost_disposed[t] == capex_total for t >= 19"
+  - "trace.accum_dep_disposed[t] == 0 for t < 19"
+  - "trace.accum_dep_disposed[t] == capex_total - salvage_value for t >= 19"
+  - "trace.nwc == nwc_level_usd"
+  - "grid.periods == ppa_term_years"
+  - "grid.periods == useful_life_years"
+  - "trace.generation_mwh[t] >= 0"
+  - "trace.revenue[t] >= 0"
+  - "trace.ebitda[t] >= 0"
+  - "trace.ppe_nbv[t] >= 0"
+  - "trace.accum_dep[t] >= 0"
+  - "trace.nol_closing[t] >= 0"
+  - "trace.nol_opening[t] >= 0"
+  - "trace.taxable_income[t] >= 0"
+  - "trace.tax[t] >= 0"
+  - "trace.receivables[t] >= 0"
+  - "trace.payables[t] >= 0"
+  - "trace.cfo[t] >= 0"
+
+notes:
+
+  - "OPERATIONS CROSS-CHECK (finding, not an assumption). 234 MW AC x 8,760 h = 2,049,840 MWh of nameplate hours; the stated 410,000 MWh first-year output implies a 20.0% AC capacity factor, about 1,752 MWh per MW-AC per year. That is an ordinary specific yield for Rift Valley irradiation, so the founder's capacity figure and his energy figure are mutually consistent and neither needed re-basing. This is asserted in checks via capacity_factor rather than left in prose."
+
+  - "HORIZON. The PPA term is the only terminus the founder gives an economic value for, and he prices the exit at that date (salvage at year 20). A 20-period annual grid mapping t = 0..19 to PPA years 1..20 is therefore the natural horizon. No post-PPA merchant tail, re-contracting or extension is modelled, because none was described; a separate agent is examining the expiry question."
+
+  - "CAPEX TIMING (judgment call, logged). The founder used the past tense ('construction cost 510 million'), which is ambiguous between 'this is the investment we are appraising' and 'this is already sunk'. The base build charges the full 510,000,000 to period 0 as the initial investment, which is the standard asset-side project view and the one that makes total FCFF a whole-life number. Because the ambiguity is real, the going-concern alternative is MATERIALISED as trace.fcff_ex_initial_capex and checked against trace.fcff and trace.capex, rather than being described in prose. What would change the call: a stated commercial operation date, a draw schedule, or an explicit statement that the plants are already operating and the spend is historic."
+
+  - "CONSTRUCTION PERIOD. Construction is collapsed into the same annual bucket as the first full operating year rather than given its own period ahead of t = 0. Direction of the effect if separated: the entire operating stream would sit one year later relative to the outflow, which worsens any time-weighted measure while leaving every operating line unchanged."
+
+  - "DEPRECIATION BASE (judgment call, logged). IAS 16.53 requires the depreciable amount to be cost less residual value, and the founder's expected year-20 salvage IS a residual value on the IAS 16.6 definition. The depreciable base is therefore 459,000,000, not 510,000,000. The consequence is that book value at disposal equals proceeds, so there is no gain and no exit tax. Direction of the effect of the alternative (depreciating the full cost): annual depreciation would be higher, so tax would be lower during the PPA, but the disposal would then throw off a taxable gain and terminal FCFF would fall. What would change the call: evidence that the 10% is a scrap estimate the entity does not actually expect to realise, or a policy of depreciating to nil."
+
+  - "USEFUL LIFE. Set equal to the PPA term because the founder expects to dispose of the plants when the contract ends. This is ASSUMED, not INFERRED - PV modules have a longer technical life, and IAS 16 useful life is entity-specific. ELICITED question not asked: do you intend to re-contract, go merchant, or sell at year 20?"
+
+  - "TAX BASE. No Kenyan capital-allowance schedule is modelled; the tax base is taken equal to the book base, so current tax is 30% of book EBIT and no deferred tax arises. Kenya does grant investment deductions on qualifying plant. Direction of the effect if accelerated allowances apply: tax is deferred into later years, raising early FCFF and lowering late FCFF. ELICITED question not asked: which allowance regime and rate applies to these six plants? CORRECTED 2026-07-26 (physical audit): this note previously added that the total would be 'broadly preserved'. That is TRUE ONLY UNDER INDEFINITE LOSS CARRYFORWARD and was stated unconditionally. Under indefinite carryforward the invariance is in fact exact, not merely broad - undiscounted lifetime FCFF is the same whatever the allowance schedule, because lifetime net relief is cost minus proceeds regardless of timing - and the auditor confirmed it holds to the cent across several allowance regimes, which is independent evidence that this gold capital account is sound. But the invariance BREAKS under a capped carryforward, because front-loaded allowances then create relief that expires unused, and Kenya reinstated a five-year cap in the Finance Act 2025. Direction only: under a cap, an accelerated allowance forfeits relief and lifetime FCFF falls substantially rather than being preserved. The sibling gold arise_expiry isolates exactly that regime; this gold and that one are the two sides of the invariant, and the condition is the carryforward rule."
+
+  - "LOSS CARRYFORWARD IS INERT (finding). The founder specifically volunteered that tax losses carry forward until absorbed, which usually signals that the speaker expects loss years. On his own numbers there are none: EBIT is positive in all 20 periods and the carryforward pool is created, drawn and closed at zero throughout. The mechanism is still materialised as four explicit rows so the logic is visible and checkable rather than assumed away. Worth telling him directly: the relief he is counting on is not doing any work in this plan, and its presence should not be read as headroom."
+
+  - "WORKING CAPITAL SET TO ZERO (flagged modelling choice, not a finding). No payment terms, ageing, arrears or payables policy appear in the utterance, and no defensible level can be deduced. Receivables, payables, NWC and delta NWC are carried as explicit zero rows so the choice is auditable. Direction of the effect if a real offtaker receivable exists: cash lags revenue, so an outflow appears in the build-up year and reverses at contract end, without changing the horizon total. ELICITED question not asked: what are Kenya Power's contractual payment terms, and what is the current arrears position? Given the offtaker, this is the single most material unasked question in the whole build."
+
+  - "NO ESCALATION ANYWHERE. The tariff is a single USD number quoted for a 20-year term, and opex is a fixed percentage of a fixed capex, so both lines are flat in nominal USD. Real opex therefore declines across the horizon. Direction of the effect if the 1% was meant in real terms: nominal opex rises through the horizon and late-year FCFF falls, amplifying the back-loading risk noted below. ELICITED question not asked: is the 1% a nominal run-rate or a real one?"
+
+  - "REPLACEMENT CAPEX OMITTED. Utility-scale PV normally carries a mid-life inverter replacement, and this build has none because the founder folded all recurring spend into the 1%-of-capex operating line and named no capex after year one. Taken at face value. Direction of the effect if a replacement is required: FCFF in the affected year falls sharply and the payback date moves later. ELICITED question not asked: does the 1% cover inverter and transformer replacement, or is that separate?"
+
+  - "RISK SHAPE (finding). Cumulative FCFF is still negative at t = 16 and turns positive only at t = 17, and the year-20 period carries the salvage. The undiscounted return is therefore concentrated in the last stretch of a single-offtaker contract. Anything that truncates, reprices or impairs the final PPA years - curtailment, offtaker non-payment, renegotiation, early termination - destroys a disproportionate share of the whole return. This is a structural observation readable directly off trace.cum_fcff, not a scenario."
+
+  - "IFRS CLASSIFICATION FRICTION. A 20-year contract under which a single offtaker takes substantially all output of identified plants can, depending on control and pricing terms, fall to be accounted for as a lease (IFRS 16) or a service concession (IFRIC 12) rather than own-use PP&E with energy revenue. On the facts given - an energy-only c/kWh tariff, plants described as 'our own plants', and no capacity payment or transfer obligation mentioned - PP&E plus IFRS 15 energy revenue is the correct default. If it were a finance-lease or concession-receivable model, the D&A line and the balance-sheet presentation would change and part of the receipt would be interest, but the underlying asset-side cash the plants generate would not. ELICITED question not asked: does the PPA contain a capacity charge, a purchase option, or a transfer obligation?"
+
+  - "CURRENCY / TAX MISMATCH FRICTION. The PPA and the capex are USD, but Kenyan corporate tax is assessed on profits measured in the entity's functional currency. If that is KES, USD/KES movements generate taxable translation gains and losses that sit outside this build entirely, and the effective cash tax rate would diverge from the 30% statutory rate applied here. Flagged rather than modelled because no FX path was given. ELICITED question not asked: what is the functional currency of the Kenyan entity?"
+
+  - "NATURAL UNITS PRESERVED. The business's own quantities are MWh delivered per portfolio-year and US cents per kWh. The model keeps MWh throughout the production layer and converts only once, at the revenue line, via the 95.60 USD/MWh bridge. Nothing was forced into a generic per-unit template."
+
+  - "PORTFOLIO-LEVEL ONLY. Six plants are modelled as one 234 MW portfolio. The founder gives no plant-level capacities, COD dates or availability; an equal split would be an invention. The degradation rate is applied to portfolio AC output as a single observed rate, which is what eight years of his own operating data support."
+
+  - "POINT ESTIMATES. 'About 410,000' and 'about half a percent' are used as point estimates. No probabilistic or P50/P90 treatment is applied, and no availability or curtailment allowance is layered on top - the 410,000 MWh is taken as net delivered energy at the metering point. ELICITED question not asked: is that figure a P50 forecast or an achieved first-year actual, and does the PPA compensate deemed energy on curtailment?"
+
+  - "SALVAGE TREATED AS NET. The 51,000,000 is taken as gross investing proceeds and assumed already net of any decommissioning or site-restoration obligation, since the founder quoted a positive figure at the end of the contract. If a material IAS 37 restoration provision exists it would need to be accreted and settled, reducing the terminal inflow. ELICITED question not asked: is there a decommissioning obligation in the land leases or the PPA, and is the 10% net of it?"
+
+  - "DEFERRED, NOT MODELLED. No discount rate was stated, so no NPV, IRR or LCOE is computed - the deliverable is the unlevered FCFF stream. The build is deliberately unlevered end to end: no debt, no interest, no DSRA, no financing flows. Any levered view would need the debt terms, which were not given."

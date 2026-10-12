@@ -1,0 +1,152 @@
+# Gold "bakery_wc": the bakery's working-capital cycle, five years on a 30/360 year
+# (cases/reference/golds/bakery_wc.yaml).
+#
+# Every amount is a gold input by name, or a formula over gold inputs (generator `gold`).
+#   * loaves_per_day x operating_days loaves at price_per_loaf: credit_share of them sold on
+#     dso_days of credit, the rest for cash;
+#   * flour at flour_per_loaf, bought on dpo_days of credit, held at doi_days of stock;
+#   * bakers and rent are committed monthly costs paid in cash;
+#   * working capital is built from nothing in the first year (wc_build_timing Y1) and held
+#     after; the terms run past the horizon (a going concern), so nothing unwinds at its end;
+#   * no owned asset (depreciation and capex are 0); tax at tax_rate percent, paid in the year.
+gold: bakery_wc
+entity: bakery
+plant: dso_days
+case:
+  case: gold-bakery-wc
+  periods: 5
+  phases: [fund, operate, close, tax, settle]
+  currency: XOF
+  floors: {}
+  generators:
+    gold:
+      kind: formulas
+      periods: 5
+      inputs: gold
+      values:
+        loaves: loaves_per_day * operating_days
+        credit_loaves: loaves * credit_share
+        cash_loaves: loaves - credit_loaves
+        variable_cost: loaves * flour_per_loaf
+        inventory: {each_period: variable_cost * doi_days / operating_days}
+        bakers_annual: n_bakers * baker_wage * 12
+        rent_annual: rent * 12
+        rate: tax_rate / 100
+        no_depreciation: {each_period: depreciation}
+  opening:
+    bakery:
+      fixed_assets: {nature: asset, value: {generator: gold, output: capex}}
+      equity: {nature: equity, value: 0}
+  contracts:
+    credit_sales:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: credit_loaves}, price: {generator: gold, output: price_per_loaf},
+              payment_days: {generator: gold, output: dso_days},
+              days_per_year: {generator: gold, output: operating_days}, periods_per_year: 1,
+              end: 5}                 # past the horizon: customers still owe at its end (going concern)
+    cash_sales:
+      type: offtake
+      parties: {seller: bakery}
+      terms: {volume: {generator: gold, output: cash_loaves}, price: {generator: gold, output: price_per_loaf},
+              payment_days: 0, days_per_year: {generator: gold, output: operating_days}, periods_per_year: 1, end: 4}
+    flour:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: 0, unit_rate: {generator: gold, output: flour_per_loaf},
+              volume: {generator: gold, output: loaves}, index: 1, periods_per_year: 1, start: 0,
+              end: 5,                 # past the horizon: the supplier is still owed at its end
+              vat_rate: 0, vat_refund_lag: 0, payment_days: {generator: gold, output: dpo_days},
+              days_per_year: {generator: gold, output: operating_days}}
+    bakers:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: bakers_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: operating_days}}
+    rent:
+      type: operating_cost
+      parties: {payer: bakery}
+      terms: {annual: {generator: gold, output: rent_annual}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 4, vat_rate: 0, vat_refund_lag: 0, payment_days: 0,
+              days_per_year: {generator: gold, output: operating_days}}
+  rulebooks:
+    inventory:
+      kind: held_balance
+      entity: bakery
+      cash: cash
+      phase: operate
+      accounts:
+        flour_inventory: {side: asset, target: {generator: gold, output: inventory}}
+    tax:
+      kind: income_tax
+      entity: bakery
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: gold, output: rate}
+      carry_forward_periods: null
+      scheme:
+        credit_sales.revenue: taxable
+        cash_sales.revenue: taxable
+        flour.expense: taxable
+        bakers.expense: taxable
+        rent.expense: taxable
+        tax_expense: non_deductible
+    pay_tax:
+      kind: settle
+      entity: bakery
+      cash: cash
+      phase: settle
+      accounts: [tax_payable]
+  schemes:
+    pnl:
+      credit_sales.revenue: credit
+      cash_sales.revenue: cash
+      flour.expense: variable
+      bakers.expense: committed
+      rent.expense: committed
+      tax_expense: tax
+    cash_flow:
+      credit_sales.receivable: operating
+      cash_sales.receivable: operating
+      flour.payable: operating
+      bakers.payable: operating
+      rent.payable: operating
+      flour_inventory: operating
+      vat_receivable: operating
+      tax_payable: operating
+  cuts:
+    revenue: {kind: pnl, entity: bakery, scheme: pnl, include: [credit, cash]}
+    credit: {kind: pnl, entity: bakery, scheme: pnl, include: [credit]}
+    cash: {kind: pnl, entity: bakery, scheme: pnl, include: [cash]}
+    variable: {kind: pnl, entity: bakery, scheme: pnl, include: [variable]}
+    committed: {kind: pnl, entity: bakery, scheme: pnl, include: [committed]}
+    ebitda: {kind: pnl, entity: bakery, scheme: pnl, include: [credit, cash, variable, committed]}
+    tax: {kind: pnl, entity: bakery, scheme: pnl, include: [tax]}
+    nopat: {kind: pnl, entity: bakery, scheme: pnl, include: [credit, cash, variable, committed, tax]}
+    cfo: {entity: bakery, account: cash, scheme: cash_flow, include: [operating]}
+    cfi: {entity: bakery, account: cash, scheme: cash_flow, include: []}     # nothing is invested: no investing line
+    fcff: {entity: bakery, account: cash, scheme: cash_flow, include: [operating]}
+  measures: {}
+trace:
+  volume_loaves: {driver: gold.loaves}
+  revenue: {cut: revenue}
+  credit_sales: {cut: credit}
+  cash_sales: {cut: cash}
+  variable_cost: {cut: variable, sign: -1}
+  committed_cost: {cut: committed, sign: -1}
+  ebitda: {cut: ebitda}
+  depreciation: {driver: gold.no_depreciation}
+  ebit: {cut: ebitda}
+  tax: {cut: tax, sign: -1}
+  nopat: {cut: nopat}
+  ar: {balance: credit_sales.receivable + cash_sales.receivable}
+  inventory: {balance: flour_inventory}
+  ap: {balance: flour.payable + bakers.payable + rent.payable}
+  nwc: {balance: credit_sales.receivable + cash_sales.receivable + flour_inventory - flour.payable - bakers.payable - rent.payable}
+  delta_nwc: {change: credit_sales.receivable + cash_sales.receivable + flour_inventory - flour.payable - bakers.payable - rent.payable}
+  book_value: {balance: fixed_assets}
+  cfo: {cut: cfo}
+  cfi: {cut: cfi}
+  fcff: {cut: fcff}

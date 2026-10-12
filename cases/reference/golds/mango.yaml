@@ -1,0 +1,339 @@
+id: casamance-mango-orchard-fcff
+title: "Five-hectare mango orchard (Casamance, Senegal) — unlevered FCFF via NOPAT"
+currency: XOF   # West African CFA franc (FCFA). Casamance ∈ Senegal ∈ WAEMU → XOF. The founder's "francs" = FCFA.
+grid:
+  periods: 10          # annual. Period index t = 0..9  ↔  calendar Year (t+1) = Year 1..Year 10.
+  freq: annual
+  note: >-
+    Year 1 (t=0) = planting / establishment season. Year 3 (t=2) = first real harvest.
+    Full maturity (10 t/ha) assumed reached Year 5 (t=4). Orchard keeps producing for
+    decades beyond the horizon; explicit grid stops at Year 10 (see notes: terminal value).
+
+utterance:
+  fr: |
+    Moi j'ai planté cinq hectares de manguiers en Casamance. La préparation du terrain, les plants et la clôture m'ont coûté quatre millions. Les manguiers, ça ne donne pas tout de suite — il faut attendre la troisième année pour la première vraie récolte. À maturité, je récolte à peu près dix tonnes à l'hectare, que je vends deux cents francs le kilo. Même les années où ça ne produit pas, il faut entretenir : la taille, le désherbage, les traitements, la main-d'œuvre, ça fait dans les un million cinq cent mille par an.
+  en: |
+    I planted five hectares of mango trees in Casamance. Land prep, saplings and fencing cost me four million. Mango trees don't bear right away — you wait until the third year for the first real harvest. At maturity I harvest about ten tonnes per hectare, which I sell at two hundred francs a kilo. Even in the years it doesn't produce, you have to tend it: pruning, weeding, treatments, labor — that runs about one million five hundred thousand a year.
+
+inputs:
+
+  area:
+    value: 5
+    unit: hectare
+    prov: STATED
+    source: '"j''ai planté cinq hectares de manguiers" / "I planted five hectares of mango trees"'
+    date: 2026-07-24
+
+  establishment_cost:
+    value: 4000000
+    unit: XOF
+    prov: STATED
+    source: '"La préparation du terrain, les plants et la clôture m''ont coûté quatre millions" / "Land prep, saplings and fencing cost me four million" — one-off capital outlay at planting (Year 1). Note: "préparation du terrain" = land PREP, not land PURCHASE; no land acquisition cost or rent is stated.'
+    date: 2026-07-24
+
+  first_harvest_year:
+    value: 3
+    unit: year (calendar, planting = Year 1)
+    prov: STATED
+    source: '"il faut attendre la troisième année pour la première vraie récolte" / "you wait until the third year for the first real harvest"'
+    date: 2026-07-24
+
+  mature_yield_t_per_ha:
+    value: 10
+    unit: tonne/hectare/year
+    prov: STATED
+    source: '"À maturité, je récolte à peu près dix tonnes à l''hectare" / "At maturity I harvest about ten tonnes per hectare" — note this is the MATURE yield, explicitly distinguished by the founder from the "première vraie récolte" of Year 3.'
+    date: 2026-07-24
+
+  price_per_kg:
+    value: 200
+    unit: XOF/kg
+    prov: STATED
+    source: '"que je vends deux cents francs le kilo" / "which I sell at two hundred francs a kilo"'
+    date: 2026-07-24
+
+  annual_maintenance:
+    value: 1500000
+    unit: XOF/year
+    prov: STATED
+    source: '"Même les années où ça ne produit pas, il faut entretenir ... ça fait dans les un million cinq cent mille par an" / "Even in the years it doesn''t produce, you have to tend it ... that runs about one million five hundred thousand a year" — recurring husbandry (pruning, weeding, treatments, labour), every year.'
+    date: 2026-07-24
+
+  first_harvest_index:
+    value: 2
+    unit: grid index (0-based)
+    prov: INFERRED
+    source: 'first_harvest_year = 3 mapped onto the grid (Year k ↔ index k−1) ⇒ index 2. Used by period masks.'
+    date: 2026-07-24
+
+  n_preproductive_years:
+    value: 2
+    unit: years
+    prov: INFERRED
+    source: 'Trees planted Year 1, first harvest Year 3 (first_harvest_year) ⇒ Years 1–2 bear no fruit ⇒ 2 pre-productive years. No new information.'
+    date: 2026-07-24
+
+  kg_per_tonne:
+    value: 1000
+    unit: kg/tonne
+    prov: DEFAULTED
+    source: 'Metric convention 1 t = 1000 kg (needed to bridge "tonnes/ha" to "XOF/kg").'
+    date: 2026-07-24
+
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: ASSUMED
+    source: 'Senegal corporate income tax (Impôt sur les Sociétés) statutory rate = 30%. FLAG: entity type/tax status not stated — a natural-person farmer would pay IR (progressive), and Senegalese agricultural income / informal smallholders are frequently exempt or de facto untaxed. See ELICITED question. Materially affects NOPAT.'
+    date: 2026-07-24
+
+  useful_life_years:
+    value: 35
+    unit: years
+    prov: ASSUMED
+    source: 'Productive life of a well-managed grafted mango orchard ≈ 30–40 yrs; 35 chosen (mid-range, and divides the 7,000,000 base to an exact 200,000/yr). Not stated. See ELICITED.'
+    date: 2026-07-24
+
+  maturity_index:
+    value: 4
+    unit: grid index (0-based)  # = Year 5
+    prov: ASSUMED
+    source: 'Founder gives Year-3 "first real harvest" and a separate "at maturity" yield but no ramp and no maturity year. A 3-year ramp (Years 3→4→5) to full bearing is a standard horticultural prior. See ELICITED.'
+    date: 2026-07-24
+
+  ramp_fraction_y3:
+    value: 0.40
+    unit: fraction of mature yield
+    prov: ASSUMED
+    source: 'Year-3 "première vraie récolte" set at 40% of mature (→ 4 t/ha). No stated value; standard first-bearing fraction. See ELICITED.'
+    date: 2026-07-24
+
+  ramp_fraction_y4:
+    value: 0.70
+    unit: fraction of mature yield
+    prov: ASSUMED
+    source: 'Year-4 yield set at 70% of mature (→ 7 t/ha). No stated value; ramp interpolation. See ELICITED.'
+    date: 2026-07-24
+
+  mature_revenue:
+    value: 10000000
+    unit: XOF/year
+    prov: INFERRED
+    source: 'mature_yield_t_per_ha(10) × area(5) × kg_per_tonne(1000) × price_per_kg(200) = 10,000,000. Pure arithmetic on STATED inputs + metric convention.'
+    date: 2026-07-24
+
+  depreciable_base:
+    value: 7000000
+    unit: XOF
+    prov: DEFAULTED
+    source: 'IAS 16 bearer-plant rule: costs of bringing the orchard to productive condition are capitalised. Base = establishment_cost(4,000,000) + n_preproductive_years(2) × annual_maintenance(1,500,000) = 7,000,000. Rule = IAS 16 (bearer plants; pre-productive cultivation costs capitalised); arithmetic is deductive.'
+    date: 2026-07-24
+
+  annual_depreciation:
+    value: 200000
+    unit: XOF/year
+    prov: INFERRED
+    source: 'Straight-line: depreciable_base(7,000,000) / useful_life_years(35) = 200,000. Depreciation begins in the first productive year (IAS 16 "available for use" = first_harvest_year).'
+    date: 2026-07-24
+
+passage: |
+  UNITS & SCALE. Everything in XOF (FCFA). Grid is annual, Years 1..10 (index t=0..9);
+  Year 1 is the planting/establishment season. All figures are pre-financing (unlevered):
+  we build NOPAT, add back depreciation, subtract the change in net working capital and
+  capex, to reach asset-side free cash flow FCFF = NOPAT + D&A − ΔNWC − capex.
+
+  --- STEP 1: PHYSICAL VOLUMES (the business's own quantities: hectares → tonnes → kg) ---
+  The orchard is 5 ha (STATED). Mature yield is 10 t/ha (STATED, "à maturité"), i.e. a
+  mature crop of 10 × 5 = 50 t/yr = 50,000 kg/yr. The founder explicitly separates the
+  "première vraie récolte" of Year 3 from the "à maturité" yield, so Year 3 is NOT yet the
+  mature crop. No ramp is stated, so I supply one (ASSUMED, flagged): Year 3 = 40% of mature
+  = 4 t/ha, Year 4 = 70% = 7 t/ha, Year 5 onward = full maturity = 10 t/ha. Years 1–2 bear
+  nothing (STATED, "ça ne donne pas tout de suite"). Yields per ha, then whole-orchard tonnes,
+  then kg:
+    Year 1: 0 t/ha → 0 t → 0 kg
+    Year 2: 0 t/ha → 0 t → 0 kg
+    Year 3: 4 t/ha → 20 t → 20,000 kg
+    Year 4: 7 t/ha → 35 t → 35,000 kg
+    Year 5–10: 10 t/ha → 50 t → 50,000 kg each
+
+  --- STEP 2: REVENUE (recognised at harvest/sale, IAS 15) ---
+  Revenue = kg × 200 XOF/kg (STATED price). Mango is perishable and sold at harvest, so the
+  crop of each year is the sale of that year.
+    Year 1–2: 0
+    Year 3: 20,000 × 200 = 4,000,000
+    Year 4: 35,000 × 200 = 7,000,000
+    Year 5–10: 50,000 × 200 = 10,000,000 each  (= mature_revenue)
+
+  --- STEP 3: OPERATING COSTS & THE ESTABLISHMENT ASSET (IAS 16 bearer plants) ---
+  Two cash cost streams: (a) the 4,000,000 establishment outlay (land prep + saplings +
+  fencing) at planting, and (b) recurring husbandry of 1,500,000/yr (pruning, weeding,
+  treatments, labour), incurred EVERY year including the non-producing ones (STATED).
+  Under IAS 16 a mango tree is a BEARER PLANT: all costs of bringing it to productive
+  condition are capitalised into the asset until it matures, then it is depreciated over its
+  productive life; husbandry incurred AFTER it is productive is expensed. Therefore:
+    • Year 1: capitalise establishment 4,000,000 + pre-productive husbandry 1,500,000 = 5,500,000 added to the orchard asset. No expense, no revenue.
+    • Year 2: capitalise pre-productive husbandry 1,500,000. No expense, no revenue.
+    • Orchard asset cost at start of production = 4,000,000 + 1,500,000 + 1,500,000 = 7,000,000 (depreciable_base).
+    • Year 3 onward (productive): the 1,500,000/yr husbandry is now an OPERATING EXPENSE (opex).
+  Note the friction/judgement: the founder experiences the Years 1–2 husbandry as a "cost";
+  IFRS reclassifies that cash as capitalised investment, not P&L expense. The CASH is
+  identical either way — it simply appears in FCFF as capex (Years 1–2) rather than opex, so
+  pre-tax FCFF is unaffected by the choice. Capitalising also keeps pre-tax EBIT ≥ 0 in every
+  year and so avoids inventing tax-loss-carryforward rules (the expense-as-incurred
+  alternative would create Year 1–2 operating losses; see notes).
+
+  --- STEP 4: DEPRECIATION (IAS 16, straight-line, from first productive year) ---
+  Depreciation begins when the asset is "available for use" — for a bearer plant, when it
+  starts bearing commercially = Year 3 (first_harvest_year). Straight-line over 35 yrs
+  (ASSUMED life): 7,000,000 / 35 = 200,000/yr.
+    Year 1–2: 0 (not yet in service)
+    Year 3–10: 200,000 each
+  Orchard net book value roll-forward (stock = prior + additions(capex) − depreciation):
+    Y1: 0 + 5,500,000 − 0        = 5,500,000
+    Y2: 5,500,000 + 1,500,000 − 0 = 7,000,000
+    Y3: 7,000,000 + 0 − 200,000   = 6,800,000
+    Y4: 6,600,000 ; Y5: 6,400,000 ; Y6: 6,200,000 ; Y7: 6,000,000 ;
+    Y8: 5,800,000 ; Y9: 5,600,000 ; Y10: 5,400,000  (stays > 0; life ≫ horizon).
+
+  --- STEP 5: EBITDA → EBIT ---
+  EBITDA = revenue − opex; EBIT = EBITDA − depreciation.
+    Year 1–2: EBITDA 0, EBIT 0.
+    Year 3: EBITDA 4,000,000 − 1,500,000 = 2,500,000 ; EBIT 2,500,000 − 200,000 = 2,300,000.
+    Year 4: EBITDA 7,000,000 − 1,500,000 = 5,500,000 ; EBIT 5,300,000.
+    Year 5–10: EBITDA 10,000,000 − 1,500,000 = 8,500,000 ; EBIT 8,300,000 each.
+
+  --- STEP 6: TAX & NOPAT (unlevered — tax on EBIT, no interest shield) ---
+  Tax = EBIT × 30% (ASSUMED Senegal IS). EBIT ≥ 0 throughout, so tax ≥ 0 (no NOL needed).
+  NOPAT = EBIT − tax = EBIT × 0.70.
+    Year 1–2: tax 0, NOPAT 0.
+    Year 3: tax 690,000 ; NOPAT 1,610,000.
+    Year 4: tax 1,590,000 ; NOPAT 3,710,000.
+    Year 5–10: tax 2,490,000 ; NOPAT 5,810,000 each.
+
+  --- STEP 7: WORKING CAPITAL ---
+  No credit terms, storage or input-financing are stated; mango is perishable (no year-end
+  inventory) and smallholder sales are cash at farmgate. So NWC = 0 every year and ΔNWC = 0
+  every year (DEFAULTED; see ELICITED). No cash-flow effect.
+
+  --- STEP 8: CAPEX (= capitalised additions to the orchard asset) ---
+    Year 1: 5,500,000 ; Year 2: 1,500,000 ; Year 3–10: 0.
+  (No replanting within a 10-yr horizon — trees live decades.)
+
+  --- STEP 9: FCFF = NOPAT + D&A − ΔNWC − capex ---
+  Equivalently CFO (= NOPAT + D&A − ΔNWC) + CFI (= −capex).
+    Year 1: 0 + 0 − 0 − 5,500,000 = −5,500,000
+    Year 2: 0 + 0 − 0 − 1,500,000 = −1,500,000
+    Year 3: 1,610,000 + 200,000 − 0 − 0 = 1,810,000
+    Year 4: 3,710,000 + 200,000 − 0 − 0 = 3,910,000
+    Year 5–10: 5,810,000 + 200,000 − 0 − 0 = 6,010,000 each
+  Cumulative FCFF turns positive during Year 5 (undiscounted payback ≈ 5 yrs): running total
+  −5.50m, −7.00m, −5.19m, −1.28m, +4.73m, then +6.01m/yr thereafter. At steady state the
+  orchard throws off 6,010,000/yr of unlevered cash — the bulk of its value sits in the long
+  productive tail beyond Year 10 (see notes on terminal value).
+
+trace:
+  yield_per_ha:   [0, 0, 4, 7, 10, 10, 10, 10, 10, 10]
+  production_t:   [0, 0, 20, 35, 50, 50, 50, 50, 50, 50]
+  production_kg:  [0, 0, 20000, 35000, 50000, 50000, 50000, 50000, 50000, 50000]
+  revenue:        [0, 0, 4000000, 7000000, 10000000, 10000000, 10000000, 10000000, 10000000, 10000000]
+  opex:           [0, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000]
+  ebitda:         [0, 0, 2500000, 5500000, 8500000, 8500000, 8500000, 8500000, 8500000, 8500000]
+  capex:          [5500000, 1500000, 0, 0, 0, 0, 0, 0, 0, 0]
+  depreciation:   [0, 0, 200000, 200000, 200000, 200000, 200000, 200000, 200000, 200000]
+  book_value:     [5500000, 7000000, 6800000, 6600000, 6400000, 6200000, 6000000, 5800000, 5600000, 5400000]
+  ebit:           [0, 0, 2300000, 5300000, 8300000, 8300000, 8300000, 8300000, 8300000, 8300000]
+  tax:            [0, 0, 690000, 1590000, 2490000, 2490000, 2490000, 2490000, 2490000, 2490000]
+  nopat:          [0, 0, 1610000, 3710000, 5810000, 5810000, 5810000, 5810000, 5810000, 5810000]
+  nwc:            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  delta_nwc:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  cfo:            [0, 0, 1810000, 3910000, 6010000, 6010000, 6010000, 6010000, 6010000, 6010000]
+  cfi:            [-5500000, -1500000, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff:           [-5500000, -1500000, 1810000, 3910000, 6010000, 6010000, 6010000, 6010000, 6010000, 6010000]
+
+fcff: [-5500000, -1500000, 1810000, 3910000, 6010000, 6010000, 6010000, 6010000, 6010000, 6010000]
+
+checks:
+  # --- driver-bridge: each computed line from its inputs ---
+  - trace.production_t == trace.yield_per_ha * area
+  - trace.production_kg == trace.production_t * kg_per_tonne
+  - trace.revenue == trace.production_kg * price_per_kg
+  - trace.yield_per_ha == mature_yield_t_per_ha for t >= maturity_index
+  - trace.revenue == 0 for t < first_harvest_index
+  - trace.opex == 0 for t < first_harvest_index
+  - trace.opex == annual_maintenance for t >= first_harvest_index
+  - trace.depreciation == 0 for t < first_harvest_index
+  - trace.depreciation == annual_depreciation for t >= first_harvest_index
+  - trace.capex == 0 for t >= first_harvest_index
+  - trace.tax == trace.ebit * tax_rate
+  - depreciable_base == establishment_cost + n_preproductive_years * annual_maintenance
+  - annual_depreciation == depreciable_base / useful_life_years
+  # --- definition: the ladder ---
+  - trace.ebitda == trace.revenue - trace.opex
+  - trace.ebit == trace.ebitda - trace.depreciation
+  - trace.nopat == trace.ebit - trace.tax
+  - trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc
+  - trace.cfi == 0 - trace.capex
+  - trace.fcff == trace.cfo + trace.cfi
+  - trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex
+  - fcff == trace.fcff
+  # --- conservation: stock roll-forwards ---
+  - trace.book_value[t] == trace.book_value[t-1] + trace.capex[t] - trace.depreciation[t]
+  - cumsum(trace.delta_nwc) == trace.nwc
+  - sum(trace.capex) == depreciable_base
+  - trace.book_value[last] == depreciable_base - sum(trace.depreciation)
+  # --- non-negativity ---
+  - min(trace.book_value) >= 0
+  - min(trace.production_t) >= 0
+  - min(trace.revenue) >= 0
+  - min(trace.opex) >= 0
+  - min(trace.capex) >= 0
+
+notes:
+  horizon_and_terminal_value: >-
+    Explicit grid stops at Year 10 for tractability, but a mango orchard bears for ~30–40 yrs.
+    The economic value is dominated by the post-Year-10 tail of ~6,010,000/yr (declining once
+    trees senesce near end of life). A full valuation would either extend the grid to ~Year 30
+    or attach a terminal value to the Year-10 steady-state FCFF (e.g. a finite annuity over the
+    remaining productive years, or a perpetuity-with-decline). This is deferred, not modelled.
+  key_judgement_capitalise_vs_expense: >-
+    Pre-productive husbandry (Years 1–2, 1,500,000/yr) is CAPITALISED into the bearer-plant
+    asset per IAS 16, not expensed. Rationale: (i) it is the IFRS-correct treatment for bringing
+    a bearer plant to productive condition; (ii) it keeps pre-tax EBIT ≥ 0, avoiding an
+    invented tax-loss-carryforward regime. The alternative (expense as incurred) yields the SAME
+    pre-tax FCFF — the two Years' 1,500,000 shift from capex to opex — and differs only in tax
+    timing: it would create Year 1–2 operating losses (−1,500,000 EBIT) whose tax benefit
+    depends on unstated loss-carryforward rules and whether other taxable income exists. If those
+    losses were fully usable against later profit, lifetime tax is nearly identical; the choice
+    mainly moves value between years. Reversible/internal call — logged here.
+  yield_ramp_is_assumed: >-
+    The single largest modelling assumption. The founder gives Year-3 "first real harvest" and a
+    separate mature yield, but no ramp and no maturity year. The 40%/70%/100% ramp over Years
+    3–5 is a supplied prior. If instead Year 3 already equals mature yield, Years 3–4 FCFF each
+    rise by ~4.2m/1.5m; if maturity is reached later (say Year 7–8), early FCFF is lower. High
+    sensitivity — should be elicited before use.
+  tax_status: >-
+    30% (Senegal IS) is applied for completeness, but is the second-largest swing factor and is
+    almost certainly wrong for a real smallholder: Senegalese agricultural revenue enjoys broad
+    exemptions and most smallholders are informal (effective rate ≈ 0%). At 0% tax, mature FCFF
+    rises from 6,010,000 to 8,700,000/yr (= EBITDA 8.5m + no tax − 0 ... i.e. NOPAT→EBIT 8.3m +
+    dep 0.2m). Elicit entity type and tax regime.
+  working_capital: >-
+    Set to zero (perishable crop → no year-end inventory; cash farmgate sales → no receivables;
+    cash inputs → no payables). If the founder sells on credit to traders or holds stock, a small
+    positive ΔNWC would appear in ramp-up years. Not stated.
+  land: >-
+    The 4,000,000 is land PREPARATION, saplings and fencing — NOT land purchase. Land is assumed
+    already owned / family land at no incremental cost or rent. If land is leased, add annual rent
+    to opex. Not stated.
+  simplifications:
+    - Single lumped orchard asset over 35 yrs; in reality fencing (~10–15 yr life) is shorter-lived than the trees and would be depreciated faster / replaced within the horizon.
+    - Flat mature yield; real mango exhibits alternate (biennial) bearing, so mature-year revenue would oscillate around 10,000,000.
+    - Price and cost held nominal-flat (no inflation, no price path); "environ / à peu près / dans les" language signals the founder's own figures are approximate.
+    - No post-harvest losses, no grading/rejects, no marketing/transport commission netted from farmgate price.
+  elicited_questions:
+    - "What did you actually harvest in Year 3, Year 4, etc., and in which year did the orchard reach the full 10 t/ha? (fixes the yield ramp and maturity year)"
+    - "Is this operated as a company (IS 30%), by you personally (IR), or under an agricultural exemption / informally (0%)? (fixes the tax rate)"
+    - "How many years do you expect the trees to keep producing, and do you plan to replant? (fixes useful life and terminal horizon)"
+    - "Do you sell for cash at harvest, or on credit? Do you store any fruit past year-end? Do you pay for inputs in advance? (fixes working capital)"
+    - "Does the 1,500,000/yr tending already happen in the planting year, and is it on top of the 4,000,000, or included in it? (fixes Year-1 cost stacking)"
+    - "Is the land yours, or rented? Any annual land cost not in the 4,000,000? (fixes whether rent belongs in opex)"

@@ -1,0 +1,308 @@
+id: boulangerie-fcff-v1
+title: "Unlevered FCFF (NOPAT build) — owner-operated neighbourhood bakery, steady state"
+currency: XOF   # 'francs' in an African market read as the CFA franc; XOF (UEMOA) assumed, could be XAF — both pegged 655.957/EUR. See notes.
+grid:
+  periods: 5
+  freq: annual   # arrays indexed t=0..4 = Year 1..Year 5
+
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Je fais cinq cents pains par jour, vendus à deux cent
+    cinquante francs pièce. La farine me coûte cent cinquante francs par pain. Je paie
+    deux boulangers à cent mille par mois. Le loyer du local est à huit cent mille par
+    mois. Je travaille tous les jours.
+  en: |
+    I run a bakery. I make five hundred loaves a day, sold at two hundred fifty francs
+    each. Flour costs me one hundred fifty francs per loaf. I pay two bakers a hundred
+    thousand a month each. The shop rent is eight hundred thousand a month. I work every
+    day.
+
+inputs:
+
+  loaves_per_day:
+    value: 500
+    unit: loaves/day
+    prov: STATED
+    source: "'Je fais cinq cents pains par jour' / 'I make five hundred loaves a day'"
+    date: 2026-07-24
+
+  price_per_loaf:
+    value: 250
+    unit: XOF/loaf
+    prov: STATED
+    source: "'vendus à deux cent cinquante francs pièce' / 'sold at two hundred fifty francs each'"
+    date: 2026-07-24
+
+  flour_cost_per_loaf:
+    value: 150
+    unit: XOF/loaf
+    prov: STATED
+    source: "'La farine me coûte cent cinquante francs par pain' / 'Flour costs me one hundred fifty francs per loaf'"
+    date: 2026-07-24
+
+  bakers_count:
+    value: 2
+    unit: employees
+    prov: STATED
+    source: "'Je paie deux boulangers' / 'I pay two bakers'"
+    date: 2026-07-24
+
+  baker_wage_month:
+    value: 100000
+    unit: XOF/baker/month
+    prov: STATED
+    source: "'à cent mille par mois' + en gloss 'a hundred thousand a month each' (French alone is ambiguous as to each vs total; the English 'each' resolves it). See notes/elicited."
+    date: 2026-07-24
+
+  rent_month:
+    value: 800000
+    unit: XOF/month
+    prov: STATED
+    source: "'Le loyer du local est à huit cent mille par mois' / 'The shop rent is eight hundred thousand a month'"
+    date: 2026-07-24
+
+  operating_days_per_year:
+    value: 365
+    unit: days/year
+    prov: DEFAULTED
+    source: "'Je travaille tous les jours' / 'I work every day' (STATED) ⇒ 7 days/week, no weekly closure (INFERRED); 365 days/year by calendar convention (DEFAULTED; leap years and public holidays ignored)."
+    date: 2026-07-24
+
+  months_per_year:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: "Calendar convention (monthly-stated costs are annualised ×12)."
+    date: 2026-07-24
+
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: ASSUMED
+    source: "Domain prior: representative CFA-zone statutory corporate income-tax rate (UEMOA/CEMAC members cluster ~25–33%). Nothing stated. Applied to EBIT (unlevered ⇒ no interest shield). Heavy caveat: a micro-bakery may instead fall under a presumptive/synthetic turnover regime — see notes."
+    date: 2026-07-24
+
+  equipment_gross_cost:
+    value: 6000000
+    unit: XOF
+    prov: ASSUMED
+    source: "Domain prior: a bakery physically cannot operate without durable assets (deck/rotary oven, spiral mixer, divider, proofing racks, tables, shelving). No equipment was stated. 6,000,000 XOF is a plausible small-artisan fit-out. ELICIT: what equipment do you own, what did it cost, and when."
+    date: 2026-07-24
+
+  useful_life_years:
+    value: 10
+    unit: years
+    prov: ASSUMED
+    source: "Domain prior: straight-line economic life for commercial bakery plant. DEFAULTED method: straight-line, nil residual."
+    date: 2026-07-24
+
+  depreciation_annual:
+    value: 600000
+    unit: XOF/year
+    prov: ASSUMED
+    source: "equipment_gross_cost / useful_life_years = 6,000,000 / 10. ASSUMED (not INFERRED) because both drivers are assumed priors."
+    date: 2026-07-24
+
+  bookvalue_opening:
+    value: 3000000
+    unit: XOF
+    prov: ASSUMED
+    source: "Net book value of equipment at the start of the forecast. Going concern already trading; asset taken as mid-life ⇒ ~half of gross. ELICIT: age of equipment."
+    date: 2026-07-24
+
+  capex_annual:
+    value: 600000
+    unit: XOF/year
+    prov: ASSUMED
+    source: "Steady-state maintenance capex for a no-growth going concern, set equal to depreciation_annual so net PP&E is held constant (DEFAULTED convergence convention). Nothing stated on reinvestment."
+    date: 2026-07-24
+
+  flour_inventory_days:
+    value: 7
+    unit: days
+    prov: ASSUMED
+    source: "Domain prior: raw-material (flour) holding period for a daily-baking shop. Nothing stated. ELICIT: how many days of flour do you keep on hand?"
+    date: 2026-07-24
+
+  ar_days:
+    value: 0
+    unit: days
+    prov: ASSUMED
+    source: "Domain prior: neighbourhood bread is a cash retail sale ⇒ trade receivables ≈ 0. ELICIT: any credit/wholesale accounts?"
+    date: 2026-07-24
+
+  ap_days:
+    value: 0
+    unit: days
+    prov: ASSUMED
+    source: "Domain prior: flour bought from a wholesaler on cash terms ⇒ trade payables ≈ 0. Conservative (understates FCFF if supplier credit exists). ELICIT: supplier credit terms?"
+    date: 2026-07-24
+
+  nwc_opening:
+    value: 525000
+    unit: XOF
+    prov: ASSUMED
+    source: "flour_cost_per_loaf × loaves_per_day × flour_inventory_days + AR − AP = 150 × 500 × 7 + 0 − 0. Working capital already invested at the going-concern start (t before Year 1). ASSUMED because it rests on flour_inventory_days/ar_days/ap_days priors."
+    date: 2026-07-24
+
+  horizon_years:
+    value: 5
+    unit: years
+    prov: DEFAULTED
+    source: "Standard explicit-forecast horizon for a stable micro-business. Economics are flat (no growth/inflation stated), so the five years are identical."
+    date: 2026-07-24
+
+passage: |
+  All figures in XOF. The business is described in its own natural quantities — LOAVES
+  per DAY and cash costs per MONTH — so I build bottom-up from a loaf and a day, annualise,
+  then run the standard unlevered ladder EBITDA → EBIT → NOPAT → FCFF. The five forecast
+  years are identical: nothing in the utterance implies growth, price change, or inflation,
+  and a competent analyst does not invent a trend the founder did not state. So I derive
+  one steady-state year in full and replicate it across t=0..4 (Years 1–5), with the
+  going-concern treatment of working capital and capital assets made explicit.
+
+  STEP 0 — cadence and units.
+  Two clocks are in play. Output and its direct material are quoted per DAY; labour and
+  rent are quoted per MONTH. "I work every day" ⇒ no weekly closure ⇒ 7 days/week; by
+  calendar convention the year has 365 operating days. Monthly costs annualise at ×12.
+  The 365-vs-12 mismatch is standard and harmless: daily lines scale by days, monthly
+  lines by months.
+
+  STEP 1 — daily unit economics (per loaf, then per day).
+  Contribution per loaf, on stated cash items only = price − flour = 250 − 150 = 100 XOF/loaf.
+  Revenue per day        = 500 loaves × 250 = 125,000 XOF/day.
+  Flour cost per day      = 500 loaves × 150 =  75,000 XOF/day.
+  Daily cash contribution = 125,000 − 75,000 =  50,000 XOF/day (before labour, rent, tax, capital).
+
+  STEP 2 — annualise the two daily lines.
+  Loaves/year   = 500 × 365 = 182,500 loaves.
+  Revenue/year  = 250 × 182,500 = 45,625,000 XOF   (= 125,000 × 365).
+  Flour COGS/yr = 150 × 182,500 = 27,375,000 XOF   (= 75,000 × 365).
+  Gross profit  = 45,625,000 − 27,375,000 = 18,250,000 XOF.
+
+  STEP 3 — annualise the two monthly cash overheads → EBITDA.
+  Labour/year = bakers × wage × months = 2 × 100,000 × 12 = 2,400,000 XOF.
+  Rent/year   = 800,000 × 12 = 9,600,000 XOF. (Rent is treated as an operating cash cost;
+  the IFRS 16 right-of-use/lease-liability split is noted as a friction below and would
+  reclassify part of rent into D&A and financing — deliberately not taken here.)
+  EBITDA = Gross profit − Labour − Rent
+         = 18,250,000 − 2,400,000 − 9,600,000 = 6,250,000 XOF/year.
+
+  STEP 4 — durable assets, depreciation, EBIT.
+  The utterance names no equipment, yet no bread exists without an oven. A real bakery
+  therefore carries capital plant. Supplying a flagged prior: gross equipment 6,000,000 XOF,
+  straight-line over 10 years, nil residual ⇒ depreciation = 6,000,000 / 10 = 600,000 XOF/year.
+  EBIT = EBITDA − Depreciation = 6,250,000 − 600,000 = 5,650,000 XOF/year.
+
+  STEP 5 — tax and NOPAT (unlevered).
+  FCFF is the asset-side, capital-structure-neutral cash flow, so tax is charged on EBIT
+  (no interest shield). At an assumed 30% statutory rate:
+  Tax   = 0.30 × 5,650,000 = 1,695,000 XOF.
+  NOPAT = EBIT − Tax = 5,650,000 − 1,695,000 = 3,955,000 XOF/year.
+
+  STEP 6 — working capital and ΔNWC.
+  Components: (i) finished-goods inventory = 0 — bread is a same-day perishable, baked and
+  sold within the day, so nothing carries overnight; (ii) flour raw-material inventory =
+  7 days × 75,000 XOF/day = 525,000 XOF; (iii) receivables = 0 (cash retail); (iv) payables
+  = 0 (cash purchases, conservative). Net working capital = 525,000 + 0 − 0 = 525,000 XOF.
+  Crucially this is a GOING CONCERN — "I run a bakery" — so the 525,000 is already invested
+  before Year 1 (captured as nwc_opening). Volumes are flat, so the NWC level never moves:
+  ΔNWC = 0 in every forecast year. (Injecting a 525,000 build into Year 1 would double-count
+  an investment already sunk; that is why the change, not the level, is zero.)
+
+  STEP 7 — capex.
+  For a no-growth going concern the sustaining reinvestment that holds the asset base intact
+  equals the depreciation it consumes: maintenance capex = 600,000 XOF/year. Net book value
+  is therefore constant at bookvalue_opening = 3,000,000 XOF (3,000,000 + 600,000 − 600,000).
+
+  STEP 8 — FCFF build (per year).
+  CFO = NOPAT + Depreciation − ΔNWC = 3,955,000 + 600,000 − 0 = 4,555,000 XOF.
+  CFI = − Capex = − 600,000 XOF.
+  FCFF = CFO + CFI = 4,555,000 − 600,000 = 3,955,000 XOF.
+  Equivalently, the canonical build FCFF = NOPAT + D&A − ΔNWC − capex
+        = 3,955,000 + 600,000 − 0 − 600,000 = 3,955,000 XOF/year.
+  Because D&A add-back and maintenance capex cancel and ΔNWC = 0, in this steady state
+  FCFF collapses to NOPAT = 3,955,000 XOF/year.
+
+  STEP 9 — replication across the horizon.
+  Every driver is flat, so Years 1–5 each yield FCFF = 3,955,000 XOF. Undiscounted 5-year
+  FCFF = 5 × 3,955,000 = 19,775,000 XOF. Discounting to a present value would require a
+  WACC (an ELICITED input — cost of capital in the local currency) and is out of scope for
+  the asset-side cash-flow build requested.
+
+  HEALTH WARNING (carried into notes): this FCFF is built from the three cash costs the
+  founder named (flour, wages, rent) plus the minimum capital/tax/working-capital scaffolding
+  the FCFF definition requires. A real bakery also burns energy to fire the oven, buys yeast/
+  salt/packaging, wastes unsold bread, pays social charges and a business licence, and consumes
+  the owner's own unpaid daily labour. None were stated; none are in the numbers above. The
+  3,955,000 is therefore a CEILING on true sustainable FCFF, not a point estimate — see notes.
+
+trace:
+  loaves_annual:        [182500, 182500, 182500, 182500, 182500]
+  revenue:              [45625000, 45625000, 45625000, 45625000, 45625000]
+  flour_cogs:           [27375000, 27375000, 27375000, 27375000, 27375000]
+  labor:                [2400000, 2400000, 2400000, 2400000, 2400000]
+  rent:                 [9600000, 9600000, 9600000, 9600000, 9600000]
+  ebitda:               [6250000, 6250000, 6250000, 6250000, 6250000]
+  depreciation:         [600000, 600000, 600000, 600000, 600000]
+  ebit:                 [5650000, 5650000, 5650000, 5650000, 5650000]
+  tax:                  [1695000, 1695000, 1695000, 1695000, 1695000]
+  nopat:                [3955000, 3955000, 3955000, 3955000, 3955000]
+  accounts_receivable:  [0, 0, 0, 0, 0]
+  accounts_payable:     [0, 0, 0, 0, 0]
+  flour_inventory:      [525000, 525000, 525000, 525000, 525000]
+  nwc:                  [525000, 525000, 525000, 525000, 525000]
+  delta_nwc:            [0, 0, 0, 0, 0]
+  capex:                [600000, 600000, 600000, 600000, 600000]
+  book_value:           [3000000, 3000000, 3000000, 3000000, 3000000]
+  cfo:                  [4555000, 4555000, 4555000, 4555000, 4555000]
+  cfi:                  [-600000, -600000, -600000, -600000, -600000]
+  fcff:                 [3955000, 3955000, 3955000, 3955000, 3955000]
+
+fcff: [3955000, 3955000, 3955000, 3955000, 3955000]
+
+checks:
+  # driver-bridge — each computed line rebuilt from its inputs
+  - trace.loaves_annual == loaves_per_day * operating_days_per_year
+  - trace.revenue == price_per_loaf * trace.loaves_annual
+  - trace.flour_cogs == flour_cost_per_loaf * trace.loaves_annual
+  - trace.labor == bakers_count * baker_wage_month * months_per_year
+  - trace.rent == rent_month * months_per_year
+  - trace.flour_inventory == flour_cost_per_loaf * loaves_per_day * flour_inventory_days
+  - trace.nwc == trace.flour_inventory + trace.accounts_receivable - trace.accounts_payable
+  - trace.depreciation == depreciation_annual
+  - trace.capex == capex_annual
+  # definition — the unlevered ladder
+  - trace.ebitda == trace.revenue - trace.flour_cogs - trace.labor - trace.rent
+  - trace.ebit == trace.ebitda - trace.depreciation
+  - trace.tax == trace.ebit * tax_rate
+  - trace.nopat == trace.ebit - trace.tax
+  - trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc
+  - trace.cfi == 0 - trace.capex
+  - trace.fcff == trace.cfo + trace.cfi
+  - trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex
+  # conservation — working-capital and PP&E roll-forwards (opening balances carried explicitly)
+  - cumsum(trace.delta_nwc) + nwc_opening == trace.nwc
+  - trace.delta_nwc[first] == trace.nwc[first] - nwc_opening
+  - bookvalue_opening + cumsum(trace.capex) - cumsum(trace.depreciation) == trace.book_value
+  - trace.capex == trace.depreciation
+  # non-negativity — stocks cannot go negative
+  - trace.flour_inventory >= 0
+  - trace.nwc >= 0
+  - trace.book_value >= 0
+
+notes:
+  - "HEADLINE RESULT: steady-state unlevered FCFF ≈ 3,955,000 XOF/year (≈ NOPAT, since D&A add-back = maintenance capex and ΔNWC = 0). This is a CEILING, not a central estimate — see omitted-cost items below."
+  - "CURRENCY: 'francs' + 'African market' ⇒ CFA franc. West-African XOF assumed; could be Central-African XAF. Both peg to EUR at 655.957, so the euro magnitude (~€69,600 revenue; ~€6,030 FCFF) is invariant to which one it is. ELICIT the country."
+  - "MATERIAL OMITTED COST — ENERGY: an oven is the single largest energy consumer in a bakery, yet no utility cost was stated. Bakery energy commonly runs 5–10% of revenue (≈ 2.3–4.6 M XOF/yr here). Loading the midpoint alone would roughly halve NOPAT/FCFF. Treated as ELICITED, deliberately kept out of the headline to avoid fabricating it. This is the biggest single risk to the number."
+  - "OTHER OMITTED CASH COSTS: yeast/salt/water and packaging (unless 'flour costs 150/loaf' is the founder's shorthand for all ingredients — ELICIT whether 150 is flour-only or all-in); wastage/unsold loaves (a perishable-product shrinkage line); employer social charges/CNSS on wages (~15–20% ⇒ ~360–480 k XOF/yr on top of the 2.4 M stated); business licence/patente and municipal fees. Each pushes true FCFF below the 3.955 M ceiling."
+  - "OWNER'S LABOUR: 'Moi… je travaille tous les jours' — the owner-operator works daily but draws no stated salary. FCFF (an actual-cash-flow concept) correctly excludes an uncompensated cost, but the number therefore overstates SUSTAINABLE economics: replace the owner and a market manager wage (~1–2 M XOF/yr) must be funded. Flagged as a normalisation adjustment, not taken in the base."
+  - "TAX REGIME: 30% on EBIT is a statutory-rate prior. Many micro-bakeries in CFA markets sit under a presumptive/synthetic turnover tax (impôt synthétique) rather than profit tax; effective cash tax could differ materially in either direction. ELICIT the registration/regime. Unlevered build ⇒ no interest tax shield by construction."
+  - "CAPITAL ASSETS ARE ENTIRELY ASSUMED: nothing was stated about an oven, its cost, age, or reinvestment. Equipment 6.0 M / 10-yr SL ⇒ 600 k depreciation; net book value 3.0 M (mid-life); maintenance capex set = depreciation for a flat going concern. Because D&A and capex cancel, the headline FCFF is INSENSITIVE to the equipment level except through the tax shield: a different depreciation D shifts FCFF by only +0.30·ΔD (e.g. zero equipment ⇒ FCFF = 6,250,000·0.70 = 4,375,000)."
+  - "WORKING CAPITAL: modelled as a going concern — flour stock (7 days) already invested, cash-in/cash-out trade terms, no finished-goods stock (bread is same-day perishable). Hence ΔNWC = 0 every forecast year and NWC never enters FCFF beyond the opening level. If the shop actually extends customer credit or receives supplier credit, ΔNWC stays ~0 in steady state but the one-off establishment differs — immaterial to the flat forecast."
+  - "RENT / IFRS 16 FRICTION: rent is booked as a pure operating cash cost (9.6 M/yr). Under IFRS 16 a lease would capitalise a right-of-use asset and lease liability, splitting rent into ROU depreciation + interest and moving principal to financing — which would raise reported EBITDA and change the FCFF composition (though not the underlying cash). The operating-cost treatment is chosen as appropriate for a small owner-operator and to keep rent a cash line; noted as a modelling choice."
+  - "NO GROWTH / NO INFLATION: the founder stated flat quantities and prices. CFA-zone inflation is modest (euro peg) but non-zero; a real forecast would escalate price, flour, wages and rent. Left flat because escalation is unstated — flagged as ELICITED (price path, flour path, wage path, rent-review terms)."
+  - "FRENCH WAGE AMBIGUITY: 'deux boulangers à cent mille par mois' could read as 100 k EACH or 100 k TOTAL; the supplied English 'each' is taken as authoritative ⇒ 200 k/month labour. If it is 100 k total, labour halves to 1.2 M/yr and FCFF rises by 1.2 M·0.70 = 840,000 to ~4,795,000. ELICIT."
+  - "VALUATION SCOPE: only the asset-side FCFF stream is requested/derived. No discounting is performed; a present value would need a local-currency WACC (ELICITED). Undiscounted 5-yr FCFF = 19,775,000 XOF."
+  - "ROBUSTNESS OF CHECKS: with flat drivers the conservation checks hold trivially by construction, but each still bites against a wrong engine — the ladder and driver-bridge checks fail on any mis-multiplication (e.g. 12-month vs 365-day annualisation error), the NWC/PP&E roll-forwards fail if opening balances or roll logic are wrong, and fcff == cfo + cfi fails on any sign error in capex/ΔNWC."
+  - "SENSITIVITY SUMMARY (relative to the 3,955,000 ceiling): +840 k if wages are 100 k total not each; −1,600 to −3,200 k if oven energy at 5–10% of revenue is loaded (after 30% tax); −0.7·owner-wage if an imputed owner salary is charged; +0.30·ΔD for any change in assumed depreciation. Downside items dominate — a fuller model would likely land materially below 3.955 M."

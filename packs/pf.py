@@ -92,6 +92,11 @@ Rulebooks
     the tax record's ``expired`` is what the period could use but the next
     cannot.
 
+    The tax record also carries the loss pool's roll-forward (the golds
+    library reports it): ``losses_opening``, ``loss_added``, ``loss_used``
+    and the ``taxable`` amount left after losses (base mode only), with
+    ``losses`` the closing pool.
+
 ``tax_instalments``
     Last year's tax, paid this year in instalments: each listed period of
     the year (``period_of_year``, 0 being the first) pays its ``share`` of
@@ -533,11 +538,17 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                 raise InputError(f"income_tax: 'timing' lines {timing_lines} are not the lines of register "
                                  f"'{timing_name}' ({regs.expense}, {regs.disposal})")
             base -= regs.tax_moves.get(t, Fraction(0))
+        opening = pool.available(t)
         tax = policy.charge(t, base, pool)
         if tax:
             g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"tax.charge:{t}"))
         # what this period could still use but the next cannot: the vintages that expire at its end
         rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
+        # the pool's roll-forward (the golds report it): opening + added - used = what this period can still use
+        added = max(Fraction(0), -base) if losses_in == "base" else max(Fraction(0), -policy.rate * base)
+        used = opening + added - pool.available(t)
+        rec.update(losses_opening=opening, loss_added=added, loss_used=used,
+                   taxable=max(Fraction(0), base - used) if losses_in == "base" else None)
         if deferred is not None:
             book = g.book(entity)
             if nil_base:

@@ -1,0 +1,325 @@
+id: cold_room_kaolack_fcff
+title: Solar cold room (chambre froide solaire), Kaolack — unlevered FCFF via NOPAT
+currency: XOF            # West African CFA franc; the founder's "francs" = FCFA
+grid:
+  periods: 11           # years 0..10 : year 0 = investment/build, years 1..10 = operations
+  freq: A               # annual
+
+utterance:
+  fr: |
+    Moi je gère une chambre froide solaire à Kaolack. Je loue de la place aux mareyeurs
+    et aux vendeuses de légumes — ils viennent garder leur poisson et leurs tomates au frais.
+    La chambre peut tenir dix tonnes. Je prends vingt-cinq francs le kilo par mois.
+    La première année, la chambre était à peine remplie à quarante pour cent, les gens ne
+    connaissaient pas encore. Aujourd'hui je tourne à quatre-vingt-dix pour cent, c'est plein
+    presque tout le temps. La chambre m'a coûté quinze millions ; elle marche au solaire, donc
+    je ne paie pas de courant. Je paie un gardien-opérateur à quarante mille par mois,
+    l'entretien du groupe froid me revient à deux cent mille par an, et il y a bien cent vingt
+    mille de petites dépenses par an.
+  en: |
+    I run a solar cold room in Kaolack. I rent space to fish traders and vegetable sellers —
+    they store their fish and tomatoes cold. The room holds ten tonnes. I charge twenty-five
+    francs per kilo per month. The first year it was barely forty percent full, people didn't
+    know about it yet. Now I run at ninety percent, it's full almost all the time. The room cost
+    me fifteen million; it runs on solar, so I pay no electricity. I pay a guard-operator forty
+    thousand a month, the cold-unit maintenance runs two hundred thousand a year, and there's a
+    good hundred and twenty thousand in small expenses a year.
+
+inputs:
+  capacity_tonnes:
+    value: 10
+    unit: tonne
+    prov: STATED
+    source: '"La chambre peut tenir dix tonnes" / "The room holds ten tonnes"'
+    date: 2026-07-24
+  capacity_kg:
+    value: 10000
+    unit: kg
+    prov: INFERRED
+    source: capacity_tonnes * 1000 (1 tonne = 1000 kg, SI definition)
+    date: 2026-07-24
+  price_per_kg_month:
+    value: 25
+    unit: XOF/kg/month
+    prov: STATED
+    source: '"Je prends vingt-cinq francs le kilo par mois" / "twenty-five francs per kilo per month"'
+    date: 2026-07-24
+  months_per_year:
+    value: 12
+    unit: month/year
+    prov: DEFAULTED
+    source: calendar convention (12 months per year)
+    date: 2026-07-24
+  utilization_year1:
+    value: 0.40
+    unit: fraction of capacity
+    prov: STATED
+    source: '"la chambre était à peine remplie à quarante pour cent" / "barely forty percent full"'
+    date: 2026-07-24
+  utilization_mature:
+    value: 0.90
+    unit: fraction of capacity
+    prov: STATED
+    source: '"je tourne à quatre-vingt-dix pour cent, c''est plein presque tout le temps"'
+    date: 2026-07-24
+  capex_amount:
+    value: 15000000
+    unit: XOF
+    prov: STATED
+    source: '"La chambre m''a coûté quinze millions" / "The room cost me fifteen million"'
+    date: 2026-07-24
+  useful_life_years:
+    value: 10
+    unit: year
+    prov: ASSUMED
+    source: >
+      Domain prior. The 15M installation bundles an insulated room, a solar PV array and a
+      refrigeration unit ("groupe froid"); the compressor/refrigeration unit is the
+      life-limiting component (~10–15 yr) while PV lasts longer. 10 yr straight-line is a
+      conservative blended economic life. Life NOT stated by founder — ELICIT: expected years
+      before the cold unit needs replacement/major overhaul?
+    date: 2026-07-24
+  salvage_value:
+    value: 0
+    unit: XOF
+    prov: DEFAULTED
+    source: standard convention — no residual value stated, depreciate to zero over useful life
+    date: 2026-07-24
+  guard_monthly:
+    value: 40000
+    unit: XOF/month
+    prov: STATED
+    source: '"un gardien-opérateur à quarante mille par mois" / "a guard-operator forty thousand a month"'
+    date: 2026-07-24
+  maintenance_annual:
+    value: 200000
+    unit: XOF/year
+    prov: STATED
+    source: '"l''entretien du groupe froid me revient à deux cent mille par an"'
+    date: 2026-07-24
+  small_expenses_annual:
+    value: 120000
+    unit: XOF/year
+    prov: STATED
+    source: '"il y a bien cent vingt mille de petites dépenses par an" / "a good hundred and twenty thousand in small expenses a year"'
+    date: 2026-07-24
+  electricity_cost_annual:
+    value: 0
+    unit: XOF/year
+    prov: STATED
+    source: '"elle marche au solaire, donc je ne paie pas de courant" / "it runs on solar, so I pay no electricity"'
+    date: 2026-07-24
+  tax_rate:
+    value: 0.30
+    unit: fraction
+    prov: ASSUMED
+    source: >
+      Domain prior — Senegal statutory corporate income tax (Impôt sur les Sociétés) = 30%.
+      NOT stated. A micro-business at this turnover almost certainly falls under Senegal's
+      Contribution Globale Unique (CGU) simplified regime, whose flat turnover-based charge
+      would be materially lower. ELICIT: is the operator on IS or CGU?
+    date: 2026-07-24
+  nwc_level:
+    value: 0
+    unit: XOF
+    prov: ASSUMED
+    source: >
+      Cash rental business — the operator holds NO inventory of its own (the stored fish and
+      tomatoes belong to the customers). Monthly storage fees assumed settled in cash on/near
+      the month of service, so receivables ≈ payables ≈ 0. Payment timing NOT stated —
+      ELICIT: are fees prepaid (deferred-revenue liability) or billed in arrears (receivable)?
+    date: 2026-07-24
+  horizon_years:
+    value: 10
+    unit: year
+    prov: ASSUMED
+    source: set equal to useful_life_years — sensible horizon for a single durable asset; at
+      year 10 the asset is fully depreciated and faces replacement/refurbishment capex
+    date: 2026-07-24
+  first_operating_period:
+    value: 1
+    unit: period index
+    prov: DEFAULTED
+    source: >
+      Grid convention. Founder frames year 1 as the first year of trading ("la première année
+      ... à peine remplie à 40%"), so the build/investment sits at t=0 and operations run t=1..10.
+    date: 2026-07-24
+
+passage: |
+  NATURAL OPERATING UNIT. This is a cold-storage rental. The physical thing sold is
+  kilogram-months of refrigerated space: one kg held for one month = one kg-month, priced at
+  25 XOF. Capacity is a STOCK of 10 t = 10,000 kg that can be re-let every month, so the annual
+  productive capacity is 10,000 kg × 12 months = 120,000 kg-months/year. Occupancy (the founder's
+  "percent full") is the fraction of that stock filled on average. I keep the derivation in
+  kg-months, then translate to the standard NOPAT/FCFF ladder.
+
+  GRID. t=0 is the build/investment year: the 15,000,000 room is bought and no trading yet.
+  Operations run t=1..10 (10 years), matching the assumed 10-year economic life so the asset is
+  fully depreciated exactly at the horizon.
+
+  STEP 1 — Occupancy path. The founder gives two regimes: first year "barely 40%", and today
+  "90%, full almost all the time". Only these two points are stated; the number of years taken to
+  climb from 40% to 90% is NOT given, so I do not fabricate an intermediate ramp. I use the
+  minimum-assumption two-regime path: t=1 at 40%, t=2..10 at the mature 90%. (A multi-year
+  adoption ramp is plausible; it is flagged as an elicitation, not invented here.)
+
+  STEP 2 — kg-months sold. kg_months = 120,000 × occupancy.
+    t=1 : 120,000 × 0.40 = 48,000 kg-months.
+    t≥2 : 120,000 × 0.90 = 108,000 kg-months.
+
+  STEP 3 — Revenue = 25 XOF × kg-months.
+    t=1 : 25 × 48,000  = 1,200,000.
+    t≥2 : 25 × 108,000 = 2,700,000.
+  (Cross-check: full-capacity revenue = 25 × 120,000 = 3,000,000/yr; revenue = 3,000,000 × occupancy.)
+
+  STEP 4 — Cash operating costs (the "matching" side). All are period costs, incurred once
+  trading begins (t≥1). Electricity is zero (solar). Per year:
+    guard-operator 40,000 × 12 = 480,000
+    cold-unit maintenance          200,000
+    small expenses                 120,000
+    ----------------------------------------
+    opex total                     800,000/yr.
+  Maintenance is expensed (routine upkeep of the groupe froid), not capitalised.
+
+  STEP 5 — EBITDA = Revenue − opex.
+    t=1 : 1,200,000 − 800,000 =   400,000.
+    t≥2 : 2,700,000 − 800,000 = 1,900,000.
+
+  STEP 6 — Depreciation. 15,000,000 straight-line over 10 years to zero salvage = 1,500,000/yr,
+  charged t=1..10. Book value rolls 15,000,000 → 13,500,000 → … → 0 at t=10.
+
+  STEP 7 — EBIT = EBITDA − depreciation.
+    t=1 : 400,000 − 1,500,000 = −1,100,000  (an accounting LOSS in year 1: positive EBITDA of
+                                             400k is more than absorbed by the 1.5M depreciation).
+    t≥2 : 1,900,000 − 1,500,000 = 400,000.
+
+  STEP 8 — Tax on the unlevered operation (30% IS), with a loss carry-forward. A standalone
+  micro-business cannot monetise the year-1 loss as a refund, so I do NOT apply tax symmetrically
+  to negative EBIT; instead the loss (driven by depreciation — "amortissement réputé différé",
+  carried forward without time limit under OHADA) is banked and offsets later profits:
+    t=1 : EBIT −1,100,000 → taxable 0, tax 0; NOL carry-forward stock = 1,100,000.
+    t=2 : EBIT 400,000 fully sheltered by NOL → taxable 0, tax 0; NOL 700,000.
+    t=3 : EBIT 400,000 sheltered → taxable 0, tax 0; NOL 300,000.
+    t=4 : EBIT 400,000, only 300,000 of NOL left → taxable 100,000, tax 30,000; NOL 0.
+    t=5..10 : EBIT 400,000, no NOL → taxable 400,000, tax 120,000 each.
+
+  STEP 9 — NOPAT = EBIT − tax.
+    t=1 −1,100,000 ; t=2 400,000 ; t=3 400,000 ; t=4 370,000 ; t=5..10 280,000.
+
+  STEP 10 — Working capital. No own-inventory; monthly cash rental. NWC held at 0, so ΔNWC = 0
+  every period. (Flagged assumption; see inputs.nwc_level.)
+
+  STEP 11 — Capex. 15,000,000 at t=0 only. No expansion is possible (capacity capped at 10 t and
+  already ~90% full) and none is mentioned; maintenance is opex, not capex. Horizon ends at t=10
+  before any replacement cycle.
+
+  STEP 12 — FCFF = NOPAT + D&A − ΔNWC − capex.
+    t=0  : 0 + 0 − 0 − 15,000,000        = −15,000,000
+    t=1  : −1,100,000 + 1,500,000        =     400,000
+    t=2  :    400,000 + 1,500,000        =   1,900,000
+    t=3  :    400,000 + 1,500,000        =   1,900,000
+    t=4  :    370,000 + 1,500,000        =   1,870,000
+    t=5..10 : 280,000 + 1,500,000        =   1,780,000
+  Equivalent (D&A cancels): FCFF = EBITDA − cash tax − ΔNWC − capex — a useful independent check.
+
+  READING. Undiscounted FCFF over the 10 years sums to +1,750,000 on a 15,000,000 outlay:
+  nominal payback lands only in year 10, so on a discounted basis this asset does not recover its
+  cost within its assumed life at a 30% tax rate. The business is thin/marginal as specified.
+  Two levers dominate: (a) tax regime — under the CGU simplified regime the effective charge would
+  be a fraction of the modelled IS, materially lifting FCFF; (b) asset life — a 15-year life
+  (dep 1,000,000/yr) shrinks the year-1 loss and improves early FCFF. Note the total tax over the
+  life is 750,000 either way (30% × ΣEBIT = 30% × 2,500,000): the loss carry-forward only reshapes
+  the timing of tax, not its lifetime total, so total FCFF is +1,750,000 under either tax-timing
+  convention.
+
+trace:
+  utilization:    [0,        0.40,      0.90,     0.90,     0.90,     0.90,     0.90,     0.90,     0.90,     0.90,     0.90]
+  kg_months:      [0,        48000,     108000,   108000,   108000,   108000,   108000,   108000,   108000,   108000,   108000]
+  revenue:        [0,        1200000,   2700000,  2700000,  2700000,  2700000,  2700000,  2700000,  2700000,  2700000,  2700000]
+  opex:           [0,        800000,    800000,   800000,   800000,   800000,   800000,   800000,   800000,   800000,   800000]
+  ebitda:         [0,        400000,    1900000,  1900000,  1900000,  1900000,  1900000,  1900000,  1900000,  1900000,  1900000]
+  dep:            [0,        1500000,   1500000,  1500000,  1500000,  1500000,  1500000,  1500000,  1500000,  1500000,  1500000]
+  ebit:           [0,        -1100000,  400000,   400000,   400000,   400000,   400000,   400000,   400000,   400000,   400000]
+  nol_added:      [0,        1100000,   0,        0,        0,        0,        0,        0,        0,        0,        0]
+  nol_used:       [0,        0,         400000,   400000,   300000,   0,        0,        0,        0,        0,        0]
+  nol_end:        [0,        1100000,   700000,   300000,   0,        0,        0,        0,        0,        0,        0]
+  taxable_income: [0,        0,         0,        0,        100000,   400000,   400000,   400000,   400000,   400000,   400000]
+  tax:            [0,        0,         0,        0,        30000,    120000,   120000,   120000,   120000,   120000,   120000]
+  nopat:          [0,        -1100000,  400000,   400000,   370000,   280000,   280000,   280000,   280000,   280000,   280000]
+  delta_nwc:      [0,        0,         0,        0,        0,        0,        0,        0,        0,        0,        0]
+  nwc:            [0,        0,         0,        0,        0,        0,        0,        0,        0,        0,        0]
+  capex:          [15000000, 0,         0,        0,        0,        0,        0,        0,        0,        0,        0]
+  book_value:     [15000000, 13500000,  12000000, 10500000, 9000000,  7500000,  6000000,  4500000,  3000000,  1500000,  0]
+  fcff:           [-15000000, 400000,   1900000,  1900000,  1870000,  1780000,  1780000,  1780000,  1780000,  1780000,  1780000]
+
+fcff: [-15000000, 400000, 1900000, 1900000, 1870000, 1780000, 1780000, 1780000, 1780000, 1780000, 1780000]
+
+checks:
+  # --- conservation ---
+  - "trace.book_value[t] == trace.book_value[t-1] - trace.dep[t] + trace.capex[t]"
+  - "trace.nol_end[t] == trace.nol_end[t-1] + trace.nol_added[t] - trace.nol_used[t]"
+  - "cumsum(trace.delta_nwc) == trace.nwc"
+  - "sum(trace.dep) == sum(trace.capex)"
+  - "trace.book_value[last] == salvage_value"
+  # --- definition (the ladder) ---
+  - "trace.ebitda == trace.revenue - trace.opex"
+  - "trace.ebit == trace.ebitda - trace.dep"
+  - "trace.taxable_income == trace.ebit - trace.nol_used + trace.nol_added"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.fcff == trace.nopat + trace.dep - trace.delta_nwc - trace.capex"
+  - "trace.fcff == trace.ebitda - trace.tax - trace.delta_nwc - trace.capex"
+  - "fcff == trace.fcff"
+  # --- driver-bridge ---
+  - "trace.kg_months == capacity_kg * months_per_year * trace.utilization"
+  - "trace.revenue == price_per_kg_month * trace.kg_months"
+  - "trace.revenue == price_per_kg_month * capacity_kg * months_per_year * trace.utilization"
+  - "trace.tax == tax_rate * trace.taxable_income"
+  - "trace.dep[t] == capex_amount / useful_life_years for t >= first_operating_period"
+  - "trace.dep[t] == 0 for t < first_operating_period"
+  - "trace.opex[t] == guard_monthly * months_per_year + maintenance_annual + small_expenses_annual for t >= first_operating_period"
+  - "trace.opex[t] == 0 for t < first_operating_period"
+  - "trace.capex[t] == 0 for t >= first_operating_period"
+  - "trace.capex[first] == capex_amount"
+  # --- non-negativity / bounds ---
+  - "trace.book_value[t] >= 0"
+  - "trace.nol_end[t] >= 0"
+  - "trace.taxable_income[t] >= 0"
+  - "trace.revenue[t] >= 0"
+  - "trace.kg_months[t] >= 0"
+  - "trace.utilization[t] <= 1"
+  - "trace.revenue[t] <= price_per_kg_month * capacity_kg * months_per_year"
+
+notes: |
+  - Natural unit. The business sells kg-months of cold storage (10,000 kg re-let each month =
+    120,000 kg-months/yr at full capacity). Occupancy is a stock-fill fraction; revenue accrues
+    per kg-month. Kept in kg-months rather than forced into a generic "volume × price" line.
+  - Occupancy path is a deliberate two-regime (40% in year 1, 90% thereafter) using ONLY the two
+    stated data points. The founder implies growth from 40% to 90% but does not say over how many
+    years, so no intermediate ramp is invented. ELICIT the elapsed time / adoption curve if a
+    smoother ramp is wanted; that would lower years 2–3 revenue.
+  - Own-inventory is zero — the stored fish and tomatoes belong to customers, not the operator.
+    This is why NWC is held at 0. The one live working-capital question is fee timing (prepaid =
+    deferred-revenue liability, lowering NWC; arrears = receivable, raising it). Flagged, set to 0.
+  - Depreciation drives a genuine year-1 accounting loss (EBITDA +400k < depreciation 1,500k).
+    I bank that loss as a carry-forward rather than granting a fictional year-1 tax refund, which
+    is the realistic treatment for a standalone entity and qualifies as deferred-depreciation
+    carry-forward under OHADA/Senegalese rules. The alternative textbook convention
+    NOPAT = EBIT × (1 − t) applied symmetrically gives FCFF_1 = 730,000 and FCFF_2..10 = 1,780,000;
+    lifetime tax (750,000) and total FCFF (+1,750,000) are identical — only tax timing differs.
+  - Tax rate is the 30% Senegal IS statutory rate as a domain prior. HIGH-IMPACT and likely wrong
+    for reality: at ~1.2–2.7M annual turnover this operator almost certainly sits under the CGU
+    simplified regime (a modest turnover-based flat charge), which would cut tax sharply and raise
+    FCFF. Modelled with IS to keep a standard NOPAT build; flagged for the founder to confirm.
+  - Useful life (10 yr) is assumed and materially affects the shape: a 15-yr life shrinks the
+    year-1 loss (dep 1,000k) and improves early FCFF. The refrigeration unit, not the solar array,
+    is the binding life constraint; confirm expected years to compressor replacement.
+  - Horizon deliberately ends at year 10 = full depreciation. Beyond it the cold unit needs
+    replacement/major overhaul (lumpy capex not modelled here); extending the horizon would require
+    a replacement-capex assumption.
+  - Economic reading: undiscounted cumulative FCFF is only +1,750,000 on a 15,000,000 investment,
+    with nominal payback in year 10 — a thin, near-break-even asset at 30% tax. Viability hinges on
+    the tax regime (CGU vs IS) and asset life above. No price escalation is modelled (none stated);
+    holding the 25 XOF/kg/month tariff flat in nominal terms is conservative under inflation.
+  - No interest/financing appears anywhere — consistent with an UNLEVERED FCFF (asset-side) build.
+  - No land rent, insurance, or owner's salary was mentioned; none assumed. If the operator draws
+    a wage or pays ground rent, opex is understated — ELICIT.

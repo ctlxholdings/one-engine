@@ -1,0 +1,761 @@
+id: gold_bakery_van_delivery_fcff_v1
+title: >-
+  Neighbourhood bakery with own delivery van — unlevered free cash flow (FCFF via NOPAT)
+  over the van's remaining useful life
+currency: XOF
+grid:
+  periods: 5
+  freq: annual
+  period_labels: ["Y1", "Y2", "Y3", "Y4", "Y5"]
+  grid_note: >-
+    Y1 is the twelve months beginning at the utterance date. Because the van was bought two
+    years ago and was said to last seven years, Y1..Y5 are years 3..7 of the van's life; the
+    grid is chosen to end exactly when the only stated durable asset is fully consumed.
+
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Je fais cinq cents pains par jour. La farine me coûte cent
+    cinquante francs par pain. Je paie deux boulangers à cent mille par mois chacun, et le
+    loyer du local est à huit cent mille par mois. Je travaille tous les jours. Avant je
+    vendais tout au comptoir à deux cent cinquante francs le pain. Il y a deux ans j'ai acheté
+    une camionnette, quinze millions, pour livrer aux boutiques et aux cafés du quartier.
+    Maintenant la moitié de ma production part en livraison, et le pain livré je le vends
+    trois cent vingt francs. Mais la camionnette coûte : le chauffeur six cent mille par an,
+    le carburant deux millions quatre cent mille par an, l'entretien un million deux cent
+    mille par an. On m'a dit qu'elle ferait sept ans.
+  en: |
+    I run a bakery. I make five hundred loaves a day. Flour costs me one hundred fifty francs
+    per loaf. I pay two bakers a hundred thousand a month each, and the shop rent is eight
+    hundred thousand a month. I work every day. I used to sell everything over the counter at
+    two hundred fifty francs a loaf. Two years ago I bought a van, fifteen million, to deliver
+    to the neighbourhood shops and cafés. Now half my production goes out on delivery, and
+    delivered bread I sell at three hundred twenty francs. But the van costs: the driver six
+    hundred thousand a year, fuel two million four hundred thousand a year, maintenance one
+    million two hundred thousand a year. They told me it would last seven years.
+
+inputs:
+
+  loaves_per_day:
+    value: 500
+    unit: loaves/day
+    prov: STATED
+    source: >-
+      "Je fais cinq cents pains par jour." / "I make five hundred loaves a day."
+    date: "2026-07-24"
+
+  days_per_year:
+    value: 365
+    unit: days/year
+    prov: DEFAULTED
+    source: >-
+      "Je travaille tous les jours." / "I work every day." entails operation on every calendar
+      day, i.e. no closure days. The count 365 is the standard non-leap calendar-year
+      convention (365-day year, leap days ignored); because an unstated convention enters,
+      this is DEFAULTED, not INFERRED. The number of operating days is what he stated; the
+      arithmetic size of a year is the convention.
+    date: "2026-07-24"
+
+  flour_cost_per_loaf:
+    value: 150
+    unit: XOF/loaf
+    prov: STATED
+    source: >-
+      "La farine me coûte cent cinquante francs par pain." / "Flour costs me one hundred fifty
+      francs per loaf." Read as a variable cost per unit of output, in matching with the loaf
+      it produces (IAS 2 cost of conversion).
+    date: "2026-07-24"
+
+  counter_price:
+    value: 250
+    unit: XOF/loaf
+    prov: ASSUMED
+    source: >-
+      "Avant je vendais tout au comptoir à deux cent cinquante francs le pain." The price is
+      stated in the PAST tense ("Avant" / "I used to"). The contrast "le pain livré je le vends
+      320" pins the current counter price BELOW 320 but does not fix it at exactly 250 — carrying
+      the old 250 forward as the current counter price rests on an unstated premise that the
+      counter price has not moved since. Per the sharp rule, that unstated world-premise makes the
+      CURRENT counter price ASSUMED, not INFERRED (the 250 is a well-motivated central estimate,
+      but its certainty is not deductive). ELICIT the current counter price — the highest-leverage
+      single input (× 91,250 loaves). CORRECTED 2026-07-25 (was INFERRED; physical audit).
+    date: "2026-07-24"
+
+  delivery_price:
+    value: 320
+    unit: XOF/loaf
+    prov: STATED
+    source: >-
+      "le pain livré je le vends trois cent vingt francs" / "delivered bread I sell at three
+      hundred twenty francs."
+    date: "2026-07-24"
+
+  delivery_share:
+    value: 0.5
+    unit: fraction of loaves produced
+    prov: STATED
+    source: >-
+      "Maintenant la moitié de ma production part en livraison." / "Now half my production
+      goes out on delivery."
+    date: "2026-07-24"
+
+  counter_share:
+    value: 0.5
+    unit: fraction of loaves produced
+    prov: INFERRED
+    source: >-
+      Complement of delivery_share within total production. He describes exactly two channels
+      (comptoir, livraison) and no third outlet, no waste and no self-consumption; production
+      is exhaustively partitioned, so counter_share = 1 - 0.5 = 0.5.
+    date: "2026-07-24"
+
+  baker_count:
+    value: 2
+    unit: employees
+    prov: STATED
+    source: >-
+      "Je paie deux boulangers" / "I pay two bakers."
+    date: "2026-07-24"
+
+  baker_wage_per_month:
+    value: 100000
+    unit: XOF/month/baker
+    prov: STATED
+    source: >-
+      "à cent mille par mois chacun" / "a hundred thousand a month each." The word "chacun" /
+      "each" makes this per-head, not a shared pot.
+    date: "2026-07-24"
+
+  months_per_year:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: >-
+      Calendar convention converting the monthly wage and rent quotes to an annual grid.
+    date: "2026-07-24"
+
+  rent_per_month:
+    value: 800000
+    unit: XOF/month
+    prov: STATED
+    source: >-
+      "le loyer du local est à huit cent mille par mois" / "the shop rent is eight hundred
+      thousand a month."
+    date: "2026-07-24"
+
+  van_purchase_cost:
+    value: 15000000
+    unit: XOF
+    prov: STATED
+    source: >-
+      "j'ai acheté une camionnette, quinze millions" / "I bought a van, fifteen million."
+      Historical cost of a single item of property, plant and equipment (IAS 16.15).
+    date: "2026-07-24"
+
+  van_years_elapsed:
+    value: 2
+    unit: years
+    prov: STATED
+    source: >-
+      "Il y a deux ans j'ai acheté une camionnette" / "Two years ago I bought a van." Fixes the
+      asset's age at t=0 and therefore its opening carrying amount.
+    date: "2026-07-24"
+
+  van_useful_life_years:
+    value: 7
+    unit: years
+    prov: STATED
+    source: >-
+      "On m'a dit qu'elle ferait sept ans." / "They told me it would last seven years."
+      Recorded as stated, but note the evidential marker "On m'a dit" — this is reported
+      hearsay, a third party's estimate of useful life, not the founder's own observation.
+    date: "2026-07-24"
+
+  van_residual_value:
+    value: 0
+    unit: XOF
+    prov: DEFAULTED
+    source: >-
+      No residual or scrap value is mentioned anywhere in the utterance. Standard convention
+      for a light commercial vehicle run to the end of its stated economic life in an intensive
+      daily-delivery duty cycle is to depreciate straight-line to nil (IAS 16.53, where residual
+      value is immaterial). A non-zero scrap value would raise terminal FCFF.
+    date: "2026-07-24"
+
+  van_driver_cost_per_year:
+    value: 600000
+    unit: XOF/year
+    prov: STATED
+    source: >-
+      "le chauffeur six cent mille par an" / "the driver six hundred thousand a year." Note the
+      unit is explicitly annual ("par an"), in contrast with the bakers' monthly quote.
+    date: "2026-07-24"
+
+  van_fuel_cost_per_year:
+    value: 2400000
+    unit: XOF/year
+    prov: STATED
+    source: >-
+      "le carburant deux millions quatre cent mille par an" / "fuel two million four hundred
+      thousand a year."
+    date: "2026-07-24"
+
+  van_maintenance_cost_per_year:
+    value: 1200000
+    unit: XOF/year
+    prov: STATED
+    source: >-
+      "l'entretien un million deux cent mille par an" / "maintenance one million two hundred
+      thousand a year." Treated as routine servicing expensed as incurred (IAS 16.12 — day-to-day
+      servicing is not capitalised), not as a capitalisable major overhaul.
+    date: "2026-07-24"
+
+  tax_rate:
+    value: 0.25
+    unit: fraction of EBIT
+    prov: ASSUMED
+    source: >-
+      No tax is mentioned in the utterance. Domain prior supplied by the analyst — the
+      harmonised statutory corporate income tax rate across most WAEMU/UEMOA member states
+      (Senegal, Côte d'Ivoire, Benin, Burkina Faso) is 25 percent. Applied to EBIT for the
+      unlevered build, so that no interest shield is embedded. FLAGGED — this is the single
+      largest non-stated input in the model; a zero-tax variant is materialised in
+      trace.fcff_untaxed rather than asserted in prose.
+    date: "2026-07-24"
+
+  flour_inventory_days:
+    value: 7
+    unit: days of flour cost held as stock
+    prov: ASSUMED
+    source: >-
+      No stock policy is stated. Analyst prior — a daily-bake operation buying flour in sacks
+      typically carries about one week of flour cover. FLAGGED. See notes — under the flat
+      steady state the FCFF result is invariant to this number, so it drives the level of NWC
+      but not any cash flow.
+    date: "2026-07-24"
+
+  delivery_receivable_days:
+    value: 7
+    unit: days of delivery revenue outstanding
+    prov: ASSUMED
+    source: >-
+      No payment terms for the shops and cafés are stated. Analyst prior — weekly settlement
+      with neighbourhood trade accounts. FLAGGED. Same invariance as above.
+    date: "2026-07-24"
+
+  counter_receivable_days:
+    value: 0
+    unit: days
+    prov: INFERRED
+    source: >-
+      "je vendais tout au comptoir" / "sell everything over the counter." A counter sale is by
+      definition settled at the point of transfer of control; no credit is extended, so counter
+      receivables are structurally nil.
+    date: "2026-07-24"
+
+  flour_payable_days:
+    value: 14
+    unit: days of flour purchases outstanding
+    prov: ASSUMED
+    source: >-
+      No supplier terms are stated. Analyst prior — fortnightly settlement with a flour
+      wholesaler. FLAGGED. Same invariance as above.
+    date: "2026-07-24"
+
+  replacement_capex_in_horizon:
+    value: 0
+    unit: XOF/year
+    prov: DEFAULTED
+    source: >-
+      The van is the only durable asset named, it was acquired before t=0, and the horizon is
+      set to terminate exactly at the end of its stated life. No oven, mixer, proofer, shelving
+      or building purchase is mentioned, and the premises are rented, not owned. In the absence
+      of any stated asset requiring renewal inside the horizon, forecast capex is nil.
+    date: "2026-07-24"
+
+  waste_rate:
+    value: 0
+    unit: fraction of loaves produced
+    prov: DEFAULTED
+    source: >-
+      He gives one production number and describes it as fully split between two selling
+      channels, with no mention of unsold or returned bread. Convention — production equals
+      sales when the speaker asserts no shrinkage. FLAGGED as a real economic risk for a
+      perishable daily product; see notes.
+    date: "2026-07-24"
+
+  owner_compensation:
+    value: 0
+    unit: XOF/year
+    prov: DEFAULTED
+    source: >-
+      "Je travaille tous les jours" establishes that the founder supplies labour daily, but he
+      names only the bakers' and the driver's pay as costs. Under the historical-cost
+      convention only transacted amounts are recognised, so unremunerated proprietor labour is
+      not expensed. FLAGGED — see notes.
+    date: "2026-07-24"
+
+  horizon_years:
+    value: 5
+    unit: years
+    prov: INFERRED
+    source: >-
+      van_useful_life_years - van_years_elapsed = 7 - 2 = 5. The only durable asset in the
+      business has five years of stated life left at the utterance date; that is the longest
+      horizon over which the stated cost structure can be carried forward without inventing a
+      replacement asset price the founder never gave.
+    date: "2026-07-24"
+
+passage: |
+  STEP 0 — WHAT KIND OF BUSINESS THIS IS, AND WHAT THE NATURAL QUANTITIES ARE
+
+  This is a single-product daily-bake operation with two selling channels out of one oven. The
+  founder's own unit of account is the loaf, and his natural period is the day — everything he
+  says is quoted either per loaf ("cent cinquante francs par pain", "deux cent cinquante francs
+  le pain", "trois cent vingt francs"), per day ("cinq cents pains par jour", "tous les jours"),
+  per month (the bakers, the rent) or per year (the three van cost lines). The model is therefore
+  built in loaves-per-day and then lifted to an annual grid, rather than being forced into a
+  generic revenue-growth template. There is no volume growth driver anywhere in his words: he
+  states one production rate, flat, with no expansion plan, no seasonality and no price path.
+  The correct reading of that silence is a flat steady state, not an assumed growth rate.
+
+  Note the structure of his story. There was a regime change two years ago: he bought a van for
+  15,000,000 and moved from all-counter selling at 250 to a half-counter / half-delivery mix in
+  which the delivered half fetches 320. The van and its running costs are the price of that
+  uplift. That framing is what makes an asset-side (unlevered) FCFF the right object — it isolates
+  what the operating assets throw off, before any question of how the van was financed. He
+  mentions no borrowing, no interest and no lender, which is consistent with an unlevered build.
+
+  STEP 1 — HORIZON
+
+  The van was bought two years ago and is said to last seven years. Five years of stated life
+  remain. Beyond year five the only durable asset in the business is consumed and a replacement
+  price would have to be invented, since he never gives one. I therefore run five annual periods,
+  Y1 to Y5, which are years three to seven of the van's life. The horizon ends exactly when the
+  van's carrying amount reaches nil — a clean terminal point rather than an arbitrary cut.
+
+  STEP 2 — PHYSICAL VOLUMES (identical in every period Y1..Y5)
+
+  He works every day, so the operating year is the full calendar year: 365 days.
+    Loaves produced per year = 500 loaves/day x 365 days = 182,500 loaves.
+  Half of production goes out on delivery:
+    Loaves delivered = 182,500 x 0.5 = 91,250 loaves.
+    Loaves sold at the counter = 182,500 x 0.5 = 91,250 loaves.
+  The partition is exhaustive — he names only two outlets and no shrinkage — so the two halves
+  sum back to 182,500. There is no ramp: the delivery channel has been running for two years
+  already ("Maintenant la moitié..."), so the mix is at its steady level from Y1.
+
+  STEP 3 — REVENUE (IFRS 15: control passes at the counter, or on delivery to the shop)
+
+  Counter revenue   = 91,250 loaves x 250 XOF   = 22,812,500 XOF
+  Delivery revenue  = 91,250 loaves x 320 XOF   = 29,200,000 XOF
+  Total revenue                                 = 52,012,500 XOF per year
+
+  Both channels settle within the annual period, so revenue recognised equals revenue earned;
+  the only timing question is the receivable at the year boundary, handled in Step 7.
+
+  Cross-check on the blended price: 52,012,500 / 182,500 = 285 XOF per loaf, which sits exactly
+  midway between 250 and 320, as a 50/50 mix must.
+
+  STEP 4 — OPERATING COSTS
+
+  (a) Flour, the only variable input he names. Matched to output loaf for loaf:
+      182,500 loaves x 150 XOF = 27,375,000 XOF per year.
+      Gross margin over flour = 52,012,500 - 27,375,000 = 24,637,500 XOF.
+      Per loaf that is 285 - 150 = 135 XOF of contribution before any fixed cost.
+
+  (b) Bakers. Two heads at 100,000 per month each:
+      2 x 100,000 x 12 = 2,400,000 XOF per year.
+      This is a fixed cost at his stated scale — he does not vary headcount with volume, and
+      volume is flat, so nothing turns on whether it is strictly fixed or strictly variable here.
+
+  (c) Rent of the premises: 800,000 x 12 = 9,600,000 XOF per year.
+      Treated as an operating expense inside EBITDA. See notes on the IFRS 16 friction.
+
+  (d) The van's running costs, all three quoted annually and all three operating in nature:
+      driver       600,000
+      fuel       2,400,000
+      maintenance 1,200,000
+      van cash operating cost = 4,200,000 XOF per year.
+      Maintenance here is routine servicing, expensed as incurred, not a capitalised overhaul.
+
+  Total cash operating cost = 27,375,000 + 2,400,000 + 9,600,000 + 4,200,000 = 43,575,000 XOF.
+
+  STEP 5 — EBITDA
+
+  EBITDA = 52,012,500 - 43,575,000 = 8,437,500 XOF per year, flat across Y1..Y5.
+
+  Structurally: 24,637,500 of contribution after flour, less 16,200,000 of cash fixed costs
+  (bakers 2,400,000 + rent 9,600,000 + van 4,200,000) = 8,437,500. The single largest fixed cost
+  in this business is the rent, at 9,600,000 — more than twice the entire van package and four
+  times the bakers' payroll.
+
+  STEP 6 — DEPRECIATION AND THE ASSET ROLL-FORWARD
+
+  The van is the only recognised item of PPE. Straight line over the stated seven-year life to a
+  nil residual:
+    Annual depreciation = 15,000,000 / 7 = 2,142,857.142857143 XOF (a repeating decimal; carried
+    at full precision throughout the trace and only rounded in this prose).
+
+  Two years have already been charged before Y1, so the carrying amount at the opening of Y1 is
+    15,000,000 - 2 x 2,142,857.142857143 = 10,714,285.714285714 XOF,
+  with 4,285,714.285714286 of accumulated depreciation already booked.
+
+  Roll-forward, opening carrying amount less the year's charge equals closing:
+    Y1  10,714,285.714285714 - 2,142,857.142857143 = 8,571,428.571428571
+    Y2   8,571,428.571428571 - 2,142,857.142857143 = 6,428,571.428571429
+    Y3   6,428,571.428571429 - 2,142,857.142857143 = 4,285,714.285714286
+    Y4   4,285,714.285714286 - 2,142,857.142857143 = 2,142,857.142857143
+    Y5   2,142,857.142857143 - 2,142,857.142857143 = 0
+  Accumulated depreciation closes at 15,000,000 in Y5, exactly extinguishing cost. The horizon
+  and the asset life are made to close together by construction.
+
+  EBIT = 8,437,500 - 2,142,857.142857143 = 6,294,642.857142857 XOF per year, flat.
+
+  STEP 7 — WORKING CAPITAL, AND WHY ITS LEVEL DOES NOT MOVE THE ANSWER
+
+  He gives no stock policy and no payment terms, so the levels below are analyst priors and are
+  flagged as such. What matters is that they are level assumptions in a flat business, and FCFF
+  responds only to the change in net working capital.
+
+    Flour stock, 7 days of flour cost:
+      daily flour cost = 27,375,000 / 365 = 75,000; x 7 = 525,000 XOF.
+    Trade receivables. Counter sales carry none — a counter sale is settled on the spot, by
+    definition of "au comptoir". Only the delivered half generates credit, 7 days of it:
+      daily delivery revenue = 29,200,000 / 365 = 80,000; x 7 = 560,000 XOF.
+    Trade payables to the flour supplier, 14 days of purchases:
+      75,000 x 14 = 1,050,000 XOF.
+
+    Net working capital = 525,000 + 560,000 - 1,050,000 = 35,000 XOF.
+
+  The important deduction is this. Volumes, both prices, the channel mix and every cost line are
+  constant across Y1..Y5, and the delivery channel has been running for two years already, so the
+  business enters Y1 already at this same steady level. A constant NWC level implies a zero change
+  in NWC in every forecast period:
+    Delta NWC = 0 in Y1, Y2, Y3, Y4 and Y5.
+  Consequently the three assumed policy days above set the level of the balance sheet item but
+  contribute nothing to free cash flow. This is not a convenient dodge; it is the correct
+  consequence of a genuinely flat operating plan, and it quarantines the model's weakest inputs
+  away from the answer. The one place they would bite — the working-capital injection required to
+  start the delivery channel — happened two years ago, before the grid opens.
+
+  STEP 8 — TAX AND NOPAT
+
+  Unlevered tax is charged on EBIT, so that no interest shield is smuggled into the asset-side
+  cash flow. At the assumed 25 percent statutory rate:
+    Tax on EBIT = 6,294,642.857142857 x 0.25 = 1,573,660.714285714 XOF
+    NOPAT       = 6,294,642.857142857 - 1,573,660.714285714 = 4,720,982.142857143 XOF
+  Equivalently NOPAT = EBIT x 0.75, which reproduces the same figure. Book depreciation is taken
+  as tax depreciation; no accelerated allowance or separate tax base is asserted, because none is
+  stated.
+
+  STEP 9 — CAPEX
+
+  Nil in every period. The van was bought before the grid opens, it is not replaced inside the
+  horizon by construction, and no other durable asset is named — the premises are rented, and no
+  oven, mixer or fitting purchase appears anywhere in the utterance. This is a genuine gap in the
+  founder's account rather than a modelled zero; it is flagged in the notes and in the elicitation
+  list, because a bakery unquestionably owns baking equipment.
+
+  STEP 10 — THE FCFF LADDER, PER PERIOD
+
+  FCFF = NOPAT + D&A - change in NWC - capex. In every one of Y1..Y5:
+
+    NOPAT                              4,720,982.142857143
+    + depreciation                     2,142,857.142857143
+    - change in net working capital                      0
+    - capex                                              0
+    = FCFF                             6,863,839.285714286 XOF
+
+  Split into the two standard sub-totals, cash from operations is
+    4,720,982.142857143 + 2,142,857.142857143 - 0 = 6,863,839.285714286,
+  and cash used in investing is -0, so FCFF = CFO + CFI reproduces the same number.
+
+  A second route confirms it. With no working-capital movement and no capex, FCFF collapses to
+  EBITDA less cash tax: 8,437,500 - 1,573,660.714285714 = 6,863,839.285714286. The two routes agree
+  exactly, which is the expected identity when the only accrual/cash difference is depreciation.
+
+  Cumulative FCFF over the five years reaches 34,319,196.428571429 XOF.
+
+  STEP 11 — WAS THE VAN WORTH IT? THE INCREMENTAL TEST
+
+  The founder tells us exactly what the world looked like without the van — "Avant je vendais tout
+  au comptoir à deux cent cinquante francs le pain" — so the counterfactual is his own, not mine.
+  All 182,500 loaves at 250 would be 45,625,000 XOF of revenue. The van's contribution is therefore
+
+    incremental revenue = 52,012,500 - 45,625,000 = 6,387,500 XOF per year,
+  which is simply the 91,250 delivered loaves earning 70 XOF more each. Against it stand the van's
+  own cash costs of 4,200,000, so
+
+    incremental EBITDA = 6,387,500 - 4,200,000 = 2,187,500 XOF per year,
+    incremental EBIT   = 2,187,500 - 2,142,857.142857143 = 44,642.857142857143 XOF per year.
+
+  That is the finding worth stating plainly. The delivery business covers its own depreciation by
+  a margin of roughly forty-five thousand francs a year on a fifteen-million-franc asset. Measured
+  as undiscounted cash, cumulative incremental EBITDA since the purchase reaches 6,562,500 by the
+  end of Y1 (two years already elapsed plus Y1) and 15,312,500 by the end of Y5 — that is, the van
+  finishes its seven-year life having returned 15,312,500 against a 15,000,000 outlay. It repays
+  itself in the last months of its stated life, with no allowance for the time value of money. On
+  any positive discount rate the decision, as described, does not pay for itself.
+
+  This does not change the FCFF above — the van is a sunk asset and its cash costs are already in
+  the ladder — but it is the analytically load-bearing result for anyone deciding whether to buy a
+  second van or replace this one in year eight.
+
+  STEP 12 — THE ZERO-TAX VARIANT, MATERIALISED
+
+  Because the tax rate is the only large purely assumed input, the untaxed ladder is carried as its
+  own trace column rather than mentioned in passing. With tax at nil, NOPAT collapses to EBIT
+  (6,294,642.857142857) and FCFF becomes 6,294,642.857142857 + 2,142,857.142857143 = 8,437,500 XOF,
+  i.e. exactly EBITDA — the expected identity when depreciation is the only accrual and there is no
+  working-capital or capex movement. The taxed and untaxed cases bracket the plausible range.
+
+trace:
+  loaves_produced:            [182500, 182500, 182500, 182500, 182500]
+  loaves_counter:             [91250, 91250, 91250, 91250, 91250]
+  loaves_delivered:           [91250, 91250, 91250, 91250, 91250]
+  revenue_counter:            [22812500, 22812500, 22812500, 22812500, 22812500]
+  revenue_delivery:           [29200000, 29200000, 29200000, 29200000, 29200000]
+  revenue:                    [52012500, 52012500, 52012500, 52012500, 52012500]
+  flour_cost:                 [27375000, 27375000, 27375000, 27375000, 27375000]
+  gross_margin:               [24637500, 24637500, 24637500, 24637500, 24637500]
+  baker_wages:                [2400000, 2400000, 2400000, 2400000, 2400000]
+  rent:                       [9600000, 9600000, 9600000, 9600000, 9600000]
+  van_driver:                 [600000, 600000, 600000, 600000, 600000]
+  van_fuel:                   [2400000, 2400000, 2400000, 2400000, 2400000]
+  van_maintenance:            [1200000, 1200000, 1200000, 1200000, 1200000]
+  van_cash_opex:              [4200000, 4200000, 4200000, 4200000, 4200000]
+  total_cash_opex:            [43575000, 43575000, 43575000, 43575000, 43575000]
+  ebitda:                     [8437500, 8437500, 8437500, 8437500, 8437500]
+  depreciation:
+    [2142857.142857143, 2142857.142857143, 2142857.142857143, 2142857.142857143, 2142857.142857143]
+  ebit:
+    [6294642.857142857, 6294642.857142857, 6294642.857142857, 6294642.857142857, 6294642.857142857]
+  tax:
+    [1573660.714285714, 1573660.714285714, 1573660.714285714, 1573660.714285714, 1573660.714285714]
+  nopat:
+    [4720982.142857143, 4720982.142857143, 4720982.142857143, 4720982.142857143, 4720982.142857143]
+  van_bv_opening:
+    [10714285.714285714, 8571428.571428571, 6428571.428571429, 4285714.285714286, 2142857.142857143]
+  van_bv_closing:
+    [8571428.571428571, 6428571.428571429, 4285714.285714286, 2142857.142857143, 0]
+  accumulated_depreciation:
+    [6428571.428571429, 8571428.571428571, 10714285.714285714, 12857142.857142857, 15000000]
+  capex:                      [0, 0, 0, 0, 0]
+  nwc_inventory:              [525000, 525000, 525000, 525000, 525000]
+  nwc_receivables:            [560000, 560000, 560000, 560000, 560000]
+  nwc_payables:               [1050000, 1050000, 1050000, 1050000, 1050000]
+  nwc_opening:                [35000, 35000, 35000, 35000, 35000]
+  nwc:                        [35000, 35000, 35000, 35000, 35000]
+  delta_nwc:                  [0, 0, 0, 0, 0]
+  cfo:
+    [6863839.285714286, 6863839.285714286, 6863839.285714286, 6863839.285714286, 6863839.285714286]
+  cfi:                        [0, 0, 0, 0, 0]
+  fcff:
+    [6863839.285714286, 6863839.285714286, 6863839.285714286, 6863839.285714286, 6863839.285714286]
+  cumulative_fcff:
+    [6863839.285714286, 13727678.571428571, 20591517.857142857, 27455357.142857143, 34319196.428571429]
+  nopat_untaxed:
+    [6294642.857142857, 6294642.857142857, 6294642.857142857, 6294642.857142857, 6294642.857142857]
+  fcff_untaxed:               [8437500, 8437500, 8437500, 8437500, 8437500]
+  revenue_counter_only_counterfactual:
+    [45625000, 45625000, 45625000, 45625000, 45625000]
+  van_incremental_revenue:    [6387500, 6387500, 6387500, 6387500, 6387500]
+  van_incremental_cash_opex:  [4200000, 4200000, 4200000, 4200000, 4200000]
+  van_incremental_ebitda:     [2187500, 2187500, 2187500, 2187500, 2187500]
+  van_incremental_ebit:
+    [44642.857142857143, 44642.857142857143, 44642.857142857143, 44642.857142857143, 44642.857142857143]
+  van_cum_incr_ebitda_since_purchase:
+    [6562500, 8750000, 10937500, 13125000, 15312500]
+
+fcff:
+  [6863839.285714286, 6863839.285714286, 6863839.285714286, 6863839.285714286, 6863839.285714286]
+
+checks:
+  # ---- conservation ----
+  - trace.van_bv_closing[t] == trace.van_bv_opening[t] - trace.depreciation[t]
+  - trace.van_bv_opening[t] == trace.van_bv_closing[t-1] for t >= 1
+  - trace.van_bv_opening[first] == van_purchase_cost - van_years_elapsed * trace.depreciation[first]
+  - trace.accumulated_depreciation[t] == trace.accumulated_depreciation[t-1] + trace.depreciation[t] for t >= 1
+  - trace.accumulated_depreciation[first] == (van_years_elapsed + 1) * trace.depreciation[first]
+  - trace.accumulated_depreciation[t] + trace.van_bv_closing[t] == van_purchase_cost
+  - trace.accumulated_depreciation[last] == van_purchase_cost
+  - trace.van_bv_closing[last] == van_purchase_cost - van_useful_life_years * trace.depreciation[last]
+  - trace.nwc[t] == trace.nwc_opening[t] + trace.delta_nwc[t]
+  - trace.nwc_opening[t] == trace.nwc[t-1] for t >= 1
+  - trace.cumulative_fcff[t] == trace.cumulative_fcff[t-1] + trace.fcff[t]
+  - cumsum(trace.fcff) == trace.cumulative_fcff
+  - trace.van_cum_incr_ebitda_since_purchase[t] == trace.van_cum_incr_ebitda_since_purchase[t-1] + trace.van_incremental_ebitda[t] for t >= 1
+  - trace.van_cum_incr_ebitda_since_purchase[first] == (van_years_elapsed + 1) * trace.van_incremental_ebitda[first]
+  - trace.loaves_produced[t] == trace.loaves_counter[t] + trace.loaves_delivered[t]
+
+  # ---- definition (the ladder) ----
+  - trace.revenue == trace.revenue_counter + trace.revenue_delivery
+  - trace.gross_margin == trace.revenue - trace.flour_cost
+  - trace.van_cash_opex == trace.van_driver + trace.van_fuel + trace.van_maintenance
+  - trace.total_cash_opex == trace.flour_cost + trace.baker_wages + trace.rent + trace.van_cash_opex
+  - trace.ebitda == trace.revenue - trace.total_cash_opex
+  - trace.ebitda == trace.gross_margin - trace.baker_wages - trace.rent - trace.van_cash_opex
+  - trace.ebit == trace.ebitda - trace.depreciation
+  - trace.tax == trace.ebit * tax_rate
+  - trace.nopat == trace.ebit - trace.tax
+  - trace.nopat == trace.ebit * (1 - tax_rate)
+  - trace.nwc == trace.nwc_inventory + trace.nwc_receivables - trace.nwc_payables
+  - trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc
+  - trace.cfi == 0 - trace.capex
+  - trace.fcff == trace.cfo + trace.cfi
+  - trace.fcff == trace.nopat + trace.depreciation - trace.delta_nwc - trace.capex
+  - trace.fcff == trace.ebitda - trace.tax - trace.delta_nwc - trace.capex
+  - trace.nopat_untaxed == trace.ebit
+  - trace.fcff_untaxed == trace.nopat_untaxed + trace.depreciation - trace.delta_nwc - trace.capex
+  - trace.fcff_untaxed == trace.ebitda
+  - trace.fcff_untaxed == trace.fcff + trace.tax
+  - trace.van_incremental_ebitda == trace.van_incremental_revenue - trace.van_incremental_cash_opex
+  - trace.van_incremental_ebit == trace.van_incremental_ebitda - trace.depreciation
+
+  # ---- driver-bridge ----
+  - grid.periods == van_useful_life_years - van_years_elapsed
+  - grid.periods == horizon_years
+  - trace.loaves_produced == loaves_per_day * days_per_year
+  - trace.loaves_delivered == trace.loaves_produced * delivery_share
+  - trace.loaves_counter == trace.loaves_produced * counter_share
+  - counter_share + delivery_share == 1
+  - trace.revenue_counter == trace.loaves_counter * counter_price
+  - trace.revenue_delivery == trace.loaves_delivered * delivery_price
+  - trace.flour_cost == trace.loaves_produced * flour_cost_per_loaf
+  - trace.baker_wages == baker_count * baker_wage_per_month * months_per_year
+  - trace.rent == rent_per_month * months_per_year
+  - trace.van_driver == van_driver_cost_per_year
+  - trace.van_fuel == van_fuel_cost_per_year
+  - trace.van_maintenance == van_maintenance_cost_per_year
+  - trace.depreciation == (van_purchase_cost - van_residual_value) / van_useful_life_years
+  - trace.nwc_inventory == trace.flour_cost * flour_inventory_days / days_per_year
+  - trace.nwc_receivables == trace.revenue_delivery * delivery_receivable_days / days_per_year
+  - trace.nwc_payables == trace.flour_cost * flour_payable_days / days_per_year
+  - trace.capex == replacement_capex_in_horizon
+  - trace.revenue_counter_only_counterfactual == trace.loaves_produced * counter_price
+  - trace.van_incremental_revenue == trace.revenue - trace.revenue_counter_only_counterfactual
+  - trace.van_incremental_revenue == trace.loaves_delivered * (delivery_price - counter_price)
+  - trace.van_incremental_cash_opex == trace.van_cash_opex
+
+  # ---- non-negativity / sign and bound invariants ----
+  - trace.van_bv_opening[t] >= 0
+  - trace.van_bv_closing[t] >= 0
+  - trace.van_bv_closing[last] == 0
+  - trace.van_bv_opening[t] <= van_purchase_cost
+  - trace.accumulated_depreciation[t] <= van_purchase_cost
+  - trace.nwc_inventory[t] >= 0
+  - trace.nwc_receivables[t] >= 0
+  - trace.nwc_payables[t] >= 0
+  - trace.tax[t] >= 0
+  - trace.ebitda[t] > 0
+  - trace.ebit[t] > 0
+  - trace.nopat[t] > 0
+  - trace.fcff[t] > 0
+  - min(trace.fcff) >= 0
+  - trace.fcff[t] <= trace.fcff_untaxed[t]
+  - trace.cumulative_fcff[last] >= trace.fcff[first]
+  - trace.van_incremental_ebitda[t] > 0
+  - trace.van_incremental_ebit[t] > 0
+  - trace.van_cum_incr_ebitda_since_purchase[last] >= van_purchase_cost
+  - trace.van_cum_incr_ebitda_since_purchase[first] < van_purchase_cost
+  - trace.revenue[t] > trace.revenue_counter_only_counterfactual[t]
+
+notes:
+  - |
+    HEADLINE. The bakery as described throws off a flat 6,863,839 XOF of unlevered free cash flow
+    a year for the five remaining years of the van's life, on revenue of 52,012,500 and EBITDA of
+    8,437,500. The flatness is not a modelling shortcut — the founder describes one production
+    rate, two fixed prices, a settled channel mix and four cost lines, with no growth, seasonality
+    or price path anywhere. Imposing a growth rate would be inventing an input he did not give.
+  - |
+    THE MATERIAL FINDING IS THE VAN, NOT THE FCFF. The delivery channel earns 70 XOF more per loaf
+    on 91,250 loaves and costs 4,200,000 a year to run, leaving incremental EBITDA of 2,187,500
+    against annual depreciation of 2,142,857 — an incremental EBIT of about 45,000 XOF a year on a
+    15,000,000 asset. Over the van's full seven-year life the undiscounted incremental cash barely
+    exceeds its purchase price (see trace.van_cum_incr_ebitda_since_purchase, checked against
+    van_purchase_cost). Directionally, once any positive cost of capital is applied the decision as
+    described does not recover its outlay. This matters most for the decision the founder will face
+    in year eight — whether to replace the van — and it is the first thing to put to him.
+  - |
+    TAX IS THE LARGEST NON-STATED INPUT. He says nothing about tax. I applied a 25 percent statutory
+    corporate rate on EBIT, the harmonised WAEMU rate, and materialised the nil-tax case as
+    trace.fcff_untaxed rather than describing it, so both ends of the range are checked arithmetic
+    rather than prose. A small bakery of this size in most OHADA jurisdictions might in practice sit
+    under a simplified or turnover-based regime rather than the standard CIT; that would need to be
+    established before the number is used for anything binding.
+  - |
+    WORKING CAPITAL — LEVEL ASSUMED, CHANGE DEDUCED. Stock days, receivable days and payable days
+    are all analyst priors and are flagged ASSUMED. But because every operating driver is flat and
+    the delivery channel has already been running two years, net working capital is constant and
+    the change is zero in every period. The assumed levels therefore set a balance-sheet number
+    (35,000 XOF) and contribute nothing to FCFF. The one moment they would have mattered — the
+    working-capital step-up when credit sales to shops and cafés began — falls two years before the
+    grid opens.
+  - |
+    IFRS 16 FRICTION, EXPLICITLY NOT TAKEN. Rent of 800,000 a month is treated as an operating
+    expense. If the lease runs beyond twelve months and the practical expedient in IFRS 16.6 is not
+    available, the premises would be recognised as a right-of-use asset with a matching lease
+    liability; rent would leave EBITDA and reappear as depreciation plus interest, and lease
+    payments would become financing rather than operating flows. That treatment raises unlevered
+    FCFF and simultaneously adds a debt-like claim against it, so it must be applied consistently on
+    both sides of any valuation. Direction only — no figure asserted. Note also that a bakery in an
+    OHADA jurisdiction reports under SYSCOHADA révisé rather than full IFRS; the mechanics used here
+    are common to both.
+  - |
+    THE OWNER'S OWN LABOUR IS UNPRICED. "Je travaille tous les jours" — he works every day, seven
+    days a week, and no salary for himself appears among the costs. EBITDA and therefore FCFF are
+    stated before any charge for the proprietor's labour. Any comparison of this business against an
+    alternative in which he would be paid must deduct a market wage for a full-time manager working
+    365 days a year. Direction of effect: FCFF as computed is overstated relative to a fully-costed
+    operation.
+  - |
+    THE COST BASE IS ALMOST CERTAINLY INCOMPLETE, AND THIS IS THE BIGGEST RISK TO THE NUMBER. Flour
+    is the only ingredient he names. Real bread also consumes yeast, salt, water and — critically —
+    oven fuel or electricity, which for a 500-loaf daily bake is a substantial line. He also names no
+    electricity for the shop, no water, no packaging, no market or trading licence, no social
+    contributions on the two bakers' wages, and no insurance on the van (which is typically
+    compulsory for a commercial vehicle). Every one of these would reduce EBITDA. The 8,437,500
+    EBITDA should be read as an upper bound on the true operating margin until these are elicited.
+  - |
+    NO BAKING EQUIPMENT APPEARS ON THE BALANCE SHEET. A bakery producing 500 loaves a day owns an
+    oven, a mixer, proving equipment and shelving, none of which he mentions. The model therefore
+    carries the van as the only depreciable asset and zero maintenance capex. If equipment exists —
+    it must — both depreciation and replacement capex are understated, and FCFF with it.
+  - |
+    THE DRIVER'S PAY IS ANOMALOUS AND WAS TAKEN AS STATED. He quotes the driver at 600,000 per year,
+    i.e. 50,000 a month, against 100,000 a month for each baker. A full-time delivery driver earning
+    half a baker's wage is possible (part-time, family member, or a per-round arrangement) but is
+    worth confirming. If the figure is actually monthly, van costs would be materially higher and the
+    van's incremental EBIT would turn negative. This is a mis-transcription risk, not a modelling
+    choice; I took his words literally because he explicitly said "par an" for all three van lines.
+  - |
+    ZERO WASTE ASSUMED FOR A PERISHABLE DAILY PRODUCT. He gives one production number and describes
+    it as fully split between counter and delivery. Bread that does not sell on the day is a total
+    loss, and any real staling or return rate reduces revenue without reducing flour cost. Directional
+    effect: revenue as modelled is an upper bound.
+  - |
+    THE CURRENT COUNTER PRICE IS DEDUCED, NOT STATED. He gives 250 in the past tense. I read it as
+    still current on the strength of his own contrastive construction — "le pain livré je le vends
+    trois cent vingt" marks 320 as the exception, which presupposes the rule. If the counter price
+    has in fact moved since, revenue and every line below it shift accordingly. This is the highest-
+    leverage single question to put back to him, because it multiplies 91,250 loaves.
+  - |
+    HORIZON CHOICE AND WHAT IS DELIBERATELY EXCLUDED. Five periods, ending exactly when the van's
+    carrying amount reaches nil. No terminal value and no continuing value is computed, because
+    valuing beyond year five requires a van replacement price the founder never gave, plus a discount
+    rate that is not derivable from anything he said. Directionally, extending the horizon past year
+    five would require replacement capex in the year the new van is bought, depressing FCFF sharply
+    in that single year relative to the flat profile shown here.
+  - |
+    CURRENCY IS INFERRED FROM CONTEXT, NOT STATED. He says "francs" without qualification. I have
+    labelled the model XOF (CFA franc BCEAO) on the strength of the West African framing and the
+    magnitudes involved. XAF (CFA franc BEAC) is numerically identical for every calculation here, so
+    nothing in the arithmetic turns on the choice; only the tax-regime prior would change.
+  - |
+    DEFERRED / TO ELICIT, in priority order: (1) is 250 still the counter price; (2) oven fuel or
+    electricity cost, and all other ingredients beyond flour; (3) what baking equipment is owned, at
+    what age and what remaining life; (4) the applicable tax regime and effective rate; (5) whether
+    the driver's 600,000 is truly annual; (6) actual payment terms from the shops and cafés and from
+    the flour supplier; (7) unsold-bread rate; (8) van insurance and licence fees; (9) whether the van
+    was bought outright or on credit, which is irrelevant to this unlevered figure but decisive for
+    equity cash flow; (10) the lease term on the premises, for the IFRS 16 question.

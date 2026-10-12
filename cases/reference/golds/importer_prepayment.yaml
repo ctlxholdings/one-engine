@@ -1,0 +1,1788 @@
+contract: "v2.6"
+id: importer_prepayment_cotonou_moto_parts
+title: "Cotonou motorcycle spare-parts wholesaler — unlevered FCFF over one stationary year at half-month resolution"
+currency: XOF
+
+grid:
+  periods: 24
+  freq: "half-month (24 per year; each period = 1/24 of a year = 15.208 days)"
+  why: >-
+    FREQUENCY. Every lag this business runs on is a whole number of half-months and none of them is a
+    whole number of months — 2.5 months from the wire transfer to goods on the shelf (5 periods), 4.5
+    months to sell a container through (9 periods), 2 months between container arrivals (4 periods),
+    30 days of credit to the regular shops (2 periods). A monthly grid would force the 2.5-month
+    prepayment lag — the single fact the founder names as his problem — to be rounded to 2 or 3
+    months, moving the capital he has asleep by roughly a fifth of a container. A quarterly or annual
+    grid nets the prepayment against itself and makes the drag vanish entirely. The half-month is the
+    coarsest grid on which nothing has to be rounded.
+    HORIZON. One year, because the founder's own accounting unit is the year — six containers a year,
+    rent a year, van cost a year, "at the end of a year I'm left with about 5% of a container" — and
+    because the obsolescence event is annual, so a shorter horizon would cut it in half. Not longer,
+    because nothing in his account changes after year one — no growth, no new asset, no change of
+    terms, no season stated. Year 2 as described reproduces year 1 exactly, and the model demonstrates
+    that rather than asserting it: it closes on the same working-capital balance it opens on
+    (trace.nwc[last] == nwc_opening_balance). And the one term the whole answer turns on — "they don't
+    know me well enough to give me credit" — is by his own framing a relationship expected to change;
+    a five-year projection would be projecting a supplier's opinion, not an operation.
+    CONSEQUENCE, stated so a reader can disagree with it. A single stationary year contains no van
+    replacement. Depreciation is therefore added back with no capex against it, which overstates the
+    repeatable figure by exactly the annual depreciation charge. That is why trace carries
+    fcff_normalised — FCFF with a replacement-capex accrual set equal to depreciation, which is the
+    unbiased steady-state figure across the van's full cycle. Read trace.fcff for the year's actual
+    asset-side cash and trace.fcff_normalised for what repeats.
+
+utterance:
+  fr: >-
+    Je suis grossiste en pièces détachées de moto à Cotonou. Je vends aux mécaniciens et aux petites
+    boutiques de Dantokpa et de tout le sud du pays. Plaquettes, chaînes, pignons, filtres, bougies,
+    tout ce qui s'use sur les motos chinoises et indiennes qu'on a ici.
+    Mon problème c'est le fournisseur. J'achète en Chine, à Guangzhou. Eux, ils ne me connaissent pas
+    assez pour me faire crédit : je dois payer cent pour cent avant qu'ils chargent le conteneur.
+    Après il faut compter huit à dix semaines entre le virement et le jour où je sors la marchandise
+    du port. Donc mon argent dort pendant deux mois et demi avant même de commencer à vendre. Un
+    conteneur me coûte trente-deux millions de marchandise, plus le fret et l'assurance quatre
+    millions, plus les droits de douane et les taxes au port — là-dessus je paie autour de sept
+    millions. Je fais venir six conteneurs par an.
+    Le conteneur, je le vends en gros quatre à cinq mois. Mes clients à moi, les mécaniciens, ils
+    paient comptant pour la plupart, mais les boutiques régulières je leur fais trente jours. Ça fait
+    peut-être quarante pour cent de mes ventes à crédit. Je vends la marchandise à peu près à
+    soixante-dix pour cent au-dessus de ce qu'elle me coûte rendue au magasin.
+    Il y a toujours des pièces qui ne partent pas. Les modèles changent, les mécaniciens ne veulent
+    plus. À la fin d'une année il me reste dans les cinq pour cent d'un conteneur que je finis par
+    brader à moitié prix, ou qui reste sur l'étagère pour toujours.
+    J'ai un magasin à un million deux cent mille par an de loyer, deux vendeurs à quatre-vingt-dix
+    mille par mois, un magasinier à cent mille, et un apprenti à quarante mille. J'ai une camionnette
+    achetée quatre millions pour les livraisons en ville et vers Porto-Novo, elle me coûte huit cent
+    mille par an entre carburant et entretien.
+  en: >-
+    I'm a wholesaler of motorcycle spare parts in Cotonou. I sell to mechanics and to the small shops
+    in Dantokpa and across the whole south of the country. Brake pads, chains, sprockets, filters,
+    spark plugs — everything that wears out on the Chinese and Indian motorcycles we have here.
+    My problem is the supplier. I buy in China, in Guangzhou. They don't know me well enough to give
+    me credit: I have to pay a hundred percent before they load the container. Then you have to count
+    eight to ten weeks between the transfer and the day I get the goods out of the port. So my money
+    sits idle for two and a half months before I even start selling. A container costs me thirty-two
+    million in goods, plus four million freight and insurance, plus customs duties and port taxes —
+    on that I pay around seven million. I bring in six containers a year.
+    A container takes four to five months to sell through wholesale. My own customers, the mechanics,
+    mostly pay cash, but the regular shops I give thirty days. That's maybe forty percent of my sales
+    on credit. I sell the goods at about seventy percent above what they cost me landed in the store.
+    There are always parts that don't move. Models change, the mechanics don't want them any more. At
+    the end of a year I'm left with about five percent of a container that I end up dumping at half
+    price, or that sits on the shelf forever.
+    I have a store at one million two hundred thousand a year in rent, two salespeople at ninety
+    thousand a month, a storeman at a hundred thousand, and an apprentice at forty thousand. I have a
+    van bought for four million for deliveries around town and out to Porto-Novo; it costs me eight
+    hundred thousand a year between fuel and maintenance.
+
+inputs:
+
+  # ---------------------------------------------------------------- STATED
+  goods_cost_per_container:
+    value: 32000000
+    unit: "XOF per container"
+    prov: STATED
+    source: >-
+      "Un conteneur me coûte trente-deux millions de marchandise" / "A container costs me thirty-two
+      million in goods". This is the supplier invoice, paid in full before loading.
+    date: "2026-07-27"
+
+  freight_insurance_per_container:
+    value: 4000000
+    unit: "XOF per container"
+    prov: STATED
+    source: >-
+      "plus le fret et l'assurance quatre millions" / "plus four million freight and insurance".
+    date: "2026-07-27"
+
+  duties_port_per_container:
+    value: 7000000
+    unit: "XOF per container"
+    prov: STATED
+    source: >-
+      "plus les droits de douane et les taxes au port — là-dessus je paie autour de sept millions".
+      Taken at his figure. See notes finding F2 — this amount cannot contain import VAT.
+    date: "2026-07-27"
+
+  containers_per_year:
+    value: 6
+    unit: "containers per year"
+    prov: STATED
+    source: '"Je fais venir six conteneurs par an."'
+    date: "2026-07-27"
+
+  supplier_prepayment_fraction:
+    value: 1.0
+    unit: "fraction of goods cost paid before shipment"
+    prov: STATED
+    source: >-
+      "je dois payer cent pour cent avant qu'ils chargent le conteneur" — 100% prepayment, hence
+      trade payables of zero on the goods leg.
+    date: "2026-07-27"
+
+  port_transit_weeks_low:
+    value: 8
+    unit: "weeks from wire transfer to goods leaving the port"
+    prov: STATED
+    source: '"il faut compter huit à dix semaines entre le virement et le jour où je sors la marchandise du port"'
+    date: "2026-07-27"
+
+  port_transit_weeks_high:
+    value: 10
+    unit: "weeks from wire transfer to goods leaving the port"
+    prov: STATED
+    source: '"huit à dix semaines"'
+    date: "2026-07-27"
+
+  money_asleep_months:
+    value: 2.5
+    unit: "months from wire transfer to first sale"
+    prov: STATED
+    source: >-
+      "mon argent dort pendant deux mois et demi avant même de commencer à vendre". Note this is
+      longer than his own 8-10 weeks (1.84-2.30 months) to port exit, which is coherent — clearing,
+      haulage to the store and shelving sit between port exit and first sale.
+    date: "2026-07-27"
+
+  credit_sales_fraction:
+    value: 0.40
+    unit: "fraction of sales value on credit"
+    prov: STATED
+    source: '"Ça fait peut-être quarante pour cent de mes ventes à crédit."'
+    date: "2026-07-27"
+
+  credit_terms_days:
+    value: 30
+    unit: "days"
+    prov: STATED
+    source: '"les boutiques régulières je leur fais trente jours"'
+    date: "2026-07-27"
+
+  rent_per_year:
+    value: 1200000
+    unit: "XOF per year"
+    prov: STATED
+    source: '"J''ai un magasin à un million deux cent mille par an de loyer"'
+    date: "2026-07-27"
+
+  n_salespeople:
+    value: 2
+    unit: "people"
+    prov: STATED
+    source: '"deux vendeurs à quatre-vingt-dix mille par mois"'
+    date: "2026-07-27"
+
+  salesperson_wage_monthly:
+    value: 90000
+    unit: "XOF per month per person"
+    prov: STATED
+    source: '"deux vendeurs à quatre-vingt-dix mille par mois"'
+    date: "2026-07-27"
+
+  storeman_wage_monthly:
+    value: 100000
+    unit: "XOF per month"
+    prov: STATED
+    source: '"un magasinier à cent mille"'
+    date: "2026-07-27"
+
+  apprentice_wage_monthly:
+    value: 40000
+    unit: "XOF per month"
+    prov: STATED
+    source: >-
+      "et un apprenti à quarante mille". Below the statutory SMIG — see smig_monthly and notes
+      finding F6.
+    date: "2026-07-27"
+
+  van_cost:
+    value: 4000000
+    unit: "XOF"
+    prov: STATED
+    source: '"J''ai une camionnette achetée quatre millions pour les livraisons"'
+    date: "2026-07-27"
+
+  van_running_cost_per_year:
+    value: 800000
+    unit: "XOF per year"
+    prov: STATED
+    source: >-
+      "elle me coûte huit cent mille par an entre carburant et entretien" — fuel and maintenance
+      only. No driver wage, no insurance, no tyres named separately.
+    date: "2026-07-27"
+
+  # -------------------------------------------------------------- INFERRED
+  landed_cost_per_container:
+    value: 43000000
+    unit: "XOF per container"
+    prov: INFERRED
+    source: >-
+      goods_cost_per_container + freight_insurance_per_container + duties_port_per_container =
+      32,000,000 + 4,000,000 + 7,000,000. The founder himself defines his markup base as the cost
+      "rendue au magasin" (landed in the store), and these are the three components he names.
+    date: "2026-07-27"
+
+  annual_landed_purchases:
+    value: 258000000
+    unit: "XOF per year"
+    prov: INFERRED
+    source: "landed_cost_per_container * containers_per_year = 43,000,000 * 6."
+    date: "2026-07-27"
+
+  prepay_to_shelf_lag_periods:
+    value: 5
+    unit: "half-month periods"
+    prov: INFERRED
+    source: >-
+      money_asleep_months = 2.5 months; the grid period is half a month; 2.5 / 0.5 = 5 periods
+      exactly. No new information enters. Consistency check against his other statement — 8-10 weeks
+      to port exit is 1.84-2.30 months, leaving 0.20-0.66 months for clearing, haulage and shelving.
+    date: "2026-07-27"
+
+  container_order_interval_periods:
+    value: 4
+    unit: "half-month periods"
+    prov: INFERRED
+    source: >-
+      containers_per_year = 6 at an even cadence, so 24 periods / 6 = 4 periods (2 months) between
+      payments. Evenness is the only regular pattern the utterance supports; no season is stated.
+    date: "2026-07-27"
+
+  credit_period_periods:
+    value: 2
+    unit: "half-month periods"
+    prov: INFERRED
+    source: "credit_terms_days = 30 days = 1 month = 2 half-month periods."
+    date: "2026-07-27"
+
+  cash_sales_fraction:
+    value: 0.60
+    unit: "fraction of sales value collected in the period of sale"
+    prov: INFERRED
+    source: >-
+      1 - credit_sales_fraction. "les mécaniciens, ils paient comptant pour la plupart" — the
+      complement of the 40% he puts on credit.
+    date: "2026-07-27"
+
+  wages_per_period:
+    value: 160000
+    unit: "XOF per half-month"
+    prov: INFERRED
+    source: >-
+      (2 * 90,000 + 100,000 + 40,000) = 320,000 per month gross = 160,000 per half-month;
+      3,840,000 per year.
+    date: "2026-07-27"
+
+  rent_per_period:
+    value: 50000
+    unit: "XOF per half-month"
+    prov: INFERRED
+    source: "rent_per_year / 24 = 1,200,000 / 24."
+    date: "2026-07-27"
+
+  van_running_per_period:
+    value: 33333.333333
+    unit: "XOF per half-month"
+    prov: INFERRED
+    source: "van_running_cost_per_year / 24 = 800,000 / 24 (repeating decimal carried to 6 dp)."
+    date: "2026-07-27"
+
+  residue_per_container:
+    value: 358333.333333
+    unit: "XOF of landed cost per container"
+    prov: INFERRED
+    source: >-
+      annual_obsolete_stock_at_cost / containers_per_year = 2,150,000 / 6 (repeating decimal carried
+      to 6 dp). This is the portion of each container that leaves the normal sell-through and enters
+      the slow-moving pool.
+    date: "2026-07-27"
+
+  dump_price_factor:
+    value: 0.50
+    unit: "fraction of the normal selling price"
+    prov: INFERRED
+    source: >-
+      "que je finis par brader à moitié prix" — half PRICE, and the only price he has named is his
+      selling price (landed cost + 70%). So dumped goods realise 0.50 * 1.70 = 0.85 of landed cost, a
+      15% loss on cost rather than a 50% one. The alternative reading (half of COST) is recorded in
+      notes finding F9.
+    date: "2026-07-27"
+
+  van_opening_nbv:
+    value: 4000000
+    unit: "XOF"
+    prov: INFERRED
+    source: >-
+      van_cost, on the base-case answer to van_remaining_life_years that the van is treated as
+      unused at t=0. If the van is older the opening NBV is lower and so is the depreciation charge.
+    date: "2026-07-27"
+
+  transit_opening_balance:
+    value: 32000000
+    unit: "XOF"
+    prov: INFERRED
+    source: >-
+      Steady state at t=-1: with a payment every 4 periods and a 5-period transit, either one or two
+      containers are afloat; at t=-1 (three periods after a payment) exactly one is, carrying
+      goods_cost_per_container.
+    date: "2026-07-27"
+
+  inv_active_opening_balance:
+    value: 38620370.370370
+    unit: "XOF"
+    prov: INFERRED
+    source: >-
+      Steady state at t=-1 = 8*a + 2*residue_per_container where a = (landed_cost_per_container -
+      residue_per_container) / sell_through_periods = 4,737,962.962963. Two containers are part-sold
+      at t=-1, with 8 container-periods of unsold full-price stock between them plus their two
+      untouched residues.
+    date: "2026-07-27"
+
+  receivables_opening_balance:
+    value: 13252759.259259
+    unit: "XOF"
+    prov: INFERRED
+    source: >-
+      credit_sales_fraction * (revenue of period -1 + revenue of period -2). The prior year is
+      identical to this one, so those are the t=23 and t=22 revenues: 0.40 * (17,022,824.074073 +
+      16,109,074.074074).
+    date: "2026-07-27"
+
+  nwc_opening_balance:
+    value: 83873129.629629
+    unit: "XOF"
+    prov: INFERRED
+    source: >-
+      transit_opening_balance + inv_active_opening_balance + 0 (the slow pool is cleared at each year
+      end) + receivables_opening_balance - 0 payables.
+    date: "2026-07-27"
+
+  port_charge_rate_on_cif:
+    value: 0.194444444444
+    unit: "fraction of CIF value"
+    prov: INFERRED
+    source: >-
+      duties_port_per_container / (goods_cost_per_container + freight_insurance_per_container) =
+      7,000,000 / 36,000,000. Used only to test the founder's port payment against the statutory
+      import charge structure.
+    date: "2026-07-27"
+
+  import_vat_on_cif_floor:
+    value: 6480000
+    unit: "XOF per container"
+    prov: INFERRED
+    source: >-
+      vat_standard_rate * (goods_cost_per_container + freight_insurance_per_container) = 0.18 *
+      36,000,000. This is the SMALLEST possible import VAT charge, because the real VAT base is CIF
+      grossed up by duty and community levies. It leaves at most 520,000 XOF (1.44% of CIF) of the
+      stated 7,000,000 for all duties and levies, which is below any non-exempt CET band. Hence
+      finding F2.
+    date: "2026-07-27"
+
+  # --------------------------------------------------------------- SOURCED
+  tps_turnover_ceiling:
+    value: 50000000
+    unit: "XOF of annual turnover"
+    prov: SOURCED
+    authority: >-
+      République du Bénin, Code Général des Impôts — the Taxe Professionnelle Synthétique regime is
+      reserved for enterprises with annual turnover below 50,000,000 FCFA and no longer covers
+      taxpayers falling under the impôt sur les sociétés. Confirmed at
+      https://www.village-justice.com/articles/benin-nouveau-code-general-des-impots,42296.html
+      (commentary on the CGI instituted by loi n°2021-15 du 23 décembre 2021) and at
+      https://benin.eregulations.org/procedure/1200 . CGI 2026 text at
+      https://api.impots.bj/media/6984ebbbb7bc0_Bénin-Code%20Général%20des%20Impôts%202026.pdf
+    verified: "2026-07-27"
+
+  tps_rate:
+    value: 0.05
+    unit: "fraction of annual receipts"
+    prov: SOURCED
+    authority: >-
+      fact_id BJ-V25-01. République du Bénin, Code Général des Impôts, édition 2026 (intégrant la loi
+      de finances pour la gestion 2026, loi n°2025-22 du 8 décembre 2025), Livre 1, Titre 3, Chapitre
+      1, Article 183-1.
+    verified: "2026-07-27"
+    note: >-
+      RECORDED, NOT APPLIED. This business's turnover is roughly 8.7 times the 50,000,000 ceiling, so
+      it cannot be on TPS. Carried here because establishing that it does NOT apply is a result, not
+      an omission. See finding F1.
+
+  annex_vat_rate_applicable_moto:
+    value: 0.0
+    unit: "fraction"
+    prov: SOURCED
+    authority: >-
+      fact_id BJ-V25-07. Code Général des Impôts du Bénin, édition 2026, Articles 226, 228 et 229-1
+      (modifiés par les lois de finances pour 2023 et 2025).
+    verified: "2026-07-27"
+    note: >-
+      RECORDED AND REJECTED FOR THIS BUSINESS. A 0% applicable VAT rate is a fact about a small
+      moto-taxi operator below the registration threshold. It is not a fact about a spare-parts
+      wholesaler turning over ~436 million XOF. Applying it here would be the single largest error
+      available in this problem. See finding F2 and vat_standard_rate.
+
+  vat_standard_rate:
+    value: 0.18
+    unit: "fraction"
+    prov: SOURCED
+    authority: >-
+      République du Bénin, Code Général des Impôts — standard TVA rate 18%, unchanged for 2026; see
+      https://www.auditiaafrica.com/actualites/37 (Bénin 2026 — TVA, IS et obligations déclaratives,
+      citing Articles 221-225 and 248 bis CGI) and the DGI list of VAT-liable enterprises at
+      https://www.impots.finances.gouv.bj/la-dgi-publie-la-liste-des-entreprises-assujetties-a-la-tva/
+    verified: "2026-07-27"
+
+  vat_registration_turnover_threshold:
+    value: 50000000
+    unit: "XOF of annual turnover"
+    prov: SOURCED
+    authority: >-
+      Direction Générale des Impôts du Bénin — only enterprises with turnover above 50,000,000 FCFA
+      that are up to date with their obligations and appear on the published list are entitled to
+      charge TVA;
+      https://www.impots.finances.gouv.bj/la-dgi-publie-la-liste-des-entreprises-assujetties-a-la-tva/
+    verified: "2026-07-27"
+
+  profit_tax_rate:
+    value: 0.30
+    unit: "fraction of taxable profit"
+    prov: SOURCED
+    authority: >-
+      République du Bénin — standard impôt sur les sociétés rate of 30% (reduced 25% rate reserved
+      for industrial companies and private schools, neither of which this is);
+      https://uggcafrica.com/fr/investir-au-benin-ohada/ and
+      https://www.auditiaafrica.com/actualites/37 . The rate is robust to the legal form: the top
+      marginal band of the Beninese IRPP scale on business/salary income is also 30%, applying above
+      530,000 XOF per month (https://blog.uptimise.io/tout-savoir-sur-les-retenues-sur-salaires-au-benin/),
+      and this operation's monthly profit is far above that band.
+    verified: "2026-07-27"
+
+  mfp_rate_loss_making:
+    value: 0.015
+    unit: "fraction of turnover excluding tax"
+    prov: SOURCED
+    authority: >-
+      Bénin, loi de finances 2026 — the minimum forfaitaire de perception rises from 1% to 1.5% of
+      turnover HT for loss-making companies, with a floor of 500,000 FCFA (Article 55 CGI);
+      https://www.auditiaafrica.com/actualites/37
+    verified: "2026-07-27"
+    note: "RECORDED, NOT BINDING. The operation is profitable in every period of the trace."
+
+  mfp_floor:
+    value: 500000
+    unit: "XOF per year"
+    prov: SOURCED
+    authority: "Bénin, loi de finances 2026, Article 55 CGI; https://www.auditiaafrica.com/actualites/37"
+    verified: "2026-07-27"
+
+  vps_rate:
+    value: 0.04
+    unit: "fraction of gross wages, employer-borne"
+    prov: SOURCED
+    authority: >-
+      Versement Patronal sur Salaires, Bénin, Code Général des Impôts Articles 211 à 215 — rate 4%
+      (reduced to 2% for private teaching establishments); TPS taxpayers are exempt, which this
+      business is not. https://benin.eregulations.org/procedure/1186/step/4017 and
+      https://helpdesk.horus-solutions.org/kb/faq.php?id=342
+    verified: "2026-07-27"
+
+  cnss_family_rate:
+    value: 0.09
+    unit: "fraction of gross wages, employer-borne"
+    prov: SOURCED
+    authority: >-
+      CLEISS, Le régime béninois de sécurité sociale — cotisations au Bénin, prestations familiales
+      9% employeur, en vigueur au 1er janvier 2024; https://www.cleiss.fr/docs/cotisations/benin.html
+      (CNSS Bénin, https://cnss.bj/)
+    verified: "2026-07-27"
+
+  cnss_pension_employer_rate:
+    value: 0.064
+    unit: "fraction of gross wages, employer-borne"
+    prov: SOURCED
+    authority: >-
+      CLEISS, cotisations au Bénin — vieillesse/invalidité/décès 6.4% employeur (3.6% salarié), no
+      ceiling, contributions computed on total gross earnings;
+      https://www.cleiss.fr/docs/cotisations/benin.html
+    verified: "2026-07-27"
+
+  aib_import_rate:
+    value: 0.01
+    unit: "fraction of customs value plus duties excluding VAT"
+    prov: SOURCED
+    authority: >-
+      Bénin, Acompte sur Impôt assis sur les Bénéfices — 1% at the customs cordon for enterprises
+      holding an IFU, 5% for those without; creditable against the profits tax. DGI briefing reported
+      at https://lanouvelletribune.info/2022/03/benin-le-dgi-yenoussi-devoile-les-modalites-dapplication-des-dispositions-fiscales-de-laib/
+    verified: "2026-07-27"
+    note: >-
+      RECORDED, NOT MODELLED SEPARATELY. AIB is an advance on the profits tax, not an extra cost; it
+      is presumed to sit inside the stated 7,000,000 and to be credited against the charge computed
+      in trace.tax. Its only real effect is a timing one, which a one-year stationary view suppresses.
+
+  smig_monthly:
+    value: 52000
+    unit: "XOF per month for a 40-hour week"
+    prov: SOURCED
+    authority: >-
+      fact_id BJ-V25-09. SMIG de la République du Bénin, 52 000 F CFA pour une durée de travail de 40
+      heures par semaine, en vigueur depuis le 1er janvier 2023 — Centre des Liaisons Européennes et
+      Internationales de Sécurité Sociale (CLEISS), https://www.cleiss.fr/docs/cotisations/benin.html
+    verified: "2026-07-27"
+
+  pump_price_essence:
+    value: 725
+    unit: "XOF per litre"
+    prov: SOURCED
+    authority: >-
+      fact_id BJ-V25-08. Government of Benin fuel price adjustment effective 1 May 2026, official
+      pump price of essence super, reported at
+      https://www.koaci.com/article/2026/05/04/benin/politique/benin-hausse-des-prix-du-carburant-a-la-pompe-depuis-le-1er-mai_196
+    verified: "2026-07-27"
+
+  cotonou_portonovo_road_km_one_way:
+    value: 40
+    unit: "km"
+    prov: SOURCED
+    authority: >-
+      Road distance Cotonou-Porto-Novo, quoted between 35 km and 47 km depending on route;
+      https://fr.distance.to/Cotonou/Porto-Novo and
+      https://www.distancede.com/bj/distance-entre-cotonou-et-porto-novo/HistoiredeDistance/386122.aspx
+      A mid-range 40 km one way (80 km round trip) is used for the vehicle duty-cycle test.
+    verified: "2026-07-27"
+
+  min_cet_duty_rate:
+    value: 0.05
+    unit: "fraction of CIF value"
+    prov: SOURCED
+    authority: >-
+      ECOWAS Common External Tariff as applied by Benin — five bands, 0%, 5%, 10%, 20% and 35%; the
+      lowest non-zero band is 5% and the 0% band is reserved for essential social goods, which
+      motorcycle wear parts are not. https://ecotis.projects.ecowas.int/faqs/tarif-exterieur-commun-de-la-cedeao-tec/?lang=fr
+      and UEMOA TEC, https://www.uemoa.int/sites/default/files/bibliotheque/tarif-exterieur-commun-de-luemoa-du-17-janvier-2017.pdf
+    verified: "2026-07-27"
+    note: >-
+      The specific HS 8714 tariff line was NOT verified to the digit. The finding it supports (F2)
+      does not depend on which band applies — it only needs the band to be non-zero.
+
+  eur_xof_parity:
+    value: 655.957
+    unit: "XOF per EUR"
+    prov: SOURCED
+    authority: >-
+      Fixed parity of the Franc CFA (BCEAO, XOF) to the euro, 1 EUR = 655.957 XOF, unchanged since
+      the euro's introduction. Used only to compare the stated freight cost with published freight
+      benchmarks.
+    verified: "2026-07-27"
+
+  china_cotonou_40ft_freight_usd_low:
+    value: 3000
+    unit: "USD per 40ft container, port to port base ocean freight"
+    prov: SOURCED
+    authority: >-
+      Published 2026 China-to-Cotonou FCL market rates, USD 3,000-5,200 for a 40ft from major Chinese
+      ports, exclusive of surcharges, insurance and clearance;
+      https://suaidglobal.com/insights/ocean-freight-rates-2026/ and
+      https://www.dantful.com/how-much-does-shipping-from-china-to-benin-cost/
+    verified: "2026-07-27"
+
+  china_cotonou_40ft_freight_usd_high:
+    value: 5200
+    unit: "USD per 40ft container, port to port base ocean freight"
+    prov: SOURCED
+    authority: "As china_cotonou_40ft_freight_usd_low; https://suaidglobal.com/insights/ocean-freight-rates-2026/"
+    verified: "2026-07-27"
+
+  # --------------------------------------------------------------- ASSUMED
+  packing_efficiency:
+    value: 0.85
+    unit: "fraction of container internal volume occupied by goods"
+    prov: ASSUMED
+    source: >-
+      A prior I supplied. Standard FCL stuffing efficiency for mixed cartoned goods — nobody in this
+      business measures it and it is not published for this trade lane. Used only in the store-space
+      test, never in a money line.
+    date: "2026-07-27"
+
+  van_fuel_consumption_l_per_100km:
+    value: 12
+    unit: "litres per 100 km"
+    prov: ASSUMED
+    source: >-
+      A prior I supplied. A light commercial delivery van in loaded urban and short-haul use. The
+      founder could state his tank-to-tank consumption, but he did not, and the range across plausible
+      vehicles is narrow enough that this does not merit displacing a higher-value question.
+    date: "2026-07-27"
+
+  van_lifetime_km_capacity:
+    value: 250000
+    unit: "km over the vehicle's economic life"
+    prov: ASSUMED
+    source: >-
+      A prior I supplied. The distance a light commercial van can be expected to deliver before
+      replacement. Used only for the cumulative-distance test (physical closure rule d).
+    date: "2026-07-27"
+
+  max_transactions_per_salesperson_per_day:
+    value: 80
+    unit: "counter transactions per salesperson per working day"
+    prov: ASSUMED
+    source: >-
+      A prior I supplied. At a nine-hour trading day this is one served customer every 6.75 minutes
+      sustained, which is the practical ceiling for a parts counter where each transaction involves
+      identifying a part, fetching it and taking payment. Used only for the staff-throughput test.
+    date: "2026-07-27"
+
+  # ------------------------------------------------------------- DEFAULTED
+  van_depreciation_method:
+    value: "straight-line to zero residual"
+    unit: "convention"
+    prov: DEFAULTED
+    source: >-
+      IAS 16.60-62 — depreciate systematically over the useful life on the pattern in which the
+      asset's benefits are consumed; straight-line in the absence of a better pattern. Zero residual
+      because a delivery van in this service is normally run to the end.
+    date: "2026-07-27"
+
+  payables_policy:
+    value: 0
+    unit: "XOF of trade payables"
+    prov: DEFAULTED
+    source: >-
+      The goods leg carries zero payables because the founder states 100% prepayment. Rent, wages and
+      running costs are treated as settled within the period in which they are incurred (accrual =
+      cash), the standard simplifying convention where no terms are stated. This is why the entire
+      working capital of the business sits on the owner — see finding F8.
+    date: "2026-07-27"
+
+  tax_payment_convention:
+    value: "accrued and paid in the period of accrual"
+    unit: "convention"
+    prov: DEFAULTED
+    source: >-
+      Unlevered FCFF convention — tax is computed at profit_tax_rate on EBIT, with no interest shield,
+      and no instalment timing is modelled. Benin's AIB advance and the April 30 balancing declaration
+      would shift cash between periods within the year but not the annual total.
+    date: "2026-07-27"
+
+  balance_measurement_convention:
+    value: "end of period, after that period's flows"
+    unit: "convention"
+    prov: DEFAULTED
+    source: >-
+      All stock rows are closing balances. This is why implied inventory days sit slightly below half
+      the stated sell-through duration: a container's last half-period of stock is measured after it
+      has been sold, not before.
+    date: "2026-07-27"
+
+  # -------------------------------------------------------------- ELICITED
+  realised_markup_on_landed:
+    value: 0.70
+    unit: "fraction above landed cost"
+    prov: ELICITED
+    source: >-
+      Base case runs on his own figure, 0.70 — the omitting choice, because deducting a discount he
+      did not mention would be inventing one. But he says "à peu près soixante-dix pour cent" and in
+      the same breath says he gives the regular shops thirty days; trade credit in this market is
+      normally priced. What I do not have is whether 70% is the price he asks or the price he
+      averages after the discounts that go with credit terms and with volume. Everything downstream
+      of revenue turns on this one number.
+    question: >-
+      Ce soixante-dix pour cent, c'est le prix que vous demandez au départ, ou c'est ce qui vous reste
+      en moyenne une fois que vous avez fait le prix aux boutiques régulières et aux gros acheteurs ?
+    range: {low: 0.40, high: 0.70}
+    materiality: high
+    date: "2026-07-27"
+
+  vat_price_divisor:
+    value: 1.00
+    unit: "divisor applied to the marked-up price to reach a VAT-exclusive figure"
+    prov: ELICITED
+    source: >-
+      Base case 1.00 — the model is run VAT-exclusive throughout, on the reading that he is registered
+      (turnover is ~8.7x the 50,000,000 threshold), charges TVA on top of the prices he quotes, and
+      recovers the import VAT he pays at the port. That reading is what makes his 7,000,000 port
+      payment arithmetically possible (see import_vat_on_cif_floor). If instead the prices he quotes
+      to mechanics are all-inclusive, the divisor is 1.18 and roughly a sixth of the revenue in this
+      model is not his. This is a fact about his own invoicing that he can state in one sentence.
+    question: >-
+      Quand vous annoncez un prix à un mécanicien, est-ce que la TVA est déjà dedans, ou est-ce que
+      vous la facturez en plus ? Et est-ce que vous récupérez la TVA que vous payez au port ?
+    range: {low: 1.00, high: 1.18}
+    materiality: high
+    date: "2026-07-27"
+
+  annual_obsolete_stock_at_cost:
+    value: 2150000
+    unit: "XOF of landed cost per year"
+    prov: ELICITED
+    source: >-
+      Base case takes the literal reading of "dans les cinq pour cent d'un conteneur" — five percent
+      of ONE container, 0.05 * 43,000,000, once a year. That is what the words say, and substituting a
+      sector prior for the founder's own words would be the larger sin. But it implies an obsolescence
+      rate of 0.83% of annual throughput, which is very low for a trade whose defining problem is
+      that "les modèles changent". The other available reading — five percent of EACH of the six —
+      gives 12,900,000 and is closer to what this trade normally carries. He can settle it instantly.
+    question: >-
+      Les pièces qui restent en fin d'année, c'est à peu près le contenu de cinq pour cent d'un seul
+      conteneur — disons deux millions de marchandise — ou bien c'est cinq pour cent de chacun des six
+      conteneurs de l'année, ce qui ferait plutôt treize millions ?
+    range: {low: 2150000, high: 12900000}
+    materiality: high
+    date: "2026-07-27"
+
+  dump_share_of_residue:
+    value: 0.50
+    unit: "fraction of the year-end residue actually sold at half price"
+    prov: ELICITED
+    source: >-
+      He gives an "ou" — dumped at half price OR sitting on the shelf forever — and no split. Base
+      case is an even one, because an even split is the only division the utterance itself supports.
+      The two ends of the range are materially different: the dumped half recovers 85% of its cost,
+      the shelved half recovers nothing and keeps occupying space forever.
+    question: >-
+      Sur ce qui vous reste en fin d'année, quelle part arrivez-vous vraiment à brader, et quelle part
+      ne part jamais du tout et reste sur l'étagère ?
+    range: {low: 0.20, high: 0.80}
+    materiality: medium
+    date: "2026-07-27"
+
+  bad_debt_rate_per_period:
+    value: 0.0
+    unit: "fraction of the outstanding receivable balance lost per half-month"
+    prov: ELICITED
+    source: >-
+      Carried at ZERO, and the zero is a statement, not a silence. He describes his credit customers
+      as "les boutiques régulières" — regulars, therefore known — and reports no losses at all. The
+      rate is applied to trace.receivables[t-1], the balance actually at risk, not to sales, so a
+      non-zero answer would scale with the exposure rather than with turnover. Forty percent of a
+      436-million turnover on thirty-day terms to small market shops is not a book that normally loses
+      nothing, so the zero is a working value awaiting his answer, not a finding.
+    question: >-
+      Sur une année, l'argent que les boutiques vous doivent et que vous ne revoyez jamais, ça
+      représente combien — rien du tout, ou une ou deux boutiques par an ?
+    range: {low: 0.0, high: 0.02}
+    materiality: medium
+    date: "2026-07-27"
+
+  inventory_shrinkage_rate_per_period:
+    value: 0.0
+    unit: "fraction of the inventory balance lost per half-month"
+    prov: ELICITED
+    source: >-
+      Carried at ZERO, stated rather than passed over. Justification for the zero: his 70% markup and
+      his 4-to-5-month sell-through are both reported as observed outcomes, so any quiet shrinkage is
+      already inside them and charging it again would double-count. Against that, this is metal and
+      rubber in a humid coastal store with four people handling it, and he never mentions a stock
+      count. The rate acts on trace.inventory_total[t-1] — the quantity actually at risk, which falls
+      as a container drains — rather than as a flat per-period charge.
+    question: >-
+      Quand vous comptez le stock dans le magasin et que vous le comparez à ce que vos cahiers disent,
+      est-ce que ça tombe juste, ou est-ce qu'il manque toujours quelque chose ?
+    range: {low: 0.0, high: 0.005}
+    materiality: medium
+    date: "2026-07-27"
+
+  other_overheads_per_period:
+    value: 75000
+    unit: "XOF per half-month"
+    prov: ELICITED
+    source: >-
+      1,800,000 a year, for the things a store of this size cannot operate without and that he did not
+      list — electricity, water, telephone, a night guard, compulsory third-party motor insurance on
+      the van (CIMA code), packaging, and municipal business charges. This is not the omitting choice:
+      omitting would be zero, and zero is not available, because a store with no electricity and an
+      uninsured van is not the business he described. He holds the answer exactly.
+    question: >-
+      En dehors du loyer, des salaires et des huit cent mille de la camionnette, qu'est-ce que vous
+      payez chaque mois pour faire tourner le magasin — électricité, eau, téléphone, gardien,
+      assurance de la camionnette, taxes de la mairie ?
+    range: {low: 50000, high: 400000}
+    materiality: medium
+    date: "2026-07-27"
+
+  owner_manager_cost_per_period:
+    value: 150000
+    unit: "XOF per half-month"
+    prov: ELICITED
+    source: >-
+      300,000 a month, 3,600,000 a year, for the founder's own labour, which the utterance costs at
+      nothing. He personally buys in Guangzhou, negotiates, clears customs and carries the credit
+      decisions; asset-side cash flow that treats that labour as free is not the cash flow the asset
+      generates, it is the cash flow the asset generates plus an uncosted full-time manager. The base
+      sits above his storeman's 100,000 and well below what a manager running a 436-million-turnover
+      import book would command. He can price his own replacement.
+    question: >-
+      Si demain vous deviez engager quelqu'un pour faire exactement votre travail — acheter en Chine,
+      dédouaner, négocier avec les fournisseurs, décider à qui on fait crédit — vous devriez le payer
+      combien par mois ?
+    range: {low: 150000, high: 600000}
+    materiality: medium
+    date: "2026-07-27"
+
+  share_of_landing_costs_prepaid_with_goods:
+    value: 0.0
+    unit: "fraction of freight, insurance, duty and port charges paid at order rather than at clearance"
+    prov: ELICITED
+    source: >-
+      Base case zero — freight and duty paid at clearance, which is how duty always works and how
+      separately-quoted freight usually works. He lists the goods at 32 million and then says "PLUS le
+      fret", which reads as a separate invoice. If in fact he wires freight with the goods, another
+      24 million a year spends an extra 2.5 months asleep.
+    question: >-
+      Le fret et l'assurance, vous les payez au moment du virement en Chine en même temps que la
+      marchandise, ou seulement quand le conteneur arrive et que vous dédouanez ?
+    range: {low: 0.0, high: 1.0}
+    materiality: medium
+    date: "2026-07-27"
+
+  sell_through_periods:
+    value: 9
+    unit: "half-month periods to sell a container through"
+    prov: ELICITED
+    source: >-
+      He gives a range, "quatre à cinq mois". Base is the midpoint, 4.5 months = 9 periods exactly on
+      this grid. Materiality is low rather than absent because with a fixed six containers a year the
+      sell-through duration moves the level of inventory and therefore the capital employed, but not
+      the annual profit or, in a stationary year, the annual change in working capital.
+    question: >-
+      Pour un conteneur, entre le jour où vous l'ouvrez et le jour où la dernière pièce qui part
+      normalement est vendue, c'est quatre mois ou cinq mois ?
+    range: {low: 8, high: 10}
+    materiality: low
+    date: "2026-07-27"
+
+  transit_loss_rate_per_period:
+    value: 0.0
+    unit: "fraction of the in-transit balance lost per half-month"
+    prov: ELICITED
+    source: >-
+      Carried at ZERO, declared rather than omitted. Ocean containers on the China-West Africa lane do
+      arrive short or wet, and a prepaid buyer with no supplier relationship has no practical recourse.
+      The zero is justified only by the fact that his realised markup and sell-through are reported as
+      outcomes, so any recurring shortage is already inside them.
+    question: >-
+      Est-ce qu'il vous arrive d'ouvrir un conteneur et de trouver des cartons manquants, mouillés ou
+      cassés ? Sur les six conteneurs de l'année, ça représente à peu près quelle part de la valeur ?
+    range: {low: 0.0, high: 0.006}
+    materiality: low
+    date: "2026-07-27"
+
+  risques_professionnels_rate:
+    value: 0.02
+    unit: "fraction of gross wages, employer-borne"
+    prov: ELICITED
+    source: >-
+      The CNSS occupational-risk contribution is set between 1% and 4% by branch of activity (CLEISS,
+      https://www.cleiss.fr/docs/cotisations/benin.html); the band is a world-fact and is SOURCED, but
+      which rate applies to HIS establishment is on his own CNSS notification and only he can read it.
+      Base 2%, mid-band for warehousing and trade.
+    question: >-
+      Sur votre avis de cotisation CNSS, quel taux de risques professionnels est appliqué à votre
+      entreprise ?
+    range: {low: 0.01, high: 0.04}
+    materiality: low
+    date: "2026-07-27"
+
+  container_internal_volume_m3:
+    value: 67.7
+    unit: "cubic metres of internal container capacity"
+    prov: ELICITED
+    source: >-
+      Base case is a 40-foot dry container (67.7 m3 internal). The inference that points there is his
+      own freight figure: 4,000,000 XOF is EUR 6,098 at the fixed parity, and published 2026
+      port-to-port base rates from Chinese ports to Cotonou run USD 3,000-5,200 for a 40ft and
+      materially less for a 20ft, so an all-in 4 million including surcharges and insurance fits a
+      40-footer and is generous for a 20-footer. But it is his container and he knows which it is.
+      Multiplied by packing_efficiency this drives the store-space test only, never a money line.
+    question: "Vos conteneurs, ce sont des vingt pieds ou des quarante pieds ?"
+    range: {low: 33.2, high: 67.7}
+    materiality: medium
+    date: "2026-07-27"
+
+  store_usable_stock_volume_m3:
+    value: 96.0
+    unit: "cubic metres of store volume actually available for stock"
+    prov: ELICITED
+    source: >-
+      Base 96 m3 = 80 m2 of floor, 2.4 m of usable stacking height, half the floor given up to aisles,
+      the counter and circulation. It is a construction, not a measurement, and it exists only so the
+      capacity assertion has something to be tested against. His annual rent of 1,200,000 over that
+      area works out at about 1,250 XOF per square metre per month, which is low for a store trading
+      into Dantokpa — so either the store is smaller than this and the stock does not fit, or the rent
+      is a legacy one. See finding F5.
+    question: >-
+      Votre magasin fait combien de mètres carrés, et jusqu'à quelle hauteur vous empilez la
+      marchandise ?
+    range: {low: 40, high: 200}
+    materiality: low
+    date: "2026-07-27"
+
+  van_fuel_share_of_running_cost:
+    value: 0.60
+    unit: "fraction of the 800,000 that is fuel rather than maintenance"
+    prov: ELICITED
+    source: >-
+      He gives one number "entre carburant et entretien" and no split. Base 60/40 in favour of fuel,
+      which is the usual shape for a low-mileage light van. Only used for the vehicle duty-cycle test.
+    question: >-
+      Sur les huit cent mille par an de la camionnette, il y a combien de carburant et combien
+      d'entretien et de réparations ?
+    range: {low: 0.40, high: 0.80}
+    materiality: low
+    date: "2026-07-27"
+
+  average_ticket_xof:
+    value: 15000
+    unit: "XOF per counter transaction"
+    prov: ELICITED
+    source: >-
+      Base 15,000 — a mechanic buying a chain and a set of pads. Used only to convert revenue into a
+      number of customers served, so that the two salespeople can be tested against the throughput the
+      model requires of them.
+    question: >-
+      Une vente moyenne à un mécanicien, ça fait combien — cinq mille francs, quinze mille, cinquante
+      mille ?
+    range: {low: 5000, high: 50000}
+    materiality: low
+    date: "2026-07-27"
+
+  working_days_per_year:
+    value: 300
+    unit: "days"
+    prov: ELICITED
+    source: >-
+      Base 300 — six days a week, which is how the Dantokpa trade runs. Used only in the staff
+      throughput test alongside average_ticket_xof.
+    question: "Le magasin ouvre combien de jours par semaine, et vous fermez combien de jours dans l'année ?"
+    range: {low: 250, high: 340}
+    materiality: low
+    date: "2026-07-27"
+
+  van_remaining_life_years:
+    value: 5
+    unit: "years"
+    prov: ELICITED
+    source: >-
+      "J'ai une camionnette ACHETÉE quatre millions" — bought, past tense, date not given. Base case
+      treats it as having its full five-year life ahead of it at t=0, which is the choice that puts the
+      largest depreciation charge in the year and therefore does not flatter the profit. If it is
+      already four years old, most of the 4,000,000 is spent and a replacement is imminent — which
+      matters far more to a multi-year view than to this one.
+    question: "La camionnette, vous l'avez achetée en quelle année, et elle a combien de kilomètres ?"
+    range: {low: 1, high: 5}
+    materiality: low
+    date: "2026-07-27"
+
+  legal_form:
+    value: "entreprise individuelle"
+    unit: "legal form"
+    prov: ELICITED
+    source: >-
+      CANNOT BE WIRED INTO A CHECK, and the reason is a result rather than an evasion: at this level of
+      profit the Beninese impôt sur les sociétés standard rate and the top marginal band of the IRPP
+      scale are both 30%, so the legal form changes which return is filed and which minimum-perception
+      rule applies, but not profit_tax_rate and therefore not a single number in the trace. It is
+      recorded because the question would otherwise look unasked.
+    question: >-
+      Le commerce est enregistré à quel nom — c'est une entreprise individuelle à votre nom, ou une
+      société, une SARL ?
+    range: {low: "entreprise individuelle", high: "SARL"}
+    materiality: low
+    date: "2026-07-27"
+
+passage: |
+  ============================================================================
+  0. WHAT KIND OF BUSINESS THIS IS, AND WHAT THAT MEANS FOR THE MODEL
+  ============================================================================
+  This is a pure trading operation. Nothing is manufactured; a container of Chinese motorcycle wear
+  parts is bought, cleared, shelved and resold. There is therefore no yield in the manufacturing
+  sense — but there IS a transformation, and it is the one that decides the answer: a quantity of
+  landed goods becomes a quantity sold at the normal price, a quantity dumped at half price, and a
+  quantity that never sells at all. Section 3 makes those three sum to the container.
+
+  The operating unit the founder actually runs on is the CONTAINER, not the month and not the piece.
+  He buys them, he counts them ("six conteneurs par an"), he times them ("quatre à cinq mois"), and
+  he measures his dead stock in them ("cinq pour cent d'un conteneur"). Every quantity below is
+  therefore carried in containers or in the landed cost of a container, and converted to money only
+  at the last step.
+
+  ============================================================================
+  1. THE UNIT OF PURCHASE, AND WHAT ONE CONTAINER COSTS
+  ============================================================================
+  Goods, paid 100% before loading                     32,000,000
+  Freight and insurance                                4,000,000
+  Duties and port charges                              7,000,000
+                                                     -----------
+  Landed cost per container                           43,000,000
+  Times six containers a year                        258,000,000  of landed purchases per year
+
+  The founder defines his selling price against exactly this base — "soixante-dix pour cent au-dessus
+  de ce qu'elle me coûte RENDUE AU MAGASIN" — so the 70% is applied to 43,000,000, not to 32,000,000.
+  Applying it to the goods cost alone would overstate gross profit by 70% of 11,000,000 per container.
+
+  Two frictions with standard line items, kept rather than forced:
+  (a) The 43,000,000 is his "rendue au magasin" and it does NOT include the cost of moving the
+      container from the port to the store, which sits inside the van's 800,000 and inside whatever
+      haulage he does not mention. Landed cost is therefore very slightly understated and gross
+      margin very slightly overstated.
+  (b) The 7,000,000 is a single number covering duty, community levies, port charges and — if he is
+      registered — the AIB advance. Section 8 tests it against the statutory structure and finds
+      what it cannot contain.
+
+  ============================================================================
+  2. THE LATTICE — WHY EVERY LAG LANDS ON A WHOLE PERIOD
+  ============================================================================
+  Period = half a month, 24 in the year, t = 0..23.
+    Payment to shelf         2.5 months  ->  5 periods
+    Sell-through             4.5 months  ->  9 periods
+    Between containers       2.0 months  ->  4 periods
+    Customer credit          30 days     ->  2 periods
+  Payments fall at t = 0, 4, 8, 12, 16, 20 (six a year). A container paid at t lands and starts
+  selling at t+5, so landings inside the horizon come from the payments at t = -4, 0, 4, 8, 12, 16
+  and fall at t = 1, 5, 9, 13, 17, 21 — again six. The business is already running, so period 0 opens
+  with a balance sheet, not with nothing; section 7 states those opening balances and section 12
+  shows the year closing on exactly the same ones.
+
+  CONTAINERS AFLOAT. A container is in transit for 5 periods and one is paid every 4, so at any
+  instant either two or one are afloat. The count runs 2,1,1,1 repeating, averaging 1.25 containers,
+  which is 5/4 exactly — the transit length over the order interval. At 32,000,000 of prepaid goods
+  each, that is 40,000,000 of the founder's money permanently at sea. This single line is his stated
+  problem, in money.
+
+  CONTAINERS SELLING. Each container sells over 9 periods and one lands every 4, so 2 or 3 are on the
+  shelf selling at once: 3 in the periods where a new one lands (t = 1 mod 4), 2 otherwise. Over the
+  year that is 6*3 + 18*2 = 54 container-periods = 6 containers * 9 periods exactly. Nothing is lost
+  or double-counted in the overlap.
+
+  ============================================================================
+  3. PHYSICAL CLOSURE (a) — THE TRANSFORMATION, MADE TO SUM
+  ============================================================================
+  A container is 43,000,000 of landed cost. It becomes three things and nothing else:
+
+    sold at the normal wholesale price   42,641,666.666667   99.166667%
+    dumped at half price                    179,166.666667    0.416667%
+    never sold, written down to nil         179,166.666667    0.416667%
+                                        -----------------   ---------
+                                         43,000,000.000000  100.000000%
+
+  Derivation of the split. The founder says that at the end of a year he is left with "dans les cinq
+  pour cent d'un conteneur", which on the literal reading is 0.05 * 43,000,000 = 2,150,000 of landed
+  cost a year, spread across six containers = 358,333.333333 each. Half of that he brades, half sits
+  forever (his "ou", split evenly for want of a stated division). The remaining 42,641,666.666667 per
+  container is what actually moves at the normal price, and it is that figure — not the full
+  43,000,000 — that is spread over the 9 selling periods:
+
+    a = (43,000,000 - 358,333.333333) / 9 = 4,737,962.962963 per container per period
+
+  so regular COGS is 2a = 9,475,925.925926 in an ordinary period and 3a = 14,213,888.888889 in a
+  landing period. Over the year, 54a = 255,850,000, plus the 2,150,000 that goes through the year-end
+  event, equals 258,000,000 — the whole of the year's purchases. The transformation closes.
+
+  WHAT THE FOUNDER'S RATIOS ARE NET OF, said explicitly:
+    - The 70% markup is on landed cost INCLUDING duty. It is NOT net of the 5% that does not sell, NOT
+      net of any discount to the shops he gives thirty days to, NOT net of shrinkage, and — on the
+      base-case reading — NOT inclusive of VAT. Each of those is a separate question above.
+    - The 5% residue is stated as a year-END position. It is not said whether it is net of stock he
+      already braded during the year, so the model treats the whole 5% as newly disposed of at the
+      year end and does not also charge a running dump.
+
+  WHERE THE MASS GOES. The written-off portion is written DOWN, not thrown away. Under IAS 2.9 stock
+  is carried at the lower of cost and net realisable value, and stock that "reste sur l'étagère pour
+  toujours" has a realisable value of nil — so its carrying value goes to zero while the parts stay
+  physically on the shelf. The trace therefore carries dead_stock_cum at original cost as a memo, and
+  section 6 includes it in the space the store has to find. A yield ratio that simply discarded it
+  would have hidden a pile that grows by roughly a million francs of cost a year, forever.
+
+  ============================================================================
+  4. PHYSICAL CLOSURE (b) — EVERY STOCK DECLARES ITS LOSS
+  ============================================================================
+  Four things are held over time in this business. Each gets a rate, and each rate is applied to the
+  balance actually at risk in that period, not as a flat charge:
+
+    Goods afloat (transit_stock)     transit_loss_rate_per_period          = 0, applied to
+                                     transit_stock[t-1]. Zero because his realised markup and
+                                     sell-through are reported as outcomes, so any recurring shortage
+                                     is already inside them. Question attached; range up to 0.6% per
+                                     period.
+    Shelf stock (inventory_total)    inventory_shrinkage_rate_per_period   = 0, applied to
+                                     inventory_total[t-1], which falls as a container drains — so a
+                                     non-zero answer would automatically charge less against a
+                                     half-empty store than against a full one. Zero for the same
+                                     reason, plus he never mentions a stock count. Question attached.
+    Slow-moving pool (inventory_slow) The loss IS the obsolescence, and it is not zero: the whole
+                                     pool is disposed of once a year, half at 85% of cost and half at
+                                     nil. This is the only declared loss that carries a number.
+    Receivables                      bad_debt_rate_per_period              = 0, applied to
+                                     receivables[t-1]. Zero because he calls his credit customers
+                                     "boutiques régulières" and reports no losses. Question attached.
+
+  Three of the four are zero. That is a claim about this business, made deliberately and with the
+  question kept attached to each, not a silence — and each is wired into a check, so a different
+  answer moves the trace rather than a footnote.
+
+  ============================================================================
+  5. PHYSICAL CLOSURE (c) — DOES THE CLAIMED OUTPUT FIT THE PLANT DESCRIBED?
+  ============================================================================
+  THE VAN. Capacity is not the constraint here; the duty cycle is. Of the 800,000 a year, 60% is
+  fuel = 480,000, which at the official pump price of 725 XOF/litre buys 662.07 litres a year. At 12
+  litres per 100 km that is 5,517.24 km a year — 229.885058 km per half-month, 18 km per working day
+  at 300 days. A Cotonou-Porto-Novo round trip is about 80 km. So the entire annual fuel budget pays
+  for 68.97 Porto-Novo round trips and nothing else at all — no deliveries in Cotonou, no runs to the
+  port, nothing to the rest of "tout le sud du pays". THE CLAIMED SERVICE AREA DOES NOT FIT INSIDE
+  THE STATED RUNNING COST. This is reported as a finding (F4), not absorbed: either the 800,000
+  understates what the van costs, or he buys informal cross-border fuel well below the official 725,
+  or the van does far less than the utterance implies and customers collect.
+
+  WHO DRIVES IT. Nobody. The payroll is two salespeople, a storeman and an apprentice; there is no
+  driver, and the founder does not say he drives. Either one of the four is off the shop floor
+  whenever the van moves — which takes a salesperson away from a counter that section 5 shows is
+  already busy — or there is an undeclared fifth person. Finding F3.
+
+  THE STAFF. Revenue of 435,858,750 at an average ticket of 15,000 is 29,057.25 counter transactions
+  a year. Over 300 working days that is 96.86 a day, or 48.43 per salesperson per day — one every
+  11.1 minutes over a nine-hour day. In the heaviest period of the model (a landing period) it peaks
+  at 1,610.907407 transactions per half-month, which is 64.44 per salesperson per day, or one every
+  8.4 minutes. That fits inside a busy parts counter, but not with room to spare, and it fits only
+  while both salespeople are actually at the counter — see the driver point above. The check asserts
+  the peak against a ceiling of 80 a day.
+
+  THE STORE. Section 6.
+
+  ============================================================================
+  6. PHYSICAL CLOSURE (c, continued) — THE SPACE
+  ============================================================================
+  Steady-state stock peaks in the landing periods. At t = 21, the last landing period before the
+  year-end clear-out, the store holds 57,572,222.222222 of active stock plus 2,149,999.999998 of
+  slow-moving pool = 59,722,222.222220 at landed cost, which is 1.388889 containers. On the base-case
+  reading of a 40-foot container (67.7 m3 internal, 85% stuffing) that is:
+
+    1.388889 * 67.7 * 0.85 = 79.923611 cubic metres of goods on the floor.
+
+  To hold 79.92 m3 you need, at 2.4 m of usable stacking and half the floor lost to aisles, the
+  counter and circulation, about 66.6 m2 of stock floor and perhaps 80 m2 of store. His rent of
+  1,200,000 a year over 80 m2 is about 1,250 XOF per square metre per month, which is cheap for a
+  store trading into Dantokpa. So one of three things is true and he can say which: the store is
+  bigger than the rent suggests, the rent is a legacy one, or the containers are 20-footers and
+  everything in this paragraph halves. Reported as finding F5, with the check asserting the peak
+  against store_usable_stock_volume_m3.
+
+  Note what the dead pile does to this over time. It never leaves. Within this one year it adds only
+  1,074,999.999999 of cost — about 1.4 m3 — but it is additive and permanent, so on the base-case
+  reading the store loses roughly a cubic metre and a half of shelf a year, forever, and on the
+  higher reading of the obsolescence question, four times that.
+
+  ============================================================================
+  7. THE OPENING BALANCE SHEET
+  ============================================================================
+  This is a going concern, so period 0 does not start empty. Steady state at t = -1:
+
+    Goods afloat, one container prepaid              32,000,000
+    Shelf stock, two containers part-sold            38,620,370.370370
+      ( = 8a + 2 * 358,333.333333 )
+    Slow-moving pool, just cleared at the year end             0
+    Receivables, 40% of the last two periods' sales  13,252,759.259259
+      ( = 0.40 * (17,022,824.074073 + 16,109,074.074074), those being the t=23 and t=22 revenues of
+        the identical preceding year )
+    Trade payables                                            0
+                                                     ------------------
+    Opening net working capital                      83,873,129.629629
+
+  Payables are zero, and that is the whole shape of this business: the supplier takes 100% up front,
+  the customers take 40% on thirty days, and there is nobody in between to carry any of it.
+
+  ============================================================================
+  8. TAX AND REGIME — ESTABLISHED, NOT ASSUMED
+  ============================================================================
+  Turnover on the base case is 435,858,750 a year.
+
+  TPS. The Taxe Professionnelle Synthétique at 5% of receipts is reserved for enterprises below
+  50,000,000 of annual turnover. This business is at 8.7 times that ceiling. IT IS NOT ON TPS, and
+  the 5% receipts tax does not apply. Nor do the accessories that ride with it. Two consequences
+  follow: the business falls under the régime du réel, and it is not exempt from the Versement
+  Patronal sur Salaires (TPS taxpayers are; this one is not).
+
+  TVA. The same 50,000,000 is the registration threshold. At 436 million the business is required to
+  be registered and to charge TVA at 18%. The whole model is therefore run EXCLUSIVE of VAT: output
+  VAT is collected on top of the prices modelled and remitted, input VAT at the port is recovered,
+  and neither touches asset-side cash flow except through a timing effect that a stationary annual
+  view suppresses. The alternative — that the prices he quotes are all-inclusive — is the single
+  largest open question in this document (vat_price_divisor).
+
+  THE 7,000,000, TESTED. It is 19.4444% of the 36,000,000 CIF value. Import VAT alone, at 18% on the
+  bare CIF and ignoring the duty and levies that properly gross the base up, is 6,480,000. That
+  leaves at most 520,000 — 1.44% of CIF — for every duty and levy combined, and the lowest non-zero
+  ECOWAS CET band is 5%. THE STATED 7,000,000 CANNOT CONTAIN IMPORT VAT. It is a duty-and-levy
+  figure. That is coherent with a registered trader who recovers his port VAT and does not think of
+  it as a cost — which is the base case — and it is incoherent with an unregistered one. Finding F2.
+
+  PROFITS TAX. 30%, applied to EBIT with no interest shield, per the unlevered convention. The rate
+  is robust to the legal form: the standard IS rate is 30% and the top marginal band of the IRPP
+  scale is also 30% (above 530,000 a month), and this operation's monthly profit is far above that.
+  The minimum forfaitaire de perception (1.5% of turnover HT, floor 500,000) applies to loss-makers
+  and does not bind — 1.5% of turnover is 6,537,881 against a computed charge of 49,499,097.
+
+  PAYROLL CHARGES, which the founder's cost base omits entirely. On gross wages of 3,840,000:
+    CNSS prestations familiales           9.0%
+    CNSS vieillesse, part patronale       6.4%
+    CNSS risques professionnels           2.0%   (band 1-4%; his own rate to be confirmed)
+    Versement Patronal sur Salaires       4.0%   (CGI art. 211-215; not exempt, see TPS above)
+                                        -------
+    Total employer charge                21.4%   = 821,760 a year = 34,240 a half-month
+
+  SMIG. The apprentice is paid 40,000 a month against a statutory SMIG of 52,000 for a 40-hour week.
+  What the founder believes about his wage bill and what the rule says are different objects: unless
+  the apprentice sits under a formal apprenticeship contract, that post is below the legal floor, and
+  regularising it would raise the wage bill and every charge computed on it. Finding F6.
+
+  ============================================================================
+  9. THE OPERATING LADDER, PER PERIOD
+  ============================================================================
+  Three kinds of period exist and no others.
+
+  ORDINARY PERIOD (17 of them: t = 0,2,3,4,6,7,8,10,11,12,14,15,16,18,19,20,22)
+    2 containers selling, so COGS = 2a
+    Revenue        1.70 * 9,475,925.925926 =   16,109,074.074074
+    COGS                                        9,475,925.925926
+    Gross profit                                6,633,148.148148
+    Opex                                          502,573.333333
+    EBITDA                                      6,130,574.814815
+    Depreciation                                   33,333.333333
+    EBIT                                        6,097,241.481482
+    Tax at 30%                                  1,829,172.444445
+    NOPAT                                       4,268,069.037037
+
+  LANDING PERIOD (6 of them: t = 1,5,9,13,17,21)
+    3 containers selling, so COGS = 3a
+    Revenue        1.70 * 14,213,888.888889 =  24,163,611.111111
+    COGS                                       14,213,888.888889
+    Gross profit                                9,949,722.222222
+    Opex                                          502,573.333333
+    EBITDA                                      9,447,148.888889
+    Depreciation                                   33,333.333333
+    EBIT                                        9,413,815.555556
+    Tax at 30%                                  2,824,144.666667
+    NOPAT                                       6,589,670.888889
+
+  YEAR-END PERIOD (t = 23, an ordinary period plus the obsolescence event)
+    Regular revenue                            16,109,074.074074
+    Dump revenue  0.85 * 1,074,999.999999 =       913,749.999999
+    Revenue                                    17,022,824.074073
+    Regular COGS                                9,475,925.925926
+    COGS of dumped stock                        1,074,999.999999
+    Write-off of dead stock                     1,074,999.999999
+    COGS                                       11,625,925.925924
+    Gross profit                                5,396,898.148149
+    Opex                                          502,573.333333
+    EBITDA                                      4,894,324.814816
+    Depreciation                                   33,333.333333
+    EBIT                                        4,860,991.481483
+    Tax at 30%                                  1,458,297.444445
+    NOPAT                                       3,402,694.037038
+
+  THE OPEX LINE, built once and constant across all 24 periods:
+    Rent                    1,200,000 / 24 =       50,000.000000
+    Wages                   3,840,000 / 24 =      160,000.000000
+    Employer charges at 21.4% of wages             34,240.000000
+    Van fuel and maintenance  800,000 / 24 =       33,333.333333
+    Owner-manager cost (imputed)                  150,000.000000
+    Other overheads (elicited)                     75,000.000000
+    Declared stock losses (all zero)                    0.000000
+                                                --------------
+                                                  502,573.333333
+
+  DEPRECIATION. 4,000,000 straight-line over 5 years to nil = 800,000 a year = 33,333.333333 a
+  half-month. Net book value runs from 3,966,666.666667 at t=0 to 3,200,000.000008 at t=23.
+
+  ============================================================================
+  10. THE YEAR, IN TOTAL
+  ============================================================================
+    Revenue                                   435,858,750     100.00%
+      of which normal wholesale               434,945,000
+      of which dumped at half price               913,750
+    Cost of goods sold                        258,000,000      59.19%
+      regular sell-through                    255,850,000
+      cost of dumped stock                      1,075,000
+      write-off of dead stock                   1,075,000
+    Gross profit                              177,858,750      40.81%
+    Operating expenses                         12,061,760       2.77%
+      rent 1,200,000; wages 3,840,000; employer charges 821,760; van 800,000;
+      owner-manager 3,600,000; other overheads 1,800,000
+    EBITDA                                    165,796,990      38.04%
+    Depreciation                                  800,000
+    EBIT                                      164,996,990      37.86%
+    Tax at 30%                                 49,499,097
+    NOPAT                                     115,497,893
+    Add back depreciation                         800,000
+    Less change in net working capital                  0
+    Less capital expenditure                            0
+                                              -----------
+    FCFF for the year                         116,297,893
+    FCFF with replacement capex normalised    115,497,893
+
+  ============================================================================
+  11. WORKING CAPITAL — THE ANSWER TO THE QUESTION HE ACTUALLY ASKED
+  ============================================================================
+  Average balances over the 24 periods:
+    Goods afloat, prepaid                      40,000,000   (1.25 containers of goods cost)
+    Shelf stock                                44,433,333.333332
+    Receivables                                14,528,625.000000
+    Trade payables                                      0
+                                               ------------------
+    Average net working capital                98,961,958.333332
+    Average van net book value                  3,583,333.333333
+    Average capital employed                   102,545,291.666665
+
+  As days of activity: inventory is 62.9 days of COGS, receivables 12.2 days of revenue (which is
+  0.40 * 30 days, as it must be), and the prepaid goods afloat are a further 56.6 days of COGS. Net
+  working capital is 82.9 days of revenue, and every franc of it is his, because payables are nil.
+
+  Within the year the swing is large and entirely driven by the payment cadence: NWC peaks at
+  107,831,296.296294 at t=21 and troughs at 83,865,962.962963 at t=3, and FCFF alternates between
+  -18,222,671.703704 in the six periods where a container is paid for and +16,999,143.111110 three
+  periods later. A monthly or annual grid would show none of this.
+
+  ============================================================================
+  12. THE STATIONARITY PROOF, AND THE CASH CROSS-CHECK
+  ============================================================================
+  Closing NWC at t=23 is 83,873,129.629629, identical to the opening balance in section 7, so the
+  24 changes sum to exactly zero and the year genuinely repeats. That is asserted in checks, not
+  claimed here.
+
+  Independently, the whole FCFF array is reproduced by the DIRECT method, which touches none of the
+  accrual machinery. For t=1, a landing period:
+    Collections on prior credit sales             6,809,129.629629
+    Cash sales, 60% of 24,163,611.111111         14,498,166.666667
+    Cash in                                      21,307,296.296296
+    Freight and duty paid at clearance          -11,000,000.000000
+    Operating cash costs                            -502,573.333333
+    Tax                                          -2,824,144.666667
+                                                 -----------------
+    Cash flow                                     6,980,578.296296   = trace.fcff[1]
+  And for t=0, a payment period:
+    Cash in                                      16,109,074.074074
+    Prepayment to Guangzhou                     -32,000,000.000000
+    Operating cash costs                            -502,573.333333
+    Tax                                          -1,829,172.444445
+                                                 -----------------
+    Cash flow                                   -18,222,671.703704   = trace.fcff[0]
+  The identity holds in all 24 periods and is asserted as a check. An engine that reproduced the
+  headline by a different route would have to satisfy it too.
+
+  ============================================================================
+  13. PHYSICAL CLOSURE (d) — THE CUMULATIVE TEST AGAINST THE WORLD
+  ============================================================================
+  Distance. The per-period figure of 229.885058 km looks unremarkable. Cumulated it is 5,517.24 km a
+  year and, over the five-year life the depreciation charge assumes, 27,586.21 km. A light commercial
+  van is built for something of the order of 250,000 km. So the van will be written off to nil having
+  covered about 11% of what it could deliver: the five-year life is a convention about age and
+  condition, not about wear, and the depreciation charge is not a usage charge. The check asserts the
+  lifetime distance against the vehicle's capability, and it passes with enormous room — which is
+  itself the finding, because it says the fuel budget, not the vehicle, is what limits the delivery
+  service, and that returns us to F4.
+
+  Throughput. Cumulated tonnage is not computable without a weight the founder never gives, so it is
+  not asserted. What is asserted cumulatively is the container count (6 paid, 6 landed), the
+  container-periods of selling (54 = 6 * 9), the closure of purchases into the three disposal routes
+  (258,000,000 in, 258,000,000 out), and the residue transfers into the year-end clearance
+  (6 * 358,333.333333 = the amount disposed of).
+
+  ============================================================================
+  14. WHERE THIS NUMBER SHOULD NOT BE BELIEVED
+  ============================================================================
+  FCFF of 116,297,893 on average capital employed of 102,545,291.67 is a return of 113.4% a year, on
+  an operation whose founder describes himself as cash-squeezed. Those two statements are not
+  compatible. A business earning 116 million a year of unlevered free cash on 103 million of capital
+  would fund its entire working capital out of one year's cash flow, and the supplier's refusal of
+  credit would have stopped being the binding problem some time ago.
+
+  The arithmetic above is internally exact — it closes, it reconciles by two independent methods, and
+  it repeats. It is nevertheless describing a business that, as described, cannot be the one making
+  the complaint. The discrepancy is not in the mechanics; it is in the inputs, and it is concentrated
+  in the three questions marked high: whether the 70% is asked or realised, whether the prices are
+  VAT-inclusive, and whether the dead stock is 5% of one container or of six. Those three, answered,
+  would move this number more than everything else in the document combined. That is what the
+  materiality ranking is for.
+
+trace:
+
+  # ---- physical container flow ------------------------------------------
+  containers_paid:        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+  containers_landed:      [0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0]
+  containers_in_transit:  [2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1]
+  containers_selling:     [2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2]
+
+  # ---- prepaid goods afloat ----------------------------------------------
+  prepayment_cash:        [32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0]
+  transit_opening:        [32000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  transit_out:            [0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0, 0, 32000000, 0, 0]
+  transit_loss:           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  transit_stock:          [64000000, 32000000, 32000000, 32000000, 64000000, 32000000, 32000000, 32000000, 64000000, 32000000, 32000000, 32000000, 64000000, 32000000, 32000000, 32000000, 64000000, 32000000, 32000000, 32000000, 64000000, 32000000, 32000000, 32000000]
+
+  # ---- shelf stock -------------------------------------------------------
+  landed_in:              [0, 43000000, 0, 0, 0, 43000000, 0, 0, 0, 43000000, 0, 0, 0, 43000000, 0, 0, 0, 43000000, 0, 0, 0, 43000000, 0, 0]
+  cogs_regular:           [9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926]
+  residue_transfer:       [0, 358333.333333, 0, 0, 0, 358333.333333, 0, 0, 0, 358333.333333, 0, 0, 0, 358333.333333, 0, 0, 0, 358333.333333, 0, 0, 0, 358333.333333, 0, 0]
+  inventory_shrinkage:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  inv_active_opening:     [38620370.370370, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  inventory_active:       [29144444.444444, 57572222.222222, 48096296.296296, 38620370.370370, 29144444.444444, 57572222.222222, 48096296.296296, 38620370.370370, 29144444.444444, 57572222.222222, 48096296.296296, 38620370.370370, 29144444.444444, 57572222.222222, 48096296.296296, 38620370.370370, 29144444.444444, 57572222.222222, 48096296.296296, 38620370.370370, 29144444.444444, 57572222.222222, 48096296.296296, 38620370.370370]
+  inventory_slow:         [0, 358333.333333, 358333.333333, 358333.333333, 358333.333333, 716666.666666, 716666.666666, 716666.666666, 716666.666666, 1074999.999999, 1074999.999999, 1074999.999999, 1074999.999999, 1433333.333332, 1433333.333332, 1433333.333332, 1433333.333332, 1791666.666665, 1791666.666665, 1791666.666665, 1791666.666665, 2149999.999998, 2149999.999998, 0]
+  obsolescence_out:       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2149999.999998]
+  cogs_dump:              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1074999.999999]
+  cogs_writeoff:          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1074999.999999]
+  dead_stock_cum:         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1074999.999999]
+  inventory_total:        [29144444.444444, 57930555.555555, 48454629.629629, 38978703.703703, 29502777.777777, 58288888.888888, 48812962.962962, 39337037.037036, 29861111.111110, 58647222.222221, 49171296.296295, 39695370.370369, 30219444.444443, 59005555.555554, 49529629.629628, 40053703.703702, 30577777.777776, 59363888.888887, 49887962.962961, 40412037.037035, 30936111.111109, 59722222.222220, 50246296.296294, 38620370.370370]
+  stock_volume_m3:        [39.002722, 77.525903, 64.844690, 52.163477, 39.482264, 78.005444, 65.324231, 52.643019, 39.961806, 78.484986, 65.803773, 53.122560, 40.441347, 78.964528, 66.283315, 53.602102, 40.920889, 79.444069, 66.762856, 54.081644, 41.400431, 79.923611, 67.242398, 53.122560]
+
+  # ---- profit and loss ---------------------------------------------------
+  revenue_full:           [16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074]
+  revenue_dump:           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 913749.999999]
+  revenue:                [16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 16109074.074074, 16109074.074074, 24163611.111111, 16109074.074074, 17022824.074073]
+  cogs_total:             [9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 9475925.925926, 9475925.925926, 14213888.888889, 9475925.925926, 11625925.925924]
+  gross_profit:           [6633148.148148, 9949722.222222, 6633148.148148, 6633148.148148, 6633148.148148, 9949722.222222, 6633148.148148, 6633148.148148, 6633148.148148, 9949722.222222, 6633148.148148, 6633148.148148, 6633148.148148, 9949722.222222, 6633148.148148, 6633148.148148, 6633148.148148, 9949722.222222, 6633148.148148, 6633148.148148, 6633148.148148, 9949722.222222, 6633148.148148, 5396898.148149]
+  stock_losses:           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  opex_total:             [502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333, 502573.333333]
+  ebitda:                 [6130574.814815, 9447148.888889, 6130574.814815, 6130574.814815, 6130574.814815, 9447148.888889, 6130574.814815, 6130574.814815, 6130574.814815, 9447148.888889, 6130574.814815, 6130574.814815, 6130574.814815, 9447148.888889, 6130574.814815, 6130574.814815, 6130574.814815, 9447148.888889, 6130574.814815, 6130574.814815, 6130574.814815, 9447148.888889, 6130574.814815, 4894324.814816]
+  dep:                    [33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333, 33333.333333]
+  van_nbv:                [3966666.666667, 3933333.333334, 3900000.000001, 3866666.666668, 3833333.333335, 3800000.000002, 3766666.666669, 3733333.333336, 3700000.000003, 3666666.666670, 3633333.333337, 3600000.000004, 3566666.666671, 3533333.333338, 3500000.000005, 3466666.666672, 3433333.333339, 3400000.000006, 3366666.666673, 3333333.333340, 3300000.000007, 3266666.666674, 3233333.333341, 3200000.000008]
+  ebit:                   [6097241.481482, 9413815.555556, 6097241.481482, 6097241.481482, 6097241.481482, 9413815.555556, 6097241.481482, 6097241.481482, 6097241.481482, 9413815.555556, 6097241.481482, 6097241.481482, 6097241.481482, 9413815.555556, 6097241.481482, 6097241.481482, 6097241.481482, 9413815.555556, 6097241.481482, 6097241.481482, 6097241.481482, 9413815.555556, 6097241.481482, 4860991.481483]
+  tax:                    [1829172.444445, 2824144.666667, 1829172.444445, 1829172.444445, 1829172.444445, 2824144.666667, 1829172.444445, 1829172.444445, 1829172.444445, 2824144.666667, 1829172.444445, 1829172.444445, 1829172.444445, 2824144.666667, 1829172.444445, 1829172.444445, 1829172.444445, 2824144.666667, 1829172.444445, 1829172.444445, 1829172.444445, 2824144.666667, 1829172.444445, 1458297.444445]
+  nopat:                  [4268069.037037, 6589670.888889, 4268069.037037, 4268069.037037, 4268069.037037, 6589670.888889, 4268069.037037, 4268069.037037, 4268069.037037, 6589670.888889, 4268069.037037, 4268069.037037, 4268069.037037, 6589670.888889, 4268069.037037, 4268069.037037, 4268069.037037, 6589670.888889, 4268069.037037, 4268069.037037, 4268069.037037, 6589670.888889, 4268069.037037, 3402694.037038]
+
+  # ---- receivables -------------------------------------------------------
+  credit_sales:           [6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6809129.629629]
+  collections:            [6443629.629630, 6809129.629629, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444, 6443629.629630, 6443629.629630, 6443629.629630, 9665444.444444]
+  bad_debt:               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  receivables_opening:    [13252759.259259, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  receivables:            [13252759.259259, 16109074.074074, 16109074.074074, 12887259.259260, 12887259.259260, 16109074.074074, 16109074.074074, 12887259.259260, 12887259.259260, 16109074.074074, 16109074.074074, 12887259.259260, 12887259.259260, 16109074.074074, 16109074.074074, 12887259.259260, 12887259.259260, 16109074.074074, 16109074.074074, 12887259.259260, 12887259.259260, 16109074.074074, 16109074.074074, 13252759.259259]
+  payables:               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  # ---- working capital, capital employed and free cash flow --------------
+  nwc:                    [106397203.703703, 106039629.629629, 96563703.703703, 83865962.962963, 106390037.037037, 106397962.962962, 96922037.037036, 84224296.296296, 106748370.370370, 106756296.296295, 97280370.370369, 84582629.629629, 107106703.703703, 107114629.629628, 97638703.703702, 84940962.962962, 107465037.037036, 107472962.962961, 97997037.037035, 85299296.296295, 107823370.370369, 107831296.296294, 98355370.370368, 83873129.629629]
+  delta_nwc:              [22524074.074074, -357574.074074, -9475925.925926, -12697740.740740, 22524074.074074, 7925.925925, -9475925.925926, -12697740.740740, 22524074.074074, 7925.925925, -9475925.925926, -12697740.740740, 22524074.074074, 7925.925925, -9475925.925926, -12697740.740740, 22524074.074074, 7925.925925, -9475925.925926, -12697740.740740, 22524074.074074, 7925.925925, -9475925.925926, -14482240.740739]
+  capex:                  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  capital_employed:       [110363870.370370, 109972962.962963, 100463703.703704, 87732629.629631, 110223370.370372, 110197962.962964, 100688703.703705, 87957629.629632, 110448370.370373, 110422962.962965, 100913703.703706, 88182629.629633, 110673370.370374, 110647962.962966, 101138703.703707, 88407629.629634, 110898370.370375, 110872962.962967, 101363703.703708, 88632629.629635, 111123370.370376, 111097962.962968, 101588703.703709, 87073129.629637]
+  cash_from_customers:    [16109074.074074, 21307296.296296, 16109074.074074, 19330888.888888, 16109074.074074, 20941796.296297, 16109074.074074, 19330888.888888, 16109074.074074, 20941796.296297, 16109074.074074, 19330888.888888, 16109074.074074, 20941796.296297, 16109074.074074, 19330888.888888, 16109074.074074, 20941796.296297, 16109074.074074, 19330888.888888, 16109074.074074, 20941796.296297, 16109074.074074, 19879138.888888]
+  cash_landing_costs:     [0, 11000000, 0, 0, 0, 11000000, 0, 0, 0, 11000000, 0, 0, 0, 11000000, 0, 0, 0, 11000000, 0, 0, 0, 11000000, 0, 0]
+  cfo:                    [-18222671.703704, 6980578.296296, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 17918268.111110]
+  cfi:                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  fcff:                   [-18222671.703704, 6980578.296296, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 17918268.111110]
+  fcff_normalised:        [-18256005.037037, 6947244.962963, 13743994.962963, 16965809.777777, -18256005.037037, 6581744.962964, 13743994.962963, 16965809.777777, -18256005.037037, 6581744.962964, 13743994.962963, 16965809.777777, -18256005.037037, 6581744.962964, 13743994.962963, 16965809.777777, -18256005.037037, 6581744.962964, 13743994.962963, 16965809.777777, -18256005.037037, 6581744.962964, 13743994.962963, 17884934.777777]
+
+  # ---- physical capacity tests -------------------------------------------
+  customer_transactions:  [1073.938272, 1610.907407, 1073.938272, 1073.938272, 1073.938272, 1610.907407, 1073.938272, 1073.938272, 1073.938272, 1610.907407, 1073.938272, 1073.938272, 1073.938272, 1610.907407, 1073.938272, 1073.938272, 1073.938272, 1610.907407, 1073.938272, 1073.938272, 1073.938272, 1610.907407, 1073.938272, 1134.854938]
+  van_fuel_litres:        [27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207, 27.586207]
+  van_km:                 [229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058, 229.885058]
+  van_km_cum:             [229.885058, 459.770116, 689.655174, 919.540232, 1149.425290, 1379.310348, 1609.195406, 1839.080464, 2068.965522, 2298.850580, 2528.735638, 2758.620696, 2988.505754, 3218.390812, 3448.275870, 3678.160928, 3908.045986, 4137.931044, 4367.816102, 4597.701160, 4827.586218, 5057.471276, 5287.356334, 5517.241392]
+
+fcff: [-18222671.703704, 6980578.296296, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 16999143.111110, -18222671.703704, 6615078.296297, 13777328.296296, 17918268.111110]
+
+checks:
+
+  # ---- conservation: stocks roll forward ---------------------------------
+  - "trace.transit_stock[t] == trace.transit_stock[t-1] + trace.transit_opening[t] + trace.prepayment_cash[t] - trace.transit_out[t] - trace.transit_loss[t]"
+  - "trace.inventory_active[t] == trace.inventory_active[t-1] + trace.inv_active_opening[t] + trace.landed_in[t] - trace.cogs_regular[t] - trace.residue_transfer[t] - trace.inventory_shrinkage[t]"
+  - "trace.inventory_slow[t] == trace.inventory_slow[t-1] + trace.residue_transfer[t] - trace.obsolescence_out[t]"
+  - "trace.inventory_total[t] == trace.inventory_active[t] + trace.inventory_slow[t]"
+  - "trace.dead_stock_cum[t] == trace.dead_stock_cum[t-1] + trace.cogs_writeoff[t]"
+  - "trace.receivables[t] == trace.receivables[t-1] + trace.receivables_opening[t] + trace.credit_sales[t] - trace.collections[t] - trace.bad_debt[t]"
+  - "trace.van_nbv == van_opening_nbv - cumsum(trace.dep) + cumsum(trace.capex)"
+  - "cumsum(trace.delta_nwc) + nwc_opening_balance == trace.nwc"
+  - "trace.van_km_cum == cumsum(trace.van_km)"
+
+  # ---- conservation: the year closes and repeats -------------------------
+  - "trace.nwc[last] == nwc_opening_balance"
+  - "sum(trace.delta_nwc) == 0"
+  - "trace.transit_stock[last] == transit_opening_balance"
+  - "trace.inventory_active[last] == inv_active_opening_balance"
+  - "trace.receivables[last] == receivables_opening_balance"
+
+  # ---- conservation: the transformation closes (physical closure a) ------
+  - "sum(trace.cogs_regular) + sum(trace.cogs_dump) + sum(trace.cogs_writeoff) + sum(trace.inventory_shrinkage) == sum(trace.landed_in) + inv_active_opening_balance - trace.inventory_total[last]"
+  - "sum(trace.residue_transfer) == sum(trace.obsolescence_out)"
+  - "trace.obsolescence_out[t] == trace.cogs_dump[t] + trace.cogs_writeoff[t]"
+  - "sum(trace.obsolescence_out) == annual_obsolete_stock_at_cost"
+  - "sum(trace.prepayment_cash) + transit_opening_balance == sum(trace.transit_out) + trace.transit_stock[last] + sum(trace.transit_loss)"
+  - "sum(trace.containers_paid) == containers_per_year"
+  - "sum(trace.containers_landed) == containers_per_year"
+  - "sum(trace.containers_in_transit) == containers_per_year * prepay_to_shelf_lag_periods"
+  - "sum(trace.containers_selling) == containers_per_year * sell_through_periods"
+  - "sum(trace.prepayment_cash) + sum(trace.cash_landing_costs) == containers_per_year * landed_cost_per_container"
+  - "sum(trace.credit_sales) == sum(trace.collections) + trace.receivables[last] - receivables_opening_balance + sum(trace.bad_debt)"
+
+  # ---- definition: the operating ladder ----------------------------------
+  - "trace.revenue == trace.revenue_full + trace.revenue_dump"
+  - "trace.cogs_total == trace.cogs_regular + trace.cogs_dump + trace.cogs_writeoff"
+  - "trace.gross_profit == trace.revenue - trace.cogs_total"
+  - "trace.ebitda == trace.gross_profit - trace.opex_total"
+  - "trace.ebit == trace.ebitda - trace.dep"
+  - "trace.tax == profit_tax_rate * trace.ebit"
+  - "trace.nopat == trace.ebit - trace.tax"
+  - "trace.stock_losses == trace.transit_loss + trace.inventory_shrinkage + trace.bad_debt"
+
+  # ---- definition: working capital and the unlevered build ---------------
+  - "trace.nwc == trace.transit_stock + trace.inventory_total + trace.receivables - trace.payables"
+  - "trace.capital_employed == trace.nwc + trace.van_nbv"
+  - "trace.cfo == trace.nopat + trace.dep - trace.delta_nwc"
+  - "trace.cfi == 0 - trace.capex"
+  - "trace.fcff == trace.cfo + trace.cfi"
+  - "trace.fcff == trace.nopat + trace.dep - trace.delta_nwc - trace.capex"
+  - "trace.fcff_normalised == trace.fcff - trace.dep + trace.capex"
+  - "trace.fcff_normalised == trace.nopat - trace.delta_nwc"
+
+  # ---- definition: independent direct-method cash reconciliation ---------
+  - "trace.fcff == trace.cash_from_customers - trace.prepayment_cash - trace.cash_landing_costs - trace.opex_total + trace.stock_losses - trace.tax - trace.capex"
+
+  # ---- driver bridges: every computed line from its inputs ---------------
+  - "landed_cost_per_container == goods_cost_per_container + freight_insurance_per_container + duties_port_per_container"
+  - "residue_per_container == annual_obsolete_stock_at_cost / containers_per_year"
+  - "trace.prepayment_cash == (goods_cost_per_container * supplier_prepayment_fraction + share_of_landing_costs_prepaid_with_goods * (freight_insurance_per_container + duties_port_per_container)) * trace.containers_paid"
+  - "trace.cash_landing_costs == (1 - share_of_landing_costs_prepaid_with_goods) * (freight_insurance_per_container + duties_port_per_container) * trace.containers_landed"
+  - "trace.transit_stock == goods_cost_per_container * trace.containers_in_transit"
+  - "trace.transit_out == goods_cost_per_container * trace.containers_landed"
+  - "trace.landed_in == landed_cost_per_container * trace.containers_landed"
+  - "trace.residue_transfer == residue_per_container * trace.containers_landed"
+  - "trace.cogs_regular == trace.containers_selling * (landed_cost_per_container - residue_per_container) / sell_through_periods"
+  - "trace.cogs_dump == dump_share_of_residue * trace.obsolescence_out"
+  - "trace.cogs_writeoff == (1 - dump_share_of_residue) * trace.obsolescence_out"
+  - "trace.revenue_full == (1 + realised_markup_on_landed) * trace.cogs_regular / vat_price_divisor"
+  - "trace.revenue_dump == (1 + realised_markup_on_landed) * dump_price_factor * trace.cogs_dump / vat_price_divisor"
+  - "trace.credit_sales == credit_sales_fraction * trace.revenue"
+  - "trace.cash_from_customers == trace.collections + (1 - credit_sales_fraction) * trace.revenue"
+  - "trace.opex_total == rent_per_period + wages_per_period + (cnss_family_rate + cnss_pension_employer_rate + risques_professionnels_rate + vps_rate) * wages_per_period + van_running_per_period + owner_manager_cost_per_period + other_overheads_per_period + trace.stock_losses"
+  - "trace.dep == van_opening_nbv / van_remaining_life_years / grid.periods"
+  - "trace.transit_loss == transit_loss_rate_per_period * trace.transit_stock[t-1]"
+  - "trace.inventory_shrinkage == inventory_shrinkage_rate_per_period * trace.inventory_total[t-1]"
+  - "trace.bad_debt == bad_debt_rate_per_period * trace.receivables[t-1]"
+  - "trace.stock_volume_m3 == (trace.inventory_total + trace.dead_stock_cum) / landed_cost_per_container * container_internal_volume_m3 * packing_efficiency"
+  - "trace.customer_transactions == trace.revenue / average_ticket_xof"
+  - "trace.van_fuel_litres == van_fuel_share_of_running_cost * van_running_per_period / pump_price_essence"
+  - "trace.van_km == trace.van_fuel_litres * 100 / van_fuel_consumption_l_per_100km"
+  - "wages_per_period == (2 * salesperson_wage_monthly + storeman_wage_monthly + apprentice_wage_monthly) / 2"
+  - "rent_per_period == rent_per_year / grid.periods"
+  - "van_running_per_period == van_running_cost_per_year / grid.periods"
+
+  # ---- non-negativity ----------------------------------------------------
+  - "trace.transit_stock[t] >= 0"
+  - "trace.inventory_active[t] >= 0"
+  - "trace.inventory_slow[t] >= 0"
+  - "trace.inventory_total[t] >= 0"
+  - "trace.dead_stock_cum[t] >= 0"
+  - "trace.receivables[t] >= 0"
+  - "trace.van_nbv[t] >= 0"
+  - "trace.revenue[t] >= 0"
+  - "trace.tax[t] >= 0"
+  - "trace.stock_volume_m3[t] >= 0"
+
+  # ---- physical capacity and regime assertions ---------------------------
+  - "max(trace.stock_volume_m3) <= store_usable_stock_volume_m3"
+  - "max(trace.customer_transactions) / (working_days_per_year / grid.periods) / n_salespeople <= max_transactions_per_salesperson_per_day"
+  - "trace.van_km_cum[last] * van_remaining_life_years <= van_lifetime_km_capacity"
+  - "sum(trace.revenue) > tps_turnover_ceiling"
+  - "sum(trace.revenue) > vat_registration_turnover_threshold"
+  - "import_vat_on_cif_floor == vat_standard_rate * (goods_cost_per_container + freight_insurance_per_container)"
+  - "duties_port_per_container - import_vat_on_cif_floor < min_cet_duty_rate * (goods_cost_per_container + freight_insurance_per_container)"
+  - "port_charge_rate_on_cif == duties_port_per_container / (goods_cost_per_container + freight_insurance_per_container)"
+  - "apprentice_wage_monthly < smig_monthly"
+  - "profit_tax_rate * sum(trace.ebit) > mfp_rate_loss_making * sum(trace.revenue)"
+  - "profit_tax_rate * sum(trace.ebit) > mfp_floor"
+
+notes:
+
+  - id: F1
+    kind: finding
+    title: "The business is not on the Taxe Professionnelle Synthétique, and establishing that is a result"
+    text: >-
+      The verified-fact annex supplies a 5% TPS rate and its accessories. None of them applies here.
+      TPS is reserved for enterprises below the 50,000,000 XOF turnover ceiling; this operation's
+      turnover, asserted in checks against that ceiling, is roughly nine times it. It therefore falls
+      under the régime du réel, pays the profits tax rather than a receipts tax, and — a second-order
+      consequence that is easy to miss — loses the exemption from the Versement Patronal sur Salaires
+      that TPS taxpayers enjoy. The 4% VPS is charged in trace.opex_total for exactly that reason. A
+      model that had reached for the annex's 5% because it was offered would have taxed receipts
+      instead of profit and would have missed the employer charges entirely.
+
+  - id: F2
+    kind: finding
+    title: "The annex's 0% VAT row does not govern this business, and the stated port payment proves it"
+    text: >-
+      A 0% applicable VAT rate is a fact about a moto-taxi operator below the registration threshold.
+      This wholesaler is far above it and is required to charge TVA at 18%. Independently, his own
+      figures show the same thing from the other direction: import VAT at 18% on the bare CIF value is
+      import_vat_on_cif_floor, which is a floor because the real base is CIF grossed up by duty and
+      community levies, and it already absorbs all but a small remainder of the 7,000,000 he says he
+      pays at the port — leaving less for all duties and levies combined than the lowest non-zero
+      ECOWAS CET band would require on its own. The check asserts this. The conclusion is that the
+      7,000,000 is a duty-and-levy figure and the VAT he pays at the port is recovered, not borne.
+      The whole model is therefore run VAT-exclusive. If instead he is quoting all-inclusive prices to
+      his customers, a sixth of the revenue in this document is the State's — which is why
+      vat_price_divisor is one of the three questions marked high.
+
+  - id: F3
+    kind: finding
+    title: "The van has no driver"
+    text: >-
+      The payroll is two salespeople, a storeman and an apprentice. Nobody is named as a driver and
+      the founder does not say he drives. Every delivery therefore either takes one of the four away
+      from the store — and the throughput test in the passage shows the counter has little slack when
+      both salespeople are on it — or there is a fifth person whose cost is not in the utterance and
+      therefore not in trace.opex_total. Direction of the error, if it is one: operating costs are
+      understated and free cash flow overstated.
+
+  - id: F4
+    kind: finding
+    title: "The stated running cost cannot move the van over the stated service area"
+    text: >-
+      trace.van_km_cum accumulates to a figure that, over the van's assumed life, is a small fraction
+      of what a light commercial vehicle is built to deliver — the check passes with enormous room,
+      and that is the problem rather than the reassurance. Converted at the official pump price, the
+      fuel half of his 800,000 buys barely enough distance for a couple of Porto-Novo round trips a
+      week and nothing else, whereas the utterance claims deliveries around Cotonou, out to Porto-Novo
+      and into "tout le sud du pays". Three explanations are available and only he can choose: the
+      800,000 omits something, he buys informal cross-border fuel materially below the official price,
+      or the delivery service is far smaller than the words suggest and customers mostly collect. This
+      is reported rather than absorbed because absorbing it would mean silently raising his cost or
+      silently shrinking his market.
+
+  - id: F5
+    kind: finding
+    title: "The steady-state stock nearly fills the store the rent implies"
+    text: >-
+      trace.stock_volume_m3 peaks in the landing period before the year-end clear-out at a volume that
+      needs, on ordinary stacking and aisle assumptions, most of an eighty-square-metre store. His
+      rent of 1,200,000 a year over that area is cheap for a business trading into Dantokpa. One of
+      three things is true: the store is larger than the rent suggests, the rent is a legacy or
+      family arrangement, or the containers are 20-footers and the whole space question halves. The
+      capacity assertion in checks passes on the base case, but with less margin than a reader should
+      be comfortable with, and it is stated so that a different answer to
+      container_internal_volume_m3 or store_usable_stock_volume_m3 breaks it visibly.
+
+  - id: F6
+    kind: finding
+    title: "The apprentice's wage is below the statutory minimum"
+    text: >-
+      What the founder believes about his wage bill and what the rule says are different objects. He
+      pays the apprentice 40,000 a month; the SMIG for a 40-hour week is 52,000, in force since 1
+      January 2023. The check asserts the inequality. Unless the post sits under a formal
+      apprenticeship contract, it is below the legal floor, and regularising it would raise both the
+      wage line and every employer charge computed on it. Direction only: costs up, free cash flow
+      down.
+
+  - id: F7
+    kind: finding
+    title: "The founder's cost base omits the employer's statutory payroll charges and his own labour"
+    text: >-
+      He lists gross wages and stops. Benin charges the employer 9% for family benefits, 6.4% for
+      pensions, 1-4% for occupational risk, and 4% VPS on top — carried in trace.opex_total and wired
+      to the payroll bridge check. He also lists no cost for himself, although he personally buys in
+      Guangzhou, clears customs and makes the credit decisions; owner_manager_cost_per_period exists
+      so that the asset-side cash flow is not quietly crediting the business with a free full-time
+      manager. Both additions are visible, both are questions rather than assertions, and a reader who
+      disagrees with the imputation can see exactly which line to remove.
+
+  - id: F8
+    kind: finding
+    title: "The whole working capital of the business sits on one person, and that is the actual answer to his question"
+    text: >-
+      trace.payables is zero in every period, by construction and by his own words. The supplier takes
+      100% before loading, the customers take 40% on thirty days, and there is nobody in between. The
+      consequence is visible in trace.capital_employed: at any instant the founder is carrying prepaid
+      goods afloat, a store full of stock, and a month of receivables, against no trade credit at all.
+      The 2.5-month prepayment is not a nuisance in his cash flow — it is roughly forty percent of the
+      capital his business requires. Anything that converted part of that prepayment into supplier
+      credit would release capital without touching a single line of the profit and loss.
+
+  - id: F9
+    kind: finding
+    title: "The margin this model computes is not compatible with the problem the founder describes"
+    text: >-
+      The passage sets it out in full. Free cash flow of roughly the same order as average capital
+      employed means an unlevered return above one hundred percent a year, for a trader whose opening
+      complaint is that his money is asleep. Both cannot be true. The arithmetic is exact — it closes,
+      it reconciles by an independent direct-method cash identity, and it repeats — so the fault is in
+      the inputs rather than the mechanics, and it is concentrated in the three high-materiality
+      questions: whether the 70% is asked or realised, whether the quoted prices carry VAT, and
+      whether the dead stock is five percent of one container or of six. This is a finding about the
+      account, not a defect in the derivation, and it is the single most important thing this document
+      has to say.
+
+  - id: J1
+    kind: judgment
+    title: "The reading of 'brader à moitié prix'"
+    text: >-
+      Taken as half the selling price, not half the cost, because price is the word he uses and the
+      only price he has named is his own. On this reading dumped stock recovers 85% of its landed cost
+      and loses 15%. The alternative reading — half of cost — would make the dumped half considerably
+      worse than the written-off half is good, and would sit oddly with the fact that he bothers to
+      dump it at all. Recorded here rather than elicited because it is a question about his words
+      rather than about his operation; if a reader disagrees, dump_price_factor is the single input to
+      change and the two revenue bridge checks will follow it.
+
+  - id: J2
+    kind: judgment
+    title: "The reading of 'cinq pour cent d'un conteneur'"
+    text: >-
+      Taken literally — five percent of ONE container per year — rather than five percent of each of
+      the six. Fidelity to the words wins over the sector prior, but only just, and the question is
+      marked high because on the alternative reading the obsolescence load is six times larger. What
+      would change my mind: any indication of how much dead stock has accumulated on his shelves over
+      the years, since the two readings imply piles that differ by a factor of six.
+
+  - id: J3
+    kind: judgment
+    title: "The container arrival cadence is taken as even"
+    text: >-
+      Six containers a year, one every two months. No season is stated and the motorcycle wear-parts
+      trade has no strong one. An uneven cadence would not change the annual totals but would change
+      the intra-year working-capital profile, which is most of what the half-month grid exists to show.
+
+  - id: S1
+    kind: simplification
+    title: "Obsolescence is recognised in a single year-end event"
+    text: >-
+      IAS 2 would write stock down when its net realisable value falls, which happens continuously as
+      models change, not on 31 December. The founder's own frame is annual ("à la fin d'une année"),
+      and a stationary annual view is indifferent to when within the year the charge lands. On a
+      shorter grid or a growing business it would not be.
+
+  - id: S2
+    kind: simplification
+    title: "VAT and AIB flows are outside the model"
+    text: >-
+      Output VAT collected on credit sales is remitted before it is collected, and import VAT and the
+      AIB advance are paid at the port and recovered later; both are genuine timing drags on a business
+      with this working-capital shape. Neither is modelled, because both net out over a stationary
+      year and because the founder's VAT position is itself an open question. Direction if modelled:
+      more capital employed, unchanged annual profit.
+
+  - id: S3
+    kind: simplification
+    title: "Balances are closing balances, and haulage from port to store is inside the van line"
+    text: >-
+      Two conventions worth naming. Stock rows are measured after the period's sales, which is why the
+      implied inventory days sit slightly below half the stated sell-through. And the founder's
+      "rendue au magasin" cost excludes port-to-store haulage, which is somewhere inside his 800,000
+      van line; landed cost is therefore marginally understated and gross margin marginally overstated.
+
+  - id: D1
+    kind: deferred
+    title: "The lattice coincidence, recorded so it is not mistaken for an error"
+    text: >-
+      Container residues enter the slow-moving pool in the same periods that new containers land. That
+      is not an assumption — it falls out of the arithmetic, because the sell-through of nine periods
+      ends eight periods after a landing and eight is a whole number of four-period order intervals.
+      If sell_through_periods is answered as eight or ten, the two events separate and the inventory
+      rows change shape while the annual totals do not.
+
+  - id: D2
+    kind: deferred
+    title: "What a longer horizon would need"
+    text: >-
+      Three things this one-year view cannot answer and did not attempt: the timing of the van
+      replacement, which needs van_remaining_life_years; the trajectory of the dead-stock pile, which
+      grows without limit and eventually competes with saleable stock for the space tested in F5; and
+      whether the supplier's prepayment demand survives, which is the assumption the whole answer rests
+      on and the one the founder himself frames as temporary. trace.fcff_normalised is provided so that
+      the figure a reader carries forward is the one with a replacement-capex accrual in it, rather than
+      the year's raw cash.

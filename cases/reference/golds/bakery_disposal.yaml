@@ -1,0 +1,279 @@
+id: bakery-fcff-2026
+title: "Unlevered FCFF (FCFF via NOPAT) — daily-cash bakery with oven replacement next year"
+currency: "XOF"
+grid:
+  periods: 5
+  freq: "annual"
+  note: "t=0 = current operating year; t=1 = 'next year' (oven replacement); t=2..4 = new-oven steady state."
+
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Je fais cinq cents pains par jour, vendus à deux cent
+    cinquante francs pièce. La farine me coûte cent cinquante francs par pain. Je paie deux
+    boulangers à cent mille par mois chacun, le loyer c'est huit cent mille par mois. Le gaz
+    du four me revient à deux cent mille par mois. Je travaille tous les jours. Mon four, je
+    l'ai payé six millions il y a six ans, on m'avait dit dix ans de durée. L'année prochaine
+    je le remplace par un neuf à huit millions, et l'ancien, un revendeur me le reprend à
+    trois millions.
+  en: |
+    I run a bakery. I make five hundred loaves a day, sold at two hundred fifty francs each.
+    Flour costs me one hundred fifty francs per loaf. I pay two bakers a hundred thousand a
+    month each, and the rent is eight hundred thousand a month. The oven gas runs me two
+    hundred thousand a month. I work every day. My oven, I paid six million for it six years
+    ago; they told me it would last ten years. Next year I replace it with a new one costing
+    eight million, and a dealer takes the old one off me for three million.
+
+inputs:
+  loaves_per_day:
+    value: 500
+    unit: "loaves/day"
+    prov: STATED
+    source: "Je fais cinq cents pains par jour"
+    date: "2026-07-25"
+  price_per_loaf:
+    value: 250
+    unit: "XOF/loaf"
+    prov: STATED
+    source: "vendus à deux cent cinquante francs pièce"
+    date: "2026-07-25"
+  flour_per_loaf:
+    value: 150
+    unit: "XOF/loaf"
+    prov: STATED
+    source: "La farine me coûte cent cinquante francs par pain"
+    date: "2026-07-25"
+  n_bakers:
+    value: 2
+    unit: "count"
+    prov: STATED
+    source: "Je paie deux boulangers"
+    date: "2026-07-25"
+  baker_wage:
+    value: 100000
+    unit: "XOF/month/baker"
+    prov: STATED
+    source: "à cent mille par mois chacun"
+    date: "2026-07-25"
+  rent_month:
+    value: 800000
+    unit: "XOF/month"
+    prov: STATED
+    source: "le loyer c'est huit cent mille par mois"
+    date: "2026-07-25"
+  gas_month:
+    value: 200000
+    unit: "XOF/month"
+    prov: STATED
+    source: "Le gaz du four me revient à deux cent mille par mois"
+    date: "2026-07-25"
+  days_per_year:
+    value: 365
+    unit: "days/year"
+    prov: DEFAULTED
+    source: "STATED basis 'Je travaille tous les jours' (every day) → DEFAULTED to the 365-day calendar-year convention; leap years ignored under flat operations."
+    date: "2026-07-25"
+  oven_old_cost:
+    value: 6000000
+    unit: "XOF"
+    prov: STATED
+    source: "je l'ai payé six millions"
+    date: "2026-07-25"
+  oven_old_life:
+    value: 10
+    unit: "years"
+    prov: STATED
+    source: "on m'avait dit dix ans de durée"
+    date: "2026-07-25"
+  oven_age_now:
+    value: 6
+    unit: "years"
+    prov: STATED
+    source: "il y a six ans"
+    date: "2026-07-25"
+  oven_new_cost:
+    value: 8000000
+    unit: "XOF"
+    prov: STATED
+    source: "je le remplace par un neuf à huit millions"
+    date: "2026-07-25"
+  oven_new_life:
+    value: 10
+    unit: "years"
+    prov: ASSUMED
+    source: "New oven's useful life not stated; ASSUMED equal to the old oven's STATED 10-year life (same asset class). Unstated prior for the new asset → ASSUMED, not INFERRED."
+    date: "2026-07-25"
+  disposal_proceeds:
+    value: 3000000
+    unit: "XOF"
+    prov: STATED
+    source: "un revendeur me le reprend à trois millions"
+    date: "2026-07-25"
+  residual_value:
+    value: 0
+    unit: "XOF"
+    prov: DEFAULTED
+    source: "No residual value stated for either oven → straight-line to zero (IAS 16 default when residual not estimated). See notes: the 3,000,000 resale of the 7-year-old oven shows economic residual exists, so this is conservative."
+    date: "2026-07-25"
+  tax_rate:
+    value: 0.30
+    unit: "ratio"
+    prov: ASSUMED
+    source: "Corporate income tax (impôt sur les sociétés) rate; country unspecified. 0.30 is a representative central value for the CFA-franc zone (statutory IS spread ~25%–33%). Flagged domain prior."
+    date: "2026-07-25"
+  replace_period:
+    value: 1
+    unit: "index (0-based)"
+    prov: INFERRED
+    source: "'L'année prochaine je le remplace' → replacement in the year after the current one. With t=0 = current year, replacement falls in t=1 (0-based index)."
+    date: "2026-07-25"
+  nwc_level:
+    value: 0
+    unit: "XOF"
+    prov: ASSUMED
+    source: "Daily-cash retail bakery; no receivables/payables/inventory stated → net working capital taken as 0. Under flat operations ΔNWC = 0 regardless of level. Flagged domain prior."
+    date: "2026-07-25"
+  dep_method:
+    value: "straight-line"
+    unit: "-"
+    prov: DEFAULTED
+    source: "Straight-line over stated/assumed useful life, full year in year of addition, none in year of disposal — standard convention."
+    date: "2026-07-25"
+
+passage: |
+  STEP 0 — Timeline & conventions
+  - t=0 is the current operating year: the oven is now 6 years old, running through its 7th year.
+  - t=1 is 'next year': at the START of t=1 the old oven is sold and the new oven is bought.
+  - Horizon = 5 annual periods (t=0..4): one status-quo year, the replacement year, three new-oven years.
+  - Operations flat (no stated growth or inflation) → all operating flows constant in nominal XOF.
+  - Depreciation: straight-line, zero residual, FULL year in the addition year, NONE in the disposal year.
+  - Tax: one corporate income-tax rate on total EBIT (operating EBIT + disposal gain). Unlevered → no interest.
+  - Working capital: cash bakery, nothing stated → NWC = 0 every period → ΔNWC = 0.
+
+  STEP 1 — Daily & annual operating flows (identical every period)
+  - Revenue/day = 500 × 250 = 125,000 ; annual = 125,000 × 365 = 45,625,000.
+  - Flour/day   = 500 × 150 =  75,000 ; annual =  75,000 × 365 = 27,375,000.
+  - Gross profit = 45,625,000 − 27,375,000 = 18,250,000.
+  - Labour = 2 × 100,000 × 12 = 2,400,000.
+  - Rent   = 800,000 × 12 = 9,600,000.
+  - Gas    = 200,000 × 12 = 2,400,000.
+  - EBITDA = 18,250,000 − 2,400,000 − 9,600,000 − 2,400,000 = 3,850,000  (constant t=0..4).
+
+  STEP 2 — Oven / PP&E roll-forward
+  Old oven: cost 6,000,000, life 10y → 600,000/y. Age 6 now → accumulated 3,600,000; opening NBV = 2,400,000.
+    t=0: depreciate 600,000 → closing NBV = 1,800,000 (oven now age 7).
+    t=1: sold at start for 3,000,000; NBV at disposal = 1,800,000 → GAIN = 3,000,000 − 1,800,000 = 1,200,000;
+         asset derecognised → NBV = 0. No old-oven depreciation in the disposal year.
+  New oven: cost 8,000,000, assumed life 10y → 800,000/y, acquired start of t=1 (full-year dep in t=1).
+    t=1 NBV = 8,000,000 − 800,000 = 7,200,000 ; t=2 = 6,400,000 ; t=3 = 5,600,000 ; t=4 = 4,800,000.
+  Total D&A: t=0 = 600,000 ; t=1..4 = 800,000.
+  Total PP&E closing NBV: 1,800,000 / 7,200,000 / 6,400,000 / 5,600,000 / 4,800,000.
+
+  STEP 3 — EBIT, tax, NOPAT (tax_rate = 0.30)
+  - Operating EBIT = EBITDA − D&A:  t=0 = 3,250,000 ; t=1..4 = 3,050,000.
+  - Disposal gain (1,200,000) enters pre-tax profit ONLY at t=1 (IAS 16.68 — gain in P&L, not revenue).
+  - EBIT_total: t=0 = 3,250,000 ; t=1 = 3,050,000 + 1,200,000 = 4,250,000 ; t=2..4 = 3,050,000.
+  - Tax = 0.30 × EBIT_total: 975,000 / 1,275,000 / 915,000 / 915,000 / 915,000.
+  - NOPAT = EBIT_total − tax:  2,275,000 / 2,975,000 / 2,135,000 / 2,135,000 / 2,135,000.
+
+  STEP 4 — FCFF = NOPAT + D&A − ΔNWC − capex + proceeds − gain_on_disposal
+  - t=0: 2,275,000 + 600,000 − 0 − 0 + 0 − 0 = 2,875,000.
+  - t=1: 2,975,000 + 800,000 − 0 − 8,000,000 + 3,000,000 − 1,200,000 = −2,425,000.
+  - t=2: 2,135,000 + 800,000 − 0 − 0 + 0 − 0 = 2,935,000.  (t=3, t=4 identical = 2,935,000)
+  Why subtract the gain: NOPAT already holds the AFTER-tax gain [gain×(1−t)]; adding full cash proceeds and
+  removing the full accounting gain leaves proceeds − t×gain = the true after-tax disposal cash. Equivalently
+  '+proceeds − gain' collapses to '+ NBV disposed' (1,800,000) at t=1.
+
+  STEP 5 — Independent cross-check (EBITDA path)
+  FCFF = EBITDA×(1−t) + t×D&A − capex + proceeds − t×gain.
+  - EBITDA×(1−t) = 3,850,000 × 0.70 = 2,695,000 (every period).
+  - t=0: 2,695,000 + 0.30×600,000 = 2,875,000.  ✓
+  - t=1: 2,695,000 + 0.30×800,000 − 8,000,000 + 3,000,000 − 0.30×1,200,000 = −2,425,000.  ✓
+  - t=2..4: 2,695,000 + 0.30×800,000 = 2,935,000.  ✓
+  Step from 2,875,000 (t=0) to 2,935,000 (t≥2) is exactly the extra depreciation tax shield 0.30×200,000 = 60,000.
+
+trace:
+  t_index:          [0, 1, 2, 3, 4]
+  revenue:          [45625000, 45625000, 45625000, 45625000, 45625000]
+  flour_cost:       [27375000, 27375000, 27375000, 27375000, 27375000]
+  gross_profit:     [18250000, 18250000, 18250000, 18250000, 18250000]
+  labor:            [2400000, 2400000, 2400000, 2400000, 2400000]
+  rent:             [9600000, 9600000, 9600000, 9600000, 9600000]
+  gas:              [2400000, 2400000, 2400000, 2400000, 2400000]
+  ebitda:           [3850000, 3850000, 3850000, 3850000, 3850000]
+  dep_old:          [600000, 0, 0, 0, 0]
+  dep_new:          [0, 800000, 800000, 800000, 800000]
+  dep_total:        [600000, 800000, 800000, 800000, 800000]
+  nbv_old_open:     [2400000, 1800000, 0, 0, 0]
+  nbv_old_close:    [1800000, 0, 0, 0, 0]
+  nbv_new_open:     [0, 0, 7200000, 6400000, 5600000]
+  nbv_new_close:    [0, 7200000, 6400000, 5600000, 4800000]
+  nbv_disposed:     [0, 1800000, 0, 0, 0]
+  proceeds:         [0, 3000000, 0, 0, 0]
+  gain_on_disposal: [0, 1200000, 0, 0, 0]
+  ppe_nbv_close:    [1800000, 7200000, 6400000, 5600000, 4800000]
+  capex:            [0, 8000000, 0, 0, 0]
+  ebit_operating:   [3250000, 3050000, 3050000, 3050000, 3050000]
+  ebit_total:       [3250000, 4250000, 3050000, 3050000, 3050000]
+  tax:              [975000, 1275000, 915000, 915000, 915000]
+  nopat:            [2275000, 2975000, 2135000, 2135000, 2135000]
+  nwc:              [0, 0, 0, 0, 0]
+  delta_nwc:        [0, 0, 0, 0, 0]
+  fcff:             [2875000, -2425000, 2935000, 2935000, 2935000]
+
+fcff: [2875000, -2425000, 2935000, 2935000, 2935000]
+
+checks:
+  - "trace.revenue[t] == loaves_per_day * price_per_loaf * days_per_year"
+  - "trace.flour_cost[t] == loaves_per_day * flour_per_loaf * days_per_year"
+  - "trace.gross_profit[t] == trace.revenue[t] - trace.flour_cost[t]"
+  - "trace.labor[t] == n_bakers * baker_wage * 12"
+  - "trace.rent[t] == rent_month * 12"
+  - "trace.gas[t] == gas_month * 12"
+  - "trace.ebitda[t] == trace.gross_profit[t] - trace.labor[t] - trace.rent[t] - trace.gas[t]"
+  - "max(trace.ebitda) - min(trace.ebitda) == 0"
+  - "trace.dep_old[t] == oven_old_cost / oven_old_life for t < replace_period"
+  - "trace.dep_old[t] == 0 for t >= replace_period"
+  - "trace.dep_new[t] == oven_new_cost / oven_new_life for t >= replace_period"
+  - "trace.dep_new[t] == 0 for t < replace_period"
+  - "trace.dep_total[t] == trace.dep_old[t] + trace.dep_new[t]"
+  - "trace.nbv_old_open[first] == oven_old_cost - oven_age_now * (oven_old_cost / oven_old_life)"
+  - "trace.nbv_old_open[t] == trace.nbv_old_close[t-1] for t >= replace_period"
+  - "trace.nbv_old_close[t] == trace.nbv_old_open[t] - trace.dep_old[t] - trace.nbv_disposed[t]"
+  - "trace.nbv_disposed[t] == 0 for t < replace_period"
+  - "sum(trace.nbv_disposed) == oven_old_cost - (oven_age_now + 1) * (oven_old_cost / oven_old_life)"
+  - "trace.proceeds[t] == 0 for t < replace_period"
+  - "sum(trace.proceeds) == disposal_proceeds"
+  - "trace.gain_on_disposal[t] == trace.proceeds[t] - trace.nbv_disposed[t]"
+  - "sum(trace.gain_on_disposal) == disposal_proceeds - (oven_old_cost - (oven_age_now + 1) * (oven_old_cost / oven_old_life))"
+  - "trace.capex[t] == 0 for t < replace_period"
+  - "sum(trace.capex) == oven_new_cost"
+  - "trace.nbv_new_open[t] == trace.nbv_new_close[t-1]"
+  - "trace.nbv_new_close[t] == trace.nbv_new_open[t] + trace.capex[t] - trace.dep_new[t]"
+  - "trace.ppe_nbv_close[t] == trace.nbv_old_close[t] + trace.nbv_new_close[t]"
+  - "trace.ebit_operating[t] == trace.ebitda[t] - trace.dep_total[t]"
+  - "trace.ebit_total[t] == trace.ebit_operating[t] + trace.gain_on_disposal[t]"
+  - "trace.tax[t] == trace.ebit_total[t] * tax_rate"
+  - "trace.nopat[t] == trace.ebit_total[t] - trace.tax[t]"
+  - "trace.nwc[t] == nwc_level"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1]"
+  - "trace.fcff[t] == trace.nopat[t] + trace.dep_total[t] - trace.delta_nwc[t] - trace.capex[t] + trace.proceeds[t] - trace.gain_on_disposal[t]"
+  - "trace.fcff[t] == trace.ebitda[t] * (1 - tax_rate) + tax_rate * trace.dep_total[t] - trace.capex[t] + trace.proceeds[t] - tax_rate * trace.gain_on_disposal[t]"
+  - "min(trace.revenue) >= 0"
+  - "min(trace.gross_profit) >= 0"
+  - "min(trace.ebitda) >= 0"
+  - "min(trace.dep_total) >= 0"
+  - "min(trace.nbv_old_close) >= 0"
+  - "min(trace.nbv_new_close) >= 0"
+  - "min(trace.ppe_nbv_close) >= 0"
+
+notes:
+  - "Currency: 'francs' inferred as CFA franc (XOF or XAF); country unspecified. Both pegged to EUR at the same rate, so the arithmetic is invariant to which."
+  - "Tax rate 0.30 is ASSUMED (CFA-zone corporate income tax spread ~25%–33%). Qualitatively, the operating portion of FCFF scales with (1 − tax_rate): a higher rate lowers every period's FCFF; a lower rate raises it. Not a driver the founder supplied — the single largest external assumption."
+  - "Disposal gain (1,200,000 at t=1) is taxed at the ordinary IS rate. Several Francophone/CGI-derived regimes grant plus-value professionnelle rollover/deferral when proceeds are reinvested — which they are here (new oven). If such relief applies, the gain is untaxed and t=1 FCFF improves by the tax otherwise levied on the gain. Deferred pending the jurisdiction."
+  - "Completeness caveat — only STATED costs are modelled. Not mentioned, hence omitted (each would reduce EBITDA/FCFF): other ingredients (water, salt, yeast), electricity/water utilities, oven maintenance/repairs, packaging, delivery, licences, and crucially the OWNER'S OWN wage (the founder works daily but draws no stated salary). EBITDA of 3,850,000 is therefore a stated-cost ceiling, not a market-wage-adjusted figure."
+  - "Residual value defaulted to 0 for both ovens. Tension: the old oven fetched 3,000,000 in resale at age 7, evidence that these assets retain material residual value. A positive residual on the NEW oven would lower its annual depreciation (smaller tax shield, slightly lower steady-state FCFF) and imply future disposal proceeds beyond this horizon."
+  - "Timing convention: replacement at the START of t=1 → full-year depreciation on the new oven in t=1, none on the old oven in its disposal year. This pins NBV-at-disposal = 1,800,000 and gain = 1,200,000. A mid-year (half-year) convention would change the disposal-year depreciation and the gain."
+  - "Working capital taken as 0 (cash bakery). Even a constant positive NWC yields ΔNWC = 0 under flat operations, so FCFF is unchanged except for an initial NWC build, which is not modelled (no opening balance stated)."
+  - "Horizon note: steady-state FCFF of 2,935,000/y continues through the new oven's remaining life (to ~t=10) before the next replacement cycle. A valuation would append a terminal/continuing value from t=5 onward — outside the scope of this FCFF-generation exercise."
+  - "Minimum turnover tax (impôt minimum forfaitaire, ~0.5% of turnover in several CFA states) is not binding here: IS on profit (≈915,000/y steady) exceeds any plausible turnover minimum on 45,625,000. Flagged, not applied."
+  - "t=1 FCFF is negative (−2,425,000) purely because the 8,000,000 replacement capex lands in one year against 3,000,000 proceeds; the business is structurally cash-generative (≈2.9M/y) around it."

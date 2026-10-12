@@ -1,0 +1,293 @@
+id: fcff-bakery-boulangerie-daily-500
+title: "Unlevered FCFF (via NOPAT) for an owner-operated daily-production bakery in a francophone African market"
+currency: XOF
+grid:
+  periods: 5
+  freq: annual
+utterance:
+  fr: |
+    Moi je tiens une boulangerie. Je fais cinq cents pains par jour. La farine me coûte cent cinquante francs par pain. Je paie deux boulangers à cent mille par mois chacun, et le loyer du local est à huit cent mille par mois. Je travaille tous les jours. Le pain, cette année je le vends deux cent cinquante francs pièce, mais chaque année je monte le prix d'à peu près dix francs — la vie augmente, et les clients suivent. Mes coûts à moi, la farine, les salaires, le loyer, ça ne bouge presque pas d'une année sur l'autre.
+  en: |
+    I run a bakery. I make five hundred loaves a day. Flour costs me one hundred fifty francs per loaf. I pay two bakers a hundred thousand a month each, and the shop rent is eight hundred thousand a month. I work every day. This year I sell the bread at two hundred fifty francs each, but every year I raise the price by about ten francs — the cost of living goes up and the customers follow. My own costs — flour, wages, rent — barely move from one year to the next.
+
+inputs:
+  loaves_per_day:
+    value: 500
+    unit: loaves/day
+    prov: STATED
+    source: "Je fais cinq cents pains par jour"
+    date: 2026-07-25
+  flour_cost_per_loaf:
+    value: 150
+    unit: XOF/loaf
+    prov: STATED
+    source: "La farine me coûte cent cinquante francs par pain"
+    date: 2026-07-25
+  bakers_count:
+    value: 2
+    unit: employees
+    prov: STATED
+    source: "Je paie deux boulangers"
+    date: 2026-07-25
+  baker_wage_month:
+    value: 100000
+    unit: XOF/month/employee
+    prov: STATED
+    source: "à cent mille par mois chacun"
+    date: 2026-07-25
+  rent_month:
+    value: 800000
+    unit: XOF/month
+    prov: STATED
+    source: "le loyer du local est à huit cent mille par mois"
+    date: 2026-07-25
+  price_y0:
+    value: 250
+    unit: XOF/loaf
+    prov: STATED
+    source: "cette année je le vends deux cent cinquante francs pièce"
+    date: 2026-07-25
+  price_increment:
+    value: 10
+    unit: XOF/loaf/year
+    prov: STATED
+    source: "chaque année je monte le prix d'à peu près dix francs (treated as exactly +10/yr, ARITHMETIC not compound; 'à peu près' flagged)"
+    date: 2026-07-25
+  days_per_year:
+    value: 365
+    unit: days/year
+    prov: INFERRED
+    source: "'Je travaille tous les jours' -> operates 365 days/yr; leap-day (366) ignored under a DEFAULTED calendar convention"
+    date: 2026-07-25
+  months_per_year:
+    value: 12
+    unit: months/year
+    prov: DEFAULTED
+    source: "calendar convention"
+    date: 2026-07-25
+  volume_growth:
+    value: 0
+    unit: fraction/year
+    prov: INFERRED
+    source: "'les clients suivent' (demand retained as price rises) + no capacity expansion or volume change stated -> hold physical output flat at 500/day"
+    date: 2026-07-25
+  tax_rate:
+    value: 0.25
+    unit: fraction
+    prov: ASSUMED
+    source: "no tax stated; representative OHADA/UEMOA corporate income-tax (IS) rate. Plausible range 25-33%; a small enterprise may instead fall under a simplified/synthetic regime. ELICIT actual regime & rate."
+    date: 2026-07-25
+  inventory_days:
+    value: 15
+    unit: days
+    prov: ASSUMED
+    source: "flour raw-material buffer; unstated. IMMATERIAL to FCFF because it is held flat (only delta-NWC enters FCFF)."
+    date: 2026-07-25
+  payable_days:
+    value: 30
+    unit: days
+    prov: ASSUMED
+    source: "supplier credit on flour; unstated. IMMATERIAL to FCFF because held flat."
+    date: 2026-07-25
+  ar_days:
+    value: 0
+    unit: days
+    prov: INFERRED
+    source: "retail bread at the counter, no credit terms mentioned -> cash sales, receivables ~0"
+    date: 2026-07-25
+  oven_cost:
+    value: 10000000
+    unit: XOF
+    prov: ASSUMED
+    source: "SCENARIO ONLY. A bakery physically requires an oven (domain knowledge) but the founder stated no asset, cost, or life -> magnitude wholly unanchored. Illustrative capex for a ~500-loaf/day commercial oven. ELICIT actual cost, age, and remaining life."
+    date: 2026-07-25
+  oven_life:
+    value: 10
+    unit: years
+    prov: ASSUMED
+    source: "SCENARIO ONLY. Straight-line useful life for the oven. ELICIT."
+    date: 2026-07-25
+
+passage: |
+  ================================================================
+  REFERENCE FCFF BUILD — worked by hand, per period, full precision
+  Horizon: 5 annual periods, t=0 (this year, FY2026) .. t=4 (FY2030).
+  Unlevered build: FCFF = NOPAT + D&A - dNWC - capex, NOPAT = EBIT*(1-tax).
+  All amounts in XOF (CFA franc; XOF vs XAF ASSUMED — see notes).
+  ================================================================
+
+  STEP 0 — CONVERT STATED FLOWS TO ANNUAL QUANTITIES (business's own units)
+    Annual volume (flat, volume_growth=0):
+      volume_annual = loaves_per_day * days_per_year = 500 * 365 = 182,500 loaves/yr (every t).
+    Daily flour cost = 500 * 150 = 75,000 XOF/day -> annual flour = 75,000 * 365 = 27,375,000 XOF/yr.
+    Wages = bakers_count * baker_wage_month * 12 = 2 * 100,000 * 12 = 2,400,000 XOF/yr.
+    Rent  = rent_month * 12 = 800,000 * 12 = 9,600,000 XOF/yr.
+    Opex is FLAT across all t ("mes coûts ... ça ne bouge presque pas" -> held constant):
+      opex_total = 27,375,000 + 2,400,000 + 9,600,000 = 39,375,000 XOF/yr (every t).
+
+  STEP 1 — PRICE PATH (arithmetic, +10/yr; NOT compound)
+    price[t] = price_y0 + price_increment * t
+      t0: 250   t1: 260   t2: 270   t3: 280   t4: 290  (XOF/loaf)
+
+  STEP 2 — REVENUE = volume_annual * price[t]   (volume flat -> revenue rises only via price)
+      t0: 182,500 * 250 = 45,625,000
+      t1: 182,500 * 260 = 47,450,000
+      t2: 182,500 * 270 = 49,275,000
+      t3: 182,500 * 280 = 51,100,000
+      t4: 182,500 * 290 = 52,925,000
+    Note: revenue rises by a constant 182,500*10 = 1,825,000/yr (arithmetic).
+
+  STEP 3 — EBITDA = revenue - opex_total   (opex flat at 39,375,000)
+      t0: 45,625,000 - 39,375,000 =  6,250,000
+      t1: 47,450,000 - 39,375,000 =  8,075,000
+      t2: 49,275,000 - 39,375,000 =  9,900,000
+      t3: 51,100,000 - 39,375,000 = 11,725,000
+      t4: 52,925,000 - 39,375,000 = 13,550,000
+    Because price rises while costs are held flat, EBITDA more than doubles over 5 yrs.
+    This margin expansion is a DIRECT, faithful consequence of the founder's stated
+    asymmetry (price up ~10/yr; costs "barely move"). Flagged as optimistic — see notes.
+
+  STEP 4 — D&A (BASE CASE) = 0
+    The founder stated no fixed asset, no purchase, no depreciation. In the stated-facts
+    base case there is no depreciable base -> D&A = 0. (Oven handled as a flagged scenario.)
+    -> EBIT = EBITDA - 0 = EBITDA.
+
+  STEP 5 — NOPAT (BASE) = EBIT * (1 - tax_rate), tax_rate = 0.25
+      t0:  6,250,000 * 0.75 =  4,687,500
+      t1:  8,075,000 * 0.75 =  6,056,250
+      t2:  9,900,000 * 0.75 =  7,425,000
+      t3: 11,725,000 * 0.75 =  8,793,750
+      t4: 13,550,000 * 0.75 = 10,162,500
+    EBIT > 0 every period -> tax charged every period (no loss carry-forward needed).
+
+  STEP 6 — NET WORKING CAPITAL and dNWC
+    Cash retail business: AR = 0 (ar_days=0).
+    Inventory (flour) = annual_flour * inventory_days/365 = 27,375,000 * 15/365 = 1,125,000 (flat).
+    Payables (flour)  = annual_flour * payable_days/365  = 27,375,000 * 30/365 = 2,250,000 (flat).
+    NWC = Inventory + AR - Payables = 1,125,000 + 0 - 2,250,000 = -1,125,000 (flat every t).
+      (Negative NWC: supplier credit exceeds flour held — a source of cash, common for
+       cash-in/credit-out retail.)
+    Because volume AND unit flour cost are flat and sales are cash, NWC does not move ->
+    dNWC = 0 every period. Going-concern convention: the -1,125,000 opening NWC is already
+    in place, so NO initial working-capital build is charged at t0 (dNWC[0] = 0, not -1,125,000).
+    Levels are IMMATERIAL to FCFF — only the (zero) change enters.
+
+  STEP 7 — CAPEX (BASE) = 0  (no asset stated).
+
+  STEP 8 — FCFF (BASE) = NOPAT + D&A(0) - dNWC(0) - capex(0) = NOPAT
+      t0:  4,687,500
+      t1:  6,056,250
+      t2:  7,425,000
+      t3:  8,793,750
+      t4: 10,162,500
+    Sum over horizon = 37,125,000 XOF.
+
+  ================================================================
+  SCENARIO (FLAGGED, ASSUMED) — "with the oven" to exhibit D&A/capex mechanics
+    Fresh-oven basis: capex 10,000,000 at t0; straight-line dep = 10,000,000/10 = 1,000,000/yr.
+    This is HYPOTHETICAL (the going concern's oven is really sunk); shown to materialise the
+    single biggest elicitation gap as a checked column rather than as prose.
+    Book value roll-forward: BV[t] = BV[t-1] + capex_oven[t] - dep_oven[t], BV[-1]=0:
+      t0: 0+10,000,000-1,000,000 = 9,000,000 ; t1 8,000,000 ; t2 7,000,000 ; t3 6,000,000 ; t4 5,000,000
+    EBIT_oven = EBITDA - 1,000,000 ; NOPAT_oven = EBIT_oven*0.75:
+      t0: 5,250,000*.75=3,937,500 ; t1 7,075,000*.75=5,306,250 ; t2 8,900,000*.75=6,675,000
+      t3: 10,725,000*.75=8,043,750 ; t4 12,550,000*.75=9,412,500
+    FCFF_oven = NOPAT_oven + 1,000,000 - 0 - capex_oven:
+      t0: 3,937,500+1,000,000-10,000,000 = -5,062,500   (the oven outlay)
+      t1: 5,306,250+1,000,000            =  6,306,250
+      t2: 6,675,000+1,000,000            =  7,675,000
+      t3: 8,043,750+1,000,000            =  9,043,750
+      t4: 9,412,500+1,000,000            = 10,412,500
+    In no-capex years FCFF_oven exceeds base by exactly 250,000 = depreciation tax shield
+    (1,000,000 * tax_rate). The real economic cost sits in the t0 outlay.
+  ================================================================
+
+trace:
+  period_index:   [0, 1, 2, 3, 4]
+  fiscal_year:    [2026, 2027, 2028, 2029, 2030]
+  price:          [250, 260, 270, 280, 290]
+  volume_annual:  [182500, 182500, 182500, 182500, 182500]
+  revenue:        [45625000, 47450000, 49275000, 51100000, 52925000]
+  flour_cost:     [27375000, 27375000, 27375000, 27375000, 27375000]
+  wages:          [2400000, 2400000, 2400000, 2400000, 2400000]
+  rent:           [9600000, 9600000, 9600000, 9600000, 9600000]
+  opex_total:     [39375000, 39375000, 39375000, 39375000, 39375000]
+  ebitda:         [6250000, 8075000, 9900000, 11725000, 13550000]
+  dep:            [0, 0, 0, 0, 0]
+  ebit:           [6250000, 8075000, 9900000, 11725000, 13550000]
+  nopat:          [4687500, 6056250, 7425000, 8793750, 10162500]
+  inventory:      [1125000, 1125000, 1125000, 1125000, 1125000]
+  ar:             [0, 0, 0, 0, 0]
+  ap:             [2250000, 2250000, 2250000, 2250000, 2250000]
+  nwc:            [-1125000, -1125000, -1125000, -1125000, -1125000]
+  delta_nwc:      [0, 0, 0, 0, 0]
+  capex:          [0, 0, 0, 0, 0]
+  fcff:           [4687500, 6056250, 7425000, 8793750, 10162500]
+  dep_oven:       [1000000, 1000000, 1000000, 1000000, 1000000]
+  ebit_oven:      [5250000, 7075000, 8900000, 10725000, 12550000]
+  nopat_oven:     [3937500, 5306250, 6675000, 8043750, 9412500]
+  capex_oven:     [10000000, 0, 0, 0, 0]
+  oven_bv:        [9000000, 8000000, 7000000, 6000000, 5000000]
+  fcff_oven:      [-5062500, 6306250, 7675000, 9043750, 10412500]
+
+fcff: [4687500, 6056250, 7425000, 8793750, 10162500]
+
+checks:
+  - trace.volume_annual[t] == loaves_per_day * days_per_year
+  - trace.volume_annual[t] == trace.volume_annual[first]
+  - trace.price[first] == price_y0
+  - trace.price[t] - trace.price[t-1] == price_increment for t >= 1
+  - trace.price[last] == price_y0 + price_increment * (grid.periods - 1)
+  - trace.revenue[t] == trace.volume_annual[t] * trace.price[t]
+  - trace.revenue[t] - trace.revenue[t-1] == loaves_per_day * days_per_year * price_increment for t >= 1
+  - trace.flour_cost[t] == flour_cost_per_loaf * trace.volume_annual[t]
+  - trace.flour_cost[t] == trace.flour_cost[first]
+  - trace.wages[t] == bakers_count * baker_wage_month * months_per_year
+  - trace.wages[t] == trace.wages[first]
+  - trace.rent[t] == rent_month * months_per_year
+  - trace.rent[t] == trace.rent[first]
+  - trace.opex_total[t] == trace.flour_cost[t] + trace.wages[t] + trace.rent[t]
+  - trace.opex_total[t] == trace.opex_total[first]
+  - trace.ebitda[t] == trace.revenue[t] - trace.opex_total[t]
+  - trace.ebitda[t] - trace.ebitda[t-1] == loaves_per_day * days_per_year * price_increment for t >= 1
+  - trace.ebitda[t] >= 0
+  - trace.dep[t] == 0
+  - trace.ebit[t] == trace.ebitda[t] - trace.dep[t]
+  - trace.nopat[t] == trace.ebit[t] * (1 - tax_rate)
+  - trace.inventory[t] == trace.flour_cost[t] * inventory_days / days_per_year
+  - trace.inventory[t] == trace.inventory[first]
+  - trace.ar[t] == 0
+  - trace.ap[t] == trace.flour_cost[t] * payable_days / days_per_year
+  - trace.ap[t] == trace.ap[first]
+  - trace.nwc[t] == trace.inventory[t] + trace.ar[t] - trace.ap[t]
+  - trace.nwc[t] == trace.nwc[first]
+  - trace.delta_nwc[t] == 0
+  - trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1] for t >= 1
+  - trace.capex[t] == 0
+  - trace.fcff[t] == trace.nopat[t] + trace.dep[t] - trace.delta_nwc[t] - trace.capex[t]
+  - trace.fcff[t] == trace.nopat[t]
+  - trace.fcff[t] >= 0
+  - sum(trace.fcff) == sum(trace.nopat)
+  - trace.dep_oven[t] == oven_cost / oven_life
+  - trace.capex_oven[t] == oven_cost for t < 1
+  - trace.capex_oven[t] == 0 for t >= 1
+  - trace.oven_bv[t] == trace.oven_bv[t-1] + trace.capex_oven[t] - trace.dep_oven[t]
+  - trace.oven_bv[t] >= 0
+  - trace.oven_bv[last] == oven_cost - sum(trace.dep_oven)
+  - trace.ebit_oven[t] == trace.ebitda[t] - trace.dep_oven[t]
+  - trace.nopat_oven[t] == trace.ebit_oven[t] * (1 - tax_rate)
+  - trace.fcff_oven[t] == trace.nopat_oven[t] + trace.dep_oven[t] - trace.delta_nwc[t] - trace.capex_oven[t]
+  - trace.fcff_oven[t] - trace.fcff[t] == oven_cost / oven_life * tax_rate for t >= 1
+
+notes:
+  - "PRIMARY ANSWER is the base FCFF array (stated-facts only): [4,687,500; 6,056,250; 7,425,000; 8,793,750; 10,162,500] XOF, summing 37,125,000 over 5 yrs. It equals NOPAT because the founder supplied no asset, so D&A=capex=0, and dNWC=0 (flat, cash business)."
+  - "MARGIN-EXPANSION ASYMMETRY (key judgment call): the founder says price rises ~10/yr while 'mes coûts ne bougent presque pas'. Taken literally this expands EBITDA from 6.25M to 13.55M in 5 yrs. Faithful to his words but optimistic: flour and rent almost certainly creep with the same inflation that lets him raise price ('la vie augmente'). Holding real costs flat while prices rise likely overstates later-year FCFF. To stress this properly, elicit input-cost inflation and add it as a checked column."
+  - "OVEN / CAPEX is the single biggest structural gap. A bakery needs an oven (domain knowledge) but no cost, age, or life was stated -> magnitude unanchored. Materialised as the flagged ASSUMED oven scenario (dep_oven/capex_oven/oven_bv/fcff_oven), not as prose. In no-capex years fcff_oven exceeds base by exactly the depreciation tax shield (250,000). ELICIT: oven cost, current age, remaining life, and expected replacement/maintenance capex."
+  - "TAX: no regime stated. Base uses ASSUMED 25% (representative OHADA/UEMOA corporate IS). Directionally, a higher rate lowers FCFF proportionally on EBIT; a small-enterprise simplified/turnover-based regime could differ materially. ELICIT the actual regime and rate; if it must be flexed, add a tax-scenario column."
+  - "OMITTED REAL COSTS (founder's stated cost set only): oven energy/fuel & electricity (material for a bakery), yeast/salt/improvers, water, packaging, licences/patente, maintenance. All unstated -> excluded here, which biases margin UP. ELICIT and add as opex lines."
+  - "OWNER'S LABOUR: he 'works every day' but draws no stated wage. Unlevered FCFF as built imputes none. A replacement-cost owner wage would reduce FCFF; flagged as a judgment call, ELICIT whether to impute."
+  - "VOLUME held flat (volume_growth=0), supported by 'les clients suivent' and no stated capacity change. 500/day may be a single-oven capacity ceiling rather than a demand ceiling — ELICIT whether output is demand- or capacity-constrained; capacity expansion would change both volume and capex."
+  - "'à peu près dix francs' treated as EXACTLY +10/yr, ARITHMETIC (linear), not compound; hence no geometric-growth ratio check — the constant absolute increment (price[t]-price[t-1]==10) is asserted instead."
+  - "WORKING CAPITAL levels (inventory 15d, payables 30d) are ASSUMED but IMMATERIAL to FCFF because only dNWC enters and it is zero (flat drivers, cash sales, AR=0). Going-concern convention applied: no initial NWC build charged at t0."
+  - "CURRENCY: 'francs' in a francophone-African context taken as CFA franc; XOF (BCEAO) assumed over XAF (BEAC). Magnitudes are identical under either; label only. ELICIT the country/currency."
+  - "HORIZON of 5 yrs is a DEFAULTED sensible small-business explicit period; the linear price ramp and flat-cost assumption grow fragile beyond it."

@@ -1,0 +1,376 @@
+id: golds_attieke_abobo_abidjan_fcff
+title: "Atelier d'attiéké — Abobo, Abidjan (Côte d'Ivoire) — Unlevered FCFF via NOPAT"
+currency: XOF            # West African CFA franc (FCFA); Côte d'Ivoire
+grid:
+  periods: 5            # t = 0..4
+  freq: annual          # no growth stated → flat nominal steady state
+
+utterance:
+  fr: |
+    Moi je suis gérante d'un atelier d'attiéké à Abobo, Abidjan. On est dix femmes.
+    On achète le manioc à la demi-bâchée, une tonne, à cent vingt-cinq mille. Avec une
+    demi-bâchée, on produit cinq cents kilos d'attiéké. On fait quatre demi-bâchées par
+    semaine. On cuit au bois, le bois nous coûte quinze mille par demi-bâchée. On vend en
+    gros à trois cent cinquante francs le kilo. On tourne cinquante semaines par an, deux
+    semaines de pause.
+  en: |
+    I run an attiéké workshop in Abobo, Abidjan. We're ten women. We buy cassava by the
+    demi-bâchée — one tonne — at a hundred twenty-five thousand. From one demi-bâchée we
+    produce five hundred kilos of attiéké. We do four demi-bâchées a week. We steam with
+    wood — wood costs us fifteen thousand per demi-bâchée. We sell wholesale at three
+    hundred fifty francs per kilo. We operate fifty weeks a year, two weeks off.
+
+inputs:
+
+  n_women:
+    value: 10
+    unit: persons
+    prov: STATED
+    source: "\"On est dix femmes / We're ten women\""
+    date: 2026-07-24
+  demi_bachee_tonnes:
+    value: 1
+    unit: tonne_per_demi_bachee
+    prov: STATED
+    source: "\"On achète le manioc à la demi-bâchée, une tonne / by the demi-bâchée — one tonne\""
+    date: 2026-07-24
+  cassava_price:
+    value: 125000
+    unit: XOF_per_demi_bachee
+    prov: STATED
+    source: "\"à cent vingt-cinq mille / at a hundred twenty-five thousand\" (per demi-bâchée = 1 tonne)"
+    date: 2026-07-24
+  yield_per_batch:
+    value: 500
+    unit: kg_attieke_per_demi_bachee
+    prov: STATED
+    source: "\"Avec une demi-bâchée, on produit cinq cents kilos d'attiéké / From one demi-bâchée we produce five hundred kilos\""
+    date: 2026-07-24
+  batches_per_week:
+    value: 4
+    unit: demi_bachee_per_week
+    prov: STATED
+    source: "\"On fait quatre demi-bâchées par semaine / We do four demi-bâchées a week\""
+    date: 2026-07-24
+  wood_price:
+    value: 15000
+    unit: XOF_per_demi_bachee
+    prov: STATED
+    source: "\"le bois nous coûte quinze mille par demi-bâchée / wood costs us fifteen thousand per demi-bâchée\""
+    date: 2026-07-24
+  price_attieke:
+    value: 350
+    unit: XOF_per_kg
+    prov: STATED
+    source: "\"On vend en gros à trois cent cinquante francs le kilo / We sell wholesale at three hundred fifty francs per kilo\""
+    date: 2026-07-24
+  operating_weeks:
+    value: 50
+    unit: weeks_per_year
+    prov: STATED
+    source: "\"On tourne cinquante semaines par an, deux semaines de pause / We operate fifty weeks a year, two weeks off\""
+    date: 2026-07-24
+
+  batches_per_year:
+    value: 200
+    unit: demi_bachee_per_year
+    prov: INFERRED
+    source: "batches_per_week (4) × operating_weeks (50) = 200"
+    date: 2026-07-24
+  attieke_kg_year:
+    value: 100000
+    unit: kg_per_year
+    prov: INFERRED
+    source: "batches_per_year (200) × yield_per_batch (500) = 100,000"
+    date: 2026-07-24
+  revenue_year:
+    value: 35000000
+    unit: XOF_per_year
+    prov: INFERRED
+    source: "attieke_kg_year (100,000) × price_attieke (350) = 35,000,000"
+    date: 2026-07-24
+  cassava_cost_year:
+    value: 25000000
+    unit: XOF_per_year
+    prov: INFERRED
+    source: "batches_per_year (200) × cassava_price (125,000) = 25,000,000"
+    date: 2026-07-24
+  wood_cost_year:
+    value: 3000000
+    unit: XOF_per_year
+    prov: INFERRED
+    source: "batches_per_year (200) × wood_price (15,000) = 3,000,000"
+    date: 2026-07-24
+
+  opex_other:
+    value: 0
+    unit: XOF_per_year
+    prov: ASSUMED
+    source: "No overhead (water, packaging/sacks, transport, rent) stated. Base case set to ZERO pending elicitation; see notes. Base FCFF is therefore an UPPER bound on operating margin."
+    date: 2026-07-24
+  equipment_gross:
+    value: 1500000
+    unit: XOF
+    prov: ASSUMED
+    source: "Prior: durable kit of a 10-woman artisanal attiéké workshop — motorised cassava grater (~400k), press(es) (~300k), steaming drums/vessels (~400k), fermentation tubs + basins + tarps + sieves (~400k). Not stated; production self-evidently requires durables ('on cuit au bois')."
+    date: 2026-07-24
+  equipment_life:
+    value: 5
+    unit: years
+    prov: ASSUMED
+    source: "Prior: straight-line useful life for artisanal food-processing equipment. Not stated."
+    date: 2026-07-24
+  tax_rate:
+    value: 0.04
+    unit: fraction_of_turnover
+    prov: ASSUMED
+    source: "Prior: Côte d'Ivoire régime de l'entreprenant — Taxe d'État de l'Entreprenant (TEE) 4% of annual turnover for commerce/négoce. A 35M turnover falls in the entreprenant band (5M–50M); the régime des microentreprises (6%) begins only at 50M. Presumptive, turnover-based — NOT a rate on EBIT. Not stated — ELICIT the regime and CGA membership (CGA halves TEE)."
+    date: 2026-07-24
+  cassava_inv_days:
+    value: 3
+    unit: days
+    prov: ASSUMED
+    source: "Prior: cassava is highly perishable, processed within a few days of delivery → ~3 days of raw stock. Not stated."
+    date: 2026-07-24
+  fg_inv_days:
+    value: 2
+    unit: days
+    prov: ASSUMED
+    source: "Prior: attiéké is perishable, sold quickly (largely fresh) → ~2 days of finished stock at production cost. Not stated."
+    date: 2026-07-24
+  ar_days:
+    value: 7
+    unit: days
+    prov: ASSUMED
+    source: "Prior: wholesale ('en gros') buyers carry short credit; ~7 days. Not stated."
+    date: 2026-07-24
+  ap_days:
+    value: 5
+    unit: days
+    prov: ASSUMED
+    source: "Prior: cassava suppliers extend a few days' credit; ~5 days. Wood assumed cash (no payable). Not stated."
+    date: 2026-07-24
+
+  wc_day_basis:
+    value: 360
+    unit: days_per_year
+    prov: DEFAULTED
+    source: "Rule: 360-day commercial year for working-capital day-count conversions (WC = days/360 × annual flow)."
+    date: 2026-07-24
+  depr_method:
+    value: straight_line
+    unit: convention
+    prov: DEFAULTED
+    source: "Rule: straight-line depreciation (IAS 16); D&A = equipment_gross / equipment_life."
+    date: 2026-07-24
+  maintenance_capex_rule:
+    value: capex_equals_dna
+    unit: convention
+    prov: DEFAULTED
+    source: "Rule: steady-state going concern → sustaining capex = depreciation each period (equipment base held constant)."
+    date: 2026-07-24
+
+passage: |
+  UNIT OF ACCOUNT AND NATURAL QUANTITY
+  The business's natural production unit is the demi-bâchée — one delivered tonne of
+  cassava steamed and processed into attiéké. Every operating figure is built from this
+  batch, then annualised. All amounts are in XOF (FCFA).
+
+  STEP 1 — OPERATING VOLUMES (STATED → INFERRED)
+  The founder runs 4 demi-bâchées per week over 50 operating weeks (two weeks off):
+      batches/year = 4 × 50 = 200 demi-bâchées.
+  Each demi-bâchée yields 500 kg of attiéké:
+      attiéké/year = 200 × 500 = 100,000 kg (= 100 tonnes).
+  Sanity check on the physical yield: 500 kg attiéké from 1,000 kg cassava = 50% mass
+  conversion — squarely within the realistic 40–60% band for attiéké. The build is
+  physically coherent.
+
+  STEP 2 — REVENUE (INFERRED)
+  Wholesale price is 350 XOF/kg:
+      revenue = 100,000 kg × 350 = 35,000,000 XOF/year.
+  Equivalently, revenue per batch = 500 × 350 = 175,000 XOF; × 200 = 35,000,000. ✓
+
+  STEP 3 — DIRECT (STATED) COSTS
+  Cassava at 125,000/demi-bâchée and wood at 15,000/demi-bâchée:
+      cassava cost = 200 × 125,000 = 25,000,000 XOF/year.
+      wood cost    = 200 × 15,000  =  3,000,000 XOF/year.
+  Direct cost per batch = 125,000 + 15,000 = 140,000; contribution per batch =
+  175,000 − 140,000 = 35,000 XOF (20% of batch revenue). Over 200 batches:
+      gross contribution = 35,000,000 − 25,000,000 − 3,000,000 = 7,000,000 XOF/year.
+
+  STEP 4 — OTHER OVERHEAD (ELICITED → base ZERO, flagged)
+  No overhead was stated. Water (soaking/washing), packaging/sacks, out-transport and
+  rent are real for such a unit but unquantified. Base case sets opex_other = 0, so the
+  reported margin/FCFF is an UPPER bound; each 1,000,000 of true overhead lowers steady
+  FCFF by 1,000,000. (See notes for the elicitation questions.)
+
+  STEP 5 — LABOUR / THE TEN WOMEN (central judgment)
+  No wage is stated. Diagnostic: gross contribution before any labour is 7,000,000/yr for
+  10 women = 700,000/woman/yr ≈ 58,333/woman/month — BELOW the Ivorian SMIG (~75,000/mo).
+  A going concern cannot pay contractual wages exceeding its gross margin; the surplus
+  itself sits below minimum wage per head. The economically consistent reading is that
+  the ten women are profit-sharing artisan owner-operators, not waged employees. In an
+  asset-side (unlevered, pre-financing, pre-distribution) FCFF, owner-operator draws are
+  distributions to equity, NOT operating expenses. Base case therefore carries NO wage
+  line; the residual FCFF is what these owner-operators (and any capital) share. This is
+  the single largest modelling judgment — if the women were in fact waged, opex would
+  rise and FCFF could fall to or below zero (see notes).
+
+  STEP 6 — DEPRECIATION (ASSUMED base, IAS 16 straight-line)
+  Durable kit assumed at 1,500,000 gross, 5-year life:
+      D&A = 1,500,000 / 5 = 300,000 XOF/year.
+  EBITDA = 35,000,000 − 25,000,000 − 3,000,000 − 0 = 7,000,000.
+  EBIT   = EBITDA − D&A = 7,000,000 − 300,000 = 6,700,000 XOF/year.
+
+  STEP 7 — TAX and NOPAT (ASSUMED regime; friction noted)
+  A 35M-turnover unit falls in Côte d'Ivoire's régime de l'entreprenant (band 5M–50M); its
+  Taxe d'État de l'Entreprenant (TEE) for commerce is 4% of TURNOVER (not a rate on EBIT).
+  The régime des microentreprises (6%) begins only at 50M turnover:
+      tax = 0.04 × 35,000,000 = 1,400,000 XOF/year.
+  FRICTION: this presumptive tax is turnover-based, so it does not equal t×EBIT and D&A
+  gives no tax shield. To preserve the FCFF identity I define NOPAT as EBIT less the
+  actual cash operating tax:
+      NOPAT = EBIT − tax = 6,700,000 − 1,400,000 = 5,300,000 XOF/year.
+  (Effective tax on EBIT = 1,400,000 / 6,700,000 = 20.9%.)
+
+  STEP 8 — WORKING CAPITAL (ASSUMED day-counts, 360-day basis)
+  Perishability keeps WC small. Levels (days/360 × annual flow):
+      raw cassava inventory   = 3/360 × 25,000,000 = 208,333.33
+      finished attiéké invty  = 2/360 × (25,000,000+3,000,000) = 2/360 × 28,000,000 = 155,555.56
+      receivables (revenue)   = 7/360 × 35,000,000 = 680,555.56
+      payables (cassava)      = 5/360 × 25,000,000 = 347,222.22   (wood is cash)
+      NWC = 208,333.33 + 155,555.56 + 680,555.56 − 347,222.22 = 697,222.22 XOF (≈2% of revenue).
+  Modelling convention: operating working capital is funded at the START of the horizon,
+  so the full 697,222.22 is invested in period t=0 (ΔNWC[0] = +697,222.22) and, with flat
+  volumes, ΔNWC = 0 in every later period. NWC then holds constant at 697,222.22.
+
+  STEP 9 — CAPEX
+  Steady-state sustaining capex = depreciation = 300,000 XOF/year (equipment base held
+  constant; the pre-existing kit is not re-bought — only maintained).
+
+  STEP 10 — FCFF = NOPAT + D&A − ΔNWC − capex
+  Cash-flow blocks:
+      CFO = NOPAT + D&A − ΔNWC ;   CFI = −capex ;   FCFF = CFO + CFI.
+  Period t=0 (WC funded):
+      CFO = 5,300,000 + 300,000 − 697,222.22 = 4,902,777.78 ; CFI = −300,000
+      FCFF[0] = 4,902,777.78 − 300,000 = 4,602,777.78 XOF.
+  Periods t=1..4 (steady state, ΔNWC = 0; D&A and capex cancel):
+      CFO = 5,300,000 + 300,000 − 0 = 5,600,000 ; CFI = −300,000
+      FCFF = 5,600,000 − 300,000 = 5,300,000 XOF.
+  Steady-state asset-side FCFF ≈ 5.30M XOF/year; period 0 lower by the 0.697M one-off
+  working-capital investment. Per owner-operator (÷10) that is ≈ 530,000/woman/year
+  (≈ 44,200/month) — the thin economics typical of informal artisanal food processing.
+
+trace:
+  demi_bachees:  [200, 200, 200, 200, 200]
+  attieke_kg:    [100000, 100000, 100000, 100000, 100000]
+  revenue:       [35000000, 35000000, 35000000, 35000000, 35000000]
+  cassava_cost:  [25000000, 25000000, 25000000, 25000000, 25000000]
+  wood_cost:     [3000000, 3000000, 3000000, 3000000, 3000000]
+  opex_other:    [0, 0, 0, 0, 0]
+  ebitda:        [7000000, 7000000, 7000000, 7000000, 7000000]
+  dna:           [300000, 300000, 300000, 300000, 300000]
+  ebit:          [6700000, 6700000, 6700000, 6700000, 6700000]
+  tax:           [1400000, 1400000, 1400000, 1400000, 1400000]
+  nopat:         [5300000, 5300000, 5300000, 5300000, 5300000]
+  capex:         [300000, 300000, 300000, 300000, 300000]
+  inv_cassava:   [208333.3333333333, 208333.3333333333, 208333.3333333333, 208333.3333333333, 208333.3333333333]
+  inv_fg:        [155555.5555555556, 155555.5555555556, 155555.5555555556, 155555.5555555556, 155555.5555555556]
+  ar:            [680555.5555555556, 680555.5555555556, 680555.5555555556, 680555.5555555556, 680555.5555555556]
+  ap:            [347222.2222222222, 347222.2222222222, 347222.2222222222, 347222.2222222222, 347222.2222222222]
+  nwc:           [697222.2222222223, 697222.2222222223, 697222.2222222223, 697222.2222222223, 697222.2222222223]
+  delta_nwc:     [697222.2222222223, 0, 0, 0, 0]
+  cfo:           [4902777.777777778, 5600000, 5600000, 5600000, 5600000]
+  cfi:           [-300000, -300000, -300000, -300000, -300000]
+  fcff:          [4602777.777777778, 5300000, 5300000, 5300000, 5300000]
+
+fcff: [4602777.777777778, 5300000, 5300000, 5300000, 5300000]
+
+checks:
+  # --- driver-bridge (each line rebuilt from its inputs) ---
+  - trace.demi_bachees == batches_per_week * operating_weeks
+  - trace.attieke_kg == yield_per_batch * trace.demi_bachees
+  - trace.revenue == price_attieke * trace.attieke_kg
+  - trace.cassava_cost == cassava_price * trace.demi_bachees
+  - trace.wood_cost == wood_price * trace.demi_bachees
+  - trace.dna == equipment_gross / equipment_life
+  - trace.tax == tax_rate * trace.revenue
+  - trace.inv_cassava == cassava_inv_days / wc_day_basis * trace.cassava_cost
+  - trace.inv_fg == fg_inv_days / wc_day_basis * (trace.cassava_cost + trace.wood_cost)
+  - trace.ar == ar_days / wc_day_basis * trace.revenue
+  - trace.ap == ap_days / wc_day_basis * trace.cassava_cost
+  # --- definition (the NOPAT→FCFF ladder) ---
+  - trace.ebitda == trace.revenue - trace.cassava_cost - trace.wood_cost - trace.opex_other
+  - trace.ebit == trace.ebitda - trace.dna
+  - trace.ebit == trace.revenue - trace.cassava_cost - trace.wood_cost - trace.opex_other - trace.dna
+  - trace.nopat == trace.ebit - trace.tax
+  - trace.cfo == trace.nopat + trace.dna - trace.delta_nwc
+  - trace.cfi == 0 - trace.capex
+  - trace.fcff == trace.cfo + trace.cfi
+  - trace.fcff == trace.nopat + trace.dna - trace.delta_nwc - trace.capex
+  - fcff == trace.fcff
+  - trace.capex == trace.dna
+  # --- conservation (working-capital stock roll-forward) ---
+  - trace.nwc == trace.inv_cassava + trace.inv_fg + trace.ar - trace.ap
+  - trace.delta_nwc[t] == trace.nwc[t] - trace.nwc[t-1]
+  - cumsum(trace.delta_nwc) == trace.nwc
+  # --- non-negativity ---
+  - trace.inv_cassava[t] >= 0
+  - trace.inv_fg[t] >= 0
+  - trace.ar[t] >= 0
+  - trace.ap[t] >= 0
+  - trace.nwc[t] >= 0
+  - trace.ebitda[t] >= 0
+  - trace.nopat[t] >= 0
+  - trace.fcff[t] >= 0
+
+notes:
+  headline: >
+    Steady-state unlevered FCFF ≈ 5,300,000 XOF/year (period 0 = 4,602,778 after the
+    one-off 697,222 working-capital investment). Revenue 35.0M, direct costs 28.0M,
+    gross contribution 7.0M, presumptive TEE tax 1.4M.
+
+  corrections: >
+    2026-07-24 — CORRECTED after physical audit. The gold taxed at 6% on the false premise
+    that "35M sits in the micro band". Per DGI thresholds the régime des microentreprises
+    runs 50M–200M; a 35M turnover falls in the régime de l'entreprenant (5M–50M), TEE 4%
+    for commerce. Rate 0.06 → 0.04; tax 2,100,000 → 1,400,000; steady FCFF 4,600,000 →
+    5,300,000. A wrong-but-internally-consistent parameter: the check tax == rate × revenue
+    passed either way, so only a fact-checking audit could catch it. Sensitivities below
+    restated qualitatively per contract v2.3.
+
+  central_judgment_labour: >
+    The ten women are treated as profit-sharing owner-operators, NOT waged staff, because
+    the gross contribution before labour (7.0M/yr ≈ 58,333/woman/month) is below the
+    Ivorian SMIG (~75,000/month): a going concern cannot pay wages exceeding its margin.
+    Asset-side FCFF excludes owner draws. THE key sensitivity — if they were waged at,
+    say, SMIG (10 × 75,000 × 12 = 9.0M/yr), operating cash would turn negative. ELICIT:
+    are the women employees or members, and what do they actually draw?
+
+  elicitation_deferred:
+    - "Overhead (base = 0): water, packaging/sacks, out-transport, workshop rent, tool consumables. Each reduces FCFF one-for-one; base FCFF is an UPPER bound."
+    - "Is the 125,000 cassava price delivered (transport included) or ex-farm? Base assumes delivered — no separate in-transport line."
+    - "Equipment actually owned and its value/replacement cycle (base 1.5M gross, 5-yr SL, capex = D&A)."
+    - "Tax registration/regime actually used (base: microenterprise 6% of turnover; many such units are informal/untaxed)."
+    - "Credit and inventory terms (base: cassava-in 3d, FG 2d, AR 7d, AP 5d on a 360-day year)."
+    - "Wood supply terms — assumed cash (no payable)."
+
+  frictions:
+    - "Presumptive tax is turnover-based, so it is NOT t×EBIT and D&A carries no tax shield; NOPAT defined as EBIT − actual cash tax to keep the FCFF identity intact (effective 31.3% of EBIT)."
+    - "Natural unit is the demi-bâchée (1 delivered tonne). Finished-goods inventory is valued at production cost (cassava + wood) — attiéké is not sold from stock at price, so no unrealised margin sits in inventory."
+
+  simplifications:
+    - "No growth or inflation stated → flat nominal steady state; FCFF is an annuity. Under inflation the real value erodes; a competent extension would index price and input costs."
+    - "Equipment treated as a pre-existing sunk asset (going concern) with sustaining capex = D&A, so D&A and capex net to zero in FCFF for t≥1; only the working-capital investment differentiates period 0."
+    - "One-off cash to establish this workshop from zero (NOT part of FCFF generated) ≈ 1,500,000 equipment + 697,222 working capital = 2,197,222 XOF."
+
+  sensitivities:   # qualitative only — per contract v2.3, quantified what-ifs must be checked scenarios, not prose
+    - "Tax regime is the largest single lever: a profit-based corporate IS, the 6% micro band (from 50M turnover), CGA membership (halves TEE), or outright informality each move FCFF materially. Direction only; quantify by re-running the regime as a checked scenario."
+    - "Unstated overhead (water, sacks, transport, rent) reduces steady FCFF one-for-one — the base (opex_other = 0) is an UPPER bound."
+    - "Sale price and cassava price are the dominant operating levers; both scale directly with the 200-batch volume."
+    - "Costing the ten women at a market wage would turn operating cash negative — see central_judgment_labour."
+
+  valuation_note: >
+    Task scope is FCFF only — no discount rate applied. If capitalised, a flat ~4.6M/yr
+    perpetuity would need a country/informal-sector risk-adjusted WACC (materially high
+    for an unlevered Ivorian microenterprise), which was neither stated nor requested.

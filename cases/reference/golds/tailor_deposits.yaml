@@ -1,0 +1,1135 @@
+contract: "v2.6"
+id: "tailor_deposits"
+title: "Atelier de couture sur-mesure, Treichville (Abidjan) — unlevered FCFF over 24 monthly periods, built from the order book and the 50% deposit"
+currency: "XOF"
+
+grid:
+  periods: 24
+  freq: "monthly"
+  why: >-
+    The month is this business's own accounting unit and I have not imposed it: the founder counts
+    working days per month (vingt-six jours par mois), pays wages, rent and electricity monthly, and
+    describes his season by calendar month (December up, January-February down). Anything coarser
+    than a month destroys the only thing that is actually interesting about this operation — the
+    deposit book swings by more than a million XOF between December and February while revenue does
+    not move at all, and an annual grid would net that to zero and report a smooth business. Anything
+    finer than a month (a week) would force me to invent a within-month arrival pattern for orders
+    that the founder never described. Twenty-four periods, i.e. two calendar years beginning 1
+    January, because: (i) one full seasonal cycle cannot be distinguished from a trend, two can —
+    the December peak and the January-February trough have to be seen to repeat; (ii) the six-week
+    order-to-delivery lead time means the order book carries roughly 1.4 months of work, so a horizon
+    shorter than about a year is dominated by whatever opening backlog I assume; (iii) the plant is
+    two years into a ten-year depreciable life, so no replacement capex falls inside 24 months and
+    the horizon does not rest on a machine-replacement assumption I cannot ground (see notes: the
+    hours test says the economic replacement cycle is shorter than ten years, which is a reason to
+    stop at 24 months, not to extend); and (iv) past roughly two years the forecast stops being
+    answerable for a four-person bespoke atelier whose demand is fashion-driven ("les motifs
+    changent"), whose capacity is three named pairs of hands, and whose management is one person who
+    is also the cutter. A reader who thinks the right answer is a single 12-month view, or a 5-year
+    view with a hired fourth seamstress, is disagreeing with a choice I made here and not with an
+    arithmetic error below.
+
+utterance:
+  fr: |
+    J'ai un atelier de couture à Treichville, à Abidjan. Je fais surtout du sur-mesure : boubous,
+    tailleurs, tenues de cérémonie. Quand quelqu'un commande, il verse la moitié tout de suite et
+    paie le reste quand il vient chercher la tenue. C'est comme ça qu'on travaille, sinon les gens
+    commandent et ne reviennent pas. En moyenne une tenue est commandée en début de mois et livrée
+    six semaines après, parfois plus quand il y a beaucoup de commandes.
+
+    Je suis moi-même et trois couturières. Chacune sort à peu près une tenue tous les trois jours de
+    travail, et on travaille vingt-six jours par mois. Une tenue se vend en moyenne quarante-cinq
+    mille. Le tissu, la doublure, le fil, les boutons, ça me revient à seize mille par tenue, et il y
+    a toujours des chutes — sur un pagne de six mètres je perds facilement un demi-mètre selon la
+    coupe. J'achète le tissu au marché d'Adjamé, en général deux mois de tissu d'avance parce que les
+    motifs changent et si je ne prends pas quand c'est là je ne retrouve pas le même.
+
+    Je paie chaque couturière quatre-vingt mille par mois, et moi je me sers cent vingt mille. Le
+    loyer de l'atelier c'est cent cinquante mille par mois. J'ai quatre machines à coudre achetées
+    deux cent mille chacune il y a deux ans, plus une surjeteuse à trois cent cinquante mille. Le
+    courant et le fil électrique, disons trente mille par mois.
+
+    En décembre et pour les fêtes de fin d'année, les commandes doublent presque. Mais en janvier et
+    février c'est très calme, les gens n'ont plus d'argent.
+  en: |
+    I have a tailoring workshop in Treichville, Abidjan. Mostly bespoke work: boubous, suits,
+    ceremonial outfits. When someone places an order they pay half right away and the rest when they
+    come to collect. That's how we work here — otherwise people order and never come back. On average
+    an outfit is ordered at the start of the month and delivered six weeks later, sometimes more when
+    there are a lot of orders.
+
+    There's me and three seamstresses. Each one turns out roughly one outfit every three working days,
+    and we work twenty-six days a month. An outfit sells for forty-five thousand on average. Fabric,
+    lining, thread, buttons come to sixteen thousand per outfit, and there are always offcuts — on a
+    six-metre pagne I easily lose half a metre depending on the cut. I buy fabric at the Adjamé market,
+    usually two months of fabric ahead, because the prints change and if I don't take it when it's
+    there I won't find the same one again.
+
+    I pay each seamstress eighty thousand a month, and I take a hundred and twenty thousand for
+    myself. The workshop rent is a hundred and fifty thousand a month. I have four sewing machines
+    bought at two hundred thousand each two years ago, plus an overlocker at three hundred and fifty
+    thousand. Electricity and wiring, say thirty thousand a month.
+
+    In December and around the end-of-year holidays orders almost double. But in January and February
+    it's very quiet, people have no money left.
+
+inputs:
+
+  # ---------------------------------------------------------------- STATED
+  outfit_price_xof:
+    value: 45000
+    unit: "XOF per outfit"
+    prov: "STATED"
+    source: "« Une tenue se vend en moyenne quarante-cinq mille. » Treated as the average realised ticket across boubous, tailleurs and tenues de cérémonie; the founder himself says « en moyenne »."
+    date: "2026-07-27"
+  materials_cost_per_outfit:
+    value: 16000
+    unit: "XOF per outfit"
+    prov: "STATED"
+    source: "« Le tissu, la doublure, le fil, les boutons, ça me revient à seize mille par tenue. » Note this figure is NOT net of the offcuts on the founder's own telling — see materials_offcut_uplift, which asks him which it is."
+    date: "2026-07-27"
+  seamstress_count:
+    value: 3
+    unit: "persons"
+    prov: "STATED"
+    source: "« Je suis moi-même et trois couturières. » This is the payroll count; whether the founder is a fourth producing pair of hands is a separate question — see producing_workers."
+    date: "2026-07-27"
+  seamstress_wage_monthly:
+    value: 80000
+    unit: "XOF per person per month"
+    prov: "STATED"
+    source: "« Je paie chaque couturière quatre-vingt mille par mois. » Gross cash paid; whether anything sits on top of it is employer_social_charge_rate."
+    date: "2026-07-27"
+  founder_draw_monthly:
+    value: 120000
+    unit: "XOF per month"
+    prov: "STATED"
+    source: "« moi je me sers cent vingt mille ». Expensed as owner-manager compensation, not treated as a distribution — see notes for the normalisation argument and the friction."
+    date: "2026-07-27"
+  rent_monthly:
+    value: 150000
+    unit: "XOF per month"
+    prov: "STATED"
+    source: "« Le loyer de l'atelier c'est cent cinquante mille par mois. »"
+    date: "2026-07-27"
+  electricity_monthly:
+    value: 30000
+    unit: "XOF per month"
+    prov: "STATED"
+    source: "« Le courant et le fil électrique, disons trente mille par mois. » The founder's own « disons » marks this as his estimate, not a meter reading."
+    date: "2026-07-27"
+  working_days_per_month:
+    value: 26
+    unit: "days per month"
+    prov: "STATED"
+    source: "« on travaille vingt-six jours par mois ». Taken as the nominal opening pattern, not as days actually worked — see attendance_availability and the finding in notes that 26 x 12 = 312 days is a six-day week with zero holidays."
+    date: "2026-07-27"
+  days_per_outfit:
+    value: 3
+    unit: "seamstress-days per outfit"
+    prov: "STATED"
+    source: "« Chacune sort à peu près une tenue tous les trois jours de travail. » A rate per day actually worked, which is why availability multiplies it rather than being folded into it."
+    date: "2026-07-27"
+  pagne_metres_per_outfit:
+    value: 6
+    unit: "metres of main fabric purchased per outfit"
+    prov: "STATED"
+    source: "« sur un pagne de six mètres ». One pagne, one outfit — the founder's sentence links the two. Friction recorded in notes: the commercial unit at Adjamé is the 6-yard pagne, about 5.4864 m, so « six mètres » is probably his rounding of a 6-yard piece."
+    date: "2026-07-27"
+  offcut_metres_per_pagne:
+    value: 0.5
+    unit: "metres lost as chutes per pagne cut"
+    prov: "STATED"
+    source: "« je perds facilement un demi-mètre selon la coupe ». « facilement » and « selon la coupe » both point upward, and « selon la coupe » is the reason I do not model a separate cutting-error allowance on top of it."
+    date: "2026-07-27"
+  deposit_share:
+    value: 0.5
+    unit: "fraction of the price taken at order"
+    prov: "STATED"
+    source: "« il verse la moitié tout de suite et paie le reste quand il vient chercher la tenue »."
+    date: "2026-07-27"
+  stated_lead_time_weeks:
+    value: 6
+    unit: "weeks from order to delivery"
+    prov: "STATED"
+    source: "« une tenue est commandée en début de mois et livrée six semaines après ». Used to calibrate the order book by Little's Law, not as a per-garment process time — the process time is days_per_outfit = 3."
+    date: "2026-07-27"
+  fabric_cover_months:
+    value: 2
+    unit: "months of consumption held in stock"
+    prov: "STATED"
+    source: "« en général deux mois de tissu d'avance parce que les motifs changent »."
+    date: "2026-07-27"
+  sewing_machine_count:
+    value: 4
+    unit: "machines"
+    prov: "STATED"
+    source: "« J'ai quatre machines à coudre »."
+    date: "2026-07-27"
+  sewing_machine_cost_each:
+    value: 200000
+    unit: "XOF per machine"
+    prov: "STATED"
+    source: "« achetées deux cent mille chacune »."
+    date: "2026-07-27"
+  overlocker_count:
+    value: 1
+    unit: "machines"
+    prov: "STATED"
+    source: "« plus une surjeteuse »."
+    date: "2026-07-27"
+  overlocker_cost:
+    value: 350000
+    unit: "XOF"
+    prov: "STATED"
+    source: "« une surjeteuse à trois cent cinquante mille »."
+    date: "2026-07-27"
+  machine_age_years_at_t0:
+    value: 2
+    unit: "years"
+    prov: "STATED"
+    source: "« achetées ... il y a deux ans ». Applied to the surjeteuse too, which the founder groups with them by « plus »."
+    date: "2026-07-27"
+
+  # ---------------------------------------------------------------- INFERRED
+  deposit_per_outfit:
+    value: 22500
+    unit: "XOF per outfit"
+    prov: "INFERRED"
+    source: "outfit_price_xof x deposit_share = 45000 x 0.5. No new information: half of the average price."
+    date: "2026-07-27"
+  gross_ppe:
+    value: 1150000
+    unit: "XOF"
+    prov: "INFERRED"
+    source: "sewing_machine_count x sewing_machine_cost_each + overlocker_count x overlocker_cost = 4 x 200000 + 1 x 350000."
+    date: "2026-07-27"
+  accumulated_depreciation_opening:
+    value: 230000
+    unit: "XOF"
+    prov: "INFERRED"
+    source: "gross_ppe / machine_useful_life_years x machine_age_years_at_t0 = 1150000/10 x 2. Depends on the DEFAULTED ten-year life."
+    date: "2026-07-27"
+  direct_labour_per_outfit:
+    value: 9230.769230769231
+    unit: "XOF per outfit"
+    prov: "INFERRED"
+    source: "seamstress_wage_monthly / working_days_per_month x days_per_outfit = 80000/26 x 3. The absorbable conversion cost of one garment at the founder's own stated day-count; used only to value work in progress."
+    date: "2026-07-27"
+  normal_month_starts:
+    value: 23.92
+    unit: "garments started per month"
+    prov: "INFERRED"
+    source: "producing_workers x working_days_per_month x attendance_availability / days_per_outfit = 3 x 26 x 0.92 / 3. Deductive given those four inputs, but it inherits the ELICITED producing_workers and attendance_availability and is no better than they are."
+    date: "2026-07-27"
+  normal_month_orders:
+    value: 23.4416
+    unit: "orders per month in a normal (non-seasonal) month"
+    prov: "INFERRED"
+    source: "normal_month_starts x (1 - remake_rate) = 23.92 x 0.98. In a shop that is neither building nor draining its book in a normal month, orders taken equal first-quality garments delivered, and a remake consumes a production slot without adding a deliverable."
+    date: "2026-07-27"
+  normal_backlog_outfits:
+    value: 32.4576
+    unit: "orders in the book"
+    prov: "INFERRED"
+    source: "Little's Law: work-in-system = throughput x lead time = normal_month_orders x stated_lead_time_weeks x 12/52 = 23.4416 x 6 x 12/52. The founder's six weeks is a waiting time, so it fixes the size of the queue given the throughput."
+    date: "2026-07-27"
+  opening_backlog_outfits:
+    value: 55.8992
+    unit: "orders in the book at 1 January of period 0"
+    prov: "INFERRED"
+    source: "normal_backlog_outfits + 2 x normal_month_orders x (1 - jan_feb_order_index) = 32.4576 + 2 x 23.4416 x 0.5. The book must be swollen by exactly the amount that January and February will drain, because the model starts on 1 January immediately after the December surge. Inherits jan_feb_order_index and dec_order_index."
+    date: "2026-07-27"
+  opening_deferred_revenue:
+    value: 1257732
+    unit: "XOF"
+    prov: "INFERRED"
+    source: "opening_backlog_outfits x deposit_per_outfit = 55.8992 x 22500. Every order in the book has already paid half."
+    date: "2026-07-27"
+  opening_fabric_stock_m:
+    value: 287.04
+    unit: "metres"
+    prov: "INFERRED"
+    source: "fabric_cover_months x normal_month_starts x pagne_metres_per_outfit = 2 x 23.92 x 6."
+    date: "2026-07-27"
+  fabric_price_per_m:
+    value: 2000
+    unit: "XOF per metre"
+    prov: "INFERRED"
+    source: "materials_cost_per_outfit x fabric_share_of_materials / pagne_metres_per_outfit = 16000 x 0.75 / 6. Sanity: 12000 XOF for a 6 m pagne sits at the economy/standard end of the Abidjan market range (roughly 5000-40000 XOF a piece), which is where a 45000 XOF finished outfit should be buying."
+    date: "2026-07-27"
+  wip_units:
+    value: 3
+    unit: "garments physically on the machines at any instant"
+    prov: "INFERRED"
+    source: "One garment per producing pair of hands: producing_workers = 3, and days_per_outfit = 3 means a seamstress is on one garment at a time. The six-week lead time is queue, not process time, so the order book is NOT work in progress."
+    date: "2026-07-27"
+  opening_nwc:
+    value: -621805.846153846154
+    unit: "XOF"
+    prov: "INFERRED"
+    source: "opening_fabric_stock_m x fabric_price_per_m + wip_value - opening_deferred_revenue = 574080 + 61846.153846153846 - 1257732. Negative: the customers finance the workshop."
+    date: "2026-07-27"
+  machine_hours_already_run:
+    value: 3444.48
+    unit: "hours per sewing machine, consumed before t=0"
+    prov: "INFERRED"
+    source: "machine_age_years_at_t0 x 12 x producing_workers x working_days_per_month x attendance_availability x hours_per_working_day / sewing_machine_count = 2 x 12 x 574.08 / 4. Assumes the last two years ran at the same intensity as the forecast; used only for the lifetime test."
+    date: "2026-07-27"
+
+  # ---------------------------------------------------------------- SOURCED
+  tee_rate_services:
+    value: 0.05
+    unit: "fraction of annual turnover TTC"
+    prov: "SOURCED"
+    source: "The activity is bespoke making-up to customer order — a prestation de services / activité artisanale, not commerce or négoce, so the 5% column applies and not the 4% one. This is my classification of his trade, and it is the one judgment inside an otherwise mechanical rate."
+    authority: "Côte d'Ivoire, Code général des impôts, arts. 72 et suivants (régime de l'entreprenant), art. 77 (taux: 4% commerce/négoce, 5% prestations de services), introduced by the annexe fiscale à la loi de finances n°2020-972 du 23 décembre 2020; restated at https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-08 / CI-V25-43"
+  tee_band_low:
+    value: 5000001
+    unit: "XOF per year, turnover TTC"
+    prov: "SOURCED"
+    source: "Lower edge of the taxe d'État de l'entreprenant band. Below it the taxpayer falls to the taxe communale de l'entreprenant instead. Asserted against this business's own turnover in checks."
+    authority: "Côte d'Ivoire, CGI art. 73 (band 5 000 001 - 50 000 000 XOF TTC), annexe fiscale 2021 (loi n°2020-972 du 23 décembre 2020, art. 33)"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-05"
+  tee_band_high:
+    value: 50000000
+    unit: "XOF per year, turnover TTC"
+    prov: "SOURCED"
+    source: "Upper edge of the TEE band; above it the taxpayer moves to the régime des microentreprises. Asserted against this business's own turnover in checks — at 12.5 m XOF a year it is at a quarter of the ceiling, so the regime is robust to every ELICITED answer in this document."
+    authority: "Côte d'Ivoire, CGI art. 73; DGI, Le système fiscal ivoirien"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-06 / CI-TAX-05"
+  tee_substitutes_for_profits_tax:
+    value: 1
+    unit: "boolean"
+    prov: "SOURCED"
+    source: "The TEE is libératoire: it stands in place of the impôt sur les bénéfices (BIC), the patente and the TVA. Three consequences carried into the build — (i) there is no 25% BIC line, (ii) there is no patente line, (iii) the entreprenant may neither invoice VAT nor deduct input VAT, so turnover TTC equals turnover and the 18% VAT paid on fabric at Adjamé is an unrecoverable part of the 16000."
+    authority: "Côte d'Ivoire, CGI arts. 72 et suivants; « Cette taxe se substitue à la patente, à l'impôt sur les bénéfices et à la TVA » — CGI art. 73, restated at https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/"
+    verified: "2026-07-27"
+    fact_id: "CI-TAX-06 / CI-V25-41"
+  cga_rate_halving:
+    value: 0.5
+    unit: "fraction by which the TEE rate is reduced for a CGA member"
+    prov: "SOURCED"
+    source: "Rates are halved for adherents of a centre de gestion agréé; adhesion must be taken before 31 January of the year in question. Whether this founder has done so is cga_member, which he holds and I do not."
+    authority: "Côte d'Ivoire, CGI art. 77 (taux réduits de moitié pour les adhérents d'un centre de gestion agréé); https://profession-juriste.ci/les-regimes-dimposition-en-cote-divoire-la-taxe-detat-de-lentreprenant/"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-07 / CI-V25-08"
+  imf_applies_to_this_regime:
+    value: 0
+    unit: "boolean"
+    prov: "SOURCED"
+    source: "Recorded because its absence is a finding, not an omission. The impôt minimum forfaitaire (0.5% of CA TTC, floor 3 000 000, cap 35 000 000) is due under the RNI and RSI only. An entreprenant is in neither, so the 3 000 000 XOF IMF floor — which would exceed this workshop's entire annual EBITDA — does NOT bite. Had I mis-assigned the regime, the arithmetic would have tied perfectly around a tax bill roughly five times the true one."
+    authority: "DGI, Le système fiscal ivoirien (IMF: RNI et RSI seulement); PwC Worldwide Tax Summaries, Ivory Coast — Corporate — Taxes on corporate income, https://taxsummaries.pwc.com/ivory-coast/corporate/taxes-on-corporate-income"
+    verified: "2026-07-27"
+    fact_id: "CI-TAX-02 / CI-V25-17 / CI-V25-18"
+  smig_monthly:
+    value: 75000
+    unit: "XOF per month"
+    prov: "SOURCED"
+    source: "Asserted in checks against seamstress_wage_monthly: 80000 clears the statutory minimum, so the wage line is not understated by an illegality. It clears it by 6.7%, which is thin."
+    authority: "Côte d'Ivoire, décret n°2022-986 du 21 décembre 2022 raising the SMIG from 60 000 to 75 000 FCFA with effect 1 January 2023; still in force in 2026"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-09 / CI-TAX-09"
+  legal_working_hours_per_week:
+    value: 40
+    unit: "hours per week"
+    prov: "SOURCED"
+    source: "Used to test the founder's own day-count against the law: 26 days a month is a six-day week, and at hours_per_working_day = 8 that is 48 hours, eight hours above the legal norm every week. Reported as a finding, not absorbed."
+    authority: "Côte d'Ivoire, loi n°2015-532 du 20 juillet 2015 portant Code du travail, art. 21.2 — « la durée normale du travail ... est fixée à quarante heures par semaine » (établissements non agricoles). https://cotedivoirepaie.ci/wp-content/uploads/2021/08/Nouveau-Code-du-travail-Loi-N2015-532-Code-du-Travail.pdf"
+    verified: "2026-07-27"
+  public_holidays_per_year:
+    value: 14
+    unit: "days per year, of which 12 fall on a working day in 2026"
+    prov: "SOURCED"
+    source: "Used to build the working value of attendance_availability: 12 holiday days lost out of 312 nominal working days is 3.85% before any illness, funeral, breakdown or power cut. Two of the fourteen (Toussaint 1 November, Journée de la paix 15 November) fall on a Sunday in 2026 and cost nothing on a six-day week."
+    authority: "Calendrier officiel des jours fériés, Côte d'Ivoire, 2026 (14 jours fériés légaux). https://www.joursferies.fr/pays/cote-d-ivoire.php and https://www.ivoirematin.com/fr/news/Societe/le-calendrier-officiel-des-jours-feries-et-journees-continues-pour-2026_n_119230.html"
+    verified: "2026-07-27"
+  cnps_pension_employer_rate:
+    value: 0.077
+    unit: "fraction of gross salary"
+    prov: "SOURCED"
+    source: "Not applied in the base case (see employer_social_charge_rate = 0). Carried because it is one of the five components that set the HIGH end of that question's range: 7.7% pension on the full 80000, plus 5% prestations familiales + 0.75% maternité + 2% accidents du travail on a base capped at 70000, plus 4.4% employer payroll taxes on the full wage — about 18.9% of gross at this wage level."
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire », rates in force 1 January 2025: retraite 7,70% employeur, plafond mensuel 3 375 000 XOF. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-10 / CI-V25-32"
+  cnps_capped_base_monthly:
+    value: 70000
+    unit: "XOF per worker per month"
+    prov: "SOURCED"
+    source: "The ceiling that applies to prestations familiales, maternité and accidents du travail. It bites here: the wage is 80000, so those three levies are charged on 70000 and not on the full wage. Used only to build the range on employer_social_charge_rate."
+    authority: "CLEISS, « Les cotisations en Côte d'Ivoire », plafond mensuel 70 000 XOF pour prestations familiales, maternité et accidents du travail. https://www.cleiss.fr/docs/cotisations/cotedivoire.html"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-14 / CI-V25-31"
+  employer_payroll_tax_rate:
+    value: 0.044
+    unit: "fraction of gross payroll"
+    prov: "SOURCED"
+    source: "2.8% contribution employeur on local employees + 0.4% taxe d'apprentissage + 1.2% taxe à la formation professionnelle continue. Not applied in the base case; part of the HIGH end of employer_social_charge_rate."
+    authority: "PwC Worldwide Tax Summaries, Ivory Coast — Corporate — Other taxes (payroll taxes 2.8% local employees), https://taxsummaries.pwc.com/ivory-coast/corporate/other-taxes; FDFP (TAP 0,4% + TFPC 1,2%)"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-35 / CI-TAX-08"
+  vat_standard_rate:
+    value: 0.18
+    unit: "fraction"
+    prov: "SOURCED"
+    source: "Recorded to close the TTC/HT question rather than to be applied: because the TEE is libératoire de TVA, this workshop neither charges the 18% nor recovers the 18% embedded in the Adjamé fabric price. Turnover TTC therefore equals turnover, and the 16000 per outfit is a VAT-inclusive cost that stays a cost."
+    authority: "Côte d'Ivoire CGI; PwC Worldwide Tax Summaries, Ivory Coast — Corporate — Other taxes, VAT 18%, https://taxsummaries.pwc.com/ivory-coast/corporate/other-taxes"
+    verified: "2026-07-27"
+    fact_id: "CI-V25-39 / CI-TAX-10"
+
+  # ---------------------------------------------------------------- ELICITED
+  producing_workers:
+    value: 3
+    unit: "persons producing saleable garments"
+    prov: "ELICITED"
+    source: "Base case takes the omitting reading: « Chacune sort à peu près une tenue tous les trois jours » uses the feminine « chacune », which attaches to « trois couturières » and not to the founder, so only the three seamstresses are counted as throughput. But « Je suis moi-même et trois couturières » counts him inside the workforce, and a master tailor who cuts also sews. The conservative reading is 3 and the base runs on it."
+    question: "Est-ce que vous cousez vous-même des tenues qui partent en vente, ou est-ce que vous faites la coupe, les essayages et la gestion pendant que les trois couturières cousent ?"
+    range: {low: 3, high: 4}
+    materiality: "high"
+  attendance_availability:
+    value: 0.92
+    unit: "fraction of nominal working days actually worked"
+    prov: "ELICITED"
+    source: "Working value built from what can be counted — 12 public-holiday working days out of 312 is 3.85% — plus a modest allowance for illness, deuils, machine breakdown and CIE power cuts, rounded to an 8% total loss. It is NOT the founder's 26 days reduced for convenience: 26 x 12 = 312 days a year is a six-day week with zero holidays and zero absence for three named people, which no workshop achieves. He is the only person who knows what he actually loses."
+    question: "Sur une année, combien de jours l'atelier ne travaille pas alors qu'il devrait — fêtes, deuils, maladie, panne de machine, coupures de courant ?"
+    range: {low: 0.8, high: 1.0}
+    materiality: "high"
+  employer_social_charge_rate:
+    value: 0
+    unit: "fraction of seamstress gross wages"
+    prov: "ELICITED"
+    source: "Base case is zero, matching what the founder actually describes paying out: « Je paie chaque couturière quatre-vingt mille par mois », with nothing said about CNPS. Zero is the base because the model must describe this business's cash, not a hypothetical compliant twin — but it is a base with a legal exposure attached and not a finding that nothing is owed. The HIGH end of the range is the fully-declared package at this wage: 7.7% pension on 80000, plus 5% + 0.75% + 2% on the 70000 capped base, plus 4.4% payroll taxes, about 18.9% of gross."
+    question: "Vos trois couturières sont-elles déclarées à la CNPS, et payez-vous des cotisations patronales en plus des quatre-vingt mille, ou est-ce que les quatre-vingt mille sont tout compris ?"
+    range: {low: 0, high: 0.19}
+    materiality: "high"
+  remake_rate:
+    value: 0.02
+    unit: "fraction of garments started that are remakes rather than new deliverables"
+    prov: "ELICITED"
+    source: "Working value of 2% of starts. Zero is not permissible for a stock of half-finished bespoke garments — rule: every stock declares its loss even when it is small — and the founder's own « selon la coupe » concedes that the cut goes wrong. Defined as a share of starts rather than of deliveries so that a remake consumes a production slot and a pagne without adding a saleable garment, which is what physically happens."
+    question: "Sur cent tenues que vos couturières montent, combien sont des reprises — une tenue qu'il faut refaire ou reprendre parce que la coupe n'allait pas ou que la cliente n'était pas contente ?"
+    range: {low: 0, high: 0.1}
+    materiality: "high"
+  tee_applies:
+    value: 1
+    unit: "boolean — is the taxe d'État de l'entreprenant actually borne"
+    prov: "ELICITED"
+    source: "Base case is 1: the law says a turnover of about 12.5 m XOF TTC sits squarely in the TEE band, so the tax is due. The founder said nothing about tax at all, and a great many Treichville ateliers are not registered. These are two different objects and I keep both: what the rule says is a fact about the world (SOURCED, above); whether he is registered and pays is a fact about his business that only he can state. A valuation cannot rest on non-payment, so 1 is also the conservative base."
+    question: "Est-ce que l'atelier est enregistré au registre du commerce et est-ce que vous payez la taxe d'État de l'entreprenant chaque mois, ou est-ce que vous n'avez pas de numéro de contribuable ?"
+    range: {low: "non enregistré, aucune taxe versée", high: "enregistré, taxe versée intégralement"}
+    materiality: "high"
+  cga_member:
+    value: 0
+    unit: "boolean — adherent of a centre de gestion agréé"
+    prov: "ELICITED"
+    source: "Base case is 0, the omitting choice: nothing in the utterance suggests he keeps books or belongs to a CGA. If he does, or joins before 31 January, the 5% becomes 2.5%, which on this turnover is the single cheapest improvement available to him."
+    question: "Êtes-vous adhérent d'un centre de gestion agréé, ou est-ce que vous déclarez tout seul ?"
+    range: {low: 0, high: 1}
+    materiality: "medium"
+  non_collection_rate:
+    value: 0.03
+    unit: "fraction of finished garments never collected"
+    prov: "ELICITED"
+    source: "The utterance evidences that this channel exists — « sinon les gens commandent et ne reviennent pas » — and says the deposit is the device that contains it, not that it eliminates it. Working value 3%: low, because the deposit works, but not zero, because he built his whole payment terms around the risk. On an uncollected garment the workshop keeps the 22500 deposit, loses the 22500 balance, and holds a garment cut to one person's measurements."
+    question: "Sur cent tenues que vous terminez, combien restent chez vous parce que le client n'est jamais revenu les chercher ?"
+    range: {low: 0, high: 0.15}
+    materiality: "medium"
+  maintenance_cost_monthly:
+    value: 15000
+    unit: "XOF per month"
+    prov: "ELICITED"
+    source: "The founder listed rent, wages, materials and current, and no maintenance. Zero is not a permissible working value: five electric machines cannot run 26 days a month on no needles, no oil, no belts and no mechanic. 15000 a month is a modest but non-zero allowance for consumables plus one mechanic's visit a quarter. He knows the real figure."
+    question: "Dans une année, combien vous coûtent les aiguilles, l'huile, les courroies et le mécanicien pour les cinq machines ?"
+    range: {low: 5000, high: 40000}
+    materiality: "medium"
+  dec_capacity_uplift:
+    value: 1.0
+    unit: "multiple of normal-month output achieved in December"
+    prov: "ELICITED"
+    source: "Base case is 1.0 — no December uplift — because that is what his stated rates support and it is the omitting choice. It is also the reason the December order surge shows up as a longer queue rather than as revenue: see the lead-time row, which reaches 9.9 weeks at end-December against his stated six. He himself flagged this with « parfois plus quand il y a beaucoup de commandes »."
+    question: "En décembre, est-ce que vous sortez plus de tenues qu'un mois normal — heures en plus, travail le dimanche, apprentis en renfort — et combien de tenues en tout ce mois-là ?"
+    range: {low: 1.0, high: 1.5}
+    materiality: "medium"
+  materials_offcut_uplift:
+    value: 0
+    unit: "fraction added to the 16000 to cover the chutes"
+    prov: "ELICITED"
+    source: "Base case is 0, i.e. the 16000 is read as gross of the chutes — what he actually hands over at Adjamé for a whole 6 m pagne plus lining, thread and buttons, which is the natural reading of « ça me revient à ». If instead the 16000 is what goes INTO the garment (5.5 m plus trimmings), then buying 6 m costs about 6.8% more, which is the high end of the range. This is exactly the ratio-that-hides-its-discards case: he gave a per-outfit cost and a per-pagne loss in the same breath and did not say whether one is inside the other."
+    question: "Les seize mille, c'est ce que vous payez au marché pour faire une tenue — donc le pagne entier de six mètres, chutes comprises — ou seulement le tissu qui reste dans la tenue ?"
+    range: {low: 0, high: 0.06818181818181818}
+    materiality: "medium"
+  jan_feb_order_index:
+    value: 0.5
+    unit: "multiple of normal-month orders received in January and February"
+    prov: "ELICITED"
+    source: "« en janvier et février c'est très calme, les gens n'ont plus d'argent » quantifies nothing. Working value 0.5 — half a normal month — chosen because it is the level at which the January-February drain exactly absorbs the December build, which is the only self-consistent reading of a shop that neither runs out of work nor accumulates an unbounded book. Ranked LOW because deliveries are capacity-constrained: this answer moves the shape of the cash profile, not the total over the horizon."
+    question: "En janvier et en février, on vous commande à peu près combien de tenues dans le mois, comparé à un mois normal ?"
+    range: {low: 0.25, high: 0.8}
+    materiality: "low"
+  dec_order_index:
+    value: 1.9
+    unit: "multiple of normal-month orders received in December"
+    prov: "ELICITED"
+    source: "« les commandes doublent presque » — his own « presque » caps it below 2 and puts it near 2. 1.9 is a reading of that hedge and not a derivation from it. Ranked LOW for the same reason as jan_feb_order_index: with output capped by the plant, a bigger December moves the deposit spike and the queue, not the two-year FCFF total."
+    question: "En décembre, vous prenez combien de commandes dans le mois, à peu près, comparé à un mois normal ?"
+    range: {low: 1.5, high: 2.0}
+    materiality: "low"
+  fabric_shrinkage_rate_monthly:
+    value: 0.005
+    unit: "fraction of opening fabric stock lost per month"
+    prov: "ELICITED"
+    source: "Working value 0.5% a month on the metres actually at risk — the opening stock, not the purchases. Not zero: two months of wax stored folded in a humid Treichville atelier loses metres to staining, mildew, crease-fade, insects and theft, and the founder adds a commercial channel of his own — « les motifs changent », so a print he cannot place becomes dead stock. The store is replenished, not draining, so an opening-balance rate is the right base here; on a draining store it would not be."
+    question: "Sur le tissu que vous gardez en réserve, combien perdez-vous dans une année — taché, moisi, décoloré au pli, volé, ou un motif que vous n'arrivez plus à placer ?"
+    range: {low: 0, high: 0.03}
+    materiality: "low"
+  fabric_share_of_materials:
+    value: 0.75
+    unit: "fraction of the 16000 that is the main fabric"
+    prov: "ELICITED"
+    source: "Working value 0.75, i.e. 12000 of fabric and 4000 of lining, thread and buttons. It cross-checks against the Abidjan market: 12000 for a 6 m piece sits at the economy/standard end of a 5000-40000 range, which is where a 45000 outfit should be buying. Ranked LOW because it moves no cost line at all — it only splits the 16000, and therefore only changes the carrying value of the fabric store and the level of working capital, not the flow."
+    question: "Sur les seize mille de fournitures, combien va au pagne lui-même, et combien à la doublure, au fil et aux boutons ?"
+    range: {low: 0.6, high: 0.9}
+    materiality: "low"
+  offcut_price_per_m:
+    value: 0
+    unit: "XOF per metre of chutes"
+    prov: "ELICITED"
+    source: "Base case zero — the omitting and conservative choice — so the chutes leave the balance as pure loss. In Abidjan they are routinely kept for foulards, children's clothes and patchwork, or sold on, so zero is a claim about this atelier and not a physical fact. Recording it as a row keeps the transformation honest: 8.33% of every pagne leaves the building and the model says what it is worth."
+    question: "Les chutes, qu'est-ce que vous en faites — vous les vendez, vous en faites des petites choses, ou elles partent à la poubelle ?"
+    range: {low: 0, high: 800}
+    materiality: "low"
+  hours_per_working_day:
+    value: 8
+    unit: "hours per working day"
+    prov: "ELICITED"
+    source: "Working value 8, the customary artisanal day. It moves no money in this model — labour is paid monthly, not hourly — but it is the input on which the two physical tests turn: the machine-hours-against-machine-life test, and the finding that 26 days x 8 hours is a 48-hour week against a 40-hour legal norm."
+    question: "L'atelier ouvre à quelle heure et ferme à quelle heure, et est-ce qu'on s'arrête à midi ?"
+    range: {low: 7, high: 11}
+    materiality: "low"
+
+  # ---------------------------------------------------------------- DEFAULTED
+  machine_useful_life_years:
+    value: 10
+    unit: "years, straight line, no residual"
+    prov: "DEFAULTED"
+    source: "SYSCOHADA révisé requires amortisation over the durée d'utilité; the customary Ivorian rate table for matériel et outillage lourd is 10% linéaire (ten years), against 20% for matériel léger. I could not open a primary DGI rate table to verify this, so it stays DEFAULTED and is not dressed as SOURCED. It is FCFF-neutral in this model in any case: under a turnover tax, depreciation reduces NOPAT and is added straight back, so the life changes the P&L and not one franc of the cash flow. The hours test in the checks says the ECONOMIC life is shorter than ten years, which is a separate finding."
+    date: "2026-07-27"
+  wip_conversion_fraction:
+    value: 0.5
+    unit: "average stage of completion of garments on the machines"
+    prov: "DEFAULTED"
+    source: "IAS 2.10/2.12 — inventories carry cost of purchase plus costs of conversion. Garments enter the machine with the full pagne already issued at cutting and leave finished, so at any instant the batch on the machines averages half its conversion. Fabric is therefore 100% absorbed and labour 50%."
+    date: "2026-07-27"
+  revenue_recognition_point:
+    value: 1
+    unit: "boolean — 1 = point in time, at collection"
+    prov: "DEFAULTED"
+    source: "IFRS 15.35(c) and 15.38. The garment has no alternative use — it is cut to one customer's measurements — but the atelier has no enforceable right to payment for performance completed to date, so the over-time criterion is not met and control passes when the customer takes the garment. The deposit is therefore a contract liability under IFRS 15.106 until then, and a forfeited deposit is recognised as revenue on breakage (IFRS 15.B46). SYSCOHADA révisé, the framework actually applicable in OHADA, reaches the same point-in-time answer on these facts."
+    date: "2026-07-27"
+  accounts_receivable_policy:
+    value: 0
+    unit: "XOF"
+    prov: "DEFAULTED"
+    source: "Zero, and it is a stated zero rather than a silent one: « paie le reste quand il vient chercher la tenue » means the balance is a cash-on-collection transaction and no trade receivable is ever created. Materialised as a row so the check can see the claim."
+    date: "2026-07-27"
+  accounts_payable_policy:
+    value: 0
+    unit: "XOF"
+    prov: "DEFAULTED"
+    source: "Zero, declared rather than omitted. Fabric is bought for cash on a market stall at Adjamé; wages, rent and current are settled within the month. No supplier credit is described and none is assumed. If any of these run on credit the working capital is more negative still, i.e. this zero is the unfavourable direction."
+    date: "2026-07-27"
+
+  # ---------------------------------------------------------------- ASSUMED
+  machine_design_life_hours:
+    value: 10000
+    unit: "running hours per sewing machine before rebuild or replacement"
+    prov: "ASSUMED"
+    source: "Flagged as a genuine assumption. Manufacturers of the machines in this price bracket do not publish an hours rating, and I could not source one; the founder cannot state a design life either, though he could tell me the make, model and whether they are new, semi-industrial or reconditioned — which is what would decide it (200 000 XOF in Abidjan buys a semi-industrial or a reconditioned industrial head, not a new Juki class machine). 10 000 hours is a conservative prior for that class. Used only as the ceiling in the lifetime test; it touches no money line."
+    date: "2026-07-27"
+
+passage: |
+  ============================================================================
+  0. WHAT THIS BUSINESS IS, IN ITS OWN QUANTITIES
+  ============================================================================
+  This is not a shop that sells garments off a rail. It is a queue. The founder takes an order and
+  half the money on day one, the garment is cut and sewn some weeks later, and the other half of the
+  money arrives when the customer walks in to collect. So the natural quantities are: orders taken
+  per month, garments started per month, garments delivered per month, the ORDER BOOK that sits
+  between them, and metres of pagne. Money is a consequence of those. I build them in that order and
+  only then convert to XOF, because the physical constraints all live upstream of the accounting.
+
+  ============================================================================
+  1. CAPACITY — WHAT THE PLANT CAN ACTUALLY DELIVER
+  ============================================================================
+  Labour. Three seamstresses (producing_workers = 3 in the base; the founder himself may be a
+  fourth pair of hands and I have asked). Each turns out one outfit per 3 working days. The shop is
+  open 26 days a month.
+
+    Nominal seamstress-days per month = 3 x 26                        = 78.00
+    Nominal garment slots per month   = 78 / 3                        = 26.00 garments
+
+  Availability. 26 days a month is 312 days a year. On a six-day week that is 52 x 6 = 312 exactly:
+  the founder's own figure describes a year with no public holidays, no funerals, no illness, no
+  breakdowns and no power cuts, for three named people. Côte d'Ivoire has 14 statutory holidays in
+  2026, of which 12 fall on a working day. That alone is 12/312 = 3.85%. Add illness, deuils,
+  machine stoppage and CIE outages and roughly 8% of the nominal year does not get worked. I apply
+  attendance_availability = 0.92, and I report the arithmetic rather than absorbing it:
+
+    Days actually worked per month     = 3 x 26 x 0.92                 = 71.76 seamstress-days
+    Garment STARTS per month           = 71.76 / 3                     = 23.92 garments
+
+  The fit test. 23.92 starts x 3 days = 71.76 seamstress-days demanded against 71.76 available. The
+  claimed output fits its plant exactly and with nothing to spare: this is a binding constraint, not
+  a comfortable one, which is why the December surge below cannot be met with output.
+
+  Machines. Four sewing machines and one surjeteuse for three seamstresses. Four heads for three
+  operators is one standing spare, which is itself part of why 8% availability loss and not more is
+  defensible for breakdown. At hours_per_working_day = 8:
+
+    Machine-attended hours per month  = 3 x 26 x 0.92 x 8              = 574.08 hours
+
+  This is an upper bound on machine time, because it charges every seamstress hour to a machine when
+  in reality cutting, hand-finishing, buttons and fittings are off-machine. Bounding upward is the
+  conservative direction for a life test.
+
+  A finding, reported and not absorbed. 26 days x 8 hours = 208 hours a month = 48 hours a week,
+  against the 40-hour legal norm in art. 21.2 of the Ivorian Code du travail. Eight hours of
+  overtime a week, every week, carries majorations if these women are on contracts. The base case
+  models neither the majorations nor employer social charges, and that is one exposure and not two:
+  both stand or fall on whether the seamstresses are declared, which is the question I have put.
+
+  ============================================================================
+  2. THE TRANSFORMATION — GARMENTS STARTED VERSUS GARMENTS DELIVERED
+  ============================================================================
+  Not every garment started is a garment sold. Two things happen to the flow, and the two are
+  different objects with different consequences:
+
+  (a) REMAKES. Some garments are made twice. The founder concedes the cut goes wrong — « selon la
+      coupe » — and a bespoke remake consumes a fresh pagne and a fresh production slot without
+      adding a deliverable. remake_rate = 0.02 of starts.
+
+        Starts                = 23.92
+        Remakes               = 23.92 x 0.02        =  0.4784
+        First-quality outputs = 23.92 - 0.4784      = 23.4416   <- the deliverable flow
+        CLOSES: 23.4416 + 0.4784 = 23.92 = starts.
+
+  (b) NON-COLLECTION. Some finished garments are never collected. The founder does not say this
+      happens now, but he tells us exactly why his terms exist: « sinon les gens commandent et ne
+      reviennent pas ». The deposit contains the loss; it does not abolish it.
+      non_collection_rate = 0.03 of first-quality outputs.
+
+        Collected   = 23.4416 x 0.97 = 22.738352
+        Uncollected = 23.4416 x 0.03 =  0.703248
+        CLOSES: 22.738352 + 0.703248 = 23.4416.
+
+      On an uncollected garment the workshop keeps the 22 500 deposit and loses the 22 500 balance,
+      and is left holding a garment cut to one person's measurements. I carry NO finished-goods
+      stock for these, and I say why rather than leaving it silent: a bespoke boubou cut to another
+      customer's measurements has no alternative use, so its net realisable value is nil and IAS 2.9
+      writes it to zero on the spot. If the founder resells them at a discount I have understated
+      him; I have asked.
+
+  ============================================================================
+  3. THE FABRIC BALANCE — EVERY METRE ACCOUNTED FOR
+  ============================================================================
+  One outfit, one pagne of 6 metres, of which half a metre leaves as chutes. That is not a yield
+  ratio, it is a balance, and here is what it is net of:
+
+    Metres bought per garment started        6.0 m       100.000%
+      of which into the finished garment     5.5 m        91.667%
+      of which leaves as chutes              0.5 m         8.333%
+    CLOSES: 5.5 + 0.5 = 6.0.
+
+  Per month, at 23.92 starts:
+
+    Fabric consumed        = 23.92 x 6.0    = 143.52 m
+    Into garments          = 23.92 x 5.5    = 131.56 m
+    Chutes                 = 23.92 x 0.5    =  11.96 m
+    CLOSES: 131.56 + 11.96 = 143.52 m.
+
+  The chutes are valued at zero in the base case (offcut_price_per_m = 0). That is a claim about
+  this atelier, not a fact about cloth — 11.96 metres a month leaves the building and in Abidjan it
+  usually has a buyer. It is materialised as its own revenue row so the claim is visible and the
+  answer can be dropped straight in.
+
+  What the 16 000 is net of. This is the point where a per-unit cost and a per-unit loss were given
+  in the same sentence and their relation was not. The base reads « ça me revient à seize mille par
+  tenue » as what he actually hands over at Adjamé for one whole 6 m pagne plus lining, thread and
+  buttons — so the chutes are already paid for inside it and materials_offcut_uplift = 0. If instead
+  the 16 000 is the fabric that stays IN the garment, buying 6 m to use 5.5 m costs 6.8% more on the
+  fabric portion. That is the question, and it is a real one.
+
+  The fabric store, and what it loses. He holds two months of cloth. The store is REPLENISHED, not
+  draining, so a per-period rate on the opening balance is the correct base here — on a draining
+  store a flat charge would overstate the tail, which is why the rate is written against the opening
+  stock row and not against purchases.
+
+    Target stock  = 2 x 143.52                     = 287.04 m, constant
+    Stock value   = 287.04 x 2 000                 = 574 080 XOF
+    Shrinkage     = 287.04 x 0.005                 =   1.4352 m/month  = 2 870.40 XOF
+    Purchases     = 143.52 + 1.4352                = 144.9552 m/month
+    ROLL FORWARD: 287.04 + 144.9552 - 143.52 - 1.4352 = 287.04. Closes.
+
+  Trimmings (lining, thread, buttons) are held at zero — declared, not omitted. He said « deux mois
+  de tissu », tissu specifically; buttons and thread are bought on the same market trip as needed
+  and no cover was described.
+
+  Cumulative test over the horizon. 24 x 144.9552 = 3 478.9248 m purchased; 24 x 143.52 = 3 444.48 m
+  consumed; 24 x 1.4352 = 34.4448 m lost; stock unchanged. 3 444.48 + 34.4448 = 3 478.9248. Closes.
+  That is 580 six-metre pagnes over two years for a four-person shop, or about one pagne per working
+  day — which is precisely one garment per working day, and consistent.
+
+  ============================================================================
+  4. THE ORDER BOOK — WHERE THE SEASON ACTUALLY LIVES
+  ============================================================================
+  This is the heart of it. The founder gives a lead time of six weeks and a process time of three
+  days. Those are not the same number and the gap between them IS the order book. Little's Law:
+
+    work in system = throughput x lead time
+    Throughput     = 23.4416 deliverables/month = 23.4416 x 12/52 = 5.4096 per week
+    Normal book    = 5.4096 x 6 weeks                             = 32.4576 orders
+
+  So in an ordinary month the atelier is holding about 32.5 orders it has been paid half for. Only
+  three of those are physically on a machine (one per seamstress); the other 29 are a queue. That
+  distinction matters twice: it keeps work-in-progress inventory tiny, and it makes the deposit book
+  large.
+
+  The season. Orders, not output, are what the season moves:
+
+    January, February   x 0.5   ->  11.7208 orders
+    March - November    x 1.0   ->  23.4416 orders
+    December            x 1.9   ->  44.53904 orders
+
+  Annual orders = 2 x 11.7208 + 9 x 23.4416 + 44.53904 = 278.95504 against annual deliverable
+  capacity of 12 x 23.4416 = 281.2992. The shop runs at 99.2% of its own capacity over a year. That
+  is not a coincidence I engineered; it is what the founder's three statements — one outfit per three
+  days, orders almost double in December, January and February very quiet — mean when they are put
+  together. The half-index for January and February is the value at which the two sides balance.
+
+  THE CAPACITY FINDING. In December the shop is asked for 44.54 garments and can start 23.92. It
+  does not fit, by a factor of 1.86, and I do not absorb the difference. The founder already told us
+  what happens instead: « parfois plus quand il y a beaucoup de commandes ». December orders are not
+  December deliveries; they are January and February deliveries. The queue lengthens, and the model
+  reports the length:
+
+    end February  32.4576  / 5.4096 = 6.00 weeks   <- reproduces his stated six weeks
+    end December  53.55504 / 5.4096 = 9.90 weeks   <- his « parfois plus »
+
+  That the ordinary-month figure comes out at exactly six weeks is the one place where this model is
+  tested against a fact the founder stated and did not have to state. It passes.
+
+  Opening book. The model starts on 1 January, immediately after a December surge, so the book opens
+  swollen by exactly what January and February will drain:
+
+    opening book = 32.4576 + 2 x (23.4416 - 11.7208) = 32.4576 + 23.4416 = 55.8992 orders
+
+  Roll forward, book[t] = book[t-1] + orders[t] - deliverables[t]:
+
+    Jan  55.8992 + 11.7208  - 23.4416 = 44.1784
+    Feb  44.1784 + 11.7208  - 23.4416 = 32.4576
+    Mar..Nov unchanged at 32.4576 (orders = deliverables)
+    Dec  32.4576 + 44.53904 - 23.4416 = 53.55504
+    Jan  53.55504 + 11.7208 - 23.4416 = 41.83424
+    Feb  41.83424 + 11.7208 - 23.4416 = 30.11344
+    Mar..Nov unchanged; Dec 30.11344 + 44.53904 - 23.4416 = 51.21088
+
+  The book drifts down by 2.34 orders a year — the 0.8% of annual slack — and never approaches zero,
+  so the delivery flow is capacity-bound in every one of the 24 months and deliveries are 23.4416
+  throughout. Revenue is therefore FLAT while orders swing by a factor of nearly four. That is the
+  single most useful thing this model says about this business.
+
+  ============================================================================
+  5. FROM QUANTITIES TO MONEY — ONE NORMAL MONTH
+  ============================================================================
+  Revenue is recognised when the customer collects (IFRS 15.35(c)/38: no alternative use, but no
+  enforceable right to payment for work to date, so control passes at handover). The deposit is a
+  contract liability until then (IFRS 15.106); a forfeited deposit becomes revenue on breakage
+  (IFRS 15.B46).
+
+    Collected garments      22.738352 x 45 000        = 1 023 225.84
+    Forfeited deposits       0.703248 x 22 500        =    15 823.08
+    Chutes sold                     11.96 x 0         =         0.00
+    REVENUE                                            = 1 039 048.92
+
+  Costs:
+    Materials consumed      23.92 x 16 000 x 1.00     =   382 720.00
+    Fabric shrinkage         1.4352 m x 2 000         =     2 870.40
+    Seamstress wages        3 x 80 000                =   240 000.00
+    Employer social charges 240 000 x 0               =         0.00
+    Founder compensation                              =   120 000.00
+    Rent                                              =   150 000.00
+    Electricity                                       =    30 000.00
+    Maintenance                                       =    15 000.00
+    OPEX                                               =   940 590.40
+
+    EBITDA                  1 039 048.92 - 940 590.40 =    98 458.52
+    Depreciation            1 150 000 / 10 / 12       =     9 583.333333
+    EBIT                                               =    88 875.186667
+
+  Tax. Annual turnover is 12 x 1 039 048.92 = 12 468 587.04 XOF TTC. That lands in the band
+  5 000 001 - 50 000 000, which is the régime de la taxe d'État de l'entreprenant. The rate is 5%
+  for prestations de services (4% is for commerce and négoce; making up a garment to order is not
+  négoce). The TEE is libératoire: it stands in place of the impôt sur les bénéfices, the patente and
+  the TVA. Three consequences, each of which would be a large error the other way:
+
+    - there is no 25% BIC charge on profit;
+    - there is no patente;
+    - and critically, the impôt minimum forfaitaire does NOT apply. The IMF is a RNI/RSI charge with
+      a 3 000 000 XOF floor. Had the regime been mis-assigned, this model would have carried a
+      minimum tax of 3 m XOF a year against annual EBITDA of 1.18 m — an arithmetically perfect,
+      catastrophically wrong answer.
+
+    TEE  = 1 039 048.92 x 5%                          =    51 952.446
+    NOPAT = 88 875.186667 - 51 952.446                =    36 922.740667
+
+  Note the friction, and I keep it rather than forcing it: NOPAT is defined off a tax on PROFIT, and
+  this business pays a tax on TURNOVER. Two things follow. The effective burden is 58% of EBIT, not
+  25%. And depreciation carries no tax shield — it is deducted to reach EBIT and added straight back
+  to reach FCFF, so the ten-year life I defaulted to changes the P&L by 9 583 a month and the cash
+  flow by nothing at all.
+
+  ============================================================================
+  6. WORKING CAPITAL — THE DEPOSIT BOOK
+  ============================================================================
+    Fabric inventory     287.04 m x 2 000                          =   574 080.000000
+    Work in progress     3 x (16 000 + 0.5 x 9 230.769231)         =    61 846.153846
+    Trade receivables    balance is cash on collection             =         0
+    Trade payables       market cash purchase, no supplier credit  =         0
+    Customer deposits    22 500 x order book                       =  (see below)
+
+    NWC = 635 926.153846 - 22 500 x book
+
+  Inventory and WIP are constant across all 24 months — starts are constant, cover is constant — so
+  every franc of movement in working capital is the deposit book moving:
+
+    opening   book 55.89920  deposits 1 257 732.00   NWC  -621 805.846154
+    end Jan   book 44.17840  deposits   994 014.00   NWC  -358 087.846154   dNWC  +263 718.00
+    end Feb   book 32.45760  deposits   730 296.00   NWC   -94 369.846154   dNWC  +263 718.00
+    Mar..Nov  unchanged                              dNWC 0
+    end Dec   book 53.55504  deposits 1 204 988.40   NWC  -569 062.246154   dNWC  -474 692.40
+    (year 2 repeats, one notch lower)
+
+  Working capital is negative throughout — between 94 000 and 622 000 XOF of net customer funding.
+  Put beside a net book value of plant that runs from 910 417 down to 690 000, the customers are
+  financing a meaningful fraction of this workshop. That is the economic content of « il verse la
+  moitié tout de suite », and it is why the file is worth building monthly.
+
+  ============================================================================
+  7. FCFF
+  ============================================================================
+    FCFF = NOPAT + D&A - dNWC - capex
+         = 36 922.740667 + 9 583.333333 - dNWC - 0
+         = 46 506.074 - dNWC
+
+  Capex is zero in all 24 periods. The machines are two years into a ten-year life and nothing in the
+  utterance describes an expansion; the maintenance allowance is expensed, not capitalised.
+
+    Normal month (18 of 24)   dNWC 0             ->   46 506.074
+    January, February (4)     dNWC +263 718.00   ->  -217 211.926
+    December (2)              dNWC -474 692.40   ->  521 198.474
+
+    Year 1 = Year 2 = 2 x (-217 211.926) + 9 x 46 506.074 + 521 198.474 = 505 329.288
+    24-month total FCFF = 1 010 658.576 XOF
+
+  Cross-check: 24 x 46 506.074 = 1 116 145.776, less the net working-capital build over the horizon
+  of 105 487.20 (the book drains by 4.68832 orders x 22 500), gives 1 010 658.576. Ties.
+
+  ============================================================================
+  8. THE LIFETIME TEST
+  ============================================================================
+  Per-month machine hours look unremarkable. Cumulated they are the number that decides whether the
+  depreciation life is a fiction:
+
+    Over 24 months, fleet     24 x 574.08                     = 13 777.92 hours
+    Per sewing machine        13 777.92 / 4                   =  3 444.48 hours
+    Already run since purchase (2 years, same intensity)      =  3 444.48 hours
+    Cumulative per machine at the end of the horizon          =  6 888.96 hours
+
+  Against an assumed 10 000-hour life for a 200 000 XOF semi-industrial or reconditioned head, the
+  test passes inside the horizon — no replacement capex is due within 24 months, which is one of the
+  reasons the horizon stops there. But extrapolate the same rate to the ten-year depreciation life
+  and each machine would be asked for about 17 200 hours, which that class of machine does not give.
+  The finding is therefore not that the model breaks, but that the ten-year accounting life overstates
+  the economic replacement cycle: on these hours the fleet needs renewing around year five or six.
+  Because depreciation is FCFF-neutral under a turnover tax, that error costs the P&L and not this
+  cash flow — but it would bite immediately on any horizon long enough to contain the replacement.
+
+  ============================================================================
+  9. WHAT THE NUMBER MEANS
+  ============================================================================
+  505 329 XOF of unlevered free cash flow a year on 12.47 m of turnover: a 4.1% FCFF margin, and
+  about 42 000 XOF a month averaged over the year — less than a third of one month's rent. Set that
+  beside the 1 440 000 XOF a year the founder draws for himself and the shape of the business is
+  plain: essentially all of the value this atelier produces is his own wage, and only a small residual
+  is a return on the 1 150 000 XOF of machines. It is a job with a lathe attached, not an asset with
+  a manager attached — and any reader tempted to capitalise the 505 329 should first answer the
+  producing_workers question, because if the founder is himself one of the four pairs of hands, a
+  large part of that FCFF disappears the day he stops sewing.
+
+trace:
+  order_index: [0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.9, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.9]
+  orders: [11.7208, 11.7208, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 44.53904, 11.7208, 11.7208, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 44.53904]
+  capacity_starts: [23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92]
+  starts: [23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92, 23.92]
+  remakes: [0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784, 0.4784]
+  completions: [23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416, 23.4416]
+  collected: [22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352, 22.738352]
+  uncollected: [0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248, 0.703248]
+  backlog_opening: [55.8992, 44.1784, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 53.55504, 41.83424, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344]
+  backlog: [44.1784, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 32.4576, 53.55504, 41.83424, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 30.11344, 51.21088]
+  implied_lead_time_weeks: [8.166666666666667, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 9.9, 7.733333333333333, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 5.566666666666667, 9.466666666666667]
+  labour_days_available: [71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76]
+  labour_days_used: [71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76, 71.76]
+  machine_attended_hours: [574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08, 574.08]
+  fabric_purchased_m: [144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552, 144.9552]
+  fabric_consumed_m: [143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52, 143.52]
+  fabric_into_garments_m: [131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56, 131.56]
+  offcuts_m: [11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96, 11.96]
+  fabric_shrinkage_m: [1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352, 1.4352]
+  fabric_stock_opening_m: [287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04]
+  fabric_stock_m: [287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04, 287.04]
+  fabric_stock_value: [574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0, 574080.0]
+  wip_units: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+  wip_value: [61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846, 61846.153846153846]
+  revenue_collected: [1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84, 1023225.84]
+  revenue_forfeited_deposits: [15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08, 15823.08]
+  offcut_revenue: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  revenue: [1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92]
+  materials_expense: [382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0, 382720.0]
+  shrinkage_expense: [2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4, 2870.4]
+  seamstress_wages: [240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0, 240000.0]
+  employer_social_charges: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  founder_compensation: [120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0, 120000.0]
+  rent: [150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0, 150000.0]
+  electricity: [30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0]
+  maintenance: [15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0, 15000.0]
+  opex_total: [940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4, 940590.4]
+  ebitda: [98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52, 98458.52]
+  depreciation: [9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333, 9583.333333333333]
+  accumulated_depreciation: [239583.333333333333, 249166.666666666667, 258750.0, 268333.333333333333, 277916.666666666667, 287500.0, 297083.333333333333, 306666.666666666667, 316250.0, 325833.333333333333, 335416.666666666667, 345000.0, 354583.333333333333, 364166.666666666667, 373750.0, 383333.333333333333, 392916.666666666667, 402500.0, 412083.333333333333, 421666.666666666667, 431250.0, 440833.333333333333, 450416.666666666667, 460000.0]
+  net_book_value: [910416.666666666667, 900833.333333333333, 891250.0, 881666.666666666667, 872083.333333333333, 862500.0, 852916.666666666667, 843333.333333333333, 833750.0, 824166.666666666667, 814583.333333333333, 805000.0, 795416.666666666667, 785833.333333333333, 776250.0, 766666.666666666667, 757083.333333333333, 747500.0, 737916.666666666667, 728333.333333333333, 718750.0, 709166.666666666667, 699583.333333333333, 690000.0]
+  ebit: [88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667, 88875.186666666667]
+  tax_tee: [51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446, 51952.446]
+  nopat: [36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667, 36922.740666666667]
+  deferred_revenue: [994014.0, 730296.0, 730296.0, 730296.0, 730296.0, 730296.0, 730296.0, 730296.0, 730296.0, 730296.0, 730296.0, 1204988.4, 941270.4, 677552.4, 677552.4, 677552.4, 677552.4, 677552.4, 677552.4, 677552.4, 677552.4, 677552.4, 677552.4, 1152244.8]
+  delta_deferred_revenue: [-263718.0, -263718.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 474692.4, -263718.0, -263718.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 474692.4]
+  accounts_receivable: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  accounts_payable: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  nwc: [-358087.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -569062.246153846154, -305344.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -516318.646153846154]
+  nwc_opening: [-621805.846153846154, -358087.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -94369.846153846154, -569062.246153846154, -305344.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154, -41626.246153846154]
+  delta_nwc: [263718.0, 263718.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -474692.4, 263718.0, 263718.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -474692.4]
+  capex: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  cash_from_customers: [775330.92, 775330.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1513741.32, 775330.92, 775330.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1039048.92, 1513741.32]
+  cfo: [-217211.926, -217211.926, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 521198.474, -217211.926, -217211.926, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 521198.474]
+  cfi: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  fcff: [-217211.926, -217211.926, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 521198.474, -217211.926, -217211.926, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 521198.474]
+
+fcff: [-217211.926, -217211.926, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 521198.474, -217211.926, -217211.926, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 46506.074, 521198.474]
+
+checks:
+  # ---- conservation: the order book
+  - "trace.backlog[t] == trace.backlog_opening[t] + trace.orders[t] - trace.completions[t]"
+  - "trace.backlog_opening[t] == trace.backlog[t-1] for t >= 1"
+  - "trace.backlog_opening[first] == opening_backlog_outfits"
+  - "cumsum(trace.orders) == cumsum(trace.completions) + trace.backlog - opening_backlog_outfits"
+  # ---- conservation: the garment transformation
+  - "trace.starts[t] == trace.completions[t] + trace.remakes[t]"
+  - "trace.completions[t] == trace.collected[t] + trace.uncollected[t]"
+  # ---- conservation: the fabric balance
+  - "trace.fabric_consumed_m[t] == trace.fabric_into_garments_m[t] + trace.offcuts_m[t]"
+  - "trace.fabric_stock_m[t] == trace.fabric_stock_opening_m[t] + trace.fabric_purchased_m[t] - trace.fabric_consumed_m[t] - trace.fabric_shrinkage_m[t]"
+  - "trace.fabric_stock_opening_m[t] == trace.fabric_stock_m[t-1] for t >= 1"
+  - "trace.fabric_stock_opening_m[first] == opening_fabric_stock_m"
+  - "cumsum(trace.fabric_purchased_m) == cumsum(trace.fabric_consumed_m) + cumsum(trace.fabric_shrinkage_m) + trace.fabric_stock_m - opening_fabric_stock_m"
+  # ---- conservation: plant
+  - "trace.accumulated_depreciation[t] == trace.accumulated_depreciation[t-1] + trace.depreciation[t] for t >= 1"
+  - "trace.accumulated_depreciation[first] == accumulated_depreciation_opening + trace.depreciation[first]"
+  # ---- conservation: deposits and working capital
+  - "trace.delta_deferred_revenue[t] == trace.deferred_revenue[t] - trace.deferred_revenue[t-1] for t >= 1"
+  - "trace.delta_deferred_revenue[first] == trace.deferred_revenue[first] - opening_deferred_revenue"
+  - "trace.nwc_opening[t] == trace.nwc[t-1] for t >= 1"
+  - "trace.nwc_opening[first] == opening_nwc"
+  - "trace.delta_nwc[t] == trace.nwc[t] - trace.nwc_opening[t]"
+  - "cumsum(trace.delta_nwc) == trace.nwc - opening_nwc"
+  # ---- definition: the ladder
+  - "trace.revenue[t] == trace.revenue_collected[t] + trace.revenue_forfeited_deposits[t] + trace.offcut_revenue[t]"
+  - "trace.opex_total[t] == trace.materials_expense[t] + trace.shrinkage_expense[t] + trace.seamstress_wages[t] + trace.employer_social_charges[t] + trace.founder_compensation[t] + trace.rent[t] + trace.electricity[t] + trace.maintenance[t]"
+  - "trace.ebitda[t] == trace.revenue[t] - trace.opex_total[t]"
+  - "trace.ebit[t] == trace.ebitda[t] - trace.depreciation[t]"
+  - "trace.nopat[t] == trace.ebit[t] - trace.tax_tee[t]"
+  - "trace.fcff[t] == trace.nopat[t] + trace.depreciation[t] - trace.delta_nwc[t] - trace.capex[t]"
+  - "trace.cfo[t] == trace.ebitda[t] - trace.tax_tee[t] - trace.delta_nwc[t]"
+  - "trace.cfi[t] == 0 - trace.capex[t]"
+  - "trace.fcff[t] == trace.cfo[t] + trace.cfi[t]"
+  - "fcff == trace.fcff"
+  - "trace.nwc[t] == trace.fabric_stock_value[t] + trace.wip_value[t] + trace.accounts_receivable[t] - trace.accounts_payable[t] - trace.deferred_revenue[t]"
+  - "trace.net_book_value[t] == gross_ppe - trace.accumulated_depreciation[t]"
+  - "trace.cash_from_customers[t] == trace.revenue[t] + trace.delta_deferred_revenue[t]"
+  # ---- driver-bridge: capacity and flow
+  - "trace.capacity_starts[t] == producing_workers * working_days_per_month * attendance_availability / days_per_outfit"
+  - "trace.starts[t] == trace.capacity_starts[t]"
+  - "trace.remakes[t] == trace.starts[t] * remake_rate"
+  - "trace.uncollected[t] == trace.completions[t] * non_collection_rate"
+  - "trace.labour_days_used[t] == trace.starts[t] * days_per_outfit"
+  - "trace.labour_days_available[t] == producing_workers * working_days_per_month * attendance_availability"
+  - "trace.machine_attended_hours[t] == producing_workers * working_days_per_month * attendance_availability * hours_per_working_day"
+  - "sum(trace.starts) == normal_month_starts * (22 + 2 * dec_capacity_uplift)"
+  - "normal_month_orders == normal_month_starts * (1 - remake_rate)"
+  # ---- driver-bridge: orders, queue and lead time
+  - "trace.orders[t] == normal_month_orders * trace.order_index[t]"
+  - "sum(trace.order_index) == 2 * (2 * jan_feb_order_index + 9 + dec_order_index)"
+  - "trace.implied_lead_time_weeks[t] * trace.completions[t] * 12 / 52 == trace.backlog[t]"
+  - "trace.backlog[1] == normal_month_orders * stated_lead_time_weeks * 12 / 52"
+  - "opening_backlog_outfits == normal_month_orders * stated_lead_time_weeks * 12 / 52 + 2 * normal_month_orders * (1 - jan_feb_order_index)"
+  # ---- driver-bridge: fabric
+  - "trace.fabric_consumed_m[t] == trace.starts[t] * pagne_metres_per_outfit"
+  - "trace.fabric_into_garments_m[t] == trace.starts[t] * (pagne_metres_per_outfit - offcut_metres_per_pagne)"
+  - "trace.offcuts_m[t] == trace.starts[t] * offcut_metres_per_pagne"
+  - "trace.fabric_shrinkage_m[t] == trace.fabric_stock_opening_m[t] * fabric_shrinkage_rate_monthly"
+  - "trace.fabric_stock_m[t] == fabric_cover_months * trace.fabric_consumed_m[t]"
+  - "trace.fabric_stock_value[t] == trace.fabric_stock_m[t] * fabric_price_per_m"
+  - "fabric_price_per_m == materials_cost_per_outfit * fabric_share_of_materials / pagne_metres_per_outfit"
+  # ---- driver-bridge: money
+  - "trace.revenue_collected[t] == trace.collected[t] * outfit_price_xof"
+  - "trace.revenue_forfeited_deposits[t] == trace.uncollected[t] * deposit_per_outfit"
+  - "trace.offcut_revenue[t] == trace.offcuts_m[t] * offcut_price_per_m"
+  - "trace.deferred_revenue[t] == trace.backlog[t] * deposit_per_outfit"
+  - "deposit_per_outfit == outfit_price_xof * deposit_share"
+  - "opening_deferred_revenue == opening_backlog_outfits * deposit_per_outfit"
+  - "opening_nwc == opening_fabric_stock_m * fabric_price_per_m + trace.wip_value[first] - opening_deferred_revenue"
+  - "trace.materials_expense[t] == trace.starts[t] * materials_cost_per_outfit * (1 + materials_offcut_uplift)"
+  - "trace.shrinkage_expense[t] == trace.fabric_shrinkage_m[t] * fabric_price_per_m"
+  - "trace.seamstress_wages[t] == seamstress_count * seamstress_wage_monthly"
+  - "trace.employer_social_charges[t] == trace.seamstress_wages[t] * employer_social_charge_rate"
+  - "trace.founder_compensation[t] == founder_draw_monthly"
+  - "trace.rent[t] == rent_monthly"
+  - "trace.electricity[t] == electricity_monthly"
+  - "trace.maintenance[t] == maintenance_cost_monthly"
+  - "trace.depreciation[t] == gross_ppe / machine_useful_life_years / 12"
+  - "gross_ppe == sewing_machine_count * sewing_machine_cost_each + overlocker_count * overlocker_cost"
+  - "accumulated_depreciation_opening == gross_ppe / machine_useful_life_years * machine_age_years_at_t0"
+  - "trace.tax_tee[t] == trace.revenue[t] * tee_rate_services * tee_applies * (1 - cga_rate_halving * cga_member)"
+  - "trace.wip_value[t] == wip_units * (materials_cost_per_outfit + wip_conversion_fraction * direct_labour_per_outfit)"
+  - "direct_labour_per_outfit == seamstress_wage_monthly / working_days_per_month * days_per_outfit"
+  # ---- non-negativity and physical fit
+  - "trace.backlog[t] >= 0"
+  - "trace.completions[t] >= 0"
+  - "trace.fabric_stock_m[t] >= 0"
+  - "trace.fabric_into_garments_m[t] >= 0"
+  - "trace.deferred_revenue[t] >= 0"
+  - "trace.wip_value[t] >= 0"
+  - "trace.net_book_value[t] >= 0"
+  - "trace.labour_days_used[t] <= trace.labour_days_available[t]"
+  - "trace.wip_units[t] <= producing_workers"
+  - "machine_hours_already_run == machine_age_years_at_t0 * 12 * producing_workers * working_days_per_month * attendance_availability * hours_per_working_day / sewing_machine_count"
+  - "cumsum(trace.machine_attended_hours)[last] / sewing_machine_count + machine_hours_already_run <= machine_design_life_hours"
+  # ---- regime eligibility and legality, asserted on my own output
+  - "sum(trace.revenue) / 2 >= tee_band_low"
+  - "sum(trace.revenue) / 2 <= tee_band_high"
+  - "seamstress_wage_monthly >= smig_monthly"
+  - "founder_draw_monthly >= smig_monthly"
+
+notes: |
+  FINDINGS
+
+  1. Revenue is flat; cash is violently seasonal. This is the headline. Because the shop is
+     capacity-bound in all 24 months, deliveries — and therefore revenue — do not move at all, while
+     orders swing from 11.72 to 44.54 in a month. The entire seasonal signal lands in the deposit
+     book and therefore in working capital: FCFF is negative in four of the 24 months (both Januaries
+     and both Februaries) and roughly eleven times the normal month in each December. A reader who
+     looked only at an annual view of this business would see none of this and would size its working
+     line wrong. This is the reason for the monthly grid.
+
+  2. The December order surge does not fit the plant, and the founder already knew. Asked for 44.54
+     garments against 23.92 starts, the shop cannot comply. It queues instead: the implied wait
+     reaches 9.9 weeks at end-December against the six weeks he quotes as normal. He flagged this
+     himself — « parfois plus quand il y a beaucoup de commandes » — and the model reproduces the
+     magnitude rather than absorbing the shortfall into a fudged December capacity. Whether he
+     instead works Sundays and takes on apprentices in December is dec_capacity_uplift, and it is
+     asked.
+
+  3. Twenty-six working days a month is a six-day week with no holidays. 26 x 12 = 312 = 52 x 6
+     exactly. Côte d'Ivoire has 14 statutory holidays. The founder's day-count is a nominal opening
+     pattern, not attendance, and I have not quietly kept it: attendance_availability = 0.92 is an
+     explicit, questioned input and every quantity in the model scales off it.
+
+  4. The shop runs a 48-hour week against a 40-hour legal norm. 26 days x 8 hours. That is eight
+     overtime hours a week, permanently, which would carry majorations under the Code du travail if
+     the seamstresses are on contracts. Neither the majorations nor employer social contributions are
+     in the base case, and both turn on the same question, which is why that question is ranked high.
+
+  5. The regime call is where a wrong answer would have hidden perfectly. At 12.47 m XOF of annual
+     turnover this is a taxe d'État de l'entreprenant taxpayer, and the TEE is libératoire: no BIC,
+     no patente, no VAT — and, decisively, no impôt minimum forfaitaire. The IMF's 3 000 000 XOF
+     floor is a RNI/RSI charge. Had I put this workshop in the réel simplifié by reflex, the model
+     would have carried a minimum tax two and a half times its annual EBITDA and every internal check
+     in this document would still have passed.
+
+  6. A turnover tax makes depreciation cash-neutral and the burden heavy. The TEE takes 5% of
+     revenue, which is 58% of EBIT here — more than double the 25% headline BIC rate — and it grants
+     no shield on the 9 583 a month of depreciation, which is deducted and added straight back. The
+     ten-year life I defaulted to therefore changes the P&L and not one franc of FCFF.
+
+  7. The machines will need replacing before their accounting life ends. At 574.08 fleet hours a
+     month, each of the four heads reaches about 6 889 hours by the end of the horizon, four years
+     from purchase — inside a 10 000-hour prior, which is why capex is legitimately zero here. Run
+     the same intensity to the ten-year depreciation life and each machine is asked for roughly
+     17 200 hours, which a 200 000 XOF semi-industrial head does not give. The finding is that the
+     accounting life overstates the economic replacement cycle, direction only: any horizon long
+     enough to contain the replacement will carry capex this one does not.
+
+  8. The business is a wage, not an asset. The founder draws 1 440 000 XOF a year; unlevered free
+     cash flow is 505 329 XOF a year. Almost all the value produced here is his own labour. The
+     producing_workers question is the first one to ask for exactly this reason: if he is himself one
+     of four producing pairs of hands, the residual is even more his wage than the base case says.
+
+  9. Customers finance the workshop. Working capital is negative in every period, between 94 000 and
+     622 000 XOF, against plant with a net book value falling from 910 417 to 690 000. The deposit is
+     not just a discipline device against no-shows; it is this business's funding.
+
+  SIMPLIFICATIONS AND JUDGMENT CALLS
+
+  - Owner compensation. The 120 000 « je me sers » is a draw, not contractually a salary. I expense
+    it, on the standard normalisation that an asset-side cash flow must be struck after the cost of
+    the labour required to run the asset, and a buyer would have to hire a cutter-manager. The
+    friction is recorded rather than hidden: a strict reading would treat it as a distribution and
+    report FCFF 1 440 000 a year higher against a business that then has no manager.
+  - Framework. The task specifies IAS/IFRS; the framework actually applicable in OHADA is SYSCOHADA
+    révisé. On these facts they agree — point-in-time recognition at collection, contract liability
+    for the deposit, conversion costs in work in progress — so nothing turns on it.
+  - Unit friction. The commercial unit at Adjamé is the 6-yard pagne, about 5.4864 m, not 6 m. I have
+    kept the founder's « six mètres » because he stated it, but if he means a 6-yard piece the offcut
+    fraction is 9.1% and not 8.3%, and the fabric-price-per-metre derivation shifts with it. Kept as
+    a friction rather than corrected, because correcting it would be substituting my unit for his.
+  - Tax timing. The TEE is accrued and treated as settled within the month it arises. The real
+    payment calendar (monthly declaration and payment in arrears) would shift a month of tax by one
+    period and would not change the total.
+  - Constant inventory. Fabric cover is held at exactly two months and work in progress at exactly
+    three garments, so both are flat and contribute nothing to the change in working capital. If he
+    buys lumpily on market trips — which « quand c'est là » suggests — the monthly cash line
+    sawtooths around the same total.
+  - Finished-goods stock is zero, declared not omitted. Uncollected garments are written to nil on
+    completion under IAS 2.9: cut to one person's measurements, no alternative use.
+  - Trade receivables and trade payables are zero, declared not omitted, on the stated collection
+    terms and on cash purchase at a market stall.
+
+  DEFERRED — a structural question I did not model
+
+  In Abidjan a large share of bespoke work is « façon »: the customer brings her own pagne and pays
+  only for the making-up. The founder's « ça me revient à seize mille par tenue » implies he buys the
+  cloth on every job, so the base case has no façon business at all. I did not carry this as an input
+  because it would require a second price line (a façon tariff) and a second materials path, i.e. it
+  changes the structure of the model rather than a value in it, and a base of zero with an unmodelled
+  second price would have been a question that moves nothing. It is nevertheless a real question and
+  it belongs in the interview alongside the ranked ones: « Est-ce qu'il y a des clientes qui
+  apportent leur propre pagne et qui paient seulement la façon ? Sur dix tenues, combien ? » If the
+  answer is materially above zero, both the revenue per garment and the materials per garment in this
+  model are wrong in offsetting directions and the mix has to be split.
+
+  Two smaller items also deferred, both low: transport and market-day costs for the Adjamé trips
+  (never mentioned, certainly non-zero, small), and the rent trajectory (held flat at 150 000 for 24
+  months with no escalation described).

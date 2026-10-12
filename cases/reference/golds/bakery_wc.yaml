@@ -1,0 +1,171 @@
+id: bakery_wc
+title: Boulangerie (Bamako) — working-capital cycle (bakery ladder 1.1)
+currency: FCFA
+grid: {periods: 5, freq: annual}     # steady state; Y1 carries the one-off NWC build, Y2..5 flat
+mechanism: >
+  The working-capital cycle: the same steady-state bakery as the baseline, now selling half its bread
+  on ~30-day credit to shops/cafés, buying flour on ~45-day supplier terms, and holding ~2 months of
+  flour in stock. Receivables + inventory − payables = a net working-capital investment that must be
+  laid down once (0 → steady) and then sits flat. Isolates ΔNWC: FCFF[Y1] is depressed by the one-off
+  NWC build; Y2..5 = NOPAT (dep, capex, ΔNWC all 0). Builds on `bakery.yaml` (same 500-loaf baseline,
+  30/360 calendar, 30% formal IS); adds only the WC layer.
+
+# ── 1. Utterance (baseline + the working-capital terms) ────────────────────────
+utterance:
+  fr: |
+    Moi je tiens une boulangerie à Bamako. Je fais cinq cents pains par jour, vendus à deux cent
+    cinquante francs pièce. La farine me coûte cent cinquante francs par pain. Je paie deux boulangers à
+    cent mille francs par mois chacun. Le loyer du local est à huit cent mille francs par mois. Je
+    travaille tous les jours. À peu près la moitié de mon pain, je le livre aux boutiques et aux cafés du
+    quartier — eux, ils me règlent en fin de mois, à peu près trente jours après la livraison. L'autre
+    moitié, c'est la vente au comptoir, payée cash. La farine, mon fournisseur me fait crédit : je le paie
+    à quarante-cinq jours. Et je garde toujours à peu près deux mois de farine en réserve au magasin.
+  en: |
+    I run a bakery in Bamako. I make five hundred loaves a day, sold at two hundred fifty francs each.
+    Flour costs me one hundred fifty francs per loaf. I pay two bakers a hundred thousand francs a month
+    each. The shop rent is eight hundred thousand francs a month. I work every day. About half my bread I
+    deliver to the neighbourhood shops and cafés — they settle at month-end, about thirty days after
+    delivery. The other half is over-the-counter, paid cash. My flour supplier gives me credit: I pay him
+    at forty-five days. And I always keep about two months of flour in reserve.
+
+# ── 2+3. Inputs ────────────────────────────────────────────────────────────────
+inputs:
+  loaves_per_day:  {value: 500,    unit: loaves/day,    prov: STATED,    source: "cinq cents pains par jour", date: 2026-07-24}
+  price_per_loaf:  {value: 250,    unit: FCFA/loaf,     prov: STATED,    source: "vendus à deux cent cinquante francs pièce", date: 2026-07-24}
+  flour_per_loaf:  {value: 150,    unit: FCFA/loaf,     prov: STATED,    source: "la farine me coûte cent cinquante francs par pain — FLOUR only (see notes)", date: 2026-07-24}
+  n_bakers:        {value: 2,      unit: bakers,        prov: STATED,    source: "deux boulangers", date: 2026-07-24}
+  baker_wage:      {value: 100000, unit: FCFA/baker/mo, prov: STATED,    source: "à cent mille par mois chacun", date: 2026-07-24}
+  rent:            {value: 800000, unit: FCFA/month,    prov: STATED,    source: "le loyer du local est à huit cent mille par mois", date: 2026-07-24}
+  operating_days:  {value: 360,    unit: days/year,     prov: DEFAULTED, source: "30/360 commercial day-count (12 × 30-day months). Named convention; independently chosen by BOTH blind authors, anchored by the founder's own 30/45/60-day terms. Founder 'travaille tous les jours' → operating = calendar days, counted on 30/360.", date: 2026-07-24}
+  credit_share:    {value: 0.5,    unit: fraction,      prov: STATED,    source: "'à peu près la moitié' delivered on credit; 'l'autre moitié... payée cash'", date: 2026-07-24}
+  dso_days:        {value: 30,     unit: days,          prov: STATED,    source: "'ils me règlent... à peu près trente jours après la livraison' (credit half only)", date: 2026-07-24}
+  dpo_days:        {value: 45,     unit: days,          prov: STATED,    source: "'mon fournisseur me fait crédit : je le paie à quarante-cinq jours' (flour purchases)", date: 2026-07-24}
+  doi_days:        {value: 60,     unit: days,          prov: STATED,    source: "'deux mois de farine en réserve' → 60 days of flour at cost", date: 2026-07-24}
+  tax_rate:        {value: 30,     unit: "%",           prov: ASSUMED,   source: "formality not stated; representative WAEMU corporate IS ~30% (matches bakery.yaml). ELICIT regime (both authors assumed 30%)", date: 2026-07-24}
+  depreciation:    {value: 0,      unit: FCFA/year,     prov: ASSUMED,   source: "premises rented, no owned durable asset stated → dep 0. Missing oven → SPAWN (as bakery.yaml)", date: 2026-07-24}
+  capex:           {value: 0,      unit: FCFA/year,     prov: ASSUMED,   source: "no equipment purchase stated → capex 0", date: 2026-07-24}
+  wc_build_timing: {value: "Y1",   unit: convention,    prov: ASSUMED,   source: "NWC established once in Y1 (0→3,000,000) so ΔNWC bites once; a mature going-concern already holding its WC would show Y1 ΔNWC 0. Steady-state identical either way (both authors made this choice)", date: 2026-07-24}
+
+# ── 4a. Passage — the full by-hand derivation (30/360 calendar) ────────────────
+passage: |
+  All values in FCFA. Steady-state retail+wholesale bakery, already operating; 5 identical annual
+  periods except the Y1 working-capital build. Natural unit = one loaf; daily flows annualise ×360
+  (30/360 commercial day-count — the founder's own 30/45/60-day terms are clean multiples of a 30-day
+  month, so 30/360 keeps the WC arithmetic exact; both blind authors chose it independently). Monthly
+  costs annualise ×12.
+
+  ── Volume & revenue ──
+  Annual volume = 500 × 360 = 180,000 loaves/year.
+  Revenue = 250 × 180,000 = 45,000,000 (recognised on sale/delivery, IFRS 15, regardless of cash timing).
+  Channel split (drives receivables only): credit (delivered) = 0.5 × 45,000,000 = 22,500,000 ;
+  cash (counter) = 22,500,000. Sum = 45,000,000.
+
+  ── Variable cost — flour only (IAS 2, made & sold same day) ──
+  Flour = 150 × 180,000 = 27,000,000. (Only stated per-loaf cost; energy/yeast/etc held at 0 — upper bound.)
+
+  ── Committed (fixed) cost ──
+  Labour = 2 × 100,000 × 12 = 2,400,000. Rent = 800,000 × 12 = 9,600,000. committed_cost = 12,000,000.
+
+  ── EBITDA / EBIT / NOPAT ──
+  EBITDA = 45,000,000 − 27,000,000 − 12,000,000 = 6,000,000. Depreciation = 0 → EBIT = 6,000,000.
+  tax = 30% × 6,000,000 = 1,800,000. NOPAT = 4,200,000.
+
+  ── Working capital (the mechanism) ──
+  AR = credit sales × DSO/360 = 22,500,000 × 30/360 = 1,875,000 (only the credit half carries a receivable).
+  Inventory = flour cost × DOI/360 = 27,000,000 × 60/360 = 4,500,000 (two months of flour at cost).
+  AP = flour purchases × DPO/360 = 27,000,000 × 45/360 = 3,375,000 (steady purchases = usage).
+  NWC = AR + Inventory − AP = 1,875,000 + 4,500,000 − 3,375,000 = 3,000,000.
+  Built once: NWC 0 → 3,000,000 in Y1 → ΔNWC[Y1] = +3,000,000 ; Y2..5 flat → ΔNWC = 0.
+
+  ── CFO / CFI / FCFF ──
+  CFO = NOPAT + dep − ΔNWC. Y1: 4,200,000 − 3,000,000 = 1,200,000 ; Y2..5: 4,200,000.
+  CFI = −capex = 0. FCFF = CFO + CFI = [1,200,000, 4,200,000, 4,200,000, 4,200,000, 4,200,000].
+  Cross-check: Σ FCFF(5y) = 1,200,000 + 4×4,200,000 = 18,000,000 = 5×NOPAT − WC build = 21,000,000 − 3,000,000. ✓
+
+  ── ODE (diagnostic) ──
+  Owner draws no stated wage → ODE = EBITDA = 6,000,000/year.
+
+# ── 4b. Trace — machine-checkable per-stage values (Y1..Y5) ────────────────────
+trace:
+  volume_loaves:  [180000, 180000, 180000, 180000, 180000]
+  revenue:        [45000000, 45000000, 45000000, 45000000, 45000000]
+  credit_sales:   [22500000, 22500000, 22500000, 22500000, 22500000]   # AR driver (half, on 30-day terms)
+  cash_sales:     [22500000, 22500000, 22500000, 22500000, 22500000]
+  variable_cost:  [27000000, 27000000, 27000000, 27000000, 27000000]   # flour, COGS on sale
+  committed_cost: [12000000, 12000000, 12000000, 12000000, 12000000]   # labour 2.4M + rent 9.6M
+  ebitda:         [6000000, 6000000, 6000000, 6000000, 6000000]
+  depreciation:   [0, 0, 0, 0, 0]
+  ebit:           [6000000, 6000000, 6000000, 6000000, 6000000]
+  tax:            [1800000, 1800000, 1800000, 1800000, 1800000]
+  nopat:          [4200000, 4200000, 4200000, 4200000, 4200000]
+  # working-capital stocks (the mechanism) — close-of-period balances
+  ar:             [1875000, 1875000, 1875000, 1875000, 1875000]
+  inventory:      [4500000, 4500000, 4500000, 4500000, 4500000]
+  ap:             [3375000, 3375000, 3375000, 3375000, 3375000]
+  nwc:            [3000000, 3000000, 3000000, 3000000, 3000000]
+  delta_nwc:      [3000000, 0, 0, 0, 0]
+  book_value:     [0, 0, 0, 0, 0]     # no owned asset
+  cfo:            [1200000, 4200000, 4200000, 4200000, 4200000]
+  cfi:            [0, 0, 0, 0, 0]
+  fcff:           [1200000, 4200000, 4200000, 4200000, 4200000]
+
+# ── 4c. Checks — invariants; every trace cell caught (conformance + falsification) ──
+checks:
+  nwc_scope: "NWC = flour inventory + AR − AP. Finished-goods = 0 (same-day perishable); cash excluded; wages/rent paid within period (no accruals). Built once in Y1 (0→3,000,000), flat thereafter."
+  driver_bridge:
+    - trace.volume_loaves == loaves_per_day * operating_days               # 500 × 360
+    - trace.revenue == price_per_loaf * trace.volume_loaves                # 250 × 180,000
+    - trace.credit_sales == credit_share * trace.revenue                   # 0.5 × revenue
+    - trace.cash_sales == trace.revenue - trace.credit_sales
+    - trace.variable_cost == flour_per_loaf * trace.volume_loaves          # 150 × 180,000
+    - trace.committed_cost == n_bakers * baker_wage * 12 + rent * 12        # 2.4M + 9.6M
+    - trace.ar == trace.credit_sales * dso_days / operating_days           # 22,500,000 × 30/360
+    - trace.inventory == trace.variable_cost * doi_days / operating_days    # 27,000,000 × 60/360
+    - trace.ap == trace.variable_cost * dpo_days / operating_days           # 27,000,000 × 45/360
+  conservation:
+    - trace.nwc == trace.ar + trace.inventory - trace.ap                    # net of the three stocks
+    - cumsum(trace.delta_nwc) == trace.nwc                                  # ΔNWC integrates to the NWC level
+    - trace.book_value[t] == trace.book_value[t-1] + capex - trace.depreciation[t]   # 0 = 0 + 0 − 0
+  definition:
+    - trace.ebitda == trace.revenue - trace.variable_cost - trace.committed_cost
+    - trace.ebit == trace.ebitda - trace.depreciation
+    - trace.tax == (tax_rate/100) * trace.ebit
+    - trace.nopat == trace.ebit - trace.tax
+    - trace.cfo == trace.nopat + trace.depreciation - trace.delta_nwc
+    - trace.fcff == trace.cfo + trace.cfi
+  non_negativity:
+    - trace.ar[t] >= 0
+    - trace.inventory[t] >= 0
+    - trace.ap[t] >= 0
+    - trace.book_value[t] >= 0
+  meta:
+    - len(each trace row) == grid.periods
+    - fcff == trace.fcff
+
+# ── 5. FCFF ────────────────────────────────────────────────────────────────────
+fcff: [1200000, 4200000, 4200000, 4200000, 4200000]   # Y1 = NOPAT − WC build; Y2..5 = NOPAT
+
+# ── 6. ODE ─────────────────────────────────────────────────────────────────────
+ode: [6000000, 6000000, 6000000, 6000000, 6000000]   # = EBITDA (actual owner comp = 0)
+
+# ── notes ──────────────────────────────────────────────────────────────────────
+notes: |
+  Bakery-ladder 1.1: the working-capital mechanism on the bakery baseline. Re-authored blind from the
+  utterance by two independent analysts; both converged to the franc on the WC mechanism
+  (NWC = 3,000,000; AR 1,875,000 + inventory 4,500,000 − AP 3,375,000) and on the ΔNWC-bites-once shape,
+  differing only in grid granularity (annual vs monthly — same economics).
+
+  DAY-COUNT (resolved): 30/360 adopted. Both blind authors independently chose the 30/360 commercial
+  day-count (360 days/yr → steady FCFF 4,200,000), anchored by the founder's own 30/45/60-day terms;
+  the field settled it, so 360 stands. The WC level is 3,000,000 under either day-count (round terms) —
+  only the steady operating level differs (365 would give 4,375,000). CONSEQUENCE (open): the accepted
+  `bakery.yaml` baseline (1.0) still uses 365 → 4,375,000; for the ladder to stay coherent (1.1 = 1.0 +
+  WC only, same calendar) the baseline should move to 30/360 too. Flagged for the baseline's owner.
+
+  Inherited baseline BOUNDs (same as bakery.yaml, disclosed there):
+  - COGS = flour only; energy/yeast/salt/packaging held at 0 → EBITDA an upper bound.
+  - Revenue assumes 100% same-day sell-through (loaves made = sold); spoilage/returns = 0 → SPAWN.
+  - Missing oven (dep/capex 0) → FCFF an upper bound; owned-asset case a SPAWN sibling.
+  - Owner labour uncosted (ODE diagnostic); tax regime ASSUMED 30% → ELICIT.
+  WC-specific: AR on the credit half only (cash half carries no receivable); AP on flour purchases;
+  wages/rent paid within period (no accrual WC); the 3,000,000 is released at wind-down (not modelled).
