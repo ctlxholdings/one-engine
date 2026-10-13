@@ -62,6 +62,33 @@ SLIPS = {
         "driver _17_Outputs.F22:L22",
         # 09_Debt D13's total is one year's interest, not the sum of the years
         "_09_Debt.D13:L13"},
+    "business_plan_3moissons_2021": {
+        # fourteen slips, each named with its cell and both numbers in the translation's header (S1-S14):
+        # Dep: technical buildings taxed at 15% not 5% (S1), miscellaneous assets divided by 100,000 (S2),
+        # straight line run past cost in year 10 (S3); these move the whole P&L below variable costs
+        "Dep.B15:L15", "Dep.B17:L17", "Dep.B22:L22", "Dep.B23:L23", "Dep.B32:L32", "Dep.B38:L38",
+        "Dep.B39:L39", "Dep.C20:L20", "Dep.C31:L31", "Dep.C34:L34", "Dep.C42:L42",
+        "P_L.D36:M36", "P_L.D38:M38", "P_L.D40:M40", "P_L.D42:M42", "P_L.D45:M45", "P_L.D46:M46",
+        "P_L.D47:M47", "P_L.D48:M48", "P_L.D50:M50", "P_L.D54:M54", "P_L.D55:M55", "P_L.D56:M56",
+        "P_L.D57:M57", "P_L.D58:M58", "P_L.D60:L60", "P_L.D66:L66", "P_L.D67:L67", "P_L.D68:L68",
+        "P_L.C75:L75", "P_L.D83:L83", "P_L.C84:L84", "P_L.D85:L85", "P_L.D92:M92", "P_L.D94:M94",
+        "P_L.D95:M95", "P_L.D99:M99", "P_L.D100:M100", "P_L.D102:M102", "P_L.D103:M103", "P_L.D104:M104",
+        "P_L.D109:L109", "P_L.D110:L110", "P_L.D111:L111", "P_L.D112:L112", "P_L.D113:L113",
+        "P_L.D114:L114", "P_L.D115", "P_L.D118:L118", "P_L.D124:L124", "P_L.D125", "P_L.D129:L129",
+        "P_L.D136:J136", "P_L.D137", "P_L.D142:L142", "P_L.D143:L143", "P_L.D145:L145", "P_L.C154:M154",
+        "P_L.C155", "P_L.D159:L159", "P_L.D160:L160", "P_L.D162:L162", "P_L.C167:L167", "P_L.D176:L176",
+        "P_L.D177:L177", "P_L.D178:L178", "P_L.D179:L179", "P_L.D181:L181", "P_L.D183:L183",
+        "P_L.F199:L199", "P_L.D202:L202", "P_L.D204:L204", "P_L.F205:L205", "P_L.F214:L214",
+        "P_L.D217:L217", "P_L.F218:L218", "P_L.D229:L229", "P_L.D230:L230", "driver P_L.D232:L232",
+        "P_L.C239", "P_L.C240", "P_L.C241",
+        # Growing cost: three crop totals add the hectares (S11-S13), aubergine margin subtracts the yield (S14)
+        "Growing_cost_assum.B15:L15", "Growing_cost_assum.C20:L20", "Growing_cost_assum.B107:L107",
+        "Growing_cost_assum.C112:L112", "Growing_cost_assum.C149:L149", "Growing_cost_assum.B198:L198",
+        "Growing_cost_assum.C203:L203"},
+    "modeloff_2015_tax_solution": {
+        # not a slip: no reading yet tests a record for nonzero (the first month a loss expires);
+        # the row is all zeros here and feeds only F104, a date answer the oracle sets aside
+        "Solution.M62:EN62"},
 }
 
 

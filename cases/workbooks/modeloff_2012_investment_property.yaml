@@ -1,0 +1,303 @@
+# Workbook "modeloff_2012_investment_property": the answer workbook of ModelOff 2012 "Buying an Investment
+# Property" (golds one-place, oracles/external/excel_models/corpus/downloads/
+# ModelOff-Buying-an-Investment-Property-Answers.xlsx; cases/reference/workbooks/
+# modeloff_2012_investment_property.xlsx). "Section 1 - Cover" is a title page; the model is "Sheet2".
+#
+# Period t is year t of the holding: t = 0 the purchase (column C), t = 1 to 10 years 1 to 10 (D to M).
+#   * uses (D6:D8): the apartment D6 (=1.6*10^6), bank charges D7 and furniture D8, bought at t = 0;
+#     the bank charges and the furniture are held at cost (they are part of the capital gains base, D9);
+#     sources: the debt D13, and equity for the rest (D12 = D9 - D13);
+#   * the apartment grows from D6 to the D16 sale value in 10 years at (D16/D6)^(1/10) - 1 a year (row 22),
+#     posted as a revaluation of the property to a revaluation reserve (equity);
+#   * rent D28 in year 1, growing by row 29; agency fees C30 and maintenance C31 of it (rows 30, 31);
+#     interest C34 on the opening debt (row 34); tax C38 of the cash flow before tax (row 38), paid in the
+#     year; everything left repays the debt (row 46); no distribution while the property is held;
+#   * the sale at the end of year C52 (rows 53, 54, 59, 60) is the variant "sale": that year's sweep
+#     runs, then the property is sold at its value, the revaluation reserve and the costs held (D7, D8)
+#     are realised as the capital gain over D9 (row 53), the gains tax is C54 of it (row 54), the debt is
+#     repaid and the rest goes to the owner (row 59, from the -D12 put in at t = 0); H60 is the owner's
+#     IRR. Nothing runs after the sale in that variant. The base case holds the property for 10 years.
+# The tenth root of row 22 is not a formula the generator has (it raises only to whole powers): it is
+# found by Newton's method, each step cut to 1000^-5, which leaves it within 1e-15 of the root; the
+# workbook's double is within 1e-16 of it.
+# The workbook's own formulas agree with the books throughout (no slip found).
+workbook: modeloff_2012_investment_property
+entity: owner
+plant: Sheet2__D28
+case:
+  case: workbook-modeloff-investment-property
+  periods: 11
+  phases: [invest, operate, pay, sale]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 11
+      inputs: workbook
+      values:
+        price: Sheet2__D6__n1 * Sheet2__D6__n2 ** Sheet2__D6__n3
+        uses: price + Sheet2__D7 + Sheet2__D8
+        equity: uses - Sheet2__D13
+        year_no: t * Sheet2__D20__n1
+        sold: 0
+        sale_t: Sheet2__C52 + 0
+        # the yearly growth of D22, (D16/D6)^(1/10) - 1. The formulas raise only to whole powers, so the
+        # root is found by Newton's method, x <- ((n - 1) x + r / x^(n - 1)) / n from 1 + (r - 1) / n (above
+        # the root), each step cut to 1000^-5; six steps leave it within 1e-15 of the root
+        ratio: Sheet2__D16 / price
+        root_n: Sheet2__D22__n2 / Sheet2__D22__n1
+        cut_to: 1 / 1000 ** 5
+        x_0: 1 + (ratio - 1) / root_n
+        y_1: ((root_n - 1) * x_0 + ratio / x_0 ** (root_n - 1)) / root_n
+        x_1: y_1 - y_1 % cut_to
+        y_2: ((root_n - 1) * x_1 + ratio / x_1 ** (root_n - 1)) / root_n
+        x_2: y_2 - y_2 % cut_to
+        y_3: ((root_n - 1) * x_2 + ratio / x_2 ** (root_n - 1)) / root_n
+        x_3: y_3 - y_3 % cut_to
+        y_4: ((root_n - 1) * x_3 + ratio / x_3 ** (root_n - 1)) / root_n
+        x_4: y_4 - y_4 % cut_to
+        y_5: ((root_n - 1) * x_4 + ratio / x_4 ** (root_n - 1)) / root_n
+        x_5: y_5 - y_5 % cut_to
+        y_6: ((root_n - 1) * x_5 + ratio / x_5 ** (root_n - 1)) / root_n
+        x_6: y_6 - y_6 % cut_to
+        growth: x_6 - Sheet2__D22__n3
+        value_0: price + 0
+        debt_0: Sheet2__D13 + 0
+        rent_1: Sheet2__D28 + 0
+        cfbit_1: rent_1 - rent_1 * Sheet2__C30 - rent_1 * Sheet2__C31
+        interest_1: debt_0 * Sheet2__C34
+        cfbt_1: cfbit_1 - interest_1
+        cf_1: cfbt_1 - cfbt_1 * Sheet2__C38
+        debt_1: debt_0 - cf_1
+        value_1: value_0 + value_0 * growth
+        rent_2: rent_1 * (Sheet2__E28__n1 + Sheet2__E29)
+        cfbit_2: rent_2 - rent_2 * Sheet2__C30 - rent_2 * Sheet2__C31
+        interest_2: debt_1 * Sheet2__C34
+        cfbt_2: cfbit_2 - interest_2
+        cf_2: cfbt_2 - cfbt_2 * Sheet2__C38
+        debt_2: debt_1 - cf_2
+        value_2: value_1 + value_1 * growth
+        rent_3: rent_2 * (Sheet2__F28__n1 + Sheet2__F29)
+        cfbit_3: rent_3 - rent_3 * Sheet2__C30 - rent_3 * Sheet2__C31
+        interest_3: debt_2 * Sheet2__C34
+        cfbt_3: cfbit_3 - interest_3
+        cf_3: cfbt_3 - cfbt_3 * Sheet2__C38
+        debt_3: debt_2 - cf_3
+        value_3: value_2 + value_2 * growth
+        rent_4: rent_3 * (Sheet2__G28__n1 + Sheet2__G29)
+        cfbit_4: rent_4 - rent_4 * Sheet2__C30 - rent_4 * Sheet2__C31
+        interest_4: debt_3 * Sheet2__C34
+        cfbt_4: cfbit_4 - interest_4
+        cf_4: cfbt_4 - cfbt_4 * Sheet2__C38
+        debt_4: debt_3 - cf_4
+        value_4: value_3 + value_3 * growth
+        rent_5: rent_4 * (Sheet2__H28__n1 + Sheet2__H29)
+        cfbit_5: rent_5 - rent_5 * Sheet2__C30 - rent_5 * Sheet2__C31
+        interest_5: debt_4 * Sheet2__C34
+        cfbt_5: cfbit_5 - interest_5
+        cf_5: cfbt_5 - cfbt_5 * Sheet2__C38
+        debt_5: debt_4 - cf_5
+        value_5: value_4 + value_4 * growth
+        rent_6: rent_5 * (Sheet2__I28__n1 + Sheet2__I29)
+        cfbit_6: rent_6 - rent_6 * Sheet2__C30 - rent_6 * Sheet2__C31
+        interest_6: debt_5 * Sheet2__C34
+        cfbt_6: cfbit_6 - interest_6
+        cf_6: cfbt_6 - cfbt_6 * Sheet2__C38
+        debt_6: debt_5 - cf_6
+        value_6: value_5 + value_5 * growth
+        rent_7: rent_6 * (Sheet2__J28__n1 + Sheet2__J29)
+        cfbit_7: rent_7 - rent_7 * Sheet2__C30 - rent_7 * Sheet2__C31
+        interest_7: debt_6 * Sheet2__C34
+        cfbt_7: cfbit_7 - interest_7
+        cf_7: cfbt_7 - cfbt_7 * Sheet2__C38
+        debt_7: debt_6 - cf_7
+        value_7: value_6 + value_6 * growth
+        rent_8: rent_7 * (Sheet2__K28__n1 + Sheet2__K29)
+        cfbit_8: rent_8 - rent_8 * Sheet2__C30 - rent_8 * Sheet2__C31
+        interest_8: debt_7 * Sheet2__C34
+        cfbt_8: cfbit_8 - interest_8
+        cf_8: cfbt_8 - cfbt_8 * Sheet2__C38
+        debt_8: debt_7 - cf_8
+        value_8: value_7 + value_7 * growth
+        rent_9: rent_8 * (Sheet2__L28__n1 + Sheet2__L29)
+        cfbit_9: rent_9 - rent_9 * Sheet2__C30 - rent_9 * Sheet2__C31
+        interest_9: debt_8 * Sheet2__C34
+        cfbt_9: cfbit_9 - interest_9
+        cf_9: cfbt_9 - cfbt_9 * Sheet2__C38
+        debt_9: debt_8 - cf_9
+        value_9: value_8 + value_8 * growth
+        rent_10: rent_9 * (Sheet2__M28__n1 + Sheet2__M29)
+        cfbit_10: rent_10 - rent_10 * Sheet2__C30 - rent_10 * Sheet2__C31
+        interest_10: debt_9 * Sheet2__C34
+        cfbt_10: cfbit_10 - interest_10
+        cf_10: cfbt_10 - cfbt_10 * Sheet2__C38
+        debt_10: debt_9 - cf_10
+        value_10: value_9 + value_9 * growth
+        live: 1 - sold * (t > sale_t)
+        rent: live * ((t == 1) * rent_1 + (t == 2) * rent_2 + (t == 3) * rent_3 + (t == 4) * rent_4 + (t == 5) * rent_5 + (t == 6) * rent_6 + (t == 7) * rent_7 + (t == 8) * rent_8 + (t == 9) * rent_9 + (t == 10) * rent_10)
+        agency: rent * Sheet2__C30
+        maintenance: rent * Sheet2__C31
+        interest: live * ((t == 1) * interest_1 + (t == 2) * interest_2 + (t == 3) * interest_3 + (t == 4) * interest_4 + (t == 5) * interest_5 + (t == 6) * interest_6 + (t == 7) * interest_7 + (t == 8) * interest_8 + (t == 9) * interest_9 + (t == 10) * interest_10)
+        cfbt: rent - agency - maintenance - interest
+        tax: cfbt * Sheet2__C38
+        repayment: cfbt - tax
+        value: (t == 0) * value_0 + (t == 1) * value_1 + (t == 2) * value_2 + (t == 3) * value_3 + (t == 4) * value_4 + (t == 5) * value_5 + (t == 6) * value_6 + (t == 7) * value_7 + (t == 8) * value_8 + (t == 9) * value_9 + (t == 10) * value_10
+        revaluation: live * (value - lag(value, 1)) * (t >= 1)
+        start: (t == 0) * 1
+        purchase: start * price
+        bank_charges: start * Sheet2__D7
+        furniture: start * Sheet2__D8
+        draw: start * Sheet2__D13
+        contribution: start * equity
+        # the sale (variant 'sale'): at the end of year C52, after that year's sweep; nothing runs after it
+        at_sale: sold * (t == sale_t)
+        debt_close: (t == 0) * debt_0 + (t == 1) * debt_1 + (t == 2) * debt_2 + (t == 3) * debt_3 + (t == 4) * debt_4 + (t == 5) * debt_5 + (t == 6) * debt_6 + (t == 7) * debt_7 + (t == 8) * debt_8 + (t == 9) * debt_9 + (t == 10) * debt_10
+        proceeds: at_sale * value
+        realised: at_sale * (value - price)
+        cgt: at_sale * (value - uses) * Sheet2__C54
+        settle_debt: at_sale * debt_close
+        furniture_off: at_sale * Sheet2__D8
+        charges_off: at_sale * Sheet2__D7
+        payout: proceeds - cgt - settle_debt
+  opening:
+    owner:
+      cash: {nature: asset, value: 0}
+  contracts: {}
+  rulebooks:
+    purchase:
+      kind: transfer
+      entity: owner
+      phase: invest
+      declare: {property: asset, acquisition_costs: asset, furniture: asset, debt: liability,
+                equity_capital: equity, revaluation_reserve: equity, equity_distributions: equity}
+      moves:
+        equity: {debit: cash, credit: equity_capital, amount: {generator: src, output: contribution}}
+        debt: {debit: cash, credit: debt, amount: {generator: src, output: draw}}
+        property: {debit: property, credit: cash, amount: {generator: src, output: purchase}}
+        bank_charges: {debit: acquisition_costs, credit: cash, amount: {generator: src, output: bank_charges}}
+        furniture: {debit: furniture, credit: cash, amount: {generator: src, output: furniture}}
+    rental:
+      kind: transfer
+      entity: owner
+      phase: operate
+      declare: {rent: income, agency: expense, maintenance: expense, interest: expense, tax: expense}
+      moves:
+        rent: {debit: cash, credit: rent, amount: {generator: src, output: rent}}
+        agency: {debit: agency, credit: cash, amount: {generator: src, output: agency}}
+        maintenance: {debit: maintenance, credit: cash, amount: {generator: src, output: maintenance}}
+        interest: {debit: interest, credit: cash, amount: {generator: src, output: interest}}
+        tax: {debit: tax, credit: cash, amount: {generator: src, output: tax}}
+        revaluation: {debit: property, credit: revaluation_reserve, amount: {generator: src, output: revaluation}}
+    sweep:
+      kind: transfer
+      entity: owner
+      phase: pay
+      moves:
+        repayment: {debit: debt, credit: cash, amount: {generator: src, output: repayment}}
+    sale:
+      kind: transfer
+      entity: owner
+      phase: sale
+      declare: {capital_gain: income, gains_tax: expense}
+      moves:
+        proceeds: {debit: cash, credit: property, amount: {generator: src, output: proceeds}}
+        realised: {debit: revaluation_reserve, credit: capital_gain, amount: {generator: src, output: realised}}
+        furniture: {debit: capital_gain, credit: furniture, amount: {generator: src, output: furniture_off}}
+        bank_charges: {debit: capital_gain, credit: acquisition_costs, amount: {generator: src, output: charges_off}}
+        gains_tax: {debit: gains_tax, credit: cash, amount: {generator: src, output: cgt}}
+        debt: {debit: debt, credit: cash, amount: {generator: src, output: settle_debt}}
+        payout: {debit: equity_distributions, credit: cash, amount: {generator: src, output: payout}}
+  schemes:
+    pnl:
+      rent: rent
+      agency: agency
+      maintenance: maintenance
+      interest: interest
+      tax: tax
+      capital_gain: capital_gain
+      gains_tax: gains_tax
+    cash_flow:
+      property: investing
+      acquisition_costs: investing
+      furniture: investing
+      rent: operating
+      agency: operating
+      maintenance: operating
+      interest: financing
+      tax: operating
+      gains_tax: operating
+      capital_gain: investing
+      revaluation_reserve: investing
+      debt: financing
+      equity_capital: equity
+      equity_distributions: equity
+    balance:
+      cash: other
+      property: cost
+      acquisition_costs: cost
+      furniture: cost
+      debt: debt
+      equity_capital: other
+      revaluation_reserve: other
+      equity_distributions: other
+  cuts:
+    property: {entity: owner, account: cash, scheme: cash_flow, include: [investing]}
+    equity: {entity: owner, account: cash, scheme: cash_flow, include: [equity]}
+    sources: {entity: owner, account: cash, scheme: cash_flow, include: [equity, financing]}
+    rent: {kind: pnl, entity: owner, scheme: pnl, include: [rent]}
+    agency: {kind: pnl, entity: owner, scheme: pnl, include: [agency]}
+    maintenance: {kind: pnl, entity: owner, scheme: pnl, include: [maintenance]}
+    before_interest: {kind: pnl, entity: owner, scheme: pnl, include: [rent, agency, maintenance]}
+    interest: {kind: pnl, entity: owner, scheme: pnl, include: [interest]}
+    before_tax: {kind: pnl, entity: owner, scheme: pnl, include: [rent, agency, maintenance, interest]}
+    tax: {kind: pnl, entity: owner, scheme: pnl, include: [tax]}
+    after_tax: {kind: pnl, entity: owner, scheme: pnl, include: [rent, agency, maintenance, interest, tax]}
+    capital_gain: {kind: pnl, entity: owner, scheme: pnl, include: [capital_gain]}
+    gains_tax: {kind: pnl, entity: owner, scheme: pnl, include: [gains_tax]}
+  lenses:
+    hold_and_sell:
+      kind: exit_returns
+      entity: owner
+      cash: cash
+      period: {generator: src, output: sale_t}
+      value: {generator: src, output: value}
+      gains_tax: {rate: {generator: src, output: Sheet2__C54}, cost: {scheme: balance, include: [cost]}}
+      net_debt: {scheme: balance, include: [debt]}
+      flows: cash_flow
+      claims_scheme: balance
+      holders:
+        owner: {classes: [equity], claim: []}
+      ownership: {paid: [owner], at: 0, layers: []}
+  measures:
+    owner_irr: {measure: irr, cut: hold_and_sell.owner}
+variants:
+  sale: {values: {sold: 1}}
+figures:
+  Sheet2.D6: {balance: property, at: 0}
+  Sheet2.D9: {cut: property, sign: -1, at: 0}
+  Sheet2.D12: {cut: equity, at: 0}
+  Sheet2.D14: {cut: sources, at: 0}
+  Sheet2.D20:M20: {driver: src.year_no, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D21:M21: {opening: property, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D22:M22: {change: property, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D23:M23: {balance: property, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.E28:M28: {cut: rent, periods: [2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D30:M30: {cut: agency, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D31:M31: {cut: maintenance, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D32:M32: {cut: before_interest, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D34:M34: {cut: interest, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D36:M36: {cut: before_tax, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D38:M38: {cut: tax, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D40:M40: {cut: after_tax, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D45:M45: {opening: debt, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D46:M46: {change: debt, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D47:M47: {balance: debt, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D53:M53: {cut: capital_gain, variant: sale, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.D54:M54: {cut: gains_tax, variant: sale, sign: -1, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  Sheet2.C59:M59: {cut: equity, variant: sale, sign: -1}
+  Sheet2.H60: {measure: owner_irr}
+  Sheet2.D62:M62: {balance: property - debt, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+notes: >
+  Row 22's growth is a tenth root, which the formulas reach by Newton's method (see the header); every
+  other figure is exact arithmetic over the workbook's inputs.

@@ -1,0 +1,274 @@
+# Workbook "modeloff_2015_tax_solution": the solution workbook of ModelOff 2015 Round 1 Section 3, "Tax"
+# (prepared by Dan Mayoh; golds one-place, oracles/external/excel_models/corpus/downloads/
+# MO15-Round-1-Sec-3-Tax-Solution-1.xlsx; cases/reference/workbooks/modeloff_2015_tax_solution.xlsx).
+# Sheets "Formats" (a legend, no figure), "Assumptions" and "Solution".
+#
+# Period t is the month t + 1 of the grid, columns M (t = 0) to EN (t = 131), 132 months. A typed date is
+# its Excel serial: Solution M6 (1 January 2015) starts month 0, month t ends on EOMONTH(M6, M7's 0 + t)
+# and month t > 0 starts the day after month t - 1 ends (rows 6-7); its calendar year (row 65) and month of
+# the year (row 91) are YEAR and MONTH of that end date, so nothing assumes the grid starts in January.
+#   * the business's taxable profit by month (Assumptions row 13) is posted to the books (Solution row 13
+#     reads it back);
+#   * each month's tax rate (row 48) is the rates of Assumptions I20:I32 weighted by the days of the month
+#     each is in force, from its start and end dates E20:F32 (rows 34-46: MAX(0, MIN(end of month, end of
+#     rate) - MAX(start of month, start of rate) + 1)). Rate 13 runs "Onwards": Solution F31 ends it at
+#     MAX(F30 + 1, EN7), the later of the day after rate 12 and the last month's end; every month ends on
+#     or before EN7, so its window is cut at MAX(F30 + 1, the month's own end), which gives each month the
+#     same days;
+#   * the tax charge is the rate times the profit (row 50). A negative charge is a tax loss, carried as tax
+#     (income_tax losses_in: tax: a loss saves tax at the rate of the month it arose in) and used first
+#     against later tax (rows 54-60); the tax payable is what is left (row 64);
+#   * losses expire after Assumptions I48 years (G58 months) only when the switch Solution G59 is 1; it is
+#     0, so nothing expires (row 59 is nil) and the rulebook carries losses without limit
+#     (carry_forward_periods: null);
+#   * each calendar year's tax payable (D70:E80) is paid the next year in the months and shares of
+#     Assumptions F39:I41 (base case) or Solution S86:T88 (adjusted case), as I85 chooses (rows 86-92).
+#     tax_instalments pays them in the periods of the year (pay month - MONTH(M6)) mod 12; it counts a
+#     year as twelve periods from t = 0, which is the calendar year because M6 is a 1 January (see notes).
+#     The 2025 tax falls due after the grid and stays payable, as in the workbook.
+# Answers F97:F106 read the same books: F97 the rate of CT (t = 85), F99 the losses at DD (t = 95), F100
+# the tax payable to EL (t = 129), F101 the payment at EJ (t = 127), F103 the payments AZ:EJ (t = 39 to
+# 127, the window 3 x 12 + 3 to 10 x 12 + 7 in the generator).
+# No slip found in the workbook.
+workbook: modeloff_2015_tax_solution
+entity: company
+plant: Assumptions__I21
+case:
+  case: workbook-modeloff-tax-solution
+  periods: 132
+  phases: [operate, tax, pay]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 132
+      inputs: workbook
+      values:
+        # section numbers: the largest number above in column A, plus the formula's 0.01
+        assumptions_1: Assumptions__A3 + Assumptions__A11__n1
+        assumptions_2: max(Assumptions__A3, assumptions_1) + Assumptions__A15__n1
+        assumptions_3: max(assumptions_2, assumptions_1) + Assumptions__A35__n1
+        assumptions_4: max(assumptions_3, assumptions_2) + Assumptions__A44__n1
+        solution_1: Solution__A3 + Solution__A11__n1
+        solution_2: max(Solution__A3, solution_1) + Solution__A94__n1
+        # question numbers (B97 typed, then +1)
+        question_33: Solution__B97 + Solution__B98__n1
+        question_34: question_33 + Solution__B99__n1
+        question_35: question_34 + Solution__B100__n1
+        question_36: question_35 + Solution__B101__n1
+        question_37: question_36 + Solution__B102__n1
+        question_38: question_37 + Solution__B103__n1
+        question_39: question_38 + Solution__B104__n1
+        question_40: question_39 + Solution__B105__n1
+        question_41: question_40 + Solution__B106__n1
+        # the calendar (rows 6-7): month t ends at EOMONTH(M6, t); it starts the day after month t - 1 ends
+        period_end: EOMONTH(Solution__M6, Solution__M7__n1 + t)
+        period_start: (t == 0) * Solution__M6 + (t > 0) * (lag(period_end, 1) + Solution__N6__n1)
+        calendar_year: YEAR(period_end)
+        month_of_year: MONTH(period_end)
+        # rate 13 runs on: F31 = MAX(F30 + 1, EN7); no month ends after EN7, so its own end stands for EN7
+        rate_13_end: max(Assumptions__F31 + Solution__F31__n1, period_end)
+        # rows 34-46: the days of the month each rate is in force
+        days_rate_1: max(Solution__M34__n1, min(period_end, Assumptions__F20) - max(period_start, Assumptions__E20) + Solution__M34__n2)
+        days_rate_2: max(Solution__M35__n1, min(period_end, Assumptions__F21) - max(period_start, Assumptions__E21) + Solution__M35__n2)
+        days_rate_3: max(Solution__M36__n1, min(period_end, Assumptions__F22) - max(period_start, Assumptions__E22) + Solution__M36__n2)
+        days_rate_4: max(Solution__M37__n1, min(period_end, Assumptions__F23) - max(period_start, Assumptions__E23) + Solution__M37__n2)
+        days_rate_5: max(Solution__M38__n1, min(period_end, Assumptions__F24) - max(period_start, Assumptions__E24) + Solution__M38__n2)
+        days_rate_6: max(Solution__M39__n1, min(period_end, Assumptions__F25) - max(period_start, Assumptions__E25) + Solution__M39__n2)
+        days_rate_7: max(Solution__M40__n1, min(period_end, Assumptions__F26) - max(period_start, Assumptions__E26) + Solution__M40__n2)
+        days_rate_8: max(Solution__M41__n1, min(period_end, Assumptions__F27) - max(period_start, Assumptions__E27) + Solution__M41__n2)
+        days_rate_9: max(Solution__M42__n1, min(period_end, Assumptions__F28) - max(period_start, Assumptions__E28) + Solution__M42__n2)
+        days_rate_10: max(Solution__M43__n1, min(period_end, Assumptions__F29) - max(period_start, Assumptions__E29) + Solution__M43__n2)
+        days_rate_11: max(Solution__M44__n1, min(period_end, Assumptions__F30) - max(period_start, Assumptions__E30) + Solution__M44__n2)
+        days_rate_12: max(Solution__M45__n1, min(period_end, Assumptions__F31) - max(period_start, Assumptions__E31) + Solution__M45__n2)
+        days_rate_13: max(Solution__M46__n1, min(period_end, rate_13_end) - max(period_start, Assumptions__E32) + Solution__M46__n2)
+        # row 48: the rates weighted by their days
+        rate: (Assumptions__I20 * days_rate_1 + Assumptions__I21 * days_rate_2 + Assumptions__I22 * days_rate_3 + Assumptions__I23 * days_rate_4 + Assumptions__I24 * days_rate_5 + Assumptions__I25 * days_rate_6 + Assumptions__I26 * days_rate_7 + Assumptions__I27 * days_rate_8 + Assumptions__I28 * days_rate_9 + Assumptions__I29 * days_rate_10 + Assumptions__I30 * days_rate_11 + Assumptions__I31 * days_rate_12 + Assumptions__I32 * days_rate_13) / (days_rate_1 + days_rate_2 + days_rate_3 + days_rate_4 + days_rate_5 + days_rate_6 + days_rate_7 + days_rate_8 + days_rate_9 + days_rate_10 + days_rate_11 + days_rate_12 + days_rate_13)
+        # money
+        profit: Assumptions__M13_EN13 + 0
+        # the loss expiry counter and the expiry in months
+        counter: (t + 1) * Solution__M54__n1
+        expiry_months: Assumptions__I48 * Solution__G58__n1
+        # the yearly table (D70:D80): the first month's year, then +1
+        year_0: YEAR(EOMONTH(Solution__M6, Solution__M7__n1))
+        year_1: year_0 + Solution__D71__n1
+        year_2: year_1 + Solution__D72__n1
+        year_3: year_2 + Solution__D73__n1
+        year_4: year_3 + Solution__D74__n1
+        year_5: year_4 + Solution__D75__n1
+        year_6: year_5 + Solution__D76__n1
+        year_7: year_6 + Solution__D77__n1
+        year_8: year_7 + Solution__D78__n1
+        year_9: year_8 + Solution__D79__n1
+        year_10: year_9 + Solution__D80__n1
+        in_year_0: (calendar_year == year_0) * 1
+        in_year_1: (calendar_year == year_1) * 1
+        in_year_2: (calendar_year == year_2) * 1
+        in_year_3: (calendar_year == year_3) * 1
+        in_year_4: (calendar_year == year_4) * 1
+        in_year_5: (calendar_year == year_5) * 1
+        in_year_6: (calendar_year == year_6) * 1
+        in_year_7: (calendar_year == year_7) * 1
+        in_year_8: (calendar_year == year_8) * 1
+        in_year_9: (calendar_year == year_9) * 1
+        in_year_10: (calendar_year == year_10) * 1
+        # the payment calendar: CHOOSE(I85, base case, adjusted case), then each month's share by its month
+        base_case: (Solution__I85 == 1) * 1
+        adjusted_case: (Solution__I85 == 2) * 1
+        pay_month_1: base_case * Assumptions__F39 + adjusted_case * Solution__S86
+        pay_share_1: base_case * Assumptions__I39 + adjusted_case * Solution__T86
+        pay_period_1: (pay_month_1 - MONTH(Solution__M6)) % 12
+        pay_month_2: base_case * Assumptions__F40 + adjusted_case * Solution__S87
+        pay_share_2: base_case * Assumptions__I40 + adjusted_case * Solution__T87
+        pay_period_2: (pay_month_2 - MONTH(Solution__M6)) % 12
+        pay_month_3: base_case * Assumptions__F41 + adjusted_case * Solution__S88
+        pay_share_3: base_case * Assumptions__I41 + adjusted_case * Solution__T88
+        pay_period_3: (pay_month_3 - MONTH(Solution__M6)) % 12
+        pay_factor: (month_of_year == pay_month_1) * pay_share_1 + (month_of_year == pay_month_2) * (month_of_year != pay_month_1) * pay_share_2 + (month_of_year == pay_month_3) * (month_of_year != pay_month_1) * (month_of_year != pay_month_2) * pay_share_3
+        # answer 38 sums AZ92:EJ92, the months t = 39 (April 2018) to 127 (August 2025)
+        answer_38_window: (t >= 3 * 12 + 3) * (t <= 10 * 12 + 7)
+  opening:
+    company:
+      cash: {nature: asset, value: 0}
+  contracts: {}
+  rulebooks:
+    trading:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {taxable_profit: income}
+      moves:
+        profit: {debit: cash, credit: taxable_profit, amount: {generator: src, output: profit}}
+    tax:
+      kind: income_tax
+      entity: company
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: rate}
+      carry_forward_periods: null        # the expiry switch Solution G59 is 0
+      losses_in: tax
+      scheme:
+        taxable_profit: taxable
+        tax_expense: non_deductible
+    instalments:
+      kind: tax_instalments
+      entity: company
+      phase: pay
+      cash: cash
+      payable: tax_payable
+      periods_per_year: 12
+      instalments:
+        - {period_of_year: {generator: src, output: pay_period_1}, share: {generator: src, output: pay_share_1}}
+        - {period_of_year: {generator: src, output: pay_period_2}, share: {generator: src, output: pay_share_2}}
+        - {period_of_year: {generator: src, output: pay_period_3}, share: {generator: src, output: pay_share_3}}
+  schemes:
+    pnl:
+      taxable_profit: taxable_profit
+      tax_expense: tax_expense
+    cash_flow:
+      taxable_profit: operating
+      tax_payable: tax
+  cuts:
+    taxable_profit: {kind: pnl, entity: company, scheme: pnl, include: [taxable_profit]}
+    tax_charge: {kind: pnl, entity: company, scheme: pnl, include: [tax_expense]}
+    tax_paid: {entity: company, account: cash, scheme: cash_flow, include: [tax]}
+  measures: {}
+figures:
+  Assumptions.A11: {driver: src.assumptions_1, at: 0}
+  Assumptions.A15: {driver: src.assumptions_2, at: 0}
+  Assumptions.A35: {driver: src.assumptions_3, at: 0}
+  Assumptions.A44: {driver: src.assumptions_4, at: 0}
+  Solution.A11: {driver: src.solution_1, at: 0}
+  Solution.A94: {driver: src.solution_2, at: 0}
+  Solution.M13:EN13: {cut: taxable_profit}
+  Solution.M34:EN34: {driver: src.days_rate_1}
+  Solution.M35:EN35: {driver: src.days_rate_2}
+  Solution.M36:EN36: {driver: src.days_rate_3}
+  Solution.M37:EN37: {driver: src.days_rate_4}
+  Solution.M38:EN38: {driver: src.days_rate_5}
+  Solution.M39:EN39: {driver: src.days_rate_6}
+  Solution.M40:EN40: {driver: src.days_rate_7}
+  Solution.M41:EN41: {driver: src.days_rate_8}
+  Solution.M42:EN42: {driver: src.days_rate_9}
+  Solution.M43:EN43: {driver: src.days_rate_10}
+  Solution.M44:EN44: {driver: src.days_rate_11}
+  Solution.M45:EN45: {driver: src.days_rate_12}
+  Solution.M46:EN46: {driver: src.days_rate_13}
+  Solution.M48:EN48: {driver: src.rate}
+  Solution.J50: {cut: taxable_profit, times: src.rate, total: true}
+  Solution.M50:EN50: {cut: taxable_profit, times: src.rate}
+  Solution.M54:EN54: {driver: src.counter}
+  Solution.M56:EN56: {record: tax.losses_opening}
+  Solution.J57: {record: tax.loss_added, total: true}
+  Solution.M57:EN57: {record: tax.loss_added}
+  Solution.G58: {driver: src.expiry_months, at: 0}
+  Solution.J58: {record: tax.loss_used, sign: -1, total: true}
+  Solution.M58:EN58: {record: tax.loss_used, sign: -1}
+  Solution.J59: {record: tax.expired, sign: -1, total: true}
+  Solution.N59:EN59: {record: tax.expired, sign: -1, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131]}
+  Solution.J60: {sum: [{record: tax.loss_added}, {record: tax.loss_used, sign: -1}, {record: tax.expired, sign: -1}], total: true}
+  Solution.M60:EN60: {record: tax.losses}
+  Solution.M64:EN64: {cut: tax_charge, sign: -1}
+  Solution.M65:EN65: {driver: src.calendar_year}
+  Solution.D70:E70: [{driver: src.year_0, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_0, total: true}]
+  Solution.D71:E71: [{driver: src.year_1, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_1, total: true}]
+  Solution.D72:E72: [{driver: src.year_2, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_2, total: true}]
+  Solution.D73:E73: [{driver: src.year_3, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_3, total: true}]
+  Solution.D74:E74: [{driver: src.year_4, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_4, total: true}]
+  Solution.D75:E75: [{driver: src.year_5, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_5, total: true}]
+  Solution.D76:E76: [{driver: src.year_6, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_6, total: true}]
+  Solution.D77:E77: [{driver: src.year_7, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_7, total: true}]
+  Solution.D78:E78: [{driver: src.year_8, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_8, total: true}]
+  Solution.D79:E79: [{driver: src.year_9, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_9, total: true}]
+  Solution.D80:E80: [{driver: src.year_10, at: 0}, {cut: tax_charge, sign: -1, times: src.in_year_10, total: true}]
+  Solution.M86:N86: [{driver: src.pay_month_1, at: 0}, {driver: src.pay_share_1, at: 0}]
+  Solution.M87:N87: [{driver: src.pay_month_2, at: 0}, {driver: src.pay_share_2, at: 0}]
+  Solution.M88:N88: [{driver: src.pay_month_3, at: 0}, {driver: src.pay_share_3, at: 0}]
+  Solution.M91:EN91: {driver: src.pay_factor}
+  Solution.J92: {cut: tax_paid, sign: -1, total: true}
+  Solution.M92:EN92: {cut: tax_paid, sign: -1}
+  Solution.F97: {driver: src.rate, at: 85}
+  Solution.F98: {cut: taxable_profit, times: src.rate, total: true}
+  Solution.F99: {record: tax.losses, at: 95}
+  Solution.F100: {cumulative: tax_charge, sign: -1, at: 129}
+  Solution.F101: {cut: tax_paid, sign: -1, at: 127}
+  Solution.F102: {cut: tax_paid, sign: -1, total: true}
+  Solution.F103: {cut: tax_paid, sign: -1, times: src.answer_38_window, total: true}
+  Solution.F105: {record: tax.expired, total: true}
+  Solution.F106: {cut: tax_paid, sign: -1, total: true}
+  Solution.B98: {driver: src.question_33, at: 0}
+  Solution.B99: {driver: src.question_34, at: 0}
+  Solution.B100: {driver: src.question_35, at: 0}
+  Solution.B101: {driver: src.question_36, at: 0}
+  Solution.B102: {driver: src.question_37, at: 0}
+  Solution.B103: {driver: src.question_38, at: 0}
+  Solution.B104: {driver: src.question_39, at: 0}
+  Solution.B105: {driver: src.question_40, at: 0}
+  Solution.B106: {driver: src.question_41, at: 0}
+not_compared:
+  Solution.D19: a link (=Assumptions!I20) that repeats the first tax rate; read back it would compare the input with itself
+  Solution.C20:D20: the rates table restated, a row number (=C19+1) beside a link (=Assumptions!I21) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C21:D21: the rates table restated, a row number (=C20+1) beside a link (=Assumptions!I22) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C22:D22: the rates table restated, a row number (=C21+1) beside a link (=Assumptions!I23) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C23:D23: the rates table restated, a row number (=C22+1) beside a link (=Assumptions!I24) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C24:D24: the rates table restated, a row number (=C23+1) beside a link (=Assumptions!I25) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C25:D25: the rates table restated, a row number (=C24+1) beside a link (=Assumptions!I26) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C26:D26: the rates table restated, a row number (=C25+1) beside a link (=Assumptions!I27) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C27:D27: the rates table restated, a row number (=C26+1) beside a link (=Assumptions!I28) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C28:D28: the rates table restated, a row number (=C27+1) beside a link (=Assumptions!I29) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C29:D29: the rates table restated, a row number (=C28+1) beside a link (=Assumptions!I30) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C30:D30: the rates table restated, a row number (=C29+1) beside a link (=Assumptions!I31) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.C31:D31: the rates table restated, a row number (=C30+1) beside a link (=Assumptions!I32) that repeats an input rate; the link read back would compare the input with itself, and the pair is one figure
+  Solution.P86:Q86: links (=Assumptions!F39, I39) that repeat the base-case payment month and share; M86:N86 reads the case chosen from them
+  Solution.P87:Q87: links (=Assumptions!F40, I40) that repeat the base-case payment month and share; M87:N87 reads the case chosen from them
+  Solution.P88:Q88: links (=Assumptions!F41, I41) that repeat the base-case payment month and share; M88:N88 reads the case chosen from them
+notes: >
+  One figure is left unread, waiting on a reading: Solution M62:EN62, the flag of the first month a loss
+  expires ((M59<>0) * no earlier flag). No reading tests a record for nonzero (or takes the first period it
+  is), so the flag cannot be read from the books' expired losses (all nil here, the switch G59 being 0); it
+  feeds only answer F104, a date, which the oracle sets aside. tax_instalments counts a tax year as
+  periods_per_year periods from t = 0; the workbook's year is the calendar year of each month (row 65).
+  The two agree because M6 is a 1 January; a grid starting in another month would need the rulebook to
+  take the first period of the tax year. The instalment months are placed from MONTH(M6) all the same.

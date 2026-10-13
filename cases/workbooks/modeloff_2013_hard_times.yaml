@@ -1,0 +1,146 @@
+# Workbook "modeloff_2013_hard_times": the assumptions workbook of ModelOff 2013 Round 2, "Hard Times", a
+# 36-month cash forecast for Slick Mick's Toys (golds one-place,
+# oracles/external/excel_models/corpus/downloads/MO13-Hard-Times-Assumptions.xlsx;
+# cases/reference/workbooks/modeloff_2013_hard_times.xlsx). One sheet, "Model".
+#
+# The workbook states the assumptions and computes only: the quarter and year headings (F11:H11, F16:H16,
+# F28:H28, each =previous+1), the four residual shares that close a profile to 100% (H12, the fourth
+# quarter's share of the year; H51, the third month's share of a sale's receipts; G54 and G62, the third
+# month of the opening receivables and payables; H59, the third month of a purchase's payment), the
+# opening total assets D72 and total liabilities D77, and the month counter H91:AQ91. The start and end
+# dates of rows 92-93 (EOMONTH) cache dates, which the oracle sets aside itself.
+#
+# Period t is the month t + 1 of the forecast: October 2013 (column H) to September 2016 (column AQ). A typed
+# date is its Excel serial: month t ends on EOMONTH(G93 + 1, t), as rows 92-93 compute; its calendar year
+# is counted from E16 (sales) or E28 (indirect costs), both 2013.
+# The case carries the business the assumptions describe (as cases/modeloff_hard_times.yaml does), every
+# amount read from the workbook by name:
+#   * units: E17 in calendar 2013, growing F18, G18 and H18 from each 1 January; a quarter sells E12, F12,
+#     G12 or H12 of its year and a month a third of its quarter (E13); price E23, direct cost E23 x (1 -
+#     E24) a unit; indirect costs E29 in 2013, growing F30, G30, H30 a year, a twelfth a month;
+#   * sales are collected E51/F51/G51/H51 in the month and the three after, purchases (direct and
+#     indirect, B64) paid E59/F59/G59/H59; the opening receivables D70 and payables D75 run off over three
+#     months at E54/F54/G54 and E62/F62/G62;
+#   * plant D71 depreciates D81 a month; no capex (D82); no tax (B86);
+#   * debt D76 pays E76 simple interest a year, a twelfth monthly on the month's opening balance, and is
+#     amortised F35:F46 in the months that end on the dates E35:E46;
+#   * cash is not floored: the forecast shows when it runs out.
+# Every row with money goes through the books (transfer rulebooks); the opening balance sheet is the
+# workbook's D69:D76, and D72 and D77 are read back from it.
+workbook: modeloff_2013_hard_times
+entity: company
+plant: Model__D70
+case:
+  case: workbook-modeloff-hard-times
+  periods: 36
+  phases: [operate, close, pay]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 36
+      inputs: workbook
+      values:
+        # headings and the residual shares the workbook computes
+        quarter_2: Model__E11 + Model__F11__n1
+        quarter_3: quarter_2 + Model__G11__n1
+        quarter_4: quarter_3 + Model__H11__n1
+        q4_share: Model__H12__n1 - (Model__E12 + Model__F12 + Model__G12)
+        sales_year_2014: Model__E16 + Model__F16__n1
+        sales_year_2015: sales_year_2014 + Model__G16__n1
+        sales_year_2016: sales_year_2015 + Model__H16__n1
+        cost_year_2014: Model__E28 + Model__F28__n1
+        cost_year_2015: cost_year_2014 + Model__G28__n1
+        cost_year_2016: cost_year_2015 + Model__H28__n1
+        receipt_m3: Model__H51__n1 - (Model__E51 + Model__F51 + Model__G51)
+        opening_ar_m3: Model__G54__n1 - (Model__E54 + Model__F54)
+        payment_m3: Model__H59__n1 - (Model__E59 + Model__F59 + Model__G59)
+        opening_ap_m3: Model__G62__n1 - (Model__E62 + Model__F62)
+        counter: (t + 1) * Model__H91__n1
+        # the calendar: each month ends at EOMONTH of the day after the last (G93, typed, ends the month before)
+        period_end: EOMONTH(Model__G93 + Model__H92__n1, Model__H93__n1 + t)
+        month_index: MONTH(period_end) - 1
+        quarter: (month_index - month_index % 3) / 3 + 1
+        year_index: YEAR(period_end) - Model__E16
+        cost_year_index: YEAR(period_end) - Model__E28
+        # units and money
+        units_year: (year_index == 0) * Model__E17 + (year_index == 1) * Model__E17 * (1 + Model__F18) + (year_index == 2) * Model__E17 * (1 + Model__F18) * (1 + Model__G18) + (year_index == 3) * Model__E17 * (1 + Model__F18) * (1 + Model__G18) * (1 + Model__H18)
+        quarter_share: (quarter == 1) * Model__E12 + (quarter == 2) * Model__F12 + (quarter == 3) * Model__G12 + (quarter == 4) * q4_share
+        units: units_year * quarter_share / 3
+        revenue: units * Model__E23
+        direct_cost: units * Model__E23 * (1 - Model__E24)
+        indirect_cost: ((cost_year_index == 0) * Model__E29 + (cost_year_index == 1) * Model__E29 * (1 + Model__F30) + (cost_year_index == 2) * Model__E29 * (1 + Model__F30) * (1 + Model__G30) + (cost_year_index == 3) * Model__E29 * (1 + Model__F30) * (1 + Model__G30) * (1 + Model__H30)) / 12
+        purchases: direct_cost + indirect_cost
+        receipts: revenue * Model__E51 + lag(revenue, 1) * Model__F51 + lag(revenue, 2) * Model__G51 + lag(revenue, 3) * receipt_m3
+        payments: purchases * Model__E59 + lag(purchases, 1) * Model__F59 + lag(purchases, 2) * Model__G59 + lag(purchases, 3) * payment_m3
+        opening_receipts: ((t == 0) * Model__E54 + (t == 1) * Model__F54 + (t == 2) * opening_ar_m3) * Model__D70
+        opening_payments: ((t == 0) * Model__E62 + (t == 1) * Model__F62 + (t == 2) * opening_ap_m3) * Model__D75
+        depreciation: {each_period: Model__D81 + 0}
+        amortisation: (period_end == Model__E35) * Model__F35 + (period_end == Model__E36) * Model__F36 + (period_end == Model__E37) * Model__F37 + (period_end == Model__E38) * Model__F38 + (period_end == Model__E39) * Model__F39 + (period_end == Model__E40) * Model__F40 + (period_end == Model__E41) * Model__F41 + (period_end == Model__E42) * Model__F42 + (period_end == Model__E43) * Model__F43 + (period_end == Model__E44) * Model__F44 + (period_end == Model__E45) * Model__F45 + (period_end == Model__E46) * Model__F46
+        repaid: cumsum(amortisation)
+        debt_opening: Model__D76 - lag(repaid, 1)
+        interest: debt_opening * Model__E76 / 12
+  opening:
+    company:
+      cash: {nature: asset, value: {generator: src, output: Model__D69}}
+      receivables: {nature: asset, value: {generator: src, output: Model__D70}}
+      ppe: {nature: asset, value: {generator: src, output: Model__D71}}
+      payables: {nature: liability, value: {generator: src, output: Model__D75}}
+      debt: {nature: liability, value: {generator: src, output: Model__D76}}
+      retained_earnings: {nature: equity, value: balancing}
+  contracts: {}
+  rulebooks:
+    trade:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {revenue: income, direct_cost: expense, indirect_cost: expense, depreciation: expense,
+                interest: expense}
+      moves:
+        sales: {debit: receivables, credit: revenue, amount: {generator: src, output: revenue}}
+        direct_cost: {debit: direct_cost, credit: payables, amount: {generator: src, output: direct_cost}}
+        indirect_cost: {debit: indirect_cost, credit: payables, amount: {generator: src, output: indirect_cost}}
+        receipts: {debit: cash, credit: receivables, amount: {generator: src, output: receipts}}
+        opening_receipts: {debit: cash, credit: receivables, amount: {generator: src, output: opening_receipts}}
+        payments: {debit: payables, credit: cash, amount: {generator: src, output: payments}}
+        opening_payments: {debit: payables, credit: cash, amount: {generator: src, output: opening_payments}}
+    plant:
+      kind: transfer
+      entity: company
+      phase: close
+      moves:
+        depreciation: {debit: depreciation, credit: ppe, amount: {generator: src, output: depreciation}}
+    debt_service:
+      kind: transfer
+      entity: company
+      phase: pay
+      moves:
+        interest: {debit: interest, credit: cash, amount: {generator: src, output: interest}}
+        amortisation: {debit: debt, credit: cash, amount: {generator: src, output: amortisation}}
+  schemes:
+    cash_flow:
+      receivables: operating
+      payables: operating
+      interest: financing
+      debt: financing
+  cuts:
+    operating: {entity: company, account: cash, scheme: cash_flow, include: [operating]}
+    financing: {entity: company, account: cash, scheme: cash_flow, include: [financing]}
+  measures: {}
+figures:
+  Model.F11:H11: [{driver: src.quarter_2, at: 0}, {driver: src.quarter_3, at: 0}, {driver: src.quarter_4, at: 0}]
+  Model.H12: {driver: src.q4_share, at: 0}
+  Model.F16:H16: [{driver: src.sales_year_2014, at: 0}, {driver: src.sales_year_2015, at: 0}, {driver: src.sales_year_2016, at: 0}]
+  Model.F28:H28: [{driver: src.cost_year_2014, at: 0}, {driver: src.cost_year_2015, at: 0}, {driver: src.cost_year_2016, at: 0}]
+  Model.H51: {driver: src.receipt_m3, at: 0}
+  Model.G54: {driver: src.opening_ar_m3, at: 0}
+  Model.H59: {driver: src.payment_m3, at: 0}
+  Model.G62: {driver: src.opening_ap_m3, at: 0}
+  Model.D72: {opening: cash + receivables + ppe, at: 0}
+  Model.D77: {opening: payables + debt, at: 0}
+  Model.H91:AQ91: {driver: src.counter}
+notes: >
+  An assumptions workbook: of its computed cells only the opening totals D72 and D77 carry money, and they
+  are read back from the opening balance sheet; the rest are headings, residual shares and a counter,
+  computed as drivers. The case posts the 36-month forecast the assumptions describe.

@@ -1,0 +1,453 @@
+# Workbook "modeloff_2015_more_money_please": the data workbook of ModelOff 2015 Round 2 "More Money
+# Please", a project-finance company before its refinancing (golds one-place,
+# oracles/external/excel_models/corpus/downloads/MO15-More-Money-Please-Data.xlsx;
+# cases/reference/workbooks/modeloff_2015_more_money_please.xlsx). Sheets "Formats" (a legend, no
+# figure), "Inputs", "Workings" and "Financial Statements"; the refinancing inputs (Inputs L43:L53) are
+# stated for the competition's questions and used by no formula.
+#
+# Period t is the calendar year 2015 + t: columns M (2015) to AK (2039); column L is the balance sheet
+# at the end of 2014, the books' opening (the 26-cell rows L..AK are read cell by cell, L from it).
+# A typed date is its Excel serial: the periods end on EOMONTH(Inputs L7, 12 (t + 1)) and start the day
+# after the previous end (Inputs rows 6-7).
+#   * the books open on Inputs L26 (fixed assets), L28 (cash), L30 (senior debt) and L32 (retained
+#     earnings);
+#   * the days in each period (Workings row 15) and the days operated in it, to the project end date
+#     Inputs L12, 30 June 2038 (row 16); revenue Inputs L18 and operating costs L20 a year, real, are
+#     indexed (row 21: M21, growing Inputs L16) and apportioned by the share of the year operated
+#     (rows 17, 25, 29); lifecycle costs (Inputs row 22, real) are indexed, not apportioned, and
+#     capitalised (rows 33, 45);
+#   * fixed assets (the opening plus each year's lifecycle) depreciate each year by the days operated
+#     over the days of operation left (rows 39-46). Row 40 sums the days operated from the year to the
+#     grid's end; the periods are contiguous, so that is the days from the year's start to the project
+#     end date. The recursion close = (open + additions) x (1 - share) is taken in its closed form: the
+#     share's complement is left(t + 1) / left(t), so close(t) = left(t + 1) x (L26 / left(0) + the sum of
+#     each year's additions over its left), exactly the workbook's arithmetic;
+#   * the senior debt repays Inputs row 38 and pays Inputs L36 on its opening balance (rows 53-59);
+#   * no tax; all the cash is paid out as dividends each year (FS row 24, =-MAX(cash flows + cash
+#     carried in, 0)): the waterfall's residual, which pays the cash available above nil.
+# Set aside: Workings L20, L24, L28, links that only repeat an input (see not_compared). The workbook's
+# formulas agree with the books throughout (no slip found).
+workbook: modeloff_2015_more_money_please
+entity: company
+plant: Inputs__L36
+case:
+  case: workbook-modeloff-more-money-please
+  periods: 25
+  phases: [operate, invest, pay, distribute]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 25
+      inputs: workbook
+      values:
+        # section numbers: the largest number above in column A, plus the formula's 0.01
+        inputs_1: Inputs__A3 + Inputs__A10__n1
+        inputs_2: max(Inputs__A3, inputs_1) + Inputs__A14__n1
+        inputs_3: max(inputs_2, inputs_1) + Inputs__A24__n1
+        inputs_4: max(inputs_3, inputs_2) + Inputs__A34__n1
+        inputs_5: max(inputs_4, inputs_3) + Inputs__A41__n1
+        workings_1: Workings__A3 + Workings__A11__n1
+        workings_2: max(Workings__A3, workings_1) + Workings__A36__n1
+        workings_3: max(workings_2, workings_1) + Workings__A50__n1
+        statements_1: Financial_Statements__A3 + Financial_Statements__A11__n1
+        statements_2: max(Financial_Statements__A3, statements_1) + Financial_Statements__A31__n1
+        statements_3: max(statements_2, statements_1) + Financial_Statements__A50__n1
+        # the calendar (Inputs rows 6-7; Workings rows 15-17, 39-41)
+        period_end: EOMONTH(Inputs__L7, Inputs__M7__n1 * (t + 1))
+        period_start: EOMONTH(Inputs__L7, Inputs__M7__n1 * t) + Inputs__M6__n1
+        days: period_end - period_start + Workings__M15__n1
+        days_operated: max(min(period_end, Inputs__L12) - period_start + Workings__M16__n1, Workings__M16__n2)
+        operated: days_operated / days
+        days_left: max(Inputs__L12 - period_start + Workings__M16__n1, Workings__M16__n2)
+        days_left_first: max(Inputs__L12 - (Inputs__L7 + Inputs__M6__n1) + Workings__M16__n1, Workings__M16__n2)
+        depreciation_share: days_operated / days_left if days_left > Workings__M41__n1 else Workings__M41__n2
+        # money
+        index: Workings__M21 * (Workings__N21__n1 + Inputs__L16) ** t
+        revenue: Inputs__L18 * index * operated
+        opex: Inputs__L20 * index * operated
+        lifecycle: Inputs__M22_AK22 * index
+        days_left_after: days_left - days_operated
+        added_per_day_left: lifecycle / days_left if days_left > Workings__M41__n1 else Workings__M41__n1
+        fa_close: days_left_after * (Inputs__L26 / days_left_first + cumsum(added_per_day_left))
+        fa_open: lag(fa_close, 1) + (t == 0) * Inputs__L26
+        depreciation: fa_open + lifecycle - fa_close
+        repayment: Inputs__M38_AK38 + 0
+        repaid: cumsum(repayment)
+        debt_open: Inputs__L30 - lag(repaid, 1)
+        interest: debt_open * Inputs__L36
+        opening_debt: Inputs__L30 + 0
+  opening:
+    company:
+      fixed_assets: {nature: asset, value: {generator: src, output: Inputs__L26}}
+      cash: {nature: asset, value: {generator: src, output: Inputs__L28}}
+      debt: {nature: liability, value: {generator: src, output: Inputs__L30}}
+      retained_earnings: {nature: equity, value: {generator: src, output: Inputs__L32}}
+  contracts:
+    owner:
+      type: sponsor_equity
+      parties: {issuer: company}
+      terms: {}
+  rulebooks:
+    trading:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {revenue: income, opex: expense}
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        opex: {debit: opex, credit: cash, amount: {generator: src, output: opex}}
+    assets:
+      kind: transfer
+      entity: company
+      phase: invest
+      declare: {depreciation: expense}
+      moves:
+        lifecycle: {debit: fixed_assets, credit: cash, amount: {generator: src, output: lifecycle}}
+        depreciation: {debit: depreciation, credit: fixed_assets, amount: {generator: src, output: depreciation}}
+    senior_debt:
+      kind: transfer
+      entity: company
+      phase: pay
+      declare: {interest: expense}
+      moves:
+        principal: {debit: debt, credit: cash, amount: {generator: src, output: repayment}}
+        interest: {debit: interest, credit: cash, amount: {generator: src, output: interest}}
+    dividends:
+      kind: waterfall
+      entity: company
+      phase: distribute
+      cash: cash
+      tiers: []
+      residual: owner.distribute
+      cfads: {scheme: cash_flow, classes: [project], less: []}
+      service: []
+      tests: []
+  schemes:
+    cash_flow:
+      revenue: project
+      opex: project
+      fixed_assets: lifecycle
+      debt: principal
+      interest: interest
+      owner.capital: dividends
+      owner.distributions: dividends
+    pnl:
+      revenue: revenue
+      opex: opex
+      depreciation: depreciation
+      interest: interest
+  cuts:
+    revenue: {kind: pnl, entity: company, scheme: pnl, include: [revenue]}
+    opex: {kind: pnl, entity: company, scheme: pnl, include: [opex]}
+    depreciation: {kind: pnl, entity: company, scheme: pnl, include: [depreciation]}
+    ebit: {kind: pnl, entity: company, scheme: pnl, include: [revenue, opex, depreciation]}
+    interest: {kind: pnl, entity: company, scheme: pnl, include: [interest]}
+    net_profit: {kind: pnl, entity: company, scheme: pnl, include: [revenue, opex, depreciation, interest]}
+    lifecycle: {entity: company, account: cash, scheme: cash_flow, include: [lifecycle]}
+    project: {entity: company, account: cash, scheme: cash_flow, include: [project, lifecycle]}
+    principal: {entity: company, account: cash, scheme: cash_flow, include: [principal]}
+    interest_paid: {entity: company, account: cash, scheme: cash_flow, include: [interest]}
+    dividends: {entity: company, account: cash, scheme: cash_flow, include: [dividends]}
+    financing: {entity: company, account: cash, scheme: cash_flow, include: [principal, interest, dividends]}
+    net_cash: {entity: company, account: cash, scheme: cash_flow, include: [project, lifecycle, principal, interest, dividends]}
+  measures: {}
+figures:
+  Inputs.A10: {driver: src.inputs_1, at: 0}
+  Inputs.A14: {driver: src.inputs_2, at: 0}
+  Inputs.A24: {driver: src.inputs_3, at: 0}
+  Inputs.A34: {driver: src.inputs_4, at: 0}
+  Inputs.A41: {driver: src.inputs_5, at: 0}
+  Workings.A11: {driver: src.workings_1, at: 0}
+  Workings.A36: {driver: src.workings_2, at: 0}
+  Workings.A50: {driver: src.workings_3, at: 0}
+  Workings.M15:AK15: {driver: src.days}
+  Workings.M16:AK16: {driver: src.days_operated}
+  Workings.M17:AK17: {driver: src.operated}
+  Workings.N21:AK21: {driver: src.index, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}
+  Workings.M25:AK25: {cut: revenue}
+  Workings.M29:AK29: {cut: opex, sign: -1}
+  Workings.M32:AK32: {cut: lifecycle, sign: -1, per: src.index}
+  Workings.M33:AK33: {cut: lifecycle, sign: -1}
+  Workings.M39:AK39: {driver: src.days_operated}
+  Workings.M40:AK40: {driver: src.days_left}
+  Workings.M41:AK41: {driver: src.depreciation_share}
+  Workings.M44:AK44: {opening: fixed_assets}
+  Workings.M45:AK45: {cut: lifecycle, sign: -1}
+  Workings.M46:AK46: {cut: depreciation}
+  Workings.M53:AK53: {opening: debt}
+  Workings.M54:AK54: {change: debt}
+  Workings.L58: {cut: interest, sign: -1, per: src.opening_debt, at: 0}
+  Workings.M59:AK59: {cut: interest, sign: -1}
+  Financial_Statements.A11: {driver: src.statements_1, at: 0}
+  Financial_Statements.A31: {driver: src.statements_2, at: 0}
+  Financial_Statements.A50: {driver: src.statements_3, at: 0}
+  Financial_Statements.M13:AK13: {cut: revenue}
+  Financial_Statements.M15:AK15: {cut: opex}
+  Financial_Statements.M17:AK17: {cut: lifecycle}
+  Financial_Statements.M19:AK19: {cut: project}
+  Financial_Statements.M21:AK21: {cut: principal}
+  Financial_Statements.M22:AK22: {cut: interest_paid}
+  Financial_Statements.M24:AK24: {cut: dividends}
+  Financial_Statements.M26:AK26: {cut: financing}
+  Financial_Statements.M28:AK28: {cut: net_cash}
+  Financial_Statements.M33:AK33: {cut: revenue}
+  Financial_Statements.M35:AK35: {cut: opex}
+  Financial_Statements.M37:AK37: {cut: depreciation}
+  Financial_Statements.M39:AK39: {cut: ebit}
+  Financial_Statements.M41:AK41: {cut: interest}
+  Financial_Statements.M43:AK43: {cut: net_profit}
+  Financial_Statements.M45:AK45: {cut: dividends}
+  Financial_Statements.M47:AK47: {sum: [{cut: net_profit}, {cut: dividends}]}
+  Financial_Statements.J66: {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, total: true}
+  Workings.L47:AK47:
+    - {opening: fixed_assets, at: 0}
+    - {balance: fixed_assets, at: 0}
+    - {balance: fixed_assets, at: 1}
+    - {balance: fixed_assets, at: 2}
+    - {balance: fixed_assets, at: 3}
+    - {balance: fixed_assets, at: 4}
+    - {balance: fixed_assets, at: 5}
+    - {balance: fixed_assets, at: 6}
+    - {balance: fixed_assets, at: 7}
+    - {balance: fixed_assets, at: 8}
+    - {balance: fixed_assets, at: 9}
+    - {balance: fixed_assets, at: 10}
+    - {balance: fixed_assets, at: 11}
+    - {balance: fixed_assets, at: 12}
+    - {balance: fixed_assets, at: 13}
+    - {balance: fixed_assets, at: 14}
+    - {balance: fixed_assets, at: 15}
+    - {balance: fixed_assets, at: 16}
+    - {balance: fixed_assets, at: 17}
+    - {balance: fixed_assets, at: 18}
+    - {balance: fixed_assets, at: 19}
+    - {balance: fixed_assets, at: 20}
+    - {balance: fixed_assets, at: 21}
+    - {balance: fixed_assets, at: 22}
+    - {balance: fixed_assets, at: 23}
+    - {balance: fixed_assets, at: 24}
+  Workings.L55:AK55:
+    - {opening: debt, at: 0}
+    - {balance: debt, at: 0}
+    - {balance: debt, at: 1}
+    - {balance: debt, at: 2}
+    - {balance: debt, at: 3}
+    - {balance: debt, at: 4}
+    - {balance: debt, at: 5}
+    - {balance: debt, at: 6}
+    - {balance: debt, at: 7}
+    - {balance: debt, at: 8}
+    - {balance: debt, at: 9}
+    - {balance: debt, at: 10}
+    - {balance: debt, at: 11}
+    - {balance: debt, at: 12}
+    - {balance: debt, at: 13}
+    - {balance: debt, at: 14}
+    - {balance: debt, at: 15}
+    - {balance: debt, at: 16}
+    - {balance: debt, at: 17}
+    - {balance: debt, at: 18}
+    - {balance: debt, at: 19}
+    - {balance: debt, at: 20}
+    - {balance: debt, at: 21}
+    - {balance: debt, at: 22}
+    - {balance: debt, at: 23}
+    - {balance: debt, at: 24}
+  Financial_Statements.L54:AK54:
+    - {opening: fixed_assets, at: 0}
+    - {balance: fixed_assets, at: 0}
+    - {balance: fixed_assets, at: 1}
+    - {balance: fixed_assets, at: 2}
+    - {balance: fixed_assets, at: 3}
+    - {balance: fixed_assets, at: 4}
+    - {balance: fixed_assets, at: 5}
+    - {balance: fixed_assets, at: 6}
+    - {balance: fixed_assets, at: 7}
+    - {balance: fixed_assets, at: 8}
+    - {balance: fixed_assets, at: 9}
+    - {balance: fixed_assets, at: 10}
+    - {balance: fixed_assets, at: 11}
+    - {balance: fixed_assets, at: 12}
+    - {balance: fixed_assets, at: 13}
+    - {balance: fixed_assets, at: 14}
+    - {balance: fixed_assets, at: 15}
+    - {balance: fixed_assets, at: 16}
+    - {balance: fixed_assets, at: 17}
+    - {balance: fixed_assets, at: 18}
+    - {balance: fixed_assets, at: 19}
+    - {balance: fixed_assets, at: 20}
+    - {balance: fixed_assets, at: 21}
+    - {balance: fixed_assets, at: 22}
+    - {balance: fixed_assets, at: 23}
+    - {balance: fixed_assets, at: 24}
+  Financial_Statements.L55:AK55:
+    - {opening: cash, at: 0}
+    - {balance: cash, at: 0}
+    - {balance: cash, at: 1}
+    - {balance: cash, at: 2}
+    - {balance: cash, at: 3}
+    - {balance: cash, at: 4}
+    - {balance: cash, at: 5}
+    - {balance: cash, at: 6}
+    - {balance: cash, at: 7}
+    - {balance: cash, at: 8}
+    - {balance: cash, at: 9}
+    - {balance: cash, at: 10}
+    - {balance: cash, at: 11}
+    - {balance: cash, at: 12}
+    - {balance: cash, at: 13}
+    - {balance: cash, at: 14}
+    - {balance: cash, at: 15}
+    - {balance: cash, at: 16}
+    - {balance: cash, at: 17}
+    - {balance: cash, at: 18}
+    - {balance: cash, at: 19}
+    - {balance: cash, at: 20}
+    - {balance: cash, at: 21}
+    - {balance: cash, at: 22}
+    - {balance: cash, at: 23}
+    - {balance: cash, at: 24}
+  Financial_Statements.L58:AK58:
+    - {opening: debt, at: 0}
+    - {balance: debt, at: 0}
+    - {balance: debt, at: 1}
+    - {balance: debt, at: 2}
+    - {balance: debt, at: 3}
+    - {balance: debt, at: 4}
+    - {balance: debt, at: 5}
+    - {balance: debt, at: 6}
+    - {balance: debt, at: 7}
+    - {balance: debt, at: 8}
+    - {balance: debt, at: 9}
+    - {balance: debt, at: 10}
+    - {balance: debt, at: 11}
+    - {balance: debt, at: 12}
+    - {balance: debt, at: 13}
+    - {balance: debt, at: 14}
+    - {balance: debt, at: 15}
+    - {balance: debt, at: 16}
+    - {balance: debt, at: 17}
+    - {balance: debt, at: 18}
+    - {balance: debt, at: 19}
+    - {balance: debt, at: 20}
+    - {balance: debt, at: 21}
+    - {balance: debt, at: 22}
+    - {balance: debt, at: 23}
+    - {balance: debt, at: 24}
+  Financial_Statements.L60:AK60:
+    - {opening: fixed_assets + cash - debt, at: 0}
+    - {balance: fixed_assets + cash - debt, at: 0}
+    - {balance: fixed_assets + cash - debt, at: 1}
+    - {balance: fixed_assets + cash - debt, at: 2}
+    - {balance: fixed_assets + cash - debt, at: 3}
+    - {balance: fixed_assets + cash - debt, at: 4}
+    - {balance: fixed_assets + cash - debt, at: 5}
+    - {balance: fixed_assets + cash - debt, at: 6}
+    - {balance: fixed_assets + cash - debt, at: 7}
+    - {balance: fixed_assets + cash - debt, at: 8}
+    - {balance: fixed_assets + cash - debt, at: 9}
+    - {balance: fixed_assets + cash - debt, at: 10}
+    - {balance: fixed_assets + cash - debt, at: 11}
+    - {balance: fixed_assets + cash - debt, at: 12}
+    - {balance: fixed_assets + cash - debt, at: 13}
+    - {balance: fixed_assets + cash - debt, at: 14}
+    - {balance: fixed_assets + cash - debt, at: 15}
+    - {balance: fixed_assets + cash - debt, at: 16}
+    - {balance: fixed_assets + cash - debt, at: 17}
+    - {balance: fixed_assets + cash - debt, at: 18}
+    - {balance: fixed_assets + cash - debt, at: 19}
+    - {balance: fixed_assets + cash - debt, at: 20}
+    - {balance: fixed_assets + cash - debt, at: 21}
+    - {balance: fixed_assets + cash - debt, at: 22}
+    - {balance: fixed_assets + cash - debt, at: 23}
+    - {balance: fixed_assets + cash - debt, at: 24}
+  Financial_Statements.L63:AK63:
+    - {opening: retained_earnings, at: 0}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 0}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 1}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 2}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 3}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 4}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 5}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 6}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 7}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 8}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 9}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 10}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 11}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 12}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 13}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 14}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 15}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 16}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 17}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 18}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 19}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 20}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 21}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 22}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 23}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 24}
+  Financial_Statements.L64:AK64:
+    - {opening: retained_earnings, at: 0}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 0}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 1}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 2}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 3}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 4}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 5}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 6}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 7}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 8}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 9}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 10}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 11}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 12}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 13}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 14}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 15}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 16}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 17}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 18}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 19}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 20}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 21}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 22}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 23}
+    - {balance: retained_earnings + revenue - opex - depreciation - interest + owner.distributions, at: 24}
+  Financial_Statements.L66:AK66:
+    - {opening: fixed_assets + cash - debt - retained_earnings, at: 0}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 0}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 1}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 2}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 3}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 4}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 5}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 6}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 7}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 8}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 9}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 10}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 11}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 12}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 13}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 14}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 15}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 16}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 17}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 18}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 19}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 20}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 21}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 22}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 23}
+    - {balance: fixed_assets + cash - debt - retained_earnings - revenue + opex + depreciation + interest - owner.distributions, at: 24}
+not_compared:
+  Workings.L20: a link (=Inputs!L16) that repeats the inflation input; the case indexes at Inputs L16 itself (row 21 reads the index), and a link read back would compare the input with itself
+  Workings.L24: a link (=Inputs!L18) that repeats the real revenue input; the case earns Inputs L18 itself (rows 25 and FS 13 read the revenue), and a link read back would compare the input with itself
+  Workings.L28: a link (=Inputs!L20) that repeats the real operating cost input; the case pays Inputs L20 itself (rows 29 and FS 15 read the costs), and a link read back would compare the input with itself
+notes: >
+  Workings L58, the rate, is read as the first year's interest over the opening debt. The balance check
+  (FS row 66, J66) is read as net assets less equity in the books.

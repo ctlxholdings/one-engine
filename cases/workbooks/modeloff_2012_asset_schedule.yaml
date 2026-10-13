@@ -1,0 +1,156 @@
+# Workbook "modeloff_2012_asset_schedule": the answer workbook of ModelOff 2012 Round 1 "Asset Schedule"
+# (golds one-place, oracles/external/excel_models/corpus/downloads/Asset-Schedule-Answer.xlsx;
+# cases/reference/workbooks/modeloff_2012_asset_schedule.xlsx). One sheet, "Capex Schedule".
+#
+# Period t is the calendar year 2012 + t: columns E (2012) to V (2029); column D is 2011, the opening
+# (the 19-cell rows D23:V23 and D29:V29 start there and are read cell by cell, D from the opening books).
+#   * capex is stated in real US$m (row 4); nominal capex (row 5) is real times the inflation index of
+#     row 8: E8 in 2012, growing F7 a year (the F8 formula's 1 + F7, every year the same rate);
+#   * the books depreciate each year's capex straight line over E10 years, a full charge in the year it
+#     is bought (row 16: the last min(E10, counter) additions over E10); the tax authority at E9 of the
+#     opening balance plus the year's additions (row 22). Neither register disposes of anything in the
+#     grid (dispose_at is the period after it);
+#   * deferred tax is the rate times the tax NBV less the book NBV (row 29, a liability when negative):
+#     D6 to 2015, I6 from 2016; row 27 is the part of each year's movement due to the change of rate,
+#     row 28 the rest;
+#   * the workbook states no income and no funding: the capex is paid from cash, which goes negative,
+#     and the depreciation makes tax losses on which no deferred tax asset is recognised (the workbook's
+#     deferred tax is on the assets only).
+# J32:J35 are the answers (J36 caches text, set aside by the oracle).
+# Set aside: the copy rows G7:V7, F9:V9 and F10:V10 (see not_compared). The workbook's formulas agree
+# with the books throughout (no slip found).
+workbook: modeloff_2012_asset_schedule
+entity: company
+plant: Capex_Schedule__F7
+case:
+  case: workbook-modeloff-asset-schedule
+  periods: 18
+  phases: [fund, close, tax]
+  currency: USD
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 18
+      inputs: workbook
+      values:
+        year: Capex_Schedule__D2 + (t + 1) * Capex_Schedule__E2__n1
+        counter: Capex_Schedule__E11 + t * Capex_Schedule__F11__n1
+        index: Capex_Schedule__E8 * (Capex_Schedule__F8__n1 + Capex_Schedule__F7) ** t
+        capex: Capex_Schedule__E4_V4 * index
+        # the tax rate typed for 2011 (D6) runs until the year a new one is typed (I6, 2016)
+        tax_rate: (t < 4) * Capex_Schedule__D6 + (t >= 4) * Capex_Schedule__I6
+  contracts:
+    capex:
+      type: capex
+      parties: {owner: company}
+      terms: {schedule: {generator: src, output: capex}, vat_rate: 0, vat_refund_lag: 0, end: 17}
+  schemes:
+    cash_flow:
+      cwip: investing
+    pnl:
+      depreciation: depreciation
+      disposal_loss: disposal
+      tax_expense: tax
+      deferred_tax_expense: tax
+  rulebooks:
+    assets:
+      kind: asset_register
+      entity: company
+      phase: close
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+      dispose_at: 18
+      life_periods: {generator: src, output: Capex_Schedule__E10}
+      first_charge: in_service
+      tax: {life_periods: null, declining_rate: {generator: src, output: Capex_Schedule__E9}, first_charge: in_service}
+    tax:
+      kind: income_tax
+      entity: company
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: tax_rate}
+      carry_forward_periods: null
+      timing: assets
+      deferred: {account: deferred_tax, expense: deferred_tax_expense, recognise_losses: false}
+      scheme:
+        depreciation: timing
+        disposal_loss: timing
+        tax_expense: non_deductible
+        deferred_tax_expense: non_deductible
+  cuts:
+    capex: {entity: company, account: cash, scheme: cash_flow, include: [investing]}
+    depreciation: {kind: pnl, entity: company, scheme: pnl, include: [depreciation]}
+  measures: {}
+figures:
+  Capex_Schedule.E2:V2: {driver: src.year}
+  Capex_Schedule.E5:V5: {cut: capex, sign: -1}
+  Capex_Schedule.E6:H6: {driver: src.tax_rate, periods: [0, 1, 2, 3]}
+  Capex_Schedule.J6:V6: {driver: src.tax_rate, periods: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]}
+  Capex_Schedule.F8:V8: {cut: capex, sign: -1, per: src.Capex_Schedule__E4_V4, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]}
+  Capex_Schedule.F11:V11: {driver: src.counter, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]}
+  Capex_Schedule.E14:V14: {opening: fixed_assets}
+  Capex_Schedule.E15:V15: {cut: capex, sign: -1}
+  Capex_Schedule.E16:V16: {cut: depreciation}
+  Capex_Schedule.E17:V17: {balance: fixed_assets}
+  Capex_Schedule.E20:V20: {sum: [{record: assets.tax_nbv}, {record: assets.tax_charge}, {cut: capex}]}
+  Capex_Schedule.E21:V21: {cut: capex, sign: -1}
+  Capex_Schedule.E22:V22: {record: assets.tax_charge, sign: -1}
+  Capex_Schedule.E26:V26: {opening: deferred_tax, sign: -1}
+  Capex_Schedule.E27:V27: {record: tax.rate_change, sign: -1}
+  Capex_Schedule.E28:V28: {sum: [{change: deferred_tax, sign: -1}, {record: tax.rate_change}]}
+  Capex_Schedule.J32: {cumulative: capex, sign: -1, at: 9}
+  Capex_Schedule.J33: {balance: fixed_assets, at: 5}
+  Capex_Schedule.J34: {record: assets.tax_nbv, at: 7}
+  Capex_Schedule.J35: {record: tax.rate_change, sign: -1, at: 4}
+  Capex_Schedule.D23:V23:
+    - {opening: fixed_assets, at: 0}
+    - {record: assets.tax_nbv, at: 0}
+    - {record: assets.tax_nbv, at: 1}
+    - {record: assets.tax_nbv, at: 2}
+    - {record: assets.tax_nbv, at: 3}
+    - {record: assets.tax_nbv, at: 4}
+    - {record: assets.tax_nbv, at: 5}
+    - {record: assets.tax_nbv, at: 6}
+    - {record: assets.tax_nbv, at: 7}
+    - {record: assets.tax_nbv, at: 8}
+    - {record: assets.tax_nbv, at: 9}
+    - {record: assets.tax_nbv, at: 10}
+    - {record: assets.tax_nbv, at: 11}
+    - {record: assets.tax_nbv, at: 12}
+    - {record: assets.tax_nbv, at: 13}
+    - {record: assets.tax_nbv, at: 14}
+    - {record: assets.tax_nbv, at: 15}
+    - {record: assets.tax_nbv, at: 16}
+    - {record: assets.tax_nbv, at: 17}
+  Capex_Schedule.D29:V29:
+    - {opening: deferred_tax, sign: -1, at: 0}
+    - {balance: deferred_tax, sign: -1, at: 0}
+    - {balance: deferred_tax, sign: -1, at: 1}
+    - {balance: deferred_tax, sign: -1, at: 2}
+    - {balance: deferred_tax, sign: -1, at: 3}
+    - {balance: deferred_tax, sign: -1, at: 4}
+    - {balance: deferred_tax, sign: -1, at: 5}
+    - {balance: deferred_tax, sign: -1, at: 6}
+    - {balance: deferred_tax, sign: -1, at: 7}
+    - {balance: deferred_tax, sign: -1, at: 8}
+    - {balance: deferred_tax, sign: -1, at: 9}
+    - {balance: deferred_tax, sign: -1, at: 10}
+    - {balance: deferred_tax, sign: -1, at: 11}
+    - {balance: deferred_tax, sign: -1, at: 12}
+    - {balance: deferred_tax, sign: -1, at: 13}
+    - {balance: deferred_tax, sign: -1, at: 14}
+    - {balance: deferred_tax, sign: -1, at: 15}
+    - {balance: deferred_tax, sign: -1, at: 16}
+    - {balance: deferred_tax, sign: -1, at: 17}
+not_compared:
+  Capex_Schedule.G7:V7: the inflation rate F7 copied into every later year (=F7, then =the cell before); the case inflates at F7 itself (row 8 reads the index from the books), and a copy of an input read back compares the input with itself
+  Capex_Schedule.F9:V9: the diminishing value rate E9 copied into every later year (=E9, then =the cell before); the tax register depreciates at E9 itself (rows 20-23 read what it does), and a copy of an input read back compares the input with itself
+  Capex_Schedule.F10:V10: the useful life E10 copied into every later year (=E10, then =the cell before); the book register depreciates over E10 itself (rows 14-17 read what it does), and a copy of an input read back compares the input with itself
+notes: >
+  Rows 20-23 are the tax authority's register, which the books keep beside the book register (its
+  records); the opening of row 20 is the closing plus the year's charge less its additions.

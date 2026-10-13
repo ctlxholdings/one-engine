@@ -1,0 +1,202 @@
+# Workbook "modeloff_2014_time_is_money": the data workbook of ModelOff 2014 Round 2 Section 2, "Time is
+# Money": a US$ business (revenue, opex and two classes of capex in real 2014 US$, 2015-2037) valued for a
+# euro buyer (golds one-place, oracles/external/excel_models/corpus/downloads/MO14-Time-is-Money-Data.xlsx;
+# cases/reference/workbooks/modeloff_2014_time_is_money.xlsx).
+#
+# The workbook is the competition's data sheet: it states the forecast and computes only three things,
+# the year counter H5:AD5 (=G5+1, ...) and the two section numbers A9 and A27 (=MAX(A$3:A8)+0.01, a
+# heading numbering that counts sections). Those are the figures; they are drivers. The period-start and
+# period-end dates of rows 6 and 7 (EOMONTH) cache dates, which the oracle sets aside itself.
+#
+# Period t is the year 2014 + t (t = 0 is the valuation year end, column G; t = 1 to 23 are H to AD).
+# The case carries the business the data describes, as cases/modeloff_time_is_money.yaml does, with every
+# amount read from the workbook by name:
+#   * revenue (row 12), opex (row 13) and the capex of classes A and B (rows 14, 15) are real US$; each
+#     year's amount is inflated by the US$ index, the product of (1 + row 30) to that year, and the books
+#     are kept in nominal US$;
+#   * class A (G18 at the start, then its capex) is depreciated on the declining balance at 2 / G21 (the
+#     "Double Declining Balance" of H21 over a G21-year life), with no cut-off; class B (G19, then capex)
+#     straight line over G22 years; both from the year after purchase, each register written off in 2037;
+#   * tax is G25 of profit before tax, paid in the year; the rest of the cash goes to the owner;
+#   * the nominal US$/EUR rate is row 34 (real) times the US$ index over the EUR index (row 31): a driver;
+#     the NPV of the post-tax cash flows of years 1-10 is at G37.
+# The workbook computes none of the money, so no money figure is compared: what is compared is the year
+# counter and the section numbers, which the case computes from G5 and A3.
+workbook: modeloff_2014_time_is_money
+entity: division
+plant: Data__G5
+case:
+  case: workbook-modeloff-time-is-money
+  periods: 24
+  phases: [operate, fund, close, tax, pay]
+  currency: USD
+  floors:
+    division.cash: 0
+  generators:
+    src:
+      kind: formulas
+      periods: 24
+      inputs: workbook
+      values:
+        year_no: Data__G5 + t
+        section_1: Data__A3 + Data__A9__n1
+        section_2: max(Data__A3, section_1) + Data__A27__n1
+        one: Data__G5 + 1
+        usd_1: one * (1 + Data__H30)
+        eur_1: one * (1 + Data__H31)
+        usd_2: usd_1 * (1 + Data__I30)
+        eur_2: eur_1 * (1 + Data__I31)
+        usd_3: usd_2 * (1 + Data__J30)
+        eur_3: eur_2 * (1 + Data__J31)
+        usd_4: usd_3 * (1 + Data__K30)
+        eur_4: eur_3 * (1 + Data__K31)
+        usd_5: usd_4 * (1 + Data__L30)
+        eur_5: eur_4 * (1 + Data__L31)
+        usd_6: usd_5 * (1 + Data__M30)
+        eur_6: eur_5 * (1 + Data__M31)
+        usd_7: usd_6 * (1 + Data__N30)
+        eur_7: eur_6 * (1 + Data__N31)
+        usd_8: usd_7 * (1 + Data__O30)
+        eur_8: eur_7 * (1 + Data__O31)
+        usd_9: usd_8 * (1 + Data__P30)
+        eur_9: eur_8 * (1 + Data__P31)
+        usd_10: usd_9 * (1 + Data__Q30)
+        eur_10: eur_9 * (1 + Data__Q31)
+        usd_11: usd_10 * (1 + Data__R30)
+        eur_11: eur_10 * (1 + Data__R31)
+        usd_12: usd_11 * (1 + Data__S30)
+        eur_12: eur_11 * (1 + Data__S31)
+        usd_13: usd_12 * (1 + Data__T30)
+        eur_13: eur_12 * (1 + Data__T31)
+        usd_14: usd_13 * (1 + Data__U30)
+        eur_14: eur_13 * (1 + Data__U31)
+        usd_15: usd_14 * (1 + Data__V30)
+        eur_15: eur_14 * (1 + Data__V31)
+        usd_16: usd_15 * (1 + Data__W30)
+        eur_16: eur_15 * (1 + Data__W31)
+        usd_17: usd_16 * (1 + Data__X30)
+        eur_17: eur_16 * (1 + Data__X31)
+        usd_18: usd_17 * (1 + Data__Y30)
+        eur_18: eur_17 * (1 + Data__Y31)
+        usd_19: usd_18 * (1 + Data__Z30)
+        eur_19: eur_18 * (1 + Data__Z31)
+        usd_20: usd_19 * (1 + Data__AA30)
+        eur_20: eur_19 * (1 + Data__AA31)
+        usd_21: usd_20 * (1 + Data__AB30)
+        eur_21: eur_20 * (1 + Data__AB31)
+        usd_22: usd_21 * (1 + Data__AC30)
+        eur_22: eur_21 * (1 + Data__AC31)
+        usd_23: usd_22 * (1 + Data__AD30)
+        eur_23: eur_22 * (1 + Data__AD31)
+        usd_index: (t == 0) * one + (t == 1) * usd_1 + (t == 2) * usd_2 + (t == 3) * usd_3 + (t == 4) * usd_4 + (t == 5) * usd_5 + (t == 6) * usd_6 + (t == 7) * usd_7 + (t == 8) * usd_8 + (t == 9) * usd_9 + (t == 10) * usd_10 + (t == 11) * usd_11 + (t == 12) * usd_12 + (t == 13) * usd_13 + (t == 14) * usd_14 + (t == 15) * usd_15 + (t == 16) * usd_16 + (t == 17) * usd_17 + (t == 18) * usd_18 + (t == 19) * usd_19 + (t == 20) * usd_20 + (t == 21) * usd_21 + (t == 22) * usd_22 + (t == 23) * usd_23
+        eur_index: (t == 0) * one + (t == 1) * eur_1 + (t == 2) * eur_2 + (t == 3) * eur_3 + (t == 4) * eur_4 + (t == 5) * eur_5 + (t == 6) * eur_6 + (t == 7) * eur_7 + (t == 8) * eur_8 + (t == 9) * eur_9 + (t == 10) * eur_10 + (t == 11) * eur_11 + (t == 12) * eur_12 + (t == 13) * eur_13 + (t == 14) * eur_14 + (t == 15) * eur_15 + (t == 16) * eur_16 + (t == 17) * eur_17 + (t == 18) * eur_18 + (t == 19) * eur_19 + (t == 20) * eur_20 + (t == 21) * eur_21 + (t == 22) * eur_22 + (t == 23) * eur_23
+        revenue: lag(Data__H12_AD12, 1) * usd_index
+        opex: lag(Data__H13_AD13, 1) * usd_index
+        capex_a: lag(Data__H14_AD14, 1) * usd_index
+        capex_b: lag(Data__H15_AD15, 1) * usd_index
+        fx_nominal: Data__G34_AD34 * usd_index / eur_index
+        class_a_rate: 2 / Data__G21
+        class_b_life: Data__G22 + 0
+        tax_rate: Data__G25 + 0
+        discount_rate: Data__G37 + 0
+  opening:
+    division:
+      class_a_assets: {nature: asset, value: {generator: src, output: Data__G18}}
+      class_b_assets: {nature: asset, value: {generator: src, output: Data__G19}}
+      retained_earnings: {nature: equity, value: balancing}
+  contracts:
+    class_a:
+      type: capex_class
+      parties: {owner: division}
+      terms: {schedule: {generator: src, output: capex_a}, vat_rate: 0, vat_refund_lag: 0, end: 23}
+    class_b:
+      type: capex_class
+      parties: {owner: division}
+      terms: {schedule: {generator: src, output: capex_b}, vat_rate: 0, vat_refund_lag: 0, end: 23}
+    owner:
+      type: sponsor_equity
+      parties: {issuer: division}
+      terms: {}
+  schemes:
+    cash_flow:
+      revenue: operating
+      opex: operating
+      vat_receivable: investing
+      class_a: investing
+      class_b: investing
+      tax_payable: tax
+      owner.capital: equity
+      owner.distributions: equity
+  rulebooks:
+    business:
+      kind: transfer
+      entity: division
+      phase: operate
+      declare: {revenue: income, opex: expense}
+      moves:
+        revenue: {debit: cash, credit: revenue, amount: {generator: src, output: revenue}}
+        opex: {debit: opex, credit: cash, amount: {generator: src, output: opex}}
+    class_a_register:
+      kind: asset_register
+      entity: division
+      phase: close
+      from: class_a
+      to: class_a_assets
+      expense: class_a_depreciation
+      disposal: class_a_disposal
+      in_service: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+      dispose_at: 23
+      life_periods: null
+      declining_rate: {generator: src, output: class_a_rate}
+      first_charge: next_period
+    class_b_register:
+      kind: asset_register
+      entity: division
+      phase: close
+      from: class_b
+      to: class_b_assets
+      expense: class_b_depreciation
+      disposal: class_b_disposal
+      in_service: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+      dispose_at: 23
+      life_periods: {generator: src, output: class_b_life}
+      first_charge: next_period
+    tax:
+      kind: income_tax
+      entity: division
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: tax_rate}
+      carry_forward_periods: null
+      scheme:
+        revenue: taxable
+        opex: taxable
+        class_a_depreciation: taxable
+        class_a_disposal: taxable
+        class_b_depreciation: taxable
+        class_b_disposal: taxable
+        tax_expense: non_deductible
+    waterfall:
+      kind: waterfall
+      entity: division
+      phase: pay
+      cash: cash
+      tiers:
+        - {name: tax, account: tax_payable}
+      residual: owner.distribute
+      cfads: {scheme: cash_flow, classes: [operating], less: [tax]}
+      service: []
+      tests: []
+  cuts:
+    free_cash_flow: {entity: division, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+  measures:
+    npv_10: {measure: npv, cut: free_cash_flow, rate: {generator: src, output: discount_rate}, through: 10}
+figures:
+  Data.H5:AD5: {driver: src.year_no, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
+  Data.A9: {driver: src.section_1, at: 0}
+  Data.A27: {driver: src.section_2, at: 0}
+notes: >
+  A data workbook: it computes a year counter and two section numbers, nothing with money in it. The case
+  still posts the business its data describes, so the books it keeps are the ones the competition's
+  questions read (cases/modeloff_time_is_money.yaml answers them from a hand transcription of the same data).
