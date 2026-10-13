@@ -1,0 +1,72 @@
+# Published case "tax_cameroon_igs_bands_2026": Cameroon's Impôt Général Synthétique, a turnover
+# class table that names a flat annual amount per class (2026 Finance Law, Article C39;
+# cases/reference/published/tax_cameroon_igs_bands_2026.yaml).
+#
+# Every amount is a published input by name (generator `src`):
+#   * turnover_xaf, the one tested turnover, booked as the year's sales, sold for cash;
+#   * the class table (class_table_<i>__ceiling, class_table_<i>__annual_amount), read as a step:
+#     the IGS is the amount of the one class whose ceiling the turnover does not exceed and whose
+#     predecessor's ceiling it does. Each class is a product of two comparisons (1 or 0), so exactly
+#     one term is non-zero. It is not a progressive band: the amount jumps at each ceiling and
+#     nothing is taxed at a rate, which is why income_tax's `bands` do not apply;
+#   * above the last ceiling the IGS does not apply (the business leaves the regime), and the
+#     formula owes nothing there; the tested turnover is well inside the table.
+# The IGS is posted as an expense of the year, paid in the year.
+# The source's single figure, igs_annual_amount_xaf, is that expense.
+# Planted: the amount of the class the turnover falls in (class 3, ceiling 3,000,000). A planted
+# turnover x 1.01 would stay in the same class and change nothing.
+published: tax_cameroon_igs_bands_2026
+entity: trader
+plant: class_table_3__annual_amount
+case:
+  case: published-tax-cameroon-igs-bands
+  periods: 1
+  phases: [operate]
+  currency: XAF
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 1
+      inputs: published
+      values:
+        lots_year: 1          # the source states one annual turnover: the year's sales are one lot
+        igs: >-
+          (turnover_xaf <= class_table_0__ceiling) * class_table_0__annual_amount
+          + (turnover_xaf > class_table_0__ceiling) * (turnover_xaf <= class_table_1__ceiling) * class_table_1__annual_amount
+          + (turnover_xaf > class_table_1__ceiling) * (turnover_xaf <= class_table_2__ceiling) * class_table_2__annual_amount
+          + (turnover_xaf > class_table_2__ceiling) * (turnover_xaf <= class_table_3__ceiling) * class_table_3__annual_amount
+          + (turnover_xaf > class_table_3__ceiling) * (turnover_xaf <= class_table_4__ceiling) * class_table_4__annual_amount
+          + (turnover_xaf > class_table_4__ceiling) * (turnover_xaf <= class_table_5__ceiling) * class_table_5__annual_amount
+          + (turnover_xaf > class_table_5__ceiling) * (turnover_xaf <= class_table_6__ceiling) * class_table_6__annual_amount
+          + (turnover_xaf > class_table_6__ceiling) * (turnover_xaf <= class_table_7__ceiling) * class_table_7__annual_amount
+          + (turnover_xaf > class_table_7__ceiling) * (turnover_xaf <= class_table_8__ceiling) * class_table_8__annual_amount
+          + (turnover_xaf > class_table_8__ceiling) * (turnover_xaf <= class_table_9__ceiling) * class_table_9__annual_amount
+          + (turnover_xaf > class_table_9__ceiling) * (turnover_xaf <= class_table_10__ceiling) * class_table_10__annual_amount
+          + (turnover_xaf > class_table_10__ceiling) * (turnover_xaf <= class_table_11__ceiling) * class_table_11__annual_amount
+  opening:
+    trader:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts:
+    sales:
+      type: offtake
+      parties: {seller: trader}
+      terms: {volume: {generator: src, output: lots_year}, price: {generator: src, output: turnover_xaf},
+              payment_days: 0, days_per_year: 12, periods_per_year: 1, end: 0}
+    igs:
+      type: operating_cost
+      parties: {payer: trader}
+      terms: {annual: {generator: src, output: igs}, unit_rate: 0, volume: 0, index: 1,
+              periods_per_year: 1, start: 0, end: 0, vat_rate: 0, vat_refund_lag: 0,
+              payment_days: 0, days_per_year: 12}
+  rulebooks: {}
+  schemes:
+    pnl:
+      sales.revenue: revenue
+      igs.expense: tax
+  cuts:
+    igs: {kind: pnl, entity: trader, scheme: pnl, include: [tax]}
+  measures: {}
+figures:
+  igs_annual_amount_xaf: {cut: igs, sign: -1}

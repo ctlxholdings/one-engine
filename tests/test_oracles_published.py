@@ -292,3 +292,7 @@ def test_a_case_without_a_tolerance_does_not_run(tmp_path):
         "published: modeloff_2014_precise_debt_modeling\nentity: x\nplant: x\ncase: {}\nfigures: {}\n")
     r = O.receipt(PublishedFamily(folder), "modeloff_2014_precise_debt_modeling", commit="test")
     assert r.verdict == "blocked" and "no tolerance" in r.reason
+    # and without a translation, the receipt names the cause, not the missing translation
+    for oid in ("modeloff_2014_precise_debt_modeling", "numpy_financial_irr_npv_pmt_mirr"):
+        r = O.receipt(FAMILY, oid, commit="test")
+        assert r.verdict == "blocked" and "no tolerance" in r.reason, r.reason

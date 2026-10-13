@@ -191,3 +191,7 @@ def test_a_deal_with_no_figure_in_the_answer_key_is_blocked(tmp_path):
     (folder / f"{bare[0]}.yaml").write_text(f"esco: {bare[0]}\nentity: x\nplant: x\ncase: {{}}\nfigures: {{}}\n")
     r = O.receipt(EscoFamily(folder), bare[0], commit="test")
     assert r.verdict == "blocked" and "no figure" in r.reason
+    # and without one, the receipt names the cause, not the missing translation
+    for oid in bare:
+        r = O.receipt(FAMILY, oid, commit="test")
+        assert r.verdict == "blocked" and "no figure" in r.reason, r.reason

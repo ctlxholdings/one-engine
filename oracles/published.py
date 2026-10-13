@@ -268,10 +268,12 @@ class PublishedFamily(Family):
 
     # ── shared ───────────────────────────────────────────────────────────────
     def run(self, oid: str, plant: bool = False) -> Tuple[List[Check], Dict[str, Any]]:
+        # the oracle first: one that cannot be compared at all (no tolerance, no figure) says so,
+        # rather than naming a translation that would not change its verdict
+        oracle, tol = self._load(oid)
         path = self.translation(oid)
         if path is None:
             raise Blocked(f"no translation yet (cases/{self.key}/{oid}.yaml)")
-        oracle, tol = self._load(oid)
         tr = load_yaml_strict(path.read_text())
         unknown = sorted(set(tr) - {self.key, "entity", "plant", "case", "figures", "not_compared", "notes"})
         if unknown or tr.get(self.key) != oid:
