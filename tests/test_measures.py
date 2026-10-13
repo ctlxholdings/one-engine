@@ -1,7 +1,7 @@
 """Tests for one_engine.measures (card 14): streams to numbers, refusing ambiguity."""
 import pytest
 
-from one_engine.measures import AmbiguousRate, MeasureError, irr, npv, payback
+from one_engine.measures import GUESS, MeasureError, PickedRate, irr, npv, payback
 
 
 def test_irr_of_a_simple_loan():
@@ -13,11 +13,27 @@ def test_irr_refuses_a_stream_with_no_sign_change():
         irr([100, 10, 10])
 
 
-def test_irr_refuses_when_two_rates_fit():
-    # -100 + 230/(1+r) - 132/(1+r)^2 = 0 at r = 10% and r = 20%.
-    with pytest.raises(AmbiguousRate) as e:
-        irr([-100, 230, -132])
-    assert len(e.value.roots) == 2
+def test_when_several_rates_fit_irr_picks_the_one_nearest_ten_percent_and_flags_the_others():
+    # -100 + 230/(1+r) - 132/(1+r)^2 = 0 at r = 10% and r = 20%: Excel's 10% guess lands on 10%
+    r = irr([-100, 230, -132])
+    assert isinstance(r, PickedRate) and r == pytest.approx(0.10, abs=1e-12)
+    assert [round(x, 12) for x in r.roots] == [0.1, 0.2]
+    # -100 + 180/(1+r) - 65/(1+r)^2 = 0 at r = -50% and r = 30%: the nearer to 10% is 30%, the second found
+    r = irr([-100, 180, -65])
+    assert r == pytest.approx(0.30, abs=1e-12) and len(r.roots) == 2
+    # the ruler is a stated constant (Excel's default guess), not a number buried in the code
+    assert GUESS == 0.10
+    # one rate is a plain number: no flag
+    assert type(irr([-100, 110])) is float
+
+
+def test_a_picked_rate_keeps_its_flag_when_a_case_annualises_it():
+    from one_engine.cases import _annualised
+    monthly = irr([-100, 180, -65])                       # 30% a period, picked from -50% and 30%
+    yearly = _annualised(monthly, 12)
+    assert isinstance(yearly, PickedRate) and yearly == pytest.approx(1.3 ** 12 - 1)
+    assert yearly.roots == pytest.approx((0.5 ** 12 - 1, 1.3 ** 12 - 1))
+    assert type(_annualised(irr([-100, 110]), 12)) is float
 
 
 def test_npv_needs_a_rate():
@@ -58,8 +74,7 @@ def test_xirr_refuses_like_irr():
     d = [dt.date(2015, 1, 1), dt.date(2016, 1, 1), dt.date(2017, 1, 1)]
     with pytest.raises(MeasureError, match="never changes sign"):
         xirr([100, 10, 10], d)
-    with pytest.raises(AmbiguousRate):
-        xirr([-100, 230, -132], d)
+    assert isinstance(xirr([-100, 230, -132], d), PickedRate)                 # several fit: picked, flagged
     with pytest.raises(MeasureError, match="2 dates"):
         xirr([-100, 50, 60], d[:2])
     with pytest.raises(MeasureError, match="before the first"):

@@ -423,7 +423,7 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
             pending[mname] = value
         elif kind == "irr":
             per_year = int(r.take_or_default("per_year", 1, reason="the stream's periods are years").value)
-            pending[mname] = lambda c=cut, n=per_year: (1 + M.irr(cuts[c].values)) ** n - 1
+            pending[mname] = lambda c=cut, n=per_year: _annualised(M.irr(cuts[c].values), n)
         else:
             pending[mname] = lambda c=cut, k=kind: MEASURES[k](cuts[c].values)
         measure_cut[mname] = cut
@@ -436,6 +436,15 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
     out = CaseResult(name, group, cuts, {}, measure_cut, verdicts, rule_checks)
     out.pending_measures = pending
     out.lenses, out.balancing = lens_values, {e: b for e, b in balancing.items() if b}
+    return out
+
+
+def _annualised(rate: float, n: int) -> float:
+    """A per-period rate compounded over ``n`` periods; a :class:`~one_engine.measures.PickedRate`
+    keeps its flag, with every root compounded the same way."""
+    out = (1 + rate) ** n - 1
+    if isinstance(rate, M.PickedRate):
+        return M.PickedRate(out, [(1 + r) ** n - 1 for r in rate.roots])
     return out
 
 

@@ -47,8 +47,12 @@ MUTATIONS = [
     ("checks.py", "if by_acct.get(a) and abs(by_acct[a][-1].closing) > tol]", "if False]",
      "test_checks.py::test_wind_down_names_what_is_left_standing"),
 
-    ("measures.py", "    if len(roots) > 1:", "    if False:",
-     "test_measures.py::test_irr_refuses_when_two_rates_fit"),
+    ("measures.py", "PickedRate(min(roots, key=lambda r: abs(r - GUESS)), roots)", "PickedRate(roots[0], roots)",
+     "test_measures.py::test_when_several_rates_fit_irr_picks_the_one_nearest_ten_percent_and_flags_the_others"),
+    ("measures.py", "    return lo if abs(flo) <= abs(fhi) else hi", "    return hi",
+     "test_oracles_library.py::test_every_oracle_gets_its_recorded_verdict[pyxirr/test_periodic::test_irr_samples[3]]"),
+    ("cases/__init__.py", "        return M.PickedRate(out, [(1 + r) ** n - 1 for r in rate.roots])", "        return out",
+     "test_measures.py::test_a_picked_rate_keeps_its_flag_when_a_case_annualises_it"),
     # the plain vanilla swap (packs/actus.py run_swap, SwapRun)
     ("packs/actus.py", 'if PHASES.index(x["type"]) <= PHASES.index(kind)][-1]', 'if True][-1]',
      "test_case_actus.py::test_a_reset_on_the_termination_date_reports_the_notional_still_outstanding"),

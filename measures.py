@@ -5,10 +5,15 @@ scalars. They never read a ledger directly and never write anything.
 
 Refusal over a confident wrong number
 -------------------------------------
-* :func:`irr` refuses a stream with no sign change (no rate exists) and a
-  stream for which several rates fit (:class:`AmbiguousRate`, carrying every
-  root found). golds: "A founder told 'your return is 8.9%' when it is
-  equally 143% has been misled by a number that looked like a fact."
+* :func:`irr` refuses a stream with no sign change (no rate exists).
+* When several rates fit, :func:`irr`, :func:`xirr` and :func:`rate`
+  return the one nearest :data:`GUESS` (10%, Excel's default guess) as a
+  :class:`PickedRate`: a float that also carries every rate found, so the
+  answer is flagged as one of several rather than passed off as the only
+  one. Ali's call of 2026-10-13, over the earlier refusal (golds: "A
+  founder told 'your return is 8.9%' when it is equally 143% has been
+  misled"): the libraries and Excel each return one rate, and the flag
+  keeps the others in view.
 * :func:`npv` has no default discount rate. An NPV at an undisclosed rate is
   refused by construction (golds' appraisal rule).
 * :func:`payback` returns ``None`` when the stream never pays back, rather
@@ -60,7 +65,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import math
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 from one_engine.units import Number
 
@@ -69,12 +74,29 @@ class MeasureError(ValueError):
     """A measure is undefined for the stream given."""
 
 
-class AmbiguousRate(MeasureError):
-    """More than one rate sets the NPV to zero."""
+#: Where a pick among several fitting rates is measured from: Excel's default guess for IRR and RATE.
+GUESS = 0.10
 
-    def __init__(self, roots: List[float]):
-        self.roots = roots
-        super().__init__(f"several rates fit this stream: {', '.join(f'{r:.6%}' for r in roots)}")
+
+class PickedRate(float):
+    """A rate picked from several that fit: the one nearest :data:`GUESS`.
+
+    It is the float the caller asked for, so arithmetic and comparisons
+    work as on any rate; ``roots`` lists every rate found, in increasing
+    order, the pick among them. Arithmetic on it returns a plain float, so
+    a caller that transforms the rate (annualising it) carries the flag on
+    itself.
+    """
+
+    roots: Tuple[float, ...]
+
+    def __new__(cls, value: float, roots: Sequence[float]) -> "PickedRate":
+        out = super().__new__(cls, value)
+        out.roots = tuple(roots)
+        return out
+
+    def __repr__(self) -> str:
+        return f"{float(self)!r} (one of several rates: {', '.join(repr(r) for r in self.roots)})"
 
 
 def npv(stream: Sequence[Number], rate: float) -> float:
@@ -99,18 +121,28 @@ def _sign_changes(values: Sequence[float]) -> int:
     return sum(1 for a, b in zip(signs, signs[1:]) if a != b)
 
 
-def _bisect(f, lo: float, hi: float, tol: float = 1e-15) -> float:
-    flo = f(lo)
-    for _ in range(300):
+def _bisect(f, lo: float, hi: float) -> float:
+    """The root of ``f`` between ``lo`` and ``hi`` (opposite signs), to the last float.
+
+    Halves until the bracket is two adjacent floats, then returns the one
+    where ``f`` is nearer zero. Near -100% the NPV moves by a large amount
+    from one float to the next, so stopping at a fixed width left a
+    residual the libraries' "NPV at that rate is nil" checks reject
+    (pyxirr's irr sample 3: -5.8e-8 against a tolerance of 1e-8).
+    """
+    flo, fhi = f(lo), f(hi)
+    for _ in range(2200):           # enough halvings to reach adjacent floats from any bracket
         mid = (lo + hi) / 2
+        if mid <= lo or mid >= hi:
+            break
         fm = f(mid)
+        if fm == 0:
+            return mid
         if (fm > 0) == (flo > 0):
             lo, flo = mid, fm
         else:
-            hi = mid
-        if hi - lo < tol:
-            break
-    return (lo + hi) / 2
+            hi, fhi = mid, fm
+    return lo if abs(flo) <= abs(fhi) else hi
 
 
 #: The rates the root scan covers, as growth factors 1 + r: from e**-30 (a rate a hair above -100%)
@@ -124,8 +156,8 @@ def irr(stream: Sequence[Number], grid: int = 2000) -> float:
 
     The rate is unique when the flows change sign once (Descartes' rule of
     signs on the polynomial in 1/(1+r)). Otherwise the NPV is scanned (see
-    :func:`_root`): one bracket gives the rate, more than one raises
-    :class:`AmbiguousRate`, none raises :class:`MeasureError`.
+    :func:`_root`): one bracket gives the rate, more than one the
+    :class:`PickedRate` nearest :data:`GUESS`, none raises :class:`MeasureError`.
     """
     cfs = [float(c) for c in stream]
     if _sign_changes(cfs) == 0:
@@ -156,8 +188,8 @@ def xirr(stream: Sequence[Number], dates: Sequence[_dt.date], grid: int = 2000) 
     from the first date given (actual/365). The base date does not move the
     rate, so zero flows before the first payment change nothing. As in
     Excel, the later dates may come in any order, but none may precede the
-    first. The same refusals as :func:`irr`: no sign change, several rates,
-    none in range.
+    first. As :func:`irr`: no sign change or no rate in range refuses,
+    several rates give the :class:`PickedRate` nearest :data:`GUESS`.
     """
     years = _years(stream, dates)
     cfs = [float(c) for c in stream]
@@ -209,7 +241,7 @@ def discount(stream: Sequence[Number], factors: Sequence[Number]) -> float:
 
 
 def _root(f, grid: int) -> float:
-    """The one rate where ``f`` is zero, or a refusal (grid scan, then bisection).
+    """The rate where ``f`` is zero (grid scan, then bisection); of several, the nearest :data:`GUESS`.
 
     The grid is the old one, ``grid`` steps from -99% to +1000%, with a tail
     on each side spaced evenly in log(1 + r): 500 steps down to
@@ -236,7 +268,9 @@ def _root(f, grid: int) -> float:
     if not roots:
         raise MeasureError(f"no rate from {xs[0]:.10%} to {xs[-1]:,.0%} sets the NPV to zero")
     if len(roots) > 1:
-        raise AmbiguousRate(roots)
+        # Excel starts Newton's method at the guess and usually lands on the nearest root; the pick
+        # is made explicit (ties go to the lower rate, the first found) and flagged with every root
+        return PickedRate(min(roots, key=lambda r: abs(r - GUESS)), roots)
     return roots[0]
 
 
@@ -403,7 +437,8 @@ def rate(nper: Number, pmt: Number, pv: Number, fv: Number = 0, when: int = 0, g
     """The rate per period at which ``nper`` payments of ``pmt`` take ``pv`` to ``-fv`` (Excel's RATE).
 
     The root of :func:`fv` in the rate, found by the same scan as
-    :func:`irr` (one root, or a refusal naming them all); the libraries run
+    :func:`irr` (of several roots, the :class:`PickedRate` nearest
+    :data:`GUESS`); the libraries run
     Newton's method from a guess and answer NaN when it does not settle.
     Each side of zero is evaluated in a form that cannot overflow: below
     0, ``fv`` as it stands (``(1 + r)**n`` shrinks); above, ``fv`` over
@@ -422,8 +457,6 @@ def rate(nper: Number, pmt: Number, pv: Number, fv: Number = 0, when: int = 0, g
 
     try:
         return _root(signed, grid)
-    except AmbiguousRate:
-        raise
     except MeasureError:
         raise MeasureError(f"no rate repays {v:g} by {nper} payments of {p:g} to a final {f:g}") from None
 

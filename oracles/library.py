@@ -65,9 +65,10 @@ How each library's conventions map onto the engine
   (:class:`one_engine.measures.MeasureError`). A refusal agrees with
   "no answer" and with nothing else; any other exception the engine raises
   fails the whole receipt (``differs``: the engine raised).
-* several roots: the engine refuses (:class:`AmbiguousRate`) and names
-  them; the libraries pick one. Such a check fails and its ``got`` lists
-  every root, so a reader sees whether the library's pick is among them.
+* several roots: the engine returns the one nearest 10%
+  (:class:`~one_engine.measures.PickedRate`, Excel's guess) and its ``got``
+  lists every root, so where the library picked another a reader sees that
+  the library's pick is among them.
 
 Comparison rules (each test's own)
 ----------------------------------
@@ -136,11 +137,8 @@ class Refused:
     """The engine declined to give a number (a :class:`MeasureError`), with its reason."""
 
     why: str
-    roots: Tuple[float, ...] = ()
 
     def __str__(self) -> str:
-        if self.roots:
-            return "refuses: several rates fit: " + ", ".join(repr(r) for r in self.roots)
         return f"refuses: {self.why}"
 
 
@@ -184,8 +182,6 @@ class _Engine:
             return Refused("an input to this call was itself refused")
         try:
             return fn(*args, **kw)
-        except M.AmbiguousRate as e:
-            return Refused(str(e), tuple(e.roots))
         except M.MeasureError as e:
             return Refused(str(e))
 
@@ -262,7 +258,8 @@ class _Engine:
 def _show(v: Any) -> str:
     if isinstance(v, (list, tuple)):
         return "[" + ", ".join(_show(x) for x in v) + "]"
-    return str(v) if isinstance(v, Refused) else repr(float(v))
+    # a picked rate shows every root beside the pick (its own repr)
+    return str(v) if isinstance(v, Refused) else repr(v) if isinstance(v, M.PickedRate) else repr(float(v))
 
 
 def _near(name: str, got: Any, want: float, eps: float, at: str = "") -> Check:
@@ -272,7 +269,7 @@ def _near(name: str, got: Any, want: float, eps: float, at: str = "") -> Check:
 
 
 def _refuses(name: str, got: Any, at: str = "") -> Check:
-    return Check(name, at, "no answer", _show(got), isinstance(got, Refused) and not got.roots)
+    return Check(name, at, "no answer", _show(got), isinstance(got, Refused))
 
 
 # ── numpy-financial: the test file read by its syntax tree ──────────────────

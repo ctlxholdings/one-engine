@@ -3,27 +3,28 @@
 The reader is the only thing authored here (there is no translation), so the
 ways it could pass a case dishonestly are each pinned:
 
-* a refusal never satisfies a numeric answer, and several roots are a
-  refusal even when the library's pick is among them;
+* a refusal never satisfies a numeric answer; where several rates fit,
+  the engine's pick (the one nearest 10%) is a number like any other and
+  its receipt lists every root;
 * a test that calls a function the engine lacks is blocked, naming it;
 * tolerances, flows and dates come from the vendored files (the default
   ``assert_almost_eq!`` tolerance from ``helpers.rs``, quoted CSV dates as
   ``csv.reader`` reads them).
 
-Then every oracle gets its recorded verdict. The differences are of three
-kinds, all checked rather than listed: the engine refuses a stream with
-several rates where the library picks one (every such refusal must name the
-library's rate among its roots); two pyxirr samples where the library
-finds no rate and the engine finds one (its XNPV must change sign across it);
-and two pyxirr rate tests with two rates, where every rate the engine names
-must pass the test's own future-value check.
+Then every oracle gets its recorded verdict. The differences are of two
+kinds, both checked rather than listed: streams with several rates where the
+engine picks the one nearest 10% and the library another (the library's rate
+must be among the roots the engine lists; a check that reads the rate, such
+as the XNPV at it, then differs too); and two pyxirr samples where the
+library finds no rate and the engine finds one (its XNPV must change sign
+across it).
 """
 import pytest
 
 from one_engine import oracles as O
-from one_engine.measures import fv, xnpv
+from one_engine.measures import PickedRate, xnpv
 from one_engine.oracles.library import (EXCLUDED, HELPERS, NUMPY, PYXIRR, LibraryFamily, Refused, _csv,
-                                        _default_eps, _future_value_eps, _literal, _near, _numpy_tests,
+                                        _default_eps, _literal, _near, _numpy_tests,
                                         _refuses, _run_numpy, _run_pyxirr)
 
 FAMILY = LibraryFamily()
@@ -39,10 +40,6 @@ UNPLANTABLE = {
     # assert_allclose(actual, desired, 4): the third argument is rtol, so 400% passes (decimal=4 was meant)
     "numpy-financial/TestNper::test_broadcast",
 }
-#: pyxirr rate tests whose flows change sign twice: the test checks only that the rate it gets makes
-#: the future value nil, which both roots do; the engine refuses and names both. Checked, not listed:
-#: every root named must pass the test's own check
-TWO_RATES = {"pyxirr/test_periodic::test_rate_non_zero_fv", "pyxirr/test_periodic::test_rate_pmt_at_beginning"}
 #: oracles the reader declines, with the start of the reason it gives (none is a missing function)
 READER_DECLINES = {
     # equality with a 28-digit Decimal pins Decimal's rounding (and, for rate, where Newton's method
@@ -86,12 +83,13 @@ def test_tolerances_flows_and_dates_are_read_from_the_vendored_files():
     assert dates and len(dates) == len(amounts)
 
 
-def test_a_refusal_never_satisfies_a_number_and_several_roots_are_a_refusal():
+def test_a_refusal_never_satisfies_a_number_and_a_picked_rate_is_a_number_that_shows_the_others():
     assert not _near("irr", Refused("no rate"), 0.1, 1e-9).ok
-    several = Refused("several", (-0.68, 0.12))
-    assert not _near("irr", several, 0.12, 1e-9).ok
-    assert not _refuses("irr", several).ok                                 # nor is it "no answer"
     assert _refuses("irr", Refused("no rate")).ok
+    picked = PickedRate(0.12, (-0.68, 0.12))
+    assert _near("irr", picked, 0.12, 1e-9).ok and not _near("irr", picked, -0.68, 1e-9).ok
+    assert not _refuses("irr", picked).ok                                  # a pick is not "no answer"
+    assert "-0.68" in _near("irr", picked, -0.68, 1e-9).got               # the receipt shows every root
 
 
 def test_a_test_calling_a_function_the_engine_lacks_is_blocked_by_name():
@@ -110,17 +108,17 @@ def test_the_xirr_samples_check_xnpv_only_where_a_rate_exists():
 
 
 def _library_rate_among_the_roots(r) -> bool:
-    """Every failing check is a several-roots refusal that names the library's rate (or a call fed by one)."""
-    for c in r.checks:
-        if c["ok"] or "itself refused" in c["got"]:
-            continue
-        if "several rates fit" not in c["got"]:
-            return False
+    """The rate check differs only by the pick: the engine lists several roots and the library's rate is
+    one of them. Any other failing check reads that rate (the NPV or XNPV at it)."""
+    picks = [c for c in r.checks if not c["ok"] and "one of several rates" in c["got"]]
+    if not picks:
+        return False
+    for c in picks:
         want = float(c["expected"].split(" ")[0])
-        roots = [float(x) for x in c["got"].split(": ", 2)[2].split(", ")]
+        roots = [float(x) for x in c["got"].split("one of several rates: ", 1)[1].rstrip(")").split(", ")]
         if not any(abs(x - want) <= max(1e-6, 1e-2 * abs(want)) for x in roots):
             return False
-    return True
+    return all(c["ok"] or c in picks or c["name"].endswith(("at that irr", "at that xirr")) for c in r.checks)
 
 
 @pytest.mark.parametrize("oid", ORACLES)
@@ -130,14 +128,6 @@ def test_every_oracle_gets_its_recorded_verdict(oid):
         assert r.verdict == "blocked" and r.reason.startswith(READER_DECLINES[oid]), r.reason
     elif r.verdict == "blocked":
         assert r.reason.startswith(("the engine has no ", "the engine's xirr counts actual/365 only")), r.reason
-    elif oid in TWO_RATES:
-        assert r.verdict == "differs" and all(not c["ok"] for c in r.checks)
-        _, eps = _future_value_eps()
-        when = int("pmt_at_beginning" in oid)
-        roots = [float(x) for x in r.checks[0]["got"].split(": ", 2)[2].split(", ")]
-        assert len(roots) == 2
-        for root in roots:     # PERIODS, PAYMENT, PV, FV of the test file; the macro's residual is -fv(...) + FV
-            assert abs(110_000.0 - fv(root, 10.0, -50_000.0, 100_000.0, when)) < eps
     elif oid in SOLVER_MISSES:
         assert r.verdict == "differs" and r.checks[0]["expected"] == "no answer"
         root = float(r.checks[0]["got"])
