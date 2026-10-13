@@ -1,0 +1,289 @@
+# Workbook "nour_3moissons_haraz": Nour Energie's solar supply to Baghara, the 50 CAP 3Moissons farms and
+# the Haraz Goz Aiche site, over 21 years (Baghara 02-Financial-Models/Nour-3Moissons-Haraz/
+# "Nour 3Moissons et Haraz v1.xlsx"; cases/reference/workbooks/nour_3moissons_haraz.xlsx).
+#
+# Every amount is a workbook input by name (a typed cell, or a number typed inside a formula), or a formula
+# over them (generator `src`). Period t is the workbook's year t + 1 (columns C to W of "VAN Nour Baghara").
+#   * 3Moissons: 10, 20 and 20 farms electrified in years 1-3 (C26:E26), each costing the four lines
+#     C17:C20, capitalised when built; each farm buys N37 kWh a year at C29 and C33 of O&M from the year it
+#     is electrified (the farm count accumulates: C27:F27);
+#   * Haraz: the five capex lines C14:C18 spent half in each of years 1 and 2; Haraz buys half its
+#     consumption (C43 + C44) in years 1-2 and all of it after, at C49, and C52 of O&M (half in year 1);
+#   * "O&M vendus pour Baghara": C41 of the capex built to date, billed every year; ageing capex is C42 of
+#     that capex in years 6-10, C43 in years 11-20 and C44 in year 21 (the workbook's columns H, M, W);
+#   * working capital moves by the typed row C7:W7; "impots et taxes" are C32 of turnover, paid in the year;
+#   * net cash is turnover less capex, working capital and taxes; the shortfalls are funded by equity,
+#     which the net cash cut leaves out; NPV at C35 with year 1 undiscounted (C36 = 1), IRR on net cash;
+#   * sensitivities are variants of the same case: capex x C40 (O&M and ageing keep the base capex as
+#     their base, as the workbook's row 41 does), turnover x C45 (taxes follow turnover), taxes x C49; the
+#     surplus-sales "upside" (row 26, and 3Moissons' C34) is a variant that also sells the PV surplus;
+#   * physical rows (hours, m2, kW, kWh, farm counts) and the discount factors are drivers.
+#
+# Where the books disagree with the workbook (the workbook wins; these are its own formula slips):
+#   * F55 "TRI du projet" is IRR(C37:W37), the IRR of the DISCOUNTED cash flows: 9.81%, which is
+#     (1 + IRR) / 1.06 - 1 for the project IRR on net cash, 16.40%; the same holds for D55:F55;
+#   * D54 (NPV, capex +10%) sums C42:V42 and leaves out year 21 (436,676): 8,624,305 against 9,060,981;
+#   * row 46 (turnover -10%) multiplies the taxes by C45 with a relative reference, so years 2-21 multiply
+#     them by the blank D45:W45: the taxes of those years drop out (E46 onwards, and its NPV E54).
+# The Haraz cost-plus block (C25:C41 of "Hypotheses Nour Haraz") is a pricing memo the cash flow never uses
+# (Haraz is billed at C49); it is set aside. Its C25 divides the capex by 12 though C24 states 20 years.
+workbook: nour_3moissons_haraz
+entity: nour
+plant: Hypotheses_Nour_3Moissons__C29
+case:
+  case: workbook-nour-baghara
+  periods: 21
+  phases: [fund, operate]
+  currency: EUR
+  floors: {}
+  generators:
+    src:
+      kind: formulas
+      periods: 21
+      inputs: workbook
+      values:
+        # 3Moissons, per farm (sheet "Hypotheses Nour 3Moissons")
+        eq_hours: Hypotheses_Nour_3Moissons__C7 * Hypotheses_Nour_3Moissons__C8
+        pv_m2: Hypotheses_Nour_3Moissons__C4 * Hypotheses_Nour_3Moissons__C10__n1 / Hypotheses_Nour_3Moissons__C10__n2
+        pv_kwh: Hypotheses_Nour_3Moissons__C4 * Hypotheses_Nour_3Moissons__C7 * Hypotheses_Nour_3Moissons__C8
+        kw_total: Hypotheses_Nour_3Moissons__K5 + Hypotheses_Nour_3Moissons__K6 + Hypotheses_Nour_3Moissons__K7 + Hypotheses_Nour_3Moissons__K8 + Hypotheses_Nour_3Moissons__K9 + Hypotheses_Nour_3Moissons__K10 + Hypotheses_Nour_3Moissons__K15 + Hypotheses_Nour_3Moissons__K16 + Hypotheses_Nour_3Moissons__K17 + Hypotheses_Nour_3Moissons__K18
+        storage_total: Hypotheses_Nour_3Moissons__N5 + Hypotheses_Nour_3Moissons__N6 + Hypotheses_Nour_3Moissons__N7 + Hypotheses_Nour_3Moissons__N8 + Hypotheses_Nour_3Moissons__N9 + Hypotheses_Nour_3Moissons__N10 + Hypotheses_Nour_3Moissons__N15 + Hypotheses_Nour_3Moissons__N16 + Hypotheses_Nour_3Moissons__N17 + Hypotheses_Nour_3Moissons__N18
+        dry_25: Hypotheses_Nour_3Moissons__K25 * Hypotheses_Nour_3Moissons__L25
+        dry_26: Hypotheses_Nour_3Moissons__K26 * Hypotheses_Nour_3Moissons__L26
+        dry_27: Hypotheses_Nour_3Moissons__K27 * Hypotheses_Nour_3Moissons__L27
+        dry_28: Hypotheses_Nour_3Moissons__K28 * Hypotheses_Nour_3Moissons__L28
+        dry_29: Hypotheses_Nour_3Moissons__K29 * Hypotheses_Nour_3Moissons__L29
+        dry_30: Hypotheses_Nour_3Moissons__K30 * Hypotheses_Nour_3Moissons__L30
+        dry_31: Hypotheses_Nour_3Moissons__K31 * Hypotheses_Nour_3Moissons__L31
+        dry_32: Hypotheses_Nour_3Moissons__K32 * Hypotheses_Nour_3Moissons__L32
+        dry_33: Hypotheses_Nour_3Moissons__K33 * Hypotheses_Nour_3Moissons__L33
+        dry_34: Hypotheses_Nour_3Moissons__K34 * Hypotheses_Nour_3Moissons__L34
+        wet_29: dry_29 * Hypotheses_Nour_3Moissons__N29__n1
+        wet_30: dry_30 + 0
+        wet_31: dry_31 + 0
+        wet_32: dry_32 / Hypotheses_Nour_3Moissons__N32__n1
+        wet_33: dry_33 + 0
+        wet_34: dry_34 + 0
+        dry_day: dry_25 + dry_26 + dry_27 + dry_28 + dry_29 + dry_30 + dry_31 + dry_32 + dry_33 + dry_34
+        wet_day: Hypotheses_Nour_3Moissons__N25 + Hypotheses_Nour_3Moissons__N26 + Hypotheses_Nour_3Moissons__N27 + Hypotheses_Nour_3Moissons__N28 + wet_29 + wet_30 + wet_31 + wet_32 + wet_33 + wet_34
+        dry_season: dry_day * Hypotheses_Nour_3Moissons__M36__n1
+        wet_season: wet_day * Hypotheses_Nour_3Moissons__N36__n1
+        farm_kwh: dry_season + wet_season
+        farm_surplus_kwh: pv_kwh - farm_kwh
+        farm_capex: Hypotheses_Nour_3Moissons__C17 + Hypotheses_Nour_3Moissons__C18 + Hypotheses_Nour_3Moissons__C19 + Hypotheses_Nour_3Moissons__C20
+        half_price_3m: Hypotheses_Nour_3Moissons__C29 / Hypotheses_Nour_3Moissons__E29__n1
+        half_surplus_price_3m: Hypotheses_Nour_3Moissons__C30 / Hypotheses_Nour_3Moissons__E30__n1
+        built: (t == 0) * Hypotheses_Nour_3Moissons__C26 + (t == 1) * Hypotheses_Nour_3Moissons__D26 + (t == 2) * Hypotheses_Nour_3Moissons__E26 + (t >= 3) * Hypotheses_Nour_3Moissons__F26
+        farms: cumsum(built)
+        first_wave: Hypotheses_Nour_3Moissons__C26 + 0
+        kwh_3m: farms * farm_kwh
+        # Haraz (sheet "Hypotheses Nour Haraz")
+        eq_hours_h: Hypotheses_Nour_Haraz__C8 * Hypotheses_Nour_Haraz__C9
+        pv_m2_h: Hypotheses_Nour_Haraz__C4 * Hypotheses_Nour_Haraz__C11__n1 / Hypotheses_Nour_Haraz__E11
+        pv_kwh_h: Hypotheses_Nour_Haraz__C4 * eq_hours_h
+        consumption_h: Hypotheses_Nour_Haraz__C43 + Hypotheses_Nour_Haraz__C44
+        surplus_kwh_h: pv_kwh_h - consumption_h
+        half_price_h: Hypotheses_Nour_Haraz__C49 / Hypotheses_Nour_Haraz__E49__n1
+        half_surplus_price_h: Hypotheses_Nour_Haraz__C50 / Hypotheses_Nour_Haraz__E50__n1
+        capex_h_total: Hypotheses_Nour_Haraz__C14 + Hypotheses_Nour_Haraz__C15 + Hypotheses_Nour_Haraz__C16 + Hypotheses_Nour_Haraz__C17 + Hypotheses_Nour_Haraz__C18
+        kwh_h: (t == 0) * consumption_h / VAN_Nour_Baghara__C16__n1 + (t == 1) * consumption_h / VAN_Nour_Baghara__D16__n1 + (t >= 2) * consumption_h
+        om_h: (t == 0) * Hypotheses_Nour_Haraz__C52 / VAN_Nour_Baghara__C18__n1 + (t >= 1) * Hypotheses_Nour_Haraz__C52
+        revenue_cut: VAN_Nour_Baghara__C45__n1 - VAN_Nour_Baghara__C45__n2
+        # the sensitivities' factors: 1 in the base case, replaced by each variant
+        capex_factor: 1
+        revenue_factor: 1
+        tax_factor: 1
+        upside_on: 0
+        # money (sheet "VAN Nour Baghara")
+        base_capex_3m: built * farm_capex
+        base_capex_h: (t == 0) * capex_h_total / VAN_Nour_Baghara__C14__n1 + (t == 1) * capex_h_total / VAN_Nour_Baghara__D14__n1
+        built_to_date: cumsum(base_capex_3m) + cumsum(base_capex_h)
+        ageing_rate: (t >= 5) * (t < 10) * Hypotheses_Nour_3Moissons__C42 + (t >= 10) * (t < 20) * Hypotheses_Nour_3Moissons__C43 + (t >= 20) * Hypotheses_Nour_3Moissons__C44
+        capex_3m: base_capex_3m * capex_factor
+        capex_h: base_capex_h * capex_factor
+        capex_ageing: ageing_rate * built_to_date * capex_factor
+        sales_kwh_3m: kwh_3m * Hypotheses_Nour_3Moissons__C29 * revenue_factor
+        sales_om_3m: farms * Hypotheses_Nour_3Moissons__C33 * revenue_factor
+        sales_kwh_h: kwh_h * Hypotheses_Nour_Haraz__C49 * revenue_factor
+        sales_om_h: om_h * revenue_factor
+        sales_om_baghara: built_to_date * Hypotheses_Nour_3Moissons__C41 * revenue_factor
+        turnover: sales_kwh_3m + sales_om_3m + sales_kwh_h + sales_om_h + sales_om_baghara
+        taxes: turnover * VAN_Nour_Baghara__C32 * tax_factor
+        surplus_3m: upside_on * (t >= 3) * Hypotheses_Nour_3Moissons__C3 * farm_surplus_kwh * Hypotheses_Nour_3Moissons__C13 * Hypotheses_Nour_3Moissons__C30
+        surplus_h: upside_on * (t >= 3) * surplus_kwh_h * Hypotheses_Nour_Haraz__C47 * Hypotheses_Nour_Haraz__C50
+        wc_change: VAN_Nour_Baghara__C7_W7 + 0
+        net_cash: turnover + surplus_3m + surplus_h - capex_3m - capex_h - capex_ageing - wc_change - taxes
+        funding: max(0, -net_cash)
+        # discounting
+        wacc: VAN_Nour_Baghara__C35 + 0
+        step: VAN_Nour_Baghara__D35__n1 / (VAN_Nour_Baghara__D35__n2 + wacc)
+        factor: VAN_Nour_Baghara__C36 * step ** t
+  opening:
+    nour:
+      cash: {nature: asset, value: 0}
+      equity: {nature: equity, value: 0}
+  contracts: {}
+  rulebooks:
+    funding:
+      kind: transfer
+      entity: nour
+      phase: fund
+      moves:
+        equity: {debit: cash, credit: equity, amount: {generator: src, output: funding}}
+    business:
+      kind: transfer
+      entity: nour
+      phase: operate
+      declare: {ppe_3m: asset, ppe_haraz: asset, ppe_ageing: asset, working_capital: asset,
+                kwh_3m: income, om_3m: income, kwh_haraz: income, om_haraz: income, om_baghara: income,
+                surplus_3m: income, surplus_haraz: income, taxes: expense}
+      moves:
+        kwh_3m: {debit: cash, credit: kwh_3m, amount: {generator: src, output: sales_kwh_3m}}
+        om_3m: {debit: cash, credit: om_3m, amount: {generator: src, output: sales_om_3m}}
+        kwh_haraz: {debit: cash, credit: kwh_haraz, amount: {generator: src, output: sales_kwh_h}}
+        om_haraz: {debit: cash, credit: om_haraz, amount: {generator: src, output: sales_om_h}}
+        om_baghara: {debit: cash, credit: om_baghara, amount: {generator: src, output: sales_om_baghara}}
+        surplus_3m: {debit: cash, credit: surplus_3m, amount: {generator: src, output: surplus_3m}}
+        surplus_haraz: {debit: cash, credit: surplus_haraz, amount: {generator: src, output: surplus_h}}
+        capex_3m: {debit: ppe_3m, credit: cash, amount: {generator: src, output: capex_3m}}
+        capex_haraz: {debit: ppe_haraz, credit: cash, amount: {generator: src, output: capex_h}}
+        capex_ageing: {debit: ppe_ageing, credit: cash, amount: {generator: src, output: capex_ageing}}
+        working_capital: {debit: working_capital, credit: cash, amount: {generator: src, output: wc_change}}
+        taxes: {debit: taxes, credit: cash, amount: {generator: src, output: taxes}}
+  schemes:
+    pnl:
+      kwh_3m: kwh_3m
+      om_3m: om_3m
+      kwh_haraz: kwh_haraz
+      om_haraz: om_haraz
+      om_baghara: om_baghara
+      surplus_3m: surplus_3m
+      surplus_haraz: surplus_haraz
+      taxes: taxes
+    cash_flow:
+      kwh_3m: operating
+      om_3m: operating
+      kwh_haraz: operating
+      om_haraz: operating
+      om_baghara: operating
+      surplus_3m: operating
+      surplus_haraz: operating
+      taxes: operating
+      working_capital: working_capital
+      ppe_3m: capex_3m
+      ppe_haraz: capex_haraz
+      ppe_ageing: capex_ageing
+      equity: financing
+  cuts:
+    kwh_3m: {kind: pnl, entity: nour, scheme: pnl, include: [kwh_3m]}
+    om_3m: {kind: pnl, entity: nour, scheme: pnl, include: [om_3m]}
+    revenue_3m: {kind: pnl, entity: nour, scheme: pnl, include: [kwh_3m, om_3m]}
+    kwh_haraz: {kind: pnl, entity: nour, scheme: pnl, include: [kwh_haraz]}
+    om_haraz: {kind: pnl, entity: nour, scheme: pnl, include: [om_haraz]}
+    revenue_haraz: {kind: pnl, entity: nour, scheme: pnl, include: [kwh_haraz, om_haraz]}
+    revenue_kwh: {kind: pnl, entity: nour, scheme: pnl, include: [kwh_3m, om_3m, kwh_haraz, om_haraz]}
+    om_baghara: {kind: pnl, entity: nour, scheme: pnl, include: [om_baghara]}
+    turnover: {kind: pnl, entity: nour, scheme: pnl, include: [kwh_3m, om_3m, kwh_haraz, om_haraz, om_baghara]}
+    surplus: {kind: pnl, entity: nour, scheme: pnl, include: [surplus_3m, surplus_haraz]}
+    surplus_3m: {kind: pnl, entity: nour, scheme: pnl, include: [surplus_3m]}
+    taxes: {kind: pnl, entity: nour, scheme: pnl, include: [taxes]}
+    capex_3m: {entity: nour, account: cash, scheme: cash_flow, include: [capex_3m]}
+    capex_haraz: {entity: nour, account: cash, scheme: cash_flow, include: [capex_haraz]}
+    capex_ageing: {entity: nour, account: cash, scheme: cash_flow, include: [capex_ageing]}
+    capex: {entity: nour, account: cash, scheme: cash_flow, include: [capex_3m, capex_haraz, capex_ageing]}
+    net_cash: {entity: nour, account: cash, scheme: cash_flow,
+               include: [operating, working_capital, capex_3m, capex_haraz, capex_ageing]}
+  measures:
+    npv: {measure: npv, cut: net_cash, rate: {generator: src, output: wacc}}
+    irr: {measure: irr, cut: net_cash}
+variants:
+  capex_plus: {values: {capex_factor: VAN_Nour_Baghara__C40 + 0}}
+  turnover_minus: {values: {revenue_factor: revenue_cut + 0}}
+  taxes_times: {values: {tax_factor: VAN_Nour_Baghara__C49 + 0}}
+  upside: {values: {upside_on: 1}}
+figures:
+  # sheet "Hypotheses Nour 3Moissons" (per farm; physical rows are drivers)
+  Hypotheses_Nour_3Moissons.C9: {driver: src.eq_hours, at: 0}
+  Hypotheses_Nour_3Moissons.C10: {driver: src.pv_m2, at: 0}
+  Hypotheses_Nour_3Moissons.C11: {driver: src.pv_kwh, at: 0}
+  Hypotheses_Nour_3Moissons.C12: {driver: src.farm_surplus_kwh, at: 0}
+  Hypotheses_Nour_3Moissons.K19: {driver: src.kw_total, at: 0}
+  Hypotheses_Nour_3Moissons.N19: {driver: src.storage_total, at: 0}
+  Hypotheses_Nour_3Moissons.C21: {cut: capex_3m, sign: -1, per: src.first_wave, at: 0}
+  Hypotheses_Nour_3Moissons.C23: {cut: capex_3m, sign: -1, total: true}
+  Hypotheses_Nour_3Moissons.M25: {driver: src.dry_25, at: 0}
+  Hypotheses_Nour_3Moissons.M26: {driver: src.dry_26, at: 0}
+  Hypotheses_Nour_3Moissons.C27:F27: {driver: src.farms, periods: [0, 1, 2, 3]}
+  Hypotheses_Nour_3Moissons.M27: {driver: src.dry_27, at: 0}
+  Hypotheses_Nour_3Moissons.M28: {driver: src.dry_28, at: 0}
+  Hypotheses_Nour_3Moissons.E29: {driver: src.half_price_3m, at: 0}
+  Hypotheses_Nour_3Moissons.M29:N29: [{driver: src.dry_29, at: 0}, {driver: src.wet_29, at: 0}]
+  Hypotheses_Nour_3Moissons.E30: {driver: src.half_surplus_price_3m, at: 0}
+  Hypotheses_Nour_3Moissons.M30:N30: [{driver: src.dry_30, at: 0}, {driver: src.wet_30, at: 0}]
+  Hypotheses_Nour_3Moissons.C31: {driver: src.farm_kwh, at: 0}
+  Hypotheses_Nour_3Moissons.M31:N31: [{driver: src.dry_31, at: 0}, {driver: src.wet_31, at: 0}]
+  Hypotheses_Nour_3Moissons.M32:N32: [{driver: src.dry_32, at: 0}, {driver: src.wet_32, at: 0}]
+  Hypotheses_Nour_3Moissons.M33:N33: [{driver: src.dry_33, at: 0}, {driver: src.wet_33, at: 0}]
+  Hypotheses_Nour_3Moissons.C34: {cut: surplus_3m, variant: upside, at: 3}
+  Hypotheses_Nour_3Moissons.M34:N34: [{driver: src.dry_34, at: 0}, {driver: src.wet_34, at: 0}]
+  Hypotheses_Nour_3Moissons.M35:N35: [{driver: src.dry_day, at: 0}, {driver: src.wet_day, at: 0}]
+  Hypotheses_Nour_3Moissons.M36:N36: [{driver: src.dry_season, at: 0}, {driver: src.wet_season, at: 0}]
+  Hypotheses_Nour_3Moissons.N37: {driver: src.farm_kwh, at: 0}
+  # sheet "Hypotheses Nour Haraz"
+  Hypotheses_Nour_Haraz.C10: {driver: src.eq_hours_h, at: 0}
+  Hypotheses_Nour_Haraz.C11: {driver: src.pv_m2_h, at: 0}
+  Hypotheses_Nour_Haraz.C19: {cut: capex_haraz, sign: -1, total: true}
+  Hypotheses_Nour_Haraz.C37: {driver: src.pv_kwh_h, at: 0}
+  Hypotheses_Nour_Haraz.C39: {driver: src.consumption_h, at: 0}
+  Hypotheses_Nour_Haraz.C45: {driver: src.consumption_h, at: 0}
+  Hypotheses_Nour_Haraz.C46: {driver: src.surplus_kwh_h, at: 0}
+  Hypotheses_Nour_Haraz.E49: {driver: src.half_price_h, at: 0}
+  Hypotheses_Nour_Haraz.E50: {driver: src.half_surplus_price_h, at: 0}
+  # sheet "VAN Nour Baghara"
+  VAN_Nour_Baghara.C5:E5: {cut: capex_3m, sign: -1, periods: [0, 1, 2]}
+  VAN_Nour_Baghara.C6:W6: {balance: ppe_3m}
+  VAN_Nour_Baghara.C8:W8: {driver: src.kwh_3m}
+  VAN_Nour_Baghara.C9:W9: {cut: kwh_3m}
+  VAN_Nour_Baghara.C10:W10: {cut: om_3m}
+  VAN_Nour_Baghara.C11:W11: {cut: revenue_3m}
+  VAN_Nour_Baghara.C14:D14: {cut: capex_haraz, sign: -1, periods: [0, 1]}
+  VAN_Nour_Baghara.C15:W15: {balance: ppe_haraz}
+  VAN_Nour_Baghara.C16:W16: {driver: src.kwh_h}
+  VAN_Nour_Baghara.C17:W17: {cut: kwh_haraz}
+  VAN_Nour_Baghara.C18:W18: {cut: om_haraz}
+  VAN_Nour_Baghara.C19:W19: {cut: revenue_haraz}
+  VAN_Nour_Baghara.C22:W22: {cut: revenue_kwh}
+  VAN_Nour_Baghara.C23:W23: {cut: om_baghara}
+  VAN_Nour_Baghara.C24:W24: {cut: turnover}
+  VAN_Nour_Baghara.F26:W26: {cut: surplus, variant: upside, periods: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}
+  VAN_Nour_Baghara.H29:W29: {cut: capex_ageing, sign: -1, periods: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}
+  VAN_Nour_Baghara.C30:W30: {cut: capex, sign: -1}
+  VAN_Nour_Baghara.C33:W33: {cut: taxes, sign: -1}
+  VAN_Nour_Baghara.C34:W34: {cut: net_cash}
+  VAN_Nour_Baghara.D35: {driver: src.step, at: 0}
+  VAN_Nour_Baghara.D36:W36: {driver: src.factor, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}
+  VAN_Nour_Baghara.C37:W37: {cut: net_cash, times: src.factor}
+  VAN_Nour_Baghara.C41:W41: {cut: net_cash, variant: capex_plus}
+  VAN_Nour_Baghara.C42:W42: {cut: net_cash, variant: capex_plus, times: src.factor}
+  VAN_Nour_Baghara.C45: {driver: src.revenue_cut, at: 0}
+  VAN_Nour_Baghara.C46:W46: {cut: net_cash, variant: turnover_minus}
+  VAN_Nour_Baghara.C47:W47: {cut: net_cash, variant: turnover_minus, times: src.factor}
+  VAN_Nour_Baghara.C50:W50: {cut: net_cash, variant: taxes_times}
+  VAN_Nour_Baghara.C51:W51: {cut: net_cash, variant: taxes_times, times: src.factor}
+  VAN_Nour_Baghara.C54:F54: [{measure: npv}, {measure: npv, variant: capex_plus}, {measure: npv, variant: turnover_minus},
+                             {measure: npv, variant: taxes_times}]
+  VAN_Nour_Baghara.C55:F55: [{measure: irr}, {measure: irr, variant: capex_plus}, {measure: irr, variant: turnover_minus},
+                             {measure: irr, variant: taxes_times}]
+not_compared:
+  Hypotheses_Nour_Haraz.C25: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses; Haraz is billed at C49
+  Hypotheses_Nour_Haraz.C28: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C31: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C33: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C35: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C36: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C38: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C40: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+  Hypotheses_Nour_Haraz.C41: the Haraz cost-plus pricing memo (C25:C41), which the cash flow never uses
+notes: >
+  The figures in the header's "where the books disagree" list are the workbook's own formula slips, kept
+  read so the receipt shows them.

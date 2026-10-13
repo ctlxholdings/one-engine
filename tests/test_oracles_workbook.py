@@ -1,0 +1,112 @@
+"""Baghara's workbooks through the oracle harness, and the reader that reads them.
+
+The reader names every input and figure mechanically, so the ways it could
+pass a workbook dishonestly are each pinned: a number typed inside a formula
+is an input like a typed cell; a formula cell that saved no number is set
+aside by the oracle with what it saved; IRR, XIRR and RATE cells keep Excel's
+documented 1e-7 and every other cell the drift of double arithmetic; a figure
+the translation neither reads nor sets aside fails as "not reported".
+
+Then every workbook gets its recorded verdict: the Nour workbook differs on
+exactly its four formula slips (listed in its translation's header, each
+worked out there), and the planted error is caught; a workbook with no
+translation yet is blocked, saying so.
+"""
+from fractions import Fraction
+
+import pytest
+import yaml
+
+from one_engine import oracles as O
+from one_engine.oracles.workbook import (FOLDER, ITERATIVE_TOL, WorkbookFamily, _literals, read_workbook,
+                                         sheet_key)
+
+FAMILY = WorkbookFamily()
+ORACLES = FAMILY.oracles()
+#: the workbooks vendored from Baghara (02-Financial-Models and 03_evidence/promoter-originals)
+VENDORED = {"nour_3moissons_haraz", "van_10ans_previsions_3moissons", "cap_3moissons_estimation_2025",
+            "business_plan_3moissons_2021", "cattle_integration_financial_model", "haraz_financial_model_2013"}
+#: the Nour workbook's own formula slips (its translation's header works each out); the workbook wins
+NOUR_SLIPS = {"VAN_Nour_Baghara.C54:F54", "VAN_Nour_Baghara.C55:F55", "VAN_Nour_Baghara.C46:W46",
+              "VAN_Nour_Baghara.C47:W47"}
+
+
+def test_the_workbooks_are_vendored_and_in_the_manifest():
+    assert set(ORACLES) == VENDORED
+    for oid in ORACLES:
+        O.verify(FAMILY.source(oid))
+        assert FAMILY.source(oid) == f"{FOLDER}/{oid}.xlsx"
+
+
+def test_inputs_are_named_mechanically_and_a_number_inside_a_formula_is_one():
+    assert sheet_key("Coûts de product° Agricole") == "Couts_de_product_Agricole"
+    assert sheet_key("50 CAP") == "_50_CAP"
+    assert _literals("=M29*1.5") == [Fraction(3, 2)]
+    assert _literals("=1-10%") == [1, Fraction(1, 10)]
+    assert _literals("=SUM(C5:C9)") == []
+    book = read_workbook(FAMILY.reference / FOLDER / "nour_3moissons_haraz.xlsx")
+    assert book["inputs"]["Hypotheses_Nour_3Moissons__N29__n1"] == Fraction(3, 2)
+    assert "VAN_Nour_Baghara__C7_W7" in book["inputs"]                 # a typed row is also a series
+    assert all(isinstance(v, (Fraction, list)) for v in book["inputs"].values())
+
+
+def test_a_formula_cell_that_saved_no_number_is_set_aside_by_the_oracle_with_what_it_saved():
+    book = read_workbook(FAMILY.reference / FOLDER / "cattle_integration_financial_model.xlsx")
+    assert book["aside"] and all(r.startswith("the workbook saved no number here") for r in book["aside"].values())
+    assert not set(book["aside"]) & set(book["figures"])
+
+
+def test_rate_cells_keep_excels_precision_and_the_rest_double_drift():
+    fig = "VAN_Nour_Baghara.C55:F55"
+    _, formulas = FAMILY._load("nour_3moissons_haraz")
+    assert all("IRR(" in f for f in formulas[fig])
+    v = Fraction(1, 10)
+    assert FAMILY._within(fig, v, v + ITERATIVE_TOL, formulas, None)[0]
+    assert not FAMILY._within(fig, v, v + 2 * ITERATIVE_TOL, formulas, None)[0]
+    other = "VAN_Nour_Baghara.C24:W24"
+    big = Fraction(10 ** 7)
+    assert FAMILY._within(other, big, big + Fraction(9, 1000), formulas, None)[0]        # 1e-9 relative
+    assert not FAMILY._within(other, big, big + Fraction(11, 1000), formulas, None)[0]
+    assert not FAMILY._within(other, Fraction(0), Fraction(2, 10 ** 6), formulas, None)[0]  # 1e-6 floor
+
+
+def _translation_copy(tmp_path, edit):
+    src = FAMILY.translations / "nour_3moissons_haraz.yaml"
+    tr = yaml.safe_load(src.read_text())
+    edit(tr)
+    (tmp_path / "nour_3moissons_haraz.yaml").write_text(yaml.safe_dump(tr, sort_keys=False))
+    return WorkbookFamily(translations=tmp_path)
+
+
+def test_a_figure_neither_read_nor_set_aside_fails_and_a_whole_sheet_may_be_set_aside(tmp_path):
+    fam = _translation_copy(tmp_path, lambda tr: tr["figures"].pop("VAN_Nour_Baghara.C24:W24"))
+    checks, _ = fam.run("nour_3moissons_haraz")
+    gone = [c for c in checks if c.name == "VAN_Nour_Baghara.C24:W24"]
+    assert len(gone) == 1 and gone[0].got == "not reported" and not gone[0].ok
+
+    def sheet(tr):
+        for f in [f for f in tr["figures"] if f.startswith("Hypotheses_Nour_Haraz.")]:
+            del tr["figures"][f]
+        tr["not_compared"] = {"Hypotheses_Nour_Haraz": "planted: the whole sheet set aside"}
+    checks, record = _translation_copy(tmp_path, sheet).run("nour_3moissons_haraz")
+    assert not [c for c in checks if c.name.startswith("Hypotheses_Nour_Haraz.")]
+    assert record["not_compared"] == {"Hypotheses_Nour_Haraz": "planted: the whole sheet set aside"}
+
+    def both(tr):
+        tr["not_compared"] = {"VAN_Nour_Baghara": "planted: a sheet whose figures are also read"}
+    with pytest.raises(ValueError, match="read and set aside"):
+        _translation_copy(tmp_path, both).run("nour_3moissons_haraz")
+
+
+@pytest.mark.parametrize("oid", ORACLES)
+def test_every_workbook_gets_its_recorded_verdict(oid):
+    r = O.receipt(FAMILY, oid, commit="test")
+    if FAMILY.translation(oid) is None:
+        assert r.verdict == "blocked" and r.reason.startswith("no translation yet"), r.reason
+        return
+    failing = {c["name"] for c in r.checks if not c["ok"]}
+    if oid == "nour_3moissons_haraz":
+        assert r.verdict == "differs" and failing == NOUR_SLIPS, failing
+    else:
+        assert r.verdict == "matches", failing
+    assert r.planted_caught

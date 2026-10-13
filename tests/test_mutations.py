@@ -605,6 +605,20 @@ MUTATIONS = [
      'test_case_nightmare.py::test_promote'),
     ('kernel.py', '            self._moves[(acct.name, p.period)] += natural * p.amount', '            self._moves[(acct.name, p.period)] += natural * p.amount * (1 + Fraction(1, 10**6))',
      'test_chain.py::test_every_case_file_runs_end_to_end_into_the_ledger'),  # ERIA reads only the journal: the chain's reconciliation sees it
+    # the workbook reader (oracles/workbook.py)
+    ("oracles/workbook.py", "                v /= 100", "                pass",
+     "test_oracles_workbook.py::test_inputs_are_named_mechanically_and_a_number_inside_a_formula_is_one"),
+    ("oracles/workbook.py", "allowed = ITERATIVE_TOL if any(ITERATIVE.search(t) for t in texts) else max(REL * abs(value), FLOOR)",
+     "allowed = max(REL * abs(value), FLOOR)",
+     "test_oracles_workbook.py::test_rate_cells_keep_excels_precision_and_the_rest_double_drift"),
+    ("oracles/workbook.py", '"not reported", False))', '"not reported", True))',
+     "test_oracles_workbook.py::test_a_figure_neither_read_nor_set_aside_fails_and_a_whole_sheet_may_be_set_aside"),
+    ("oracles/workbook.py", "        clash = sorted({f for f in specs if set_aside(f)} |", "        clash = sorted(set() |",
+     "test_oracles_workbook.py::test_a_figure_neither_read_nor_set_aside_fails_and_a_whole_sheet_may_be_set_aside"),
+    ("oracles/workbook.py", "            if rc not in numeric:", "            if False:",
+     "test_oracles_workbook.py::test_a_formula_cell_that_saved_no_number_is_set_aside_by_the_oracle_with_what_it_saved"),
+    ("oracles/workbook.py", "            if not c.ok:\n                return Check(fig, f\"cell", "            if False:\n                return Check(fig, f\"cell",
+     "test_oracles_workbook.py::test_every_workbook_gets_its_recorded_verdict"),
     # the chain (test_chain.py, guards 1 and 3)
     ("packs/pf.py", 'dispose_when == "end":\n            retire()\n            post(g, t, loss, fa, reg.dispose() + residual, "disposal")',
      'dispose_when == "end":\n            retire()\n            pass',
