@@ -1,0 +1,24 @@
+# W4: POLICY STOP (E35_W4; the Andhra Pradesh shape), on panel_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w4-policy-stop.yaml, translated.
+#
+# The switch: the collection route's condition precedent (the route is
+# permitted) fails from stop_period (4) and never comes back. The duty is
+# suspended. The fee never reaches the pledged account, the claims measured
+# on a zero collection are zero, and nothing distributes. The platform's
+# fixed costs keep running: the operator carries the stop.
+world: w4_policy_stop
+family: E35_W4_policy_stop
+what: >
+  The policy lever kills the collection route mid-term: the duty suspends on
+  the determination, collections go to zero, and the deal runs unfunded.
+watch:
+  - "the duty is SUSPENDED from the stop period and stays so (no cure)"
+  - "collections, claims and distributions are zero from the stop; the payers' cumulative freezes"
+  - "fixed platform costs keep posting: the pocket drains through zero"
+set:
+  rulebooks.collections_route.condition: {generator: panel, output: route_permitted}
+add:
+  generators.panel.inputs:
+    stop_period: 4
+  generators.panel.values:
+    route_permitted: {each_period: t < stop_period}

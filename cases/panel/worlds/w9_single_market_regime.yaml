@@ -1,0 +1,21 @@
+# W9: SINGLE-MARKET REGIME (E35_W9; the EnerNOC/PJM shape), on panel_pool_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w9-single-market-regime.yaml, translated.
+#
+# The switch: the platform's fee is indexed to ONE market's clearing price,
+# and that index SWITCHES REGIME at period 4 (1.00 -> 0.55, held). The
+# physical book is unchanged: every host still saves and the pool still
+# receives. But the fee claim is repriced at the new regime, while the
+# 0.60 share stays on the claim. The claims no longer add up to the
+# receipts, and the stack only ever pays claims. The difference STRANDS in
+# the pledged account.
+world: w9_single_market_regime
+family: E35_W9_single_market_regime
+what: >
+  Income depends on one market's clearing price; the regime change reprices
+  the whole book mid-run while the physical flows continue unchanged.
+watch:
+  - "the fee steps down by EXACTLY the regime factor at the switch (54,000 -> 29,700 a year); the hosts' net is untouched"
+  - "pool receipts are IDENTICAL before and after the switch"
+  - "the undistributed difference accumulates in the pledged account (the trap)"
+set:
+  rulebooks.waterfall_claims.claims.fee.index: [1.0, 1.0, 1.0, 1.0, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55]

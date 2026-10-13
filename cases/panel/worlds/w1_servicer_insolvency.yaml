@@ -1,0 +1,94 @@
+# W1: SERVICER INSOLVENCY (E35_W1; the Metronet shape), on metronet.yaml.
+# esco-product engine/tests/fixtures/worlds/w1-servicer-insolvency.yaml, translated.
+#
+# The switch: the consortium fails in week 4 (failure_period, the one datum).
+# In that period, in firing order:
+#   * accrue: the servicing duty suspends on its precedent (solvent). The
+#     consortium's claims crystallize on the failure fact: the guaranteed
+#     debt (debts_total less the unguaranteed tail), the tail, and the
+#     equity invested;
+#   * settle: the public wrapper settles its lenders' put at par. Par is
+#     the guaranteed claim outstanding, paid into the settlement pool. The
+#     government's two grant tranches (158 + 150) support the public. The
+#     settlement stack pays the guaranteed lenders out of the pool and
+#     extinguishes what the tail and the equity cannot be paid (the wipe);
+#   * close: the public takes the work in-house. A one-off administration
+#     of 630 (which includes the grants; they are never added twice) is
+#     followed by running costs of 14 a week.
+world: w1_servicer_insolvency
+family: E35_W1_servicer_insolvency
+what: >
+  The provider fails mid-term: the public settles the lenders' put at par,
+  the unguaranteed tail and the equity are wiped, and the public runs the
+  work in-house.
+watch:
+  - "the put settlement lands within +-10% of the published ~1,747 (1,810 = 2,000 - 190, the anchored split)"
+  - "private losses EXACTLY 540 = 190 tail + 350 equity; guaranteed lenders at par"
+  - "the wrapper's one-off position -2,132 (= -1,810 put - 630 admin + 308 grants) then -14 a week in-house"
+  - "the sequence in the failure week: fail (the duty suspends) -> put -> par -> wipe -> in-house"
+set:
+  rulebooks.servicing.condition: {generator: chassis, output: solvent}
+add:
+  generators.chassis.inputs:
+    failure_period: 4
+    grant_tranche_1: 158
+    grant_tranche_2: 150
+    admin_one_off: 630
+    running_cost_per_week: 14
+  generators.chassis.values:
+    solvent: {each_period: t < failure_period}
+    failed: {each_period: t >= failure_period}
+    grant_1: {each_period: grant_tranche_1 * (t == failure_period)}
+    grant_2: {each_period: grant_tranche_2 * (t == failure_period)}
+    admin: {each_period: admin_one_off * (t == failure_period)}
+    running: {each_period: running_cost_per_week * (t > failure_period)}
+  rulebooks:
+    # the claims crystallize on the failure, out of the concession book
+    crystallize:
+      kind: claim
+      entity: deal
+      phase: accrue
+      claims:
+        guaranteed: {claim: guaranteed_claim, against: concession_book, amount: {generator: chassis, output: guaranteed},
+                     crystallizes_on: {generator: chassis, output: failed}}
+        tail: {claim: tail_claim, against: concession_book, amount: {generator: chassis, output: unguaranteed_tail},
+               crystallizes_on: {generator: chassis, output: failed}}
+        equity: {claim: equity_claim, against: concession_book, amount: {generator: chassis, output: equity_invested},
+                 crystallizes_on: {generator: chassis, output: failed}}
+    # the guarantee: the public settles its lenders' put at par on the failure
+    lender_put:
+      kind: put
+      entity: deal
+      phase: settle
+      trigger: {generator: chassis, output: failed}
+      guarantor: tfl_account
+      pool: settlement_pool
+      claim: guaranteed_claim
+    # the grant tranches support the settlement (intra-public)
+    grants:
+      kind: transfer
+      entity: deal
+      phase: settle
+      moves:
+        tranche_1: {debit: tfl_account, credit: gov_account, amount: {generator: chassis, output: grant_1}}
+        tranche_2: {debit: tfl_account, credit: gov_account, amount: {generator: chassis, output: grant_2}}
+    # the settlement stack: par to the guaranteed lenders; the tail and the equity extinguish unpaid
+    settlement:
+      kind: stack
+      entity: deal
+      phase: settle
+      pool: settlement_pool
+      claims_book: concession_book
+      extinguished: claims_extinguished
+      tiers:
+        - {name: guaranteed, claim: guaranteed_claim, to: guaranteed_lenders, shortfall: extinguish}
+        - {name: tail, claim: tail_claim, to: tail_lenders, shortfall: extinguish}
+        - {name: equity, claim: equity_claim, to: equity_holders, shortfall: extinguish}
+    # the in-house substitution: the one-off administration, then running costs
+    in_house:
+      kind: transfer
+      entity: deal
+      phase: close
+      moves:
+        administration: {debit: in_house_ops, credit: tfl_account, amount: {generator: chassis, output: admin}}
+        running: {debit: in_house_ops, credit: tfl_account, amount: {generator: chassis, output: running}}

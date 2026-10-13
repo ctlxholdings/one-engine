@@ -99,7 +99,7 @@ def test_a_stated_claim_is_recognised_in_its_window_and_a_triggered_one_once():
     res = run_case(case({"claims": {"kind": "claim", "entity": "deal", "phase": "accrue", "claims": {
         "fixed": {"claim": "senior_claim", "against": "claims_book", "amount": 5, "from": 1, "until": 2},
         "crystallised": {"claim": "junior_claim", "against": "claims_book", "amount": 9,
-                         "on": [False, True, True]}}}}, POCKETS))
+                         "crystallizes_on": [False, True, True]}}}}, POCKETS))
     assert [flow(res, "senior_claim", t) for t in range(3)] == [0, 5, 5]
     assert [flow(res, "junior_claim", t) for t in range(3)] == [0, 9, 0]
 
@@ -110,7 +110,7 @@ def test_a_claim_refuses_a_negative_amount_and_two_timings():
             "x": {"claim": "senior_claim", "against": "claims_book", "amount": -1}}}}, POCKETS))
     with pytest.raises(InputError, match="either"):
         run_case(case({"claims": {"kind": "claim", "entity": "deal", "phase": "accrue", "claims": {
-            "x": {"claim": "senior_claim", "against": "claims_book", "amount": 1, "on": True, "from": 0}}}},
+            "x": {"claim": "senior_claim", "against": "claims_book", "amount": 1, "crystallizes_on": True, "from": 0}}}},
             POCKETS))
 
 

@@ -1,0 +1,111 @@
+# THE PANEL BASE 1: a serviced guaranteed-savings contract (the failure panel's
+# surface for W1b, W2, W4 and W8; esco-product engine/tests/fixtures/panel-base.yaml,
+# translated).
+#
+# The standing deal. A platform operator serves one client body under a
+# guaranteed-savings contract. The M&V gate verifies the savings each period:
+# a baseline bill of 400,000 x a 30% savings fraction x the performance
+# factor = 120,000 a year. The client owes a fixed service fee of 84,000 a
+# year, struck as data (70% of the verified savings). It pays the fee into
+# the PLEDGED collections account through a duty whose condition precedent
+# is that the collection route is permitted. At settlement two claims are
+# measured on what the pledged account collected in the period: the senior
+# funder's 75% and the platform's 25%. A priority stack then pays them in
+# that rank out of the pledged account. The platform's fixed running costs
+# of 12,000 a year come out of its own pocket.
+#
+# One book, the deal's ("deal"). Every party's position in the deal is an
+# account:
+#   * asset: the parties' cash in the deal (positive means net received,
+#     negative means net paid in). These are the client (fee_payers), the
+#     pledged account, the senior funder, the platform's pocket, and the
+#     client's verified savings;
+#   * liability: the claims;
+#   * equity: claims_book, which the claims are recognised against and
+#     discharged into;
+#   * income: host_world, the savings the retrofit produces outside the deal;
+#   * expense: platform_cost_payees, the running costs paid out of the deal.
+# Nothing is floored: a pocket that pays more than it receives goes negative,
+# and that is the result the panel watches.
+#
+# Periods are years, horizon 10. The deal stands on its own until a world
+# (cases/panel/worlds) flips a switch.
+case: panel-serviced-guaranteed-savings
+periods: 10
+phases: [open, accrue, settle, close]
+currency: LCU
+floors: {}
+generators:
+  panel:
+    kind: formulas
+    periods: 10
+    inputs:
+      baseline_bill: 400000
+      savings_fraction: 0.30
+      performance: 1
+      fee: 84000
+      senior_share: 0.75
+      platform_share: 0.25
+      running_costs: 12000
+    values:
+      verified: {each_period: baseline_bill * savings_fraction * performance}
+opening:
+  deal:
+    host_world: {nature: income, value: 0}
+    verified_savings: {nature: asset, value: 0}
+    fee_payers: {nature: asset, value: 0}
+    collections_pledged: {nature: asset, value: 0}
+    senior_claim: {nature: liability, value: 0}
+    equity_claim: {nature: liability, value: 0}
+    claims_book: {nature: equity, value: 0}
+    senior_funder: {nature: asset, value: 0}
+    platform_pocket: {nature: asset, value: 0}
+    platform_cost_payees: {nature: expense, value: 0}
+contracts: {}
+rulebooks:
+  # the M&V gate: only the verified quantity posts
+  mv_gate:
+    kind: transfer
+    entity: deal
+    phase: accrue
+    moves:
+      verified: {debit: verified_savings, credit: host_world, amount: {generator: panel, output: verified}}
+  # the collection route: the client's fee lands in the pledged account while the route is permitted
+  collections_route:
+    kind: duty
+    entity: deal
+    phase: accrue
+    condition: true
+    from: 0
+    until: 9
+    perform: {debit: collections_pledged, credit: fee_payers, amount: {generator: panel, output: fee}}
+  # the platform's fixed running costs, out of its own pocket
+  running_costs:
+    kind: transfer
+    entity: deal
+    phase: accrue
+    moves:
+      costs: {debit: platform_cost_payees, credit: platform_pocket, amount: {generator: panel, output: running_costs}}
+  # the waterfall's claims, measured on what the pledged account collected this period
+  waterfall_claims:
+    kind: claim
+    entity: deal
+    phase: settle
+    claims:
+      senior: {claim: senior_claim, against: claims_book, share: {generator: panel, output: senior_share}, index: 1,
+               of: {account: collections_pledged, read: flow}}
+      platform: {claim: equity_claim, against: claims_book, share: {generator: panel, output: platform_share},
+                 index: 1, of: {account: collections_pledged, read: flow}}
+  # the priority stack over the pledged account: senior first, then the platform
+  waterfall:
+    kind: stack
+    entity: deal
+    phase: settle
+    pool: collections_pledged
+    claims_book: claims_book
+    tiers:
+      - {name: senior, claim: senior_claim, to: senior_funder, shortfall: carry}
+      - {name: platform, claim: equity_claim, to: platform_pocket, shortfall: carry}
+schemes: {}
+cuts: {}
+measures: {}

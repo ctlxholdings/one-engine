@@ -1,0 +1,25 @@
+# W3: SINGLE-CLIENT CONCENTRATION (E35_W3; the UK CHP shape), on panel_pool_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w3-single-client.yaml, translated.
+#
+# The switch: the pool is skewed to one host. host_a carries 80% of the
+# pooled bills (288,000 of the 360,000 stock) and the other five carry 14,400
+# each. From the sixth year of its stint (period 5) the anchor's performance
+# goes to zero: the client stops. The pool's receipts collapse by exactly
+# the anchor's share.
+world: w3_single_client_concentration
+family: E35_W3_single_client
+what: >
+  One host IS the book: 80% of the pool rides on the anchor client, and when
+  the anchor stops the platform loses four fifths of its receipts overnight.
+watch:
+  - "before the stop the anchor's sub-ledger takes exactly 80% of every period's pool receipts"
+  - "from the stop pool receipts fall 80% (90,000 -> 18,000 a year); the fee and the hosts' net ride the cliff"
+  - "the pool's composition holds throughout; the anchor's sub-ledger flatlines at its pre-stop level"
+set:
+  generators.pool.inputs.bill_a: 288000
+  generators.pool.inputs.bill_b: 14400
+  generators.pool.inputs.bill_c: 14400
+  generators.pool.inputs.bill_d: 14400
+  generators.pool.inputs.bill_e: 14400
+  generators.pool.inputs.bill_f: 14400
+  rulebooks.pool.members.host_a.performance: [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]

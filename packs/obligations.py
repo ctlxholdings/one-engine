@@ -56,8 +56,9 @@ Rulebooks
     of an account (``of: {account, read}``, ``read`` being ``flow``, the
     period's movement so far, or ``balance``, the balance so far). Timing is
     either a window (``from``, ``until``; the whole grid by default) or
-    ``on``, a trigger: the claim *crystallizes* once, in the first period the
-    trigger holds. A claim is never negative. The record carries ``claims``
+    ``crystallizes_on``, a trigger: the claim is recognised once, in the
+    first period the trigger holds. (Not ``on``: YAML reads that key as a
+    boolean.) A claim is never negative. The record carries ``claims``
     (name -> amount recognised).
 
 ``put``
@@ -249,9 +250,9 @@ def claim(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                 raise InputError(f"{where}.of: read must be flow or balance, not {read!r}")
             index = cr.take_or_default("index", 1, reason="no index moves the share").value
             measure = ("share", (exact(cr.take("share")), index, account, read))
-        if "on" in raw and ("from" in raw or "until" in raw):
-            raise InputError(f"{where}: give either a trigger (on) or a window (from, until)")
-        trigger = cr.take("on") if "on" in raw else None
+        if "crystallizes_on" in raw and ("from" in raw or "until" in raw):
+            raise InputError(f"{where}: give either a trigger (crystallizes_on) or a window (from, until)")
+        trigger = cr.take("crystallizes_on") if "crystallizes_on" in raw else None
         window = None if trigger is not None else _window(cr, group.periods, where)
         cr.finish()
         specs.append((cname, acct, against, measure, trigger, window, where))
@@ -271,7 +272,7 @@ def claim(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         for cname, acct, against, measure, trigger, window, where in specs:
             if trigger is not None:
                 # a crystallizing claim is recognised once, in the first period its trigger holds
-                if cname in crystallized or not _fact(trigger, t, f"{where}.on"):
+                if cname in crystallized or not _fact(trigger, t, f"{where}.crystallizes_on"):
                     continue
                 crystallized[cname] = t
             elif not window[0] <= t <= window[1]:

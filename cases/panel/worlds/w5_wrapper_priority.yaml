@@ -1,0 +1,63 @@
+# W5: WRAPPER CREDITOR PRIORITY (E35_W5; the I5 recovery composition), on
+# eria.yaml (any deal whose provider keeps its cash in esco.cash and whose
+# term ends at period 8).
+# esco-product engine/tests/fixtures/worlds/w5-wrapper-priority.yaml, translated.
+#
+# The switch: at realization (period 8, the last), the provider's whole cash
+# is swept into the estate. The estate goes through a SECOND priority stack
+# that ranks the wrapper's own creditors first: a wrapper lien of 700,000 and
+# the recovery of the 850,000 capital, both at par. The residual goes to the
+# provider's owner (equity_pocket). The par ranks are paid in full whatever
+# the estate; a shortfall is called from the owner.
+#
+# Reading on one_engine's ERIA: the capital is the owner's share capital,
+# paid in at period 0 (contracts.funding), so its recovery is a return of
+# that capital. The estate is the ESCO's cash at realization: eight years of
+# its savings share, 2,129,292.0576. The panel's ERIA fixture never books
+# the 850,000 paid in, so its estate is 850,000 lower (1,279,292.0576) and its
+# owner faces a call of 270,707.9424. Here the owner receives a residual.
+# tests/test_case_esco_panel.py holds both numbers.
+world: w5_wrapper_creditor_priority
+family: E35_W5_wrapper_creditor_priority
+what: >
+  The wrapper's own creditors rank ahead of the deal: at realization they
+  settle from the gross estate before any residual reaches the owner, and
+  the owner funds whatever the estate cannot cover.
+watch:
+  - "the wrapper lien and the capital recovery are paid AT PAR from the swept estate, in rank order"
+  - "the owner's residual is the estate less the par ranks: a cash call when the ranks exceed the estate"
+  - "an underperformed estate does not shrink the par ranks; it only shrinks the residual (or grows the call)"
+add:
+  opening:
+    esco:
+      estate_proceeds: {nature: asset, value: 0}
+      wrapper_creditors: {nature: expense, value: 0}
+      wrapper_lien_claim: {nature: liability, value: 0}
+      capital_recovery_claim: {nature: liability, value: 0}
+      claims_book: {nature: equity, value: 0}
+      equity_pocket: {nature: equity, value: 0}
+  schemes.cash_flow:
+    estate_proceeds: realization
+  rulebooks:
+    # the wrapper's claims, recognised at realization ahead of the owner
+    realization_claims:
+      kind: claim
+      entity: esco
+      phase: settle
+      claims:
+        wrapper_lien: {claim: wrapper_lien_claim, against: claims_book, amount: 700000, from: 8, until: 8}
+        capital_recovery: {claim: capital_recovery_claim, against: claims_book, amount: 850000, from: 8, until: 8}
+    # the wrapper-first stack over the swept estate; the owner takes (or funds) the residual
+    realization:
+      kind: stack
+      entity: esco
+      phase: settle
+      from: 8
+      until: 8
+      sweep: [cash]
+      pool: estate_proceeds
+      claims_book: claims_book
+      tiers:
+        - {name: wrapper_lien, claim: wrapper_lien_claim, to: wrapper_creditors, shortfall: call}
+        - {name: capital_recovery, claim: capital_recovery_claim, to: share_capital, shortfall: call}
+      residual: equity_pocket

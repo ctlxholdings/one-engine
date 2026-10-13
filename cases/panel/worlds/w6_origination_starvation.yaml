@@ -1,0 +1,36 @@
+# W6: ORIGINATION STARVATION (E35_W6; the UK Green Deal shape), on panel_pool_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w6-origination-starvation.yaml, translated.
+#
+# The switch: projected origination never comes. Entry is staggered: hosts
+# a, b and c at period 0, d and e at 3, f at 6. A market-demand index (data)
+# collapses from period 2. An origination floor of 55 on that index reads
+# the period before each entry. d and e read 95 and enter. f reads 50 and is
+# BLOCKED, which the pool's record shows. The cohorts that start the
+# platform have no earlier period to read, and are taken (if_missing: pass).
+# The fixed costs, sized for six hosts, keep running against the book that
+# exists.
+world: w6_origination_starvation
+family: E35_W6_origination_starvation
+what: >
+  The pipeline dies: the demand floor blocks every later origination cohort
+  while the platform's fixed cost base keeps running against the deals that
+  already exist.
+watch:
+  - "the blocked entry is recorded (skipped, with the floor that blocked it); its sub-ledger never books"
+  - "the pocket bleeds from period 0 (a three-host book against a six-host cost base), flat-lining when the survivors cover the costs"
+  - "the pool's composition holds throughout: starvation is a growth failure, not a bookkeeping one"
+set:
+  rulebooks.pool.entries:
+    - {member: host_a, entry: 0, terms: 10}
+    - {member: host_b, entry: 0, terms: 10}
+    - {member: host_c, entry: 0, terms: 10}
+    - {member: host_d, entry: 3, terms: 7}
+    - {member: host_e, entry: 3, terms: 7}
+    - {member: host_f, entry: 6, terms: 4}
+  rulebooks.pool.thresholds:
+    - {id: origination-viability, kind: origination_floor, measure: {generator: pool, output: market_demand},
+       floor: {generator: pool, output: viability_floor}, if_missing: pass}
+add:
+  generators.pool.inputs:
+    market_demand: [100, 100, 95, 85, 70, 50, 30, 15, 5, 2]
+    viability_floor: 55

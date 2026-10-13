@@ -643,8 +643,8 @@ MUTATIONS = [
     ("packs/obligations.py", '        if state["exercised"] is not None or not _fact(trigger, t, f"{where}.trigger"):',
      '        if not _fact(trigger, t, f"{where}.trigger"):',
      "test_obligations.py::test_a_put_pays_par_of_the_outstanding_claim_once_at_the_first_trigger"),
-    ("packs/obligations.py", '                if cname in crystallized or not _fact(trigger, t, f"{where}.on"):',
-     '                if not _fact(trigger, t, f"{where}.on"):',
+    ("packs/obligations.py", '                if cname in crystallized or not _fact(trigger, t, f"{where}.crystallizes_on"):',
+     '                if not _fact(trigger, t, f"{where}.crystallizes_on"):',
      "test_obligations.py::test_a_stated_claim_is_recognised_in_its_window_and_a_triggered_one_once"),
     ("packs/obligations.py", '(book.opening(account, t) if read == "flow" else 0)', "0",
      "test_obligations.py::test_a_claim_measured_on_a_flow_takes_its_share_times_the_index_at_fire_time"),
@@ -675,6 +675,9 @@ MUTATIONS = [
      "test_contracts.py::test_a_performance_series_must_cover_the_term_exactly"),
     ("packs/contracts.py", "        performance = performance[t - start]", "        performance = performance[t - start - 1]",
      "test_contracts.py::test_performance_may_be_a_series_one_value_per_year_of_the_term"),
+    # the failure panel's W1 (cases/panel): the put must pay the lenders at par
+    ("packs/obligations.py", "par = g.book(entity).balance(acct, t)", "par = g.book(entity).balance(acct, t) / 2",
+     "test_case_esco_panel.py::test_w1_metronet_losses_exactly_540_lenders_at_par"),
 ]
 
 
