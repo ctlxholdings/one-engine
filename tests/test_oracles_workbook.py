@@ -46,6 +46,22 @@ SLIPS = {
         "Invest.C24:J24", "Invest.C25:J25", "Invest.I38:J38", "Invest.E49:J49",
         # the per-CAP loan balance is stitched from two linked files and is not draws less repayments
         "Emprunts.D30:K30", "Emprunts.F206:K206", "Emprunts.G223:K223", "_50_CAP.D109:J109"},
+    "baghara_v15_24": {
+        # 08_OpEx row 17, the DSRA LC fee, is charged but left out of the opex totals (rows 7 and 71);
+        # with the fee set to nil every one of these agrees
+        "_00_Cover.D24", "_00_Cover.D25", "_00_Cover.D26", "_08_OpEx.D10:L10", "_08_OpEx.D71:L71",
+        "_08_OpEx.D7:L7", "_12_WC.D13:L13", "_12_WC.D15:L15", "_12_WC.D9:L9", "_13_Tax.D12:L12",
+        "_13_Tax.D16:L16", "_13_Tax.D17:L17", "_13_Tax.D18:L18", "_13_Tax.D19:L19", "_13_Tax.D9:L9",
+        "_14_IS.D13:L13", "_14_IS.D18:L18", "_14_IS.D22:L22", "_14_IS.D27:L27", "_14_IS.D8:L8", "_14_IS.D9:L9",
+        "_15_BS.D13:L13", "_15_BS.D16:L16", "_15_BS.D20:L20", "_15_BS.D24:L24", "_15_BS.D26:L26",
+        "_15_BS.D27:L27", "_15_BS.D8:L8", "_16_CFS.D11:L11", "_16_CFS.D13:L13", "_16_CFS.D26:L26",
+        "_16_CFS.D28:L28", "_16_CFS.D29:L29", "_16_CFS.D8:L8", "_17_Outputs.D11:L11", "_17_Outputs.D14:L14",
+        "_17_Outputs.D16:L16", "_17_Outputs.D18:L18", "_17_Outputs.D25", "_17_Outputs.D29:L29",
+        "_17_Outputs.D30", "_17_Outputs.D34", "_17_Outputs.D35", "_17_Outputs.D36", "_17_Outputs.D37",
+        "_17_Outputs.D38", "_17_Outputs.D8:L8", "_17_Outputs.D9:L9", "driver _17_Outputs.D22",
+        "driver _17_Outputs.F22:L22",
+        # 09_Debt D13's total is one year's interest, not the sum of the years
+        "_09_Debt.D13:L13"},
 }
 
 
