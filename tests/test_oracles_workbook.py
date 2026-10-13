@@ -85,6 +85,47 @@ SLIPS = {
         "Growing_cost_assum.B15:L15", "Growing_cost_assum.C20:L20", "Growing_cost_assum.B107:L107",
         "Growing_cost_assum.C112:L112", "Growing_cost_assum.C149:L149", "Growing_cost_assum.B198:L198",
         "Growing_cost_assum.C203:L203"},
+    "cap_3moissons_estimation_2025": {
+        # ten slips, each named with its cell and both numbers in the translation's header: totals that
+        # leave out rows (Amenag N10, Mat bureau R9, the Salaires totals), Exploitation row 72 adding the
+        # year label, CA Elevage leaving out the poultry charges, CRP charging last year's annuity as
+        # interest, Coût F15 adding two working-capital levels, BFR row 18 subtracting a change, and the
+        # euro budget's crop totals; against the slip-corrected workbook every check agrees
+        'Amenag_Infrastr_et_Equipemt.G58', 'Amenag_Infrastr_et_Equipemt.L55',
+        'Amenag_Infrastr_et_Equipemt.L59', 'Amenag_Infrastr_et_Equipemt.N10',
+        'Amenag_Infrastr_et_Equipemt.N11', 'Amort_technique.D11', 'Amort_technique.D13',
+        'Amort_technique.D8', 'Amort_technique.F13:J13', 'Amort_technique.G11:J11', 'Amort_technique.G8:J8',
+        'BFR.E11:I11', 'BFR.E12:I12', 'BFR.E15:I15', 'BFR.E16:I16', 'BFR.E17:I17', 'BFR.F18:I18',
+        'CA_Elevage.C204:G204', 'CRP.C11:G11', 'CRP.C12:G12', 'CRP.C17:G17', 'CRP.C19:G19', 'CRP.C20:G20',
+        'CRP.C23:G23', 'CRP.C25:G25', 'CRP.C27:G27', 'CRP.C32:G32', 'CRP.C36:G36', 'CRP.C38:G38',
+        'CRP.C40:G40', 'CRP.C6:G6', 'CRP.D29:G29', 'CRP.D30:G30', 'CRP.I11:K11', 'CRP.I12:K12',
+        'CRP.I17:K17', 'CRP.I20:K20', 'CRP.I23:K23', 'CRP.I25:K25', 'CRP.I27:K27', 'CRP.I29:K29',
+        'CRP.I30:K30', 'CRP.I32:K32', 'CRP.I36:K36', 'CRP.I38:K38', 'CRP.I40:K40', 'CRP.I6:K6', 'Cout.F13',
+        'Cout.F14', 'Cout.F15', 'Cout.F17', 'Couts_de_product_Agricole.C109:M109',
+        'Couts_de_product_Agricole.C17:M17', 'Couts_de_product_Agricole.C199:M199',
+        'Couts_de_product_Agricole.C209:M209', 'Couts_de_product_Agricole.C63:M63',
+        'Couts_de_product_Agricole.C64:M64', 'Couts_de_product_Agricole.C65:M65',
+        'Couts_de_product_Agricole.C66:M66', 'Couts_de_product_Agricole.C67:M67',
+        'Couts_de_product_Agricole.C68:M68', 'Couts_de_product_Agricole.C69:M69',
+        'Couts_de_product_Agricole.C70:M70', 'Couts_de_product_Agricole.C71:M71',
+        'Couts_de_product_Agricole.D114:M114', 'Couts_de_product_Agricole.D150:M150',
+        'Couts_de_product_Agricole.D204:M204', 'Couts_de_product_Agricole.D211:M211',
+        'Couts_de_product_Agricole.D213:M213', 'Couts_de_product_Agricole.D22:M22',
+        'Couts_de_product_Agricole.D62:M62', 'Couts_de_product_Agricole.D74:M74',
+        'Couts_de_product_Agricole.D76:M76', 'Diverses_charges_immobilisees.F43',
+        'Diverses_charges_immobilisees.F45', 'Diverses_charges_immobilisees.F48',
+        'Diverses_charges_immobilisees.F58', 'Diverses_charges_immobilisees.F60', 'Exploitation.F72:J72',
+        'Exploitation.F80:J80', 'Exploitation.F82:J82', 'Mat_bureau_Mat_roulants.I76',
+        'Mat_bureau_Mat_roulants.R10', 'Mat_bureau_Mat_roulants.R64', 'Mat_bureau_Mat_roulants.R68',
+        'Mat_bureau_Mat_roulants.R9', 'Salaires_Avantages.F100:J100', 'Salaires_Avantages.F101:J101',
+        'Salaires_Avantages.F102:J102', 'Salaires_Avantages.F134:J134', 'Salaires_Avantages.F142:J142',
+        'Salaires_Avantages.F143:J143', 'Salaires_Avantages.F144:J144', 'Salaires_Avantages.F145:J145',
+        'Salaires_Avantages.F146:J146', 'Salaires_Avantages.F148:J148', 'Salaires_Avantages.F149:J149',
+        'Salaires_Avantages.F150:J150', 'Salaires_Avantages.F49:J49', 'Salaires_Avantages.F50:J50',
+        'Salaires_Avantages.F51:J51', 'Salaires_Avantages.F52:J52', 'Salaires_Avantages.F53:J53',
+        'Salaires_Avantages.G103:J103', 'Salaires_Avantages.G136:J136', 'Salaires_Avantages.L148',
+        'Schema_de_financement.H14:I14', 'Schema_de_financement.H9', 'driver Schema_de_financement.I10',
+        'driver Schema_de_financement.I11', 'driver Schema_de_financement.I12'},
     "modeloff_2015_tax_solution": {
         # not a slip: no reading yet tests a record for nonzero (the first month a loss expires);
         # the row is all zeros here and feeds only F104, a date answer the oracle sets aside
