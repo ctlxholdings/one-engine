@@ -21,6 +21,11 @@ Everything the modeller typed, named mechanically so nothing is chosen:
   from 1 in the formula's reading order (``=M29*1.5`` gives ``...__N29__n1``
   = 1.5; ``=1-10%`` gives ``__n1`` = 1 and ``__n2`` = 0.1). A modeller's
   assumption hidden in a formula is still an assumption;
+* every date typed in a cell, by the day count Excel stores for it (its
+  serial: 30 June 2038 is 50586 in the 1900 date system), since a model's
+  formulas compute with that number (the days in a period). A formula cell
+  that saved a date is set aside by the oracle, as any cell that saved no
+  plain number;
 * every formula cell that reads another workbook (``=[2]PL!D27``; Excel
   numbers the linked files), by the value it imported, named as a typed cell:
   the linked file was not saved with this one, so nothing here can recompute
@@ -72,6 +77,7 @@ workbook's saved values are untouched.
 from __future__ import annotations
 
 import copy
+import datetime
 import hashlib
 import pathlib
 import re
@@ -83,6 +89,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import openpyxl
 from openpyxl.formula.tokenizer import Token, Tokenizer
 from openpyxl.utils import column_index_from_string, get_column_letter
+from openpyxl.utils.datetime import to_excel
 
 from one_engine.inputs import load_yaml_strict
 from one_engine.oracles import REFERENCE, Blocked, Check
@@ -165,6 +172,11 @@ def read_workbook(path: pathlib.Path) -> Dict[str, Any]:
                     fcells[(c.row, c.column)] = (v, wv[ws.title][c.coordinate].value)
                 elif isinstance(v, (int, float)) and not isinstance(v, bool):
                     inputs[f"{key}__{c.coordinate}"] = _exact(v)
+                    consts.append((c.row, c.column))
+                elif isinstance(v, (datetime.datetime, datetime.date)):
+                    # a typed date is the day count Excel stores (its serial, in the workbook's own
+                    # date system), the number the model's formulas compute with
+                    inputs[f"{key}__{c.coordinate}"] = _exact(to_excel(v, wf.epoch))
                     consts.append((c.row, c.column))
         for run in _runs(consts):
             if len(run) > 1:

@@ -69,6 +69,13 @@ def test_inputs_are_named_mechanically_and_a_number_inside_a_formula_is_one():
     assert all(isinstance(v, (Fraction, list)) for v in book["inputs"].values())
 
 
+def test_a_typed_date_is_an_input_by_its_excel_serial():
+    # Excel stores a date as a day count (1 = 1 Jan 1900 in the 1900 system); a model computes with it
+    # (days in a period, a day-weighted rate), so the date the modeller typed is a number they typed
+    book = read_workbook(FAMILY.reference / FOLDER / "modeloff_2015_more_money_please.xlsx")
+    assert book["inputs"]["Inputs__L12"] == 50586                       # 30 June 2038
+
+
 def test_a_cell_read_from_another_workbook_is_an_input_with_the_value_it_imported():
     # '1 CAP'!D33 is =[2]PL!D27, a workbook that was not saved with this one: nothing here can recompute
     # it, so the value the workbook imported is what it computed from

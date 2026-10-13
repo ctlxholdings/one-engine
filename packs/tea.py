@@ -39,7 +39,12 @@ Exact arithmetic over names: ``+ - * /``, ``%`` (the remainder: an event
 every so many periods), ``**`` to a whole power (a decline compounding by
 period), unary minus, numbers, the period
 index ``t``, the comparisons ``< <= > >= == !=`` (1 when true, else 0), the
-conditional ``a if c else b``, ``min``, ``max``, ``abs``, and ``lag(name, k)``:
+conditional ``a if c else b``, ``min``, ``max``, ``abs``, Excel's date
+functions over its day counts, spelled as Excel spells them
+(``EOMONTH(d, k)``, ``DATE(y, m, d)``, ``YEAR(d)``, ``MONTH(d)``,
+``DAY(d)``: a date is the day count Excel stores,
+1 being 1 January 1900, so days between two dates are their difference), and
+``lag(name, k)``:
 the value ``name`` had ``k`` periods earlier, nil before the first period
 (nothing had happened yet: a case that starts a business from nothing, then
 warms up to its steady state, reads its payment calendar this way), and
@@ -55,6 +60,8 @@ is neither an input nor an earlier value refuses.
 from __future__ import annotations
 
 import ast
+import datetime
+import math
 from fractions import Fraction
 from typing import Any, Dict, List, Mapping, Union
 
@@ -65,7 +72,39 @@ from one_engine.units import exact
 
 Value = Union[Fraction, List[Fraction]]
 
-_FUNCS = {"min": min, "max": max, "abs": abs}
+#: day 0 of Excel's 1900 date system, as Excel counts from 1 March 1900 on (it counts a 29 February
+#: 1900 that never was, so its earlier serials are a day off; no model here dates anything that early)
+_EXCEL_DAY0 = datetime.date(1899, 12, 30)
+
+
+def _day(serial: Fraction) -> datetime.date:
+    """The calendar date of an Excel day count; a fraction of a day (a time) is dropped, as INT does."""
+    return _EXCEL_DAY0 + datetime.timedelta(days=math.floor(serial))
+
+
+def _serial(d: datetime.date) -> Fraction:
+    return Fraction((d - _EXCEL_DAY0).days)
+
+
+def _eomonth(serial: Fraction, months: Fraction) -> Fraction:
+    """Excel's EOMONTH: the last day of the month ``months`` after (or before) the date's month."""
+    d = _day(serial)
+    k = d.year * 12 + d.month - 1 + math.trunc(months)
+    first_of_next = datetime.date(k // 12 + (k % 12 + 1) // 12, (k % 12 + 1) % 12 + 1, 1)
+    return _serial(first_of_next - datetime.timedelta(days=1))
+
+
+def _date(y: Fraction, m: Fraction, d: Fraction) -> Fraction:
+    """Excel's DATE for a real calendar date (Excel's rolling of a month 13 or a day 0 is not copied:
+    such a date refuses)."""
+    return _serial(datetime.date(int(y), int(m), int(d)))
+
+
+_FUNCS = {"min": min, "max": max, "abs": abs,
+          # dates as Excel's day counts (a workbook's typed dates arrive as such)
+          # spelled as Excel spells them, so they never take a name a case already uses (month, year)
+          "EOMONTH": _eomonth, "DATE": _date, "YEAR": lambda s: _day(s).year,
+          "MONTH": lambda s: _day(s).month, "DAY": lambda s: _day(s).day}
 _CMP = {ast.Lt: lambda a, b: a < b, ast.LtE: lambda a, b: a <= b, ast.Gt: lambda a, b: a > b,
         ast.GtE: lambda a, b: a >= b, ast.Eq: lambda a, b: a == b, ast.NotEq: lambda a, b: a != b}
 

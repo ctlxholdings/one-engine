@@ -134,6 +134,16 @@ def test_formulas_take_running_totals():
     assert out["to_date"] == [1, 1, 2, 2] and out["last_two"] == [1, 1, 1, 1] and out["flat"] == [5, 10, 15, 20]
 
 
+def test_formulas_read_dates_as_excel_day_counts():
+    # 30 June 2038 is day 50586 of Excel's 1900 date system; a workbook's typed dates arrive as such
+    out = _gen({"month_end": "EOMONTH(start, 1)", "back": "EOMONTH(start, -4)", "y": "YEAR(start)",
+                "m": "MONTH(start)", "d": "DAY(start)", "again": "DATE(YEAR(start), MONTH(start), DAY(start))",
+                "days": "EOMONTH(start, 1) - start", "month": "MONTH(start) + 0"}, {"start": 50586}, periods=1)
+    assert out["month_end"] == 50617 and out["back"] == 50464                  # 31 July, 28 February 2038
+    assert out["month"] == 6                                     # a case's own name is not the function
+    assert (out["y"], out["m"], out["d"]) == (2038, 6, 30) and out["again"] == 50586 and out["days"] == 31
+
+
 def test_formulas_refuse_an_unknown_name_and_a_reused_one():
     with pytest.raises(InputError, match="neither an input nor an earlier value"):
         _gen({"a": "b * 2"}, {"c": 1})
