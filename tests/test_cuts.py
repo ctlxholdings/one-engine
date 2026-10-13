@@ -80,3 +80,22 @@ def test_a_pnl_line_left_out_of_the_scheme_refuses():
 def test_a_balance_left_out_of_the_scheme_refuses():
     with pytest.raises(CutError, match="equity"):
         balance_cut(pl_book(), Scheme("bs", {"cash": "cash", "debt": "debt"}), ["debt"])
+
+
+def test_a_sum_cut_adds_and_subtracts_earlier_cuts_across_books():
+    # a stream two books make together (a company's CFADS less a plan's capex, for one IRR): each part is
+    # read where it is booked and the sum is a view, posting nothing
+    import copy
+    import pathlib
+
+    from one_engine.cases import run_case
+    from one_engine.inputs import InputError, load_yaml_strict
+    case = load_yaml_strict((pathlib.Path(__file__).resolve().parents[1] / "cases" / "averta_spv.yaml").read_text())
+    case["cuts"]["margin"] = {"kind": "sum", "add": ["revenue"], "subtract": ["opex"]}
+    out = run_case(copy.deepcopy(case))
+    rev, opex = out.cut("revenue").values, out.cut("opex").values
+    assert out.cut("margin").values == [r - o for r, o in zip(rev, opex)]
+    bad = copy.deepcopy(case)
+    bad["cuts"]["margin"] = {"kind": "sum", "add": ["later"]}
+    with pytest.raises(InputError, match="'later', which is not a cut declared above"):
+        run_case(bad)

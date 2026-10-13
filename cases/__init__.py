@@ -81,6 +81,7 @@ import copy
 import datetime as dt
 import pathlib
 from dataclasses import dataclass, field
+from fractions import Fraction
 from typing import Any, Callable, Dict, List, Mapping, Union
 
 from one_engine import measures as M
@@ -383,8 +384,21 @@ def _run(data: Mapping[str, Any], src: str) -> CaseResult:
         elif kind == "cash":
             cuts[cname] = cash_flow_cut(group.book(r.take("entity")), r.take("account"),
                                         schemes[r.take("scheme")], r.take("include"), name=cname)
+        elif kind == "sum":
+            # a view over cuts declared above, which may read different books (a company's CFADS less
+            # a plan's capex, for one IRR): it posts nothing, so every part stays read where it is booked
+            add = list(r.take("add"))
+            subtract = list(r.take_or_default("subtract", [], reason="nothing taken away").value)
+            for part in add + subtract:
+                if part not in cuts:
+                    raise InputError(f"{src}: cut '{cname}' sums '{part}', which is not a cut declared above")
+            n = len(cuts[(add + subtract)[0]].values)
+            cuts[cname] = Series(cname, [sum((cuts[a].values[t] for a in add), Fraction(0))
+                                         - sum((cuts[b].values[t] for b in subtract), Fraction(0))
+                                         for t in range(n)],
+                                 frozenset().union(*(cuts[p].states for p in add + subtract)))
         else:
-            raise InputError(f"{src}: cut '{cname}' has unknown kind '{kind}' (cash or pnl)")
+            raise InputError(f"{src}: cut '{cname}' has unknown kind '{kind}' (cash, pnl or sum)")
         r.finish()
     lens_values: Dict[str, Dict[str, Any]] = {}
     for lname, raw in top.take_or_default("lenses", {}, reason="no lens declared").value.items():
