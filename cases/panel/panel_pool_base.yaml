@@ -1,0 +1,110 @@
+# THE PANEL BASE 2: a pooled guaranteed-savings platform (the failure panel's
+# surface for W3, W6 and W9; esco-product engine/tests/fixtures/panel-pool-base.yaml,
+# translated).
+#
+# The standing deal. Six hosts are pooled into one pledged collections
+# account. Each host's savings are a baseline bill of 60,000 x a 25% savings
+# fraction = 15,000 a year. Once all six originate at period 0 the pool
+# receives 90,000 a year. Each host's sub-ledger (host_<x>_savings, income:
+# what the pool received from that host) moves by exactly what that host
+# paid in; the pool's composition check re-reads this every period. At
+# settlement two claims are measured on what the pool collected in the
+# period. The platform's services fee is 60%, times its market index (1
+# here; W9 switches its regime), and ranks first. The hosts' collective net
+# is 40% and ranks second. Fixed platform costs of 45,000 a year, sized for
+# the full six-host platform, come out of the platform's pocket.
+#
+# One book ("deal"), natures as in panel_base.yaml. Periods are years, horizon 10.
+case: panel-pooled-guaranteed-savings
+periods: 10
+phases: [open, accrue, settle, close]
+currency: LCU
+floors: {}
+generators:
+  pool:
+    kind: formulas
+    periods: 10
+    inputs:
+      bill_a: 60000
+      bill_b: 60000
+      bill_c: 60000
+      bill_d: 60000
+      bill_e: 60000
+      bill_f: 60000
+      savings_fraction: 0.25
+      fee_share: 0.60
+      host_share: 0.40
+      running_costs: 45000
+    values:
+      savings_a: bill_a * savings_fraction
+      savings_b: bill_b * savings_fraction
+      savings_c: bill_c * savings_fraction
+      savings_d: bill_d * savings_fraction
+      savings_e: bill_e * savings_fraction
+      savings_f: bill_f * savings_fraction
+opening:
+  deal:
+    collections_pledged: {nature: asset, value: 0}
+    host_a_savings: {nature: income, value: 0}
+    host_b_savings: {nature: income, value: 0}
+    host_c_savings: {nature: income, value: 0}
+    host_d_savings: {nature: income, value: 0}
+    host_e_savings: {nature: income, value: 0}
+    host_f_savings: {nature: income, value: 0}
+    fee_claim: {nature: liability, value: 0}
+    host_net_claim: {nature: liability, value: 0}
+    claims_book: {nature: equity, value: 0}
+    platform_pocket: {nature: asset, value: 0}
+    hosts_collective: {nature: asset, value: 0}
+    platform_cost_payees: {nature: expense, value: 0}
+contracts: {}
+rulebooks:
+  # the pool: six hosts' savings into the pledged account, each through its own sub-ledger
+  pool:
+    kind: pool
+    entity: deal
+    phase: accrue
+    pool_to: collections_pledged
+    members:
+      host_a: {quantity: {generator: pool, output: savings_a}, performance: 1, account: host_a_savings}
+      host_b: {quantity: {generator: pool, output: savings_b}, performance: 1, account: host_b_savings}
+      host_c: {quantity: {generator: pool, output: savings_c}, performance: 1, account: host_c_savings}
+      host_d: {quantity: {generator: pool, output: savings_d}, performance: 1, account: host_d_savings}
+      host_e: {quantity: {generator: pool, output: savings_e}, performance: 1, account: host_e_savings}
+      host_f: {quantity: {generator: pool, output: savings_f}, performance: 1, account: host_f_savings}
+    entries:
+      - {member: host_a, entry: 0, terms: 10}
+      - {member: host_b, entry: 0, terms: 10}
+      - {member: host_c, entry: 0, terms: 10}
+      - {member: host_d, entry: 0, terms: 10}
+      - {member: host_e, entry: 0, terms: 10}
+      - {member: host_f, entry: 0, terms: 10}
+    thresholds: []
+  running_costs:
+    kind: transfer
+    entity: deal
+    phase: accrue
+    moves:
+      costs: {debit: platform_cost_payees, credit: platform_pocket, amount: {generator: pool, output: running_costs}}
+  # the claims, measured on what the pool collected this period
+  waterfall_claims:
+    kind: claim
+    entity: deal
+    phase: settle
+    claims:
+      fee: {claim: fee_claim, against: claims_book, share: {generator: pool, output: fee_share}, index: 1,
+            of: {account: collections_pledged, read: flow}}
+      host_net: {claim: host_net_claim, against: claims_book, share: {generator: pool, output: host_share},
+                 index: 1, of: {account: collections_pledged, read: flow}}
+  waterfall:
+    kind: stack
+    entity: deal
+    phase: settle
+    pool: collections_pledged
+    claims_book: claims_book
+    tiers:
+      - {name: fee, claim: fee_claim, to: platform_pocket, shortfall: carry}
+      - {name: host_net, claim: host_net_claim, to: hosts_collective, shortfall: carry}
+schemes: {}
+cuts: {}
+measures: {}

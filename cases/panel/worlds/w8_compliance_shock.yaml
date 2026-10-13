@@ -1,0 +1,32 @@
+# W8: COMPLIANCE LIABILITY SHOCK (E35_W8; the PACE-originators shape), on panel_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w8-compliance-shock.yaml, translated.
+#
+# The switch: in shock_period (5) the origination channel itself becomes the
+# liability. A consumer-protection prohibition is violated, and its
+# reparation is the enforcement claim: 75,000 out of the platform's own
+# pocket, paid to the enforcement authority. The claim is not a claim on
+# collections, so it never enters the waterfall. The waterfall keeps
+# distributing while the pocket is driven through zero.
+world: w8_compliance_liability_shock
+family: E35_W8_compliance_liability_shock
+what: >
+  The enforcement action lands on the originator's own pocket: the liability
+  claim is injected by determination, outside the deal's waterfall.
+watch:
+  - "the prohibition is VIOLATED with the reparation PAID in the shock period"
+  - "the pocket is driven THROUGH ZERO while that period's distributions are unaffected"
+add:
+  generators.panel.inputs:
+    shock_period: 5
+    enforcement_claim: 75000
+  generators.panel.values:
+    prohibited_practice: {each_period: t == shock_period}
+  opening.deal:
+    compliance_enforcement: {nature: expense, value: 0}
+  rulebooks:
+    originator_compliance:
+      kind: prohibition
+      entity: deal
+      phase: settle
+      forbidden: {generator: panel, output: prohibited_practice}
+      remedy: {debit: compliance_enforcement, credit: platform_pocket, amount: {generator: panel, output: enforcement_claim}}

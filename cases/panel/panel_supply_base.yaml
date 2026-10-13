@@ -1,0 +1,47 @@
+# THE PANEL BASE 3: a fixed-rebill energy supply deal (the failure panel's
+# surface for W7; esco-product engine/tests/fixtures/panel-supply-base.yaml,
+# translated).
+#
+# The standing deal has the provider-pays-and-rebills custody shape. The
+# provider buys the input energy at wholesale for the client's site and
+# rebills the client a FIXED 110,000 a year. The input costs the baseline
+# 100,000 a year times the wholesale index (1 here; W7 ramps it), so the
+# trading margin is +10,000 a year at par.
+#
+# One book ("deal"): the client's and the provider's positions are assets;
+# the wholesale supplier is paid out of the deal (expense). Periods are years,
+# horizon 8.
+case: panel-fixed-rebill-supply
+periods: 8
+phases: [open, accrue, settle, close]
+currency: LCU
+floors: {}
+generators:
+  supply:
+    kind: formulas
+    periods: 8
+    inputs:
+      rebill: 110000
+      baseline_input_cost: 100000
+    values:
+      wholesale_index: {each_period: "1"}
+      input_cost: baseline_input_cost * wholesale_index
+opening:
+  deal:
+    clients: {nature: asset, value: 0}
+    provider_trading: {nature: asset, value: 0}
+    utility_supplier: {nature: expense, value: 0}
+contracts: {}
+rulebooks:
+  supply:
+    kind: transfer
+    entity: deal
+    phase: accrue
+    moves:
+      # the fixed rebill: the client's payments never move with the input price
+      rebill: {debit: provider_trading, credit: clients, amount: {generator: supply, output: rebill}}
+      # the wholesale input at the baseline cost times the index
+      input: {debit: utility_supplier, credit: provider_trading, amount: {generator: supply, output: input_cost}}
+schemes: {}
+cuts: {}
+measures: {}

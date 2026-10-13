@@ -1,0 +1,24 @@
+# W7: INPUT-PRICE SHOCK (E35_W7; the Bulb shape, generalised), on panel_supply_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w7-input-price-shock.yaml, translated.
+#
+# The switch: the wholesale index ramps linearly from 1.0 to 3.0 over 6
+# periods and holds there, against the FIXED rebill. The whole shock lands in
+# the provider's trading margin. The client's payments never move: under the
+# provider-pays-and-rebills custody, the provider bears the exposure.
+world: w7_input_price_shock
+family: E35_W7_input_price_shock
+what: >
+  Fixed-price commitments against a moving input commodity: the wholesale
+  ramp compresses the trading margin through zero and keeps going.
+watch:
+  - "period 0 still closes positive; period 1 is the first deficit period, and the deficit grows along the ramp"
+  - "the client's flows are IDENTICAL to the unshocked base"
+  - "the books stay whole: the deficit is a funded negative margin, not a broken book"
+set:
+  generators.supply.values.wholesale_index:
+    each_period: ramp_from + (ramp_to - ramp_from) * min(t, ramp_periods) / ramp_periods
+add:
+  generators.supply.inputs:
+    ramp_from: 1.0
+    ramp_to: 3.0
+    ramp_periods: 6

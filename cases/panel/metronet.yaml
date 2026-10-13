@@ -1,0 +1,63 @@
+# THE METRONET CHASSIS: the PPP structure the W1 world snaps onto
+# (esco-product engine/tests/fixtures/metronet.yaml, translated; anchors from
+# NAO HC 512, PAC HC 390 and Hansard 10-Mar-2008 as that fixture records them).
+#
+# The deal: a 30-year tube-maintenance PPP. The consortium carried about
+# GBP 2,000m of debts (debts_total). The unguaranteed tail is 190, the
+# anchored split of the prior blind run: the source's "about 95%" coverage
+# reads 90.5% on the GBP anchors. So the guaranteed, put-able portion is
+# what remains. Equity invested is 350.
+#
+# The chassis carries the structure only. Its one rulebook is the
+# consortium's servicing duty, a pure determination: it posts nothing and
+# records its state each period. Nothing is booked before a failure: the
+# settlement economics start at the failure date, the prior run's assumption
+# A6. The W1 world (worlds/w1_servicer_insolvency.yaml) adds the failure
+# fact, the claims that crystallize on it, the lenders' put settled at par,
+# the settlement stack, the grants and the in-house cost path.
+#
+# One book ("deal"). The public wrapper, the government and the three classes
+# of claimant hold positions (assets). The in-house delivery is a cost
+# (expense). The claims are liabilities recognised against the concession
+# book (equity). Claims extinguished unpaid are the claimants' loss
+# (claims_extinguished). Periods are weeks, horizon 12; amounts are GBP m.
+case: metronet-ppp-chassis
+periods: 12
+phases: [open, accrue, settle, close]
+currency: GBPm
+floors: {}
+generators:
+  chassis:
+    kind: formulas
+    periods: 12
+    inputs:
+      debts_total: 2000
+      unguaranteed_tail: 190
+      equity_invested: 350
+    values:
+      guaranteed: debts_total - unguaranteed_tail
+opening:
+  deal:
+    tfl_account: {nature: asset, value: 0}
+    gov_account: {nature: asset, value: 0}
+    guaranteed_lenders: {nature: asset, value: 0}
+    tail_lenders: {nature: asset, value: 0}
+    equity_holders: {nature: asset, value: 0}
+    in_house_ops: {nature: expense, value: 0}
+    concession_book: {nature: equity, value: 0}
+    guaranteed_claim: {nature: liability, value: 0}
+    tail_claim: {nature: liability, value: 0}
+    equity_claim: {nature: liability, value: 0}
+    settlement_pool: {nature: asset, value: 0}
+    claims_extinguished: {nature: income, value: 0}
+contracts: {}
+rulebooks:
+  # the consortium's servicing duty: operative while it serves (W1 adds the solvency precedent)
+  servicing:
+    kind: duty
+    entity: deal
+    phase: accrue
+    condition: true
+schemes: {}
+cuts: {}
+measures: {}

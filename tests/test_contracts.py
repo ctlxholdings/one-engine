@@ -53,6 +53,15 @@ def test_a_stand_in_tariff_reaches_the_provider_cash_as_stand_in():
     assert State.STAND_IN in g.book("esco").states("cash", 1)
 
 
+def test_performance_may_be_a_series_one_value_per_year_of_the_term():
+    # added for the failure panel's W2 on ERIA: the measured savings slide down a declared ramp,
+    # and the provider's fee is its share of what was measured (the split is proportional)
+    g = run(contract(performance=stated(["1", "0.5"])))
+    esco, host = g.book("esco"), g.book("host")
+    assert [esco.balance("cash", t) - esco.opening("cash", t) for t in (1, 2)] == [80, 40]
+    assert [host.balance("avoided_energy_cost", t) - host.opening("avoided_energy_cost", t) for t in (1, 2)] == [100, 50]
+
+
 # ── added for the nightmare case: accounts in a second unit, given figures ──
 
 from fractions import Fraction as F  # noqa: E402
@@ -146,3 +155,8 @@ def test_days_per_period_may_be_a_series():
     g.run()
     # a quarter of 10% a year on 100
     assert g.book("spv").balance("b.interest", 1) - g.book("spv").opening("b.interest", 1) == F(10) / 4
+
+
+def test_a_performance_series_must_cover_the_term_exactly():
+    with pytest.raises(ValueError, match="term of 2"):
+        run(contract(performance=stated(["1", "0.5", "0.5"])))

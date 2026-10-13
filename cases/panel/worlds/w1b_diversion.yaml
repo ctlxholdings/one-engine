@@ -1,0 +1,56 @@
+# W1b: COLLECTIONS DIVERSION (E35_W1b; the UK wind shape) and the G1 guard's
+# response, on panel_base.yaml.
+# esco-product engine/tests/fixtures/worlds/w1b-diversion.yaml, translated.
+#
+# The switch: in diversion_period (4) the client's fee is paid into the
+# operator's OWN account instead of the pledged one. The pledged route stops
+# after the period before, a diverted transfer takes the fee in its place, and
+# the pledged route is restored afterwards. The G1 guard is a prohibition:
+# collections off the pledged account are forbidden. Its reparation is the
+# reassertion: the diverted fee is re-credited to the pledged account in the
+# same period and phase, ahead of the waterfall. Remove the guard and the
+# diversion sticks.
+world: w1b_diversion
+family: E35_W1b_diversion
+what: >
+  The operator pays itself first: collections are routed off the pledged
+  account for one period; the G1 guard detects the forbidden routing and
+  reasserts the pledged placement.
+watch:
+  - "the detour is visible: the operator's own account takes the whole fee in period 4 and gives it back"
+  - "with the guard on, the waterfall never sees the difference; party nets are those of the standing deal"
+  - "with the guard off, period 4 starves (no claims, no distributions) and the operator keeps the fee"
+set:
+  rulebooks.collections_route.until: {generator: panel, output: last_pledged_period}
+add:
+  generators.panel.inputs:
+    diversion_period: 4
+  generators.panel.values:
+    last_pledged_period: diversion_period - 1
+    diverted: {each_period: fee * (t == diversion_period)}
+    restored: {each_period: fee * (t > diversion_period)}
+    routed_off_pledged: {each_period: t == diversion_period}
+  opening.deal:
+    operator_own: {nature: asset, value: 0}
+  rulebooks:
+    # the diverted route: the same fee, paid into the operator's own account
+    diversion:
+      kind: transfer
+      entity: deal
+      phase: accrue
+      moves:
+        diverted: {debit: operator_own, credit: fee_payers, amount: {generator: panel, output: diverted}}
+    # the G1 guard: collections off the pledged account are forbidden; the reparation re-credits them
+    g1_guard:
+      kind: prohibition
+      entity: deal
+      phase: accrue
+      forbidden: {generator: panel, output: routed_off_pledged}
+      remedy: {debit: collections_pledged, credit: operator_own, amount: {generator: panel, output: fee}}
+    # the pledged route restored after the diversion
+    restored_route:
+      kind: transfer
+      entity: deal
+      phase: accrue
+      moves:
+        fee: {debit: collections_pledged, credit: fee_payers, amount: {generator: panel, output: restored}}

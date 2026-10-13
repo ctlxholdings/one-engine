@@ -1,0 +1,32 @@
+# W2: ASSET UNDERPERFORMANCE (E35_W2; the Spanish solar shape), on
+# panel_base.yaml or on any deal whose sharing rule carries a performance
+# factor (eria.yaml).
+# esco-product engine/tests/fixtures/worlds/w2-underperformance.yaml, translated.
+#
+# ANNOTATION (root-cause tag, carried as commentary): forecast_bias. This
+# world presents as underperformance but can originate in skewed underwriting
+# priors (toll-road defaults). The ramp below is the DECLARED performance path,
+# whichever side of measurement or underwriting produced it.
+#
+# The switch: the performance factor ramps down from 1.00 to 0.55 over the
+# term. On the panel base the M&V gate verifies baseline x fraction x the
+# ramp, and the collection schedule is re-declared on the same ramp (84,000 x
+# ramp). Senior and platform claims, measured on what was collected, ride it
+# too. The platform's fixed costs do not. On ERIA the shared-savings
+# contract's performance takes the ERIA ramp, one factor per year of the
+# eight-year term. Each hook binds only where its surface exists.
+world: w2_asset_underperformance
+family: E35_W2_asset_underperformance
+what: >
+  The asset underperforms: verified savings slide down a declared ramp and
+  everything measured downstream slides with them.
+watch:
+  - "verified savings = baseline x savings fraction x the ramp factor, exact every period"
+  - "collections, senior and platform distributions ride the ramp; fixed costs do not, so late in the term the platform's flow turns negative"
+set_where_present:
+  # hook 1 (panel base): the M&V gate's performance path
+  generators.panel.inputs.performance: [1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55]
+  # hook 1b (panel base): the collection schedule re-declared on the same ramp
+  rulebooks.collections_route.perform.amount: [84000, 79800, 75600, 71400, 67200, 63000, 58800, 54600, 50400, 46200]
+  # hook 2 (shared-savings deals, ERIA): the measured savings' performance, per year of the term
+  contracts.savings.terms.performance: [1, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
