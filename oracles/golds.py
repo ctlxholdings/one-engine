@@ -38,7 +38,8 @@ Where a row is read (``trace`` entries):
   depreciation);
 * ``{record: kind.field}``: a rulebook's record of each period (the tax
   rulebook's loss pool: ``tax.losses_opening``, ``tax.loss_used``); a
-  period with no record reads 0;
+  period with no record reads 0. A field recorded as a mapping is read
+  further by name (``waterfall.paid.sweep``);
 * ``{driver: name}``: a value the ``formulas`` generator computed. These are
   the gold's physical rows (loaves a year, trips, litres): the translation's
   arithmetic is compared with the gold's, but no ledger is involved, and the
@@ -56,6 +57,13 @@ computed (a gold input by name): a row the gold states per head or per unit
 (FCFF per worker). ``times: gen.output`` multiplies by one instead (the tax
 a lost deduction would have saved: the expired losses times the rate). The
 factor is the gold's own input, so nothing is typed.
+
+``{ratio: [spec, spec]}`` divides the first reading by the second, period by
+period (an interest cover, a holder's share of the equity, a cost per unit);
+either side may take ``at: t`` (that period's value) or ``total: true`` (the
+sum over the periods), or be ``{measure: name}``, each the same every
+period. A nil denominator refuses. ``running: true`` on any reading adds it
+up from the first period (an amount funded so far).
 
 ``{carried_in: "a + b"}`` reads the balances carried into the gold's first
 period (the gold's "opening injection" rows: that amount in the first
@@ -341,6 +349,28 @@ class GoldFamily(Family):
                 raise ValueError("per and times scale one row; put them on a part of the sum")
             parts = [GoldFamily._read(results, entity, s, n, warm) for s in spec["sum"]]
             return [sign * sum(col, Fraction(0)) for col in zip(*parts)]
+        if "ratio" in spec:
+            # one reading over another (an interest cover, a share of the equity, a cost per unit); a part
+            # may be one period's value (``at``), its total over the periods (``total``) or a measure,
+            # any of which is the same every period
+            if "per" in spec or "times" in spec:
+                raise ValueError("per and times scale one row; put them on a part of the ratio")
+            if not isinstance(spec["ratio"], list) or len(spec["ratio"]) != 2:
+                raise ValueError("a ratio takes two readings, the numerator and the denominator")
+            num, den = (GoldFamily._part(results, entity, p, n, warm) for p in spec["ratio"])
+            for t, d in enumerate(den):
+                if d == 0:
+                    raise ValueError(f"ratio: the denominator is nil at period {t}")
+            return [sign * x / d for x, d in zip(num, den)]
+        if spec.get("running"):
+            # a running total of any reading: what a row adds up to so far (a record field, a balance's change)
+            vals = GoldFamily._read(results, entity, {k: v for k, v in spec.items() if k not in ("running", "sign")},
+                                    n, warm)
+            out, run = [], Fraction(0)
+            for x in vals:
+                run += x
+                out.append(sign * run)
+            return out
         result = results[spec.get("variant")]
         if "carried_in" in spec:
             book = result.group.book(entity)
@@ -354,9 +384,16 @@ class GoldFamily(Family):
                 run += x
                 vals.append(run)
         elif "record" in spec:
-            kind, _, field = spec["record"].partition(".")
+            # ``kind.field``, or ``kind.field.inner`` for a field a rulebook records as a mapping (a
+            # waterfall's ``paid`` per tier)
+            kind, *path = spec["record"].split(".")
             recs = result.records(kind)
-            vals = [recs[t][field] if t in recs else Fraction(0) for t in range(n + warm)]
+
+            def field(rec: Mapping[str, Any]) -> Fraction:
+                for key in path:
+                    rec = rec[key]
+                return rec
+            vals = [field(recs[t]) if t in recs else Fraction(0) for t in range(n + warm)]
         elif "driver" in spec:
             gen, _, out = spec["driver"].rpartition(".")
             v = result.generated[gen or next(iter(result.generated))][out]
@@ -382,6 +419,22 @@ class GoldFamily(Family):
                 vals = [Fraction(x) / f[t] if key == "per" else Fraction(x) * f[t] for t, x in enumerate(vals)]
         vals = vals[warm:]
         return [sign * Fraction(x) for x in vals]
+
+    @staticmethod
+    def _part(results, entity: str, spec: Mapping[str, Any], n: int, warm: int) -> List[Fraction]:
+        """One side of a ratio, ``n`` periods long: a reading, one period of it (``at``), its total
+        (``total``), or a measure (``{measure: name}``, with an optional ``variant``)."""
+        if "measure" in spec:
+            if set(spec) - {"measure", "variant", "sign"}:
+                raise ValueError("a measure in a ratio takes only variant and sign")
+            m = Fraction(spec.get("sign", 1)) * Fraction(results[spec.get("variant")].measure(spec["measure"]))
+            return [m] * n
+        vals = GoldFamily._read(results, entity, {k: v for k, v in spec.items() if k not in ("at", "total")}, n, warm)
+        if spec.get("total"):
+            return [sum(vals, Fraction(0))] * n
+        if "at" in spec:
+            return [vals[int(spec["at"])]] * n
+        return vals
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:
         """Claim the inventory rows of the hand golds: ``<library_folder>/<id>.yaml`` in the golds library."""

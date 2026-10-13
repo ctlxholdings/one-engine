@@ -43,7 +43,8 @@ Translation
 * ``figures``: figure path -> where the engine reports it. Any reading of
   :meth:`GoldFamily._read <one_engine.oracles.golds.GoldFamily._read>`
   (``cut``, ``balance``, ``opening``, ``change``, ``cumulative``, ``record``,
-  ``driver``, ``sum``, ``per``, ``times``, ``carried_in``), plus:
+  ``driver``, ``sum``, ``ratio``, ``per``, ``times``, ``carried_in``, and ``running``
+  on any of them), plus:
 
   - ``at: t``: a single figure is the reading at period ``t``; ``total: true``
     sums the reading over every period instead. A one-period case needs

@@ -627,6 +627,9 @@ MUTATIONS = [
     ("packs/tea.py", "                if name not in ns:\n                    raise InputError(f\"{where}: '{name}' is neither",
      "                if False:\n                    raise InputError(f\"{where}: '{name}' is neither",
      "test_oracles_golds.py::test_formulas_refuse_an_unknown_name_and_a_reused_one"),
+    ("oracles/golds.py", "                if d == 0:", "                if False:", "test_oracles_golds.py::test_a_ratio_divides_one_reading_by_another_period_by_period_or_by_its_total"),
+    ("oracles/golds.py", "        if spec.get(\"total\"):\n            return [sum(vals", "        if False:\n            return [sum(vals", "test_oracles_golds.py::test_a_ratio_divides_one_reading_by_another_period_by_period_or_by_its_total"),
+    ("oracles/golds.py", "                run += x\n                out.append(sign * run)", "                out.append(sign * x)", "test_oracles_golds.py::test_a_record_field_may_be_nested_and_any_reading_may_be_a_running_total"),
     ("packs/tea.py", '"EOMONTH": _eomonth,', '"EOMONTH": lambda s, k: s,',
      "test_oracles_golds.py::test_formulas_read_dates_as_excel_day_counts"),
     ("oracles/workbook.py", "                elif isinstance(v, (datetime.datetime, datetime.date)):",
@@ -637,7 +640,7 @@ MUTATIONS = [
     ("oracles/workbook.py", "            if rc not in numeric:", "            if False:",
      "test_oracles_workbook.py::test_a_formula_cell_that_saved_no_number_is_set_aside_by_the_oracle_with_what_it_saved"),
     ("oracles/workbook.py", "            if not c.ok:\n                return Check(fig, f\"cell", "            if False:\n                return Check(fig, f\"cell",
-     "test_oracles_workbook.py::test_every_workbook_gets_its_recorded_verdict"),
+     "test_oracles_workbook.py::test_every_workbook_gets_its_recorded_verdict[baghara_v15_24]"),
     # the chain (test_chain.py, guards 1 and 3)
     ("packs/pf.py", 'dispose_when == "end":\n            retire()\n            post(g, t, loss, fa, reg.dispose() + residual, "disposal")',
      'dispose_when == "end":\n            retire()\n            pass',
@@ -708,6 +711,6 @@ def test_switching_off_a_check_turns_its_test_red(tmp_path, fname, old, new, gua
     src = target.read_text()
     assert src.count(old) == 1, f"mutation anchor not found exactly once in {fname}: {old!r}"
     target.write_text(src.replace(old, new))
-    res = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+    res = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider",
                           f"one_engine/tests/{guard}"], cwd=tmp_path, capture_output=True, text=True)
     assert res.returncode != 0, f"switching off the check in {fname} left {guard} green:\n{res.stdout[-800:]}"

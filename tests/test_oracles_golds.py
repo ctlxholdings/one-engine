@@ -245,3 +245,44 @@ def test_the_lower_tax_bands_are_relieved(tmp_path):
                                "rate: {generator: gold, output: ibica_band3_rate}}")])
     r = O.receipt(fam, "paygo_solar", commit="test")
     assert r.verdict == "differs" and r.first_difference["name"] == "tax"
+
+
+class _Result:
+    """A case result reduced to what a reading reads: cuts, records, generated values and measures."""
+
+    def __init__(self, cuts=None, records=None, generated=None, measures=None):
+        self._cuts, self._records = cuts or {}, records or {}
+        self.generated, self._measures = generated or {"g": {}}, measures or {}
+
+    def cut(self, name):
+        return type("S", (), {"values": [Fraction(x) for x in self._cuts[name]]})()
+
+    def records(self, kind):
+        return self._records[kind]
+
+    def measure(self, name):
+        return self._measures[name]
+
+
+def test_a_ratio_divides_one_reading_by_another_period_by_period_or_by_its_total():
+    res = {None: _Result(cuts={"ebitda": [10, 30, 0], "interest": [5, 10, 4], "flows": [1, 2, 1]},
+                         measures={"npv": 8})}
+    read = lambda spec: GoldFamily._read(res, "e", spec, 3)
+    assert read({"ratio": [{"cut": "ebitda"}, {"cut": "interest"}]}) == [2, 3, 0]
+    # a part may be one period's value or the total, the same every period, or a measure
+    assert read({"ratio": [{"cut": "ebitda"}, {"cut": "interest", "at": 1}]}) == [1, 3, 0]
+    assert read({"ratio": [{"cut": "ebitda", "total": True}, {"cut": "flows", "total": True}]}) == [10, 10, 10]
+    assert read({"ratio": [{"measure": "npv"}, {"cut": "flows"}], "sign": -1}) == [-8, -4, -8]
+    with pytest.raises(ValueError, match="nil at period 2"):
+        read({"ratio": [{"cut": "interest"}, {"cut": "ebitda"}]})
+    with pytest.raises(ValueError, match="two readings"):
+        read({"ratio": [{"cut": "ebitda"}]})
+
+
+def test_a_record_field_may_be_nested_and_any_reading_may_be_a_running_total():
+    recs = {0: {"paid": {"sweep": Fraction(2)}}, 2: {"paid": {"sweep": Fraction(3)}}}
+    res = {None: _Result(records={"waterfall": recs}, cuts={"cash": [1, 2, 3]})}
+    read = lambda spec: GoldFamily._read(res, "e", spec, 3)
+    assert read({"record": "waterfall.paid.sweep"}) == [2, 0, 3]
+    assert read({"record": "waterfall.paid.sweep", "running": True}) == [2, 2, 5]
+    assert read({"cut": "cash", "running": True}) == read({"cumulative": "cash"}) == [1, 3, 6]
