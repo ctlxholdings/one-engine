@@ -41,6 +41,20 @@ libraries publish rates the old -99%..+1000% scan refused); dated flows
 after the first may come in any order, as Excel and pyxirr allow, and only a
 date before the first is refused; npv refuses a rate of -100% or below
 (numpy-financial answers NaN; the engine divided by zero).
+
+Added for the same two suites and for Baghara's cattle workbook (about
+1,200 IPMT/PPMT cells): the annuity functions :func:`pv`, :func:`fv`,
+:func:`pmt`, :func:`ipmt`, :func:`ppmt`, :func:`nper`, :func:`rate`, and
+:func:`mirr`. They follow Excel and numpy-financial: money received is
+positive and money paid negative, so a loan of +1,000 has payments below
+zero; ``when`` is 0 for payments at the end of each period (in arrears) and
+1 for payments at the start (in advance), Excel's ``type``. pv, fv, pmt,
+ipmt and ppmt are closed forms in plain arithmetic, so exact inputs
+(fractions, a whole number of periods) give exact answers and the identities
+between them hold to the unit; nper takes a logarithm and rate is a root, so
+both are floats. Where the libraries answer NaN, the engine refuses: a
+period outside the term, a term of no payments, a rate at or below -100%, a
+loan the payments never repay, no rate that repays it.
 """
 from __future__ import annotations
 
@@ -276,3 +290,156 @@ def payback(stream: Sequence[Number]) -> Optional[float]:
         if t > 0 and before < 0 <= cum:
             return (t - 1) + (-before / cf)
     return None
+
+
+# ── annuities (numpy-financial, pyxirr, Baghara's IPMT/PPMT) ────────────────
+
+def _check(rate: Number, when: int) -> None:
+    if when not in (0, 1):
+        raise MeasureError(f"when is 0 (paid at the end of each period) or 1 (at the start), not {when!r}")
+    if rate <= -1:
+        raise MeasureError(f"a rate of {float(rate):.0%} is at or below -100%, where discounting is undefined")
+
+
+def _annuity(rate: Number, nper: Number, when: int) -> Number:
+    """What a payment of 1 a period is worth at the end of the term: ``nper`` at a zero rate."""
+    if rate == 0:
+        return nper
+    return (1 + rate * when) * ((1 + rate) ** nper - 1) / rate
+
+
+def fv(rate: Number, nper: Number, pmt: Number, pv: Number, when: int = 0) -> Number:
+    """Future value: what is left after ``nper`` periods of ``pmt`` on a starting ``pv`` (Excel's FV).
+
+    The balance grows at ``rate`` and each payment adds to it; the answer
+    is the amount that would bring it to nothing, so a loan received (+)
+    and repaid in full gives 0, and one part repaid gives a negative number.
+    """
+    _check(rate, when)
+    return -(pv * (1 + rate) ** nper + pmt * _annuity(rate, nper, when))
+
+
+def pv(rate: Number, nper: Number, pmt: Number, fv: Number = 0, when: int = 0) -> Number:
+    """Present value of ``nper`` payments of ``pmt`` and a final ``fv`` (Excel's PV)."""
+    _check(rate, when)
+    return -(fv + pmt * _annuity(rate, nper, when)) / (1 + rate) ** nper
+
+
+def pmt(rate: Number, nper: Number, pv: Number, fv: Number = 0, when: int = 0) -> Number:
+    """The level payment that takes ``pv`` to ``-fv`` over ``nper`` periods (Excel's PMT)."""
+    _check(rate, when)
+    if nper == 0:
+        raise MeasureError("a term of 0 periods has no payments to size")
+    return -(fv + pv * (1 + rate) ** nper) / _annuity(rate, nper, when)
+
+
+def ipmt(rate: Number, per: Number, nper: Number, pv: Number, fv: Number = 0, when: int = 0) -> Number:
+    """The interest part of payment ``per`` (1 to ``nper``) of the level payment (Excel's IPMT).
+
+    The interest on what is still owed after ``per - 1`` payments. Paid in
+    advance, the first payment falls before any interest has run (0), and
+    each later one pays the interest of the period before it, discounted
+    one period, as Excel and both libraries do.
+
+    What is owed after ``k`` payments is ``(pv (g**n - g**k) - fv (g**k -
+    1)) / (g**n - 1)`` with ``g = 1 + rate`` (the payment, ``when`` and all,
+    cancels out). Taking it as :func:`fv` of the first ``k`` payments, as
+    numpy-financial does, subtracts two numbers near ``pv g**k``: at 14.79%
+    over 300 periods, period 297's interest came out -2,423 where it is
+    16.97 (numpy-financial issue 35; pyxirr's test of it is an oracle).
+    Here the powers are taken so they shrink: over ``g**n`` when ``g`` > 1.
+    """
+    _check(rate, when)
+    if not 1 <= per <= nper:
+        raise MeasureError(f"period {per} is outside the term: payments are periods 1 to {nper}")
+    if when == 1 and per == 1:
+        return 0 * rate
+    k = per - 1
+    if rate == 0:
+        owed = pv - (pv + fv) * k / nper
+    elif rate > 0:
+        d, e = (1 + rate) ** (k - nper), (1 + rate) ** -nper
+        owed = (pv * (1 - d) - fv * (d - e)) / (1 - e)
+    else:
+        gk, gn = (1 + rate) ** k, (1 + rate) ** nper
+        owed = (pv * (gn - gk) - fv * (gk - 1)) / (gn - 1)
+    interest = -owed * rate
+    return interest / (1 + rate) if when == 1 else interest
+
+
+def ppmt(rate: Number, per: Number, nper: Number, pv: Number, fv: Number = 0, when: int = 0) -> Number:
+    """The principal part of payment ``per``: the level payment less its interest (Excel's PPMT)."""
+    return pmt(rate, nper, pv, fv, when) - ipmt(rate, per, nper, pv, fv, when)
+
+
+def nper(rate: Number, pmt: Number, pv: Number, fv: Number = 0, when: int = 0) -> float:
+    """The number of periods of ``pmt`` that take ``pv`` to ``-fv`` (Excel's NPER), as a float.
+
+    Infinite when the payment is nil at a zero rate (the balance never
+    moves). Refused when the payments never get there: interest outruns
+    them, or they move the balance away from the target (Excel and
+    numpy-financial answer a negative number of periods, or NaN).
+    """
+    _check(rate, when)
+    if rate == 0:
+        if pmt == 0:
+            if fv + pv == 0:
+                raise MeasureError("the balance is already at the target, and no payment moves it")
+            return math.inf
+        n = -float(fv + pv) / float(pmt)
+    else:
+        # (1 + r)**n = (z - fv) / (pv + z), with z the payment's worth as a perpetuity
+        z = float(pmt) * (1 + float(rate) * when) / float(rate)
+        a = (z - float(fv)) / (float(pv) + z) if float(pv) + z else -1.0
+        if a <= 0:
+            raise MeasureError("the payments never repay the balance: interest outruns them")
+        n = math.log(a) / math.log1p(float(rate))
+    if n < 0:
+        raise MeasureError("the payments never repay the balance: they move it away from the target")
+    return n
+
+
+def rate(nper: Number, pmt: Number, pv: Number, fv: Number = 0, when: int = 0, grid: int = 2000) -> float:
+    """The rate per period at which ``nper`` payments of ``pmt`` take ``pv`` to ``-fv`` (Excel's RATE).
+
+    The root of :func:`fv` in the rate, found by the same scan as
+    :func:`irr` (one root, or a refusal naming them all); the libraries run
+    Newton's method from a guess and answer NaN when it does not settle.
+    Each side of zero is evaluated in a form that cannot overflow: below
+    0, ``fv`` as it stands (``(1 + r)**n`` shrinks); above, ``fv`` over
+    ``(1 + r)**n``.
+    """
+    if when not in (0, 1):
+        raise MeasureError(f"when is 0 (paid at the end of each period) or 1 (at the start), not {when!r}")
+    n, p, v, f = (float(x) for x in (nper, pmt, pv, fv))
+
+    def signed(r: float) -> float:
+        u = math.log1p(r)
+        per_payment = (1 + r * when) * (n if r == 0 else math.expm1(n * u) / r)
+        if r <= 0:
+            return v * math.exp(n * u) + p * per_payment + f
+        return v + p * per_payment * math.exp(-n * u) + f * math.exp(-n * u)
+
+    try:
+        return _root(signed, grid)
+    except AmbiguousRate:
+        raise
+    except MeasureError:
+        raise MeasureError(f"no rate repays {v:g} by {nper} payments of {p:g} to a final {f:g}") from None
+
+
+def mirr(stream: Sequence[Number], finance_rate: float, reinvest_rate: float) -> float:
+    """Modified internal rate of return (Excel's MIRR), one period apart.
+
+    The outflows are financed at ``finance_rate`` (brought to t = 0) and
+    the inflows reinvested at ``reinvest_rate`` (carried to the last
+    period); the rate is the one that grows the first into the second.
+    Refused unless the stream has both an outflow and an inflow.
+    """
+    cfs = [float(c) for c in stream]
+    if not (any(c < 0 for c in cfs) and any(c > 0 for c in cfs)):
+        raise MeasureError("the stream needs both an outflow and an inflow for a modified rate of return")
+    n = len(cfs)
+    grown = abs(npv([c if c > 0 else 0.0 for c in cfs], reinvest_rate))
+    financed = abs(npv([c if c < 0 else 0.0 for c in cfs], finance_rate))
+    return (grown / financed) ** (1 / (n - 1)) * (1 + reinvest_rate) - 1

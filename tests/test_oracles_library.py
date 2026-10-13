@@ -10,18 +10,21 @@ ways it could pass a case dishonestly are each pinned:
   ``assert_almost_eq!`` tolerance from ``helpers.rs``, quoted CSV dates as
   ``csv.reader`` reads them).
 
-Then every oracle gets its recorded verdict. The differences are of two
-kinds, both checked rather than listed: the engine refuses a stream with
+Then every oracle gets its recorded verdict. The differences are of three
+kinds, all checked rather than listed: the engine refuses a stream with
 several rates where the library picks one (every such refusal must name the
-library's rate among its roots), and two pyxirr samples where the library
-finds no rate and the engine finds one (its XNPV must change sign across it).
+library's rate among its roots); two pyxirr samples where the library
+finds no rate and the engine finds one (its XNPV must change sign across it);
+and two pyxirr rate tests with two rates, where every rate the engine names
+must pass the test's own future-value check.
 """
 import pytest
 
 from one_engine import oracles as O
-from one_engine.measures import xnpv
+from one_engine.measures import fv, xnpv
 from one_engine.oracles.library import (EXCLUDED, HELPERS, NUMPY, PYXIRR, LibraryFamily, Refused, _csv,
-                                        _default_eps, _literal, _near, _numpy_tests, _refuses, _run_pyxirr)
+                                        _default_eps, _future_value_eps, _literal, _near, _numpy_tests,
+                                        _refuses, _run_numpy, _run_pyxirr)
 
 FAMILY = LibraryFamily()
 ORACLES = FAMILY.oracles()
@@ -33,6 +36,23 @@ SOLVER_MISSES = {"pyxirr/test_scheduled::test_xirr_samples[case_30_20]",
 UNPLANTABLE = {
     # the rate is -1 + 9.4e-10; 1% on any flow moves it by 1e-11, inside the test's rtol of 1e-9
     "numpy-financial/TestIrr::test_gh_15",
+    # assert_allclose(actual, desired, 4): the third argument is rtol, so 400% passes (decimal=4 was meant)
+    "numpy-financial/TestNper::test_broadcast",
+}
+#: pyxirr rate tests whose flows change sign twice: the test checks only that the rate it gets makes
+#: the future value nil, which both roots do; the engine refuses and names both. Checked, not listed:
+#: every root named must pass the test's own check
+TWO_RATES = {"pyxirr/test_periodic::test_rate_non_zero_fv", "pyxirr/test_periodic::test_rate_pmt_at_beginning"}
+#: oracles the reader declines, with the start of the reason it gives (none is a missing function)
+READER_DECLINES = {
+    # equality with a 28-digit Decimal pins Decimal's rounding (and, for rate, where Newton's method
+    # stopped: the vendored answer 0.11069085371426893 is 3.5e-12 from the root, 0.1106908537107528...)
+    **{oid: "the test asks for equality with a 28-digit Decimal" for oid in (
+        "numpy-financial/TestIpmt::test_decimal", "numpy-financial/TestPV::test_pv_decimal",
+        "numpy-financial/TestPmt::test_pmt_decimal_broadcast", "numpy-financial/TestPmt::test_pmt_decimal_simple",
+        "numpy-financial/TestPpmt::test_decimal", "numpy-financial/TestRate::test_rate_decimal")},
+    "numpy-financial/TestMirr::test_mirr_broadcast": "mirr over a table of streams and rates",
+    "pyxirr/test_periodic::test_fv_vectorized_ndarray": "the reader cannot read `pyarray!",
 }
 
 
@@ -75,8 +95,8 @@ def test_a_refusal_never_satisfies_a_number_and_several_roots_are_a_refusal():
 
 
 def test_a_test_calling_a_function_the_engine_lacks_is_blocked_by_name():
-    r = O.receipt(FAMILY, "numpy-financial/TestPmt::test_pmt_simple", commit="test")
-    assert r.verdict == "blocked" and r.reason == "the engine has no pmt"
+    r = O.receipt(FAMILY, "pyxirr/test_periodic::test_cumprinc_works", commit="test")
+    assert r.verdict == "blocked" and r.reason == "the engine has no cumprinc"
     r = O.receipt(FAMILY, "pyxirr/test_scheduled::test_xirr_day_count[0]", commit="test")
     assert r.verdict == "blocked" and "30/360 SIA" in r.reason
 
@@ -106,8 +126,18 @@ def _library_rate_among_the_roots(r) -> bool:
 @pytest.mark.parametrize("oid", ORACLES)
 def test_every_oracle_gets_its_recorded_verdict(oid):
     r = O.receipt(FAMILY, oid, commit="test")
-    if r.verdict == "blocked":
+    if oid in READER_DECLINES:
+        assert r.verdict == "blocked" and r.reason.startswith(READER_DECLINES[oid]), r.reason
+    elif r.verdict == "blocked":
         assert r.reason.startswith(("the engine has no ", "the engine's xirr counts actual/365 only")), r.reason
+    elif oid in TWO_RATES:
+        assert r.verdict == "differs" and all(not c["ok"] for c in r.checks)
+        _, eps = _future_value_eps()
+        when = int("pmt_at_beginning" in oid)
+        roots = [float(x) for x in r.checks[0]["got"].split(": ", 2)[2].split(", ")]
+        assert len(roots) == 2
+        for root in roots:     # PERIODS, PAYMENT, PV, FV of the test file; the macro's residual is -fv(...) + FV
+            assert abs(110_000.0 - fv(root, 10.0, -50_000.0, 100_000.0, when)) < eps
     elif oid in SOLVER_MISSES:
         assert r.verdict == "differs" and r.checks[0]["expected"] == "no answer"
         root = float(r.checks[0]["got"])
@@ -122,7 +152,32 @@ def test_every_oracle_gets_its_recorded_verdict(oid):
         assert r.planted_caught
 
 
-def test_the_numpy_reader_covers_every_npv_and_irr_test():
-    ran = [oid for oid in _numpy_tests() if "TestIrr" in oid or "TestNpv" in oid]
-    for oid in ran:
-        assert O.receipt(FAMILY, oid, commit="test").verdict != "blocked", oid
+def test_the_numpy_reader_covers_every_numpy_financial_test_it_does_not_decline():
+    for oid in _numpy_tests():
+        if oid not in READER_DECLINES:
+            assert O.receipt(FAMILY, oid, commit="test").verdict != "blocked", oid
+
+
+def test_a_decimal_is_read_as_the_exact_number_it_writes():
+    # Decimal("0.1") / Decimal("12") is 1/120 exactly, so ipmt's first-period interest is exact too
+    checks, _ = _run_numpy("numpy-financial/TestIpmt::test_decimal_broadcasting", plant=False)
+    assert [c.at for c in checks] == ["[0]", "[1]", "[2]", "[3]"] and all(c.ok for c in checks)
+    assert checks[0].got == repr(float(-2000 / 120 * 1))
+
+
+def test_an_expected_nan_is_agreed_only_by_a_refusal():
+    # ipmt at period 0 has no answer: numpy NaN, the engine refuses; the other periods are numbers
+    checks, _ = _run_numpy("numpy-financial/TestIpmt::test_broadcasting", plant=False)
+    assert checks[0].got.startswith("refuses: period 0") and checks[0].ok
+    assert all(c.ok and not c.got.startswith("refuses") for c in checks[1:])
+
+
+def test_a_raises_check_over_an_array_needs_only_one_element_without_an_answer():
+    checks, _ = _run_numpy("numpy-financial/TestRate::test_rate_maximum_iterations_exception_array", plant=False)
+    assert len(checks) == 1 and checks[0].ok and checks[0].got.startswith("refuses: no rate")
+
+
+def test_an_equality_of_two_calls_sees_the_plant_on_the_first():
+    # each side is evaluated once: a second evaluation would be an unplanted second call
+    planted, _ = _run_numpy("numpy-financial/TestFinancial::test_when", plant=True)
+    assert not planted[0].ok and all(c.ok for c in planted[1:])

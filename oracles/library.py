@@ -31,11 +31,23 @@ instead of sinking its whole test.
 
 What runs, what is blocked, what is left out
 --------------------------------------------
-The engine's rate measures are :func:`one_engine.measures.irr`, ``npv``,
-``xirr`` and ``xnpv``. A test that calls any other library function (pv,
-fv, pmt, ipmt, ppmt, nper, rate, mirr, xfv, xnfv, cumprinc, ...) is
-``blocked`` and the reason names the functions the engine lacks. A pyxirr
-case asking for a day count other than actual/365 is blocked the same way.
+The engine answers irr, npv, xirr, xnpv, mirr and the annuity functions pv,
+fv, pmt, ipmt, ppmt, nper and rate (:mod:`one_engine.measures`). A test
+that calls any other library function (xfv, xnfv, nfv, cumprinc, cumipmt)
+is ``blocked`` and the reason names the functions the engine lacks. A
+pyxirr case asking for a day count other than actual/365 is blocked the
+same way. The reader also declines, by name, a numpy test that asks for
+equality with a 28-digit ``Decimal`` (that pins Decimal's rounding at each
+step, which exact arithmetic does not reproduce in the last digits), numpy's
+mirr over a table of streams, and a pyxirr test built on ``pyarray!``.
+
+numpy-financial's tests are read as Python: a ``Decimal("...")`` is the
+exact number it writes, arrays broadcast as numpy broadcasts them (one
+engine call per element), ``when`` is 0 / "end" or 1 / "begin". pyxirr's
+annuity tests are Rust: each statement is rewritten as Python by a fixed
+list of substitutions (:data:`_RUST_TO_PYTHON`) and read the same way;
+``assert_future_value!`` is the test's own future value of the four
+numbers, whose tolerances are read from the vendored helpers.rs.
 
 Left out of the oracle list, with the reason in :data:`EXCLUDED`:
 property tests (``@given``: random inputs, no stored answer), tests of
@@ -72,6 +84,13 @@ anything, so instead the stream is made to start negative and end positive
 ``[-1, 1]``), which gives it a rate; for npv the rate moves by +0.01. Only
 the first call is changed: a check such as ``npv(irr(x), x) == 0`` stays
 true when both calls see the same changed stream.
+
+For the annuity functions the change is the rate + 0.01 (rate's own plant
+is the present value x 1.01), applied to every element the first call
+broadcasts to. Where the test expects no answer, ipmt and ppmt are asked for
+period 1 and rate is given the final value at which 10% repays the loan;
+mirr's stream is flipped only when it has one sign, else scaled. ipmt in
+advance at period 1 is nil at any rate, so there the period moves to 2.
 """
 from __future__ import annotations
 
@@ -81,6 +100,7 @@ import datetime as _dt
 import itertools
 import re
 from dataclasses import dataclass
+from fractions import Fraction
 from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
@@ -92,7 +112,8 @@ NUMPY = f"{FOLDER}/numpy-financial/test_financial.py"
 PYXIRR = f"{FOLDER}/pyxirr/tests"
 PYXIRR_FILES = ("test_periodic", "test_scheduled")
 HELPERS = f"{PYXIRR}/common/helpers.rs"
-#: the library functions the engine answers, by the engine function that answers them
+#: the rate measures the pyxirr irr/npv/xirr/xnpv readers call; the annuity functions and mirr are
+#: answered through :data:`SIGNATURES`
 ENGINE = {"irr": M.irr, "npv": M.npv, "xirr": M.xirr, "xnpv": M.xnpv}
 #: tests that are not oracles at all, with why
 EXCLUDED = {
@@ -100,6 +121,8 @@ EXCLUDED = {
         "tests numpy's refusal of a rate array of the wrong shape; the engine takes one rate",
     "numpy-financial/TestNpv::test_invalid_cashflows_shape":
         "tests numpy's refusal of a cash-flow array of the wrong shape; the engine takes one flat stream",
+    "numpy-financial/TestIpmt::test_0d_inputs":
+        "tests that numpy returns a scalar rather than a 0-d array; it states no answer",
     "pyxirr/test_periodic::test_fv_macro_working":
         "calls no pyxirr function: it checks the test file's own assert_future_value! macro",
 }
@@ -156,23 +179,64 @@ class _Engine:
         out[first], out[last] = -(abs(out[first]) + 1), abs(out[last]) + 1
         return out
 
-    def _call(self, fn: Callable, *args) -> Any:
+    def _call(self, fn: Callable, *args, **kw) -> Any:
         if any(isinstance(a, Refused) for a in args):
             return Refused("an input to this call was itself refused")
         try:
-            return fn(*args)
+            return fn(*args, **kw)
         except M.AmbiguousRate as e:
             return Refused(str(e), tuple(e.roots))
         except M.MeasureError as e:
             return Refused(str(e))
 
-    def irr(self, stream: List[float]) -> Any:
-        if self._first():
+    def begin(self) -> bool:
+        """One library call starts: whether the plant applies to it (to every element it broadcasts to)."""
+        return self._first()
+
+    def irr(self, stream: List[float], plant: Optional[bool] = None) -> Any:
+        if self._first() if plant is None else plant:
             stream = self._flipped(stream) if self.flip else self._scaled(stream)
         return self._call(M.irr, stream)
 
-    def npv(self, rate: float, stream: List[float]) -> Any:
-        if self._first():
+    def mirr(self, stream: List[float], finance: float, reinvest: float, plant: Optional[bool] = None) -> Any:
+        # flipped only when the stream has no answer (one sign): numpy's mirr tests read "no answer"
+        # and a number in one body, and flipping the ends of a stream that has a rate moves it too little
+        if self._first() if plant is None else plant:
+            one_sign = all(c >= 0 for c in stream) or all(c <= 0 for c in stream)
+            stream = self._flipped(stream) if one_sign else self._scaled(stream)
+        return self._call(M.mirr, stream, finance, reinvest)
+
+    def tvm(self, name: str, kw: Dict[str, Any], plant: Optional[bool] = None) -> Any:
+        """An annuity function (pv, fv, pmt, ipmt, ppmt, nper, rate) on one element's arguments.
+
+        The plant (see the module docstring): the rate + 0.01, or for
+        ``rate`` the present value x 1.01; ipmt in advance at period 1 is
+        nil at any rate, so there the period moves to 2. When the test
+        expects no answer: ipmt and ppmt are asked for period 1 (2 when it
+        is 1 already), and
+        ``rate`` gets the final value at which 10% repays the loan.
+        """
+        kw = dict(kw)
+        if "when" in kw:
+            kw["when"] = _when(kw["when"])
+        if any(isinstance(v, Refused) for v in kw.values()):
+            return Refused("an input to this call was itself refused")
+        if self._first() if plant is None else plant:
+            if name == "rate":
+                if self.flip:
+                    kw["fv"] = M.fv(0.1, kw["nper"], kw["pmt"], kw["pv"], kw.get("when", 0))
+                else:
+                    kw["pv"] = kw["pv"] * 1.01
+            elif self.flip and name in ("ipmt", "ppmt"):
+                kw["per"] = 2 if kw["per"] == 1 else 1
+            elif name == "ipmt" and kw.get("when", 0) == 1 and kw["per"] == 1:
+                kw["per"] = 2
+            else:
+                kw["rate"] = kw["rate"] + 0.01
+        return self._call(getattr(M, name), **kw)
+
+    def npv(self, rate: float, stream: List[float], plant: Optional[bool] = None) -> Any:
+        if self._first() if plant is None else plant:
             if self.flip:
                 rate = rate + 0.01
             else:
@@ -196,6 +260,8 @@ class _Engine:
 
 
 def _show(v: Any) -> str:
+    if isinstance(v, (list, tuple)):
+        return "[" + ", ".join(_show(x) for x in v) + "]"
     return str(v) if isinstance(v, Refused) else repr(float(v))
 
 
@@ -272,48 +338,233 @@ def _npf_calls(fn: ast.FunctionDef) -> List[str]:
 
 
 def _expects_nothing(fn: ast.FunctionDef) -> bool:
-    """Whether the test's answer is "no answer" (``isnan`` or ``pytest.raises``)."""
+    """Whether the test's answer is "no answer" (an ``isnan``, ``pytest.raises`` or ``assert_raises``)."""
     src = ast.unparse(fn)
-    return "numpy.isnan" in src or "pytest.raises" in src
+    return any(s in src for s in ("numpy.isnan", "math.isnan", "is_nan", "pytest.raises", "assert_raises"))
+
+
+#: each numpy-financial function's arguments in order (numpy_financial 2.0.0), for positional calls
+SIGNATURES = {
+    "irr": ("values",), "npv": ("rate", "values"), "mirr": ("values", "finance_rate", "reinvest_rate"),
+    "fv": ("rate", "nper", "pmt", "pv", "when"), "pv": ("rate", "nper", "pmt", "fv", "when"),
+    "pmt": ("rate", "nper", "pv", "fv", "when"), "ipmt": ("rate", "per", "nper", "pv", "fv", "when"),
+    "ppmt": ("rate", "per", "nper", "pv", "fv", "when"), "nper": ("rate", "pmt", "pv", "fv", "when"),
+    "rate": ("nper", "pmt", "pv", "fv", "when"),
+}
+#: numpy's switch between answering NaN and raising: both are "no answer", so it is read and dropped
+_DROPPED = {"raise_exceptions"}
+#: Decimal's own working precision: an equality with a Decimal literal this long pins its rounding
+_FLOAT_DIGITS = 17
+
+
+class _Dec(Fraction):
+    """A ``Decimal("...")`` literal, read as the exact number it writes, remembering how many digits."""
+
+    def __new__(cls, text: str):
+        self = super().__new__(cls, text)
+        self.digits = len(re.sub(r"[^0-9]", "", text.lstrip("+-0.").split("e")[0].split("E")[0]))
+        return self
+
+
+class _IsNan:
+    """``numpy.isnan``, ``math.isnan`` or ``Decimal.is_nan`` used as a value (bound to a name)."""
+
+
+class _DecimalType:
+    """The name ``Decimal`` used as a value (a parametrized number type)."""
+
+
+def _when(v: Any) -> int:
+    """numpy-financial's ``when``: 0 / "end" for payments in arrears, 1 / "begin" in advance."""
+    if v in ("end", "begin"):
+        return int(v == "begin")
+    if not isinstance(v, (str, list)) and v in (0, 1):
+        return int(v)
+    raise Blocked(f"the reader cannot read when={v!r}")
+
+
+def _shape(v: Any) -> Tuple[int, ...]:
+    return (len(v),) + _shape(v[0]) if isinstance(v, (list, tuple)) and v else ((0,) if isinstance(v, (list, tuple)) else ())
+
+
+def _broadcast(fn: Callable[[Dict[str, Any]], Any], kw: Dict[str, Any]) -> Any:
+    """``fn`` over every element of numpy's broadcast of ``kw``'s arrays (nested lists): a scalar,
+    or nested lists in the broadcast shape. Shapes align from the right; a length of 1 stretches."""
+    shapes = {k: _shape(v) for k, v in kw.items()}
+    rank = max((len(s) for s in shapes.values()), default=0)
+    out = []
+    for d in range(rank):
+        sizes = {s[len(s) - rank + d] for s in shapes.values() if len(s) - rank + d >= 0} - {1}
+        if len(sizes) > 1:
+            raise Blocked(f"the arguments' shapes {sorted(shapes.values())} do not broadcast")
+        out.append(sizes.pop() if sizes else 1)
+
+    def pick(v: Any, s: Tuple[int, ...], idx: Tuple[int, ...]) -> Any:
+        for i, n in zip(idx[rank - len(s):], s):
+            v = v[0 if n == 1 else i]
+        return v
+
+    def build(prefix: Tuple[int, ...]) -> Any:
+        if len(prefix) == rank:
+            return fn({k: pick(v, shapes[k], prefix) for k, v in kw.items()})
+        return [build(prefix + (i,)) for i in range(out[len(prefix)])]
+
+    return build(())
+
+
+def _flat(v: Any) -> List[Any]:
+    return [x for e in v for x in _flat(e)] if isinstance(v, (list, tuple)) else [v]
+
+
+def _is_nan(v: Any) -> bool:
+    return isinstance(v, Refused) or (isinstance(v, float) and v != v)
+
+
+def _pinned_decimal(*vs: Any) -> None:
+    for v in vs:
+        for x in _flat(v):
+            if isinstance(x, _Dec) and x.digits >= _FLOAT_DIGITS:
+                raise Blocked(f"the test asks for equality with a {x.digits}-digit Decimal, which pins Decimal's "
+                              f"own rounding at each step; the engine computes exactly, or in floats")
 
 
 class _NumpyReader:
     """Evaluates one numpy-financial test body over literals, with ``npf`` routed to the engine.
 
-    Only the forms the rate and npv tests use are read; anything else is a
-    :class:`Blocked` naming the expression, never a guess.
+    Only the forms the tests use are read (arithmetic, tuples and lists,
+    ``Decimal``, ``numpy.array`` / ``arange``, ``range``, subscripts, a
+    conditional on a parametrized value, ``*args``); anything else is a
+    :class:`Blocked` naming the expression, never a guess. A ``Decimal``
+    is read as the exact number it writes, so a test in Decimals runs the
+    engine on exact inputs. Arrays are broadcast as numpy does, one engine
+    call per element; the engine functions take scalars.
     """
 
     def __init__(self, eng: _Engine, env: Dict[str, Any]):
         self.eng, self.env, self.checks = eng, env, []
 
+    def _args(self, call: ast.Call) -> List[Any]:
+        out: List[Any] = []
+        for a in call.args:
+            if isinstance(a, ast.Starred):
+                out.extend(self.value(a.value))
+            else:
+                out.append(self.value(a))
+        return out
+
+    def npf(self, name: str, call: ast.Call) -> Any:
+        """One ``npf`` call: its arguments bound by name, broadcast, each element to the engine."""
+        kw = dict(zip(SIGNATURES[name], self._args(call)))
+        for k in call.keywords:
+            if k.arg not in _DROPPED:
+                if k.arg not in SIGNATURES[name]:
+                    raise Blocked(f"the engine's {name} takes no {k.arg}")
+                kw[k.arg] = self.value(k.value)
+        return self.call(name, kw)
+
+    def call(self, name: str, kw: Dict[str, Any]) -> Any:
+        """A library function on its arguments by name (numpy-financial's names)."""
+        plant = self.eng.begin()
+        if name == "irr":
+            return self.eng.irr(kw["values"], plant)
+        if name == "npv":
+            return self.eng.npv(kw["rate"], kw["values"], plant)
+        if name == "mirr":
+            if any(isinstance(v, list) for v in _flat_once(kw["values"])) or \
+                    isinstance(kw["finance_rate"], list) or isinstance(kw["reinvest_rate"], list):
+                raise Blocked("mirr over a table of streams and rates (numpy's row-by-rate grid); "
+                              "the engine's mirr takes one stream")
+            return self.eng.mirr(kw["values"], kw["finance_rate"], kw["reinvest_rate"], plant)
+        return _broadcast(lambda e: self.eng.tvm(name, e, plant), kw)
+
     def value(self, node: ast.expr) -> Any:
-        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
-            return float(node.value)
+        ev = self.value
+        if isinstance(node, ast.Constant) and (node.value is None or isinstance(node.value, (int, float, str))):
+            return node.value
         if isinstance(node, (ast.List, ast.Tuple)):
-            return [self.value(e) for e in node.elts]
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
-            v = self.value(node.operand)
-            return v if isinstance(v, Refused) else -v
-        if isinstance(node, ast.Name) and node.id in self.env:
-            return self.env[node.id]
+            vs = [ev(e) for e in node.elts]
+            return vs if isinstance(node, ast.List) else tuple(vs)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+            v = ev(node.operand)
+            return v if isinstance(v, Refused) or isinstance(node.op, ast.UAdd) else -v
+        if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
+            a, b = ev(node.left), ev(node.right)
+            return a if isinstance(a, Refused) else b if isinstance(b, Refused) else _OPS[type(node.op)](a, b)
+        if isinstance(node, ast.Compare) and len(node.ops) == 1 and type(node.ops[0]) in _COMPARE:
+            a, b = ev(node.left), ev(node.comparators[0])
+            return _COMPARE[type(node.ops[0])](a, b)
+        if isinstance(node, ast.IfExp):
+            return ev(node.body) if ev(node.test) else ev(node.orelse)
+        if isinstance(node, ast.Subscript):
+            v, i = ev(node.value), node.slice
+            if isinstance(i, ast.Slice):
+                return v[slice(*(None if x is None else int(ev(x)) for x in (i.lower, i.upper, i.step)))]
+            return v[int(ev(i))]
+        if isinstance(node, ast.Name):
+            if node.id in self.env:
+                return self.env[node.id]
+            if node.id == "Decimal":
+                return _DecimalType
+            if node.id == "float":
+                return float
+        if isinstance(node, ast.Attribute) and ast.unparse(node) in ("numpy.nan", "numpy.inf"):
+            return float(ast.unparse(node)[len("numpy."):])
+        if isinstance(node, ast.Attribute) and ast.unparse(node) in ("numpy.isnan", "math.isnan", "Decimal.is_nan"):
+            return _IsNan
         if isinstance(node, ast.Call):
             f = ast.unparse(node.func)
-            if f == "numpy.array" and len(node.args) == 1:
-                return self.value(node.args[0])
-            if f == "numpy.arange" and len(node.args) == 1:
-                return [float(i) for i in range(int(self.value(node.args[0])))]
-            if f == "npf.irr":
-                return self.eng.irr(self.value(node.args[0]))
-            if f == "npf.npv":
-                return self.eng.npv(self.value(node.args[0]), self.value(node.args[1]))
+            if f.startswith("npf.") and f[4:] in SIGNATURES:
+                return self.npf(f[4:], node)
+            if f.startswith("npf."):
+                raise Blocked(f"the engine has no {f[4:]}")
+            args = self._args(node)
+            fn = ev(node.func) if isinstance(node.func, ast.Name) and node.func.id in self.env else None
+            if f == "Decimal" or fn is _DecimalType:
+                (a,) = args
+                return _Dec(a) if isinstance(a, str) else Fraction(a)
+            if fn is float:
+                return float(args[0])
+            if f in ("numpy.isnan", "math.isnan") or fn is _IsNan:
+                return _is_nan(args[0])
+            if f == "numpy.array" and len(args) == 1:
+                return args[0]
+            if f in ("numpy.arange", "range") and len(args) in (1, 2):
+                return [i for i in range(*(int(a) for a in args))]
+            if f == "list" and len(args) == 1:
+                return list(args[0])
+            if f in ("len", "str") and len(args) == 1:
+                return len(args[0]) if f == "len" else str(args[0])
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "split" and len(args) == 1:
+                return ev(node.func.value).split(args[0])
         raise Blocked(f"the reader cannot read `{ast.unparse(node)}`")
 
-    def _kw(self, call: ast.Call, name: str, default: float) -> float:
+    def _kw(self, call: ast.Call, name: str, position: int, default: Any) -> Any:
+        if len(call.args) > position:
+            return self.value(call.args[position])
         for k in call.keywords:
             if k.arg == name:
-                return float(self.value(k.value))
+                return self.value(k.value)
         return default
+
+    def _each(self, call: ast.Call, got: Any, want: Any) -> List[Tuple[str, Any, Any]]:
+        """``(where, got, want)`` per element of the first two arguments, which must have one shape.
+
+        Each argument is evaluated once, by the caller: a second evaluation
+        would make a second engine call, which the plant does not reach."""
+        name = ast.unparse(call.args[0])
+        if not isinstance(want, (list, tuple)) and not isinstance(got, (list, tuple)):
+            return [("", got, want)]
+        if _shape(got) != _shape(want):
+            self.checks.append(Check(name, "", f"shape {_shape(want)}", f"shape {_shape(got)}", False))
+            return []
+        return [(f"[{i}]", g, w) for i, (g, w) in enumerate(zip(_flat(got), _flat(want)))]
+
+    def _check(self, call: ast.Call, ok: Callable[[Any, Any], bool], shown: Callable[[Any], str],
+               got: Any = None, want: Any = None, evaluated: bool = False) -> None:
+        if not evaluated:
+            got, want = self.value(call.args[0]), self.value(call.args[1])
+        for at, got, want in self._each(call, got, want):
+            self.checks.append(Check(ast.unparse(call.args[0]), at, shown(want), _show(got), ok(got, want)))
 
     def statement(self, st: ast.stmt) -> None:
         if isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant):
@@ -321,50 +572,113 @@ class _NumpyReader:
         if isinstance(st, ast.Assign) and len(st.targets) == 1 and isinstance(st.targets[0], ast.Name):
             self.env[st.targets[0].id] = self.value(st.value)
             return
+        if isinstance(st, ast.If):
+            for inner in (st.body if self.value(st.test) else st.orelse):
+                self.statement(inner)
+            return
+        if isinstance(st, ast.With) and len(st.items) == 1 and \
+                ast.unparse(st.items[0].context_expr.func) == "numpy.errstate":
+            for inner in st.body:                         # numpy's floating-point warnings: no answer in it
+                self.statement(inner)
+            return
         if isinstance(st, ast.Expr) and isinstance(st.value, ast.Call):
             call, f = st.value, ast.unparse(st.value.func)
             if f == "assert_allclose":
-                got, want = self.value(call.args[0]), float(self.value(call.args[1]))
-                rtol, atol = self._kw(call, "rtol", 1e-7), self._kw(call, "atol", 0.0)
-                ok = not isinstance(got, Refused) and abs(float(got) - want) <= atol + rtol * abs(want)
-                self.checks.append(Check(ast.unparse(call.args[0]), "", f"{want!r} (rtol {rtol:g}, atol {atol:g})",
-                                         _show(got), ok))
+                rtol = float(self._kw(call, "rtol", 2, 1e-7))
+                atol = float(self._kw(call, "atol", 3, 0.0))
+                self._check(call, lambda g, w: (_is_nan(g) and _is_nan(w)) or (
+                    not _is_nan(g) and not _is_nan(w) and abs(float(g) - float(w)) <= atol + rtol * abs(float(w))),
+                    lambda w: f"{_show(w)} (rtol {rtol:g}, atol {atol:g})")
+                return
+            if f == "assert_decimal_close":
+                tol = self._kw(call, "tol", 2, Fraction(1, 10 ** 7))
+                self._check(call, lambda g, w: not isinstance(g, Refused) and abs(g - w) <= tol,
+                            lambda w: f"{_show(w)} (within {float(tol):g})")
                 return
             if f == "assert_equal":
                 got, want = self.value(call.args[0]), self.value(call.args[1])
-                self.checks.append(Check(ast.unparse(call.args[0]), "", repr(want), _show(got), got == want))
+                _pinned_decimal(got, want)
+                self._check(call, lambda g, w: (_is_nan(g) and _is_nan(w)) or (
+                    not isinstance(g, Refused) and not isinstance(w, Refused) and g == w), _show, got, want, True)
+                return
+            if f == "assert_raises" and ast.unparse(call.args[1]).startswith("npf."):
+                fake = ast.Call(func=call.args[1], args=call.args[2:], keywords=call.keywords)
+                self.checks.append(_refuses(ast.unparse(fake), _raised(self.value(fake))))
+                return
+            if f == "assert_" and len(call.args) == 1:
+                self.statement(ast.Assert(test=call.args[0]))
                 return
         if isinstance(st, ast.Assert) and isinstance(st.test, ast.Call):
-            f = ast.unparse(st.test.func)
-            if f in ("numpy.isnan", "numpy.isfinite"):
-                got = self.value(st.test.args[0])
-                name = ast.unparse(st.test.args[0])
-                if f == "numpy.isnan":
-                    self.checks.append(_refuses(name, got))
-                else:
-                    self.checks.append(Check(name, "", "a number", _show(got), not isinstance(got, Refused)))
+            f, fn = ast.unparse(st.test.func), None
+            if isinstance(st.test.func, ast.Name) and st.test.func.id in self.env:
+                fn = self.env[st.test.func.id]
+            if f in ("numpy.isnan", "math.isnan") or fn is _IsNan:
+                self.checks.append(_refuses(ast.unparse(st.test.args[0]), self.value(st.test.args[0])))
                 return
+            if f == "numpy.isfinite":
+                got = self.value(st.test.args[0])
+                self.checks.append(Check(ast.unparse(st.test.args[0]), "", "a number", _show(got),
+                                         not isinstance(got, Refused)))
+                return
+        if isinstance(st, ast.Assert) and isinstance(st.test, ast.Compare) and len(st.test.ops) == 1 \
+                and isinstance(st.test.ops[0], ast.Eq):
+            got, want = self.value(st.test.left), self.value(st.test.comparators[0])
+            _pinned_decimal(got, want)
+            self.checks.append(Check(ast.unparse(st.test.left), "", _show(want), _show(got),
+                                     not isinstance(got, Refused) and got == want))
+            return
         if isinstance(st, ast.With) and len(st.items) == 1 and \
                 ast.unparse(st.items[0].context_expr.func).startswith("pytest.raises"):
             for inner in st.body:
                 if not (isinstance(inner, ast.Expr) and isinstance(inner.value, ast.Call)):
                     raise Blocked(f"the reader cannot read `{ast.unparse(inner)}`")
-                self.checks.append(_refuses(ast.unparse(inner.value), self.value(inner.value)))
+                self.checks.append(_refuses(ast.unparse(inner.value), _raised(self.value(inner.value))))
             return
         raise Blocked(f"the reader cannot read `{ast.unparse(st)}`")
 
 
+def _raised(got: Any) -> Any:
+    """What a ``raises`` check sees of a broadcast call: numpy raises when any element has no answer."""
+    for x in _flat(got):
+        if isinstance(x, Refused):
+            return x
+    return got
+
+
+def _flat_once(v: Any) -> List[Any]:
+    return list(v) if isinstance(v, (list, tuple)) else [v]
+
+
+_OPS = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b, ast.Mult: lambda a, b: a * b,
+        ast.Div: lambda a, b: a / b, ast.Pow: lambda a, b: a ** b}
+_COMPARE = {ast.Eq: lambda a, b: a == b, ast.NotEq: lambda a, b: a != b,
+            ast.Is: lambda a, b: a is b, ast.IsNot: lambda a, b: a is not b}
+
+
 def _run_numpy(oid: str, plant: bool) -> Tuple[List[Check], Dict[str, Any]]:
     fn, case = _numpy_tests()[oid]
-    missing = [n for n in _npf_calls(fn) if n not in ENGINE]
+    missing = [n for n in _npf_calls(fn) if n not in SIGNATURES]
     if missing:
         raise Blocked(f"the engine has no {', '.join(missing)}")
     reader = _NumpyReader(_Engine(plant, _expects_nothing(fn)), {})
     reader.env = {k: reader.value(v) for k, v in (case or {}).items()}
-    inputs = {"test": ast.unparse(fn), **{k: v for k, v in reader.env.items()}}
+    inputs = {"test": ast.unparse(fn), **{k: _show_input(v) for k, v in reader.env.items()}}
     for st in fn.body:
         reader.statement(st)
     return reader.checks, inputs
+
+
+def _show_input(v: Any) -> Any:
+    """An input as the receipt's JSON can hold it (a Decimal or fraction as its text)."""
+    if isinstance(v, (list, tuple)):
+        return [_show_input(x) for x in v]
+    if isinstance(v, Fraction):
+        return str(v)
+    if v is _DecimalType:
+        return "Decimal"
+    if v is float:
+        return "float"
+    return v
 
 
 # ── pyxirr: the Rust test files read by their brackets ──────────────────────
@@ -580,7 +894,185 @@ def _xirr_day_count(t: _RustTest, args: Dict[str, Any], eng: _Engine) -> List[Ch
     return [_near("xirr act/365F", eng.xirr(dates, amounts), args["expected"], eps)]
 
 
-#: how each pyxirr test that calls only the engine's four functions is read
+# ── pyxirr's annuity tests: each Rust statement rewritten as Python, then read as numpy's are ──
+
+#: pyxirr's keyword for numpy-financial's ``when`` (a bool, or a list of them), and its switch between
+#: raising and answering None (both "no answer", so dropped)
+_PYX_KEYWORDS = {"pmt_at_beginning": "when", "silent": None}
+#: the Rust forms the annuity tests use, each as the Python the numpy reader reads (applied in order)
+_RUST_TO_PYTHON = [
+    (r'pyxirr_call(?:_impl)?!\(\s*py,\s*"(\w+)",', r'pyx("\1",'),
+    (r'py_dict!\(\s*py,\s*"(\w+)"\s*=>\s*', r'pyd("\1", '),
+    (r'PyList::new\(py,\s*(\[[^\]]*\])\)\.unwrap\(\)', r'\1'),
+    (r'py\.eval\(c_str!\("(range\([^"]*\))"\),\s*None,\s*None\)\.unwrap\(\)', r'list(\1)'),
+    (r'\((\w+)\.\.=(\w+)\)\.collect::<Vec<_>>\(\)', r'list(range(\1, \2 + 1))'),
+    (r'\((\w+)\.\.(\w+)\)\.collect::<Vec<_>>\(\)', r'list(range(\1, \2))'),
+    (r'\.unwrap_err\(\)', ''),
+    (r'(\w+(?:\[\w+\])*)\.is_instance_of::<[\w:]+>\(py\)', r'isnan(\1)'),
+    (r'(\w+(?:\[\w+\])*)\.is_(?:none|nan)\(\)', r'isnan(\1)'),
+    (r'(\w+)\.len\(\)', r'len(\1)'),
+    (r'f64::NAN', 'nan'),
+    (r'\btrue\b', 'True'),
+    (r'\bfalse\b', 'False'),
+    (r'&(\w)', r'\1'),
+    (r'\bSome\(([^()]*)\)', r'\1'),
+]
+
+
+def _python(rust: str) -> ast.expr:
+    """One Rust expression of the annuity tests, rewritten (:data:`_RUST_TO_PYTHON`) and parsed."""
+    text = rust.strip()
+    for pattern, repl in _RUST_TO_PYTHON:
+        text = re.sub(pattern, repl, text)
+    try:
+        return ast.parse(text, mode="eval").body
+    except SyntaxError:
+        raise Blocked(f"the reader cannot read `{rust.strip()}`") from None
+
+
+@lru_cache(maxsize=None)
+def _constants() -> Dict[str, float]:
+    """The file's ``const NAME: f64 = x;`` lines."""
+    return {k: float(v.replace("_", "")) for k, v in re.findall(r"const (\w+): f64 = ([0-9._eE+-]+);", _rust("test_periodic"))}
+
+
+@lru_cache(maxsize=None)
+def _future_value_eps() -> Tuple[float, float]:
+    """``assert_future_value!``'s two tolerances (zero rate, other rates), read from helpers.rs."""
+    m = re.search(r"macro_rules! assert_future_value(.*?)\n}", (REFERENCE / HELPERS).read_text(), re.S).group(1)
+    zero = re.search(r"assert_almost_eq!\(fv \+ pv \+ pmt \* nper, 0\.0\)", m)
+    other = re.search(r"assert_almost_eq!\(result, 0\.0, ([0-9.e+-]+)\)", m)
+    if not (zero and other):
+        raise Blocked("helpers.rs's assert_future_value! is not in the form the reader reads")
+    return _default_eps(), float(other.group(1))
+
+
+class _PyxirrReader(_NumpyReader):
+    """The numpy reader over pyxirr statements: ``pyx(name, args, kwargs)`` is a pyxirr call."""
+
+    def value(self, node: ast.expr) -> Any:
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "pyd":
+            key, val = (self.value(a) for a in node.args)
+            return {key: val}
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "pyx":
+            name = node.args[0].value
+            if name not in SIGNATURES:
+                raise Blocked(f"the engine has no {name}")
+            args = self.value(node.args[1])
+            kw = dict(zip(SIGNATURES[name], args if isinstance(args, tuple) else (args,)))
+            for k, v in (self.value(node.args[2]) if len(node.args) > 2 else {}).items():
+                if k not in _PYX_KEYWORDS:
+                    raise Blocked(f"the reader cannot read pyxirr's {k}")
+                if _PYX_KEYWORDS[k] is not None:
+                    kw[_PYX_KEYWORDS[k]] = v
+            return self.call(name, kw)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "isnan":
+            return _is_nan(self.value(node.args[0]))
+        if isinstance(node, ast.Name) and node.id in _constants():
+            return _constants()[node.id]
+        if isinstance(node, ast.Name) and node.id == "nan":
+            return float("nan")
+        if isinstance(node, ast.Name) and node.id == "None":
+            return None
+        if isinstance(node, ast.Call) and ast.unparse(node.func) == "range":
+            return list(range(*(int(self.value(a)) for a in node.args)))
+        return super().value(node)
+
+    def run(self, body: str) -> None:
+        """The statements of a ``Python::with_gil(|py| { ... })`` body, in order."""
+        m = re.search(r"Python::with_gil\(\|py\|\s*\{", body)
+        if not m:
+            raise Blocked("the reader found no Python::with_gil body")
+        inner = body[m.end():_close(body, m.end() - 1) - 1]
+        self._block(inner)
+
+    def _block(self, text: str) -> None:
+        i = 0
+        while i < len(text):
+            if text[i].isspace() or text[i] == ";":
+                i += 1
+                continue
+            fm = re.compile(r"for (\w+) in 0\.\.(\w+(?:\.len\(\))?)\s*\{").match(text, i)
+            if fm:
+                end = _close(text, fm.end() - 1)
+                for k in range(int(self.value(_python(fm.group(2))))):
+                    self.env[fm.group(1)] = k
+                    self._block(text[fm.end():end - 1])
+                self.env.pop(fm.group(1), None)
+                i = end
+                continue
+            j = i
+            while j < len(text) and text[j] != ";":
+                j = _close(text, j) if text[j] in "([{" else (text.index('"', j + 1) + 1 if text[j] == '"' else j + 1)
+            self._statement(text[i:j].strip())
+            i = j + 1
+
+    def _statement(self, st: str) -> None:
+        if st.startswith("let "):
+            m = re.match(r"let (\w+)\s*(?::[^=]+)?=\s*(.*)$", st, re.S)
+            self.env[m.group(1)] = self.value(_python(m.group(2)))
+            return
+        mm = re.match(r"match (\w+\[\w+\])\s*\{\s*Some\((\w+)\)\s*=>\s*assert_almost_eq!\((\w+),\s*(\w+\[\w+\])"
+                      r"(?:,\s*([0-9.e+-]+))?\),\s*None\s*=>\s*assert!\(\4\.is_nan\(\)\),?\s*\}$", st, re.S)
+        if mm and mm.group(2) == mm.group(3):
+            got, want = self.value(_python(mm.group(1))), self.value(_python(mm.group(4)))
+            eps = float(mm.group(5)) if mm.group(5) else _default_eps()
+            at = f"[{self.env.get('i')}]"
+            self.checks.append(_refuses(mm.group(1), got, at) if want != want else _near(mm.group(1), got, want, eps, at))
+            return
+        fe = re.match(r"(\w+)\.into_iter\(\)\.for_each\(\|(\w+)\|\s*assert!\(\2\.is_none\(\)\)\)$", st)
+        if fe:
+            for k, x in enumerate(_flat_once(self.env[fe.group(1)])):
+                self.checks.append(_refuses(fe.group(1), x, f"[{k}]"))
+            return
+        m = re.match(r"(assert_almost_eq|assert_future_value|assert|assert_eq)!\((.*)\)$", st, re.S)
+        if not m:
+            raise Blocked(f"the reader cannot read `{st}`")
+        parts = _split(m.group(2))
+        at = f"[{self.env['i']}]" if "i" in self.env else ""
+        if m.group(1) == "assert_almost_eq":
+            got, want = self.value(_python(parts[0])), self.value(_python(parts[1]))
+            eps = float(self.value(_python(parts[2]))) if len(parts) > 2 else _default_eps()
+            self.checks.append(_near(parts[0], got, want, eps, at))
+        elif m.group(1) == "assert_eq" and parts[1] == "None":
+            self.checks.append(_refuses(parts[0], self.value(_python(parts[0]))))
+        elif m.group(1) == "assert" and re.fullmatch(r"\w+(?:\[\w+\])*\.(?:is_none\(\)|is_instance_of::<[\w:]+>\(py\))",
+                                                      parts[0]):
+            name = parts[0].split(".")[0]
+            self.checks.append(_refuses(name, self.value(_python(name)), at))
+        elif m.group(1) == "assert_future_value":
+            self._future_value(parts)
+        else:
+            raise Blocked(f"the reader cannot read `{st}`")
+
+    def _future_value(self, parts: List[str]) -> None:
+        """helpers.rs's ``assert_future_value!(rate, nper, pmt, pv, fv, pmt_at_beginning)``: the
+        test's own future value of the four (Option arguments as None or Some) is 0."""
+        rate, nper, pmt_, pv_, fv_, begin = (self.value(_python(p)) for p in parts)
+        name = next(p for p in parts[:4] if not re.fullmatch(r"[A-Z_]+|[0-9.]+", p))
+        if any(isinstance(v, Refused) for v in (rate, nper, pmt_, pv_)):
+            bad = next(v for v in (rate, nper, pmt_, pv_) if isinstance(v, Refused))
+            self.checks.append(Check(name, "", "the future value is 0", _show(bad), False))
+            return
+        fv_ = 0.0 if fv_ is None else float(fv_)
+        zero_eps, eps = _future_value_eps()
+        if rate == 0:
+            residual, tol = fv_ + pv_ + pmt_ * nper, zero_eps
+        else:
+            w = 1.0 if begin else 0.0
+            g = (1.0 + rate) ** nper
+            residual, tol = fv_ + pv_ * g + pmt_ * (1.0 + rate * w) / rate * (g - 1.0), eps
+        self.checks.append(Check(name, "", f"the future value is 0 (within {tol:g})", repr(residual),
+                                 abs(residual) < tol))
+
+
+def _annuity_body(t: _RustTest, args: Dict[str, Any], eng: _Engine) -> List[Check]:
+    reader = _PyxirrReader(eng, {})
+    reader.run(t.body)
+    return reader.checks
+
+
+#: how each pyxirr test of irr, npv, xirr or xnpv is read (an annuity test is read by :func:`_annuity_body`)
 READERS: Dict[str, Callable[[_RustTest, Dict[str, Any], _Engine], List[Check]]] = {
     "test_npv_works": _npv_body, "test_npv_start_from_zero": _npv_body, "test_npv_zero_rate": _npv_body,
     "test_irr_works": _irr_case, "test_irr_equal_payments": _irr_case, "test_irr_special_cases": _irr_case,
@@ -605,16 +1097,18 @@ def _run_pyxirr(oid: str, plant: bool) -> Tuple[List[Check], Dict[str, Any]]:
     stem, rest = oid[len("pyxirr/"):].split("::")
     name, _, label = rest.partition("[")
     t = _rust_tests(stem)[name]
-    missing = [f for f in _called(t.body) if f not in ENGINE]
+    missing = [f for f in _called(t.body) if f not in ENGINE and f not in SIGNATURES]
     if missing:
         raise Blocked(f"the engine has no {', '.join(missing)}")
-    if name not in READERS:
+    annuity = all(f in SIGNATURES and f not in ("irr", "npv") for f in _called(t.body))
+    if name not in READERS and not annuity:
         raise Blocked("no reader is written for this test's shape")
     raw = dict(t.cases)[label[:-1]] if label else ()
     args = {p: _literal(a) for p, a in zip(t.params, raw)}
     expected = args.get("expected")
-    flip = (expected is not None and expected != expected) or "unwrap_err" in t.body
-    checks = READERS[name](t, args, _Engine(plant, flip))
+    flip = (expected is not None and expected != expected) or any(
+        s in t.body for s in ("unwrap_err", "is_none()", "is_nan()", "assert_eq!(result, None)"))
+    checks = READERS.get(name, _annuity_body)(t, args, _Engine(plant, flip))
     return checks, {"test": f"{stem}.rs::{name}", **{k: v for k, v in args.items()}}
 
 

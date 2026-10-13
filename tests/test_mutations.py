@@ -49,6 +49,22 @@ MUTATIONS = [
 
     ("measures.py", "    if len(roots) > 1:", "    if False:",
      "test_measures.py::test_irr_refuses_when_two_rates_fit"),
+    # the annuity measures (numpy-financial, pyxirr, Baghara's IPMT/PPMT)
+    ("measures.py", "    return interest / (1 + rate) if when == 1 else interest", "    return interest",
+     "test_measures_annuity.py::test_each_payment_is_its_interest_plus_its_principal"),
+    ("measures.py", "        owed = (pv * (1 - d) - fv * (d - e)) / (1 - e)", "        owed = pv * (1 + rate) ** k + pmt(rate, nper, pv, fv, when) * (1 + rate * when) * ((1 + rate) ** k - 1) / rate",
+     "test_measures_annuity.py::test_interest_late_in_a_long_term_at_a_high_rate_keeps_its_precision"),
+    ("measures.py", "    if n < 0:", "    if False:", "test_measures_annuity.py::test_refusals"),
+    ("measures.py", "    if not 1 <= per <= nper:", "    if not 1 <= per:", "test_measures_annuity.py::test_refusals"),
+    ("measures.py", "    if not (any(c < 0 for c in cfs) and any(c > 0 for c in cfs)):", "    if False:",
+     "test_measures_annuity.py::test_mirr_finances_the_outflows_and_reinvests_the_inflows"),
+    # the library reader: a raises over an array, a 28-digit Decimal equality, each side evaluated once
+    ("oracles/library.py", "        if isinstance(x, Refused):\n            return x", "        if False:\n            return x",
+     "test_oracles_library.py::test_a_raises_check_over_an_array_needs_only_one_element_without_an_answer"),
+    ("oracles/library.py", "if isinstance(x, _Dec) and x.digits >= _FLOAT_DIGITS:", "if False:",
+     "test_oracles_library.py::test_every_oracle_gets_its_recorded_verdict"),
+    ("oracles/library.py", "and g == w), _show, got, want, True)", "and g == w), _show, got, want, False)",
+     "test_oracles_library.py::test_an_equality_of_two_calls_sees_the_plant_on_the_first"),
     ("cuts.py", "    if missing:", "    if False:",
      "test_cuts.py::test_an_unclassified_counter_account_refuses"),
     ("contracts.py", "        if unknown:\n            raise ContractError", "        if False:\n            raise ContractError",
