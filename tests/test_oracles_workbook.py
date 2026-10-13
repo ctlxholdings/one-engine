@@ -7,10 +7,11 @@ aside by the oracle with what it saved; IRR, XIRR and RATE cells keep Excel's
 documented 1e-7 and every other cell the drift of double arithmetic; a figure
 the translation neither reads nor sets aside fails as "not reported".
 
-Then every workbook gets its recorded verdict: the Nour workbook differs on
-exactly its four formula slips (listed in its translation's header, each
-worked out there), and the planted error is caught; a workbook with no
-translation yet is blocked, saying so.
+Then every workbook gets its recorded verdict: a translated workbook
+matches, or differs on exactly the figures its own formula slips (or linked
+files that disagree) get wrong, each worked out in its translation's header;
+the planted error is caught; a workbook with no translation yet is blocked,
+saying so.
 """
 from fractions import Fraction
 
@@ -31,9 +32,21 @@ VENDORED = {"nour_3moissons_haraz", "van_10ans_previsions_3moissons", "cap_3mois
             "baghara_v15_24", "modeloff_2012_asset_schedule", "modeloff_2012_investment_property",
             "modeloff_2013_hard_times", "modeloff_2014_time_is_money", "modeloff_2015_more_money_please",
             "modeloff_2015_tax_solution", "bodmer_solar_case_study", "macabacus_lbo_short", "macabacus_lbo_long"}
-#: the Nour workbook's own formula slips (its translation's header works each out); the workbook wins
-NOUR_SLIPS = {"VAN_Nour_Baghara.C54:F54", "VAN_Nour_Baghara.C55:F55", "VAN_Nour_Baghara.C46:W46",
-              "VAN_Nour_Baghara.C47:W47"}
+#: the figures each translated workbook gets wrong by its own formula slips, or by linked files that
+#: disagree with each other (each translation's header works every one out); the workbook wins
+SLIPS = {
+    "nour_3moissons_haraz": {"VAN_Nour_Baghara.C54:F54", "VAN_Nour_Baghara.C55:F55", "VAN_Nour_Baghara.C46:W46",
+                             "VAN_Nour_Baghara.C47:W47"},
+    "van_10ans_previsions_3moissons": {
+        # PL row 33 takes the later cohorts' overheads (rows 90, 117) for their one-off charges (89, 116)
+        "PL.C33:J33", "PL.C40:J40", "PL.C43:J43", "PL.C47:J47", "_50_CAP.C37:J37",
+        "VAN_des_CAP.D43:O43", "VAN_des_CAP.D46:O46", "VAN_des_CAP.D47:O47",
+        "VAN_des_CAP.C48", "VAN_des_CAP.C49", "VAN_des_CAP.C51", "VAN_des_CAP.C52",
+        # Invest I38:J38 repeat year 5's depreciation where the P&L charges the imported year-6 amount
+        "Invest.C24:J24", "Invest.C25:J25", "Invest.I38:J38", "Invest.E49:J49",
+        # the per-CAP loan balance is stitched from two linked files and is not draws less repayments
+        "Emprunts.D30:K30", "Emprunts.F206:K206", "Emprunts.G223:K223", "_50_CAP.D109:J109"},
+}
 
 
 def test_the_workbooks_are_vendored_and_in_the_manifest():
@@ -121,8 +134,8 @@ def test_every_workbook_gets_its_recorded_verdict(oid):
         assert r.verdict == "blocked" and r.reason.startswith("no translation yet"), r.reason
         return
     failing = {c["name"] for c in r.checks if not c["ok"]}
-    if oid == "nour_3moissons_haraz":
-        assert r.verdict == "differs" and failing == NOUR_SLIPS, failing
+    if oid in SLIPS:
+        assert r.verdict == "differs" and failing == SLIPS[oid], failing
     else:
         assert r.verdict == "matches", failing
     assert r.planted_caught
