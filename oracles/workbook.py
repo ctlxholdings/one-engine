@@ -6,8 +6,8 @@ of 2026-10-13 and listed in ``MANIFEST.json`` with the path they came from.
 
 The oracle
 ----------
-``cases/reference/workbooks/<id>.xlsx``, a copy of the workbook as its author
-saved it, never opened for writing. Excel saves each formula's last computed
+``cases/reference/workbooks/<id>.xlsx`` (or ``.xlsm``), a copy of the workbook
+as its author saved it, never opened for writing. Excel saves each formula's last computed
 value beside the formula; those cached values are the workbook's answers.
 
 Inputs
@@ -21,8 +21,13 @@ Everything the modeller typed, named mechanically so nothing is chosen:
   from 1 in the formula's reading order (``=M29*1.5`` gives ``...__N29__n1``
   = 1.5; ``=1-10%`` gives ``__n1`` = 1 and ``__n2`` = 0.1). A modeller's
   assumption hidden in a formula is still an assumption;
-* every run of two or more adjacent number cells in one row, also as a
-  series: ``<sheet>__<first>_<last>`` (a row typed year by year).
+* every formula cell that reads another workbook (``=[2]PL!D27``; Excel
+  numbers the linked files), by the value it imported, named as a typed cell:
+  the linked file was not saved with this one, so nothing here can recompute
+  it, and the workbook computed from what it imported;
+* every run of two or more adjacent number cells in one row (typed or
+  imported), also as a series: ``<sheet>__<first>_<last>`` (a row typed year
+  by year).
 
 Figures
 -------
@@ -85,8 +90,12 @@ from one_engine.oracles.golds import GoldFamily, _fmt, untraced
 from one_engine.oracles.published import PublishedFamily, _echoes, _exact, untraced_published
 
 FOLDER = "workbooks"
+#: the workbook formats read: Excel's, with or without macros
+EXTENSIONS = (".xlsx", ".xlsm")
 TRANSLATIONS = pathlib.Path(__file__).resolve().parent.parent / "cases" / "workbooks"
 #: Excel's documented precision for its iterative rate functions (0.00001 percent)
+#: a reference into another workbook (``[2]PL!D27``): Excel numbers the linked files
+EXTERNAL = re.compile(r"\[\d+\]")
 ITERATIVE = re.compile(r"\b(X?IRR|RATE)\s*\(", re.I)
 ITERATIVE_TOL = Fraction(1, 10 ** 7)
 REL, FLOOR = Fraction(1, 10 ** 9), Fraction(1, 10 ** 6)
@@ -143,7 +152,14 @@ def read_workbook(path: pathlib.Path) -> Dict[str, Any]:
         for row in ws.iter_rows():
             for c in row:
                 v = c.value
-                if isinstance(v, str) and v.startswith("="):
+                if isinstance(v, str) and v.startswith("=") and EXTERNAL.search(v):
+                    # it reads a workbook not saved with this one: nothing here can recompute it, so the
+                    # value it imported is an input (text it imported, a label, is nothing)
+                    got = wv[ws.title][c.coordinate].value
+                    if isinstance(got, (int, float)) and not isinstance(got, bool):
+                        inputs[f"{key}__{c.coordinate}"] = _exact(got)
+                        consts.append((c.row, c.column))
+                elif isinstance(v, str) and v.startswith("="):
                     for k, lit in enumerate(_literals(v), 1):
                         inputs[f"{key}__{c.coordinate}__n{k}"] = lit
                     fcells[(c.row, c.column)] = (v, wv[ws.title][c.coordinate].value)
@@ -178,18 +194,23 @@ class WorkbookFamily(PublishedFamily):
         super().__init__(translations)
         self.reference = reference
 
+    def _file(self, oid: str) -> pathlib.Path:
+        """The workbook's file: ``.xlsx``, or ``.xlsm`` for one saved with macros (Bodmer's); the
+        macros are never run, only the saved values read."""
+        return next(p for p in (self.reference / FOLDER / f"{oid}{ext}" for ext in EXTENSIONS) if p.exists())
+
     def oracles(self) -> List[str]:
-        return sorted(p.stem for p in (self.reference / FOLDER).glob("*.xlsx"))
+        return sorted(p.stem for ext in EXTENSIONS for p in (self.reference / FOLDER).glob(f"*{ext}"))
 
     def source(self, oid: str) -> str:
-        return f"{FOLDER}/{oid}.xlsx"
+        return f"{FOLDER}/{self._file(oid).name}"
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:
         """No inventory row is a workbook: they were vendored after the inventory was taken."""
         return None
 
     def _book(self, oid: str) -> Dict[str, Any]:
-        return read_workbook(self.reference / FOLDER / f"{oid}.xlsx")
+        return read_workbook(self._file(oid))
 
     def _load(self, oid: str):
         wb = self._book(oid)

@@ -23,9 +23,14 @@ from one_engine.oracles.workbook import (FOLDER, ITERATIVE_TOL, WorkbookFamily, 
 
 FAMILY = WorkbookFamily()
 ORACLES = FAMILY.oracles()
-#: the workbooks vendored from Baghara (02-Financial-Models and 03_evidence/promoter-originals)
+#: the workbooks vendored from Baghara (02-Financial-Models and 03_evidence/promoter-originals, and v15.24
+#: from the golds corpus), the ModelOff answer and data workbooks, Bodmer's solar case (a macro workbook,
+#: .xlsm) and Macabacus's two LBO templates
 VENDORED = {"nour_3moissons_haraz", "van_10ans_previsions_3moissons", "cap_3moissons_estimation_2025",
-            "business_plan_3moissons_2021", "cattle_integration_financial_model", "haraz_financial_model_2013"}
+            "business_plan_3moissons_2021", "cattle_integration_financial_model", "haraz_financial_model_2013",
+            "baghara_v15_24", "modeloff_2012_asset_schedule", "modeloff_2012_investment_property",
+            "modeloff_2013_hard_times", "modeloff_2014_time_is_money", "modeloff_2015_more_money_please",
+            "modeloff_2015_tax_solution", "bodmer_solar_case_study", "macabacus_lbo_short", "macabacus_lbo_long"}
 #: the Nour workbook's own formula slips (its translation's header works each out); the workbook wins
 NOUR_SLIPS = {"VAN_Nour_Baghara.C54:F54", "VAN_Nour_Baghara.C55:F55", "VAN_Nour_Baghara.C46:W46",
               "VAN_Nour_Baghara.C47:W47"}
@@ -35,7 +40,8 @@ def test_the_workbooks_are_vendored_and_in_the_manifest():
     assert set(ORACLES) == VENDORED
     for oid in ORACLES:
         O.verify(FAMILY.source(oid))
-        assert FAMILY.source(oid) == f"{FOLDER}/{oid}.xlsx"
+        assert FAMILY.source(oid) in (f"{FOLDER}/{oid}.xlsx", f"{FOLDER}/{oid}.xlsm")
+    assert FAMILY.source("bodmer_solar_case_study").endswith(".xlsm")
 
 
 def test_inputs_are_named_mechanically_and_a_number_inside_a_formula_is_one():
@@ -48,6 +54,16 @@ def test_inputs_are_named_mechanically_and_a_number_inside_a_formula_is_one():
     assert book["inputs"]["Hypotheses_Nour_3Moissons__N29__n1"] == Fraction(3, 2)
     assert "VAN_Nour_Baghara__C7_W7" in book["inputs"]                 # a typed row is also a series
     assert all(isinstance(v, (Fraction, list)) for v in book["inputs"].values())
+
+
+def test_a_cell_read_from_another_workbook_is_an_input_with_the_value_it_imported():
+    # '1 CAP'!D33 is =[2]PL!D27, a workbook that was not saved with this one: nothing here can recompute
+    # it, so the value the workbook imported is what it computed from
+    book = read_workbook(FAMILY.reference / FOLDER / "van_10ans_previsions_3moissons.xlsx")
+    assert float(book["inputs"]["_1_CAP__E33"]) == pytest.approx(218.11174)
+    assert isinstance(book["inputs"]["_1_CAP__D33_J33"], list)              # an imported row is a series too
+    assert book["figures"]["_1_CAP.C33"] and not [f for f in book["figures"] if f.startswith("_1_CAP.D33")]
+    assert all("[" not in t for fs in book["formulas"].values() for t in fs)
 
 
 def test_a_formula_cell_that_saved_no_number_is_set_aside_by_the_oracle_with_what_it_saved():
