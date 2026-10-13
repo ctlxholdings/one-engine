@@ -100,6 +100,11 @@ Modelling note on ``shared_savings``: the client's savings are booked as an
 income line ("avoided energy cost"), i.e. a with-versus-without view of the
 client's utility bill. A lens that restates the client against its baseline
 would read the same postings.
+
+Changed for the failure panel (W2 on ERIA): ``performance`` of
+``shared_savings`` may be a series, one factor per year of the term. The
+provider's fee stays ``split`` of the savings measured, so an
+underperforming year costs both parties in proportion.
 """
 from __future__ import annotations
 
@@ -135,7 +140,14 @@ def _shared_savings(terms, t, bal=None):
     start, n = int(terms["start"]), int(terms["terms"])
     if not start <= t < start + n:
         return {}
-    savings = exact(terms["kwh"]) * exact(terms["tariff"]) * exact(terms["performance"])
+    # performance is one factor, or one per year of the term (indexed from ``start``): a ramp the
+    # failure panel's W2 declares. The fee stays the split of what was measured
+    performance = terms["performance"]
+    if isinstance(performance, (list, tuple)):
+        if len(performance) != n:
+            raise ValueError(f"shared_savings: performance has {len(performance)} values for a term of {n}")
+        performance = performance[t - start]
+    savings = exact(terms["kwh"]) * exact(terms["tariff"]) * exact(performance)
     return {"savings": savings, "fee": exact(terms["split"]) * savings}
 
 
