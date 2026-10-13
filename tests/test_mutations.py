@@ -627,6 +627,7 @@ MUTATIONS = [
     ("packs/tea.py", "                if name not in ns:\n                    raise InputError(f\"{where}: '{name}' is neither",
      "                if False:\n                    raise InputError(f\"{where}: '{name}' is neither",
      "test_oracles_golds.py::test_formulas_refuse_an_unknown_name_and_a_reused_one"),
+    ("oracles/golds.py", "for j in range(len(rest), 0, -1)", "for j in range(1, 2)", "test_oracles_golds.py::test_a_record_field_may_be_nested_and_any_reading_may_be_a_running_total"),
     ("oracles/golds.py", "                if d == 0:", "                if False:", "test_oracles_golds.py::test_a_ratio_divides_one_reading_by_another_period_by_period_or_by_its_total"),
     ("oracles/golds.py", "        if spec.get(\"total\"):\n            return [sum(vals", "        if False:\n            return [sum(vals", "test_oracles_golds.py::test_a_ratio_divides_one_reading_by_another_period_by_period_or_by_its_total"),
     ("oracles/golds.py", "                run += x\n                out.append(sign * run)", "                out.append(sign * x)", "test_oracles_golds.py::test_a_record_field_may_be_nested_and_any_reading_may_be_a_running_total"),

@@ -284,5 +284,9 @@ def test_a_record_field_may_be_nested_and_any_reading_may_be_a_running_total():
     res = {None: _Result(records={"waterfall": recs}, cuts={"cash": [1, 2, 3]})}
     read = lambda spec: GoldFamily._read(res, "e", spec, 3)
     assert read({"record": "waterfall.paid.sweep"}) == [2, 0, 3]
+    # a key may itself hold a dot (a waterfall's tier named after its claim: "term_loan_a.principal")
+    tiers = {1: {"paid": {"term_loan_a.principal": Fraction(7), "term_loan_a.prepay": Fraction(42)}}}
+    res[None]._records["tiers"] = tiers
+    assert read({"record": "tiers.paid.term_loan_a.prepay"}) == [0, 42, 0]
     assert read({"record": "waterfall.paid.sweep", "running": True}) == [2, 2, 5]
     assert read({"cut": "cash", "running": True}) == read({"cumulative": "cash"}) == [1, 3, 6]

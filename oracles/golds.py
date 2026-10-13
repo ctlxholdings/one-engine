@@ -39,7 +39,8 @@ Where a row is read (``trace`` entries):
 * ``{record: kind.field}``: a rulebook's record of each period (the tax
   rulebook's loss pool: ``tax.losses_opening``, ``tax.loss_used``); a
   period with no record reads 0. A field recorded as a mapping is read
-  further by name (``waterfall.paid.sweep``);
+  further by name (``waterfall.paid.sweep``), a name that holds a dot
+  included (``waterfall.paid.term_loan_a.prepay``);
 * ``{driver: name}``: a value the ``formulas`` generator computed. These are
   the gold's physical rows (loaves a year, trips, litres): the translation's
   arithmetic is compared with the gold's, but no ledger is involved, and the
@@ -385,13 +386,18 @@ class GoldFamily(Family):
                 vals.append(run)
         elif "record" in spec:
             # ``kind.field``, or ``kind.field.inner`` for a field a rulebook records as a mapping (a
-            # waterfall's ``paid`` per tier)
+            # waterfall's ``paid`` per tier); a key may itself hold a dot (a tier named after its claim,
+            # ``term_loan_a.principal``), so each step takes the longest run of the path that is a key
             kind, *path = spec["record"].split(".")
             recs = result.records(kind)
 
             def field(rec: Mapping[str, Any]) -> Fraction:
-                for key in path:
-                    rec = rec[key]
+                rest = path
+                while rest:
+                    j = next((j for j in range(len(rest), 0, -1) if ".".join(rest[:j]) in rec), None)
+                    if j is None:
+                        raise KeyError(f"record {spec['record']}: no field '{'.'.join(rest)}'")
+                    rec, rest = rec[".".join(rest[:j])], rest[j:]
                 return rec
             vals = [field(recs[t]) if t in recs else Fraction(0) for t in range(n + warm)]
         elif "driver" in spec:
