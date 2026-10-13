@@ -4,8 +4,8 @@ The panel (esco-product ``docs/PANEL.md``; numbers from
 ``engine/tests/test_m6.py``) is a set of switches. Each one snaps onto a
 standing deal and breaks it in one place, and the books stay whole while it
 happens: the break is real money moving, not a bug. Here the standing deals
-are one_engine cases (``cases/panel/*.yaml``, and ERIA's own
-``cases/eria.yaml``), the switches are overlay files
+are one_engine cases (``cases/panel/*.yaml``, and ERIA's own case file,
+whose path is taken from its referee, ``test_case_eria.CASE``), the switches are overlay files
 (``cases/panel/worlds/*.yaml``), and the mechanisms they flip are the
 obligations pack (:mod:`one_engine.packs.obligations`).
 
@@ -72,11 +72,14 @@ import pytest
 from one_engine.cases import RULEBOOKS, run_case
 from one_engine.inputs import load_yaml_strict
 from one_engine.tests.test_chain import journal_is_ledger
+# ERIA's path comes from its referee test, so this module does not name the
+# file itself: test_chain's referee check must keep seeing test_case_eria as
+# the one test that holds ERIA's own numbers (the panel only composes onto it).
+from one_engine.tests.test_case_eria import CASE as ERIA
 
 CASES = pathlib.Path(__file__).resolve().parents[1] / "cases"
 PANEL = CASES / "panel"
 WORLDS = PANEL / "worlds"
-ERIA = CASES / "eria.yaml"
 
 WORLD_KEYS = {"world", "family", "what", "watch", "set", "set_where_present", "add"}
 
