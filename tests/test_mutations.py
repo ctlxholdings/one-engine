@@ -61,6 +61,17 @@ MUTATIONS = [
     ("oracles/actus.py", "        bad = [t for leg in r.legs() for t in range(len(leg.plan.instants))",
      "        bad = [t for leg in r.legs()[:1] for t in range(len(leg.plan.instants))",
      "test_oracles.py::test_a_swap_is_checked_in_both_its_books"),
+    # the FX outright (packs/actus.py run_fxout, FxRun; the price plant in oracles/actus.py)
+    ("packs/actus.py", '{"TD_price": ended[1]}', '{"TD_price": R * ended[1]}',
+     "test_case_actus.py::test_a_forward_bought_pays_its_price_by_role_and_terminated_receives_its_price_as_stated"),
+    ("packs/actus.py", '            if kind == "MD":\n', '            if False:\n',
+     "test_case_actus.py::test_a_forward_delivered_exchanges_both_notionals_each_in_its_own_currency"),
+    ("packs/actus.py", "(ended is None or e[1] <= ended[0])", "True",
+     "test_case_actus.py::test_a_forward_bought_pays_its_price_by_role_and_terminated_receives_its_price_as_stated"),
+    ("packs/actus.py", "        except MarketError as e:", "        except ActusError as e:",
+     "test_case_actus.py::test_a_forward_refuses_what_the_corpus_does_not_show"),
+    ("oracles/actus.py", "            for price in PLANTED_PRICES:", "            for price in ():",
+     "test_oracles.py::test_every_actus_oracle_gets_its_recorded_verdict[fxout/fxout06]"),
     # the annuity measures (numpy-financial, pyxirr, Baghara's IPMT/PPMT)
     ("measures.py", "    return interest / (1 + rate) if when == 1 else interest", "    return interest",
      "test_measures_annuity.py::test_each_payment_is_its_interest_plus_its_principal"),

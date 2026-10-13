@@ -214,3 +214,59 @@ def test_a_swap_refuses_what_the_corpus_does_not_show():
     case["terms"]["cycleOfInterestPayment"] = "P6ML1"     # quarterly resets between half-yearly payments
     with pytest.raises(actus.ActusError, match="falls between the fixed leg's events"):
         actus.run(case)
+
+
+# ── the FX outright (FXOUT): one currency for another at maturity ───────────
+
+FORWARDS = json.loads((HERE / "actus-tests-fxout.json").read_text())
+
+
+def fx_rows(cid):
+    return [(r["date"], r["type"], r["payoff"]) for r in actus.run(FORWARDS[cid]).stream()]
+
+
+def test_a_forward_delivered_exchanges_both_notionals_each_in_its_own_currency():
+    # fxout01 buys 2000 USD for 1000 EUR: two maturity rows, the dollars received and the euros paid
+    md = I("2014-12-31T23:59:59")
+    assert fx_rows("fxout01") == [(md, "MD", 2000), (md, "MD", -1000)]
+    assert fx_rows("fxout02") == [(md, "MD", -2000), (md, "MD", 1000)]      # the seller: the reverse
+    r = actus.run(FORWARDS["fxout01"])
+    book = r.group.book("holder")
+    assert book.accounts["cash"].unit == "USD" and book.accounts["cash2"].unit == "EUR"
+    # each currency balances on its own: no posting ever mixes dollars and euros
+    assert all(v == 0 for t in range(len(r.plan.instants)) for v in book.imbalance(t).values())
+
+
+def test_a_forward_settled_pays_the_difference_at_the_rate_observed_on_maturity():
+    # fxout11 sells 2000 USD for 1000 EUR, settled 5 days after a maturity of 10 January, EUR/USD 1.18 there
+    assert fx_rows("fxout11")[-1] == (I("2015-01-15T00:00:00"), "STD", -(2000 - F("1.18") * 1000))
+    # the settlement date is the maturity plus the period, not shifted (fxout12: MD 31 December 23:59:59)
+    assert fx_rows("fxout12") == [(I("2015-01-01T23:59:59"), "STD", 2000 - F("1.2") * 1000)]
+
+
+def test_a_forward_bought_pays_its_price_by_role_and_terminated_receives_its_price_as_stated():
+    # fxout10, a seller: buys at -50 (pays 50) and terminates at 100 (receives 100); nothing at maturity
+    assert fx_rows("fxout10") == [(I("2014-04-01T00:00:00"), "PRD", -50), (I("2014-09-30T23:59:59"), "TD", 100)]
+    # fxout07, a buyer at 50, also pays 50
+    assert fx_rows("fxout07")[0] == (I("2014-04-01T00:00:00"), "PRD", -50)
+    # fxout12 states prices of 0 and no purchase or termination date: there is no such event
+    assert [k for _, k, _ in fx_rows("fxout12")] == ["STD"]
+
+
+def test_a_forward_refuses_what_the_corpus_does_not_show():
+    case = copy.deepcopy(FORWARDS["fxout01"])
+    case["terms"]["deliverySettlement"] = "X"
+    with pytest.raises(actus.ActusError, match="deliverySettlement 'X'"):
+        actus.run(case)
+    case = copy.deepcopy(FORWARDS["fxout01"])
+    case["terms"]["purchaseDate"] = "2014-04-01T00:00:00"
+    with pytest.raises(actus.ActusError, match="purchase date with no price"):
+        actus.run(case)
+    case = copy.deepcopy(FORWARDS["fxout01"])
+    case["terms"]["nominalInterestRate"] = "0.05"
+    with pytest.raises(actus.ActusError, match="nominalInterestRate"):
+        actus.run(case)
+    case = copy.deepcopy(FORWARDS["fxout03"])
+    case["dataObserved"] = {}
+    with pytest.raises(actus.ActusError, match="EUR/USD"):
+        actus.run(case)

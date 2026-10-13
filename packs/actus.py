@@ -1,6 +1,7 @@
 """ACTUS contracts on the ledger kernel: loans (PAM, LAM, LAX, NAM, ANN), call money (CLM),
-undefined maturity (UMP), the cash position (CSH), and the plain vanilla swap (SWPPV), run as
-two PAM legs (:func:`run_swap`).
+undefined maturity (UMP), the cash position (CSH), the plain vanilla swap (SWPPV), run as
+two PAM legs (:func:`run_swap`), and the FX outright (FXOUT), in a book of two currencies
+(:func:`run_fxout`).
 
 What this pack is
 -----------------
@@ -139,7 +140,7 @@ from one_engine.contracts import Contract, ContractType, FixedUnit, FlowSpec, Le
 from one_engine.entities import Group
 from one_engine.inputs import State, Value
 from one_engine.kernel import Nature
-from one_engine.market import Market, Series
+from one_engine.market import Market, MarketError, Series
 from one_engine.units import exact
 
 
@@ -1009,8 +1010,13 @@ def run(contract: Mapping[str, Any], analysis: Tuple[str, ...] = ()) -> Run:
     Observed ``AD`` events and any ``analysis`` instants (ISO text) become
     analysis-date events. Any other observed event (a credit event, an
     exercise) is not built and refuses by name. A swap (SWPPV) runs as its
-    two legs (:func:`run_swap`).
+    two legs (:func:`run_swap`); an FX outright (FXOUT) in a book of two
+    currencies (:func:`run_fxout`).
     """
+    if contract["terms"].get("contractType") in FORWARDS:
+        if analysis or contract.get("eventsObserved"):
+            raise ActusError(f"{contract['terms'].get('contractID')}: observed events are not built for FXOUT")
+        return run_fxout(contract)
     if contract["terms"].get("contractType") in COMPOSITE:
         if analysis or contract.get("eventsObserved"):
             raise ActusError(f"{contract['terms'].get('contractID')}: observed events are not built for a swap")
@@ -1079,6 +1085,10 @@ def _opening_accrued(k: Terms) -> Fraction:
 
 #: Contract types built from others: a swap runs as two PAM legs.
 COMPOSITE = ("SWPPV",)
+#: Contract types that exchange one currency for another (:func:`run_fxout`).
+FORWARDS = ("FXOUT",)
+#: Every contract type :func:`run` builds.
+BUILT_TYPES = TYPES + COMPOSITE + FORWARDS
 #: SWPPV roles: pay fixed (the fixed leg borrowed, the floating leg lent) or receive fixed
 SWAP_ROLES = {"PF": -1, "RF": 1}
 #: the swap's own terms, which no leg takes
@@ -1208,3 +1218,179 @@ def run_swap(contract: Mapping[str, Any]) -> SwapRun:
         raise ActusError(f"{raw['contractID']}: a reset on {between[0].date()} falls between the fixed leg's "
                          f"events; what the swap reports there is not built")
     return SwapRun(f, l, R, raw["deliverySettlement"] == "S")
+
+
+# ── the FX outright (FXOUT): one currency for another at maturity ───────────
+
+#: The terms an FX outright reads. Housekeeping terms have no effect on the stream.
+FX_TERMS = frozenset({
+    "contractType", "contractID", "contractRole", "contractDealDate", "statusDate", "creatorID",
+    "counterpartyID", "currency", "currency2", "calendar", "businessDayConvention", "endOfMonthConvention",
+    "maturityDate", "notionalPrincipal", "notionalPrincipal2", "deliverySettlement", "settlementPeriod",
+    "purchaseDate", "priceAtPurchaseDate", "terminationDate", "priceAtTerminationDate",
+})
+#: (flow, phase, debit, credit): the holder's cash in each currency against its result in that currency.
+#: A flow of negative amount posts its mirror ``name~``.
+_FX_FLOWS = (
+    ("PRD_price", "PRD", "{id}.result", "cash"),
+    ("TD_price", "TD", "cash", "{id}.result"),
+    ("MD_receive", "MD", "cash", "{id}.result"),
+    ("MD_deliver", "MD", "{id}.result2", "cash2"),
+    ("STD_settle", "STD", "cash", "{id}.result"),
+)
+_FX_NATURES = {"cash": Nature.ASSET, "cash2": Nature.ASSET, "{id}.result": Nature.INCOME,
+               "{id}.result2": Nature.INCOME}
+
+
+def _fx_leg(debit: str, credit: str) -> Leg:
+    up = (Nature.ASSET, Nature.EXPENSE)
+    return Leg("holder", debit, credit, (+1 if _FX_NATURES[debit] in up else -1,
+                                         -1 if _FX_NATURES[credit] in up else +1))
+
+
+_FX_TYPE = ContractType(
+    name="actus_FXOUT", terms=("plan", "currency2"), parties=("holder",),
+    # the first currency is the contract's (the book's); the second takes its unit from the term
+    accounts={"holder": (("cash", Nature.ASSET), ("cash2", Nature.ASSET, "currency2"),
+                         ("{id}.result", Nature.INCOME), ("{id}.result2", Nature.INCOME, "currency2"))},
+    flows=tuple(FlowSpec(n + m, phase, (_fx_leg(*((d, c) if not m else (c, d))),))
+                for n, phase, d, c in _FX_FLOWS for m in ("", "~")),
+    amounts=lambda terms, t, bal: terms["plan"].flows.get(t, {}),
+)
+
+
+@dataclass
+class FxPlan:
+    """The FX outright's events, its instants (one period each), and the flow amounts per period."""
+
+    events: List[Tuple[str, _dt.datetime]]
+    instants: List[_dt.datetime]
+    flows: Dict[int, Dict[str, Fraction]]
+
+
+@dataclass
+class FxRun:
+    """An FX outright run in one book, and the stream the corpus reports for it.
+
+    The holder's book carries cash in both currencies (``cash`` in
+    ``currency``, ``cash2`` in ``currency2``), each against a result
+    account in the same currency, so the kernel's per-unit identity holds
+    for each currency on its own and no posting converts one into the
+    other. Only a net settlement reads an exchange rate, and it pays in the
+    first currency alone.
+
+    The corpus reports no state for the contract (notional, rate and
+    accrued interest are 0 on every row), so the stream reports 0 for each;
+    every number it checks is a payoff.
+    """
+
+    group: Group
+    plan: FxPlan
+    cid: str
+
+    def legs(self) -> Tuple["FxRun"]:
+        return (self,)
+
+    def _moved(self, account: str, t: int, phase: str) -> Fraction:
+        """What ``account`` (an asset) received in ``phase`` of period ``t``."""
+        out = Fraction(0)
+        for p in self.group.book("holder").postings:
+            if p.period == t and p.phase == phase:
+                out += p.amount if p.debit == account else -p.amount if p.credit == account else 0
+        return out
+
+    def stream(self) -> List[Dict[str, Any]]:
+        """Per event: date, type, payoff. A delivery is two rows, the first currency then the second."""
+        rows, zero = [], {"notional": Fraction(0), "rate": Fraction(0), "accrued": Fraction(0)}
+        for kind, at in self.plan.events:
+            t = self.plan.instants.index(at)
+            rows.append({"date": at, "type": kind, "payoff": self._moved("cash", t, kind), **zero})
+            if kind == "MD":
+                rows.append({"date": at, "type": kind, "payoff": self._moved("cash2", t, kind), **zero})
+        return rows
+
+
+def run_fxout(contract: Mapping[str, Any]) -> FxRun:
+    """Run an FXOUT entry of the corpus: an exchange of two currencies at maturity.
+
+    The holder (role ``RPA``, R = +1) receives ``notionalPrincipal`` in
+    ``currency`` and pays ``notionalPrincipal2`` in ``currency2``; a seller
+    (``RPL``, R = -1) the reverse. Each rule below is the corpus's reading,
+    pinned in tests/test_case_actus.py:
+
+    * delivered (``deliverySettlement`` D, the default): two ``MD`` rows at
+      maturity, R x NT in the first currency, then -R x NT2 in the second
+      (fxout01, fxout02);
+    * settled (S): one ``STD`` row at maturity plus ``settlementPeriod``,
+      paying R x (NT - X x NT2) in the first currency, with X the
+      ``<currency2>/<currency>`` observation on the maturity instant itself
+      (fxout03: 2000 - 1.2612 x 1000 = 738.8). No settlement period means
+      settlement at maturity, the standard's default of P0D;
+    * a purchase pays -R x ``priceAtPurchaseDate``; a termination receives
+      ``priceAtTerminationDate`` as stated, whatever the role (fxout10: a
+      seller bought at -50 pays 50 and terminating at 100 receives 100), and
+      nothing happens after it;
+    * a price with no date is no event (fxout12 states prices of 0 alone);
+    * dates are not moved by the business-day rule, as for the loans' MD,
+      STD, PRD and TD (``UNSHIFTED``); events before the status date are
+      dropped.
+
+    Refused by name: terms outside :data:`FX_TERMS`, a role other than
+    RPA / RPL, a settlement other than D / S, a purchase or termination
+    date with no price, and a settlement with no observed rate.
+    """
+    raw = contract["terms"]
+    cid = raw["contractID"]
+    unknown = sorted(set(raw) - FX_TERMS)
+    if unknown:
+        raise ActusError(f"{cid}: term(s) {unknown} are not built for FXOUT")
+    if raw.get("contractRole") not in ROLES:
+        raise ActusError(f"{cid}: role {raw.get('contractRole')!r} is not built ({sorted(ROLES)})")
+    settle = raw.get("deliverySettlement") or "D"
+    if settle not in ("D", "S"):
+        raise ActusError(f"{cid}: deliverySettlement {settle!r} is not D or S")
+    R, cur, cur2 = ROLES[raw["contractRole"]], raw["currency"], raw["currency2"]
+    nt, nt2, md = _num(raw["notionalPrincipal"]), _num(raw["notionalPrincipal2"]), cal.instant(raw["maturityDate"])
+    sd = cal.instant(raw["statusDate"])
+
+    def priced(date_term, price_term):
+        if raw.get(date_term) in (None, ""):
+            return None
+        if raw.get(price_term) in (None, ""):
+            raise ActusError(f"{cid}: a {'purchase' if date_term == 'purchaseDate' else 'termination'} "
+                             f"date with no price")
+        return cal.instant(raw[date_term]), _num(raw[price_term])
+
+    events: List[Tuple[str, _dt.datetime, Dict[str, Fraction]]] = []
+    bought, ended = priced("purchaseDate", "priceAtPurchaseDate"), priced("terminationDate", "priceAtTerminationDate")
+    if bought:
+        events.append(("PRD", bought[0], {"PRD_price": R * bought[1]}))
+    if ended:
+        events.append(("TD", ended[0], {"TD_price": ended[1]}))
+    if settle == "D":
+        events.append(("MD", md, {"MD_receive": R * nt, "MD_deliver": R * nt2}))
+    else:
+        at = md
+        if raw.get("settlementPeriod"):
+            c = cal.Cycle.parse(raw["settlementPeriod"])
+            at = c.step(md, 1, raw.get("endOfMonthConvention") == "EOM" and md.day == cal._last_day(md.year, md.month))
+        try:
+            x = _market(contract.get("dataObserved")).series(f"{cur2}/{cur}").at(md)
+        except MarketError as e:
+            raise ActusError(f"{cid}: settlement needs the {cur2}/{cur} rate on {md.isoformat()}: {e}") from e
+        events.append(("STD", at, {"STD_settle": R * (nt - x * nt2)}))
+    events = [e for e in events if e[1] >= sd and (ended is None or e[1] <= ended[0])]
+    events.sort(key=lambda e: (e[1], PHASES.index(e[0])))
+    instants = sorted({at for _, at, _ in events})
+    flows: Dict[int, Dict[str, Fraction]] = {}
+    for _, at, amounts in events:
+        out = flows.setdefault(instants.index(at), {})
+        for name, amount in amounts.items():
+            _signed(out, name, amount)
+    plan = FxPlan([(k, at) for k, at, _ in events], instants, flows)
+    g = Group(periods=len(instants), phases=PHASES)
+    g.add_contract(Contract(cid, _FX_TYPE, {"holder": "holder"},
+                            {"plan": Value(plan, State.STATED, f"actus:{cid}"),
+                             "currency2": Value(cur2, State.STATED, f"actus:{cid}")}, cur))
+    g.run()
+    return FxRun(g, plan, cid)

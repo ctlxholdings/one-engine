@@ -29,8 +29,10 @@ Checks, per oracle
 Planted error
 -------------
 ``notionalPrincipal`` × 1.01; the nominal rate + 1% when a contract has no
-notional or the engine refuses the planted notional. A comparison that
-still agrees after that is blind.
+notional or the engine refuses the planted notional. Either way any stated
+purchase or termination price is also × 1.01: an FX outright terminated
+before maturity pays only its prices. A comparison that still agrees after
+that is blind.
 
 Ids
 ---
@@ -71,14 +73,23 @@ def _close(got: Any, want: Any) -> bool:
     return abs(g - w) <= REL * max(1.0, abs(w))
 
 
+#: Prices planted with every variant: an FX outright bought and terminated before maturity
+#: (fxout06, fxout08, fxout10) pays its two prices and nothing that depends on its notional.
+PLANTED_PRICES = ("priceAtPurchaseDate", "priceAtTerminationDate")
+
+
 def _plants(case: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """The planted variants, in order of preference: notional x 1.01, then rate + 0.01."""
+    """The planted variants, in order of preference: notional x 1.01, then rate + 0.01; each with
+    any stated purchase or termination price x 1.01."""
     out = []
     for term, change in (("notionalPrincipal", lambda v: v * Fraction(101, 100)),
                          ("nominalInterestRate", lambda v: v + Fraction(1, 100))):
         if case["terms"].get(term) not in (None, ""):
             c = copy.deepcopy(case)
             c["terms"][term] = str(change(Fraction(str(c["terms"][term]).strip())))
+            for price in PLANTED_PRICES:
+                if c["terms"].get(price) not in (None, ""):
+                    c["terms"][price] = str(Fraction(str(c["terms"][price]).strip()) * Fraction(101, 100))
             out.append(c)
     return out
 
@@ -97,7 +108,8 @@ def _run_planted(case: Dict[str, Any], asked) -> "actus.Run":
 
 class ActusFamily(Family):
     name = "actus"
-    planted = "notionalPrincipal x 1.01 (nominal rate + 0.01 when there is no notional or it is refused)"
+    planted = ("notionalPrincipal x 1.01 (nominal rate + 0.01 when there is no notional or it is refused), "
+               "with any stated purchase or termination price x 1.01")
     tolerance = "event list identical; each value within 1e-8 relative (floor 1), as the corpus prints to ten digits"
 
     def oracles(self) -> List[str]:
@@ -113,9 +125,9 @@ class ActusFamily(Family):
     def run(self, oid: str, plant: bool = False) -> Tuple[List[Check], Dict[str, Any]]:
         case = self.case(oid)
         kind = case["terms"].get("contractType")
-        if kind not in actus.TYPES + actus.COMPOSITE:
+        if kind not in actus.BUILT_TYPES:
             raise Blocked(f"ACTUS contract type {kind} is not built "
-                          f"(packs/actus.py builds {', '.join(actus.TYPES + actus.COMPOSITE)})")
+                          f"(packs/actus.py builds {', '.join(actus.BUILT_TYPES)})")
         inputs = {"terms": case["terms"], "dataObserved": sorted(case.get("dataObserved") or {}),
                   "eventsObserved": case.get("eventsObserved") or [], "to": case.get("to"),
                   "translation": "none: passed verbatim to packs.actus.run"}
