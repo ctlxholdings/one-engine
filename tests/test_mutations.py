@@ -49,6 +49,18 @@ MUTATIONS = [
 
     ("measures.py", "    if len(roots) > 1:", "    if False:",
      "test_measures.py::test_irr_refuses_when_two_rates_fit"),
+    # the plain vanilla swap (packs/actus.py run_swap, SwapRun)
+    ("packs/actus.py", 'if PHASES.index(x["type"]) <= PHASES.index(kind)][-1]', 'if True][-1]',
+     "test_case_actus.py::test_a_reset_on_the_termination_date_reports_the_notional_still_outstanding"),
+    ("packs/actus.py", "    elif k.rranx and k.rranx < md:", "    elif False:",
+     "test_case_actus.py::test_a_reset_anchor_with_no_cycle_is_a_single_reset"),
+    ("packs/actus.py", '_num(raw["priceAtPurchaseDate"]) - R * acc["PRD"] if prd', '_num(raw["priceAtPurchaseDate"]) if prd',
+     "test_case_actus.py::test_a_swap_bought_pays_its_price_alone_and_reports_the_fixed_legs_accrued_interest"),
+    ("packs/actus.py", '            if kind == "IP" and not self.net:', '            if kind == "IP":',
+     "test_case_actus.py::test_a_swap_settled_net_pays_one_coupon_of_the_difference"),
+    ("oracles/actus.py", "        bad = [t for leg in r.legs() for t in range(len(leg.plan.instants))",
+     "        bad = [t for leg in r.legs()[:1] for t in range(len(leg.plan.instants))",
+     "test_oracles.py::test_a_swap_is_checked_in_both_its_books"),
     # the annuity measures (numpy-financial, pyxirr, Baghara's IPMT/PPMT)
     ("measures.py", "    return interest / (1 + rate) if when == 1 else interest", "    return interest",
      "test_measures_annuity.py::test_each_payment_is_its_interest_plus_its_principal"),

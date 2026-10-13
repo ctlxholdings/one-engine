@@ -1,5 +1,6 @@
 """ACTUS contracts on the ledger kernel: loans (PAM, LAM, LAX, NAM, ANN), call money (CLM),
-undefined maturity (UMP) and the cash position (CSH).
+undefined maturity (UMP), the cash position (CSH), and the plain vanilla swap (SWPPV), run as
+two PAM legs (:func:`run_swap`).
 
 What this pack is
 -----------------
@@ -448,6 +449,10 @@ def schedule(k: Terms, analysis: Tuple[_dt.datetime, ...] = (), called: Optional
                 first = False
             if k.kind == "ANN" and k.prnxt is None:
                 raw.append(("PRF", t))
+    elif k.rranx and k.rranx < md:
+        # an anchor with no cycle is a single reset, as for CLM (clm15); swppv01's floating leg resets
+        # on its exchange date. No loan in the corpus states an anchor without a cycle
+        raw.append(("RRF" if k.rrnxt is not None else "RR", k.rranx))
     if k.kind == "ANN" and k.prnxt is None and k.pranx and k.pranx > k.ied:
         raw.append(("PRF", k.pranx - _dt.timedelta(days=1)))
     if k.ipcb == "NTL" and k.ipcbcl:
@@ -957,6 +962,10 @@ class Run:
             out[a.split(".", 1)[-1]] = v
         return out
 
+    def legs(self) -> Tuple["Run", ...]:
+        """The runs whose books hold this contract: itself (a swap has two, :class:`SwapRun`)."""
+        return (self,)
+
     def stream(self) -> List[Dict[str, Any]]:
         """Per reported event: date, type, payoff, and the signed state after it (ACTUS sign)."""
         R, rows = self.plan.k.role, []
@@ -999,8 +1008,13 @@ def run(contract: Mapping[str, Any], analysis: Tuple[str, ...] = ()) -> Run:
 
     Observed ``AD`` events and any ``analysis`` instants (ISO text) become
     analysis-date events. Any other observed event (a credit event, an
-    exercise) is not built and refuses by name.
+    exercise) is not built and refuses by name. A swap (SWPPV) runs as its
+    two legs (:func:`run_swap`).
     """
+    if contract["terms"].get("contractType") in COMPOSITE:
+        if analysis or contract.get("eventsObserved"):
+            raise ActusError(f"{contract['terms'].get('contractID')}: observed events are not built for a swap")
+        return run_swap(contract)
     k = parse_terms(contract["terms"])
     observed = contract.get("eventsObserved") or []
     allowed = {"AD", "XD"} if k.kind == "CLM" else {"AD"}
@@ -1059,3 +1073,138 @@ def _opening_accrued(k: Terms) -> Fraction:
             i += 1
         last = c.step(k.ipanx, i, False)
     return cal.year_fraction(k.dcc, last, k.sd) * k.ipnr * k.nt
+
+
+# ── the plain vanilla swap (SWPPV): two loans, one each way ──────────────────
+
+#: Contract types built from others: a swap runs as two PAM legs.
+COMPOSITE = ("SWPPV",)
+#: SWPPV roles: pay fixed (the fixed leg borrowed, the floating leg lent) or receive fixed
+SWAP_ROLES = {"PF": -1, "RF": 1}
+#: the swap's own terms, which no leg takes
+_SWAP_ONLY = {"contractType", "contractRole", "nominalInterestRate2", "deliverySettlement",
+              "priceAtPurchaseDate", "priceAtTerminationDate", "fixingPeriod"}
+#: the floating leg's reset terms, which the fixed leg does not take
+_RESET_TERMS = {"cycleAnchorDateOfRateReset", "cycleOfRateReset", "rateMultiplier", "rateSpread",
+                "marketObjectCodeOfRateReset", "fixingDays", "nextResetRate"}
+
+
+@dataclass
+class SwapRun:
+    """A plain vanilla swap run as its two legs, and the stream the corpus reports for it.
+
+    Each leg is a PAM in a book of its own, with the swap's notional, dates
+    and interest cycle: the fixed leg at ``nominalInterestRate``, the
+    floating leg at ``nominalInterestRate2`` and reset on the swap's reset
+    terms. A payer of fixed borrowed the fixed leg and lent the floating
+    one; a receiver the reverse. The notionals exchanged at the start and at
+    maturity are equal and opposite, so the swap pays nothing then.
+    """
+
+    fixed: Run
+    floating: Run
+    role: int
+    net: bool
+
+    def legs(self) -> Tuple[Run, Run]:
+        return self.fixed, self.floating
+
+    def stream(self) -> List[Dict[str, Any]]:
+        """The swap's events with the corpus's reading (each rule pinned in tests/test_case_actus.py).
+
+        * interest: ``IPFX`` (the fixed leg's payment) and ``IPFL`` (the
+          floating leg's) when the legs are delivered, one ``IP`` with
+          their sum when settled net (``deliverySettlement`` = ``S``);
+        * the state after each event is the fixed leg's notional and
+          accrued interest (signed by the swap's role) and the floating
+          leg's rate (swppv12, swppv14: a purchase reports the fixed leg's
+          accrued interest alone);
+        * a reset is the floating leg's; a start, maturity, purchase or
+          termination pays the sum of the two legs' payoffs.
+        """
+        fx, at_instant = {}, {}
+        for r in self.fixed.stream():
+            fx[(r["date"], r["type"])] = r
+            at_instant.setdefault(r["date"], []).append(r)
+        fl = self.floating.stream()
+        rows = []
+        for r in fl:
+            at, kind = r["date"], r["type"]
+            if kind == "AD":
+                continue
+            # a reset: the fixed leg as it stands at that phase of the instant (swppv14 resets, then
+            # terminates, on 2015-07-01: the reset reports the notional still outstanding)
+            f = fx.get((at, kind)) or [x for x in at_instant[at] if PHASES.index(x["type"]) <= PHASES.index(kind)][-1]
+            state = {"notional": f["notional"], "rate": r["rate"], "accrued": f["accrued"]}
+            if kind == "IP" and not self.net:
+                rows.append({"date": at, "type": "IPFX", "payoff": f["payoff"], **state})
+                rows.append({"date": at, "type": "IPFL", "payoff": r["payoff"], **state})
+                continue
+            payoff = r["payoff"] + (f["payoff"] if kind != "RR" else Fraction(0))
+            rows.append({"date": at, "type": kind, "payoff": payoff, **state})
+        return rows
+
+
+def _leg_terms(raw: Mapping[str, Any], fixed: bool, role: int, prices: Tuple[Any, Any]) -> Dict[str, Any]:
+    leg = {k: v for k, v in raw.items() if k not in _SWAP_ONLY and not (fixed and k in _RESET_TERMS)}
+    leg.update(contractType="PAM", contractID=f"{raw['contractID']}_{'fixed' if fixed else 'floating'}",
+               contractRole="RPA" if role == 1 else "RPL",
+               nominalInterestRate=raw["nominalInterestRate"] if fixed else raw["nominalInterestRate2"])
+    if not fixed and raw.get("fixingPeriod") not in (None, "P0D"):
+        raise ActusError(f"{raw['contractID']}: a fixing period of {raw['fixingPeriod']} is not built")
+    for term, price in zip(("priceAtPurchaseDate", "priceAtTerminationDate"), prices):
+        if price is not None:
+            leg[term] = str(price)
+    return leg
+
+
+def run_swap(contract: Mapping[str, Any]) -> SwapRun:
+    """Run a SWPPV entry of the corpus as two PAM legs (see :class:`SwapRun`).
+
+    A purchase or termination pays the swap's stated price and nothing for
+    the interest accrued (swppv12..14: the buyer then receives each leg's
+    whole next coupon). Each PAM leg prices its own event as price plus or
+    minus its accrued interest, so the price is put on the fixed leg, the
+    floating leg at par, with both legs' accrued interest taken back out:
+    the legs are run once at par to read it. The difference from par lands
+    in each leg's ``result``.
+
+    Refused: a role other than PF / RF, a settlement other than D / S, a
+    fixing period, and a reset on a date with no fixed-leg event (the corpus
+    has none, so what accrued interest it reports is not known).
+    """
+    raw = contract["terms"]
+    if raw.get("contractRole") not in SWAP_ROLES:
+        raise ActusError(f"{raw.get('contractID')}: swap role {raw.get('contractRole')!r} is not built "
+                         f"({sorted(SWAP_ROLES)})")
+    if raw.get("deliverySettlement") not in ("D", "S"):
+        raise ActusError(f"{raw.get('contractID')}: deliverySettlement {raw.get('deliverySettlement')!r} "
+                         f"is not D or S")
+    R, nt = SWAP_ROLES[raw["contractRole"]], _num(raw["notionalPrincipal"])
+    data = contract.get("dataObserved")
+
+    def legs(prices):
+        par = tuple(nt if p is not None else None for p in prices)
+        return (run({"terms": _leg_terms(raw, True, R, prices), "dataObserved": data}),
+                run({"terms": _leg_terms(raw, False, -R, par), "dataObserved": data}))
+
+    prd, td = raw.get("purchaseDate"), raw.get("terminationDate")
+    f, l = legs((nt if prd else None, nt if td else None))
+    if prd or td:
+        # each leg's accrued interest at the event, read off its payoff at par: a leg of role r pays
+        # -r P - A at a purchase and receives r P + A at a termination (A its natural accrued)
+        acc = {"PRD": Fraction(0), "TD": Fraction(0)}
+        for leg, r in ((f, R), (l, -R)):
+            for x in leg.stream():
+                if x["type"] == "PRD":
+                    acc["PRD"] += -x["payoff"] - r * nt
+                elif x["type"] == "TD":
+                    acc["TD"] += x["payoff"] - r * nt
+        f, l = legs((nt + _num(raw["priceAtPurchaseDate"]) - R * acc["PRD"] if prd else None,
+                     nt + R * (_num(raw["priceAtTerminationDate"]) - acc["TD"]) if td else None))
+    own = {r["date"] for r in f.stream()}
+    between = sorted(r["date"] for r in l.stream() if r["type"] == "RR" and r["date"] not in own)
+    if between:
+        raise ActusError(f"{raw['contractID']}: a reset on {between[0].date()} falls between the fixed leg's "
+                         f"events; what the swap reports there is not built")
+    return SwapRun(f, l, R, raw["deliverySettlement"] == "S")

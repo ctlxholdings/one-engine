@@ -112,7 +112,7 @@ def test_each_verdict_is_given_only_when_earned(behaviour, verdict, reason):
 
 FAMILY = ActusFamily()
 ORACLES = FAMILY.oracles()
-BUILT = {"pam", "lam", "nam", "ann", "ad0", "csh", "clm", "ump", "lax"}
+BUILT = {"pam", "lam", "nam", "ann", "ad0", "csh", "clm", "ump", "lax", "swppv"}
 
 
 def test_the_whole_corpus_is_receipted():
@@ -143,3 +143,20 @@ def test_the_scoreboard_counts_and_names(tmp_path):
     board = O.scoreboard({"actus": rs}, [FAMILY])
     assert "| actus | 2 | 1 | 0 | 1 | 0 |" in board
     assert "ACTUS contract type SWAPS is not built" in board and "swaps/swaps01" in board
+
+
+def test_a_swap_is_checked_in_both_its_books(monkeypatch):
+    # a swap's two legs sit in two books: an imbalance planted in the second (floating) leg's book is seen
+    from one_engine.packs import actus
+    real = actus.run
+
+    def broken(case, analysis=()):
+        r = real(case, analysis)
+        if case["terms"].get("contractType") == "SWPPV":
+            book = r.legs()[1].group.book("holder")
+            monkeypatch.setattr(book, "imbalance", lambda t: {"XXX": 1})
+        return r
+
+    monkeypatch.setattr(actus, "run", broken)
+    checks, _ = FAMILY.run("swppv/swppv04")
+    assert [c.ok for c in checks if c.name == "ledger balanced"] == [False]

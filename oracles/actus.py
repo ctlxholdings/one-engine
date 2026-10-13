@@ -22,6 +22,7 @@ Checks, per oracle
   prints some values to ten digits;
 * ``ledger balanced``: every period of the holder's book closes on the
   per-unit identity, and ``flows paired``: no flow lacks its counter-leg.
+  A swap is held in two books, one per leg; both are checked.
   The standard does not cover the ledger; these are the engine's own laws,
   run on every oracle.
 
@@ -112,8 +113,9 @@ class ActusFamily(Family):
     def run(self, oid: str, plant: bool = False) -> Tuple[List[Check], Dict[str, Any]]:
         case = self.case(oid)
         kind = case["terms"].get("contractType")
-        if kind not in actus.TYPES:
-            raise Blocked(f"ACTUS contract type {kind} is not built (packs/actus.py builds {', '.join(actus.TYPES)})")
+        if kind not in actus.TYPES + actus.COMPOSITE:
+            raise Blocked(f"ACTUS contract type {kind} is not built "
+                          f"(packs/actus.py builds {', '.join(actus.TYPES + actus.COMPOSITE)})")
         inputs = {"terms": case["terms"], "dataObserved": sorted(case.get("dataObserved") or {}),
                   "eventsObserved": case.get("eventsObserved") or [], "to": case.get("to"),
                   "translation": "none: passed verbatim to packs.actus.run"}
@@ -146,10 +148,11 @@ class ActusFamily(Family):
             # a value the answer states and the engine does not report is a failed check, not a skip
             for extra in sorted(set(w) - known - NOT_VALUES):
                 checks.append(Check(extra, at, str(w[extra]), "not reported", False))
-        book = r.group.book("holder")
-        bad = [t for t in range(len(r.plan.instants)) if any(v != 0 for v in book.imbalance(t).values())]
+        # a swap is held in two books, one per leg (packs.actus.SwapRun)
+        bad = [t for leg in r.legs() for t in range(len(leg.plan.instants))
+               if any(v != 0 for v in leg.group.book("holder").imbalance(t).values())]
         checks.append(Check("ledger balanced", "every period", "0 unbalanced periods", f"{len(bad)}", not bad))
-        unpaired = r.group.unpaired_flows()
+        unpaired = [u for leg in r.legs() for u in leg.group.unpaired_flows()]
         checks.append(Check("flows paired", "every flow", "0 unpaired", str(len(unpaired)), not unpaired))
         return checks, inputs
 

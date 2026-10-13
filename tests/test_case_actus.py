@@ -157,3 +157,60 @@ def test_terms_outside_the_built_vocabulary_refuse_by_name():
         case["terms"][key] = value
         with pytest.raises(actus.ActusError, match="not built"):
             actus.run(case)
+
+
+# ── the plain vanilla swap (SWPPV): two PAM legs, one each way ──────────────
+
+SWAPS = json.loads((HERE / "actus-tests-swppv.json").read_text())
+
+
+def swap_row(cid, date, kind):
+    return next(r for r in actus.run(SWAPS[cid]).stream() if r["type"] == kind and r["date"] == I(date))
+
+
+def test_a_swap_is_two_loans_one_each_way():
+    # swppv04 pays fixed: it borrowed the fixed leg and lent the floating one, in two books
+    r = actus.run(SWAPS["swppv04"])
+    fixed, floating = r.legs()
+    assert fixed.group.book("holder").accounts["swppv04_fixed.notional"].nature is Nature.LIABILITY
+    assert floating.group.book("holder").accounts["swppv04_floating.notional"].nature is Nature.ASSET
+    # the notionals exchanged at the start and at maturity cancel: the swap pays nothing then
+    assert swap_row("swppv04", "2015-01-01T00:00:00", "IED")["payoff"] == 0
+    assert swap_row("swppv04", "2016-01-01T00:00:00", "MD")["payoff"] == 0
+    for leg in r.legs():
+        assert all(v == 0 for t in range(len(leg.plan.instants)) for v in leg.group.book("holder").imbalance(t).values())
+
+
+def test_a_swap_bought_pays_its_price_alone_and_reports_the_fixed_legs_accrued_interest():
+    row = swap_row("swppv12", "2015-03-15T23:59:59", "PRD")
+    assert row["payoff"] == -500                                  # the price; no accrued interest on top
+    assert row["accrued"] == -F(1000) * F(5, 100) * 15 / 365      # the fixed leg's, 1 to 16 March, signed PF
+    # the buyer then receives the floating leg's whole April coupon, from 1 March
+    assert swap_row("swppv12", "2015-04-01T00:00:00", "IPFL")["payoff"] == F(1000) * F(5, 100) * 31 / 365
+
+
+def test_a_swap_settled_net_pays_one_coupon_of_the_difference():
+    ip = swap_row("swppv06", "2015-07-01T00:00:00", "IP")
+    assert ip["payoff"] == F(1000) * (F(8, 100) - F(5, 100)) * 181 / 365
+
+
+def test_a_reset_on_the_termination_date_reports_the_notional_still_outstanding():
+    # swppv14 resets, then terminates, on 2015-07-01: the reset precedes the termination
+    assert swap_row("swppv14", "2015-07-01T00:00:00", "RR")["notional"] == 1000
+    assert swap_row("swppv14", "2015-07-01T00:00:00", "TD")["notional"] == 0
+
+
+def test_a_reset_anchor_with_no_cycle_is_a_single_reset():
+    # swppv01: one reset, on the exchange date, to the observation there
+    assert swap_row("swppv01", "2015-01-01T00:00:00", "RR")["rate"] == F(1, 100)
+
+
+def test_a_swap_refuses_what_the_corpus_does_not_show():
+    case = copy.deepcopy(SWAPS["swppv02"])
+    case["terms"]["contractRole"] = "RPA"
+    with pytest.raises(actus.ActusError, match="swap role"):
+        actus.run(case)
+    case = copy.deepcopy(SWAPS["swppv04"])
+    case["terms"]["cycleOfInterestPayment"] = "P6ML1"     # quarterly resets between half-yearly payments
+    with pytest.raises(actus.ActusError, match="falls between the fixed leg's events"):
+        actus.run(case)
