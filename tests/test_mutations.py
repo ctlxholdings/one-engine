@@ -387,6 +387,11 @@ MUTATIONS = [
     ("packs/pf.py", "if p.credit == payable and (year - 1) * per_year <= p.period < year * per_year)",
      "if p.credit == payable and p.period < year * per_year)",
      "test_case_modeloff_tax.py::test_q39_q40_q41_losses_that_expire_after_two_years"),
+    # the asset register's gross view of assets carried in part depreciated (the pilot isp_levy)
+    ("packs/pf.py", "            gross[\"charged\"] += carried", "            pass",
+     "test_asset_register_carried.py::test_the_depreciation_charged_before_the_first_period_is_in_the_gross_view"),
+    ("packs/pf.py", "        if t == in_service[0] and carried and not book.opening(fa, t):", "        if False:",
+     "test_asset_register_carried.py::test_a_carried_accumulation_with_nothing_carried_in_refuses"),
     # the income_tax options the pilot golds needed: a minimum tax and progressive bands
     ("packs/pf.py", "            if _at(m_applies, t):", "            if True:",
      "test_income_tax_options.py::test_a_waived_minimum_is_still_computed_but_not_charged"),

@@ -15,10 +15,9 @@
 #     has left (90M / 8 a year); it is retired at nil book value at the end of
 #     replacement_period_index and replaced the same day by replacement_capex, which enters at the
 #     year end and is charged nothing in that year;
-#   * the books carry the network at its book value, so the depreciation charged before the
-#     horizon (accum_dep_opening) is nowhere in them: gross_ppe, accum_dep, asset_retired_cost and
-#     accum_dep_retired add it to the registers' gross records as a driver (`pre_horizon_dep`
-#     while the old network is held, `pre_horizon_retired` when it is retired);
+#   * the books carry the network at its book value; the depreciation charged on it before the
+#     horizon (accum_dep_opening) is the register's carried_accumulated, so its gross records
+#     (cost, accumulated, and what the retirement takes out) include it;
 #   * receivables are one month (dso_months) of the closing run-rate (closing subscribers x the
 #     fee), not of the year's billing, so revenue is collected in the year and a held balance,
 #     carried in at ar_opening, holds the receivable at that target; the bandwidth payable is
@@ -56,8 +55,6 @@ case:
         receivable: subs_closing * monthly_fee_per_subscriber * dso_months
         replacement: replacement_capex * (t == replacement_period_index)
         new_network_retired: replacement_period_index + asset_useful_life_years
-        pre_horizon_dep: accum_dep_opening * (t < replacement_period_index)
-        pre_horizon_retired: accum_dep_opening * (t == replacement_period_index)
   opening:
     isp:
       cash: {nature: asset, value: 0}
@@ -118,6 +115,7 @@ case:
       dispose_at: {generator: gold, output: replacement_period_index}
       life_periods: {generator: gold, output: remaining_life_years}
       first_charge: in_service
+      carried_accumulated: {generator: gold, output: accum_dep_opening}
     new_network:
       kind: asset_register
       entity: isp
@@ -234,10 +232,10 @@ trace:
   nwc: {balance: receivables + access.receivable - bandwidth.payable - technicians.payable - site.payable - connections.payable - regulator.payable}
   delta_nwc: {change: receivables + access.receivable - bandwidth.payable - technicians.payable - site.payable - connections.payable - regulator.payable}
   capex: {cut: cfi, sign: -1}
-  asset_retired_cost: {sum: [{record: old_network.disposed_cost}, {driver: gold.pre_horizon_retired}]}
-  accum_dep_retired: {sum: [{record: old_network.disposed_accumulated}, {driver: gold.pre_horizon_retired}]}
-  gross_ppe: {sum: [{record: old_network.cost}, {record: new_network.cost}, {driver: gold.pre_horizon_dep}]}
-  accum_dep: {sum: [{record: old_network.accumulated}, {record: new_network.accumulated}, {driver: gold.pre_horizon_dep}]}
+  asset_retired_cost: {record: old_network.disposed_cost}
+  accum_dep_retired: {record: old_network.disposed_accumulated}
+  gross_ppe: {sum: [{record: old_network.cost}, {record: new_network.cost}]}
+  accum_dep: {sum: [{record: old_network.accumulated}, {record: new_network.accumulated}]}
   nbv: {balance: fixed_assets + new_network}
   cfo: {cut: cfo}
   cfi: {cut: cfi}

@@ -66,6 +66,11 @@ Rulebooks
     the golds' ``arise``): the books depreciate that cost less the
     residual, which stays in the asset account until the disposal writes
     it off. A ``tax`` register depreciates the full cost.
+    ``carried_accumulated`` (default 0; the golds' ``isp_levy``) is the
+    depreciation already charged on the fixed assets carried in, before the
+    first period: the books carry them at net book value, and the gross view
+    below shows their cost as that value plus it, and their accumulated
+    depreciation from it. The books and the charge do not change.
 
     Each period the register records, under the rulebook's own name, its
     gross view (the golds report cost and accumulated depreciation apart):
@@ -492,6 +497,8 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         raise InputError(f"asset_register: dispose_when is start or end, not {dispose_when!r}")
     reg = Register(_policy(r, "asset_register"))
     residual = exact(r.take_or_default("residual", 0, reason="depreciated to nil").value)
+    carried = exact(r.take_or_default("carried_accumulated", 0,
+                                      reason="nothing was charged on the assets carried in before the first period").value)
     tax_raw = r.take_or_default("tax", None, reason="the tax authority depreciates as the books do").value
     tax_reg = None
     if tax_raw is not None:
@@ -524,8 +531,12 @@ def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
                             tax_nbv=tax_reg.nbv() if tax_reg is not None else Fraction(0))
             gross.update(cost=Fraction(0), charged=Fraction(0))
 
+        if t == in_service[0] and carried and not book.opening(fa, t):
+            raise InputError(f"asset_register {name}: carried_accumulated is {carried}, but nothing is carried in")
         if t == in_service[0] and book.opening(fa, t):
-            gross["cost"] += book.opening(fa, t)
+            # the gross view of what is carried in: its cost is its book value plus what was charged on it before
+            gross["cost"] += book.opening(fa, t) + carried
+            gross["charged"] += carried
             # fixed assets carried in on an opening balance sheet are a tranche from the first in-service
             # period: otherwise the register would never depreciate them
             for x in (reg, tax_reg):
