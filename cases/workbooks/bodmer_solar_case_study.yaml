@@ -39,11 +39,14 @@
 #     costs typed in the "Fixed" column I55:I57; then each month's uses (capex, IDC, up-front and commitment
 #     fees, computed) pro rata, debt H67 and equity H66. The computed costs fall below the typed ones
 #     (J58 = 2,728.43), so the loan drawn (I114, 3,407,446.18) stays below its commitment (3,409,676.29);
-#   * waterfall from COD: tax, interest, principal, the sweep F157 (nil) and the rest to equity (row 177);
-#   * the circular blocks: the sculpted size is the loop `debt_size` (rule sculpt). The memo book `memo`
-#     books the debt service capacity of row 22 (CFADS / F132) and draws and repays the sized ledger of rows
-#     33-37 (loan `sizer`), so the rule sculpts at a DSCR of 1; the loop closes in two runs (the capacity
-#     does not depend on the debt, interest not being deductible) with tolerance 0. The funding needs no loop:
+#   * waterfall from COD: tax, interest, principal, then the sweep (row 176: F157 of what remains, nil here,
+#     paid down the senior debt) and the rest to equity (row 177); after maturity tax, the sweep and equity;
+#   * the circular blocks: the sculpted size is the loop `debt_size` (rule sculpt). The waterfall's CFADS
+#     (row 16) carries the share repayment flag / F132, so the CFADS it records is row 22's debt service
+#     capacity and the rule sculpts on it at a DSCR of 1. The memo book `memo` draws the sized ledger of rows
+#     33-37 (loan `sizer`) at the last construction month and settles its interest and principal as due;
+#     the loop closes in two runs (the capacity does not depend on the debt, interest not being deductible)
+#     with tolerance 0. The funding needs no loop:
 #     the budget is typed, the commitment comes from the loop, and each month's IDC and fees are computed on
 #     the balance drawn so far, as the workbook's converged iteration has them;
 #   * physical rows, prices, rates, indices and flags are drivers.
@@ -55,19 +58,25 @@
 #     (T142 99,503.15 against 105,503.15), and with it everything after: K104, K144, K156-K164; Financing
 #     Model K13-K22 (T22 68,622.86 against 72,760.79), the sculpted size G31 = H34 = G61 (3,409,676.29
 #     against 3,587,932.54), the sources and uses and funding rows 55-97 (equity up front G81 507,935.02
-#     against 436,632.52), the loan rows 113-131, the tax rows 150-161, the waterfall 166-184, the DSCR
-#     T185:CU185 (1.4504 against 1.45 at T), the lender flows L201 and rows 206-207; Summary F7, F30, F31.
+#     against 436,632.52) and the up-front equity to date K82, K83, K87, K89, the loan rows 113-131, the tax
+#     rows 150-161, the waterfall 166-184, the DSCR T185:CU185 (1.4504 against 1.45 at T), the PLCR G193 =
+#     G189 / G191 (1.7840 against 1.7782) with T199:CU199 and T213:CU213 (T199 1.7852 against 1.7782), the
+#     lender flows L201 and rows 206-207; Summary F7, F9, F30, F31.
 #     Put back in a scratch copy (opex + row 87), every one of those figures agrees, the sculpt and the
 #     funding included;
 #   * the generation totals stop at column BR (period 59) where every other I-column total runs to DQ:
 #     Operating Model I31:I42 (the third cell of G31:I31 ... G42:I42; I31 8,960.38 against 16,731.38 over
 #     the 100 quarters) and I43 = SUM(K43:BR43), 162,481.89 MWh against 310,071.86; Operating Model I10
 #     and Financing Model I10 = SUM(K10:BR10) count 51 operating quarters, not 100;
+#   * Financing Model K196:AA196 and K197:AA197 (the PLCR's present values, array formulas) lack the
+#     "* previous index" that AB196 onwards apply, so U199:AA199 (= U196 / U198) discount to the wrong date;
+#     T213:CU213 repeats row 199. With the K96 slip put back, every other PLCR cell agrees, and U199 is
+#     1.7769 against 1.7920 in the books, AA199 1.7125 against 1.8170;
 #   * not compared, for the record: Financing Model G146 = I131 + I124 leaves out the IDC I121 (57,402.82
-#     against 74,785.40), an amortisation memo nothing reads; Financing Model K196:AA196 and K197:AA197 (the
-#     PLCR's present values, array formulas) lack the "* previous index" that AB196 onwards apply, so U199
-#     to AA199 discount to the wrong date (the PLCR rows wait on the engine, see the notes); Assumptions F14
-#     = EDATE(F9, F10) adds construction periods as months, the same here as F3 = 1.
+#     against 74,785.40), an amortisation memo nothing reads; Assumptions F14 = EDATE(F9, F10) adds
+#     construction periods as months, the same here as F3 = 1. And latent: the lender flows L201 =
+#     -L93 + L75 + L76 + L77 + L152 + L171 + L174 - L173 leave out the sweep L176, nil here, so the row
+#     agrees.
 workbook: bodmer_solar_case_study
 entity: spv
 plant: Assumptions__F20
@@ -369,8 +378,6 @@ case:
         consumption_qrate: "Assumptions__F79 / 12 * Assumptions__F4"
         consumption_base: "op_flag * months / 12 * idx_om"
         consumption_cost: "consumption_unit * op_flag"
-        # rows 88-95 (row 96 adds the capacity of row 87 as well: a slip)
-        opex_total: "om_fee_cost + battery_om_cost + admin_cost + insurance_cost + rent_cost + property_tax_cost + utility_cost + consumption_cost"
         # rows 99-102
         inverter1_cost: "Assumptions__F88 * inv1_flag * capacity"
         inverter2_cost: "Assumptions__F89 * inv2_flag * capacity"
@@ -441,9 +448,6 @@ case:
         crisis_price_dec: "lag(crisis_dec, t - crisis_index) * price"
         rev_dec: "gen_dec * price"
         crev_dec: "gen_dec * crisis_price_dec"
-        revenue: "rev_jan + rev_feb + rev_mar + rev_apr + rev_may + rev_jun + rev_jul + rev_aug + rev_sep + rev_oct + rev_nov + rev_dec"
-        # row 142
-        ebitda: "revenue - opex_total - inverter1_cost - inverter2_cost"
         # tax depreciation over F127 years of quarters from COD
         dep_life: "Assumptions__F127 * 12 / Assumptions__F4"
         # H149
@@ -454,32 +458,9 @@ case:
         dep_left: "1 - cumsum(dep_rate_q) + dep_rate_q"
         # row 151
         dep_adj: "max(min(dep_rate_q, dep_left), 0)"
-        # row 154
-        dep_charge: "capex_total * op_flag * dep_adj"
         annual_dep: "capex_total / Assumptions__F127"
-        # row 156
-        ebit: "ebitda - dep_charge"
-        # losses carried forward without limit: the profit taxed to date is the running maximum of the cumulative EBIT (at least nil)
-        ebit_cum: "cumsum(ebit)"
-        hi0: "max(ebit_cum, 0)"
-        hi1: "max(hi0, lag(hi0, 1))"
-        hi2: "max(hi1, lag(hi1, 2))"
-        hi3: "max(hi2, lag(hi2, 4))"
-        hi4: "max(hi3, lag(hi3, 8))"
-        hi5: "max(hi4, lag(hi4, 16))"
-        hi6: "max(hi5, lag(hi5, 2 * 16))"
-        # a running maximum over 128 periods, doubling the window each step
-        hi7: "max(hi6, lag(hi6, 4 * 16))"
-        # row 162
-        taxable_gen: "hi7 - lag(hi7, 1)"
-        # row 163
-        tax_gen: "Assumptions__F128 * taxable_gen"
-        # Financing Model row 16
-        cfads_gen: "ebitda - tax_gen"
         # Assumptions F132
         dscr: "Assumptions__G132 / 100"
-        # Financing Model row 22: the debt service the CFADS carries at the DSCR
-        capacity_k22: "cfads_gen / dscr * repay_flag"
         # the repayment quarters
         tenor_periods: "Assumptions__G140 * 12 / Assumptions__F4"
         # Assumptions H147:J147, five-year bands from COD
@@ -689,6 +670,12 @@ case:
         property_tax_div: "property_tax_base + 1 - op_flag"
         utility_div: "utility_base + 1 - op_flag"
         consumption_div: "consumption_base + 1 - op_flag"
+        # Financing Model row 22 = CFADS / F132 in the repayment quarters: the share of the CFADS the sculpted service takes
+        sizing_share: "repay_flag / dscr"
+        # the discount index one period back (Financing Model row 197's previous column; one at the start)
+        rate_index_prev: "lag(rate_index, 1) + (t == 0)"
+        # one outside the repayment span, so the forward PLCR's denominator is never nil where the workbook shows nothing
+        plcr_pad: "(t <= fc_period) + (t > last_repay)"
   loops:
     debt_size:
       rule: {kind: sculpt, loan: senior, dscr: 1, cfads: waterfall}
@@ -1037,48 +1024,6 @@ case:
         admin: taxable, insurance: taxable, rent: taxable, property_tax: taxable, utility: taxable, consumption: taxable, inverter1: taxable,
         inverter2: taxable, depreciation: taxable, disposal_loss: taxable, senior.interest: non_deductible, senior.fees: non_deductible,
         tax_expense: non_deductible}
-    waterfall:
-      kind: waterfall
-      entity: spv
-      phase: pay
-      cash: cash
-      tiers:
-      - {name: tax, account: tax_payable}
-      - {claim: senior.interest}
-      - {claim: senior.capitalised}
-      - {claim: senior.principal}
-      - claim: senior.prepay
-        share_of_remaining: {generator: src, output: sweep}
-      residual: equity.distribute
-      cfads: &id001
-        scheme: flows
-        classes: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
-          om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2]
-        less: [tax]
-      service: [senior.interest, senior.capitalised, senior.principal]
-      active:
-        from: {generator: src, output: pre_periods}
-        until: {generator: src, output: last_repay}
-      tests:
-      - name: dscr
-        op: '>='
-        level: {generator: src, output: dscr}
-        if_missing: pass
-        consequence: report
-    waterfall_after_maturity:
-      kind: waterfall
-      entity: spv
-      phase: pay
-      cash: cash
-      tiers:
-      - {name: tax, account: tax_payable}
-      residual: equity.distribute
-      cfads: *id001
-      service: []
-      active:
-        from: {generator: src, output: tail_from}
-        until: {generator: src, output: dispose_period}
-      tests: []
     crisis_revenue:
       kind: transfer
       entity: crisis
@@ -1134,35 +1079,69 @@ case:
           debit: cash
           credit: crev_dec
           amount: {generator: src, output: crev_dec}
-    sizing_capacity:
-      kind: transfer
-      entity: memo
-      phase: operate
-      declare: {capacity: income}
-      moves:
-        capacity:
-          debit: cash
-          credit: capacity
-          amount: {generator: src, output: capacity_k22}
-    sizing_ledger:
+    sizing_draw:
       kind: waterfall
       entity: memo
       phase: pay
       cash: cash
       sources: [sizer.draw]
       tiers:
-      - {claim: sizer.interest}
-      - {claim: sizer.capitalised}
-      - {claim: sizer.principal}
+      - {name: sweep, account: sizer.debt, share_of_remaining: 0}
       residual: null
       cfads:
         scheme: flows
-        classes: [capacity]
+        classes: [memo_interest]
         less: []
-      service: [sizer.interest, sizer.capitalised, sizer.principal]
+      service: []
       active:
         from: {generator: src, output: last_pre}
+        until: {generator: src, output: last_pre}
+      tests: []
+    sizing_service:
+      kind: pay_as_due
+      phase: pay
+      claims: [sizer.interest, sizer.capitalised, sizer.principal]
+    waterfall:
+      kind: waterfall
+      entity: spv
+      phase: pay
+      cash: cash
+      tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: senior.interest}
+      - {claim: senior.capitalised}
+      - {claim: senior.principal}
+      - &id001
+        name: sweep
+        account: senior.debt
+        share_of_remaining: {generator: src, output: sweep}
+      residual: equity.distribute
+      cfads: &id002
+        scheme: flows
+        classes: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+          om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2]
+        less: [tax]
+        share: {generator: src, output: sizing_share}
+      service: [senior.interest, senior.capitalised, senior.principal]
+      active:
+        from: {generator: src, output: pre_periods}
         until: {generator: src, output: last_repay}
+      tests:
+      - {name: dscr, op: '>=', level: 1, if_missing: pass, consequence: report}
+    waterfall_after_maturity:
+      kind: waterfall
+      entity: spv
+      phase: pay
+      cash: cash
+      tiers:
+      - {name: tax, account: tax_payable}
+      - *id001
+      residual: equity.distribute
+      cfads: *id002
+      service: []
+      active:
+        from: {generator: src, output: tail_from}
+        until: {generator: src, output: dispose_period}
       tests: []
   schemes:
     flows: {rev_jan: rev_jan, rev_feb: rev_feb, rev_mar: rev_mar, rev_apr: rev_apr, rev_may: rev_may, rev_jun: rev_jun, rev_jul: rev_jul,
@@ -1174,15 +1153,15 @@ case:
       dev_misc: dev_misc, epc_panel: epc_panel, epc_racking: epc_racking, epc_bos: epc_bos, epc_site: epc_site, epc_special: epc_special,
       epc_battery: epc_battery, epc_misc: epc_misc, vat_receivable: vat, senior.debt: senior_debt, senior.capitalised_interest: senior_debt,
       senior.interest_payable: senior_interest, senior.fee_payable: senior_fee, senior.deferred_fees: senior_upfront, equity.capital: equity_in,
-      equity.distributions: equity_out, tax_payable: tax, capacity: capacity, sizer.debt: memo_debt, sizer.capitalised_interest: memo_debt,
-      sizer.interest_payable: memo_interest, sizer.fee_payable: memo_fee, sizer.deferred_fees: memo_fee}
+      equity.distributions: equity_out, tax_payable: tax, sizer.debt: memo_debt, sizer.capitalised_interest: memo_debt, sizer.interest_payable: memo_interest,
+      sizer.fee_payable: memo_fee, sizer.deferred_fees: memo_fee}
     pnl: {rev_jan: rev_jan, rev_feb: rev_feb, rev_mar: rev_mar, rev_apr: rev_apr, rev_may: rev_may, rev_jun: rev_jun, rev_jul: rev_jul,
       rev_aug: rev_aug, rev_sep: rev_sep, rev_oct: rev_oct, rev_nov: rev_nov, rev_dec: rev_dec, crev_jan: crev_jan, crev_feb: crev_feb,
       crev_mar: crev_mar, crev_apr: crev_apr, crev_may: crev_may, crev_jun: crev_jun, crev_jul: crev_jul, crev_aug: crev_aug,
       crev_sep: crev_sep, crev_oct: crev_oct, crev_nov: crev_nov, crev_dec: crev_dec, om_fee: om_fee, battery_om: battery_om,
       admin: admin, insurance: insurance, rent: rent, property_tax: property_tax, utility: utility, consumption: consumption,
       inverter1: inverter1, inverter2: inverter2, depreciation: depreciation, disposal_loss: depreciation, senior.interest: interest,
-      senior.fees: fees, tax_expense: tax, capacity: capacity, sizer.interest: memo_interest, sizer.fees: memo_fees}
+      senior.fees: fees, tax_expense: tax, sizer.interest: memo_interest, sizer.fees: memo_fees}
   cuts:
     rev_jan:
       entity: spv
@@ -1533,11 +1512,6 @@ case:
       scheme: pnl
       include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
         om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2, depreciation]
-    memo_capacity:
-      kind: pnl
-      entity: memo
-      scheme: pnl
-      include: [capacity]
     memo_debt_flow:
       entity: memo
       account: cash
@@ -1748,6 +1722,7 @@ figures:
   Operating_Model.K173:DQ173: {"driver": "src.nom_factor"}
   Operating_Model.G174: {"driver": "src.real_rate", "at": 0}
   Operating_Model.K174:DQ174: {"driver": "src.real_factor"}
+  Operating_Model.G178: {"ratio": [{"cut": "revenue", "per": "src.nom_factor", "total": true}, {"driver": "src.gen_total", "per": "src.real_factor", "total": true}], "at": 0}
   Financing_Model.K13:DQ13: {"cut": "ebitda"}
   Financing_Model.K15:DQ15: {"record": "tax.tax"}
   Financing_Model.K16:DQ16: {"cut": "cfads"}
@@ -1757,8 +1732,8 @@ figures:
   Financing_Model.K19:DQ19: {"cut": "depreciation", "sign": -1}
   Financing_Model.K21:DQ21: {"driver": "src.repay_flag"}
   Financing_Model.G22: {"driver": "src.dscr", "at": 0}
-  Financing_Model.I22: {"cut": "memo_capacity", "total": true}
-  Financing_Model.K22:DQ22: {"cut": "memo_capacity"}
+  Financing_Model.I22: {"record": "waterfall.cfads", "total": true}
+  Financing_Model.K22:DQ22: {"record": "waterfall.cfads"}
   Financing_Model.K25:DQ25: {"driver": "src.spread"}
   Financing_Model.K26:DQ26: {"driver": "src.rate"}
   Financing_Model.K28:DQ28: {"driver": "src.period_rate"}
@@ -1801,6 +1776,10 @@ figures:
   Financing_Model.K81:DQ81: [{"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}]
   Financing_Model.K85:DQ85: {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}]}
   Financing_Model.K88:DQ88: {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}]}
+  Financing_Model.K82:DQ82: {"sum": [{"record": "funding.paid.up_front", "running": true}, {"record": "funding.paid.up_front", "sign": -1}]}
+  Financing_Model.K83:DQ83: {"sum": [{"ratio": [{"record": "funding.paid.up_front", "total": true}, {"driver": "src.one"}]}, {"record": "funding.paid.up_front", "running": true, "sign": -1}, {"record": "funding.paid.up_front"}]}
+  Financing_Model.K87:DQ87: {"sum": [{"record": "funding.paid.up_front", "running": true}, {"record": "funding.paid.up_front", "sign": -1}]}
+  Financing_Model.K89:DQ89: {"record": "funding.paid.up_front", "running": true}
   Financing_Model.K92:DQ92: {"sum": [{"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "funding.residual"}]}
   Financing_Model.G93: {"record": "funding.share", "at": 0}
   Financing_Model.K93:DQ93: {"cut": "senior_debt", "times": "src.pre_flag"}
@@ -1809,8 +1788,8 @@ figures:
   Financing_Model.K96:DQ96: {"cut": "senior_debt", "times": "src.pre_flag"}
   Financing_Model.K97:DQ97: {"cut": "equity_in"}
   Financing_Model.L101:DQ101: {"driver": "src.repay_counter", "periods": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110]}
-  Financing_Model.I102: {"cut": "memo_capacity", "total": true}
-  Financing_Model.K102:DQ102: {"cut": "memo_capacity"}
+  Financing_Model.I102: {"record": "waterfall.cfads", "total": true}
+  Financing_Model.K102:DQ102: {"record": "waterfall.cfads"}
   Financing_Model.I103: {"cut": "memo_interest_pnl", "sign": -1, "total": true}
   Financing_Model.K103:DQ103: {"cut": "memo_interest_pnl", "sign": -1}
   Financing_Model.I104: {"sum": [{"cut": "memo_owed_change", "sign": -1}, {"cut": "memo_debt_flow", "times": "src.draw_flag"}], "total": true}
@@ -1822,8 +1801,8 @@ figures:
   Financing_Model.K113:DQ113: {"opening": "senior.debt + senior.capitalised_interest"}
   Financing_Model.I114: {"cut": "senior_debt", "times": "src.pre_flag", "total": true}
   Financing_Model.K114:DQ114: {"cut": "senior_debt", "times": "src.pre_flag"}
-  Financing_Model.I115: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}], "total": true}
-  Financing_Model.K115:DQ115: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
+  Financing_Model.I115: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "waterfall.paid.sweep", "sign": -1}], "total": true}
+  Financing_Model.K115:DQ115: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "waterfall.paid.sweep", "sign": -1}]}
   Financing_Model.G116: {"driver": "src.sweep", "at": 0}
   Financing_Model.K117:DQ117: {"balance": "senior.debt + senior.capitalised_interest"}
   Financing_Model.K118:DQ118: {"driver": "src.period_rate"}
@@ -1860,28 +1839,36 @@ figures:
   Financing_Model.K167:DQ167: {"record": "tax.tax"}
   Financing_Model.K169:DQ169: {"cut": "cfads"}
   Financing_Model.K170:DQ170: {"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}
-  Financing_Model.K171:DQ171: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
-  Financing_Model.K172:DQ172: {"sum": [{"cut": "cfads"}, {"cut": "interest_pnl", "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest"}, {"cut": "senior_debt", "times": "src.pre_flag", "sign": -1}]}
-  Financing_Model.K175:DQ175: {"sum": [{"cut": "cfads"}, {"cut": "interest_pnl", "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest"}, {"cut": "senior_debt", "times": "src.pre_flag", "sign": -1}]}
+  Financing_Model.K171:DQ171: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "waterfall.paid.sweep", "sign": -1}]}
+  Financing_Model.K172:DQ172: {"sum": [{"cut": "cfads"}, {"cut": "interest_pnl", "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest"}, {"cut": "senior_debt", "times": "src.pre_flag", "sign": -1}, {"record": "waterfall.paid.sweep"}]}
+  Financing_Model.K175:DQ175: {"sum": [{"cut": "cfads"}, {"cut": "interest_pnl", "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest"}, {"cut": "senior_debt", "times": "src.pre_flag", "sign": -1}, {"record": "waterfall.paid.sweep"}]}
   Financing_Model.G176: {"driver": "src.sweep", "at": 0}
+  Financing_Model.K116:DQ116: {"record": "waterfall.paid.sweep"}
+  Financing_Model.K176:DQ176: {"record": "waterfall.paid.sweep"}
+  Financing_Model.K210:DQ210: {"record": "waterfall.paid.sweep"}
   Financing_Model.K177:DQ177: {"cut": "equity_out", "sign": -1}
   Financing_Model.K180:DQ180: {"cut": "equity", "sign": -1}
   Financing_Model.K183:DQ183: {"cut": "cfads"}
-  Financing_Model.K184:DQ184: {"sum": [{"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
-  Financing_Model.T185:CU185: {"record": "test.value", "periods": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88]}
+  Financing_Model.K184:DQ184: {"sum": [{"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "waterfall.paid.sweep", "sign": -1}]}
+  Financing_Model.T185:CU185: {"record": "test.value", "times": "src.dscr", "periods": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88]}
   Financing_Model.K187:DQ187: {"driver": "src.rate_index"}
   Financing_Model.G191: {"cut": "memo_debt_flow", "at": 8}
+  Financing_Model.G193: {"ratio": [{"cut": "cfads", "per": "src.rate_index", "total": true}, {"cut": "memo_debt_flow", "at": 8}], "at": 0}
   Financing_Model.K198:DQ198: {"opening": "senior.debt + senior.capitalised_interest"}
+  Financing_Model.T199:CU199: {"ratio": [{"sum": [{"ratio": [{"cut": "cfads", "per": "src.rate_index", "total": true}, {"driver": "src.one"}]}, {"cut": "cfads", "per": "src.rate_index", "running": true, "sign": -1}, {"cut": "cfads", "per": "src.rate_index"}]}, {"sum": [{"opening": "senior.debt + senior.capitalised_interest", "per": "src.rate_index_prev"}, {"driver": "src.plcr_pad"}]}], "periods": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88]}
+  Financing_Model.T213:CU213: {"ratio": [{"sum": [{"ratio": [{"cut": "cfads", "per": "src.rate_index", "total": true}, {"driver": "src.one"}]}, {"cut": "cfads", "per": "src.rate_index", "running": true, "sign": -1}, {"cut": "cfads", "per": "src.rate_index"}]}, {"sum": [{"opening": "senior.debt + senior.capitalised_interest", "per": "src.rate_index_prev"}, {"driver": "src.plcr_pad"}]}], "periods": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88]}
   Financing_Model.L201:DQ201: {"cut": "senior_all", "sign": -1, "periods": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110]}
   Financing_Model.K206:DQ206: {"cut": "cfads"}
-  Financing_Model.K207:DQ207: {"sum": [{"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
+  Financing_Model.K207:DQ207: {"sum": [{"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "waterfall.paid.sweep", "sign": -1}]}
   Summary.F7: {"cut": "memo_debt_flow", "at": 8, "per": "src.budget"}
+  Summary.F9: {"ratio": [{"cut": "cfads", "per": "src.rate_index", "total": true}, {"cut": "memo_debt_flow", "at": 8}], "at": 0}
   Summary.F11: {"driver": "src.dscr", "at": 0}
   Summary.F13: {"driver": "src.sweep", "at": 0}
   Summary.F16: {"driver": "src.merchant", "at": 0}
   Summary.F19: {"driver": "src.cost_per_kw", "at": 0}
   Summary.F20: {"driver": "src.om_fee_rate", "at": 0}
   Summary.F21: {"driver": "src.mcf_total", "at": 0}
+  Summary.F22: {"ratio": [{"cut": "revenue", "per": "src.nom_factor", "total": true}, {"driver": "src.gen_total", "per": "src.real_factor", "total": true}], "at": 0}
   Summary.F25:G25: [{"cut": "capex_dev", "sign": -1, "total": true}, {"cut": "capex_dev", "sign": -1, "total": true, "per": "src.Assumptions__F20"}]
   Summary.F26:G26: [{"cut": "capex_epc", "sign": -1, "total": true}, {"cut": "capex_epc", "sign": -1, "total": true, "per": "src.Assumptions__F20"}]
   Summary.F27:G27: [{"driver": "src.fixed_fin", "at": 0}, {"driver": "src.fixed_fin", "at": 0, "per": "src.Assumptions__F20"}]
@@ -2045,23 +2032,23 @@ notes: >
   XIRR over the period-end dates (Operating Model G146, G166; Financing Model G181, G202; Summary F2-F5;
   Scenario R6): the xirr measure takes typed ISO dates, which the traced gate refuses, and cannot take the
   generator's day counts. NORM.INV (Assumptions F29, F30): the formulas have no inverse normal. A minimum
-  over periods (Financing Model G185, Summary F8) and a ratio of two readings (the LCOE Operating Model G178
-  and Summary F22; the PLCR Financing Model G193, Summary F9, T199:CU199, T213:CU213): no reading divides
-  one reading by another. The up-front equity paid to date (Financing Model K82, K83, K87, K89): the
-  funding records it per period only (paid.up_front, nested), and a running total of a record field is
-  not a reading. The cash sweep paid (K116, K176, K210): the waterfall records tier payments only in its
-  nested 'paid' field (the sweep is nil here, and the engine's sweep share is one number for every period,
-  so F156's start date cannot be applied). The default line (K134-K137, K139, K173, K174, K208, K209): a
-  standby loan that lends the debt-service shortfall MAX(-K172, 0) at the senior rate and is repaid from
-  later surplus; the waterfall leaves a shortfall as arrears and deficit_funding refills only cash below
-  its floor. It never draws here, so K152, K170, K172 and K175 are read without its (nil) interest and
-  repayment, and K115 with the (nil) sweep inside it.
+  over periods (Financing Model G185, Summary F8): no reading takes the least of a series. The default line
+  (K134-K137, K139, K173, K174, K208, K209): a standby loan that lends the debt-service shortfall MAX(-K172,
+  0) at the senior rate and is repaid from later surplus; the waterfall leaves a shortfall as arrears and
+  deficit_funding refills only cash below its floor. It never draws here, so K152, K170, K172 and K175 are
+  read without its (nil) interest and repayment.
   Readings worth knowing: the kW cells that repeat F20 inside a row of costs (Assumptions G54:G67) are read
   as the operating capacity at COD; the typed euro/kW and euro/kW-year rates there and in Operating Model
   G78:G84 are read back from the books as each line's booked cost over its kW (or kW-years, years); G149
-  (F127 years) is the cost placed in service over a year's depreciation. Summary F27 is the sum of the
-  typed financing costs I55:I57 (a budget the books fund against, not a flow). The sizing ledger and the
-  crisis revenue are memo books (`memo`, `crisis`); a memo balance is read as the running total of its
-  cut. Twelfth roots (monthly degradation, inflation, discounting) are Newton steps truncated at 1e-30, and
-  the indices compounded from them are truncated the same way; the LOOKUPs over typed year rows are exact
-  column choices.
+  (F127 years) is the cost placed in service over a year's depreciation. Summary F27 is the sum of the typed
+  financing costs I55:I57 (a budget the books fund against, not a flow). The sizing ledger and the crisis
+  revenue are memo books (`memo`, `crisis`); a memo balance is read as the running total of its cut. The
+  LCOE (Operating Model G178 = G176 / G177, Summary F22) is the revenue over the nominal discount factor
+  over the MWh over the real one, both summed; the PLCR at COD (G193, Summary F9) the CFADS over the loan's
+  index, summed, over the sculpted debt; the forward PLCR (T199:CU199, T213:CU213) the CFADS still to come
+  over the index, over the opening debt over the previous index, plus `plcr_pad`, one outside the repayment
+  quarters where the debt is nil (those periods are not compared). The up-front equity to date (K82, K83,
+  K87, K89) is a running total of the funding record's paid.up_front, and the sweep (K116, K176, K210) the
+  waterfall record's paid.sweep. Twelfth roots (monthly degradation, inflation, discounting) are Newton
+  steps truncated at 1e-30, and the indices compounded from them are truncated the same way; the LOOKUPs
+  over typed year rows are exact column choices.

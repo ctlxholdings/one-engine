@@ -78,16 +78,25 @@
 #     year 1's cash at 124.513 against K221 116.101 (T221 910.900 -> 919.817), and the later cash, interest
 #     on cash, retained earnings, the exit's net debt and equity value, and the holders' streams and
 #     returns follow (sponsor C1062 18.2038% -> 18.4458%, management C1071 25.4076% -> 25.6642%,
-#     subordinated note C1019 18.1770% -> 18.2355%, preferred A C1042 17.0322% -> 17.0708%). The
-#     depreciation and amortisation schedules (rows 661-671, 686-694) agree.
+#     subordinated note C1019 18.1770% -> 18.2355%, preferred A C1042 17.0322% -> 17.0708%), and so do the
+#     ratios on them from year 1: ROIC K205 9.69% -> 7.71%, ROE K206 9.09% -> 6.52%, ROA K207 5.81% -> 4.13%
+#     (and K116:K118), the current and quick ratios K121 2.5701 -> 2.6497 and K122 2.4837 -> 2.5633, the asset
+#     turnovers K125 0.5275 -> 0.5322 and K126 8.1971 -> 8.3552, and basic and if-converted EPS K797
+#     1.6208 -> 1.1301 (K785:K795). The depreciation and amortisation schedules (rows 661-671, 686-694)
+#     agree.
 #
-# What the engine cannot read yet (figures not reported; see the report): ratios of one engine result over
-# another (interest coverage, returns on capital, liquidity, turnover, growth of net income, EPS after the
-# deal and the conversion tests on it, the holders' shares of the equity); the split of a loan's repayment
-# into its scheduled and its swept parts (both post to its debt account); the revolver's draws and
+# What the engine cannot read yet (figures not reported; see the report): growth of net income (a reading
+# lagged a period); the conversion tests on EPS after the deal (a comparison of two ratios) and the
+# convertible shares and FDSO counted on them; a preferred's scheduled redemption and sweep (no redemption
+# claim; nil here); the legacy debt's repayments after the close (not modelled kept: the case refinances it,
+# O870 = 1); the revolver's draws and
 # repayments while available; a mark-down's DTA and liability marks (rows 46-52, P38-P40) and a bargain
 # purchase (P41); the preferred's capitalised issue fee (rows 625-626); the no-deal, refinancing-only and
 # other LBO cases of the sources-and-uses table; the IRR of a nil stream (C1031, C1053).
+# A loan's scheduled repayment and its sweep are read from the waterfall's record of what it paid each
+# tier (waterfall.paid.<loan>.principal, .prepay). Ratios (covers, returns, liquidity, turnover, EPS, the holders' shares of the equity) are ratio readings; where
+# a denominator is nil outside the periods a figure compares, it carries a driver that is 1 only in those
+# periods (pad_pre4, pad_pre5, pad_not4).
 # Set aside: the year and case counters of the section headers (K59:T59, L141:T141 and the like, J825:O825).
 workbook: macabacus_lbo_short
 entity: company
@@ -1060,6 +1069,26 @@ case:
         lbo_N: LBO__N827 + 0
         adv_N: LBO__N827 * LBO__D857
         spf_N: LBO__N827 * LBO__D858
+        pad_pre5: (t <= 4) + 0
+        pad_pre4: (t <= 3) + 0
+        pad_not4: (t != 4) + 0
+        two: 1 + 1
+        e_typed_sum: LBO__E974 + LBO__E975 + LBO__E976 + LBO__E977 + LBO__E978 + LBO__E979 + LBO__E980 + LBO__E981 + LBO__E982 + LBO__E983 + LBO__E984
+        kept_G: 1 - (LBO__G974 + LBO__G975 + LBO__G976 + LBO__G977 + LBO__G978 + LBO__G979 + LBO__G980 + LBO__G981 + LBO__G982 + LBO__G983 + LBO__G984)
+        kept_H: kept_G * (1 - LBO__H984)
+        kickers_G: LBO__G974 + LBO__G975 + LBO__G976 + LBO__G977 + LBO__G978 + LBO__G979 + LBO__G980 + LBO__G981 + LBO__G982 + LBO__G983 + LBO__G984
+        perf_H: LBO__H984 + 0
+        e_typed974: LBO__E974 + 0
+        e_typed975: LBO__E975 + 0
+        e_typed976: LBO__E976 + 0
+        e_typed977: LBO__E977 + 0
+        e_typed978: LBO__E978 + 0
+        e_typed979: LBO__E979 + 0
+        e_typed980: LBO__E980 + 0
+        e_typed981: LBO__E981 + 0
+        e_typed982: LBO__E982 + 0
+        e_typed983: LBO__E983 + 0
+        e_typed984: LBO__E984 + 0
   opening:
     company:
       cash:
@@ -4735,7 +4764,7 @@ figures:
     opening: minority_interest
     at: 4
   LBO.D33:F33:
-  - sum: &id097
+  - sum: &id149
     - &id010
       balance: cash
     - &id011
@@ -5311,41 +5340,51 @@ figures:
     - 13
     - 14
   LBO.K81:T81:
-    sum: &id093
+    sum: &id121
     - &id023
       cut: int_legacy
       sign: -1
     - &id024
       cut: int_revolver
       sign: -1
-    - cut: int_term_loan_a
+    - &id045
+      cut: int_term_loan_a
       sign: -1
       times: src.senior_881
-    - cut: int_term_loan_b
+    - &id046
+      cut: int_term_loan_b
       sign: -1
       times: src.senior_882
-    - cut: int_senior_note
+    - &id047
+      cut: int_senior_note
       sign: -1
       times: src.senior_883
-    - cut: int_subordinated_note
+    - &id048
+      cut: int_subordinated_note
       sign: -1
       times: src.senior_884
-    - cut: int_mezzanine
+    - &id049
+      cut: int_mezzanine
       sign: -1
       times: src.senior_885
-    - cut: int_seller_note
+    - &id050
+      cut: int_seller_note
       sign: -1
       times: src.senior_886
-    - cut: int_convertible_bond
+    - &id051
+      cut: int_convertible_bond
       sign: -1
       times: src.senior_887
-    - cut: int_debt_8
+    - &id052
+      cut: int_debt_8
       sign: -1
       times: src.senior_888
-    - change: preferred_a.dividends
+    - &id053
+      change: preferred_a.dividends
       sign: -1
       times: src.senior_889
-    - change: preferred_b.dividends
+    - &id054
+      change: preferred_b.dividends
       sign: -1
       times: src.senior_890
     periods:
@@ -5437,7 +5476,7 @@ figures:
     - 13
     - 14
   LBO.K83:T83:
-    sum: &id095
+    sum: &id123
     - &id035
       cut: int_term_loan_a
       sign: -1
@@ -5525,7 +5564,7 @@ figures:
     - 13
     - 14
   LBO.K86:T86:
-    sum: &id094
+    sum: &id122
     - *id023
     - *id024
     - *id025
@@ -5638,6 +5677,297 @@ figures:
     - 12
     - 13
     - 14
+  LBO.K97:T97:
+    ratio:
+    - &id055
+      cut: ebitda
+    - sum:
+      - *id023
+      - *id024
+      - *id045
+      - *id046
+      - *id047
+      - *id048
+      - *id049
+      - *id050
+      - *id051
+      - *id052
+      - *id053
+      - *id054
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K98:T98:
+    ratio:
+    - *id055
+    - sum:
+      - *id023
+      - *id024
+      - *id025
+      - *id026
+      - *id027
+      - *id028
+      - *id029
+      - *id030
+      - *id031
+      - *id032
+      - *id033
+      - *id034
+      - *id035
+      - *id036
+      - *id037
+      - *id038
+      - *id039
+      - *id040
+      - *id041
+      - *id042
+      - *id043
+      - *id044
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K99:T99:
+    ratio:
+    - *id055
+    - sum:
+      - *id023
+      - *id024
+      - *id025
+      - *id026
+      - *id027
+      - *id028
+      - *id029
+      - *id030
+      - *id031
+      - *id032
+      - *id033
+      - *id034
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K101:T101:
+    ratio:
+    - &id056
+      sum:
+      - *id055
+      - &id057
+        cut: capex
+    - sum:
+      - *id023
+      - *id024
+      - *id045
+      - *id046
+      - *id047
+      - *id048
+      - *id049
+      - *id050
+      - *id051
+      - *id052
+      - *id053
+      - *id054
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K102:T102:
+    ratio:
+    - *id056
+    - sum:
+      - *id023
+      - *id024
+      - *id025
+      - *id026
+      - *id027
+      - *id028
+      - *id029
+      - *id030
+      - *id031
+      - *id032
+      - *id033
+      - *id034
+      - *id035
+      - *id036
+      - *id037
+      - *id038
+      - *id039
+      - *id040
+      - *id041
+      - *id042
+      - *id043
+      - *id044
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K103:T103:
+    ratio:
+    - *id056
+    - sum:
+      - *id023
+      - *id024
+      - *id025
+      - *id026
+      - *id027
+      - *id028
+      - *id029
+      - *id030
+      - *id031
+      - *id032
+      - *id033
+      - *id034
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K105:T105:
+    ratio:
+    - &id058
+      sum:
+      - *id055
+      - *id057
+      - cut: wc
+    - sum:
+      - *id023
+      - *id024
+      - *id045
+      - *id046
+      - *id047
+      - *id048
+      - *id049
+      - *id050
+      - *id051
+      - *id052
+      - *id053
+      - *id054
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K106:T106:
+    ratio:
+    - *id058
+    - sum:
+      - *id023
+      - *id024
+      - *id025
+      - *id026
+      - *id027
+      - *id028
+      - *id029
+      - *id030
+      - *id031
+      - *id032
+      - *id033
+      - *id034
+      - *id035
+      - *id036
+      - *id037
+      - *id038
+      - *id039
+      - *id040
+      - *id041
+      - *id042
+      - *id043
+      - *id044
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K107:T107:
+    ratio:
+    - *id058
+    - sum:
+      - *id023
+      - *id024
+      - *id025
+      - *id026
+      - *id027
+      - *id028
+      - *id029
+      - *id030
+      - *id031
+      - *id032
+      - *id033
+      - *id034
+      - driver: src.pad_pre5
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.K112:T112:
     sum:
     - driver: src.one
@@ -5698,6 +6028,158 @@ figures:
     - balance: legacy_debt + revolver.debt + revolver.capitalised_interest + term_loan_a.debt + term_loan_a.capitalised_interest + term_loan_b.debt + term_loan_b.capitalised_interest + senior_note.debt + senior_note.capitalised_interest + subordinated_note.debt + subordinated_note.capitalised_interest + mezzanine.debt + mezzanine.capitalised_interest + seller_note.debt + seller_note.capitalised_interest + convertible_bond.debt + convertible_bond.capitalised_interest + debt_8.debt + debt_8.capitalised_interest + capital_leases
       per: src.debt_close
       sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K116:T116:
+    ratio: &id072
+    - sum:
+      - cut: ebit
+      - cut: eq_income
+      - cut: amfin
+      - cut: other
+      - cut: tax
+    - sum:
+      - &id068
+        balance: legacy_debt + revolver.debt + revolver.capitalised_interest + term_loan_a.debt + term_loan_a.capitalised_interest + term_loan_b.debt + term_loan_b.capitalised_interest + senior_note.debt + senior_note.capitalised_interest + subordinated_note.debt + subordinated_note.capitalised_interest + mezzanine.debt + mezzanine.capitalised_interest + seller_note.debt + seller_note.capitalised_interest + convertible_bond.debt + convertible_bond.capitalised_interest + debt_8.debt + debt_8.capitalised_interest
+      - &id069
+        balance: minority_interest
+      - &id070
+        balance: preferred_a.capital + preferred_a.discount
+      - &id071
+        balance: preferred_b.capital + preferred_b.discount
+      - &id059
+        balance: common_par
+      - &id060
+        balance: apic + conversion_capital + sponsor.capital + management.capital + preferred_a_issue_costs + preferred_b_issue_costs
+      - &id061
+        balance: retained_earnings + refinancing_tax + sales - cogs - sga - dep_existing - amort_existing - sbc - interest_legacy + interest_income - amort_fin_legacy - other_expense + equity_income - tax_expense - tax_drd_current - tax_drd_deferred - dep_capex_y1 - dep_capex_y2 - dep_capex_y3 - dep_capex_y4 - dep_capex_y5 - dep_capex_y6 - dep_capex_y7 - dep_capex_y8 - dep_capex_y9 - dep_capex_y10 - dep_mark - amort_mark - transaction_costs + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest
+          - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense + preferred_a.dividends + preferred_b.dividends + sponsor.distributions + management.distributions
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K117:T117:
+    ratio: &id073
+    - &id062
+      sum: &id066
+      - &id080
+        cut: ni
+      - &id081
+        change: preferred_a.dividends
+      - &id082
+        change: preferred_b.dividends
+      - &id083
+        change: minority_interest
+        sign: -1
+    - sum:
+      - *id059
+      - *id060
+      - *id061
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K118:T118:
+    ratio: &id074
+    - *id062
+    - &id064
+      balance: cash + receivables + inventories + dta_current + prepaid + equity_investments + capitalised_costs_legacy + goodwill + intangibles + operating_rights + other_lt_assets + ppe_gross + accumulated_depreciation + ppe_disposals + ppe_writeup + intangibles_writeup + deal.purchase + revolver.deferred_fees + revolver_fee.deferred + term_loan_a.deferred_fees + term_loan_a_fee.deferred + term_loan_b.deferred_fees + term_loan_b_fee.deferred + senior_note.deferred_fees + senior_note_fee.deferred + subordinated_note.deferred_fees + subordinated_note_fee.deferred + mezzanine.deferred_fees + mezzanine_fee.deferred + seller_note.deferred_fees + seller_note_fee.deferred + convertible_bond.deferred_fees + convertible_bond_fee.deferred + debt_8.deferred_fees + debt_8_fee.deferred
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.J121:T121:
+    ratio:
+    - balance: cash + receivables + inventories + dta_current + prepaid
+    - &id063
+      balance: short_term_debt + payables + accrued + client_deposits + other_current_liabilities
+    periods:
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.J122:T122:
+    ratio:
+    - sum:
+      - &id150
+        balance: cash
+      - &id151
+        balance: receivables
+    - *id063
+    periods:
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K125:T125:
+    ratio:
+    - &id065
+      cut: sales
+      times: src.two
+    - sum:
+      - *id064
+      - opening: cash + receivables + inventories + dta_current + prepaid + equity_investments + capitalised_costs_legacy + goodwill + intangibles + operating_rights + other_lt_assets + ppe_gross + accumulated_depreciation + ppe_disposals + ppe_writeup + intangibles_writeup + deal.purchase + revolver.deferred_fees + revolver_fee.deferred + term_loan_a.deferred_fees + term_loan_a_fee.deferred + term_loan_b.deferred_fees + term_loan_b_fee.deferred + senior_note.deferred_fees + senior_note_fee.deferred + subordinated_note.deferred_fees + subordinated_note_fee.deferred + mezzanine.deferred_fees + mezzanine_fee.deferred + seller_note.deferred_fees + seller_note_fee.deferred + convertible_bond.deferred_fees + convertible_bond_fee.deferred + debt_8.deferred_fees + debt_8_fee.deferred
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K126:T126:
+    ratio:
+    - *id065
+    - sum:
+      - balance: ppe_gross + ppe_writeup + accumulated_depreciation + ppe_disposals
+      - opening: ppe_gross + ppe_writeup + accumulated_depreciation + ppe_disposals
     periods:
     - 5
     - 6
@@ -6362,23 +6844,14 @@ figures:
     - 13
     - 14
   LBO.E176:H176:
-    sum: &id045
-    - &id052
-      cut: ni
-    - &id053
-      change: preferred_a.dividends
-    - &id054
-      change: preferred_b.dividends
-    - &id055
-      change: minority_interest
-      sign: -1
+    sum: *id066
     periods:
     - 0
     - 1
     - 2
     - 3
   LBO.K176:T176:
-    sum: *id045
+    sum: *id066
     periods:
     - 5
     - 6
@@ -6679,7 +7152,7 @@ figures:
     - 13
     - 14
   LBO.E203:H203:
-    sum: &id046
+    sum: &id067
     - cut: ni
       per: src.sales_safe
     - change: preferred_a.dividends
@@ -6695,7 +7168,249 @@ figures:
     - 2
     - 3
   LBO.K203:T203:
-    sum: *id046
+    sum: *id067
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.E205:H205:
+  - ratio:
+    - sum:
+      - cut: ebit
+        times: src.LBO__E205__n1
+      - cut: eq_income
+        times: src.LBO__E205__n1
+      - cut: amfin
+        times: src.LBO__E205__n1
+      - cut: other
+        times: src.LBO__E205__n1
+      - cut: tax
+        times: src.LBO__E205__n1
+    - sum:
+      - *id068
+      - *id069
+      - *id070
+      - *id071
+      - *id059
+      - *id060
+      - *id061
+    at: 0
+  - ratio:
+    - sum:
+      - cut: ebit
+        times: src.LBO__F205__n1
+      - cut: eq_income
+        times: src.LBO__F205__n1
+      - cut: amfin
+        times: src.LBO__F205__n1
+      - cut: other
+        times: src.LBO__F205__n1
+      - cut: tax
+        times: src.LBO__F205__n1
+    - sum:
+      - *id068
+      - *id069
+      - *id070
+      - *id071
+      - *id059
+      - *id060
+      - *id061
+    at: 1
+  - ratio:
+    - sum:
+      - cut: ebit
+        times: src.LBO__G205__n1
+      - cut: eq_income
+        times: src.LBO__G205__n1
+      - cut: amfin
+        times: src.LBO__G205__n1
+      - cut: other
+        times: src.LBO__G205__n1
+      - cut: tax
+        times: src.LBO__G205__n1
+    - sum:
+      - *id068
+      - *id069
+      - *id070
+      - *id071
+      - *id059
+      - *id060
+      - *id061
+    at: 2
+  - ratio:
+    - sum:
+      - cut: ebit
+        times: src.LBO__H205__n1
+      - cut: eq_income
+        times: src.LBO__H205__n1
+      - cut: amfin
+        times: src.LBO__H205__n1
+      - cut: other
+        times: src.LBO__H205__n1
+      - cut: tax
+        times: src.LBO__H205__n1
+    - sum:
+      - *id068
+      - *id069
+      - *id070
+      - *id071
+      - *id059
+      - *id060
+      - *id061
+    at: 3
+  LBO.K205:T205:
+    ratio: *id072
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.E206:H206:
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__E206__n1
+      - change: preferred_a.dividends
+        times: src.LBO__E206__n1
+      - change: preferred_b.dividends
+        times: src.LBO__E206__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__E206__n1
+    - sum:
+      - *id059
+      - *id060
+      - *id061
+    at: 0
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__F206__n1
+      - change: preferred_a.dividends
+        times: src.LBO__F206__n1
+      - change: preferred_b.dividends
+        times: src.LBO__F206__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__F206__n1
+    - sum:
+      - *id059
+      - *id060
+      - *id061
+    at: 1
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__G206__n1
+      - change: preferred_a.dividends
+        times: src.LBO__G206__n1
+      - change: preferred_b.dividends
+        times: src.LBO__G206__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__G206__n1
+    - sum:
+      - *id059
+      - *id060
+      - *id061
+    at: 2
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__H206__n1
+      - change: preferred_a.dividends
+        times: src.LBO__H206__n1
+      - change: preferred_b.dividends
+        times: src.LBO__H206__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__H206__n1
+    - sum:
+      - *id059
+      - *id060
+      - *id061
+    at: 3
+  LBO.K206:T206:
+    ratio: *id073
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.E207:H207:
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__E207__n1
+      - change: preferred_a.dividends
+        times: src.LBO__E207__n1
+      - change: preferred_b.dividends
+        times: src.LBO__E207__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__E207__n1
+    - *id064
+    at: 0
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__F207__n1
+      - change: preferred_a.dividends
+        times: src.LBO__F207__n1
+      - change: preferred_b.dividends
+        times: src.LBO__F207__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__F207__n1
+    - *id064
+    at: 1
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__G207__n1
+      - change: preferred_a.dividends
+        times: src.LBO__G207__n1
+      - change: preferred_b.dividends
+        times: src.LBO__G207__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__G207__n1
+    - *id064
+    at: 2
+  - ratio:
+    - sum:
+      - cut: ni
+        times: src.LBO__H207__n1
+      - change: preferred_a.dividends
+        times: src.LBO__H207__n1
+      - change: preferred_b.dividends
+        times: src.LBO__H207__n1
+      - change: minority_interest
+        sign: -1
+        times: src.LBO__H207__n1
+    - *id064
+    at: 3
+  LBO.K207:T207:
+    ratio: *id074
     periods:
     - 5
     - 6
@@ -6916,84 +7631,84 @@ figures:
   - balance: cash + receivables + inventories + dta_current + prepaid
     at: 14
   LBO.E227:T227:
-  - sum: &id047
-    - &id108
+  - sum: &id075
+    - &id160
       balance: ppe_gross + ppe_writeup
-    - &id109
+    - &id161
       cumulative: dep_mark
       sign: -1
     at: 0
-  - sum: *id047
+  - sum: *id075
     at: 1
-  - sum: *id047
+  - sum: *id075
     at: 2
-  - sum: *id047
+  - sum: *id075
     at: 3
   - sum:
     - change: ppe_gross + ppe_writeup
     - sign: -1
       cut: dep_mark
     at: 4
-  - sum: *id047
+  - sum: *id075
     at: 4
-  - sum: *id047
+  - sum: *id075
     at: 5
-  - sum: *id047
+  - sum: *id075
     at: 6
-  - sum: *id047
+  - sum: *id075
     at: 7
-  - sum: *id047
+  - sum: *id075
     at: 8
-  - sum: *id047
+  - sum: *id075
     at: 9
-  - sum: *id047
+  - sum: *id075
     at: 10
-  - sum: *id047
+  - sum: *id075
     at: 11
-  - sum: *id047
+  - sum: *id075
     at: 12
-  - sum: *id047
+  - sum: *id075
     at: 13
-  - sum: *id047
+  - sum: *id075
     at: 14
   LBO.E228:T228:
-  - sum: &id048
-    - &id110
+  - sum: &id076
+    - &id162
       balance: accumulated_depreciation
-    - &id111
+    - &id163
       cumulative: dep_mark
     at: 0
-  - sum: *id048
+  - sum: *id076
     at: 1
-  - sum: *id048
+  - sum: *id076
     at: 2
-  - sum: *id048
+  - sum: *id076
     at: 3
   - sum:
     - change: accumulated_depreciation
     - cut: dep_mark
     at: 4
-  - sum: *id048
+  - sum: *id076
     at: 4
-  - sum: *id048
+  - sum: *id076
     at: 5
-  - sum: *id048
+  - sum: *id076
     at: 6
-  - sum: *id048
+  - sum: *id076
     at: 7
-  - sum: *id048
+  - sum: *id076
     at: 8
-  - sum: *id048
+  - sum: *id076
     at: 9
-  - sum: *id048
+  - sum: *id076
     at: 10
-  - sum: *id048
+  - sum: *id076
     at: 11
-  - sum: *id048
+  - sum: *id076
     at: 12
-  - sum: *id048
+  - sum: *id076
     at: 13
-  - sum: *id048
+  - sum: *id076
     at: 14
   LBO.F229:T229:
   - balance: ppe_gross + ppe_writeup + accumulated_depreciation + ppe_disposals
@@ -8228,18 +8943,18 @@ figures:
       + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense
     at: 14
   LBO.E270:T270:
-  - sum: &id049
+  - sum: &id077
     - balance: short_term_debt + payables + accrued + client_deposits + other_current_liabilities + capital_leases + legacy_debt + net_dtl + other_lt_liabilities + revolver.debt + revolver.capitalised_interest + revolver.interest_payable + revolver.fee_payable + term_loan_a.debt + term_loan_a.capitalised_interest + term_loan_a.interest_payable + term_loan_a.fee_payable + term_loan_b.debt + term_loan_b.capitalised_interest + term_loan_b.interest_payable + term_loan_b.fee_payable + senior_note.debt + senior_note.capitalised_interest + senior_note.interest_payable + senior_note.fee_payable + subordinated_note.debt + subordinated_note.capitalised_interest + subordinated_note.interest_payable + subordinated_note.fee_payable + mezzanine.debt + mezzanine.capitalised_interest + mezzanine.interest_payable + mezzanine.fee_payable + seller_note.debt + seller_note.capitalised_interest + seller_note.interest_payable + seller_note.fee_payable + convertible_bond.debt + convertible_bond.capitalised_interest
         + convertible_bond.interest_payable + convertible_bond.fee_payable + debt_8.debt + debt_8.capitalised_interest + debt_8.interest_payable + debt_8.fee_payable + preferred_a.dividend_payable + preferred_b.dividend_payable + tax_payable + minority_interest + common_par + apic + retained_earnings + conversion_capital + refinancing_tax + preferred_a_issue_costs + preferred_b_issue_costs + preferred_a.capital + preferred_a.dividends + preferred_a.discount + preferred_b.capital + preferred_b.dividends + preferred_b.discount + sponsor.capital + sponsor.distributions + management.capital + management.distributions + sales - cogs - sga - dep_existing - amort_existing - sbc - interest_legacy + interest_income - amort_fin_legacy - other_expense + equity_income - tax_expense - tax_drd_current - tax_drd_deferred - dep_capex_y1 - dep_capex_y2 - dep_capex_y3 - dep_capex_y4 - dep_capex_y5 - dep_capex_y6 - dep_capex_y7 - dep_capex_y8 - dep_capex_y9 - dep_capex_y10 - dep_mark - amort_mark - transaction_costs
         + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense
     - balance: cash + receivables + inventories + dta_current + prepaid + equity_investments + capitalised_costs_legacy + goodwill + intangibles + operating_rights + other_lt_assets + ppe_gross + accumulated_depreciation + ppe_disposals + ppe_writeup + intangibles_writeup + deal.purchase + revolver.deferred_fees + revolver_fee.deferred + term_loan_a.deferred_fees + term_loan_a_fee.deferred + term_loan_b.deferred_fees + term_loan_b_fee.deferred + senior_note.deferred_fees + senior_note_fee.deferred + subordinated_note.deferred_fees + subordinated_note_fee.deferred + mezzanine.deferred_fees + mezzanine_fee.deferred + seller_note.deferred_fees + seller_note_fee.deferred + convertible_bond.deferred_fees + convertible_bond_fee.deferred + debt_8.deferred_fees + debt_8_fee.deferred
       sign: -1
     at: 0
-  - sum: *id049
+  - sum: *id077
     at: 1
-  - sum: *id049
+  - sum: *id077
     at: 2
-  - sum: *id049
+  - sum: *id077
     at: 3
   - sum:
     - change: short_term_debt + payables + accrued + client_deposits + other_current_liabilities + capital_leases + legacy_debt + net_dtl + other_lt_liabilities + revolver.debt + revolver.capitalised_interest + revolver.interest_payable + revolver.fee_payable + term_loan_a.debt + term_loan_a.capitalised_interest + term_loan_a.interest_payable + term_loan_a.fee_payable + term_loan_b.debt + term_loan_b.capitalised_interest + term_loan_b.interest_payable + term_loan_b.fee_payable + senior_note.debt + senior_note.capitalised_interest + senior_note.interest_payable + senior_note.fee_payable + subordinated_note.debt + subordinated_note.capitalised_interest + subordinated_note.interest_payable + subordinated_note.fee_payable + mezzanine.debt + mezzanine.capitalised_interest + mezzanine.interest_payable + mezzanine.fee_payable + seller_note.debt + seller_note.capitalised_interest + seller_note.interest_payable + seller_note.fee_payable + convertible_bond.debt + convertible_bond.capitalised_interest
@@ -8248,36 +8963,36 @@ figures:
     - sign: -1
       change: cash + receivables + inventories + dta_current + prepaid + equity_investments + capitalised_costs_legacy + goodwill + intangibles + operating_rights + other_lt_assets + ppe_gross + accumulated_depreciation + ppe_disposals + ppe_writeup + intangibles_writeup + deal.purchase + revolver.deferred_fees + revolver_fee.deferred + term_loan_a.deferred_fees + term_loan_a_fee.deferred + term_loan_b.deferred_fees + term_loan_b_fee.deferred + senior_note.deferred_fees + senior_note_fee.deferred + subordinated_note.deferred_fees + subordinated_note_fee.deferred + mezzanine.deferred_fees + mezzanine_fee.deferred + seller_note.deferred_fees + seller_note_fee.deferred + convertible_bond.deferred_fees + convertible_bond_fee.deferred + debt_8.deferred_fees + debt_8_fee.deferred
     at: 4
-  - sum: *id049
+  - sum: *id077
     at: 4
-  - sum: *id049
+  - sum: *id077
     at: 5
-  - sum: *id049
+  - sum: *id077
     at: 6
-  - sum: *id049
+  - sum: *id077
     at: 7
-  - sum: *id049
+  - sum: *id077
     at: 8
-  - sum: *id049
+  - sum: *id077
     at: 9
-  - sum: *id049
+  - sum: *id077
     at: 10
-  - sum: *id049
+  - sum: *id077
     at: 11
-  - sum: *id049
+  - sum: *id077
     at: 12
-  - sum: *id049
+  - sum: *id077
     at: 13
-  - sum: *id049
+  - sum: *id077
     at: 14
   LBO.F282:H282:
-    sum: *id045
+    sum: *id066
     periods:
     - 1
     - 2
     - 3
   LBO.K282:T282:
-    sum: *id045
+    sum: *id066
     periods:
     - 5
     - 6
@@ -8413,30 +9128,30 @@ figures:
     - 13
     - 14
   LBO.F289:H289:
-    sum: &id050
-    - &id056
+    sum: &id078
+    - &id084
       cut: dep
       sign: -1
-    - &id057
+    - &id085
       cut: amort
       sign: -1
-    - &id058
+    - &id086
       cut: amfin
       sign: -1
-    - &id059
+    - &id087
       cut: sbc
       sign: -1
-    - &id060
+    - &id088
       cut: eq_income
       sign: -1
-    - &id061
+    - &id089
       cut: eq_dividends
     periods:
     - 1
     - 2
     - 3
   LBO.K289:T289:
-    sum: *id050
+    sum: *id078
     periods:
     - 5
     - 6
@@ -8527,22 +9242,22 @@ figures:
     - 13
     - 14
   LBO.F294:H294:
-    sum: &id051
-    - &id062
+    sum: &id079
+    - &id090
       cut: wc
-    - &id063
+    - &id091
       change: net_dtl
-    - &id064
+    - &id092
       change: other_lt_assets
       sign: -1
-    - &id065
+    - &id093
       change: other_lt_liabilities
     periods:
     - 1
     - 2
     - 3
   LBO.K294:T294:
-    sum: *id051
+    sum: *id079
     periods:
     - 5
     - 6
@@ -8555,27 +9270,27 @@ figures:
     - 13
     - 14
   LBO.F295:H295:
-    sum: &id066
-    - *id052
-    - *id053
-    - *id054
-    - *id055
-    - *id056
-    - *id057
-    - *id058
-    - *id059
-    - *id060
-    - *id061
-    - *id062
-    - *id063
-    - *id064
-    - *id065
+    sum: &id094
+    - *id080
+    - *id081
+    - *id082
+    - *id083
+    - *id084
+    - *id085
+    - *id086
+    - *id087
+    - *id088
+    - *id089
+    - *id090
+    - *id091
+    - *id092
+    - *id093
     periods:
     - 1
     - 2
     - 3
   LBO.K295:T295:
-    sum: *id066
+    sum: *id094
     periods:
     - 5
     - 6
@@ -8612,17 +9327,17 @@ figures:
     - 2
     - 3
   LBO.F301:H301:
-    sum: &id067
-    - &id069
+    sum: &id095
+    - &id097
       cut: capex
-    - &id070
+    - &id098
       cut: disposals
     periods:
     - 1
     - 2
     - 3
   LBO.K301:T301:
-    sum: *id067
+    sum: *id095
     periods:
     - 5
     - 6
@@ -8870,39 +9585,39 @@ figures:
     - 13
     - 14
   LBO.F318:H318:
-    sum: &id068
-    - &id072
+    sum: &id096
+    - &id100
       cut: debt_revolver
-    - &id073
+    - &id101
       cut: legacy_flow
-    - &id074
+    - &id102
       cut: debt_term_loan_a
-    - &id075
+    - &id103
       cut: debt_term_loan_b
-    - &id076
+    - &id104
       cut: debt_senior_note
-    - &id077
+    - &id105
       cut: debt_subordinated_note
-    - &id078
+    - &id106
       cut: debt_mezzanine
-    - &id079
+    - &id107
       cut: debt_seller_note
-    - &id080
+    - &id108
       cut: debt_convertible_bond
-    - &id081
+    - &id109
       cut: debt_debt_8
-    - &id082
+    - &id110
       cut: cap_preferred_a
-    - &id083
+    - &id111
       cut: cap_preferred_b
-    - &id084
+    - &id112
       cut: common_div
     periods:
     - 1
     - 2
     - 3
   LBO.K318:T318:
-    sum: *id068
+    sum: *id096
     periods:
     - 5
     - 6
@@ -8915,29 +9630,29 @@ figures:
     - 13
     - 14
   LBO.F320:H320:
-    sum: &id071
-    - *id069
-    - *id070
-    - *id052
-    - *id053
-    - *id054
-    - *id055
-    - *id056
-    - *id057
-    - *id058
-    - *id059
-    - *id060
-    - *id061
-    - *id062
-    - *id063
-    - *id064
-    - *id065
+    sum: &id099
+    - *id097
+    - *id098
+    - *id080
+    - *id081
+    - *id082
+    - *id083
+    - *id084
+    - *id085
+    - *id086
+    - *id087
+    - *id088
+    - *id089
+    - *id090
+    - *id091
+    - *id092
+    - *id093
     periods:
     - 1
     - 2
     - 3
   LBO.K320:T320:
-    sum: *id071
+    sum: *id099
     periods:
     - 5
     - 6
@@ -8950,42 +9665,42 @@ figures:
     - 13
     - 14
   LBO.F321:H321:
-    sum: &id085
-    - *id072
-    - *id073
-    - *id074
-    - *id075
-    - *id076
-    - *id077
-    - *id078
-    - *id079
+    sum: &id113
+    - *id100
+    - *id101
+    - *id102
+    - *id103
+    - *id104
+    - *id105
+    - *id106
+    - *id107
+    - *id108
+    - *id109
+    - *id110
+    - *id111
+    - *id112
+    - *id097
+    - *id098
     - *id080
     - *id081
     - *id082
     - *id083
     - *id084
-    - *id069
-    - *id070
-    - *id052
-    - *id053
-    - *id054
-    - *id055
-    - *id056
-    - *id057
-    - *id058
-    - *id059
-    - *id060
-    - *id061
-    - *id062
-    - *id063
-    - *id064
-    - *id065
+    - *id085
+    - *id086
+    - *id087
+    - *id088
+    - *id089
+    - *id090
+    - *id091
+    - *id092
+    - *id093
     periods:
     - 1
     - 2
     - 3
   LBO.K321:T321:
-    sum: *id085
+    sum: *id113
     periods:
     - 5
     - 6
@@ -9328,43 +10043,43 @@ figures:
   - balance: payables + accrued + client_deposits + other_current_liabilities
     at: 14
   LBO.E343:T343:
-  - sum: &id086
+  - sum: &id114
     - balance: receivables + inventories + dta_current + prepaid
     - balance: payables + accrued + client_deposits + other_current_liabilities
       sign: -1
     at: 0
-  - sum: *id086
+  - sum: *id114
     at: 1
-  - sum: *id086
+  - sum: *id114
     at: 2
-  - sum: *id086
+  - sum: *id114
     at: 3
   - sum:
     - change: receivables + inventories + dta_current + prepaid
     - change: payables + accrued + client_deposits + other_current_liabilities
       sign: -1
     at: 4
-  - sum: *id086
+  - sum: *id114
     at: 4
-  - sum: *id086
+  - sum: *id114
     at: 5
-  - sum: *id086
+  - sum: *id114
     at: 6
-  - sum: *id086
+  - sum: *id114
     at: 7
-  - sum: *id086
+  - sum: *id114
     at: 8
-  - sum: *id086
+  - sum: *id114
     at: 9
-  - sum: *id086
+  - sum: *id114
     at: 10
-  - sum: *id086
+  - sum: *id114
     at: 11
-  - sum: *id086
+  - sum: *id114
     at: 12
-  - sum: *id086
+  - sum: *id114
     at: 13
-  - sum: *id086
+  - sum: *id114
     at: 14
   LBO.E347:H347:
     cut: sales
@@ -9439,7 +10154,7 @@ figures:
     sign: -1
     at: 14
   LBO.F349:H349:
-    sum: &id087
+    sum: &id115
     - change: inventories
     - cut: cogs
       sign: -1
@@ -9454,25 +10169,25 @@ figures:
     - cumulative: wc_inventories
       sign: -1
     at: 3
-  - sum: *id087
+  - sum: *id115
     at: 5
-  - sum: *id087
+  - sum: *id115
     at: 6
-  - sum: *id087
+  - sum: *id115
     at: 7
-  - sum: *id087
+  - sum: *id115
     at: 8
-  - sum: *id087
+  - sum: *id115
     at: 9
-  - sum: *id087
+  - sum: *id115
     at: 10
-  - sum: *id087
+  - sum: *id115
     at: 11
-  - sum: *id087
+  - sum: *id115
     at: 12
-  - sum: *id087
+  - sum: *id115
     at: 13
-  - sum: *id087
+  - sum: *id115
     at: 14
   LBO.E351:H351:
     driver: src.r_receivables
@@ -9643,7 +10358,7 @@ figures:
     - 13
     - 14
   LBO.F361:H361:
-    sum: &id088
+    sum: &id116
     - balance: receivables
       times: src.k361
     - opening: receivables
@@ -9653,7 +10368,7 @@ figures:
     - 2
     - 3
   LBO.K361:T361:
-    sum: *id088
+    sum: *id116
     periods:
     - 5
     - 6
@@ -9666,7 +10381,7 @@ figures:
     - 13
     - 14
   LBO.F362:H362:
-    sum: &id089
+    sum: &id117
     - balance: payables
       times: src.k362
     - opening: payables
@@ -9676,7 +10391,7 @@ figures:
     - 2
     - 3
   LBO.K362:T362:
-    sum: *id089
+    sum: *id117
     periods:
     - 5
     - 6
@@ -9689,7 +10404,7 @@ figures:
     - 13
     - 14
   LBO.F363:H363:
-    sum: &id090
+    sum: &id118
     - balance: inventories
       times: src.k363
     - opening: inventories
@@ -9699,7 +10414,7 @@ figures:
     - 2
     - 3
   LBO.K363:T363:
-    sum: *id090
+    sum: *id118
     periods:
     - 5
     - 6
@@ -9773,7 +10488,7 @@ figures:
     - 13
     - 14
   LBO.F383:H383:
-    sum: &id091
+    sum: &id119
     - cut: drd_current
       sign: -1
     - cut: drd_deferred
@@ -9783,7 +10498,7 @@ figures:
     - 2
     - 3
   LBO.K383:T383:
-    sum: *id091
+    sum: *id119
     periods:
     - 5
     - 6
@@ -9796,7 +10511,7 @@ figures:
     - 13
     - 14
   LBO.F385:H385:
-    sum: &id092
+    sum: &id120
     - cut: eq_income
       times: src.rate209
     - cut: drd_current
@@ -9806,7 +10521,7 @@ figures:
     - 2
     - 3
   LBO.K385:T385:
-    sum: *id092
+    sum: *id120
     periods:
     - 5
     - 6
@@ -10016,7 +10731,7 @@ figures:
     - 13
     - 14
   LBO.K415:T415:
-    sum: *id071
+    sum: *id099
     periods:
     - 5
     - 6
@@ -10032,22 +10747,134 @@ figures:
     sum:
     - opening: cash
     - driver: src.mincash_neg_y
-    - *id069
-    - *id070
-    - *id052
-    - *id053
-    - *id054
-    - *id055
-    - *id056
-    - *id057
-    - *id058
-    - *id059
-    - *id060
-    - *id061
-    - *id062
-    - *id063
-    - *id064
-    - *id065
+    - *id097
+    - *id098
+    - *id080
+    - *id081
+    - *id082
+    - *id083
+    - *id084
+    - *id085
+    - *id086
+    - *id087
+    - *id088
+    - *id089
+    - *id090
+    - *id091
+    - *id092
+    - *id093
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K417:T417:
+    record: waterfall.paid.term_loan_a.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K418:T418:
+    record: waterfall.paid.term_loan_b.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K419:T419:
+    record: waterfall.paid.senior_note.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K420:T420:
+    record: waterfall.paid.subordinated_note.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K421:T421:
+    record: waterfall.paid.mezzanine.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K422:T422:
+    record: waterfall.paid.seller_note.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K423:T423:
+    record: waterfall.paid.convertible_bond.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K424:T424:
+    record: waterfall.paid.debt_8.principal
+    sign: -1
     periods:
     - 5
     - 6
@@ -10077,22 +10904,22 @@ figures:
     sum:
     - opening: cash
     - driver: src.mincash_neg_y
-    - *id069
-    - *id070
-    - *id052
-    - *id053
-    - *id054
-    - *id055
-    - *id056
-    - *id057
-    - *id058
-    - *id059
-    - *id060
-    - *id061
-    - *id062
-    - *id063
-    - *id064
-    - *id065
+    - *id097
+    - *id098
+    - *id080
+    - *id081
+    - *id082
+    - *id083
+    - *id084
+    - *id085
+    - *id086
+    - *id087
+    - *id088
+    - *id089
+    - *id090
+    - *id091
+    - *id092
+    - *id093
     - record: waterfall.service
       sign: -1
     periods:
@@ -10115,27 +10942,139 @@ figures:
   LBO.I433:
     driver: src.sweep_881
     at: 4
+  LBO.K433:T433:
+    record: waterfall.paid.term_loan_a.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I434:
     driver: src.sweep_882
     at: 4
+  LBO.K434:T434:
+    record: waterfall.paid.term_loan_b.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I435:
     driver: src.sweep_883
     at: 4
+  LBO.K435:T435:
+    record: waterfall.paid.senior_note.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I436:
     driver: src.sweep_884
     at: 4
+  LBO.K436:T436:
+    record: waterfall.paid.subordinated_note.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I437:
     driver: src.sweep_885
     at: 4
+  LBO.K437:T437:
+    record: waterfall.paid.mezzanine.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I438:
     driver: src.sweep_886
     at: 4
+  LBO.K438:T438:
+    record: waterfall.paid.seller_note.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I439:
     driver: src.sweep_887
     at: 4
+  LBO.K439:T439:
+    record: waterfall.paid.convertible_bond.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I440:
     driver: src.sweep_888
     at: 4
+  LBO.K440:T440:
+    record: waterfall.paid.debt_8.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.I441:
     driver: src.sweep_889
     at: 4
@@ -10342,6 +11281,34 @@ figures:
     - 12
     - 13
     - 14
+  LBO.K473:T473:
+    record: waterfall.paid.term_loan_a.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K474:T474:
+    record: waterfall.paid.term_loan_a.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.J475:T475:
     balance: term_loan_a.debt + term_loan_a.capitalised_interest
     periods:
@@ -10372,6 +11339,34 @@ figures:
     - 14
   LBO.K481:T481:
     opening: term_loan_b.debt + term_loan_b.capitalised_interest
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K482:T482:
+    record: waterfall.paid.term_loan_b.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K483:T483:
+    record: waterfall.paid.term_loan_b.prepay
+    sign: -1
     periods:
     - 5
     - 6
@@ -10424,6 +11419,34 @@ figures:
     - 12
     - 13
     - 14
+  LBO.K491:T491:
+    record: waterfall.paid.senior_note.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K492:T492:
+    record: waterfall.paid.senior_note.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.J493:T493:
     balance: senior_note.debt + senior_note.capitalised_interest
     periods:
@@ -10454,6 +11477,34 @@ figures:
     - 14
   LBO.K499:T499:
     opening: subordinated_note.debt + subordinated_note.capitalised_interest
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K500:T500:
+    record: waterfall.paid.subordinated_note.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K501:T501:
+    record: waterfall.paid.subordinated_note.prepay
+    sign: -1
     periods:
     - 5
     - 6
@@ -10506,6 +11557,34 @@ figures:
     - 12
     - 13
     - 14
+  LBO.K509:T509:
+    record: waterfall.paid.mezzanine.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K510:T510:
+    record: waterfall.paid.mezzanine.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.J511:T511:
     balance: mezzanine.debt + mezzanine.capitalised_interest
     periods:
@@ -10536,6 +11615,34 @@ figures:
     - 14
   LBO.K517:T517:
     opening: seller_note.debt + seller_note.capitalised_interest
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K518:T518:
+    record: waterfall.paid.seller_note.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K519:T519:
+    record: waterfall.paid.seller_note.prepay
+    sign: -1
     periods:
     - 5
     - 6
@@ -10588,6 +11695,34 @@ figures:
     - 12
     - 13
     - 14
+  LBO.K527:T527:
+    record: waterfall.paid.convertible_bond.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K528:T528:
+    record: waterfall.paid.convertible_bond.prepay
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
   LBO.J529:T529:
     balance: convertible_bond.debt + convertible_bond.capitalised_interest
     periods:
@@ -10618,6 +11753,34 @@ figures:
     - 14
   LBO.K535:T535:
     opening: debt_8.debt + debt_8.capitalised_interest
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K536:T536:
+    record: waterfall.paid.debt_8.principal
+    sign: -1
+    periods:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+  LBO.K537:T537:
+    record: waterfall.paid.debt_8.prepay
+    sign: -1
     periods:
     - 5
     - 6
@@ -11131,7 +12294,7 @@ figures:
     - 13
     - 14
   LBO.K604:T604:
-    sum: *id093
+    sum: *id121
     periods:
     - 5
     - 6
@@ -11144,7 +12307,7 @@ figures:
     - 13
     - 14
   LBO.K605:T605:
-    sum: *id094
+    sum: *id122
     periods:
     - 5
     - 6
@@ -11157,7 +12320,7 @@ figures:
     - 13
     - 14
   LBO.K606:T606:
-    sum: *id095
+    sum: *id123
     periods:
     - 5
     - 6
@@ -11874,7 +13037,7 @@ figures:
     - 13
     - 14
   LBO.F717:H717:
-    sum: &id096
+    sum: &id124
     - cut: ebitda
     - cut: dep
     - cut: amort
@@ -11888,7 +13051,7 @@ figures:
     - 2
     - 3
   LBO.K717:T717:
-    sum: *id096
+    sum: *id124
     periods:
     - 5
     - 6
@@ -12591,7 +13754,7 @@ figures:
     - 13
     - 14
   LBO.E785:H785:
-    sum:
+    sum: &id125
     - cut: ni
       per: src.shares_q_879
     - change: preferred_a.dividends
@@ -12610,8 +13773,155 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J785:T785:
+  - sum: *id125
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - &id126
+        balance: sponsor.capital
+        per: src.offer
+      - &id127
+        balance: legacy_debt
+        times: src.inv_T879
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_legacy
+        sign: -1
+        times: src.factor_q_879
+    - sum:
+      - *id126
+      - *id127
+      - driver: src.pad_pre4
+    at: 14
   LBO.E786:H786:
-    sum:
+    sum: &id128
     - cut: ni
       per: src.shares_q_881
     - change: preferred_a.dividends
@@ -12630,8 +13940,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J786:T786:
+  - sum: *id128
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - &id129
+        balance: term_loan_a.debt + term_loan_a.capitalised_interest
+        times: src.inv_T881
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_a
+        sign: -1
+        times: src.factor_q_881
+    - sum:
+      - *id126
+      - *id129
+      - driver: src.pad_pre4
+    at: 14
   LBO.E787:H787:
-    sum:
+    sum: &id130
     - cut: ni
       per: src.shares_q_882
     - change: preferred_a.dividends
@@ -12650,8 +14105,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J787:T787:
+  - sum: *id130
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - &id131
+        balance: term_loan_b.debt + term_loan_b.capitalised_interest
+        times: src.inv_T882
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_term_loan_b
+        sign: -1
+        times: src.factor_q_882
+    - sum:
+      - *id126
+      - *id131
+      - driver: src.pad_pre4
+    at: 14
   LBO.E788:H788:
-    sum:
+    sum: &id132
     - cut: ni
       per: src.shares_q_883
     - change: preferred_a.dividends
@@ -12670,8 +14270,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J788:T788:
+  - sum: *id132
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - &id133
+        balance: senior_note.debt + senior_note.capitalised_interest
+        times: src.inv_T883
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_senior_note
+        sign: -1
+        times: src.factor_q_883
+    - sum:
+      - *id126
+      - *id133
+      - driver: src.pad_pre4
+    at: 14
   LBO.E789:H789:
-    sum:
+    sum: &id134
     - cut: ni
       per: src.shares_q_884
     - change: preferred_a.dividends
@@ -12690,8 +14435,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J789:T789:
+  - sum: *id134
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - &id135
+        balance: subordinated_note.debt + subordinated_note.capitalised_interest
+        times: src.inv_T884
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_subordinated_note
+        sign: -1
+        times: src.factor_q_884
+    - sum:
+      - *id126
+      - *id135
+      - driver: src.pad_pre4
+    at: 14
   LBO.E790:H790:
-    sum:
+    sum: &id136
     - cut: ni
       per: src.shares_q_885
     - change: preferred_a.dividends
@@ -12710,8 +14600,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J790:T790:
+  - sum: *id136
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - &id137
+        balance: mezzanine.debt + mezzanine.capitalised_interest
+        times: src.inv_T885
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_mezzanine
+        sign: -1
+        times: src.factor_q_885
+    - sum:
+      - *id126
+      - *id137
+      - driver: src.pad_pre4
+    at: 14
   LBO.E791:H791:
-    sum:
+    sum: &id138
     - cut: ni
       per: src.shares_q_886
     - change: preferred_a.dividends
@@ -12730,8 +14765,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J791:T791:
+  - sum: *id138
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - &id139
+        balance: seller_note.debt + seller_note.capitalised_interest
+        times: src.inv_T886
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_seller_note
+        sign: -1
+        times: src.factor_q_886
+    - sum:
+      - *id126
+      - *id139
+      - driver: src.pad_pre4
+    at: 14
   LBO.E792:H792:
-    sum:
+    sum: &id140
     - cut: ni
       per: src.shares_q_887
     - change: preferred_a.dividends
@@ -12750,8 +14930,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J792:T792:
+  - sum: *id140
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - &id141
+        balance: convertible_bond.debt + convertible_bond.capitalised_interest
+        times: src.inv_T887
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_convertible_bond
+        sign: -1
+        times: src.factor_q_887
+    - sum:
+      - *id126
+      - *id141
+      - driver: src.pad_pre4
+    at: 14
   LBO.E793:H793:
-    sum:
+    sum: &id142
     - cut: ni
       per: src.shares_q_888
     - change: preferred_a.dividends
@@ -12770,8 +15095,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J793:T793:
+  - sum: *id142
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - &id143
+        balance: debt_8.debt + debt_8.capitalised_interest
+        times: src.inv_T888
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - cut: int_debt_8
+        sign: -1
+        times: src.factor_q_888
+    - sum:
+      - *id126
+      - *id143
+      - driver: src.pad_pre4
+    at: 14
   LBO.E794:H794:
-    sum:
+    sum: &id144
     - cut: ni
       per: src.shares_q_889
     - change: preferred_a.dividends
@@ -12790,8 +15260,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J794:T794:
+  - sum: *id144
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - &id145
+        balance: preferred_a.capital + preferred_a.discount
+        times: src.inv_T889
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_a.dividends
+        sign: -1
+        times: src.factor_q_889
+    - sum:
+      - *id126
+      - *id145
+      - driver: src.pad_pre4
+    at: 14
   LBO.E795:H795:
-    sum:
+    sum: &id146
     - cut: ni
       per: src.shares_q_890
     - change: preferred_a.dividends
@@ -12810,8 +15425,153 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J795:T795:
+  - sum: *id146
+    at: 3
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - &id147
+        balance: preferred_b.capital + preferred_b.discount
+        times: src.inv_T890
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - sum:
+      - *id080
+      - *id081
+      - *id082
+      - *id083
+      - change: preferred_b.dividends
+        sign: -1
+        times: src.factor_q_890
+    - sum:
+      - *id126
+      - *id147
+      - driver: src.pad_pre4
+    at: 14
   LBO.E797:H797:
-    sum:
+    sum: &id148
     - cut: ni
       per: src.LBO__E814
     - change: preferred_a.dividends
@@ -12826,6 +15586,69 @@ figures:
     - 1
     - 2
     - 3
+  LBO.J797:T797:
+  - sum: *id148
+    at: 3
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 5
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 6
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 7
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 8
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 9
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 10
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 11
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 12
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 13
+  - ratio:
+    - *id062
+    - sum:
+      - *id126
+      - driver: src.pad_pre4
+    at: 14
   LBO.E800:H800:
     driver: src.dilutive_q_879
     periods:
@@ -13091,7 +15914,7 @@ figures:
   - record: deal.equity_purchase_price
     at: 4
   LBO.O855:
-    sum: *id097
+    sum: *id149
     at: 4
   LBO.J857:O857:
   - record: deal.equity_purchase_price
@@ -13289,16 +16112,16 @@ figures:
     sign: -1
     at: 4
   - sum:
-    - &id098
+    - &id152
       opening: cash
-    - &id099
+    - &id153
       record: deal.purchase_price
       sign: -1
     at: 4
   - sum:
-    - &id100
+    - &id154
       cut: deal_costs
-    - &id101
+    - &id155
       cut: deal_benefit
     at: 4
   - cut: legacy_flow
@@ -13357,15 +16180,13 @@ figures:
     at: 4
   LBO.E916:O916:
   - sum:
-    - &id102
-      balance: cash
-    - &id103
-      balance: receivables
-    - &id104
+    - *id150
+    - *id151
+    - &id156
       balance: inventories
-    - &id105
+    - &id157
       balance: dta_current
-    - &id106
+    - &id158
       balance: prepaid
     at: 3
   - driver: src.zero
@@ -13375,85 +16196,85 @@ figures:
   - driver: src.zero
     at: 4
   - sum:
-    - &id123
+    - &id175
       opening: cash
-    - &id124
+    - &id176
       opening: receivables
-    - &id125
+    - &id177
       opening: inventories
-    - &id126
+    - &id178
       opening: dta_current
-    - &id127
+    - &id179
       opening: prepaid
     at: 4
   - sum:
-    - &id130
+    - &id182
       record: deal.purchase_price
       sign: -1
     at: 4
   - sum:
-    - *id098
-    - *id099
-    - &id131
+    - *id152
+    - *id153
+    - &id183
       opening: receivables
-    - &id132
+    - &id184
       opening: inventories
-    - &id133
+    - &id185
       opening: dta_current
-    - &id134
+    - &id186
       opening: prepaid
     at: 4
   - sum:
-    - *id100
-    - *id101
+    - *id154
+    - *id155
     at: 4
   - sum:
-    - &id136
+    - &id188
       cut: legacy_flow
     at: 4
   - sum:
-    - &id137
+    - &id189
       cut: new_funding
     at: 4
   - sum:
-    - *id102
-    - *id103
-    - *id104
-    - *id105
-    - *id106
+    - *id150
+    - *id151
+    - *id156
+    - *id157
+    - *id158
     at: 4
   LBO.E917:
-    sum: *id047
+    sum: *id075
     at: 3
   LBO.G917:
     change: ppe_writeup
     at: 4
   LBO.I917:
-    sum: &id107
-    - &id112
+    sum: &id159
+    - &id164
       opening: ppe_gross + ppe_writeup
-    - &id113
+    - &id165
       sum:
       - cumulative: dep_mark
         sign: -1
       - cut: dep_mark
-    - &id114
+    - &id166
       change: ppe_writeup
     at: 4
   LBO.K917:
-    sum: *id107
+    sum: *id159
     at: 4
   LBO.O917:
-    sum: *id047
+    sum: *id075
     at: 4
   LBO.E918:
-    sum: *id048
+    sum: *id076
     at: 3
   LBO.I918:
     sum:
-    - &id115
+    - &id167
       opening: accumulated_depreciation
-    - &id116
+    - &id168
       sum:
       - cumulative: dep_mark
       - cut: dep_mark
@@ -13461,47 +16282,47 @@ figures:
     at: 4
   LBO.K918:
     sum:
-    - &id117
+    - &id169
       opening: accumulated_depreciation
-    - &id118
+    - &id170
       sum:
       - cumulative: dep_mark
       - cut: dep_mark
         sign: -1
     at: 4
   LBO.O918:
-    sum: *id048
+    sum: *id076
     at: 4
   LBO.E919:O919:
   - sum:
-    - *id108
-    - *id109
-    - *id110
-    - *id111
+    - *id160
+    - *id161
+    - *id162
+    - *id163
     at: 3
   - driver: src.zero
     at: 4
   - sum:
-    - &id122
+    - &id174
       change: ppe_writeup
     at: 4
   - driver: src.zero
     at: 4
   - sum:
-    - *id112
-    - *id113
-    - *id114
-    - *id115
-    - *id116
+    - *id164
+    - *id165
+    - *id166
+    - *id167
+    - *id168
     at: 4
   - driver: src.zero
     at: 4
   - sum:
-    - *id112
-    - *id113
-    - *id114
-    - *id117
-    - *id118
+    - *id164
+    - *id165
+    - *id166
+    - *id169
+    - *id170
     at: 4
   - driver: src.zero
     at: 4
@@ -13510,10 +16331,10 @@ figures:
   - driver: src.zero
     at: 4
   - sum:
-    - *id108
-    - *id109
-    - *id110
-    - *id111
+    - *id160
+    - *id161
+    - *id162
+    - *id163
     at: 4
   LBO.E920:
     balance: equity_investments
@@ -13538,23 +16359,23 @@ figures:
     at: 4
   LBO.N921:O921:
   - sum:
-    - &id138
+    - &id190
       change: revolver_fee.deferred
-    - &id139
+    - &id191
       change: term_loan_a_fee.deferred
-    - &id140
+    - &id192
       change: term_loan_b_fee.deferred
-    - &id141
+    - &id193
       change: senior_note_fee.deferred
-    - &id142
+    - &id194
       change: subordinated_note_fee.deferred
-    - &id143
+    - &id195
       change: mezzanine_fee.deferred
-    - &id144
+    - &id196
       change: seller_note_fee.deferred
-    - &id145
+    - &id197
       change: convertible_bond_fee.deferred
-    - &id146
+    - &id198
       change: debt_8_fee.deferred
     at: 4
   - balance: revolver_fee.deferred + term_loan_a_fee.deferred + term_loan_b_fee.deferred + senior_note_fee.deferred + subordinated_note_fee.deferred + mezzanine_fee.deferred + seller_note_fee.deferred + convertible_bond_fee.deferred + debt_8_fee.deferred + revolver.deferred_fees + term_loan_a.deferred_fees + term_loan_b.deferred_fees + senior_note.deferred_fees + subordinated_note.deferred_fees + mezzanine.deferred_fees + seller_note.deferred_fees + convertible_bond.deferred_fees + debt_8.deferred_fees + capitalised_costs_legacy
@@ -13568,9 +16389,9 @@ figures:
     at: 4
   LBO.I922:K922:
   - sum:
-    - &id119
+    - &id171
       opening: goodwill
-    - &id120
+    - &id172
       opening: goodwill
       sign: -1
       times: src.lbo
@@ -13578,9 +16399,9 @@ figures:
   - record: deal.goodwill
     at: 4
   - sum:
-    - *id119
-    - *id120
-    - &id135
+    - *id171
+    - *id172
+    - &id187
       record: deal.goodwill
     at: 4
   LBO.O922:
@@ -13593,14 +16414,14 @@ figures:
     change: intangibles_writeup
     at: 4
   LBO.I923:
-    sum: &id121
-    - &id128
+    sum: &id173
+    - &id180
       opening: intangibles + intangibles_writeup
-    - &id129
+    - &id181
       change: intangibles_writeup
     at: 4
   LBO.K923:
-    sum: *id121
+    sum: *id173
     at: 4
   LBO.O923:
     balance: intangibles + intangibles_writeup
@@ -13631,26 +16452,26 @@ figures:
     at: 4
   LBO.E926:O926:
   - sum:
-    - *id102
-    - *id103
-    - *id104
-    - *id105
-    - *id106
-    - *id108
-    - *id109
-    - *id110
-    - *id111
-    - &id147
+    - *id150
+    - *id151
+    - *id156
+    - *id157
+    - *id158
+    - *id160
+    - *id161
+    - *id162
+    - *id163
+    - &id199
       balance: equity_investments
-    - &id148
+    - &id200
       balance: revolver_fee.deferred + term_loan_a_fee.deferred + term_loan_b_fee.deferred + senior_note_fee.deferred + subordinated_note_fee.deferred + mezzanine_fee.deferred + seller_note_fee.deferred + convertible_bond_fee.deferred + debt_8_fee.deferred + revolver.deferred_fees + term_loan_a.deferred_fees + term_loan_b.deferred_fees + senior_note.deferred_fees + subordinated_note.deferred_fees + mezzanine.deferred_fees + seller_note.deferred_fees + convertible_bond.deferred_fees + debt_8.deferred_fees + capitalised_costs_legacy
-    - &id149
+    - &id201
       balance: goodwill
-    - &id150
+    - &id202
       balance: intangibles + intangibles_writeup
-    - &id151
+    - &id203
       balance: operating_rights
-    - &id152
+    - &id204
       balance: other_lt_assets
     at: 3
   - sum:
@@ -13662,7 +16483,7 @@ figures:
     at: 4
   - sum:
     - driver: src.zero
-    - *id122
+    - *id174
     - change: intangibles_writeup
     at: 4
   - sum:
@@ -13670,90 +16491,90 @@ figures:
     - driver: src.zero
     at: 4
   - sum:
-    - *id123
-    - *id124
-    - *id125
-    - *id126
-    - *id127
-    - *id112
-    - *id113
-    - *id114
-    - *id115
-    - *id116
+    - *id175
+    - *id176
+    - *id177
+    - *id178
+    - *id179
+    - *id164
+    - *id165
+    - *id166
+    - *id167
+    - *id168
     - opening: equity_investments
     - opening: revolver_fee.deferred + term_loan_a_fee.deferred + term_loan_b_fee.deferred + senior_note_fee.deferred + subordinated_note_fee.deferred + mezzanine_fee.deferred + seller_note_fee.deferred + convertible_bond_fee.deferred + debt_8_fee.deferred + revolver.deferred_fees + term_loan_a.deferred_fees + term_loan_b.deferred_fees + senior_note.deferred_fees + subordinated_note.deferred_fees + mezzanine.deferred_fees + seller_note.deferred_fees + convertible_bond.deferred_fees + debt_8.deferred_fees + capitalised_costs_legacy
-    - *id119
-    - *id120
-    - *id128
-    - *id129
+    - *id171
+    - *id172
+    - *id180
+    - *id181
     - opening: operating_rights
     - opening: other_lt_assets
     at: 4
   - sum:
-    - *id130
+    - *id182
     - driver: src.zero
     - record: deal.goodwill
     at: 4
   - sum:
-    - *id098
-    - *id099
-    - *id131
-    - *id132
-    - *id133
-    - *id134
-    - *id112
-    - *id113
-    - *id114
-    - *id117
-    - *id118
+    - *id152
+    - *id153
+    - *id183
+    - *id184
+    - *id185
+    - *id186
+    - *id164
+    - *id165
+    - *id166
+    - *id169
+    - *id170
     - opening: equity_investments
     - opening: revolver_fee.deferred + term_loan_a_fee.deferred + term_loan_b_fee.deferred + senior_note_fee.deferred + subordinated_note_fee.deferred + mezzanine_fee.deferred + seller_note_fee.deferred + convertible_bond_fee.deferred + debt_8_fee.deferred + revolver.deferred_fees + term_loan_a.deferred_fees + term_loan_b.deferred_fees + senior_note.deferred_fees + subordinated_note.deferred_fees + mezzanine.deferred_fees + seller_note.deferred_fees + convertible_bond.deferred_fees + debt_8.deferred_fees + capitalised_costs_legacy
-    - *id119
-    - *id120
-    - *id135
-    - *id128
-    - *id129
+    - *id171
+    - *id172
+    - *id187
+    - *id180
+    - *id181
     - opening: operating_rights
     - opening: other_lt_assets
     at: 4
   - sum:
-    - *id100
-    - *id101
+    - *id154
+    - *id155
     - driver: src.zero
     at: 4
   - sum:
-    - *id136
+    - *id188
     - driver: src.zero
     at: 4
   - sum:
-    - *id137
+    - *id189
     - driver: src.zero
-    - *id138
-    - *id139
-    - *id140
-    - *id141
-    - *id142
-    - *id143
-    - *id144
-    - *id145
-    - *id146
+    - *id190
+    - *id191
+    - *id192
+    - *id193
+    - *id194
+    - *id195
+    - *id196
+    - *id197
+    - *id198
     at: 4
   - sum:
-    - *id102
-    - *id103
-    - *id104
-    - *id105
-    - *id106
-    - *id108
-    - *id109
-    - *id110
-    - *id111
-    - *id147
-    - *id148
-    - *id149
     - *id150
     - *id151
-    - *id152
+    - *id156
+    - *id157
+    - *id158
+    - *id160
+    - *id161
+    - *id162
+    - *id163
+    - *id199
+    - *id200
+    - *id201
+    - *id202
+    - *id203
+    - *id204
     at: 4
   LBO.E930:
     balance: short_term_debt
@@ -13817,15 +16638,15 @@ figures:
     at: 4
   LBO.E935:O935:
   - sum:
-    - &id153
+    - &id205
       balance: short_term_debt
-    - &id154
+    - &id206
       balance: payables
-    - &id155
+    - &id207
       balance: accrued
-    - &id156
+    - &id208
       balance: client_deposits
-    - &id157
+    - &id209
       balance: other_current_liabilities
     at: 3
   - driver: src.zero
@@ -13835,29 +16656,29 @@ figures:
   - driver: src.zero
     at: 4
   - sum:
-    - &id174
+    - &id226
       opening: short_term_debt
-    - &id175
+    - &id227
       opening: payables
-    - &id176
+    - &id228
       opening: accrued
-    - &id177
+    - &id229
       opening: client_deposits
-    - &id178
+    - &id230
       opening: other_current_liabilities
     at: 4
   - driver: src.zero
     at: 4
   - sum:
-    - &id191
+    - &id243
       opening: short_term_debt
-    - &id192
+    - &id244
       opening: payables
-    - &id193
+    - &id245
       opening: accrued
-    - &id194
+    - &id246
       opening: client_deposits
-    - &id195
+    - &id247
       opening: other_current_liabilities
     at: 4
   - driver: src.zero
@@ -13867,11 +16688,11 @@ figures:
   - driver: src.zero
     at: 4
   - sum:
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
+    - *id205
+    - *id206
+    - *id207
+    - *id208
+    - *id209
     at: 4
   LBO.E936:
     balance: capital_leases
@@ -13892,18 +16713,18 @@ figures:
   - opening: legacy_debt
     at: 4
   - sum:
-    - &id158
+    - &id210
       change: legacy_debt
-    - &id159
+    - &id211
       cut: legacy_flow
       sign: -1
     at: 4
   - sum:
-    - &id160
+    - &id212
       opening: legacy_debt
-    - &id161
+    - &id213
       change: legacy_debt
-    - &id162
+    - &id214
       cut: legacy_flow
       sign: -1
     at: 4
@@ -14041,25 +16862,25 @@ figures:
     at: 4
   LBO.E947:O947:
   - sum:
-    - &id163
+    - &id215
       balance: legacy_debt
-    - &id164
+    - &id216
       balance: revolver.debt + revolver.capitalised_interest
-    - &id165
+    - &id217
       balance: term_loan_a.debt + term_loan_a.capitalised_interest
-    - &id166
+    - &id218
       balance: term_loan_b.debt + term_loan_b.capitalised_interest
-    - &id167
+    - &id219
       balance: senior_note.debt + senior_note.capitalised_interest
-    - &id168
+    - &id220
       balance: subordinated_note.debt + subordinated_note.capitalised_interest
-    - &id169
+    - &id221
       balance: mezzanine.debt + mezzanine.capitalised_interest
-    - &id170
+    - &id222
       balance: seller_note.debt + seller_note.capitalised_interest
-    - &id171
+    - &id223
       balance: convertible_bond.debt + convertible_bond.capitalised_interest
-    - &id172
+    - &id224
       balance: debt_8.debt + debt_8.capitalised_interest
     at: 3
   - driver: src.zero
@@ -14069,91 +16890,91 @@ figures:
   - driver: src.zero
     at: 4
   - sum:
-    - &id179
+    - &id231
       opening: legacy_debt
-    - &id180
+    - &id232
       opening: revolver.debt + revolver.capitalised_interest
-    - &id181
+    - &id233
       opening: term_loan_a.debt + term_loan_a.capitalised_interest
-    - &id182
+    - &id234
       opening: term_loan_b.debt + term_loan_b.capitalised_interest
-    - &id183
+    - &id235
       opening: senior_note.debt + senior_note.capitalised_interest
-    - &id184
+    - &id236
       opening: subordinated_note.debt + subordinated_note.capitalised_interest
-    - &id185
+    - &id237
       opening: mezzanine.debt + mezzanine.capitalised_interest
-    - &id186
+    - &id238
       opening: seller_note.debt + seller_note.capitalised_interest
-    - &id187
+    - &id239
       opening: convertible_bond.debt + convertible_bond.capitalised_interest
-    - &id188
+    - &id240
       opening: debt_8.debt + debt_8.capitalised_interest
     at: 4
   - sum:
-    - *id158
-    - *id159
+    - *id210
+    - *id211
     at: 4
   - sum:
-    - *id160
-    - *id161
-    - *id162
-    - &id196
+    - *id212
+    - *id213
+    - *id214
+    - &id248
       opening: revolver.debt + revolver.capitalised_interest
-    - &id197
+    - &id249
       opening: term_loan_a.debt + term_loan_a.capitalised_interest
-    - &id198
+    - &id250
       opening: term_loan_b.debt + term_loan_b.capitalised_interest
-    - &id199
+    - &id251
       opening: senior_note.debt + senior_note.capitalised_interest
-    - &id200
+    - &id252
       opening: subordinated_note.debt + subordinated_note.capitalised_interest
-    - &id201
+    - &id253
       opening: mezzanine.debt + mezzanine.capitalised_interest
-    - &id202
+    - &id254
       opening: seller_note.debt + seller_note.capitalised_interest
-    - &id203
+    - &id255
       opening: convertible_bond.debt + convertible_bond.capitalised_interest
-    - &id204
+    - &id256
       opening: debt_8.debt + debt_8.capitalised_interest
     at: 4
   - driver: src.zero
     at: 4
   - sum:
-    - &id205
+    - &id257
       cut: legacy_flow
     at: 4
   - sum:
-    - &id206
+    - &id258
       change: revolver.debt
-    - &id207
+    - &id259
       change: term_loan_a.debt
-    - &id208
+    - &id260
       change: term_loan_b.debt
-    - &id209
+    - &id261
       change: senior_note.debt
-    - &id210
+    - &id262
       change: subordinated_note.debt
-    - &id211
+    - &id263
       change: mezzanine.debt
-    - &id212
+    - &id264
       change: seller_note.debt
-    - &id213
+    - &id265
       change: convertible_bond.debt
-    - &id214
+    - &id266
       change: debt_8.debt
     at: 4
   - sum:
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
+    - *id215
+    - *id216
+    - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
     at: 4
   LBO.E948:
     balance: net_dtl
@@ -14161,14 +16982,14 @@ figures:
   LBO.H948:I948:
   - record: deal.dtl
     at: 4
-  - sum: &id173
-    - &id189
+  - sum: &id225
+    - &id241
       opening: net_dtl
-    - &id190
+    - &id242
       record: deal.dtl
     at: 4
   LBO.K948:
-    sum: *id173
+    sum: *id225
     at: 4
   LBO.N948:O948:
   - cut: fee_tax
@@ -14189,26 +17010,26 @@ figures:
     at: 4
   LBO.E950:O950:
   - sum:
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
-    - &id215
+    - *id205
+    - *id206
+    - *id207
+    - *id208
+    - *id209
+    - &id267
       balance: capital_leases
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
-    - &id216
+    - *id215
+    - *id216
+    - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
+    - &id268
       balance: net_dtl
-    - &id217
+    - &id269
       balance: other_lt_liabilities
     at: 3
   - sum:
@@ -14222,60 +17043,60 @@ figures:
   - sum:
     - driver: src.zero
     - driver: src.zero
-    - &id242
+    - &id288
       record: deal.dtl
     at: 4
   - sum:
-    - *id174
-    - *id175
-    - *id176
-    - *id177
-    - *id178
-    - &id249
+    - *id226
+    - *id227
+    - *id228
+    - *id229
+    - *id230
+    - &id295
       opening: capital_leases
-    - *id179
-    - *id180
-    - *id181
-    - *id182
-    - *id183
-    - *id184
-    - *id185
-    - *id186
-    - *id187
-    - *id188
-    - *id189
-    - *id190
-    - &id250
+    - *id231
+    - *id232
+    - *id233
+    - *id234
+    - *id235
+    - *id236
+    - *id237
+    - *id238
+    - *id239
+    - *id240
+    - *id241
+    - *id242
+    - &id296
       opening: other_lt_liabilities
     at: 4
   - sum:
     - driver: src.zero
-    - *id158
-    - *id159
+    - *id210
+    - *id211
     at: 4
   - sum:
-    - *id191
-    - *id192
-    - *id193
-    - *id194
-    - *id195
-    - &id255
+    - *id243
+    - *id244
+    - *id245
+    - *id246
+    - *id247
+    - &id301
       opening: capital_leases
-    - *id160
-    - *id161
-    - *id162
-    - *id196
-    - *id197
-    - *id198
-    - *id199
-    - *id200
-    - *id201
-    - *id202
-    - *id203
-    - *id204
-    - *id189
-    - *id190
-    - &id256
+    - *id212
+    - *id213
+    - *id214
+    - *id248
+    - *id249
+    - *id250
+    - *id251
+    - *id252
+    - *id253
+    - *id254
+    - *id255
+    - *id256
+    - *id241
+    - *id242
+    - &id302
       opening: other_lt_liabilities
     at: 4
   - sum:
@@ -14284,41 +17105,41 @@ figures:
     at: 4
   - sum:
     - driver: src.zero
+    - *id257
+    at: 4
+  - sum:
+    - driver: src.zero
+    - *id258
+    - *id259
+    - *id260
+    - *id261
+    - *id262
+    - *id263
+    - *id264
+    - *id265
+    - *id266
+    - &id306
+      cut: fee_tax
+    at: 4
+  - sum:
     - *id205
-    at: 4
-  - sum:
-    - driver: src.zero
     - *id206
     - *id207
     - *id208
     - *id209
-    - *id210
-    - *id211
-    - *id212
-    - *id213
-    - *id214
-    - &id260
-      cut: fee_tax
-    at: 4
-  - sum:
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
+    - *id267
     - *id215
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
     - *id216
     - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
+    - *id268
+    - *id269
     at: 4
   LBO.E951:
     balance: minority_interest
@@ -14369,9 +17190,9 @@ figures:
   - change: common_par
     at: 4
   - sum:
-    - &id224
+    - &id276
       opening: common_par
-    - &id225
+    - &id277
       change: common_par
     at: 4
   LBO.O954:
@@ -14384,28 +17205,28 @@ figures:
   - opening: apic + conversion_capital + sponsor.capital + management.capital + preferred_a_issue_costs + preferred_b_issue_costs
     at: 4
   - sum:
-    - &id222
+    - &id274
       change: apic
-    - &id223
+    - &id275
       change: conversion_capital
     at: 4
   - sum:
-    - &id226
+    - &id278
       opening: apic + conversion_capital + sponsor.capital + management.capital + preferred_a_issue_costs + preferred_b_issue_costs
-    - &id227
+    - &id279
       change: apic
-    - &id228
+    - &id280
       change: conversion_capital
     at: 4
   LBO.N955:O955:
   - sum:
-    - &id232
+    - &id284
       change: sponsor.capital
-    - &id233
+    - &id285
       change: management.capital
-    - &id234
+    - &id286
       change: preferred_a_issue_costs
-    - &id235
+    - &id287
       change: preferred_b_issue_costs
     at: 4
   - balance: apic + conversion_capital + sponsor.capital + management.capital + preferred_a_issue_costs + preferred_b_issue_costs
@@ -14419,32 +17240,32 @@ figures:
       - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense + preferred_a.dividends + preferred_b.dividends + sponsor.distributions + management.distributions
     at: 4
   - sum:
-    - &id218
+    - &id270
       change: retained_earnings + refinancing_tax + sales - cogs - sga - dep_existing - amort_existing - sbc - interest_legacy + interest_income - amort_fin_legacy - other_expense + equity_income - tax_expense - tax_drd_current - tax_drd_deferred - dep_capex_y1 - dep_capex_y2 - dep_capex_y3 - dep_capex_y4 - dep_capex_y5 - dep_capex_y6 - dep_capex_y7 - dep_capex_y8 - dep_capex_y9 - dep_capex_y10 - dep_mark - amort_mark - transaction_costs + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest
         - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense + preferred_a.dividends + preferred_b.dividends + sponsor.distributions + management.distributions
-    - &id219
+    - &id271
       cut: deal_costs
       sign: -1
-    - &id220
+    - &id272
       cut: deal_benefit
       sign: -1
-    - &id221
+    - &id273
       change: refinancing_tax
       sign: -1
     at: 4
   - sum:
-    - &id229
+    - &id281
       opening: retained_earnings + refinancing_tax + sales - cogs - sga - dep_existing - amort_existing - sbc - interest_legacy + interest_income - amort_fin_legacy - other_expense + equity_income - tax_expense - tax_drd_current - tax_drd_deferred - dep_capex_y1 - dep_capex_y2 - dep_capex_y3 - dep_capex_y4 - dep_capex_y5 - dep_capex_y6 - dep_capex_y7 - dep_capex_y8 - dep_capex_y9 - dep_capex_y10 - dep_mark - amort_mark - transaction_costs + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest
         - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense + preferred_a.dividends + preferred_b.dividends + sponsor.distributions + management.distributions
-    - *id218
-    - *id219
-    - *id220
-    - *id221
+    - *id270
+    - *id271
+    - *id272
+    - *id273
     at: 4
   - sum:
-    - &id230
+    - &id282
       cut: deal_costs
-    - &id231
+    - &id283
       cut: deal_benefit
     at: 4
   - change: refinancing_tax
@@ -14455,19 +17276,12 @@ figures:
     at: 4
   LBO.E957:O957:
   - sum:
-    - &id236
-      balance: minority_interest
-    - &id237
-      balance: preferred_a.capital + preferred_a.discount
-    - &id238
-      balance: preferred_b.capital + preferred_b.discount
-    - &id239
-      balance: common_par
-    - &id240
-      balance: apic + conversion_capital + sponsor.capital + management.capital + preferred_a_issue_costs + preferred_b_issue_costs
-    - &id241
-      balance: retained_earnings + refinancing_tax + sales - cogs - sga - dep_existing - amort_existing - sbc - interest_legacy + interest_income - amort_fin_legacy - other_expense + equity_income - tax_expense - tax_drd_current - tax_drd_deferred - dep_capex_y1 - dep_capex_y2 - dep_capex_y3 - dep_capex_y4 - dep_capex_y5 - dep_capex_y6 - dep_capex_y7 - dep_capex_y8 - dep_capex_y9 - dep_capex_y10 - dep_mark - amort_mark - transaction_costs + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest
-        - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense + preferred_a.dividends + preferred_b.dividends + sponsor.distributions + management.distributions
+    - *id069
+    - *id070
+    - *id071
+    - *id059
+    - *id060
+    - *id061
     at: 3
   - driver: src.zero
     at: 4
@@ -14476,100 +17290,100 @@ figures:
   - driver: src.zero
     at: 4
   - sum:
-    - &id243
+    - &id289
       opening: minority_interest
-    - &id244
+    - &id290
       opening: preferred_a.capital + preferred_a.discount
-    - &id245
+    - &id291
       opening: preferred_b.capital + preferred_b.discount
-    - &id246
+    - &id292
       opening: common_par
-    - &id247
+    - &id293
       opening: apic + conversion_capital + sponsor.capital + management.capital + preferred_a_issue_costs + preferred_b_issue_costs
-    - &id248
+    - &id294
       opening: retained_earnings + refinancing_tax + sales - cogs - sga - dep_existing - amort_existing - sbc - interest_legacy + interest_income - amort_fin_legacy - other_expense + equity_income - tax_expense - tax_drd_current - tax_drd_deferred - dep_capex_y1 - dep_capex_y2 - dep_capex_y3 - dep_capex_y4 - dep_capex_y5 - dep_capex_y6 - dep_capex_y7 - dep_capex_y8 - dep_capex_y9 - dep_capex_y10 - dep_mark - amort_mark - transaction_costs + deal_tax_benefit - revolver.interest - revolver.fees - revolver_fee.amortisation - term_loan_a.interest - term_loan_a.fees - term_loan_a_fee.amortisation - term_loan_b.interest - term_loan_b.fees - term_loan_b_fee.amortisation - senior_note.interest - senior_note.fees - senior_note_fee.amortisation - subordinated_note.interest - subordinated_note.fees - subordinated_note_fee.amortisation - mezzanine.interest - mezzanine.fees - mezzanine_fee.amortisation - seller_note.interest - seller_note.fees - seller_note_fee.amortisation - convertible_bond.interest
         - convertible_bond.fees - convertible_bond_fee.amortisation - debt_8.interest - debt_8.fees - debt_8_fee.amortisation - deferred_tax_expense + preferred_a.dividends + preferred_b.dividends + sponsor.distributions + management.distributions
     at: 4
   - sum:
-    - &id251
+    - &id297
       change: common_par
-    - *id222
-    - *id223
-    - *id218
-    - *id219
-    - *id220
-    - *id221
+    - *id274
+    - *id275
+    - *id270
+    - *id271
+    - *id272
+    - *id273
     at: 4
   - sum:
-    - &id252
+    - &id298
       opening: minority_interest
-    - &id253
+    - &id299
       opening: preferred_a.capital + preferred_a.discount
-    - &id254
+    - &id300
       opening: preferred_b.capital + preferred_b.discount
-    - *id224
-    - *id225
-    - *id226
-    - *id227
-    - *id228
-    - *id229
-    - *id218
-    - *id219
-    - *id220
-    - *id221
+    - *id276
+    - *id277
+    - *id278
+    - *id279
+    - *id280
+    - *id281
+    - *id270
+    - *id271
+    - *id272
+    - *id273
     at: 4
   - sum:
-    - *id230
-    - *id231
+    - *id282
+    - *id283
     at: 4
   - sum:
-    - &id257
+    - &id303
       change: refinancing_tax
     at: 4
   - sum:
-    - &id258
+    - &id304
       change: preferred_a.capital
-    - &id259
+    - &id305
       change: preferred_b.capital
-    - *id232
-    - *id233
-    - *id234
-    - *id235
+    - *id284
+    - *id285
+    - *id286
+    - *id287
     at: 4
   - sum:
-    - *id236
-    - *id237
-    - *id238
-    - *id239
-    - *id240
-    - *id241
+    - *id069
+    - *id070
+    - *id071
+    - *id059
+    - *id060
+    - *id061
     at: 4
   LBO.E958:O958:
   - sum:
-    - *id236
-    - *id237
-    - *id238
-    - *id239
-    - *id240
-    - *id241
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
+    - *id069
+    - *id070
+    - *id071
+    - *id059
+    - *id060
+    - *id061
+    - *id205
+    - *id206
+    - *id207
+    - *id208
+    - *id209
+    - *id267
     - *id215
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
     - *id216
     - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
+    - *id268
+    - *id269
     at: 3
   - sum:
     - driver: src.zero
@@ -14585,169 +17399,169 @@ figures:
     - driver: src.zero
     - driver: src.zero
     - driver: src.zero
-    - *id242
+    - *id288
     at: 4
   - sum:
+    - *id289
+    - *id290
+    - *id291
+    - *id292
+    - *id293
+    - *id294
+    - *id226
+    - *id227
+    - *id228
+    - *id229
+    - *id230
+    - *id295
+    - *id231
+    - *id232
+    - *id233
+    - *id234
+    - *id235
+    - *id236
+    - *id237
+    - *id238
+    - *id239
+    - *id240
+    - *id241
+    - *id242
+    - *id296
+    at: 4
+  - sum:
+    - *id297
+    - *id274
+    - *id275
+    - *id270
+    - *id271
+    - *id272
+    - *id273
+    - driver: src.zero
+    - *id210
+    - *id211
+    at: 4
+  - sum:
+    - *id298
+    - *id299
+    - *id300
+    - *id276
+    - *id277
+    - *id278
+    - *id279
+    - *id280
+    - *id281
+    - *id270
+    - *id271
+    - *id272
+    - *id273
     - *id243
     - *id244
     - *id245
     - *id246
     - *id247
+    - *id301
+    - *id212
+    - *id213
+    - *id214
     - *id248
-    - *id174
-    - *id175
-    - *id176
-    - *id177
-    - *id178
     - *id249
-    - *id179
-    - *id180
-    - *id181
-    - *id182
-    - *id183
-    - *id184
-    - *id185
-    - *id186
-    - *id187
-    - *id188
-    - *id189
-    - *id190
     - *id250
-    at: 4
-  - sum:
     - *id251
-    - *id222
-    - *id223
-    - *id218
-    - *id219
-    - *id220
-    - *id221
-    - driver: src.zero
-    - *id158
-    - *id159
-    at: 4
-  - sum:
     - *id252
     - *id253
     - *id254
-    - *id224
-    - *id225
-    - *id226
-    - *id227
-    - *id228
-    - *id229
-    - *id218
-    - *id219
-    - *id220
-    - *id221
-    - *id191
-    - *id192
-    - *id193
-    - *id194
-    - *id195
     - *id255
-    - *id160
-    - *id161
-    - *id162
-    - *id196
-    - *id197
-    - *id198
-    - *id199
-    - *id200
-    - *id201
-    - *id202
-    - *id203
-    - *id204
-    - *id189
-    - *id190
     - *id256
+    - *id241
+    - *id242
+    - *id302
     at: 4
   - sum:
-    - *id230
-    - *id231
-    - &id261
+    - *id282
+    - *id283
+    - &id307
       driver: src.zero
-    - &id262
+    - &id308
       driver: src.zero
     at: 4
   - sum:
+    - *id303
+    - &id309
+      driver: src.zero
     - *id257
-    - &id263
-      driver: src.zero
-    - *id205
     at: 4
   - sum:
+    - *id304
+    - *id305
+    - *id284
+    - *id285
+    - *id286
+    - *id287
+    - &id310
+      driver: src.zero
     - *id258
     - *id259
-    - *id232
-    - *id233
-    - *id234
-    - *id235
-    - &id264
-      driver: src.zero
+    - *id260
+    - *id261
+    - *id262
+    - *id263
+    - *id264
+    - *id265
+    - *id266
+    - *id306
+    at: 4
+  - sum:
+    - *id069
+    - *id070
+    - *id071
+    - *id059
+    - *id060
+    - *id061
+    - *id205
     - *id206
     - *id207
     - *id208
     - *id209
-    - *id210
-    - *id211
-    - *id212
-    - *id213
-    - *id214
-    - *id260
-    at: 4
-  - sum:
-    - *id236
-    - *id237
-    - *id238
-    - *id239
-    - *id240
-    - *id241
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
+    - *id267
     - *id215
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
     - *id216
     - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
+    - *id268
+    - *id269
     at: 4
   LBO.E960:
     sum:
-    - *id236
-    - *id237
-    - *id238
-    - *id239
-    - *id240
-    - *id241
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
+    - *id069
+    - *id070
+    - *id071
+    - *id059
+    - *id060
+    - *id061
+    - *id205
+    - *id206
+    - *id207
+    - *id208
+    - *id209
+    - *id267
     - *id215
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
     - *id216
     - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
+    - *id268
+    - *id269
     - balance: cash
       sign: -1
     - balance: receivables
@@ -14780,40 +17594,40 @@ figures:
     at: 3
   LBO.K960:O960:
   - sum:
+    - *id298
+    - *id299
+    - *id300
+    - *id276
+    - *id277
+    - *id278
+    - *id279
+    - *id280
+    - *id281
+    - *id270
+    - *id271
+    - *id272
+    - *id273
+    - *id243
+    - *id244
+    - *id245
+    - *id246
+    - *id247
+    - *id301
+    - *id212
+    - *id213
+    - *id214
+    - *id248
+    - *id249
+    - *id250
+    - *id251
     - *id252
     - *id253
     - *id254
-    - *id224
-    - *id225
-    - *id226
-    - *id227
-    - *id228
-    - *id229
-    - *id218
-    - *id219
-    - *id220
-    - *id221
-    - *id191
-    - *id192
-    - *id193
-    - *id194
-    - *id195
     - *id255
-    - *id160
-    - *id161
-    - *id162
-    - *id196
-    - *id197
-    - *id198
-    - *id199
-    - *id200
-    - *id201
-    - *id202
-    - *id203
-    - *id204
-    - *id189
-    - *id190
     - *id256
+    - *id241
+    - *id242
+    - *id302
     - opening: cash
       sign: -1
     - record: deal.purchase_price
@@ -14857,10 +17671,10 @@ figures:
       sign: -1
     at: 4
   - sum:
-    - *id230
-    - *id231
-    - *id261
-    - *id262
+    - *id282
+    - *id283
+    - *id307
+    - *id308
     - cut: deal_costs
       sign: -1
     - cut: deal_benefit
@@ -14869,32 +17683,32 @@ figures:
       sign: -1
     at: 4
   - sum:
+    - *id303
+    - *id309
     - *id257
-    - *id263
-    - *id205
     - cut: legacy_flow
       sign: -1
     - driver: src.zero
       sign: -1
     at: 4
   - sum:
+    - *id304
+    - *id305
+    - *id284
+    - *id285
+    - *id286
+    - *id287
+    - *id310
     - *id258
     - *id259
-    - *id232
-    - *id233
-    - *id234
-    - *id235
-    - *id264
-    - *id206
-    - *id207
-    - *id208
-    - *id209
-    - *id210
-    - *id211
-    - *id212
-    - *id213
-    - *id214
     - *id260
+    - *id261
+    - *id262
+    - *id263
+    - *id264
+    - *id265
+    - *id266
+    - *id306
     - cut: new_funding
       sign: -1
     - driver: src.zero
@@ -14919,30 +17733,30 @@ figures:
       sign: -1
     at: 4
   - sum:
-    - *id236
-    - *id237
-    - *id238
-    - *id239
-    - *id240
-    - *id241
-    - *id153
-    - *id154
-    - *id155
-    - *id156
-    - *id157
+    - *id069
+    - *id070
+    - *id071
+    - *id059
+    - *id060
+    - *id061
+    - *id205
+    - *id206
+    - *id207
+    - *id208
+    - *id209
+    - *id267
     - *id215
-    - *id163
-    - *id164
-    - *id165
-    - *id166
-    - *id167
-    - *id168
-    - *id169
-    - *id170
-    - *id171
-    - *id172
     - *id216
     - *id217
+    - *id218
+    - *id219
+    - *id220
+    - *id221
+    - *id222
+    - *id223
+    - *id224
+    - *id268
+    - *id269
     - balance: cash
       sign: -1
     - balance: receivables
@@ -14973,35 +17787,237 @@ figures:
     - balance: other_lt_assets
       sign: -1
     at: 4
+  LBO.E971:H971:
+  - change: sponsor.capital
+    at: 4
+  - ratio: &id314
+    - change: sponsor.capital
+    - sum:
+      - &id311
+        change: sponsor.capital
+      - &id312
+        change: management.capital
+      - &id313
+        driver: src.one
+        times: src.e_typed_sum
+      - driver: src.pad_not4
+    at: 4
+  - ratio: &id327
+    - change: sponsor.capital
+      times: src.kept_G
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
+  - ratio: &id329
+    - change: sponsor.capital
+      times: src.kept_H
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
+  LBO.E972:H972:
+  - change: management.capital
+    at: 4
+  - ratio: &id315
+    - change: management.capital
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
+  - ratio: &id328
+    - change: management.capital
+      times: src.kept_G
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
+  - ratio: &id330
+    - change: management.capital
+      times: src.kept_H
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
+  LBO.F974:
+    ratio: &id316
+    - driver: src.e_typed974
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
   LBO.H974:
     driver: src.dil_term_loan_a
+    at: 4
+  LBO.F975:
+    ratio: &id317
+    - driver: src.e_typed975
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
     at: 4
   LBO.H975:
     driver: src.dil_term_loan_b
     at: 4
+  LBO.F976:
+    ratio: &id318
+    - driver: src.e_typed976
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
   LBO.H976:
     driver: src.dil_senior_note
+    at: 4
+  LBO.F977:
+    ratio: &id319
+    - driver: src.e_typed977
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
     at: 4
   LBO.H977:
     driver: src.dil_subordinated_note
     at: 4
+  LBO.F978:
+    ratio: &id320
+    - driver: src.e_typed978
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
   LBO.H978:
     driver: src.dil_mezzanine
+    at: 4
+  LBO.F979:
+    ratio: &id321
+    - driver: src.e_typed979
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
     at: 4
   LBO.H979:
     driver: src.dil_seller_note
     at: 4
+  LBO.F980:
+    ratio: &id322
+    - driver: src.e_typed980
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
   LBO.H980:
     driver: src.dil_convertible_bond
+    at: 4
+  LBO.F981:
+    ratio: &id323
+    - driver: src.e_typed981
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
     at: 4
   LBO.H981:
     driver: src.dil_debt_8
     at: 4
+  LBO.F982:
+    ratio: &id324
+    - driver: src.e_typed982
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
   LBO.H982:
     driver: src.dil_preferred_a
     at: 4
+  LBO.F983:
+    ratio: &id325
+    - driver: src.e_typed983
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
   LBO.H983:
     driver: src.dil_preferred_b
+    at: 4
+  LBO.F984:
+    ratio: &id326
+    - driver: src.e_typed984
+    - sum:
+      - *id311
+      - *id312
+      - *id313
+      - driver: src.pad_not4
+    at: 4
+  LBO.E985:H985:
+  - sum:
+    - *id311
+    - *id312
+    - *id313
+    at: 4
+  - sum:
+    - ratio: *id314
+    - ratio: *id315
+    - ratio: *id316
+    - ratio: *id317
+    - ratio: *id318
+    - ratio: *id319
+    - ratio: *id320
+    - ratio: *id321
+    - ratio: *id322
+    - ratio: *id323
+    - ratio: *id324
+    - ratio: *id325
+    - ratio: *id326
+    at: 4
+  - sum:
+    - ratio: *id327
+    - ratio: *id328
+    - driver: src.kickers_G
+    at: 4
+  - sum:
+    - ratio: *id329
+    - ratio: *id330
+    - driver: src.dil_term_loan_a
+    - driver: src.dil_term_loan_b
+    - driver: src.dil_senior_note
+    - driver: src.dil_subordinated_note
+    - driver: src.dil_mezzanine
+    - driver: src.dil_seller_note
+    - driver: src.dil_convertible_bond
+    - driver: src.dil_debt_8
+    - driver: src.dil_preferred_a
+    - driver: src.dil_preferred_b
+    - driver: src.perf_H
     at: 4
   LBO.K996:T996:
     cut: ebitda
@@ -15075,7 +18091,7 @@ figures:
     - 13
     - 14
   LBO.K1003:T1003:
-    sum: *id045
+    sum: *id066
     periods:
     - 5
     - 6
