@@ -117,7 +117,7 @@ def _account_cut(book: Book, scheme: Scheme, include: Iterable[str], natures, cl
     values = [Fraction(0)] * (book.periods - first)
     states: Set[State] = set()
     picked = {a.name: (-1 if a.nature.debit_natured else 1) for a in accounts if scheme.classes[a.name] in include}
-    for row in book.table():
+    for row in book.table(picked):
         if row.account in picked:
             values[row.period - first] += picked[row.account] * (row.closing if closing else row.movement)
     for acct in picked:

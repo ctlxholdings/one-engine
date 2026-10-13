@@ -345,10 +345,18 @@ class Book:
         self._account(account)
         return set(self._states.get((account, period), set()))
 
-    def table(self) -> List[Row]:
-        """The roll-forward for every account and every closed period."""
+    def table(self, accounts: Optional[Iterable[str]] = None) -> List[Row]:
+        """The roll-forward for every closed period, of every account or only of ``accounts``.
+
+        A cut reads a handful of accounts from books with hundreds; building only their rows
+        keeps a workbook translation's thousands of cuts from rebuilding the whole table each time.
+        The rows are the same objects, in the book's account order, either way.
+        """
+        wanted = None if accounts is None else {self._account(a).name for a in accounts}
         rows = []
         for name in self.accounts:
+            if wanted is not None and name not in wanted:
+                continue
             opening = self._opening[name]
             for t in range(self.start_period, self._closed_through + 1):
                 move = self._moves.get((name, t), Fraction(0))

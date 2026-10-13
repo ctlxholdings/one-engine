@@ -113,6 +113,18 @@ def test_closing_is_opening_plus_movements_and_rolls_into_next_opening():
     assert rows[("revenue", 1)].movement == 5
 
 
+
+def test_the_table_of_some_accounts_is_their_rows_of_the_whole_table():
+    book = new_book()
+    book.post(sale("10", 0))
+    book.close_period(0)
+    book.post(sale("5", 1))
+    book.close_period(1)
+    some = book.table(["revenue"])
+    assert some == [r for r in book.table() if r.account == "revenue"] and len(some) == 2
+    with pytest.raises(KernelError, match="unknown account"):
+        book.table(["no_such_account"])
+
 def test_identity_holds_exactly_not_within_a_tolerance():
     book = new_book()
     for _ in range(10):
