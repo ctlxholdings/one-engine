@@ -32,21 +32,21 @@ TRANSLATED = {p.stem for p in TRANSLATIONS.glob("*.yaml")}
 #: translated cases whose receipt is ``differs`` because the source contradicts itself, with every
 #: figure that differs (no other may); the cause is in the translation's header, and the oracle is never edited
 SOURCE_FINDINGS: dict = {
-    # BFAP's per-hectare totals are rounded for display before they are subtracted (oracle notes)
+    # BFAP subtracts its unrounded per-hectare totals and prints each rounded: the printed totals
+    # subtract to a unit less (audit of 2026-10-13; the oracle notes have it the other way round)
     "atlas_growsell_maize_breakeven": {"marge_brute"},
     "bfap_maize_bloedrivier_2024_25": {"gross_income_zar_per_ha", "total_variable_expenditure_zar_per_ha",
                                        "gross_margin_zar_per_ha"},
     # the cost table's lines sum to 560,400, not the printed 709,000; the margin cell is a typo (oracle notes)
     "atlas_growsell_onion_errors": {"marge_cycle", "total_des_charges"},
     "giz_parse_oignon": {"total_des_charges_fcfa", "marge_beneficiaire_fcfa"},
-    # molasses at the annexure's 4.5% is 540 lakh against 900 printed (the printed row uses 7.5%)
+    # molasses at the annexure's 4.5% is 540 lakh against 900 printed (the printed row uses 7.5%);
+    # the year-2 income total is an input gap besides (cogeneration and other income are no inputs)
     "cap_sugarmill_ncdc_solapur_2500tcd": {"income_year_2.molasses", "total_income_year_2"},
     # the six cost lines do not reconcile with the stated EBITDAR (oracle notes)
     "cell_franchise_jackinthebox_item19": {"ebitdar_at_auv"},
     # extension budgets whose printed totals are not the sum of their own printed lines (a dollar or
     # a few cents of display rounding carried into later totals); each translation's header names it
-    "ext_broiler_maryland": {"net_income_over_variable_and_fixed_costs_usd", "net_income_over_variable_costs_usd",
-                             "total_variable_and_fixed_cost_usd", "total_variable_costs_usd"},
     "ext_corn_iowa2025": {"harvest_machinery_section_total.variable_usd_per_acre"},
     "ext_dairy_heifer_24month_isu": {"subtotal_before_ownership_and_labour_usd", "total_cost_24_months_usd",
                                      "total_feed_cost_usd", "weaning_to_calving_cost_usd"},
@@ -65,13 +65,12 @@ SOURCE_FINDINGS: dict = {
                                           "accumulated_net_cash_costs_per_acre_usd.year4",
                                           "establishment_cost_40_acres_usd", "establishment_cost_per_acre_usd",
                                           "total_accumulated_net_cost_per_acre_usd.year6"},
-    "ext_yearlingsteer_iowa2024": {"total_of_all_costs_usd", "total_variable_costs_usd"},
     "iowa_state_farrow_to_finish": {"profit_loss_usd_per_hd", "sales_value_usd_per_hd"},
     "landbank_beef_cattle_18month": {"gross_margin_R_per_LSU", "gross_margin_R_per_cow", "gross_production_value_R",
                                      "gross_production_value_R_per_LSU", "gross_production_value_R_per_cow"},
-    # printed changes that do not follow from the printed GWh pairs (oracle notes)
+    # the printed changes divide by this half's GWh, the column's other rows by the prior half's
     "energy_epra_kenya_2023h2": {"driver half_on_half_changes_pct.hydro", "driver half_on_half_changes_pct.wind"},
-    # the on-grid / off-grid split is not reproducible from the source's own inputs (oracle notes)
+    # the printed split shares the total out by site count, ignoring the litres each site burns
     "energy_nigeria_diesel_captive_power": {"driver generation_off_grid_gwh_2012", "driver generation_on_grid_gwh_2012",
                                             "driver generation_total_gwh_2012"},
     # the workbook's funding circularity was never solved (three debt sizes); the year-5 revenue
@@ -94,16 +93,16 @@ SOURCE_FINDINGS: dict = {
     # ERROR 3 of the oracle's notes: the receivables line printed with the wrong sign
     "fc_openstax_virtual_co_cashflow": {"indirect_method_cash_flow_statement_usd.operating_activities."
                                         "accounts_receivable_change_as_labeled"},
-    # the printed table breaks its own rules: year-1 miscellaneous of 4,000 on nil revenue (10% rule),
-    # year-4 sales of 45,046 against 45,346 every other year, feed matching no stated head count;
-    # every total and the IRR and NPV inherit them
+    # year-1 miscellaneous of 4,000 on nil revenue (its 10% rule gives nil), chick feed (6,480) on no
+    # stated head count, broiler feed on the flock unrounded (9 x 1,923.75 = 17,314; printed stock
+    # 1,924); every total and the IRR and NPV inherit them. Sales match (hens sold every two years)
     "ifad_zambia_poultry_esilp": {
         "financial_internal_rate_of_return_pct", "net_income_K", "npv_at_8pct_K", "operating_feed_broilers_K",
-        "operating_feed_chicks_K", "operating_miscellaneous_K", "sales_live_animals_K", "total_operating_costs_K",
-        "total_revenues_K", *(f"{row}.{y}" for row in ("net_incremental_benefits_K", "return_to_labour_K_per_day",
-                                                         "total_costs_K") for y in range(1, 6))},
-    # US$3.68/oz x 6,313 koz is 23,231.8, printed 23,206; the after-tax IRR needs annual cash flows
-    # that no input carries
+        "operating_feed_chicks_K", "operating_miscellaneous_K", "total_operating_costs_K",
+        *(f"{row}.{y}" for row in ("net_incremental_benefits_K", "return_to_labour_K_per_day",
+                                   "total_costs_K") for y in range(1, 6))},
+    # refining: the input rate is printed rounded (23,206 / 6,313 = 3.676, shown 3.68), not a
+    # contradiction; the after-tax IRR is an input gap (its annual cash flows are no input)
     "mining_mt_todd_2024_fs": {"after_tax_irr_pct", "cash_flow_summary_usd_000.refinery_costs"},
     # equipment printed 327,000 against its lines' 90,500; working capital leaves out the cattle
     "rte_embouche_bovine_niger_3cycles": {"cout_global_investissements_xof", "total_equipements_xof",
@@ -121,10 +120,6 @@ SOURCE_FINDINGS: dict = {
         "investment_donated_per_all_beneficiaries_usd", "investment_donated_per_direct_beneficiary_usd",
         "investment_own_resources_per_all_beneficiaries_usd", "investment_own_resources_per_direct_beneficiary_usd",
         "total_investment_per_all_beneficiaries_usd", "variable_cost_per_all_beneficiaries_usd"},
-    # a dating convention, not an amount: the engine records an expiring loss in the last period that
-    # can use it, as ARISE (golds/arise_expiry) and ModelOff 2015 Q39 date it; this oracle (the old
-    # tax engine) records it in the first period that cannot. Cash tax and relief forgone agree
-    "taxeng_loss_carryforward_expiry": {"losses_expired"},
 }
 #: translated cases whose scored figures the oracle's inputs cannot produce (they report "not
 #: reported"), with every such figure: the inputs, not the engine, are missing what they need
@@ -167,9 +162,9 @@ UNPLANTABLE = {
 
 #: recorded findings whose every disagreement is within 1% of the oracle: ``near``, never ``matches``
 NEAR = {
-    "atlas_growsell_maize_breakeven", "bfap_maize_bloedrivier_2024_25", "ext_broiler_maryland",
+    "atlas_growsell_maize_breakeven", "bfap_maize_bloedrivier_2024_25",
     "ext_corn_iowa2025", "ext_dairy_heifer_24month_isu", "ext_freshwater_shrimp_100day_uky",
-    "ext_hay_tamu2023", "ext_table_olive_establish_ucd2023", "ext_yearlingsteer_iowa2024",
+    "ext_hay_tamu2023", "ext_table_olive_establish_ucd2023",
     "fao_ruralinvest_broiler_poultry", "fc_openstax_cbs_merchandising_income",
     "landbank_beef_cattle_18month", "sep_msstate_p3489_beef_cutout", "sep_msu_grassfed_freezerbeef_pricing",
 }

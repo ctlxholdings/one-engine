@@ -7,8 +7,10 @@
 #   * grower payments: grower_payments__quantity thousand birds placed times the integrator's
 #     grower_payments__price_usd per thousand; litter: litter_sales__quantity tons at
 #     price_usd_per_ton; both received in cash in the year;
-#   * the eight variable costs are the source's own line totals (the hand-labelled `costs`
-#     list), paid in cash and expensed; interest on operating capital is its printed line;
+#   * the eight variable costs are paid in cash and expensed: six are the source's own line
+#     totals (the hand-labelled `costs` list); crust-out is its quantity times its price
+#     (5.5 x 325 = 1,787.50, printed 1,788) and interest on operating capital its base times its
+#     rate (30,346 x 4.5% = 1,365.57, printed 1,366), as the source's own totals take them;
 #   * fixed costs: property taxes and insurance paid in cash; building and equipment
 #     depreciation charged against accumulated_depreciation (no cash); owner's labour, interest
 #     on investment and the land charge are the owner's own labour, capital and land charged at
@@ -20,11 +22,11 @@
 # Per-square-foot figures divide by the two houses' floor area (house_sqft_each x
 # number_of_houses), a physical driver, via `per`.
 #
-# Source finding: the eight variable lines sum to 31,712, but the source prints its variable
-# total as 31,711 and carries that 1-dollar rounding into net over variable costs (106,089),
-# the variable-and-fixed total (101,937) and the net return (35,863). Those four figures are
-# read from the books and differ by one dollar, wider than the half-dollar tolerance; the
-# oracle's tolerance note says this gap must surface.
+# The printed variable total, 31,711, is the exact sum (31,711.07): the source adds the unrounded
+# crust-out and interest lines and prints each line rounded. Adding the printed line cells
+# instead gives 31,712, a dollar off the total and the three figures built on it (an audit of
+# 2026-10-13 found the earlier "source rounds" reading backwards); with the two lines computed
+# from their own inputs every figure matches.
 published: ext_broiler_maryland
 entity: farm
 plant: grower_payments__price_usd
@@ -53,6 +55,8 @@ case:
           + well_and_water_system__quantity * well_and_water_system__price_usd
           + stone__quantity * stone__price_usd
         floor_sqft: house_sqft_each * number_of_houses
+        crust_out_cost: crust_out_or_windrow__quantity * crust_out_or_windrow__price_usd
+        operating_interest_cost: interest_on_operating_capital__base_usd * interest_on_operating_capital__rate_pct / 100
   opening:
     farm:
       cash: {nature: asset, value: 0}
@@ -91,10 +95,10 @@ case:
         telephone: {debit: telephone_alarm, credit: cash, amount: {generator: src, output: telephone_alarm}}
         supplies: {debit: supplies_and_miscellaneous, credit: cash, amount: {generator: src, output: supplies_and_miscellaneous}}
         repairs: {debit: building_and_equipment_repairs, credit: cash, amount: {generator: src, output: building_and_equipment_repairs}}
-        crust_out: {debit: crust_out_or_windrow, credit: cash, amount: {generator: src, output: crust_out_or_windrow}}
+        crust_out: {debit: crust_out_or_windrow, credit: cash, amount: {generator: src, output: crust_out_cost}}
         partial_cleanout: {debit: partial_house_cleanout, credit: cash, amount: {generator: src, output: partial_house_cleanout_annual}}
         full_cleanout: {debit: full_house_cleanout, credit: cash, amount: {generator: src, output: full_house_cleanout}}
-        operating_interest: {debit: interest_on_operating_capital, credit: cash, amount: {generator: src, output: interest_on_operating_capital}}
+        operating_interest: {debit: interest_on_operating_capital, credit: cash, amount: {generator: src, output: operating_interest_cost}}
         labour: {debit: owners_labor, credit: owner_equity, amount: {generator: src, output: owners_labor}}
         building_dep: {debit: building_depreciation, credit: accumulated_depreciation, amount: {generator: src, output: building_depreciation}}
         equipment_dep: {debit: equipment_depreciation, credit: accumulated_depreciation, amount: {generator: src, output: equipment_depreciation}}

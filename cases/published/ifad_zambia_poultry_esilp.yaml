@@ -9,14 +9,18 @@
 #     "Yr5-20" column is period 5, every later year repeating it;
 #   * the technical inputs are printed for year 1, year 2 and years 3-20 (three-element series);
 #     period p reads element min(p-1, 2), and the year-2 element for the year-1 vet contribution;
-#   * sales: each year's offtake of hens, roosters and broilers (offtake_*_selling_head,
-#     offtake_broilers_head) at their selling prices, for cash; the hens passed on earn nothing;
+#   * sales: each year's offtake of hens, roosters and broilers at their selling prices, for cash;
+#     hens are "sold every two years" (the offtake table's footnote), so the year-2 hen sale
+#     recurs in every even year; broilers are the year's whole offtake less the hens and roosters
+#     sold and the hens passed on (which earn nothing): year 4 sells 30 hens and 1,858 broilers,
+#     45,046 as printed, and the odd years 45,346;
 #   * investment, year 1, expensed as the source's net-income row nets it (the table is a cash
 #     budget, not accrual accounts): housing_K, and the one-time veterinary contribution at its
 #     percent of gross revenue (the first selling year's, year 2);
 #   * operating costs each project year, paid in cash: chick feed per head of the chicken stock
-#     (stock_chickens_head), broiler feed per head of the broiler stock (stock_broilers_head),
-#     animal health per head of the whole flock (stock_total_head), miscellaneous at its percent
+#     (stock_chickens_head); broiler feed and animal health per head of the whole flock
+#     (stock_total_head), as the source prices both (17,314 = 9 x 1,923.75 and 7,695 =
+#     4 x 1,923.75, the flock before rounding to the printed 1,924); miscellaneous at its percent
 #     of the year's gross revenue;
 #   * family labour: family_labour_days_per_year at family_labour_wage_K_per_day, unpaid, so
 #     posted against the household's equity (an imputed cost, no cash); the hired-labour account
@@ -28,11 +32,13 @@
 # Return to labour is net income per family-labour day, the benefit/cost ratio revenue per total
 # cost (`per`, over the same costs computed from the inputs).
 # Source findings (read, they differ): the miscellaneous cost of year 1 is printed 4,000 though
-# its own rule (10% of gross revenue) gives nil, there being no sale in year 1; year 4 sales are
-# printed 45,046 though the inputs give years 3-20 one pattern (45,346); chick feed (6,480) and
-# broiler feed (17,314) match no stated head count (3 x 2,700 = 8,100; 9 x 1,890 = 17,010); every
-# total built on them (operating and total costs, net income, incremental benefits, returns,
-# NPV, IRR) inherits the gap. The oracle's notes record the year-1 total investment printed one
+# its own rule (10% of gross revenue) gives nil, there being no sale in year 1; chick feed (6,480)
+# matches no stated head count (3 x 2,700 = 8,100; 6,480 is 3 x 2,700 x (1 - 40% / 2), an average
+# stock under the chicks' mortality the source never states, so it is not adopted); broiler feed
+# is 2 above the printed 17,314, its flock printed rounded (1,924 for 1,923.75); every total built
+# on them (operating and total costs, net income, incremental benefits, returns, NPV, IRR)
+# inherits the gap. An audit of 2026-10-13 found the year-4 sales, read before as a source
+# error, to be the footnote's every-other-year hen sale, now booked. The oracle's notes record the year-1 total investment printed one
 # below its own parts (4,905 against 4,906).
 published: ifad_zambia_poultry_esilp
 entity: farm
@@ -52,9 +58,13 @@ case:
         project: (t >= 1)
         year1: (t == 1)
         # element min(t-1, 2) of a [year 1, year 2, years 3-20] series; nil in the WOP period
-        hens_sold: lag(offtake_hens_selling_head, t - min(t - 1, 2))
+        # hens are "sold every two years" (the offtake table's footnote): the year-2 sale of
+        # element 1 recurs in every even year; the [0] of years 3-20 is the odd years'
+        hens_sold: lag(offtake_hens_selling_head, max(0, t - 1)) * (t >= 2) * (t % 2 == 0)
         roosters_sold: lag(offtake_roosters_selling_head, t - min(t - 1, 2))
-        broilers_sold: lag(offtake_broilers_head, t - min(t - 1, 2))
+        hens_passed_on: lag(offtake_hens_passon_head, t - min(t - 1, 2))
+        # the year's offtake less the hens and roosters sold and the hens passed on
+        broilers_sold: lag(offtake_total_head, t - min(t - 1, 2)) - hens_sold - roosters_sold - hens_passed_on
         chickens: lag(stock_chickens_head, t - min(t - 1, 2))
         broilers: lag(stock_broilers_head, t - min(t - 1, 2))
         flock: lag(stock_total_head, t - min(t - 1, 2))
@@ -70,7 +80,8 @@ case:
         housing: housing_K * year1
         vet_contribution: one_time_veterinary_contribution_pct_of_gross_revenue / 100 * sales_year2 * year1
         feed_chicks: feed_cost_chicks_K_per_head * chickens * project
-        feed_broilers: feed_cost_broilers_K_per_head * broilers * project
+        # per head of the whole flock, as the source prices it (and animal health with it)
+        feed_broilers: feed_cost_broilers_K_per_head * flock * project
         health: veterinary_cost_K_per_head * flock * project
         miscellaneous: miscellaneous_expenditure_pct_of_gross_revenue / 100 * sales * project
         family_labour: family_labour_days_per_year * family_labour_wage_K_per_day * project

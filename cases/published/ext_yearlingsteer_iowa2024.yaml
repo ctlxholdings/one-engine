@@ -9,17 +9,21 @@
 #   * the feeder is bought for cash and expensed with the cycle (the budget charges it as a
 #     variable cost of the steer sold); its interest, the four feed lines, vet, machinery,
 #     marketing, interest on other variable costs, labour and death loss are paid in cash and
-#     expensed, each interest and the death loss at its printed amount;
+#     expensed; each interest is its base times its annual rate for its months financed (the
+#     feeder's 1,987.50 x 8% x 6.5/12 = 86.125, printed 86.13; the feed, vet, machinery and
+#     marketing lines' 504.35 x 8% x 3.25/12 = 10.928, printed 10.93), as the source's totals
+#     take them; the death loss is its printed 23.54 (its footnote's 0.5% is not an input);
 #   * the fixed machinery, equipment and housing cost is the owner's buildings and machines
 #     charged at their ownership cost and credited to the owner (no cash moves);
 #   * no tax.
 # Break-even prices per pound divide a cost total by slaughter_weight_lbs (a physical driver)
 # via `per`.
 #
-# Source finding: the nine variable lines sum to 2,657.45, but the source prints its variable
-# total as 2,657.44 and carries it into the total of all costs (2,679.84, mapped). Both are read
-# from the books and differ by one cent, wider than the half-cent tolerance; the oracle's
-# tolerance note says this gap must surface.
+# The printed variable total, 2,657.44, is the exact sum (2,657.4402): the source adds the
+# unrounded interest and death-loss lines and prints each line rounded. Adding the printed line
+# cells instead gives 2,657.45, a cent off the total and the total of all costs (an audit of
+# 2026-10-13 found the earlier "source rounds" reading backwards); with both interest lines
+# computed from their own inputs, every figure matches.
 # Set aside: the corn-and-silage ration column, an alternative ration whose line costs are not
 # inputs.
 published: ext_yearlingsteer_iowa2024
@@ -36,7 +40,15 @@ case:
       kind: formulas
       periods: 1
       inputs: published
-      values: {}
+      values:
+        feeder_interest_cost: >-
+          yearling_feeder_purchase__cost_usd * interest_on_feeder__rate_pct_annual / 100
+          * interest_on_feeder__months_financed / 12
+        other_interest_cost: >-
+          (corn + fair_quality_hay + modified_distillers_grain + supplement_and_minerals
+          + veterinary_and_health + machinery_and_equipment + marketing_transport_miscellaneous)
+          * interest_on_other_variable_costs__rate_pct_annual / 100
+          * interest_on_other_variable_costs__months_financed / 12
   opening:
     farm:
       cash: {nature: asset, value: 0}
@@ -63,7 +75,7 @@ case:
         machinery_equipment_housing: expense
       moves:
         feeder: {debit: feeder_steer, credit: cash, amount: {generator: src, output: yearling_feeder_purchase}}
-        feeder_interest: {debit: interest_on_feeder, credit: cash, amount: {generator: src, output: interest_on_feeder}}
+        feeder_interest: {debit: interest_on_feeder, credit: cash, amount: {generator: src, output: feeder_interest_cost}}
         corn: {debit: corn, credit: cash, amount: {generator: src, output: corn}}
         hay: {debit: fair_quality_hay, credit: cash, amount: {generator: src, output: fair_quality_hay}}
         mdg: {debit: modified_distillers_grain, credit: cash, amount: {generator: src, output: modified_distillers_grain}}
@@ -71,7 +83,7 @@ case:
         vet: {debit: veterinary_and_health, credit: cash, amount: {generator: src, output: veterinary_and_health}}
         machinery: {debit: machinery_and_equipment, credit: cash, amount: {generator: src, output: machinery_and_equipment}}
         marketing: {debit: marketing_transport_miscellaneous, credit: cash, amount: {generator: src, output: marketing_transport_miscellaneous}}
-        other_interest: {debit: interest_on_other_variable_costs, credit: cash, amount: {generator: src, output: interest_on_other_variable_costs}}
+        other_interest: {debit: interest_on_other_variable_costs, credit: cash, amount: {generator: src, output: other_interest_cost}}
         labor: {debit: labor, credit: cash, amount: {generator: src, output: labor}}
         death_loss: {debit: death_loss, credit: cash, amount: {generator: src, output: death_loss}}
         fixed: {debit: machinery_equipment_housing, credit: owner_equity, amount: {generator: src, output: fixed_costs_machinery_equipment_housing}}
