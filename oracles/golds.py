@@ -123,7 +123,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import yaml
 
 from one_engine.inputs import load_yaml_strict
-from one_engine.oracles import REFERENCE, Blocked, Check, Family
+from one_engine.oracles import REFERENCE, Blocked, Check, Family, worst_rel
 
 FOLDER = "golds"
 TRANSLATIONS = pathlib.Path(__file__).resolve().parent.parent / "cases" / "golds"
@@ -333,10 +333,13 @@ class GoldFamily(Family):
     def _compare(name: str, want: List[Any], got: List[Fraction]) -> Check:
         if len(got) != len(want):
             return Check(name, "length", f"{len(want)} periods", f"{len(got)} periods", False)
-        for t, (w, g) in enumerate(zip(want, got)):
-            w = Fraction(repr(w)) if isinstance(w, float) else Fraction(w)
-            if abs(g - w) > ATOL:
-                return Check(name, f"t={t}", _fmt(w), _fmt(g), False)
+        exact_want = [Fraction(repr(w)) if isinstance(w, float) else Fraction(w) for w in want]
+        bad = [t for t, (w, g) in enumerate(zip(exact_want, got)) if abs(g - w) > ATOL]
+        if bad:
+            # the first period that disagrees is shown; the size is the worst over all that do
+            t = bad[0]
+            return Check(name, f"t={t}", _fmt(exact_want[t]), _fmt(got[t]), False,
+                         rel=worst_rel([(exact_want[i], got[i]) for i in bad]))
         return Check(name, f"all {len(want)} periods", _fmt(Fraction(repr(want[-1])) if isinstance(want[-1], float)
                                                            else Fraction(want[-1])) + " at the last",
                      _fmt(got[-1]) + " at the last", True)

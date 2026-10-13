@@ -76,6 +76,14 @@ class _Fake(O.Family):
             # still seen on the figure that agreed
             return [O.Check("s", "element 3" if plant else "all 4 elements", "1", "2" if plant else "1",
                             not plant)], {"a": 1}
+        if b in ("near", "near_and_far", "near_unmeasured", "near_unseen"):
+            # a check that disagrees by a measured relative amount: 0.5% is near, 5% is not, and a
+            # disagreement whose size was not measured is never near
+            rel = {"near": [0.005], "near_and_far": [0.005, 0.05], "near_unmeasured": [None],
+                   "near_unseen": [0.005]}[b]
+            ok = not (plant and b != "near_unseen")
+            return [O.Check("v", "t0", "1", "1" if ok else "2", ok)] + \
+                [O.Check("w", f"t{i}", "200", "201", False, rel=r) for i, r in enumerate(rel)], {}
         if b in ("differs", "differs_seen"):
             # "differs_seen": the plant also breaks the check that agreed
             ok = not (plant and b == "differs_seen")
@@ -94,6 +102,10 @@ class _Fake(O.Family):
     ("differs", "differs", "1 of 2 checks disagree; first: v at t1"),
     ("differs_seen", "differs", "1 of 2 checks disagree; first: v at t1"),
     ("blocked", "blocked", "the engine has no widget"),
+    ("near", "near", "1 of 2 checks are near (within 1%); first: w at t0"),
+    ("near_and_far", "differs", "2 of 3 checks disagree; first: w at t0"),
+    ("near_unmeasured", "differs", "1 of 2 checks disagree; first: w at t0"),
+    ("near_unseen", "differs", "1 of 2 checks disagree; first: w at t0"),
 ])
 def test_each_verdict_is_given_only_when_earned(behaviour, verdict, reason):
     r = O.receipt(_Fake(behaviour), "x", commit="test")
@@ -103,9 +115,12 @@ def test_each_verdict_is_given_only_when_earned(behaviour, verdict, reason):
     if verdict == "matches":
         assert r.planted_caught is True and r.planted_failures == 1 and r.inputs == {"a": 1}
     if verdict == "differs":
-        assert r.first_difference == {"name": "v", "at": "t1", "expected": "2", "got": "3", "ok": False}
+        assert r.first_difference == {"name": "v", "at": "t1", "expected": "2", "got": "3", "ok": False,
+                                      "rel": None} or behaviour.startswith("near")
         # a case that differs is still planted: the plant must break a check that agreed
-        assert r.planted_caught is (behaviour == "differs_seen")
+        assert r.planted_caught is (behaviour in ("differs_seen", "near_and_far", "near_unmeasured"))
+    if verdict == "near":
+        assert r.planted_caught is True and r.n_failed == 1
 
 
 # ── the ACTUS corpus ────────────────────────────────────────────────────────
@@ -141,7 +156,7 @@ def test_the_scoreboard_counts_and_names(tmp_path):
     saved = json.loads((tmp_path / "receipts" / "actus" / "pam__pam01.json").read_text())
     assert saved["verdict"] == "matches" and saved["checks"][0]["name"] == "events"
     board = O.scoreboard({"actus": rs}, [FAMILY])
-    assert "| actus | 2 | 1 | 0 | 1 | 0 |" in board
+    assert "| actus | 2 | 1 | 0 | 0 | 1 | 0 |" in board
     assert "ACTUS contract type SWAPS is not built" in board and "swaps/swaps01" in board
 
 

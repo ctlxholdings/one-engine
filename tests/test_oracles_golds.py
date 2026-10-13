@@ -244,7 +244,8 @@ def test_the_lower_tax_bands_are_relieved(tmp_path):
                         more=[("rate: {generator: gold, output: ibica_band2_rate}}",
                                "rate: {generator: gold, output: ibica_band3_rate}}")])
     r = O.receipt(fam, "paygo_solar", commit="test")
-    assert r.verdict == "differs" and r.first_difference["name"] == "tax"
+    # the excess is 0.94% of the tax, so the receipt is ``near``: never a match, and tax is named first
+    assert r.verdict == "near" and r.first_difference["name"] == "tax"
 
 
 class _Result:
@@ -290,3 +291,11 @@ def test_a_record_field_may_be_nested_and_any_reading_may_be_a_running_total():
     assert read({"record": "tiers.paid.term_loan_a.prepay"}) == [0, 42, 0]
     assert read({"record": "waterfall.paid.sweep", "running": True}) == [2, 2, 5]
     assert read({"cut": "cash", "running": True}) == read({"cumulative": "cash"}) == [1, 3, 6]
+
+
+def test_a_row_that_disagrees_records_its_worst_relative_difference_not_its_first():
+    # the first period is 0.8% off, the second 50%: the row is far, not near
+    c = GoldFamily._compare("x", [100, 100], [Fraction(1008, 10), Fraction(150)])
+    assert not c.ok and c.at == "t=0" and c.rel == 0.5
+    # a nil oracle value has no relative size, so the row is unmeasured (never near)
+    assert GoldFamily._compare("x", [0, 100], [Fraction(1), Fraction(100)]).rel is None

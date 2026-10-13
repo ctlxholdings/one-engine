@@ -128,12 +128,16 @@ def test_a_citation_or_unit_is_not_an_input_even_when_it_holds_a_number():
     assert not [k for k in esco_inputs(_case("ehingen_berufsschulzentrum")) if k.endswith("__source")]
 
 
+#: recorded findings whose every disagreement is within 1% of the source: ``near``, never ``matches``
+NEAR = {"belo_horizonte_public_lighting_ppp", "eria_hospital", "geolumen_ener2crowd"}
+
+
 @pytest.mark.parametrize("oid", ORACLES)
 def test_every_deal_gets_its_recorded_verdict(oid):
     r = O.receipt(FAMILY, oid, commit="test")
     assert r.verdict != "blind" or oid in BLIND, r.reason
     if oid in RECORD_FINDINGS:
-        assert r.verdict == "differs", r.reason
+        assert r.verdict == ("near" if oid in NEAR else "differs"), r.reason
         assert {c["name"] for c in r.checks if not c["ok"]} == RECORD_FINDINGS[oid]
         assert r.planted_caught or oid in UNPLANTABLE, "the plant broke none of the checks that agree"
     elif oid in BLIND:

@@ -104,7 +104,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import yaml
 
 from one_engine.inputs import load_yaml_strict
-from one_engine.oracles import REFERENCE, Blocked, Check, Family
+from one_engine.oracles import REFERENCE, Blocked, Check, Family, rel_diff, worst_rel
 from one_engine.oracles.golds import STRUCTURAL, GoldFamily, _fmt, _numbers
 
 FOLDER = "published"
@@ -370,9 +370,13 @@ class PublishedFamily(Family):
             idx = spec.get("periods", list(range(len(reading))))
             if len(idx) != len(value):
                 return Check(label, "length", f"{len(value)} elements", f"{len(idx)} periods read", False)
-            for i, (w, t) in enumerate(zip(value, idx)):
-                if not self._within(fig, w, reading[t], tol, canon)[0]:
-                    return Check(label, f"element {i} (t={t})", _fmt(w), _fmt(reading[t]), False)
+            bad = [(i, w, t) for i, (w, t) in enumerate(zip(value, idx))
+                   if not self._within(fig, w, reading[t], tol, canon)[0]]
+            if bad:
+                # the first element that disagrees is shown; the size is the worst over all that do
+                i, w, t = bad[0]
+                return Check(label, f"element {i} (t={t})", _fmt(w), _fmt(reading[t]), False,
+                             rel=worst_rel([(w, reading[t]) for _, w, t in bad]))
             return Check(label, f"all {len(value)} elements", _fmt(value[-1]) + " at the last",
                          _fmt(reading[idx[-1]]) + " at the last", True)
         if spec.get("total"):
@@ -384,7 +388,7 @@ class PublishedFamily(Family):
         else:
             raise ValueError(f"figure {fig}: a single figure from a {len(reading)}-period reading needs at or total")
         ok, rule = self._within(fig, value, got, tol, canon)
-        return Check(label, f"{at}, {rule}", _fmt(value), _fmt(got), ok)
+        return Check(label, f"{at}, {rule}", _fmt(value), _fmt(got), ok, rel=None if ok else rel_diff(value, got))
 
     def inventory_oid(self, row: Mapping[str, str]) -> Optional[str]:
         """Claim the inventory rows of the published cases (``cases/golds/<id>.yaml``, encoding g_published_case)."""

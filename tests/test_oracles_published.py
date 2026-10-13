@@ -165,6 +165,16 @@ UNPLANTABLE = {
 }
 
 
+#: recorded findings whose every disagreement is within 1% of the oracle: ``near``, never ``matches``
+NEAR = {
+    "atlas_growsell_maize_breakeven", "bfap_maize_bloedrivier_2024_25", "ext_broiler_maryland",
+    "ext_corn_iowa2025", "ext_dairy_heifer_24month_isu", "ext_freshwater_shrimp_100day_uky",
+    "ext_hay_tamu2023", "ext_table_olive_establish_ucd2023", "ext_yearlingsteer_iowa2024",
+    "fao_ruralinvest_broiler_poultry", "fc_openstax_cbs_merchandising_income",
+    "landbank_beef_cattle_18month", "sep_msstate_p3489_beef_cutout", "sep_msu_grassfed_freezerbeef_pricing",
+}
+
+
 def test_every_published_case_is_vendored_and_in_the_manifest():
     assert len(ORACLES) == 103
     files = O.load_manifest()
@@ -179,7 +189,7 @@ def test_every_published_case_gets_its_recorded_verdict(oid):
     assert r.verdict != "blind", r.reason
     known = {**SOURCE_FINDINGS, **INPUT_GAPS}
     if oid in known:
-        assert r.verdict == "differs", r.reason
+        assert r.verdict == ("near" if oid in NEAR else "differs"), r.reason
         assert {c["name"] for c in r.checks if not c["ok"]} == known[oid]
         assert r.planted_caught or oid in UNPLANTABLE, "the plant broke none of the checks that agree"
     elif oid in TRANSLATED:

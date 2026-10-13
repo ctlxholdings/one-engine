@@ -23,7 +23,14 @@ comparison could have failed*. Each run therefore produces a **receipt**:
 Verdicts
 --------
 ``matches``  every check agrees, and the planted error was caught.
-``differs``  at least one check disagrees. The oracle wins: the engine or
+``near``     every check that disagrees does so by at most ``NEAR`` (1%) of the
+             oracle's value, and the planted error was caught: the figures agree
+             but the precision is not there (Ali, 2026-10-13: "essentially it
+             matches but the precision is not there. it's a different thing").
+             Never counted as a match. A disagreement is near only when the
+             comparison measured its size (``Check.rel``); one against a nil
+             oracle value, a missing figure or a failed book check never is.
+``differs``  at least one check disagrees by more. The oracle wins: the engine or
              the translation is wrong, never the stored number.
 ``blocked``  the engine lacks a piece the oracle needs; the reason names it.
 ``blind``    the run produced no check, or the planted error went unseen.
@@ -54,7 +61,25 @@ REFERENCE = pathlib.Path(__file__).resolve().parents[1] / "cases" / "reference"
 MANIFEST = REFERENCE / "MANIFEST.json"
 REPO = pathlib.Path(__file__).resolve().parents[2]
 
-VERDICTS = ("matches", "differs", "blocked", "blind")
+VERDICTS = ("matches", "near", "differs", "blocked", "blind")
+#: a disagreement within this share of the oracle's value is "near" (Ali's card of 2026-10-13: 1%)
+NEAR = 0.01
+
+
+def rel_diff(want: Any, got: Any) -> Optional[float]:
+    """How far ``got`` is from ``want``, as a share of ``want``; ``None`` when ``want`` is nil (no share
+    to speak of) or either is not a number. A comparison that fails records this on its check."""
+    try:
+        w, g = float(want), float(got)
+    except (TypeError, ValueError):
+        return None
+    return abs(g - w) / abs(w) if w else None
+
+
+def worst_rel(pairs: Iterable[Tuple[Any, Any]]) -> Optional[float]:
+    """The largest :func:`rel_diff` over ``(want, got)`` pairs that disagree; ``None`` if any is unmeasured."""
+    rels = [rel_diff(w, g) for w, g in pairs]
+    return None if not rels or any(r is None for r in rels) else max(rels)
 
 
 class OracleChanged(RuntimeError):
@@ -77,6 +102,9 @@ class Check:
     expected: str
     got: str
     ok: bool
+    #: when the check failed on numbers: the largest relative difference over everything it compared
+    #: (every element of a series, not only the first that failed); ``None`` when not measured
+    rel: Optional[float] = None
 
 
 @dataclass
@@ -204,6 +232,7 @@ def receipt(family: Family, oid: str, commit: Optional[str] = None) -> Receipt:
     if not checks:
         base.reason = "the run produced no check"
         return base
+    near = bool(failed) and all(c.rel is not None and c.rel <= NEAR for c in failed)
     if failed:
         base.verdict = "differs"
         base.first_difference = asdict(failed[0])
@@ -228,6 +257,10 @@ def receipt(family: Family, oid: str, commit: Optional[str] = None) -> Receipt:
                                 for c in planted_checks)
     base.planted_caught = base.planted_failures > 0
     if failed:
+        if near and base.planted_caught:
+            base.verdict = "near"
+            base.reason = (f"{len(failed)} of {len(checks)} checks are near (within {NEAR:.0%}); "
+                           f"first: {failed[0].name} at {failed[0].at}")
         return base
     if base.planted_caught:
         base.verdict = "matches"
@@ -261,15 +294,18 @@ def scoreboard(receipts: Mapping[str, List[Receipt]], families: Iterable[Family]
              f"Generated {when} from engine commit {', '.join(commits) or 'n/a'}. "
              "Written by `python3 -m one_engine.oracles run`; do not edit by hand.", "",
              "Verdicts: **matches** (every check agrees and a planted error was caught), "
+             f"**near** (every disagreement within {NEAR:.0%} of the oracle's value: agrees, the precision "
+             "is not there; never counted as a match), "
              "**differs** (the oracle wins), **blocked** (the engine lacks a named piece), "
              "**blind** (the check could not fail; never counts).", "",
-             "| Family | Oracles | Matches | Differs | Blocked | Blind |", "|---|---|---|---|---|---|"]
+             "| Family | Oracles | Matches | Near | Differs | Blocked | Blind |", "|---|---|---|---|---|---|---|"]
     for name, rs in receipts.items():
         n = {v: sum(r.verdict == v for r in rs) for v in VERDICTS}
-        lines.append(f"| {name} | {len(rs)} | {n['matches']} | {n['differs']} | {n['blocked']} | {n['blind']} |")
+        lines.append(f"| {name} | {len(rs)} | {n['matches']} | {n['near']} | {n['differs']} | {n['blocked']} "
+                     f"| {n['blind']} |")
     for name, rs in receipts.items():
         lines += ["", f"## {name}", ""]
-        for v in ("differs", "blind", "blocked"):
+        for v in ("near", "differs", "blind", "blocked"):
             bad = [r for r in rs if r.verdict == v]
             if not bad:
                 continue

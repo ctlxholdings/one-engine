@@ -92,7 +92,7 @@ from openpyxl.utils import column_index_from_string, get_column_letter
 from openpyxl.utils.datetime import to_excel
 
 from one_engine.inputs import load_yaml_strict
-from one_engine.oracles import REFERENCE, Blocked, Check
+from one_engine.oracles import REFERENCE, Blocked, Check, rel_diff
 from one_engine.oracles.golds import GoldFamily, _fmt, untraced
 from one_engine.oracles.published import PublishedFamily, _echoes, _exact, untraced_published
 
@@ -327,7 +327,7 @@ class WorkbookFamily(PublishedFamily):
                 raise ValueError(f"figure {fig}: a measure takes only variant and sign")
             got = Fraction(spec.get("sign", 1)) * Fraction(results[spec.get("variant")].measure(spec["measure"]))
             ok, rule = self._within(fig, value, got, tol, None)
-            return Check(fig, rule, _fmt(value), _fmt(got), ok)
+            return Check(fig, rule, _fmt(value), _fmt(got), ok, rel=None if ok else rel_diff(value, got))
         return self._figure(fig, value, spec, {None: results[None], **results}, entity, n, tol, None)
 
     def _elements(self, fig, value, specs, results, entity, n, tol) -> Check:
@@ -335,8 +335,12 @@ class WorkbookFamily(PublishedFamily):
         if not isinstance(value, list) or len(specs) != len(value):
             return Check(fig, "length", f"{len(value) if isinstance(value, list) else 1} cells",
                          f"{len(specs)} readings", False)
-        for i, (w, s) in enumerate(zip(value, specs)):
-            c = self._read_one(f"{fig}", w, s, results, entity, n, tol)
-            if not c.ok:
-                return Check(fig, f"cell {i + 1}: {c.at}", c.expected, c.got, False)
+        cells = [self._read_one(f"{fig}", w, s, results, entity, n, tol) for w, s in zip(value, specs)]
+        bad = [(i, c) for i, c in enumerate(cells) if not c.ok]
+        if bad:
+            # the first cell that disagrees is shown; the size is the worst over all that do
+            i, c = bad[0]
+            rels = [c.rel for _, c in bad]
+            return Check(fig, f"cell {i + 1}: {c.at}", c.expected, c.got, False,
+                         rel=None if any(r is None for r in rels) else max(rels))
         return Check(fig, f"all {len(value)} cells", _fmt(value[-1]) + " at the last", "agree", True)

@@ -30,6 +30,8 @@ PILOT_FINDINGS = {
     # inventory_packaging uses the unrounded 33,333.33 bottles; the gold's own check and cost rows round
     "juice_nondeductible_v26": {"inventory_packaging", "nwc", "nwc_prior"},
 }
+#: recorded findings whose every disagreement is within 1% of the gold: ``near``, never ``matches``
+NEAR = {"juice_nondeductible_v26"}
 
 
 def test_every_pilot_gold_is_vendored_and_in_the_manifest():
@@ -53,7 +55,7 @@ def test_every_pilot_gold_gets_its_recorded_verdict(oid):
     r = O.receipt(FAMILY, oid, commit="test")
     assert r.verdict != "blind", r.reason
     if oid in PILOT_FINDINGS:
-        assert r.verdict == "differs", r.reason
+        assert r.verdict == ("near" if oid in NEAR else "differs"), r.reason
         assert {c["name"] for c in r.checks if not c["ok"]} == PILOT_FINDINGS[oid]
         assert r.planted_caught, "the plant broke none of the checks that agree"
     elif oid in TRANSLATED:
