@@ -15,16 +15,14 @@
 #     their life and depreciated over the years they have left; the digital press is replaced at
 #     digital_replacement_period for digital_cost, charged over a full life from that period, in
 #     its own account; both reach nil at the horizon, nothing is disposed of;
-#   * IBICA: the top band's rate on the profit, less the lower bands' relief
-#     ((top - band rate) x band width, which is ibica_top_band_offset), posted as a tax credit
-#     (the promoted gold paygo_solar's schedule, valid above the second ceiling, which the gold's
-#     checks assert); paid in the year. income_tax has no progressive band schedule, so the band
-#     split is memo arithmetic no ledger holds: the band widths and the lower bands' tax are
-#     drivers, the top band's base is the tax record's base less the second ceiling, and its tax
-#     is the booked IBICA less the lower bands'. The MFP (the higher of mfp_rate of billings and
-#     mfp_floor_rsi) is a memo row below the IBICA (a driver, as in the promoted golds); the 5%
-#     withholding is an advance on the tax and moves no number: it is read as that rate of the
-#     booked billings;
+#   * IBICA in its three bands (income_tax `bands`, ceilings ibica_band1_ceiling and
+#     ibica_band2_ceiling) on the year's profit; each band's base and tax are read from the tax
+#     record (band<i>_base, band<i>_tax), the IBICA from its profit_tax; paid in the year;
+#   * the MFP is the income_tax `minimum`: mfp_rate of the booked billings, floored at
+#     mfp_floor_rsi, charged where it beats the IBICA (it does not here); the tax record's minimum
+#     is the MFP row, the charge (the higher of the two) the statutory tax;
+#   * the 5% withholding is an advance on the tax and moves no number: it is read as that rate of
+#     the booked billings;
 #   * variant `cash_basis`: the founder's literal basis, cash in less cash out with the presses
 #     deducted when paid. Those paid before the grid already were (carried at nil, never deducted
 #     inside it) and the replacement is charged in full when bought (a one-period life). With the
@@ -68,15 +66,6 @@ case:
         digital_life_left: digital_life_years - digital_age_years
         digital_new_life: digital_life_years
         digital_spend: digital_cost * (t == digital_replacement_period)
-        band_relief: >-
-          (ibica_rate_band3 - ibica_rate_band1) * ibica_band1_ceiling
-          + (ibica_rate_band3 - ibica_rate_band2) * (ibica_band2_ceiling - ibica_band1_ceiling)
-        relief: {each_period: band_relief}
-        band1_width: ibica_band1_ceiling
-        band2_width: ibica_band2_ceiling - ibica_band1_ceiling
-        ibica_band1: band1_width * ibica_rate_band1
-        ibica_band2: band2_width * ibica_rate_band2
-        mfp: max(mfp_floor_rsi, billings * mfp_rate)
   opening:
     printer:
       offset: {nature: asset, value: {generator: gold, output: offset_carried}}
@@ -221,7 +210,14 @@ case:
       phase: tax
       expense: tax_expense
       payable: tax_payable
-      rate: {generator: gold, output: ibica_rate_band3}
+      bands:
+        - {upto: {generator: gold, output: ibica_band1_ceiling}, rate: {generator: gold, output: ibica_rate_band1}}
+        - {upto: {generator: gold, output: ibica_band2_ceiling}, rate: {generator: gold, output: ibica_rate_band2}}
+        - {rate: {generator: gold, output: ibica_rate_band3}}
+      minimum:                        # the MFP
+        turnover: [billings.revenue]
+        rate: {generator: gold, output: mfp_rate}
+        floor: {generator: gold, output: mfp_floor_rsi}
       carry_forward_periods: null
       scheme:
         billings.revenue: taxable
@@ -241,15 +237,6 @@ case:
         dep_digital: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
-        ibica_band_relief: non_deductible
-    bands:                            # the lower bands' relief on the top rate
-      kind: transfer
-      entity: printer
-      phase: tax
-      declare:
-        ibica_band_relief: income
-      moves:
-        relief: {debit: tax_payable, credit: ibica_band_relief, amount: {generator: gold, output: relief}}
     pay_tax:
       kind: settle
       entity: printer
@@ -275,7 +262,6 @@ case:
       dep_digital: dep_digital
       disposal_loss: dep_digital
       tax_expense: tax
-      ibica_band_relief: tax
     cash_flow:
       billings.receivable: receipts
       materials.payable: suppliers
@@ -365,15 +351,15 @@ trace:
   nbv_digital: {balance: digital_old + digital_new}
   nbv: {balance: offset + digital_old + digital_new}
   taxable_income_statutory: {record: tax.base}
-  taxable_band1: {driver: gold.band1_width}
-  taxable_band2: {driver: gold.band2_width}
-  taxable_band3: {sum: [{record: tax.base}, {driver: gold.ibica_band2_ceiling, sign: -1}]}
-  ibica_band1: {driver: gold.ibica_band1}
-  ibica_band2: {driver: gold.ibica_band2}
-  ibica_band3: {sum: [{cut: tax, sign: -1}, {driver: gold.ibica_band1, sign: -1}, {driver: gold.ibica_band2, sign: -1}]}
-  ibica_statutory: {cut: tax, sign: -1}
+  taxable_band1: {record: tax.band1_base}
+  taxable_band2: {record: tax.band2_base}
+  taxable_band3: {record: tax.band3_base}
+  ibica_band1: {record: tax.band1_tax}
+  ibica_band2: {record: tax.band2_tax}
+  ibica_band3: {record: tax.band3_tax}
+  ibica_statutory: {record: tax.profit_tax}
   mfp_computed: {cut: revenue, times: gold.mfp_rate}
-  mfp: {driver: gold.mfp}
+  mfp: {record: tax.minimum}
   tax_statutory: {cut: tax, sign: -1}
   withholding_advance: {cut: revenue, times: gold.withholding_rate_prestations}
   nopat: {cut: nopat}
@@ -382,7 +368,7 @@ trace:
   fcff: {cut: fcff}
   cash_disbursements: {cut: disbursements, sign: -1}
   taxable_income_cashbasis: {record: tax.base, variant: cash_basis}
-  ibica_cashbasis: {cut: tax, sign: -1, variant: cash_basis}
+  ibica_cashbasis: {record: tax.profit_tax, variant: cash_basis}
   tax_cashbasis: {cut: tax, sign: -1, variant: cash_basis}
   nopat_cashbasis: {sum: [{cut: ebit}, {cut: tax, variant: cash_basis}]}
   fcff_cashbasis: {cut: fcff, variant: cash_basis}

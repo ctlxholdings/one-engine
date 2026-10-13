@@ -27,14 +27,14 @@
 #     VAT-inclusive cost over a full life from that month, in its own account;
 #   * IR (one part): the owner's pay and the stock losses are not deductible (no destruction
 #     record inside the horizon: pv_arrival_period is past it), so the tax base is EBIT plus both.
-#     income_tax has no progressive band schedule: the fourth band's rate on each month's base,
-#     less the lower bands' relief spread over the year's months, posted as a tax credit (the
-#     promoted gold paygo_solar's schedule, valid while each year's base is in the fourth band,
-#     which the gold's checks assert); accrued and paid in the month;
+#     The barème's seven bands (income_tax `bands`: ceilings ir_band_1 to ir_band_6, rates
+#     ir_rate_b1 to ir_rate_b7) are set on the year's income: each month's base is banded at its
+#     yearly equivalent (bands_per_year months_per_year) and the tax brought back to the month;
+#     accrued and paid in the month;
 #   * the same shop as a company (variant societe: ir_on 0, societe_on 1): a second income_tax,
 #     dormant in the base (rate corporate_tax_rate x societe_on), classifies the owner's pay as
-#     a deductible salary and the stock losses still not; the IR and its band relief are off
-#     (x ir_on). Its minimum is the IMF (imf_applies_to_societies_only: charged only where
+#     a deductible salary and the stock losses still not; the IR is off (each band's rate
+#     x ir_on). Its minimum is the IMF (imf_applies_to_societies_only: charged only where
 #     societe_on), imf_rate of the month's sales between the annual floor and cap spread over
 #     months_per_year (the sales are level, so this is the gold's annual IMF / 12); it binds.
 #     tax_cash_societe and fcff_societe are that variant's tax and FCFF.
@@ -99,14 +99,16 @@ case:
         shelving_life_left: shelving_useful_life_months - age_months
         fridge_spend: fridge_share_of_fixtures * vat_in_cost * (t == fridge_replacement_period)
         software_spend: software_cost_at_opening * vat_in_cost * (t == software_replacement_period)
-        relief_annual: >-
-          (ir_rate_b4 - ir_rate_b1) * ir_band_1 + (ir_rate_b4 - ir_rate_b2) * (ir_band_2 - ir_band_1)
-          + (ir_rate_b4 - ir_rate_b3) * (ir_band_3 - ir_band_2)
         # the legal form (variant societe): 1 the sole proprietor's IR, 0 the company's IS and IMF
         ir_on: 1
         societe_on: 0
-        relief: {each_period: relief_annual * ir_on / months_per_year}
-        ir_used: ir_rate_b4 * ir_on
+        ir_b1: ir_rate_b1 * ir_on
+        ir_b2: ir_rate_b2 * ir_on
+        ir_b3: ir_rate_b3 * ir_on
+        ir_b4: ir_rate_b4 * ir_on
+        ir_b5: ir_rate_b5 * ir_on
+        ir_b6: ir_rate_b6 * ir_on
+        ir_b7: ir_rate_b7 * ir_on
         is_used: corporate_tax_rate * societe_on
         imf_floor_month: imf_floor / months_per_year
         imf_cap_month: imf_cap / months_per_year
@@ -253,7 +255,15 @@ case:
       phase: tax
       expense: tax_expense
       payable: tax_payable
-      rate: {generator: gold, output: ir_used}
+      bands:                          # the barème, set on the year's income
+        - {upto: {generator: gold, output: ir_band_1}, rate: {generator: gold, output: ir_b1}}
+        - {upto: {generator: gold, output: ir_band_2}, rate: {generator: gold, output: ir_b2}}
+        - {upto: {generator: gold, output: ir_band_3}, rate: {generator: gold, output: ir_b3}}
+        - {upto: {generator: gold, output: ir_band_4}, rate: {generator: gold, output: ir_b4}}
+        - {upto: {generator: gold, output: ir_band_5}, rate: {generator: gold, output: ir_b5}}
+        - {upto: {generator: gold, output: ir_band_6}, rate: {generator: gold, output: ir_b6}}
+        - {rate: {generator: gold, output: ir_b7}}
+      bands_per_year: {generator: gold, output: months_per_year}
       carry_forward_periods: null
       scheme:
         cash_sales.revenue: taxable
@@ -272,7 +282,6 @@ case:
         depreciation: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
-        ir_band_relief: non_deductible
         is_expense: non_deductible
     societe:
       kind: income_tax
@@ -299,7 +308,6 @@ case:
         depreciation: taxable
         disposal_loss: taxable
         tax_expense: non_deductible
-        ir_band_relief: non_deductible
         is_expense: non_deductible
       minimum:
         turnover: [cash_sales.revenue, credit_sales.revenue]
@@ -307,14 +315,6 @@ case:
         floor: {generator: gold, output: imf_floor_month}
         cap: {generator: gold, output: imf_cap_month}
         applies: {generator: gold, output: societe_on}
-    bands:                            # the lower bands' relief on the fourth band's rate
-      kind: transfer
-      entity: officine
-      phase: tax
-      declare:
-        ir_band_relief: income
-      moves:
-        relief: {debit: tax_payable, credit: ir_band_relief, amount: {generator: gold, output: relief}}
     pay_tax:
       kind: settle
       entity: officine
@@ -339,7 +339,6 @@ case:
       depreciation: depreciation
       disposal_loss: depreciation
       tax_expense: tax
-      ir_band_relief: tax
       is_expense: tax
     cash_flow:
       cash_sales.receivable: operating

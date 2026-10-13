@@ -26,9 +26,10 @@
 #     inputs;
 #   * the motos are carried at cost less moto_age_months_at_t0 of moto_life_months and
 #     depreciated monthly; their replacement falls after the year;
-#   * IBICA: the top band's rate on each month's profit, less the relief of the two lower bands
-#     spread over the year's 12 months (the gold's own schedule, valid while the year's profit is
-#     above the second band, which its checks assert); the CGA reduction applied to both.
+#   * IBICA in its three bands (income_tax `bands`, ceilings ibica_band1_ceiling and
+#     ibica_band2_ceiling), set on the year's profit: each month's profit is banded at its yearly
+#     equivalent (bands_per_year 12) and the tax brought back to the month; the CGA reduction
+#     (cga_ibica_reduction x cga_member) cuts each band's rate.
 gold: paygo_solar
 entity: paygo
 plant: kit_cash_price
@@ -121,13 +122,11 @@ case:
         moto_carried: motos * moto_cost * (1 - moto_age_months_at_t0 / moto_life_months)
         moto_life_left: moto_life_months - moto_age_months_at_t0
         moto_replacement: motos * moto_cost * (t == moto_replacement_period_index)
-        # IBICA: the top band's rate, less the lower bands' relief a month
+        # IBICA: each band's rate, cut by the CGA reduction
         cga: 1 - cga_ibica_reduction * cga_member
-        ibica_rate: ibica_rate_band3 * cga
-        band_relief: >-
-          cga * ((ibica_rate_band3 - ibica_rate_band1) * ibica_band1_ceiling
-          + (ibica_rate_band3 - ibica_rate_band2) * (ibica_band2_ceiling - ibica_band1_ceiling)) / 12
-        relief: {each_period: band_relief}
+        ibica_band1_rate: ibica_rate_band1 * cga
+        ibica_band2_rate: ibica_rate_band2 * cga
+        ibica_band3_rate: ibica_rate_band3 * cga
   opening:
     paygo:
       cash: {nature: asset, value: 0}
@@ -245,7 +244,11 @@ case:
       phase: tax
       expense: tax_expense
       payable: tax_payable
-      rate: {generator: gold, output: ibica_rate}
+      bands:
+        - {upto: {generator: gold, output: ibica_band1_ceiling}, rate: {generator: gold, output: ibica_band1_rate}}
+        - {upto: {generator: gold, output: ibica_band2_ceiling}, rate: {generator: gold, output: ibica_band2_rate}}
+        - {rate: {generator: gold, output: ibica_band3_rate}}
+      bands_per_year: 12                # the bands are set on the year's profit
       carry_forward_periods: null
       scheme:
         goods_revenue: taxable
@@ -269,15 +272,6 @@ case:
         depreciation: taxable
         written_off: taxable
         tax_expense: non_deductible
-        ibica_band_relief: non_deductible
-    bands:
-      kind: transfer
-      entity: paygo
-      phase: tax
-      declare:
-        ibica_band_relief: income
-      moves:
-        relief: {debit: tax_payable, credit: ibica_band_relief, amount: {generator: gold, output: relief}}
     pay_tax:
       kind: settle
       entity: paygo
@@ -307,7 +301,6 @@ case:
       depreciation: depreciation
       written_off: depreciation
       tax_expense: tax
-      ibica_band_relief: tax
     cash_flow:
       goods_revenue: deposits
       receivable: instalments

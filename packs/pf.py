@@ -104,6 +104,17 @@ Rulebooks
     losses, as IAS 12.34 requires when no taxable profit is expected
     against them (the case states no income).
 
+    ``bands`` replaces ``rate`` with a progressive schedule (the golds'
+    paygo_solar, pharmacy_expiry, printer_cashbasis_v25): a list of
+    ``{upto, rate}``, ceilings rising, the last band ``{rate}`` alone; each
+    band taxes the taxable amount (after losses) inside it. Bands set on a
+    year's income over a grid of shorter periods take ``bands_per_year``:
+    each period's taxable amount is banded at its yearly equivalent (times
+    that number) and the tax brought back to the period (divided by it),
+    which is the year's tax when the periods are level. The record carries
+    ``band<i>_base`` and ``band<i>_tax`` per band, from 1. Built for losses
+    carried forward as base, without ``deferred``.
+
     ``minimum`` (the golds' pilots: OHADA's "impôt minimum forfaitaire")
     charges the higher of the profits tax and a minimum on turnover:
     ``rate`` times the period's ``turnover`` (the income lines listed),
@@ -567,11 +578,22 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     start = int(r.take_or_default("from", 0, reason="tax is charged from the first period").value)
     cf = r.take("carry_forward_periods")
     cf = None if cf is None else int(cf)
-    rates = r.take("rate")                      # a rate, or one per period (a change of rate)
+    rates = r.take_or_default("rate", None, reason="the tax is charged in bands").value   # or one per period
+    bands = r.take_or_default("bands", None, reason="one rate on the whole base").value
+    per_year = exact(r.take_or_default("bands_per_year", 1, reason="the bands apply to each period's base").value)
+    if (rates is None) == (bands is None):
+        raise InputError("income_tax: give a rate or bands, not both and not neither")
     losses_in = r.take_or_default("losses_in", "base", reason="losses are carried as amounts of the base").value
     relief = r.take_or_default("loss_relief", "carry_forward", reason="a loss is carried to later profit").value
     if relief not in ("carry_forward", "refund"):
         raise InputError(f"income_tax: loss_relief is carry_forward or refund, not {relief!r}")
+    if bands is not None:
+        # every band but the last has a ceiling; the last runs on without one
+        bands = [Reader(b, source=f"income_tax.bands[{i}]") for i, b in enumerate(bands)]
+        bands = [(b.take("upto") if i < len(bands) - 1 else None, b.take("rate"), b.finish())[:2]
+                 for i, b in enumerate(bands)]
+        if not bands or losses_in != "base" or relief != "carry_forward":
+            raise InputError("income_tax: bands are built for losses carried forward as base, and need a band")
     from one_engine.packs.contracts import _at
     scheme = dict(r.take("scheme"))
     minimum = r.take_or_default("minimum", None, reason="no minimum tax: the charge is the profits tax").value
@@ -604,6 +626,8 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
             raise InputError("income_tax: deferred tax on losses carried as tax (losses_in: tax) is not built")
         if relief == "refund":
             raise InputError("income_tax: deferred tax with losses refunded (loss_relief: refund) is not built")
+        if bands is not None:
+            raise InputError("income_tax: deferred tax measured on bands is not built")
         if nil_base and timing_name is not None:
             raise InputError("income_tax: deferred.nil_tax_base measures movements and cannot be combined "
                              "with a 'timing' register")
@@ -617,7 +641,8 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     def handler(g: Group, t: int) -> None:
         if t < start:
             return
-        policy = TaxPolicy(_at(rates, t), cf, losses_in)
+        # with bands the policy only measures what losses leave taxable (a rate of 1); the bands tax that
+        policy = TaxPolicy(Fraction(1) if bands is not None else _at(rates, t), cf, losses_in)
         base = taxable_base(g.book(entity), t, scheme)
         if timing_name is not None:
             regs = ctx["registers"][timing_name]
@@ -628,6 +653,20 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         opening = pool.available(t)
         # a refunded loss is relieved now, at the rate: the pool is never fed, so it stays empty
         tax = policy.rate * base if relief == "refund" else policy.charge(t, base, pool)
+        banded = {}
+        if bands is not None:
+            # the period's taxable amount at its yearly equivalent, banded, and brought back to the period
+            left, floor_, tax = tax * per_year, Fraction(0), Fraction(0)
+            for i, (upto, rate) in enumerate(bands, 1):
+                top = None if upto is None else _at(upto, t)
+                if top is not None and top < floor_:
+                    raise InputError(f"income_tax: bands must rise; band {i} ends at {top}, below {floor_}")
+                inside = left if top is None else min(left, top - floor_)
+                banded[f"band{i}_base"] = inside / per_year
+                banded[f"band{i}_tax"] = _at(rate, t) * inside / per_year
+                tax += banded[f"band{i}_tax"]
+                left -= inside
+                floor_ = top if top is not None else floor_
         profit_tax = tax
         if minimum is not None:
             book = g.book(entity)
@@ -649,6 +688,7 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
         if minimum is not None:
             rec.update(profit_tax=profit_tax, minimum=least)
+        rec.update(banded)
         # the pool's roll-forward (the golds report it): opening + added - used = what this period can still use
         added = Fraction(0) if relief == "refund" else \
             max(Fraction(0), -base) if losses_in == "base" else max(Fraction(0), -policy.rate * base)

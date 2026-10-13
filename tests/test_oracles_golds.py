@@ -227,9 +227,11 @@ def test_a_pool_lives_its_mean_life_not_a_whole_number_of_years(tmp_path):
 
 
 def test_the_lower_tax_bands_are_relieved(tmp_path):
-    # IBICA at the top rate on everything, without the two lower bands' relief, is too much tax
+    # IBICA at the top rate on everything, without the two lower bands, is too much tax
     fam = _planted_copy(tmp_path, "paygo_solar",
-                        "        relief: {debit: tax_payable, credit: ibica_band_relief, amount: {generator: gold, output: relief}}\n",
-                        "        relief: {debit: tax_payable, credit: ibica_band_relief, amount: 0}\n")
+                        "rate: {generator: gold, output: ibica_band1_rate}}",
+                        "rate: {generator: gold, output: ibica_band3_rate}}",
+                        more=[("rate: {generator: gold, output: ibica_band2_rate}}",
+                               "rate: {generator: gold, output: ibica_band3_rate}}")])
     r = O.receipt(fam, "paygo_solar", commit="test")
     assert r.verdict == "differs" and r.first_difference["name"] == "tax"
