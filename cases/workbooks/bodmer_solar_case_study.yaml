@@ -1,0 +1,2067 @@
+# Workbook "bodmer_solar_case_study": Edward Bodmer's solar project-finance case study, a 6,000 kW merchant
+# solar plant in euro with a sculpted senior loan, saved on the Base Case (Scenario E3 = 1) with Excel's
+# iterative calculation converged (cases/reference/workbooks/bodmer_solar_case_study.xlsm). Origin: this
+# repository, generic_engine/tests/fixtures/oracles/bodmer_solar/Solar-Case-Study-Complete.xlsm (the generic
+# engine's fixture); vendored unmodified 2026-10-13. Licence: Edward Bodmer (edbodmer.com),
+# Solar-Case-Study-Complete.xlsm. The macros are never run; only the saved values are read.
+#
+# Every amount is a workbook input by name (a typed cell, a number typed inside a formula, a typed row), or
+# a formula over them (generator `src`). Period t is column K + t of the Operating and Financing Model
+# sheets (111 columns, K to DQ): t = 0-3 the development months (Sep-Dec 2015), t = 4-8 the construction
+# months (Jan-May 2016, financial close at t = 4), t = 9-108 the operating quarters (Jun 2016 to May 2041,
+# COD at t = 9), t = 109-110 after decommissioning. Repayment runs t = 9-88 (20 years, Assumptions G140).
+# Rows on other sheets map their columns to t as each figure's `periods` says (Assumptions F:AT by price
+# year, E:J by crisis year).
+#   * generation: Assumptions F20 kW at a P50 net yield (Scenario G16 x H16 / 100 kWh/kWp; F28 is NORMINV at
+#     E28 = 0.5, the mean) spread by month on F36:F47, degraded at F21 a year compounded monthly (row 15);
+#     each calendar month falls in the period that contains it (rows 18-43);
+#   * price: the Scenario L16 price row (Scenario 24-28) times the merchant multiplier K16 / 100, by
+#     calendar year (Operating Model row 108); revenue is each month's MWh at that price (row 109). The
+#     crisis prices (Assumptions 112-124, Scenario E33 = 3) are computed but not applied (G139 = Assumptions
+#     F107 is FALSE): the case books them in a memo book, `crisis`, beside the plant;
+#   * capex: four development lines (euro/kW x kW) spread evenly over the development months, seven EPC lines
+#     (Scenario E16 and F16 set two of the rates) over the construction months; each line is its own
+#     account, capitalised to CWIP, in service at COD and depreciated straight-line over F127 years
+#     (row 149-154), for the books and for tax;
+#   * opex: the O&M fee (Scenario M16 / 10 euro/kW-year), battery O&M, administration and insurance per kW,
+#     indexed by inflation from COD compounded monthly (rows 68-74), and rent, property tax, utility and
+#     own consumption per year; inverter replacements at F82 and F83 years after COD (2096: never);
+#   * tax: F128 of EBITDA less depreciation, losses carried forward without limit (Financing Model 150-160);
+#     interest and fees are not deductible (row 153 leaves the interest of row 152 out);
+#   * senior loan, sculpted: in each repayment quarter the debt service is CFADS (EBITDA less tax, row 16)
+#     over the DSCR F132 (row 22); the size is that service discounted at the loan's own index (row 29),
+#     G31 = H34; interest is the opening balance x (base F146 + the spread of the five-year band from COD,
+#     row 25) x months / 12. The up-front fee F151 x the size is paid at financial close, the commitment fee
+#     F152 on the undrawn commitment during construction. The principal is the sizing ledger's (rows 33-37,
+#     row 104; G110 is FALSE so the typed schedule of row 107 is not used), capped by the balance (row 115);
+#     a quarter whose service is below its interest adds the difference to the debt;
+#   * funding: equity first, F136 of (budget less debt) (G65), the budget being the capex and the financing
+#     costs typed in the "Fixed" column I55:I57; then each month's uses (capex, IDC, up-front and commitment
+#     fees, computed) pro rata, debt H67 and equity H66. The computed costs fall below the typed ones
+#     (J58 = 2,728.43), so the loan drawn (I114, 3,407,446.18) stays below its commitment (3,409,676.29);
+#   * waterfall from COD: tax, interest, principal, the sweep F157 (nil) and the rest to equity (row 177);
+#   * the circular blocks: the sculpted size is the loop `debt_size` (rule sculpt). The memo book `memo`
+#     books the debt service capacity of row 22 (CFADS / F132) and draws and repays the sized ledger of rows
+#     33-37 (loan `sizer`), so the rule sculpts at a DSCR of 1; the loop closes in two runs (the capacity
+#     does not depend on the debt, interest not being deductible) with tolerance 0. The funding needs no loop:
+#     the budget is typed, the commitment comes from the loop, and each month's IDC and fees are computed on
+#     the balance drawn so far, as the workbook's converged iteration has them;
+#   * physical rows, prices, rates, indices and flags are drivers.
+#
+# Where the books disagree with the workbook (the workbook wins; these are its own formula slips):
+#   * Operating Model K96:DQ96 "Total O&M" is SUM(K87:K95): it adds row 87, the capacity in kW (6,000), to
+#     the euro costs of every operating quarter: T96 is 31,986.39 against 25,986.39 for the cost lines
+#     (I96 3,399,665.83 against 2,799,665.83). EBITDA (row 142) is 6,000 lower in each operating quarter
+#     (T142 99,503.15 against 105,503.15), and with it everything after: K104, K144, K156-K164; Financing
+#     Model K13-K22 (T22 68,622.86 against 72,760.79), the sculpted size G31 = H34 = G61 (3,409,676.29
+#     against 3,587,932.54), the sources and uses and funding rows 55-97 (equity up front G81 507,935.02
+#     against 436,632.52), the loan rows 113-131, the tax rows 150-161, the waterfall 166-184, the DSCR
+#     T185:CU185 (1.4504 against 1.45 at T), the lender flows L201 and rows 206-207; Summary F7, F30, F31.
+#     Put back in a scratch copy (opex + row 87), every one of those figures agrees, the sculpt and the
+#     funding included;
+#   * the generation totals stop at column BR (period 59) where every other I-column total runs to DQ:
+#     Operating Model I31:I42 (the third cell of G31:I31 ... G42:I42; I31 8,960.38 against 16,731.38 over
+#     the 100 quarters) and I43 = SUM(K43:BR43), 162,481.89 MWh against 310,071.86; Operating Model I10
+#     and Financing Model I10 = SUM(K10:BR10) count 51 operating quarters, not 100;
+#   * not compared, for the record: Financing Model G146 = I131 + I124 leaves out the IDC I121 (57,402.82
+#     against 74,785.40), an amortisation memo nothing reads; Financing Model K196:AA196 and K197:AA197 (the
+#     PLCR's present values, array formulas) lack the "* previous index" that AB196 onwards apply, so U199
+#     to AA199 discount to the wrong date (the PLCR rows wait on the engine, see the notes); Assumptions F14
+#     = EDATE(F9, F10) adds construction periods as months, the same here as F3 = 1.
+workbook: bodmer_solar_case_study
+entity: spv
+plant: Assumptions__F20
+case:
+  case: workbook-bodmer-solar-case-study
+  periods: 111
+  phases: ["accrue", "fund", "operate", "tax", "pay", "close"]
+  currency: EUR
+  floors: {"spv.cash": 0}
+  generators:
+    src:
+      kind: formulas
+      periods: 111
+      inputs: workbook
+      values:
+        # the step every truncated root and index is rounded down to (1e-30)
+        trunc_unit: "(1 / 1000) ** 10"
+        # periods before COD (Assumptions F12 = F10 + F7, F10 = Scenario I16)
+        pre_periods: "Assumptions__F7 + Scenario__I16"
+        # row 4: the period number (row 3, typed 1, 2, ... from column K) is within the pre-COD periods
+        precod: "t + 1 <= pre_periods"
+        # row 5: months in each period
+        months: "Assumptions__F3 if precod else Assumptions__F4"
+        # row 8
+        dev_flag: "(t + 1 <= Assumptions__F7) * 1"
+        months_to_date: "cumsum(months)"
+        # Assumptions F6 = Scenario H98 = INDEX(F95:F106, J96): month J96 of the typed calendar from F95
+        start0: "EOMONTH(Scenario__F95, Scenario__J96 - 2) + 1"
+        # row 6, the day count of each period's first day
+        pstart: "EOMONTH(start0, months_to_date - months - 1) + 1"
+        # row 7
+        pend: "EOMONTH(start0, months_to_date - 1)"
+        # Assumptions F8
+        dev_months: "Assumptions__F7 * Assumptions__F3"
+        # Assumptions F9, financial close = EDATE(F6, F8)
+        fc: "EOMONTH(start0, dev_months - 1) + 1"
+        # Assumptions F11
+        constr_months: "Scenario__I16 * Assumptions__F3"
+        # Assumptions F14 (the workbook adds F10, the periods, as months: the same with F3 = 1)
+        cod: "EOMONTH(fc, constr_months - 1) + 1"
+        # Assumptions F16 = F15 * 12, F15 = Scenario J16
+        op_months: "Scenario__J16 * 12"
+        # Assumptions F17
+        decom: "EOMONTH(cod, op_months - 1) + 1"
+        # row 9
+        constr_flag: "(pstart >= fc) * (pstart < cod)"
+        not_constr: "1 - constr_flag"
+        # row 10
+        op_flag: "(pstart >= cod) * (pstart < decom)"
+        # the loan is drawn before COD only
+        pre_flag: "(pstart < cod) * 1"
+        # Assumptions F142 = EDATE(F14, F140 * 12), F140 = G140
+        maturity: "EOMONTH(cod, Assumptions__G140 * 12 - 1) + 1"
+        # Financing Model row 21
+        repay_flag: "(pstart >= cod) * (pstart < maturity)"
+        # Financing Model G34 = EDATE(F141, -1): the sizing draw
+        draw_flag: "(pstart == EOMONTH(cod, 0 - 2) + 1) * 1"
+        # row 67: inflation applies from Assumptions H72 = F14
+        infl_flag: "(pstart >= cod) * 1"
+        # Assumptions F85, F86: inverter replacements
+        inv1: "EOMONTH(cod, Assumptions__F82 * 12 - 1) + 1"
+        inv2: "EOMONTH(cod, Assumptions__F83 * 12 - 1) + 1"
+        inv1_flag: "(pstart == inv1) * 1"
+        inv2_flag: "(pstart == inv2) * 1"
+        start_month: "MONTH(pstart)"
+        # row 107
+        year_end: "YEAR(pend)"
+        # the last pre-COD period (the loan is available until then)
+        last_pre: "pre_periods - 1"
+        # the first period after operations
+        dispose_period: "pre_periods + op_months / Assumptions__F4"
+        # Operating Model I8: the development flags (row 8) number F7
+        dev_count: "Assumptions__F7 + 0"
+        # I9: construction periods
+        constr_count: "constr_months / Assumptions__F3"
+        # H47:H50 = 1 / I8
+        dev_share: "1 / dev_count"
+        # H54:H61 = 1 / I9
+        constr_share: "1 / constr_count"
+        one: "1"
+        # the twelfth root of 1 + F21 (Operating Model K14 = (1 + G14) ^ (K5 / 12) - 1)
+        deg_x0: "1"
+        deg_n1: "deg_x0 - (deg_x0 ** 12 - (1 + Assumptions__F21)) / (12 * deg_x0 ** 11)"
+        deg_x1: "deg_n1 - deg_n1 % trunc_unit"
+        deg_n2: "deg_x1 - (deg_x1 ** 12 - (1 + Assumptions__F21)) / (12 * deg_x1 ** 11)"
+        deg_x2: "deg_n2 - deg_n2 % trunc_unit"
+        deg_n3: "deg_x2 - (deg_x2 ** 12 - (1 + Assumptions__F21)) / (12 * deg_x2 ** 11)"
+        deg_x3: "deg_n3 - deg_n3 % trunc_unit"
+        deg_n4: "deg_x3 - (deg_x3 ** 12 - (1 + Assumptions__F21)) / (12 * deg_x3 ** 11)"
+        deg_x4: "deg_n4 - deg_n4 % trunc_unit"
+        deg_n5: "deg_x4 - (deg_x4 ** 12 - (1 + Assumptions__F21)) / (12 * deg_x4 ** 11)"
+        deg_x5: "deg_n5 - deg_n5 % trunc_unit"
+        # row 14
+        deg_rate: "deg_x5 ** months - 1"
+        op_months_t: "months * op_flag"
+        deg_count: "cumsum(op_months_t)"
+        deg_idx_raw: "deg_x5 ** deg_count"
+        # row 15, the degradation index
+        deg_idx: "deg_idx_raw - deg_idx_raw % trunc_unit"
+        # row 13 (and row 87)
+        capacity: "Assumptions__F20 * op_flag"
+        # row 16
+        cap_deg: "capacity / deg_idx"
+        # F23
+        pr: "Scenario__H16 / Assumptions__F23__n1"
+        # F24
+        net_yield: "Scenario__G16 * pr"
+        # F27
+        yield_sd: "net_yield * Assumptions__F26"
+        # F28 = NORMINV(E28, F24, F27): the mean at E28 = 0.5; another probability needs NORM.INV, which the formulas lack
+        p50: "net_yield if 2 * Assumptions__E28 == 1 else net_yield / 0"
+        # F32 = INDEX(F28:F30, E32): P50 (E32 = 1)
+        applied_yield: "p50 if Assumptions__E32 == 1 else p50 / 0"
+        # F33
+        net_cf: "applied_yield / Assumptions__F33__n1"
+        # rows 36-47: kWh/kWp by month (G), hours (I), capacity factor (J)
+        mg_jan: "applied_yield * Assumptions__F36"
+        mh_jan: "Assumptions__H36 * Assumptions__I36__n1"
+        mcf_jan: "mg_jan / mh_jan"
+        mg_feb: "applied_yield * Assumptions__F37"
+        mh_feb: "Assumptions__H37 * Assumptions__I37__n1"
+        mcf_feb: "mg_feb / mh_feb"
+        mg_mar: "applied_yield * Assumptions__F38"
+        mh_mar: "Assumptions__H38 * Assumptions__I38__n1"
+        mcf_mar: "mg_mar / mh_mar"
+        mg_apr: "applied_yield * Assumptions__F39"
+        mh_apr: "Assumptions__H39 * Assumptions__I39__n1"
+        mcf_apr: "mg_apr / mh_apr"
+        mg_may: "applied_yield * Assumptions__F40"
+        mh_may: "Assumptions__H40 * Assumptions__I40__n1"
+        mcf_may: "mg_may / mh_may"
+        mg_jun: "applied_yield * Assumptions__F41"
+        mh_jun: "Assumptions__H41 * Assumptions__I41__n1"
+        mcf_jun: "mg_jun / mh_jun"
+        mg_jul: "applied_yield * Assumptions__F42"
+        mh_jul: "Assumptions__H42 * Assumptions__I42__n1"
+        mcf_jul: "mg_jul / mh_jul"
+        mg_aug: "applied_yield * Assumptions__F43"
+        mh_aug: "Assumptions__H43 * Assumptions__I43__n1"
+        mcf_aug: "mg_aug / mh_aug"
+        mg_sep: "applied_yield * Assumptions__F44"
+        mh_sep: "Assumptions__H44 * Assumptions__I44__n1"
+        mcf_sep: "mg_sep / mh_sep"
+        mg_oct: "applied_yield * Assumptions__F45"
+        mh_oct: "Assumptions__H45 * Assumptions__I45__n1"
+        mcf_oct: "mg_oct / mh_oct"
+        mg_nov: "applied_yield * Assumptions__F46"
+        mh_nov: "Assumptions__H46 * Assumptions__I46__n1"
+        mcf_nov: "mg_nov / mh_nov"
+        mg_dec: "applied_yield * Assumptions__F47"
+        mh_dec: "Assumptions__H47 * Assumptions__I47__n1"
+        mcf_dec: "mg_dec / mh_dec"
+        # row 48
+        mg_total: "mg_jan + mg_feb + mg_mar + mg_apr + mg_may + mg_jun + mg_jul + mg_aug + mg_sep + mg_oct + mg_nov + mg_dec"
+        days_total: "Assumptions__H36 + Assumptions__H37 + Assumptions__H38 + Assumptions__H39 + Assumptions__H40 + Assumptions__H41 + Assumptions__H42 + Assumptions__H43 + Assumptions__H44 + Assumptions__H45 + Assumptions__H46 + Assumptions__H47"
+        mh_total: "mh_jan + mh_feb + mh_mar + mh_apr + mh_may + mh_jun + mh_jul + mh_aug + mh_sep + mh_oct + mh_nov + mh_dec"
+        mcf_total: "mg_total / mh_total"
+        # rows 18-29 (find_month): 1 when the calendar month falls in the period
+        flag_jan: "((Assumptions__E36 - start_month) % 12 < months) * 1"
+        gen_jan: "mcf_jan * mh_jan * flag_jan * cap_deg / Operating_Model__K31__n1"
+        flag_feb: "((Assumptions__E37 - start_month) % 12 < months) * 1"
+        gen_feb: "mcf_feb * mh_feb * flag_feb * cap_deg / Operating_Model__K31__n1"
+        flag_mar: "((Assumptions__E38 - start_month) % 12 < months) * 1"
+        gen_mar: "mcf_mar * mh_mar * flag_mar * cap_deg / Operating_Model__K31__n1"
+        flag_apr: "((Assumptions__E39 - start_month) % 12 < months) * 1"
+        gen_apr: "mcf_apr * mh_apr * flag_apr * cap_deg / Operating_Model__K31__n1"
+        flag_may: "((Assumptions__E40 - start_month) % 12 < months) * 1"
+        gen_may: "mcf_may * mh_may * flag_may * cap_deg / Operating_Model__K31__n1"
+        flag_jun: "((Assumptions__E41 - start_month) % 12 < months) * 1"
+        gen_jun: "mcf_jun * mh_jun * flag_jun * cap_deg / Operating_Model__K31__n1"
+        flag_jul: "((Assumptions__E42 - start_month) % 12 < months) * 1"
+        gen_jul: "mcf_jul * mh_jul * flag_jul * cap_deg / Operating_Model__K31__n1"
+        flag_aug: "((Assumptions__E43 - start_month) % 12 < months) * 1"
+        gen_aug: "mcf_aug * mh_aug * flag_aug * cap_deg / Operating_Model__K31__n1"
+        flag_sep: "((Assumptions__E44 - start_month) % 12 < months) * 1"
+        gen_sep: "mcf_sep * mh_sep * flag_sep * cap_deg / Operating_Model__K31__n1"
+        flag_oct: "((Assumptions__E45 - start_month) % 12 < months) * 1"
+        gen_oct: "mcf_oct * mh_oct * flag_oct * cap_deg / Operating_Model__K31__n1"
+        flag_nov: "((Assumptions__E46 - start_month) % 12 < months) * 1"
+        gen_nov: "mcf_nov * mh_nov * flag_nov * cap_deg / Operating_Model__K31__n1"
+        flag_dec: "((Assumptions__E47 - start_month) % 12 < months) * 1"
+        gen_dec: "mcf_dec * mh_dec * flag_dec * cap_deg / Operating_Model__K31__n1"
+        # row 43, MWh
+        gen_total: "gen_jan + gen_feb + gen_mar + gen_apr + gen_may + gen_jun + gen_jul + gen_aug + gen_sep + gen_oct + gen_nov + gen_dec"
+        # Assumptions H54:H67, euro/kW times kW
+        dev_legal_total: "Assumptions__F64 * Assumptions__F20"
+        dev_legal_spend: "dev_legal_total * dev_share * dev_flag"
+        dev_accounting_total: "Assumptions__F65 * Assumptions__F20"
+        dev_accounting_spend: "dev_accounting_total * dev_share * dev_flag"
+        dev_engineer_total: "Assumptions__F66 * Assumptions__F20"
+        dev_engineer_spend: "dev_engineer_total * dev_share * dev_flag"
+        dev_misc_total: "Assumptions__F67 * Assumptions__F20"
+        dev_misc_spend: "dev_misc_total * dev_share * dev_flag"
+        epc_panel_total: "Scenario__E16 * Assumptions__F20"
+        epc_panel_spend: "epc_panel_total * constr_share * constr_flag"
+        epc_racking_total: "Assumptions__F55 * Assumptions__F20"
+        epc_racking_spend: "epc_racking_total * constr_share * constr_flag"
+        epc_bos_total: "Scenario__F16 * Assumptions__F20"
+        epc_bos_spend: "epc_bos_total * constr_share * constr_flag"
+        epc_site_total: "Assumptions__F57 * Assumptions__F20"
+        epc_site_spend: "epc_site_total * constr_share * constr_flag"
+        epc_special_total: "Assumptions__F58 * Assumptions__F20"
+        epc_special_spend: "epc_special_total * constr_share * constr_flag"
+        epc_battery_total: "Assumptions__F59 * Assumptions__F20"
+        epc_battery_spend: "epc_battery_total * constr_share * constr_flag"
+        epc_misc_total: "Assumptions__F60 * Assumptions__F20"
+        epc_misc_spend: "epc_misc_total * constr_share * constr_flag"
+        dev_total: "dev_legal_total + dev_accounting_total + dev_engineer_total + dev_misc_total"
+        epc_total: "epc_panel_total + epc_racking_total + epc_bos_total + epc_site_total + epc_special_total + epc_battery_total + epc_misc_total"
+        # Operating Model I63 = G153
+        capex_total: "dev_total + epc_total"
+        # Assumptions F61
+        epc_per_kw: "Scenario__E16 + Assumptions__F55 + Scenario__F16 + Assumptions__F57 + Assumptions__F58 + Assumptions__F59 + Assumptions__F60"
+        # Assumptions F68
+        dev_per_kw: "Assumptions__F64 + Assumptions__F65 + Assumptions__F66 + Assumptions__F67"
+        # Summary F19
+        cost_per_kw: "epc_per_kw + dev_per_kw"
+        # inflation of O&M (row 68, G72), of administration (row 69, G74) and other (row 70, G75)
+        omi_x0: "1"
+        omi_n1: "omi_x0 - (omi_x0 ** 12 - (1 + Assumptions__G72)) / (12 * omi_x0 ** 11)"
+        omi_x1: "omi_n1 - omi_n1 % trunc_unit"
+        omi_n2: "omi_x1 - (omi_x1 ** 12 - (1 + Assumptions__G72)) / (12 * omi_x1 ** 11)"
+        omi_x2: "omi_n2 - omi_n2 % trunc_unit"
+        omi_n3: "omi_x2 - (omi_x2 ** 12 - (1 + Assumptions__G72)) / (12 * omi_x2 ** 11)"
+        omi_x3: "omi_n3 - omi_n3 % trunc_unit"
+        omi_n4: "omi_x3 - (omi_x3 ** 12 - (1 + Assumptions__G72)) / (12 * omi_x3 ** 11)"
+        omi_x4: "omi_n4 - omi_n4 % trunc_unit"
+        omi_n5: "omi_x4 - (omi_x4 ** 12 - (1 + Assumptions__G72)) / (12 * omi_x4 ** 11)"
+        omi_x5: "omi_n5 - omi_n5 % trunc_unit"
+        adi_x0: "1"
+        adi_n1: "adi_x0 - (adi_x0 ** 12 - (1 + Assumptions__G74)) / (12 * adi_x0 ** 11)"
+        adi_x1: "adi_n1 - adi_n1 % trunc_unit"
+        adi_n2: "adi_x1 - (adi_x1 ** 12 - (1 + Assumptions__G74)) / (12 * adi_x1 ** 11)"
+        adi_x2: "adi_n2 - adi_n2 % trunc_unit"
+        adi_n3: "adi_x2 - (adi_x2 ** 12 - (1 + Assumptions__G74)) / (12 * adi_x2 ** 11)"
+        adi_x3: "adi_n3 - adi_n3 % trunc_unit"
+        adi_n4: "adi_x3 - (adi_x3 ** 12 - (1 + Assumptions__G74)) / (12 * adi_x3 ** 11)"
+        adi_x4: "adi_n4 - adi_n4 % trunc_unit"
+        adi_n5: "adi_x4 - (adi_x4 ** 12 - (1 + Assumptions__G74)) / (12 * adi_x4 ** 11)"
+        adi_x5: "adi_n5 - adi_n5 % trunc_unit"
+        oti_x0: "1"
+        oti_n1: "oti_x0 - (oti_x0 ** 12 - (1 + Assumptions__G75)) / (12 * oti_x0 ** 11)"
+        oti_x1: "oti_n1 - oti_n1 % trunc_unit"
+        oti_n2: "oti_x1 - (oti_x1 ** 12 - (1 + Assumptions__G75)) / (12 * oti_x1 ** 11)"
+        oti_x2: "oti_n2 - oti_n2 % trunc_unit"
+        oti_n3: "oti_x2 - (oti_x2 ** 12 - (1 + Assumptions__G75)) / (12 * oti_x2 ** 11)"
+        oti_x3: "oti_n3 - oti_n3 % trunc_unit"
+        oti_n4: "oti_x3 - (oti_x3 ** 12 - (1 + Assumptions__G75)) / (12 * oti_x3 ** 11)"
+        oti_x4: "oti_n4 - oti_n4 % trunc_unit"
+        oti_n5: "oti_x4 - (oti_x4 ** 12 - (1 + Assumptions__G75)) / (12 * oti_x4 ** 11)"
+        oti_x5: "oti_n5 - oti_n5 % trunc_unit"
+        # rows 68-70
+        infl_om: "omi_x5 ** months - 1"
+        infl_admin: "adi_x5 ** months - 1"
+        infl_other: "oti_x5 ** months - 1"
+        infl_months_t: "months * infl_flag"
+        infl_count: "cumsum(infl_months_t)"
+        idx_om_raw: "omi_x5 ** infl_count"
+        # rows 72-74
+        idx_om: "idx_om_raw - idx_om_raw % trunc_unit"
+        idx_admin_raw: "adi_x5 ** infl_count"
+        idx_admin: "idx_admin_raw - idx_admin_raw % trunc_unit"
+        idx_other_raw: "oti_x5 ** infl_count"
+        idx_other: "idx_other_raw - idx_other_raw % trunc_unit"
+        # Assumptions F72 = Scenario M16 / 10, euro/kW-yr
+        om_fee_rate: "Scenario__M16 / Assumptions__F72__n1"
+        # rows 77-84: per kW (or per year) in each period
+        om_fee_unit: "om_fee_rate * months / 12 * idx_om"
+        # H77:H84 = G / 12 * H76 (H76 = H5 = F4)
+        om_fee_qrate: "om_fee_rate / 12 * Assumptions__F4"
+        om_fee_base: "capacity * months / 12 * idx_om"
+        om_fee_cost: "capacity * om_fee_unit"
+        battery_om_unit: "Assumptions__F73 * months / 12 * idx_om"
+        battery_om_qrate: "Assumptions__F73 / 12 * Assumptions__F4"
+        battery_om_base: "capacity * months / 12 * idx_om"
+        battery_om_cost: "capacity * battery_om_unit"
+        admin_unit: "Assumptions__F74 * months / 12 * idx_admin"
+        admin_qrate: "Assumptions__F74 / 12 * Assumptions__F4"
+        admin_base: "capacity * months / 12 * idx_admin"
+        admin_cost: "capacity * admin_unit"
+        insurance_unit: "Assumptions__F75 * months / 12 * idx_other"
+        insurance_qrate: "Assumptions__F75 / 12 * Assumptions__F4"
+        insurance_base: "capacity * months / 12 * idx_other"
+        insurance_cost: "capacity * insurance_unit"
+        rent_unit: "Assumptions__F76 * months / 12"
+        rent_qrate: "Assumptions__F76 / 12 * Assumptions__F4"
+        rent_base: "op_flag * months / 12"
+        # rows 92-95: a cost per year in operation (K94 and K95 leave out the flag; both are nil)
+        rent_cost: "rent_unit * op_flag"
+        property_tax_unit: "Assumptions__F77 * months / 12 * idx_om"
+        property_tax_qrate: "Assumptions__F77 / 12 * Assumptions__F4"
+        property_tax_base: "op_flag * months / 12 * idx_om"
+        property_tax_cost: "property_tax_unit * op_flag"
+        utility_unit: "Assumptions__F78 * months / 12 * idx_om"
+        utility_qrate: "Assumptions__F78 / 12 * Assumptions__F4"
+        utility_base: "op_flag * months / 12 * idx_om"
+        utility_cost: "utility_unit * op_flag"
+        consumption_unit: "Assumptions__F79 * months / 12 * idx_om"
+        consumption_qrate: "Assumptions__F79 / 12 * Assumptions__F4"
+        consumption_base: "op_flag * months / 12 * idx_om"
+        consumption_cost: "consumption_unit * op_flag"
+        # rows 88-95 (row 96 adds the capacity of row 87 as well: a slip)
+        opex_total: "om_fee_cost + battery_om_cost + admin_cost + insurance_cost + rent_cost + property_tax_cost + utility_cost + consumption_cost"
+        # rows 99-102
+        inverter1_cost: "Assumptions__F88 * inv1_flag * capacity"
+        inverter2_cost: "Assumptions__F89 * inv2_flag * capacity"
+        # Scenario F20 = L16, the revenue scenario
+        price_code: "Scenario__L16 + 0"
+        # Scenario row 30 = INDEX(F24:F28, F20) = Assumptions row 100, by column F.. AT (t = 0..40)
+        price_col: "(Scenario__F24_AT24 if price_code == 1 else Scenario__F25_AT25 if price_code == 2 else Scenario__F26_AT26 if price_code == 3 else Scenario__F27_AT27 if price_code == 4 else Scenario__F28_AT28) if t <= Scenario__AT23 - Scenario__G23 + 1 else 0"
+        # Assumptions F97
+        merchant: "Scenario__K16 / Assumptions__F97__n1"
+        # Assumptions row 101
+        merchant_col: "merchant * price_col"
+        # LOOKUP(year, row 99, row 101): column F (the start year) until G23, then one column a year
+        price_index: "(year_end >= Scenario__G23) * (year_end - Scenario__G23 + 1)"
+        # row 108, euro/MWh
+        price: "lag(merchant_col, t - price_index)"
+        crisis_code: "Scenario__E33 + 0"
+        # Assumptions E113:J124 = CHOOSE(Scenario E33, the three crisis tables), by column E..J (t = 0..5)
+        crisis_jan: "(Scenario__E37_J37 if crisis_code == 1 else Scenario__E53_J53 if crisis_code == 2 else Scenario__E69_J69) if t <= 5 else 0"
+        crisis_feb: "(Scenario__E38_J38 if crisis_code == 1 else Scenario__E54_J54 if crisis_code == 2 else Scenario__E70_J70) if t <= 5 else 0"
+        crisis_mar: "(Scenario__E39_J39 if crisis_code == 1 else Scenario__E55_J55 if crisis_code == 2 else Scenario__E71_J71) if t <= 5 else 0"
+        crisis_apr: "(Scenario__E40_J40 if crisis_code == 1 else Scenario__E56_J56 if crisis_code == 2 else Scenario__E72_J72) if t <= 5 else 0"
+        crisis_may: "(Scenario__E41_J41 if crisis_code == 1 else Scenario__E57_J57 if crisis_code == 2 else Scenario__E73_J73) if t <= 5 else 0"
+        crisis_jun: "(Scenario__E42_J42 if crisis_code == 1 else Scenario__E58_J58 if crisis_code == 2 else Scenario__E74_J74) if t <= 5 else 0"
+        crisis_jul: "(Scenario__E43_J43 if crisis_code == 1 else Scenario__E59_J59 if crisis_code == 2 else Scenario__E75_J75) if t <= 5 else 0"
+        crisis_aug: "(Scenario__E44_J44 if crisis_code == 1 else Scenario__E60_J60 if crisis_code == 2 else Scenario__E76_J76) if t <= 5 else 0"
+        crisis_sep: "(Scenario__E45_J45 if crisis_code == 1 else Scenario__E61_J61 if crisis_code == 2 else Scenario__E77_J77) if t <= 5 else 0"
+        crisis_oct: "(Scenario__E46_J46 if crisis_code == 1 else Scenario__E62_J62 if crisis_code == 2 else Scenario__E78_J78) if t <= 5 else 0"
+        crisis_nov: "(Scenario__E47_J47 if crisis_code == 1 else Scenario__E63_J63 if crisis_code == 2 else Scenario__E79_J79) if t <= 5 else 0"
+        crisis_dec: "(Scenario__E48_J48 if crisis_code == 1 else Scenario__E64_J64 if crisis_code == 2 else Scenario__E80_J80) if t <= 5 else 0"
+        # LOOKUP(year, Assumptions row 112): E112 is the start year, F112 typed, G112 and H112 the next two, I112 and J112 typed
+        crisis_index: "(year_end >= Assumptions__F112) + (year_end >= Assumptions__F112 + 1) + (year_end >= Assumptions__F112 + 2) + (year_end >= Assumptions__I112) + (year_end >= Assumptions__J112)"
+        # rows 111-122
+        crisis_price_jan: "lag(crisis_jan, t - crisis_index) * price"
+        # revenue by month (row 109 is their sum)
+        rev_jan: "gen_jan * price"
+        # revenue by month at the crisis prices (rows 125-136), booked in a memo: Operating Model G139 (Assumptions F107, 'Apply Crisis Assumptions') is FALSE
+        crev_jan: "gen_jan * crisis_price_jan"
+        crisis_price_feb: "lag(crisis_feb, t - crisis_index) * price"
+        rev_feb: "gen_feb * price"
+        crev_feb: "gen_feb * crisis_price_feb"
+        crisis_price_mar: "lag(crisis_mar, t - crisis_index) * price"
+        rev_mar: "gen_mar * price"
+        crev_mar: "gen_mar * crisis_price_mar"
+        crisis_price_apr: "lag(crisis_apr, t - crisis_index) * price"
+        rev_apr: "gen_apr * price"
+        crev_apr: "gen_apr * crisis_price_apr"
+        crisis_price_may: "lag(crisis_may, t - crisis_index) * price"
+        rev_may: "gen_may * price"
+        crev_may: "gen_may * crisis_price_may"
+        crisis_price_jun: "lag(crisis_jun, t - crisis_index) * price"
+        rev_jun: "gen_jun * price"
+        crev_jun: "gen_jun * crisis_price_jun"
+        crisis_price_jul: "lag(crisis_jul, t - crisis_index) * price"
+        rev_jul: "gen_jul * price"
+        crev_jul: "gen_jul * crisis_price_jul"
+        crisis_price_aug: "lag(crisis_aug, t - crisis_index) * price"
+        rev_aug: "gen_aug * price"
+        crev_aug: "gen_aug * crisis_price_aug"
+        crisis_price_sep: "lag(crisis_sep, t - crisis_index) * price"
+        rev_sep: "gen_sep * price"
+        crev_sep: "gen_sep * crisis_price_sep"
+        crisis_price_oct: "lag(crisis_oct, t - crisis_index) * price"
+        rev_oct: "gen_oct * price"
+        crev_oct: "gen_oct * crisis_price_oct"
+        crisis_price_nov: "lag(crisis_nov, t - crisis_index) * price"
+        rev_nov: "gen_nov * price"
+        crev_nov: "gen_nov * crisis_price_nov"
+        crisis_price_dec: "lag(crisis_dec, t - crisis_index) * price"
+        rev_dec: "gen_dec * price"
+        crev_dec: "gen_dec * crisis_price_dec"
+        revenue: "rev_jan + rev_feb + rev_mar + rev_apr + rev_may + rev_jun + rev_jul + rev_aug + rev_sep + rev_oct + rev_nov + rev_dec"
+        # row 142
+        ebitda: "revenue - opex_total - inverter1_cost - inverter2_cost"
+        # tax depreciation over F127 years of quarters from COD
+        dep_life: "Assumptions__F127 * 12 / Assumptions__F4"
+        # H149
+        dep_rate_year: "1 / Assumptions__F127"
+        # row 149
+        dep_rate_q: "dep_rate_year * op_flag / 12 * months"
+        # row 150
+        dep_left: "1 - cumsum(dep_rate_q) + dep_rate_q"
+        # row 151
+        dep_adj: "max(min(dep_rate_q, dep_left), 0)"
+        # row 154
+        dep_charge: "capex_total * op_flag * dep_adj"
+        annual_dep: "capex_total / Assumptions__F127"
+        # row 156
+        ebit: "ebitda - dep_charge"
+        # losses carried forward without limit: the profit taxed to date is the running maximum of the cumulative EBIT (at least nil)
+        ebit_cum: "cumsum(ebit)"
+        hi0: "max(ebit_cum, 0)"
+        hi1: "max(hi0, lag(hi0, 1))"
+        hi2: "max(hi1, lag(hi1, 2))"
+        hi3: "max(hi2, lag(hi2, 4))"
+        hi4: "max(hi3, lag(hi3, 8))"
+        hi5: "max(hi4, lag(hi4, 16))"
+        hi6: "max(hi5, lag(hi5, 2 * 16))"
+        # a running maximum over 128 periods, doubling the window each step
+        hi7: "max(hi6, lag(hi6, 4 * 16))"
+        # row 162
+        taxable_gen: "hi7 - lag(hi7, 1)"
+        # row 163
+        tax_gen: "Assumptions__F128 * taxable_gen"
+        # Financing Model row 16
+        cfads_gen: "ebitda - tax_gen"
+        # Assumptions F132
+        dscr: "Assumptions__G132 / 100"
+        # Financing Model row 22: the debt service the CFADS carries at the DSCR
+        capacity_k22: "cfads_gen / dscr * repay_flag"
+        # the repayment quarters
+        tenor_periods: "Assumptions__G140 * 12 / Assumptions__F4"
+        # Assumptions H147:J147, five-year bands from COD
+        cod60: "EOMONTH(cod, Assumptions__H147__n1 - 1) + 1"
+        cod120: "EOMONTH(cod60, Assumptions__I147__n1 - 1) + 1"
+        cod180: "EOMONTH(cod120, Assumptions__J147__n1 - 1) + 1"
+        # row 25 = LOOKUP(start, Assumptions row 147, row 148)
+        spread: "Assumptions__J148 if pstart >= cod180 else Assumptions__I148 if pstart >= cod120 else Assumptions__H148 if pstart >= cod60 else Assumptions__G148 if pstart >= cod else Assumptions__F148"
+        # row 26
+        rate: "Assumptions__F146 + spread"
+        # row 28
+        period_rate: "rate / 12 * months"
+        band2: "op_flag * (pstart >= cod) * (pstart < cod60)"
+        band3: "op_flag * (pstart >= cod60) * (pstart < cod120)"
+        band4: "op_flag * (pstart >= cod120) * (pstart < cod180)"
+        band5: "op_flag * (pstart >= cod180)"
+        # row 29, the interest index compounded over the operating quarters
+        rate_index: "(1 + (Assumptions__F146 + Assumptions__G148) / 12 * Assumptions__F4) ** cumsum(band2) * (1 + (Assumptions__F146 + Assumptions__H148) / 12 * Assumptions__F4) ** cumsum(band3) * (1 + (Assumptions__F146 + Assumptions__I148) / 12 * Assumptions__F4) ** cumsum(band4) * (1 + (Assumptions__F146 + Assumptions__J148) / 12 * Assumptions__F4) ** cumsum(band5)"
+        # the commitment fee is charged during construction (row 129 times K9)
+        cfee_rate: "Assumptions__F152 * constr_flag"
+        # row 130
+        cfee_periodic: "Assumptions__F152 * months / 12"
+        # the financing costs typed in the 'Fixed' column, I55:I57 (Summary F27)
+        fixed_fin: "Financing_Model__I55 + Financing_Model__I56 + Financing_Model__I57"
+        fixed_fin_t0: "fixed_fin * (t == 0)"
+        fixed_idc_t0: "Financing_Model__I55 * (t == 0)"
+        fixed_upfront_t0: "Financing_Model__I56 * (t == 0)"
+        fixed_cfee_t0: "Financing_Model__I57 * (t == 0)"
+        # G58, the sources and uses total
+        budget: "capex_total + fixed_fin"
+        # Assumptions F157
+        sweep: "Assumptions__G157 / 100"
+        # row 176: the sweep share from Assumptions F156 = F14
+        sweep_flagged: "sweep * (pstart >= cod)"
+        # row 101
+        repay_counter: "Financing_Model__K101 + cumsum(op_flag)"
+        # row 108 = LOOKUP(row 101, row 106, row 107): the key's own column, and in the closing run of 50s the last column
+        fixed_rep: "Financing_Model__K107_DQ107 if (Financing_Model__K106_DQ106 == repay_counter) * (repay_counter < Financing_Model__DQ106) else Financing_Model__DQ107"
+        # I107
+        fixed_typed_cum: "cumsum(Financing_Model__K107_DQ107)"
+        fixed_rep_cum: "cumsum(fixed_rep)"
+        # the LCOE discount rate (G169) and inflation (G170)
+        nom_x0: "1"
+        nom_n1: "nom_x0 - (nom_x0 ** 12 - (1 + Assumptions__F103)) / (12 * nom_x0 ** 11)"
+        nom_x1: "nom_n1 - nom_n1 % trunc_unit"
+        nom_n2: "nom_x1 - (nom_x1 ** 12 - (1 + Assumptions__F103)) / (12 * nom_x1 ** 11)"
+        nom_x2: "nom_n2 - nom_n2 % trunc_unit"
+        nom_n3: "nom_x2 - (nom_x2 ** 12 - (1 + Assumptions__F103)) / (12 * nom_x2 ** 11)"
+        nom_x3: "nom_n3 - nom_n3 % trunc_unit"
+        nom_n4: "nom_x3 - (nom_x3 ** 12 - (1 + Assumptions__F103)) / (12 * nom_x3 ** 11)"
+        nom_x4: "nom_n4 - nom_n4 % trunc_unit"
+        nom_n5: "nom_x4 - (nom_x4 ** 12 - (1 + Assumptions__F103)) / (12 * nom_x4 ** 11)"
+        nom_x5: "nom_n5 - nom_n5 % trunc_unit"
+        inf_x0: "1"
+        inf_n1: "inf_x0 - (inf_x0 ** 12 - (1 + Assumptions__F104)) / (12 * inf_x0 ** 11)"
+        inf_x1: "inf_n1 - inf_n1 % trunc_unit"
+        inf_n2: "inf_x1 - (inf_x1 ** 12 - (1 + Assumptions__F104)) / (12 * inf_x1 ** 11)"
+        inf_x2: "inf_n2 - inf_n2 % trunc_unit"
+        inf_n3: "inf_x2 - (inf_x2 ** 12 - (1 + Assumptions__F104)) / (12 * inf_x2 ** 11)"
+        inf_x3: "inf_n3 - inf_n3 % trunc_unit"
+        inf_n4: "inf_x3 - (inf_x3 ** 12 - (1 + Assumptions__F104)) / (12 * inf_x3 ** 11)"
+        inf_x4: "inf_n4 - inf_n4 % trunc_unit"
+        inf_n5: "inf_x4 - (inf_x4 ** 12 - (1 + Assumptions__F104)) / (12 * inf_x4 ** 11)"
+        inf_x5: "inf_n5 - inf_n5 % trunc_unit"
+        # G171
+        real_rate: "(1 + Assumptions__F103) / (1 + Assumptions__F104) - 1"
+        # row 169
+        disc_nom: "nom_x5 ** months - 1"
+        # row 170
+        disc_infl: "inf_x5 ** months - 1"
+        # row 171 (the twelfth root of the ratio is the ratio of the roots)
+        disc_real: "(nom_x5 / inf_x5) ** months - 1"
+        nom_factor_raw: "nom_x5 ** months_to_date"
+        # row 173
+        nom_factor: "nom_factor_raw - nom_factor_raw % trunc_unit"
+        real_factor_raw: "(nom_x5 / inf_x5) ** months_to_date"
+        # row 174
+        real_factor: "real_factor_raw - real_factor_raw % trunc_unit"
+        # Scenario E30 = K14 = INDEX(K7:K12, E3)
+        scen_merchant: "Scenario__K7 if Scenario__E3 == 1 else Scenario__K8 if Scenario__E3 == 2 else Scenario__K9 if Scenario__E3 == 3 else Scenario__K10 if Scenario__E3 == 4 else Scenario__K11 if Scenario__E3 == 5 else Scenario__K12"
+        # Assumptions F137
+        eq_prorata_share: "1 - Assumptions__F136"
+        # Operating Data J5:J8, cost per kW
+        od_J5: "Operating_Data__I5 / Operating_Data__K5"
+        od_J6: "Operating_Data__I6 / Operating_Data__K6"
+        od_J7: "Operating_Data__I7 / Operating_Data__K7"
+        od_J8: "Operating_Data__I8 / Operating_Data__K8"
+        # row 10 = INDEX(rows 5-8, E2)
+        od_E10: "Operating_Data__E5 if Operating_Data__E2 == 1 else Operating_Data__E6 if Operating_Data__E2 == 2 else Operating_Data__E7 if Operating_Data__E2 == 3 else Operating_Data__E8"
+        od_F10: "Operating_Data__F5 if Operating_Data__E2 == 1 else Operating_Data__F6 if Operating_Data__E2 == 2 else Operating_Data__F7 if Operating_Data__E2 == 3 else Operating_Data__F8"
+        od_G10: "Operating_Data__G5 if Operating_Data__E2 == 1 else Operating_Data__G6 if Operating_Data__E2 == 2 else Operating_Data__G7 if Operating_Data__E2 == 3 else Operating_Data__G8"
+        od_H10: "Operating_Data__H5 if Operating_Data__E2 == 1 else Operating_Data__H6 if Operating_Data__E2 == 2 else Operating_Data__H7 if Operating_Data__E2 == 3 else Operating_Data__H8"
+        od_I10: "Operating_Data__I5 if Operating_Data__E2 == 1 else Operating_Data__I6 if Operating_Data__E2 == 2 else Operating_Data__I7 if Operating_Data__E2 == 3 else Operating_Data__I8"
+        od_J10: "od_J5 if Operating_Data__E2 == 1 else od_J6 if Operating_Data__E2 == 2 else od_J7 if Operating_Data__E2 == 3 else od_J8"
+        od_K10: "Operating_Data__K5 if Operating_Data__E2 == 1 else Operating_Data__K6 if Operating_Data__E2 == 2 else Operating_Data__K7 if Operating_Data__E2 == 3 else Operating_Data__K8"
+        od_L10: "Operating_Data__L5 if Operating_Data__E2 == 1 else Operating_Data__L6 if Operating_Data__E2 == 2 else Operating_Data__L7 if Operating_Data__E2 == 3 else Operating_Data__L8"
+        od_M10: "Operating_Data__M5 if Operating_Data__E2 == 1 else Operating_Data__M6 if Operating_Data__E2 == 2 else Operating_Data__M7 if Operating_Data__E2 == 3 else Operating_Data__M8"
+        # N10 = INDEX(N5:N8, E2) of an empty column
+        od_N10: "0"
+        od_O10: "Operating_Data__O5 if Operating_Data__E2 == 1 else Operating_Data__O6 if Operating_Data__E2 == 2 else Operating_Data__O7 if Operating_Data__E2 == 3 else Operating_Data__O8"
+        od_P10: "Operating_Data__P5 if Operating_Data__E2 == 1 else Operating_Data__P6 if Operating_Data__E2 == 2 else Operating_Data__P7 if Operating_Data__E2 == 3 else Operating_Data__P8"
+        od_Q10: "Operating_Data__Q5 if Operating_Data__E2 == 1 else Operating_Data__Q6 if Operating_Data__E2 == 2 else Operating_Data__Q7 if Operating_Data__E2 == 3 else Operating_Data__Q8"
+        od_R10: "Operating_Data__R5 if Operating_Data__E2 == 1 else Operating_Data__R6 if Operating_Data__E2 == 2 else Operating_Data__R7 if Operating_Data__E2 == 3 else Operating_Data__R8"
+        od_E11: "od_E10 / od_J10"
+        od_F11: "od_F10 / od_J10"
+        od_G11: "od_G10 / od_J10"
+        od_H11: "od_H10 / od_J10"
+        od_I11: "od_I10 / od_J10"
+        od_O11: "od_O10 / od_K10"
+        od_P11: "od_P10 / od_K10"
+        od_Q11: "od_Q10 / od_K10"
+        od_R11: "od_R10 / od_K10"
+        # row 26, the PPP exchange rate, column by column
+        fx_F: "Operating_Data__E26 * (1 + Operating_Data__F25) / (1 + Operating_Data__F24)"
+        fxr_F: "fx_F * Operating_Data__F27"
+        fx_G: "fx_F * (1 + Operating_Data__G25) / (1 + Operating_Data__G24)"
+        fxr_G: "fx_G * Operating_Data__G27"
+        fx_H: "fx_G * (1 + Operating_Data__H25) / (1 + Operating_Data__H24)"
+        fxr_H: "fx_H * Operating_Data__H27"
+        fx_I: "fx_H * (1 + Operating_Data__I25) / (1 + Operating_Data__I24)"
+        fxr_I: "fx_I * Operating_Data__I27"
+        fx_J: "fx_I * (1 + Operating_Data__J25) / (1 + Operating_Data__J24)"
+        fxr_J: "fx_J * Operating_Data__J27"
+        fx_K: "fx_J * (1 + Operating_Data__K25) / (1 + Operating_Data__K24)"
+        fxr_K: "fx_K * Operating_Data__K27"
+        fx_L: "fx_K * (1 + Operating_Data__L25) / (1 + Operating_Data__L24)"
+        fxr_L: "fx_L * Operating_Data__L27"
+        fx_M: "fx_L * (1 + Operating_Data__M25) / (1 + Operating_Data__M24)"
+        fxr_M: "fx_M * Operating_Data__M27"
+        fx_N: "fx_M * (1 + Operating_Data__N25) / (1 + Operating_Data__N24)"
+        fxr_N: "fx_N * Operating_Data__N27"
+        fx_O: "fx_N * (1 + Operating_Data__O25) / (1 + Operating_Data__O24)"
+        fxr_O: "fx_O * Operating_Data__O27"
+        fx_P: "fx_O * (1 + Operating_Data__P25) / (1 + Operating_Data__P24)"
+        fxr_P: "fx_P * Operating_Data__P27"
+        fx_Q: "fx_P * (1 + Operating_Data__Q25) / (1 + Operating_Data__Q24)"
+        fxr_Q: "fx_Q * Operating_Data__Q27"
+        fx_R: "fx_Q * (1 + Operating_Data__R25) / (1 + Operating_Data__R24)"
+        fxr_R: "fx_R * Operating_Data__R27"
+        fx_S: "fx_R * (1 + Operating_Data__S25) / (1 + Operating_Data__S24)"
+        fxr_S: "fx_S * Operating_Data__S27"
+        fx_T: "fx_S * (1 + Operating_Data__T25) / (1 + Operating_Data__T24)"
+        fxr_T: "fx_T * Operating_Data__T27"
+        fx_U: "fx_T * (1 + Operating_Data__U25) / (1 + Operating_Data__U24)"
+        fxr_U: "fx_U * Operating_Data__U27"
+        fx_V: "fx_U * (1 + Operating_Data__V25) / (1 + Operating_Data__V24)"
+        fxr_V: "fx_V * Operating_Data__V27"
+        fx_W: "fx_V * (1 + Operating_Data__W25) / (1 + Operating_Data__W24)"
+        fxr_W: "fx_W * Operating_Data__W27"
+        fx_X: "fx_W * (1 + Operating_Data__X25) / (1 + Operating_Data__X24)"
+        fxr_X: "fx_X * Operating_Data__X27"
+        fx_Y: "fx_X * (1 + Operating_Data__Y25) / (1 + Operating_Data__Y24)"
+        fxr_Y: "fx_Y * Operating_Data__Y27"
+        fx_Z: "fx_Y * (1 + Operating_Data__Z25) / (1 + Operating_Data__Z24)"
+        fxr_Z: "fx_Z * Operating_Data__Z27"
+        fx_AA: "fx_Z * (1 + Operating_Data__AA25) / (1 + Operating_Data__AA24)"
+        fxr_AA: "fx_AA * Operating_Data__AA27"
+        fx_AB: "fx_AA * (1 + Operating_Data__AB25) / (1 + Operating_Data__AB24)"
+        fxr_AB: "fx_AB * Operating_Data__AB27"
+        fx_AC: "fx_AB * (1 + Operating_Data__AC25) / (1 + Operating_Data__AC24)"
+        fxr_AC: "fx_AC * Operating_Data__AC27"
+        fx_AD: "fx_AC * (1 + Operating_Data__AD25) / (1 + Operating_Data__AD24)"
+        fxr_AD: "fx_AD * Operating_Data__AD27"
+        fx_AE: "fx_AD * (1 + Operating_Data__AE25) / (1 + Operating_Data__AE24)"
+        fxr_AE: "fx_AE * Operating_Data__AE27"
+        fx_AF: "fx_AE * (1 + Operating_Data__AF25) / (1 + Operating_Data__AF24)"
+        fxr_AF: "fx_AF * Operating_Data__AF27"
+        fx_AG: "fx_AF * (1 + Operating_Data__AG25) / (1 + Operating_Data__AG24)"
+        fxr_AG: "fx_AG * Operating_Data__AG27"
+        fx_AH: "fx_AG * (1 + Operating_Data__AH25) / (1 + Operating_Data__AH24)"
+        fxr_AH: "fx_AH * Operating_Data__AH27"
+        fx_AI: "fx_AH * (1 + Operating_Data__AI25) / (1 + Operating_Data__AI24)"
+        fxr_AI: "fx_AI * Operating_Data__AI27"
+        fx_AJ: "fx_AI * (1 + Operating_Data__AJ25) / (1 + Operating_Data__AJ24)"
+        fxr_AJ: "fx_AJ * Operating_Data__AJ27"
+        fx_AK: "fx_AJ * (1 + Operating_Data__AK25) / (1 + Operating_Data__AK24)"
+        fxr_AK: "fx_AK * Operating_Data__AK27"
+        fx_AL: "fx_AK * (1 + Operating_Data__AL25) / (1 + Operating_Data__AL24)"
+        fxr_AL: "fx_AL * Operating_Data__AL27"
+        fx_AM: "fx_AL * (1 + Operating_Data__AM25) / (1 + Operating_Data__AM24)"
+        fxr_AM: "fx_AM * Operating_Data__AM27"
+        fx_AN: "fx_AM * (1 + Operating_Data__AN25) / (1 + Operating_Data__AN24)"
+        fxr_AN: "fx_AN * Operating_Data__AN27"
+        fx_AO: "fx_AN * (1 + Operating_Data__AO25) / (1 + Operating_Data__AO24)"
+        fxr_AO: "fx_AO * Operating_Data__AO27"
+        fx_AP: "fx_AO * (1 + Operating_Data__AP25) / (1 + Operating_Data__AP24)"
+        fxr_AP: "fx_AP * Operating_Data__AP27"
+        fx_AQ: "fx_AP * (1 + Operating_Data__AQ25) / (1 + Operating_Data__AQ24)"
+        fxr_AQ: "fx_AQ * Operating_Data__AQ27"
+        fx_AR: "fx_AQ * (1 + Operating_Data__AR25) / (1 + Operating_Data__AR24)"
+        fxr_AR: "fx_AR * Operating_Data__AR27"
+        fx_AS: "fx_AR * (1 + Operating_Data__AS25) / (1 + Operating_Data__AS24)"
+        fxr_AS: "fx_AS * Operating_Data__AS27"
+        # the sources and uses total, once (for readings summed over the periods)
+        budget_t0: "budget * (t == 0)"
+        # the period of financial close (Assumptions F9; Financing Model H124)
+        fc_period: "dev_months / Assumptions__F3"
+        # the last repayment quarter (Assumptions F142)
+        last_repay: "pre_periods + tenor_periods - 1"
+        tail_from: "last_repay + 1"
+        # each opex line's base (kW-years, or years), one outside operations
+        om_fee_div: "om_fee_base + 1 - op_flag"
+        battery_om_div: "battery_om_base + 1 - op_flag"
+        admin_div: "admin_base + 1 - op_flag"
+        insurance_div: "insurance_base + 1 - op_flag"
+        rent_div: "rent_base + 1 - op_flag"
+        property_tax_div: "property_tax_base + 1 - op_flag"
+        utility_div: "utility_base + 1 - op_flag"
+        consumption_div: "consumption_base + 1 - op_flag"
+  loops:
+    debt_size:
+      rule: {kind: sculpt, loan: senior, dscr: 1, cfads: waterfall}
+      start: {debt: 0, repayment: 0}
+      tolerance: 0
+      max_iterations: 3
+  contracts:
+    dev_legal:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: dev_legal_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    dev_accounting:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: dev_accounting_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    dev_engineer:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: dev_engineer_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    dev_misc:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: dev_misc_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_panel:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_panel_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_racking:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_racking_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_bos:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_bos_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_site:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_site_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_special:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_special_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_battery:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_battery_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    epc_misc:
+      type: capex_class
+      parties: {owner: spv}
+      terms:
+        schedule: {generator: src, output: epc_misc_spend}
+        vat_rate: 0
+        vat_refund_lag: 0
+        end: {generator: src, output: dispose_period}
+    senior:
+      type: loan
+      parties: {borrower: spv}
+      terms:
+        commitment: {loop: debt_size, output: debt}
+        draw_schedule: {loop: debt_size, output: debt}
+        available_until: {generator: src, output: last_pre}
+        rate: {generator: src, output: rate}
+        rate_from: 0
+        days_per_period: {generator: src, output: months}
+        day_count_basis: 12
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: pre_periods}
+        repay_periods: {generator: src, output: tenor_periods}
+        sculpt_dscr: null
+        principal_schedule: {loop: debt_size, output: repayment}
+        commitment_fee_rate: {generator: src, output: cfee_rate}
+        arrangement_fee:
+          loop: debt_size
+          output: debt
+          times: {generator: src, output: Assumptions__F151}
+        fee_at: {generator: src, output: fc_period}
+    equity:
+      type: sponsor_equity
+      parties: {issuer: spv}
+      terms: {}
+    sizer:
+      type: loan
+      parties: {borrower: memo}
+      terms:
+        commitment: {loop: debt_size, output: debt}
+        draw_schedule: {loop: debt_size, output: debt}
+        available_until: {generator: src, output: last_pre}
+        rate: {generator: src, output: rate}
+        rate_from: 0
+        days_per_period: {generator: src, output: months}
+        day_count_basis: 12
+        capitalise_from: 1
+        capitalise_until: 0
+        repay_from: {generator: src, output: pre_periods}
+        repay_periods: {generator: src, output: tenor_periods}
+        sculpt_dscr: null
+        principal_schedule: {loop: debt_size, output: repayment}
+        commitment_fee_rate: 0
+        arrangement_fee: 0
+        fee_at: {generator: src, output: fc_period}
+  rulebooks:
+    funding:
+      kind: pro_rata_funding
+      entity: spv
+      cash: cash
+      phase: fund
+      until: {generator: src, output: last_pre}
+      uses:
+      - {flow: dev_legal.spend}
+      - {flow: dev_accounting.spend}
+      - {flow: dev_engineer.spend}
+      - {flow: dev_misc.spend}
+      - {flow: epc_panel.spend}
+      - {flow: epc_racking.spend}
+      - {flow: epc_bos.spend}
+      - {flow: epc_site.spend}
+      - {flow: epc_special.spend}
+      - {flow: epc_battery.spend}
+      - {flow: epc_misc.spend}
+      - {claim: senior.arrangement_fee}
+      - {claim: senior.interest}
+      - {claim: senior.fee}
+      loan: senior
+      equity: equity.contribute
+      equity_first: {generator: src, output: Assumptions__F136}
+      budget:
+        dev_legal: {generator: src, output: dev_legal_total}
+        dev_accounting: {generator: src, output: dev_accounting_total}
+        dev_engineer: {generator: src, output: dev_engineer_total}
+        dev_misc: {generator: src, output: dev_misc_total}
+        epc_panel: {generator: src, output: epc_panel_total}
+        epc_racking: {generator: src, output: epc_racking_total}
+        epc_bos: {generator: src, output: epc_bos_total}
+        epc_site: {generator: src, output: epc_site_total}
+        epc_special: {generator: src, output: epc_special_total}
+        epc_battery: {generator: src, output: epc_battery_total}
+        epc_misc: {generator: src, output: epc_misc_total}
+        idc: {generator: src, output: Financing_Model__I55}
+        up_front_fee: {generator: src, output: Financing_Model__I56}
+        commitment_fee: {generator: src, output: Financing_Model__I57}
+    business:
+      kind: transfer
+      entity: spv
+      phase: operate
+      declare: {cwip: asset, rev_jan: income, rev_feb: income, rev_mar: income, rev_apr: income, rev_may: income, rev_jun: income,
+        rev_jul: income, rev_aug: income, rev_sep: income, rev_oct: income, rev_nov: income, rev_dec: income, om_fee: expense,
+        battery_om: expense, admin: expense, insurance: expense, rent: expense, property_tax: expense, utility: expense, consumption: expense,
+        inverter1: expense, inverter2: expense}
+      moves:
+        cwip_dev_legal:
+          debit: cwip
+          credit: dev_legal
+          amount: {generator: src, output: dev_legal_spend}
+        cwip_dev_accounting:
+          debit: cwip
+          credit: dev_accounting
+          amount: {generator: src, output: dev_accounting_spend}
+        cwip_dev_engineer:
+          debit: cwip
+          credit: dev_engineer
+          amount: {generator: src, output: dev_engineer_spend}
+        cwip_dev_misc:
+          debit: cwip
+          credit: dev_misc
+          amount: {generator: src, output: dev_misc_spend}
+        cwip_epc_panel:
+          debit: cwip
+          credit: epc_panel
+          amount: {generator: src, output: epc_panel_spend}
+        cwip_epc_racking:
+          debit: cwip
+          credit: epc_racking
+          amount: {generator: src, output: epc_racking_spend}
+        cwip_epc_bos:
+          debit: cwip
+          credit: epc_bos
+          amount: {generator: src, output: epc_bos_spend}
+        cwip_epc_site:
+          debit: cwip
+          credit: epc_site
+          amount: {generator: src, output: epc_site_spend}
+        cwip_epc_special:
+          debit: cwip
+          credit: epc_special
+          amount: {generator: src, output: epc_special_spend}
+        cwip_epc_battery:
+          debit: cwip
+          credit: epc_battery
+          amount: {generator: src, output: epc_battery_spend}
+        cwip_epc_misc:
+          debit: cwip
+          credit: epc_misc
+          amount: {generator: src, output: epc_misc_spend}
+        rev_jan:
+          debit: cash
+          credit: rev_jan
+          amount: {generator: src, output: rev_jan}
+        rev_feb:
+          debit: cash
+          credit: rev_feb
+          amount: {generator: src, output: rev_feb}
+        rev_mar:
+          debit: cash
+          credit: rev_mar
+          amount: {generator: src, output: rev_mar}
+        rev_apr:
+          debit: cash
+          credit: rev_apr
+          amount: {generator: src, output: rev_apr}
+        rev_may:
+          debit: cash
+          credit: rev_may
+          amount: {generator: src, output: rev_may}
+        rev_jun:
+          debit: cash
+          credit: rev_jun
+          amount: {generator: src, output: rev_jun}
+        rev_jul:
+          debit: cash
+          credit: rev_jul
+          amount: {generator: src, output: rev_jul}
+        rev_aug:
+          debit: cash
+          credit: rev_aug
+          amount: {generator: src, output: rev_aug}
+        rev_sep:
+          debit: cash
+          credit: rev_sep
+          amount: {generator: src, output: rev_sep}
+        rev_oct:
+          debit: cash
+          credit: rev_oct
+          amount: {generator: src, output: rev_oct}
+        rev_nov:
+          debit: cash
+          credit: rev_nov
+          amount: {generator: src, output: rev_nov}
+        rev_dec:
+          debit: cash
+          credit: rev_dec
+          amount: {generator: src, output: rev_dec}
+        om_fee:
+          debit: om_fee
+          credit: cash
+          amount: {generator: src, output: om_fee_cost}
+        battery_om:
+          debit: battery_om
+          credit: cash
+          amount: {generator: src, output: battery_om_cost}
+        admin:
+          debit: admin
+          credit: cash
+          amount: {generator: src, output: admin_cost}
+        insurance:
+          debit: insurance
+          credit: cash
+          amount: {generator: src, output: insurance_cost}
+        rent:
+          debit: rent
+          credit: cash
+          amount: {generator: src, output: rent_cost}
+        property_tax:
+          debit: property_tax
+          credit: cash
+          amount: {generator: src, output: property_tax_cost}
+        utility:
+          debit: utility
+          credit: cash
+          amount: {generator: src, output: utility_cost}
+        consumption:
+          debit: consumption
+          credit: cash
+          amount: {generator: src, output: consumption_cost}
+        inverter1:
+          debit: inverter1
+          credit: cash
+          amount: {generator: src, output: inverter1_cost}
+        inverter2:
+          debit: inverter2
+          credit: cash
+          amount: {generator: src, output: inverter2_cost}
+    assets:
+      kind: asset_register
+      entity: spv
+      phase: accrue
+      from: cwip
+      to: fixed_assets
+      expense: depreciation
+      disposal: disposal_loss
+      in_service: {generator: src, output: pre_periods}
+      life_periods: {generator: src, output: dep_life}
+      first_charge: in_service
+      dispose_at: {generator: src, output: dispose_period}
+    tax:
+      kind: income_tax
+      entity: spv
+      phase: tax
+      expense: tax_expense
+      payable: tax_payable
+      rate: {generator: src, output: Assumptions__F128}
+      carry_forward_periods: null
+      scheme: {rev_jan: taxable, rev_feb: taxable, rev_mar: taxable, rev_apr: taxable, rev_may: taxable, rev_jun: taxable, rev_jul: taxable,
+        rev_aug: taxable, rev_sep: taxable, rev_oct: taxable, rev_nov: taxable, rev_dec: taxable, om_fee: taxable, battery_om: taxable,
+        admin: taxable, insurance: taxable, rent: taxable, property_tax: taxable, utility: taxable, consumption: taxable, inverter1: taxable,
+        inverter2: taxable, depreciation: taxable, disposal_loss: taxable, senior.interest: non_deductible, senior.fees: non_deductible,
+        tax_expense: non_deductible}
+    waterfall:
+      kind: waterfall
+      entity: spv
+      phase: pay
+      cash: cash
+      tiers:
+      - {name: tax, account: tax_payable}
+      - {claim: senior.interest}
+      - {claim: senior.capitalised}
+      - {claim: senior.principal}
+      - claim: senior.prepay
+        share_of_remaining: {generator: src, output: sweep}
+      residual: equity.distribute
+      cfads: &id001
+        scheme: flows
+        classes: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+          om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2]
+        less: [tax]
+      service: [senior.interest, senior.capitalised, senior.principal]
+      active:
+        from: {generator: src, output: pre_periods}
+        until: {generator: src, output: last_repay}
+      tests:
+      - name: dscr
+        op: '>='
+        level: {generator: src, output: dscr}
+        if_missing: pass
+        consequence: report
+    waterfall_after_maturity:
+      kind: waterfall
+      entity: spv
+      phase: pay
+      cash: cash
+      tiers:
+      - {name: tax, account: tax_payable}
+      residual: equity.distribute
+      cfads: *id001
+      service: []
+      active:
+        from: {generator: src, output: tail_from}
+        until: {generator: src, output: dispose_period}
+      tests: []
+    crisis_revenue:
+      kind: transfer
+      entity: crisis
+      phase: operate
+      declare: {cash: asset, crev_jan: income, crev_feb: income, crev_mar: income, crev_apr: income, crev_may: income, crev_jun: income,
+        crev_jul: income, crev_aug: income, crev_sep: income, crev_oct: income, crev_nov: income, crev_dec: income}
+      moves:
+        crev_jan:
+          debit: cash
+          credit: crev_jan
+          amount: {generator: src, output: crev_jan}
+        crev_feb:
+          debit: cash
+          credit: crev_feb
+          amount: {generator: src, output: crev_feb}
+        crev_mar:
+          debit: cash
+          credit: crev_mar
+          amount: {generator: src, output: crev_mar}
+        crev_apr:
+          debit: cash
+          credit: crev_apr
+          amount: {generator: src, output: crev_apr}
+        crev_may:
+          debit: cash
+          credit: crev_may
+          amount: {generator: src, output: crev_may}
+        crev_jun:
+          debit: cash
+          credit: crev_jun
+          amount: {generator: src, output: crev_jun}
+        crev_jul:
+          debit: cash
+          credit: crev_jul
+          amount: {generator: src, output: crev_jul}
+        crev_aug:
+          debit: cash
+          credit: crev_aug
+          amount: {generator: src, output: crev_aug}
+        crev_sep:
+          debit: cash
+          credit: crev_sep
+          amount: {generator: src, output: crev_sep}
+        crev_oct:
+          debit: cash
+          credit: crev_oct
+          amount: {generator: src, output: crev_oct}
+        crev_nov:
+          debit: cash
+          credit: crev_nov
+          amount: {generator: src, output: crev_nov}
+        crev_dec:
+          debit: cash
+          credit: crev_dec
+          amount: {generator: src, output: crev_dec}
+    sizing_capacity:
+      kind: transfer
+      entity: memo
+      phase: operate
+      declare: {capacity: income}
+      moves:
+        capacity:
+          debit: cash
+          credit: capacity
+          amount: {generator: src, output: capacity_k22}
+    sizing_ledger:
+      kind: waterfall
+      entity: memo
+      phase: pay
+      cash: cash
+      sources: [sizer.draw]
+      tiers:
+      - {claim: sizer.interest}
+      - {claim: sizer.capitalised}
+      - {claim: sizer.principal}
+      residual: null
+      cfads:
+        scheme: flows
+        classes: [capacity]
+        less: []
+      service: [sizer.interest, sizer.capitalised, sizer.principal]
+      active:
+        from: {generator: src, output: last_pre}
+        until: {generator: src, output: last_repay}
+      tests: []
+  schemes:
+    flows: {rev_jan: rev_jan, rev_feb: rev_feb, rev_mar: rev_mar, rev_apr: rev_apr, rev_may: rev_may, rev_jun: rev_jun, rev_jul: rev_jul,
+      rev_aug: rev_aug, rev_sep: rev_sep, rev_oct: rev_oct, rev_nov: rev_nov, rev_dec: rev_dec, crev_jan: crev_jan, crev_feb: crev_feb,
+      crev_mar: crev_mar, crev_apr: crev_apr, crev_may: crev_may, crev_jun: crev_jun, crev_jul: crev_jul, crev_aug: crev_aug,
+      crev_sep: crev_sep, crev_oct: crev_oct, crev_nov: crev_nov, crev_dec: crev_dec, om_fee: om_fee, battery_om: battery_om,
+      admin: admin, insurance: insurance, rent: rent, property_tax: property_tax, utility: utility, consumption: consumption,
+      inverter1: inverter1, inverter2: inverter2, dev_legal: dev_legal, dev_accounting: dev_accounting, dev_engineer: dev_engineer,
+      dev_misc: dev_misc, epc_panel: epc_panel, epc_racking: epc_racking, epc_bos: epc_bos, epc_site: epc_site, epc_special: epc_special,
+      epc_battery: epc_battery, epc_misc: epc_misc, vat_receivable: vat, senior.debt: senior_debt, senior.capitalised_interest: senior_debt,
+      senior.interest_payable: senior_interest, senior.fee_payable: senior_fee, senior.deferred_fees: senior_upfront, equity.capital: equity_in,
+      equity.distributions: equity_out, tax_payable: tax, capacity: capacity, sizer.debt: memo_debt, sizer.capitalised_interest: memo_debt,
+      sizer.interest_payable: memo_interest, sizer.fee_payable: memo_fee, sizer.deferred_fees: memo_fee}
+    pnl: {rev_jan: rev_jan, rev_feb: rev_feb, rev_mar: rev_mar, rev_apr: rev_apr, rev_may: rev_may, rev_jun: rev_jun, rev_jul: rev_jul,
+      rev_aug: rev_aug, rev_sep: rev_sep, rev_oct: rev_oct, rev_nov: rev_nov, rev_dec: rev_dec, crev_jan: crev_jan, crev_feb: crev_feb,
+      crev_mar: crev_mar, crev_apr: crev_apr, crev_may: crev_may, crev_jun: crev_jun, crev_jul: crev_jul, crev_aug: crev_aug,
+      crev_sep: crev_sep, crev_oct: crev_oct, crev_nov: crev_nov, crev_dec: crev_dec, om_fee: om_fee, battery_om: battery_om,
+      admin: admin, insurance: insurance, rent: rent, property_tax: property_tax, utility: utility, consumption: consumption,
+      inverter1: inverter1, inverter2: inverter2, depreciation: depreciation, disposal_loss: depreciation, senior.interest: interest,
+      senior.fees: fees, tax_expense: tax, capacity: capacity, sizer.interest: memo_interest, sizer.fees: memo_fees}
+  cuts:
+    rev_jan:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jan]
+    rev_feb:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_feb]
+    rev_mar:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_mar]
+    rev_apr:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_apr]
+    rev_may:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_may]
+    rev_jun:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jun]
+    rev_jul:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jul]
+    rev_aug:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_aug]
+    rev_sep:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_sep]
+    rev_oct:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_oct]
+    rev_nov:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_nov]
+    rev_dec:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_dec]
+    revenue:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec]
+    crev_jan:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_jan]
+    crev_feb:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_feb]
+    crev_mar:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_mar]
+    crev_apr:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_apr]
+    crev_may:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_may]
+    crev_jun:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_jun]
+    crev_jul:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_jul]
+    crev_aug:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_aug]
+    crev_sep:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_sep]
+    crev_oct:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_oct]
+    crev_nov:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_nov]
+    crev_dec:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_dec]
+    crisis_revenue:
+      kind: pnl
+      entity: crisis
+      scheme: pnl
+      include: [crev_jan, crev_feb, crev_mar, crev_apr, crev_may, crev_jun, crev_jul, crev_aug, crev_sep, crev_oct, crev_nov,
+        crev_dec]
+    om_fee:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [om_fee]
+    battery_om:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [battery_om]
+    admin:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [admin]
+    insurance:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [insurance]
+    rent:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rent]
+    property_tax:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [property_tax]
+    utility:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [utility]
+    consumption:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [consumption]
+    inverter1:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [inverter1]
+    inverter2:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [inverter2]
+    opex:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption]
+    inverter:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [inverter1, inverter2]
+    ebitda:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+        om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2]
+    capex_dev_legal:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [dev_legal]
+    capex_dev_accounting:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [dev_accounting]
+    capex_dev_engineer:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [dev_engineer]
+    capex_dev_misc:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [dev_misc]
+    capex_epc_panel:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_panel]
+    capex_epc_racking:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_racking]
+    capex_epc_bos:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_bos]
+    capex_epc_site:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_site]
+    capex_epc_special:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_special]
+    capex_epc_battery:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_battery]
+    capex_epc_misc:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_misc]
+    capex_dev:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [dev_legal, dev_accounting, dev_engineer, dev_misc]
+    capex_epc:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [epc_panel, epc_racking, epc_bos, epc_site, epc_special, epc_battery, epc_misc]
+    capex:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [dev_legal, dev_accounting, dev_engineer, dev_misc, epc_panel, epc_racking, epc_bos, epc_site, epc_special, epc_battery,
+        epc_misc]
+    project:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+        om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2, dev_legal, dev_accounting,
+        dev_engineer, dev_misc, epc_panel, epc_racking, epc_bos, epc_site, epc_special, epc_battery, epc_misc]
+    project_after_tax:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+        om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2, dev_legal, dev_accounting,
+        dev_engineer, dev_misc, epc_panel, epc_racking, epc_bos, epc_site, epc_special, epc_battery, epc_misc, tax]
+    tax:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [tax]
+    cfads:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+        om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2, tax]
+    senior_debt:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [senior_debt]
+    senior_interest:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [senior_interest]
+    senior_fee:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [senior_fee]
+    senior_upfront:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [senior_upfront]
+    senior_all:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [senior_debt, senior_interest, senior_fee, senior_upfront]
+    equity_in:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [equity_in]
+    equity_out:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [equity_out]
+    equity:
+      entity: spv
+      account: cash
+      scheme: flows
+      include: [equity_in, equity_out]
+    interest_pnl:
+      kind: pnl
+      entity: spv
+      scheme: pnl
+      include: [interest]
+    depreciation:
+      kind: pnl
+      entity: spv
+      scheme: pnl
+      include: [depreciation]
+    ebit:
+      kind: pnl
+      entity: spv
+      scheme: pnl
+      include: [rev_jan, rev_feb, rev_mar, rev_apr, rev_may, rev_jun, rev_jul, rev_aug, rev_sep, rev_oct, rev_nov, rev_dec,
+        om_fee, battery_om, admin, insurance, rent, property_tax, utility, consumption, inverter1, inverter2, depreciation]
+    memo_capacity:
+      kind: pnl
+      entity: memo
+      scheme: pnl
+      include: [capacity]
+    memo_debt_flow:
+      entity: memo
+      account: cash
+      scheme: flows
+      include: [memo_debt]
+    memo_interest_cash:
+      entity: memo
+      account: cash
+      scheme: flows
+      include: [memo_interest]
+    memo_interest_pnl:
+      kind: pnl
+      entity: memo
+      scheme: pnl
+      include: [memo_interest]
+    memo_owed_change:
+      kind: sum
+      add: [memo_debt_flow, memo_interest_cash]
+      subtract: [memo_interest_pnl]
+  measures: {}
+figures:
+  Operating_Model.G4: {"driver": "src.pre_periods", "at": 0}
+  Operating_Model.K5:DQ5: {"driver": "src.months"}
+  Operating_Model.I8: {"driver": "src.dev_flag", "total": true}
+  Operating_Model.K8:DQ8: {"driver": "src.dev_flag"}
+  Operating_Model.I9: {"driver": "src.constr_flag", "total": true}
+  Operating_Model.K9:DQ9: {"driver": "src.constr_flag"}
+  Operating_Model.I10: {"driver": "src.op_flag", "total": true}
+  Operating_Model.K10:DQ10: {"driver": "src.op_flag"}
+  Financing_Model.G4: {"driver": "src.pre_periods", "at": 0}
+  Financing_Model.K5:DQ5: {"driver": "src.months"}
+  Financing_Model.I8: {"driver": "src.dev_flag", "total": true}
+  Financing_Model.K8:DQ8: {"driver": "src.dev_flag"}
+  Financing_Model.I9: {"driver": "src.constr_flag", "total": true}
+  Financing_Model.K9:DQ9: {"driver": "src.constr_flag"}
+  Financing_Model.I10: {"driver": "src.op_flag", "total": true}
+  Financing_Model.K10:DQ10: {"driver": "src.op_flag"}
+  Operating_Model.K13:DQ13: {"driver": "src.capacity"}
+  Operating_Model.K14:DQ14: {"driver": "src.deg_rate"}
+  Operating_Model.K15:DQ15: {"driver": "src.deg_idx"}
+  Operating_Model.K16:DQ16: {"driver": "src.cap_deg"}
+  Operating_Model.G31:I31: [{"driver": "src.mcf_jan", "at": 0}, {"driver": "src.mh_jan", "at": 0}, {"driver": "src.gen_jan", "total": true}]
+  Operating_Model.K31:DQ31: {"driver": "src.gen_jan"}
+  Operating_Model.G32:I32: [{"driver": "src.mcf_feb", "at": 0}, {"driver": "src.mh_feb", "at": 0}, {"driver": "src.gen_feb", "total": true}]
+  Operating_Model.K32:DQ32: {"driver": "src.gen_feb"}
+  Operating_Model.G33:I33: [{"driver": "src.mcf_mar", "at": 0}, {"driver": "src.mh_mar", "at": 0}, {"driver": "src.gen_mar", "total": true}]
+  Operating_Model.K33:DQ33: {"driver": "src.gen_mar"}
+  Operating_Model.G34:I34: [{"driver": "src.mcf_apr", "at": 0}, {"driver": "src.mh_apr", "at": 0}, {"driver": "src.gen_apr", "total": true}]
+  Operating_Model.K34:DQ34: {"driver": "src.gen_apr"}
+  Operating_Model.G35:I35: [{"driver": "src.mcf_may", "at": 0}, {"driver": "src.mh_may", "at": 0}, {"driver": "src.gen_may", "total": true}]
+  Operating_Model.K35:DQ35: {"driver": "src.gen_may"}
+  Operating_Model.G36:I36: [{"driver": "src.mcf_jun", "at": 0}, {"driver": "src.mh_jun", "at": 0}, {"driver": "src.gen_jun", "total": true}]
+  Operating_Model.K36:DQ36: {"driver": "src.gen_jun"}
+  Operating_Model.G37:I37: [{"driver": "src.mcf_jul", "at": 0}, {"driver": "src.mh_jul", "at": 0}, {"driver": "src.gen_jul", "total": true}]
+  Operating_Model.K37:DQ37: {"driver": "src.gen_jul"}
+  Operating_Model.G38:I38: [{"driver": "src.mcf_aug", "at": 0}, {"driver": "src.mh_aug", "at": 0}, {"driver": "src.gen_aug", "total": true}]
+  Operating_Model.K38:DQ38: {"driver": "src.gen_aug"}
+  Operating_Model.G39:I39: [{"driver": "src.mcf_sep", "at": 0}, {"driver": "src.mh_sep", "at": 0}, {"driver": "src.gen_sep", "total": true}]
+  Operating_Model.K39:DQ39: {"driver": "src.gen_sep"}
+  Operating_Model.G40:I40: [{"driver": "src.mcf_oct", "at": 0}, {"driver": "src.mh_oct", "at": 0}, {"driver": "src.gen_oct", "total": true}]
+  Operating_Model.K40:DQ40: {"driver": "src.gen_oct"}
+  Operating_Model.G41:I41: [{"driver": "src.mcf_nov", "at": 0}, {"driver": "src.mh_nov", "at": 0}, {"driver": "src.gen_nov", "total": true}]
+  Operating_Model.K41:DQ41: {"driver": "src.gen_nov"}
+  Operating_Model.G42:I42: [{"driver": "src.mcf_dec", "at": 0}, {"driver": "src.mh_dec", "at": 0}, {"driver": "src.gen_dec", "total": true}]
+  Operating_Model.K42:DQ42: {"driver": "src.gen_dec"}
+  Operating_Model.I43: {"driver": "src.gen_total", "total": true}
+  Operating_Model.K43:DQ43: {"driver": "src.gen_total"}
+  Operating_Model.G47:I47: [{"cut": "capex_dev_legal", "sign": -1, "total": true}, {"driver": "src.dev_share", "at": 0}, {"cut": "capex_dev_legal", "sign": -1, "total": true}]
+  Operating_Model.K47:DQ47: {"cut": "capex_dev_legal", "sign": -1}
+  Operating_Model.G48:I48: [{"cut": "capex_dev_accounting", "sign": -1, "total": true}, {"driver": "src.dev_share", "at": 0}, {"cut": "capex_dev_accounting", "sign": -1, "total": true}]
+  Operating_Model.K48:DQ48: {"cut": "capex_dev_accounting", "sign": -1}
+  Operating_Model.G49:I49: [{"cut": "capex_dev_engineer", "sign": -1, "total": true}, {"driver": "src.dev_share", "at": 0}, {"cut": "capex_dev_engineer", "sign": -1, "total": true}]
+  Operating_Model.K49:DQ49: {"cut": "capex_dev_engineer", "sign": -1}
+  Operating_Model.G50:I50: [{"cut": "capex_dev_misc", "sign": -1, "total": true}, {"driver": "src.dev_share", "at": 0}, {"cut": "capex_dev_misc", "sign": -1, "total": true}]
+  Operating_Model.K50:DQ50: {"cut": "capex_dev_misc", "sign": -1}
+  Operating_Model.G54:I54: [{"cut": "capex_epc_panel", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_panel", "sign": -1, "total": true}]
+  Operating_Model.K54:DQ54: {"cut": "capex_epc_panel", "sign": -1}
+  Operating_Model.G55:I55: [{"cut": "capex_epc_racking", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_racking", "sign": -1, "total": true}]
+  Operating_Model.K55:DQ55: {"cut": "capex_epc_racking", "sign": -1}
+  Operating_Model.G56:I56: [{"cut": "capex_epc_bos", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_bos", "sign": -1, "total": true}]
+  Operating_Model.K56:DQ56: {"cut": "capex_epc_bos", "sign": -1}
+  Operating_Model.G57:I57: [{"cut": "capex_epc_site", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_site", "sign": -1, "total": true}]
+  Operating_Model.K57:DQ57: {"cut": "capex_epc_site", "sign": -1}
+  Operating_Model.G58:I58: [{"cut": "capex_epc_special", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_special", "sign": -1, "total": true}]
+  Operating_Model.K58:DQ58: {"cut": "capex_epc_special", "sign": -1}
+  Operating_Model.G59:I59: [{"cut": "capex_epc_battery", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_battery", "sign": -1, "total": true}]
+  Operating_Model.K59:DQ59: {"cut": "capex_epc_battery", "sign": -1}
+  Operating_Model.G60:I60: [{"cut": "capex_epc_misc", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc_misc", "sign": -1, "total": true}]
+  Operating_Model.K60:DQ60: {"cut": "capex_epc_misc", "sign": -1}
+  Operating_Model.I51: {"cut": "capex_dev", "sign": -1, "total": true}
+  Operating_Model.K51:DQ51: {"cut": "capex_dev", "sign": -1}
+  Operating_Model.G61:I61: [{"cut": "capex_epc", "sign": -1, "total": true}, {"driver": "src.constr_share", "at": 0}, {"cut": "capex_epc", "sign": -1, "total": true}]
+  Operating_Model.K61:DQ61: {"cut": "capex_epc", "sign": -1}
+  Operating_Model.I63: {"cut": "capex", "sign": -1, "total": true}
+  Operating_Model.K63:DQ63: {"cut": "capex", "sign": -1}
+  Operating_Model.K68:DQ68: {"driver": "src.infl_om"}
+  Operating_Model.K69:DQ69: {"driver": "src.infl_admin"}
+  Operating_Model.K70:DQ70: {"driver": "src.infl_other"}
+  Operating_Model.K72:DQ72: {"driver": "src.idx_om"}
+  Operating_Model.K73:DQ73: {"driver": "src.idx_admin"}
+  Operating_Model.K74:DQ74: {"driver": "src.idx_other"}
+  Operating_Model.G77:H77: [{"driver": "src.om_fee_rate", "at": 0}, {"driver": "src.om_fee_qrate", "at": 0}]
+  Operating_Model.K77:DQ77: {"driver": "src.om_fee_unit"}
+  Operating_Model.G78:H78: [{"cut": "battery_om", "sign": -1, "per": "src.battery_om_div", "at": 9}, {"driver": "src.battery_om_qrate", "at": 0}]
+  Operating_Model.K78:DQ78: {"driver": "src.battery_om_unit"}
+  Operating_Model.G79:H79: [{"cut": "admin", "sign": -1, "per": "src.admin_div", "at": 9}, {"driver": "src.admin_qrate", "at": 0}]
+  Operating_Model.K79:DQ79: {"driver": "src.admin_unit"}
+  Operating_Model.G80:H80: [{"cut": "insurance", "sign": -1, "per": "src.insurance_div", "at": 9}, {"driver": "src.insurance_qrate", "at": 0}]
+  Operating_Model.K80:DQ80: {"driver": "src.insurance_unit"}
+  Operating_Model.G81:H81: [{"cut": "rent", "sign": -1, "per": "src.rent_div", "at": 9}, {"driver": "src.rent_qrate", "at": 0}]
+  Operating_Model.K81:DQ81: {"driver": "src.rent_unit"}
+  Operating_Model.G82:H82: [{"cut": "property_tax", "sign": -1, "per": "src.property_tax_div", "at": 9}, {"driver": "src.property_tax_qrate", "at": 0}]
+  Operating_Model.K82:DQ82: {"driver": "src.property_tax_unit"}
+  Operating_Model.G83:H83: [{"cut": "utility", "sign": -1, "per": "src.utility_div", "at": 9}, {"driver": "src.utility_qrate", "at": 0}]
+  Operating_Model.K83:DQ83: {"driver": "src.utility_unit"}
+  Operating_Model.G84:H84: [{"cut": "consumption", "sign": -1, "per": "src.consumption_div", "at": 9}, {"driver": "src.consumption_qrate", "at": 0}]
+  Operating_Model.K84:DQ84: {"driver": "src.consumption_unit"}
+  Operating_Model.K87:DQ87: {"driver": "src.capacity"}
+  Operating_Model.I88: {"cut": "om_fee", "sign": -1, "total": true}
+  Operating_Model.K88:DQ88: {"cut": "om_fee", "sign": -1}
+  Operating_Model.I89: {"cut": "battery_om", "sign": -1, "total": true}
+  Operating_Model.K89:DQ89: {"cut": "battery_om", "sign": -1}
+  Operating_Model.I90: {"cut": "admin", "sign": -1, "total": true}
+  Operating_Model.K90:DQ90: {"cut": "admin", "sign": -1}
+  Operating_Model.I91: {"cut": "insurance", "sign": -1, "total": true}
+  Operating_Model.K91:DQ91: {"cut": "insurance", "sign": -1}
+  Operating_Model.I92: {"cut": "rent", "sign": -1, "total": true}
+  Operating_Model.K92:DQ92: {"cut": "rent", "sign": -1}
+  Operating_Model.I93: {"cut": "property_tax", "sign": -1, "total": true}
+  Operating_Model.K93:DQ93: {"cut": "property_tax", "sign": -1}
+  Operating_Model.I94: {"cut": "utility", "sign": -1, "total": true}
+  Operating_Model.K94:DQ94: {"cut": "utility", "sign": -1}
+  Operating_Model.I95: {"cut": "consumption", "sign": -1, "total": true}
+  Operating_Model.K95:DQ95: {"cut": "consumption", "sign": -1}
+  Operating_Model.I96: {"cut": "opex", "sign": -1, "total": true}
+  Operating_Model.K96:DQ96: {"cut": "opex", "sign": -1}
+  Operating_Model.I100: {"cut": "inverter1", "sign": -1, "total": true}
+  Operating_Model.K100:DQ100: {"cut": "inverter1", "sign": -1}
+  Operating_Model.I101: {"cut": "inverter2", "sign": -1, "total": true}
+  Operating_Model.K101:DQ101: {"cut": "inverter2", "sign": -1}
+  Operating_Model.I102: {"cut": "inverter", "sign": -1, "total": true}
+  Operating_Model.K102:DQ102: {"cut": "inverter", "sign": -1}
+  Operating_Model.K104:DQ104: {"sum": [{"cut": "opex", "sign": -1}, {"cut": "inverter", "sign": -1}]}
+  Operating_Model.K108:DQ108: {"driver": "src.price"}
+  Operating_Model.K109:DQ109: {"cut": "revenue"}
+  Operating_Model.K111:DQ111: {"driver": "src.crisis_price_jan"}
+  Operating_Model.I125: {"cut": "crev_jan", "total": true}
+  Operating_Model.K125:DQ125: {"cut": "crev_jan"}
+  Operating_Model.K112:DQ112: {"driver": "src.crisis_price_feb"}
+  Operating_Model.I126: {"cut": "crev_feb", "total": true}
+  Operating_Model.K126:DQ126: {"cut": "crev_feb"}
+  Operating_Model.K113:DQ113: {"driver": "src.crisis_price_mar"}
+  Operating_Model.I127: {"cut": "crev_mar", "total": true}
+  Operating_Model.K127:DQ127: {"cut": "crev_mar"}
+  Operating_Model.K114:DQ114: {"driver": "src.crisis_price_apr"}
+  Operating_Model.I128: {"cut": "crev_apr", "total": true}
+  Operating_Model.K128:DQ128: {"cut": "crev_apr"}
+  Operating_Model.K115:DQ115: {"driver": "src.crisis_price_may"}
+  Operating_Model.I129: {"cut": "crev_may", "total": true}
+  Operating_Model.K129:DQ129: {"cut": "crev_may"}
+  Operating_Model.K116:DQ116: {"driver": "src.crisis_price_jun"}
+  Operating_Model.I130: {"cut": "crev_jun", "total": true}
+  Operating_Model.K130:DQ130: {"cut": "crev_jun"}
+  Operating_Model.K117:DQ117: {"driver": "src.crisis_price_jul"}
+  Operating_Model.I131: {"cut": "crev_jul", "total": true}
+  Operating_Model.K131:DQ131: {"cut": "crev_jul"}
+  Operating_Model.K118:DQ118: {"driver": "src.crisis_price_aug"}
+  Operating_Model.I132: {"cut": "crev_aug", "total": true}
+  Operating_Model.K132:DQ132: {"cut": "crev_aug"}
+  Operating_Model.K119:DQ119: {"driver": "src.crisis_price_sep"}
+  Operating_Model.I133: {"cut": "crev_sep", "total": true}
+  Operating_Model.K133:DQ133: {"cut": "crev_sep"}
+  Operating_Model.K120:DQ120: {"driver": "src.crisis_price_oct"}
+  Operating_Model.I134: {"cut": "crev_oct", "total": true}
+  Operating_Model.K134:DQ134: {"cut": "crev_oct"}
+  Operating_Model.K121:DQ121: {"driver": "src.crisis_price_nov"}
+  Operating_Model.I135: {"cut": "crev_nov", "total": true}
+  Operating_Model.K135:DQ135: {"cut": "crev_nov"}
+  Operating_Model.K122:DQ122: {"driver": "src.crisis_price_dec"}
+  Operating_Model.I136: {"cut": "crev_dec", "total": true}
+  Operating_Model.K136:DQ136: {"cut": "crev_dec"}
+  Operating_Model.I137: {"cut": "crisis_revenue", "total": true}
+  Operating_Model.K137:DQ137: {"cut": "crisis_revenue"}
+  Operating_Model.K139:DQ139: {"cut": "revenue"}
+  Operating_Model.K142:DQ142: {"cut": "ebitda"}
+  Operating_Model.K143:DQ143: {"cut": "capex", "sign": -1}
+  Operating_Model.K144:DQ144: {"cut": "project"}
+  Operating_Model.G149:I149: [{"record": "assets.cost", "per": "src.annual_dep", "at": 9}, {"driver": "src.dep_rate_year", "at": 0}, {"driver": "src.dep_rate_q", "total": true}]
+  Operating_Model.K149:DQ149: {"driver": "src.dep_rate_q"}
+  Operating_Model.K150:DQ150: {"driver": "src.dep_left"}
+  Operating_Model.I151: {"driver": "src.dep_adj", "total": true}
+  Operating_Model.K151:DQ151: {"driver": "src.dep_adj"}
+  Operating_Model.G153: {"record": "assets.cost", "at": 9}
+  Operating_Model.K153:DQ153: {"record": "assets.cost"}
+  Operating_Model.K154:DQ154: {"cut": "depreciation", "sign": -1}
+  Operating_Model.K156:DQ156: {"cut": "ebit"}
+  Operating_Model.K157:DQ157: {"record": "tax.losses_opening"}
+  Operating_Model.K158:DQ158: {"record": "tax.loss_added"}
+  Operating_Model.K159:DQ159: {"record": "tax.loss_used"}
+  Operating_Model.K160:DQ160: {"record": "tax.losses"}
+  Operating_Model.K162:DQ162: {"record": "tax.taxable"}
+  Operating_Model.K163:DQ163: {"record": "tax.tax"}
+  Operating_Model.K164:DQ164: {"cut": "project_after_tax"}
+  Operating_Model.K169:DQ169: {"driver": "src.disc_nom"}
+  Operating_Model.K170:DQ170: {"driver": "src.disc_infl"}
+  Operating_Model.G171: {"driver": "src.real_rate", "at": 0}
+  Operating_Model.K171:DQ171: {"driver": "src.disc_real"}
+  Operating_Model.K173:DQ173: {"driver": "src.nom_factor"}
+  Operating_Model.G174: {"driver": "src.real_rate", "at": 0}
+  Operating_Model.K174:DQ174: {"driver": "src.real_factor"}
+  Financing_Model.K13:DQ13: {"cut": "ebitda"}
+  Financing_Model.K15:DQ15: {"record": "tax.tax"}
+  Financing_Model.K16:DQ16: {"cut": "cfads"}
+  Financing_Model.I18: {"cut": "capex", "sign": -1, "total": true}
+  Financing_Model.K18:DQ18: {"cut": "capex", "sign": -1}
+  Financing_Model.I19: {"cut": "depreciation", "sign": -1, "total": true}
+  Financing_Model.K19:DQ19: {"cut": "depreciation", "sign": -1}
+  Financing_Model.K21:DQ21: {"driver": "src.repay_flag"}
+  Financing_Model.G22: {"driver": "src.dscr", "at": 0}
+  Financing_Model.I22: {"cut": "memo_capacity", "total": true}
+  Financing_Model.K22:DQ22: {"cut": "memo_capacity"}
+  Financing_Model.K25:DQ25: {"driver": "src.spread"}
+  Financing_Model.K26:DQ26: {"driver": "src.rate"}
+  Financing_Model.K28:DQ28: {"driver": "src.period_rate"}
+  Financing_Model.K29:DQ29: {"driver": "src.rate_index"}
+  Financing_Model.K33:DQ33: {"sum": [{"cumulative": "memo_owed_change"}, {"cut": "memo_owed_change", "sign": -1}]}
+  Financing_Model.H34: {"cut": "memo_debt_flow", "at": 8}
+  Financing_Model.K34:DQ34: {"cut": "memo_debt_flow", "times": "src.draw_flag"}
+  Financing_Model.K35:DQ35: {"sum": [{"cut": "memo_owed_change", "sign": -1}, {"cut": "memo_debt_flow", "times": "src.draw_flag"}]}
+  Financing_Model.K36:DQ36: {"cumulative": "memo_owed_change"}
+  Financing_Model.K37:DQ37: {"cut": "memo_interest_pnl", "sign": -1}
+  Financing_Model.G42: {"cut": "capex_dev_legal", "sign": -1, "total": true}
+  Financing_Model.G43: {"cut": "capex_dev_accounting", "sign": -1, "total": true}
+  Financing_Model.G44: {"cut": "capex_dev_engineer", "sign": -1, "total": true}
+  Financing_Model.G45: {"cut": "capex_dev_misc", "sign": -1, "total": true}
+  Financing_Model.G47: {"cut": "capex_epc_panel", "sign": -1, "total": true}
+  Financing_Model.G48: {"cut": "capex_epc_racking", "sign": -1, "total": true}
+  Financing_Model.G49: {"cut": "capex_epc_bos", "sign": -1, "total": true}
+  Financing_Model.G50: {"cut": "capex_epc_site", "sign": -1, "total": true}
+  Financing_Model.G51: {"cut": "capex_epc_special", "sign": -1, "total": true}
+  Financing_Model.G52: {"cut": "capex_epc_battery", "sign": -1, "total": true}
+  Financing_Model.G53: {"cut": "capex_epc_misc", "sign": -1, "total": true}
+  Financing_Model.J55: {"sum": [{"driver": "src.fixed_idc_t0"}, {"cut": "interest_pnl", "times": "src.constr_flag"}], "total": true}
+  Financing_Model.J56: {"sum": [{"driver": "src.fixed_upfront_t0"}, {"cut": "senior_upfront"}], "total": true}
+  Financing_Model.J57: {"sum": [{"driver": "src.fixed_cfee_t0"}, {"cut": "senior_fee"}], "total": true}
+  Financing_Model.G58: {"driver": "src.budget", "at": 0}
+  Financing_Model.J58: {"sum": [{"driver": "src.fixed_fin_t0"}, {"cut": "interest_pnl", "times": "src.constr_flag"}, {"cut": "senior_upfront"}, {"cut": "senior_fee"}], "total": true}
+  Financing_Model.G62: {"sum": [{"driver": "src.budget"}, {"cut": "memo_debt_flow", "sign": -1}], "at": 8}
+  Financing_Model.G63: {"driver": "src.budget", "at": 0}
+  Financing_Model.G66:H66: [{"sum": [{"driver": "src.budget_t0"}, {"cut": "memo_debt_flow", "times": "src.draw_flag", "sign": -1}, {"cut": "equity_in", "sign": -1}, {"record": "funding.residual"}], "total": true}, {"sum": [{"driver": "src.one"}, {"record": "funding.share", "sign": -1}], "at": 0}]
+  Financing_Model.G67:H67: [{"cut": "memo_debt_flow", "at": 8}, {"record": "funding.share", "at": 0}]
+  Financing_Model.G68: {"sum": [{"driver": "src.budget_t0"}, {"cut": "equity_in", "sign": -1}, {"record": "funding.residual"}], "total": true}
+  Financing_Model.G69: {"cut": "memo_debt_flow", "at": 8, "per": "src.budget"}
+  Financing_Model.K73:DQ73: {"cut": "capex_dev", "sign": -1}
+  Financing_Model.K74:DQ74: {"cut": "capex_epc", "sign": -1}
+  Financing_Model.K75:DQ75: {"cut": "interest_pnl", "sign": -1, "times": "src.constr_flag"}
+  Financing_Model.K76:DQ76: {"cut": "senior_upfront", "sign": -1}
+  Financing_Model.K77:DQ77: {"cut": "senior_fee", "sign": -1}
+  Financing_Model.K78:DQ78: {"sum": [{"cut": "capex", "sign": -1}, {"cut": "interest_pnl", "sign": -1, "times": "src.constr_flag"}, {"cut": "senior_upfront", "sign": -1}, {"cut": "senior_fee", "sign": -1}]}
+  Financing_Model.G81: {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}
+  Financing_Model.K81:DQ81: [{"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}, {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}], "total": true}]
+  Financing_Model.K85:DQ85: {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}]}
+  Financing_Model.K88:DQ88: {"sum": [{"cut": "equity_in"}, {"record": "funding.residual", "sign": -1}]}
+  Financing_Model.K92:DQ92: {"sum": [{"cut": "senior_debt", "times": "src.pre_flag"}, {"record": "funding.residual"}]}
+  Financing_Model.G93: {"record": "funding.share", "at": 0}
+  Financing_Model.K93:DQ93: {"cut": "senior_debt", "times": "src.pre_flag"}
+  Financing_Model.G94: {"sum": [{"driver": "src.one"}, {"record": "funding.share", "sign": -1}], "at": 0}
+  Financing_Model.K94:DQ94: {"record": "funding.residual"}
+  Financing_Model.K96:DQ96: {"cut": "senior_debt", "times": "src.pre_flag"}
+  Financing_Model.K97:DQ97: {"cut": "equity_in"}
+  Financing_Model.L101:DQ101: {"driver": "src.repay_counter", "periods": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110]}
+  Financing_Model.I102: {"cut": "memo_capacity", "total": true}
+  Financing_Model.K102:DQ102: {"cut": "memo_capacity"}
+  Financing_Model.I103: {"cut": "memo_interest_pnl", "sign": -1, "total": true}
+  Financing_Model.K103:DQ103: {"cut": "memo_interest_pnl", "sign": -1}
+  Financing_Model.I104: {"sum": [{"cut": "memo_owed_change", "sign": -1}, {"cut": "memo_debt_flow", "times": "src.draw_flag"}], "total": true}
+  Financing_Model.K104:DQ104: {"sum": [{"cut": "memo_owed_change", "sign": -1}, {"cut": "memo_debt_flow", "times": "src.draw_flag"}]}
+  Financing_Model.I107: {"driver": "src.fixed_typed_cum", "at": 110}
+  Financing_Model.I108: {"driver": "src.fixed_rep", "total": true}
+  Financing_Model.K108:DQ108: {"driver": "src.fixed_rep"}
+  Financing_Model.K110:DQ110: {"sum": [{"cut": "memo_owed_change", "sign": -1}, {"cut": "memo_debt_flow", "times": "src.draw_flag"}]}
+  Financing_Model.K113:DQ113: {"opening": "senior.debt + senior.capitalised_interest"}
+  Financing_Model.I114: {"cut": "senior_debt", "times": "src.pre_flag", "total": true}
+  Financing_Model.K114:DQ114: {"cut": "senior_debt", "times": "src.pre_flag"}
+  Financing_Model.I115: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}], "total": true}
+  Financing_Model.K115:DQ115: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
+  Financing_Model.G116: {"driver": "src.sweep", "at": 0}
+  Financing_Model.K117:DQ117: {"balance": "senior.debt + senior.capitalised_interest"}
+  Financing_Model.K118:DQ118: {"driver": "src.period_rate"}
+  Financing_Model.I120: {"cut": "interest_pnl", "sign": -1, "total": true}
+  Financing_Model.K120:DQ120: {"cut": "interest_pnl", "sign": -1}
+  Financing_Model.I121: {"cut": "interest_pnl", "sign": -1, "times": "src.constr_flag", "total": true}
+  Financing_Model.K121:DQ121: {"cut": "interest_pnl", "sign": -1, "times": "src.constr_flag"}
+  Financing_Model.I122: {"cut": "interest_pnl", "sign": -1, "times": "src.not_constr", "total": true}
+  Financing_Model.K122:DQ122: {"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}
+  Financing_Model.I124: {"cut": "senior_upfront", "sign": -1, "total": true}
+  Financing_Model.K124:DQ124: {"cut": "senior_upfront", "sign": -1}
+  Financing_Model.G127: {"cut": "memo_debt_flow", "at": 8}
+  Financing_Model.K127:DQ127: {"sum": [{"cut": "senior_fee", "sign": -1, "per": "src.cfee_periodic"}, {"opening": "senior.debt", "times": "src.constr_flag"}]}
+  Financing_Model.K128:DQ128: {"opening": "senior.debt + senior.capitalised_interest"}
+  Financing_Model.K129:DQ129: {"cut": "senior_fee", "sign": -1, "per": "src.cfee_periodic"}
+  Financing_Model.K130:DQ130: {"driver": "src.cfee_periodic"}
+  Financing_Model.I131: {"cut": "senior_fee", "sign": -1, "total": true}
+  Financing_Model.K131:DQ131: {"cut": "senior_fee", "sign": -1}
+  Financing_Model.K138:DQ138: {"driver": "src.period_rate"}
+  Financing_Model.K144:DQ144: {"driver": "src.dep_adj"}
+  Financing_Model.K145:DQ145: {"cut": "depreciation", "sign": -1}
+  Financing_Model.K150:DQ150: {"cut": "ebitda"}
+  Financing_Model.K151:DQ151: {"cut": "depreciation", "sign": -1}
+  Financing_Model.K152:DQ152: {"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}
+  Financing_Model.K153:DQ153: {"record": "tax.base"}
+  Financing_Model.K154:DQ154: {"record": "tax.losses_opening"}
+  Financing_Model.K155:DQ155: {"record": "tax.loss_added"}
+  Financing_Model.K156:DQ156: {"record": "tax.loss_used"}
+  Financing_Model.K157:DQ157: {"record": "tax.losses"}
+  Financing_Model.K158:DQ158: {"record": "tax.taxable"}
+  Financing_Model.K160:DQ160: {"record": "tax.tax"}
+  Financing_Model.K161:DQ161: {"sum": [{"record": "tax.base"}, {"record": "tax.tax", "sign": -1}]}
+  Financing_Model.K166:DQ166: {"cut": "ebitda"}
+  Financing_Model.K167:DQ167: {"record": "tax.tax"}
+  Financing_Model.K169:DQ169: {"cut": "cfads"}
+  Financing_Model.K170:DQ170: {"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}
+  Financing_Model.K171:DQ171: {"sum": [{"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
+  Financing_Model.K172:DQ172: {"sum": [{"cut": "cfads"}, {"cut": "interest_pnl", "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest"}, {"cut": "senior_debt", "times": "src.pre_flag", "sign": -1}]}
+  Financing_Model.K175:DQ175: {"sum": [{"cut": "cfads"}, {"cut": "interest_pnl", "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest"}, {"cut": "senior_debt", "times": "src.pre_flag", "sign": -1}]}
+  Financing_Model.G176: {"driver": "src.sweep", "at": 0}
+  Financing_Model.K177:DQ177: {"cut": "equity_out", "sign": -1}
+  Financing_Model.K180:DQ180: {"cut": "equity", "sign": -1}
+  Financing_Model.K183:DQ183: {"cut": "cfads"}
+  Financing_Model.K184:DQ184: {"sum": [{"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
+  Financing_Model.T185:CU185: {"record": "test.value", "periods": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88]}
+  Financing_Model.K187:DQ187: {"driver": "src.rate_index"}
+  Financing_Model.G191: {"cut": "memo_debt_flow", "at": 8}
+  Financing_Model.K198:DQ198: {"opening": "senior.debt + senior.capitalised_interest"}
+  Financing_Model.L201:DQ201: {"cut": "senior_all", "sign": -1, "periods": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110]}
+  Financing_Model.K206:DQ206: {"cut": "cfads"}
+  Financing_Model.K207:DQ207: {"sum": [{"cut": "interest_pnl", "sign": -1, "times": "src.not_constr"}, {"change": "senior.debt + senior.capitalised_interest", "sign": -1}, {"cut": "senior_debt", "times": "src.pre_flag"}]}
+  Summary.F7: {"cut": "memo_debt_flow", "at": 8, "per": "src.budget"}
+  Summary.F11: {"driver": "src.dscr", "at": 0}
+  Summary.F13: {"driver": "src.sweep", "at": 0}
+  Summary.F16: {"driver": "src.merchant", "at": 0}
+  Summary.F19: {"driver": "src.cost_per_kw", "at": 0}
+  Summary.F20: {"driver": "src.om_fee_rate", "at": 0}
+  Summary.F21: {"driver": "src.mcf_total", "at": 0}
+  Summary.F25:G25: [{"cut": "capex_dev", "sign": -1, "total": true}, {"cut": "capex_dev", "sign": -1, "total": true, "per": "src.Assumptions__F20"}]
+  Summary.F26:G26: [{"cut": "capex_epc", "sign": -1, "total": true}, {"cut": "capex_epc", "sign": -1, "total": true, "per": "src.Assumptions__F20"}]
+  Summary.F27:G27: [{"driver": "src.fixed_fin", "at": 0}, {"driver": "src.fixed_fin", "at": 0, "per": "src.Assumptions__F20"}]
+  Summary.F28:G28: [{"driver": "src.budget", "at": 0}, {"driver": "src.budget", "at": 0, "per": "src.Assumptions__F20"}]
+  Summary.F30: {"cut": "memo_debt_flow", "at": 8}
+  Summary.F31: {"sum": [{"driver": "src.budget"}, {"cut": "memo_debt_flow", "sign": -1}], "at": 8}
+  Summary.F32: {"driver": "src.budget", "at": 0}
+  Assumptions.F8: {"driver": "src.dev_months", "at": 0}
+  Assumptions.F11: {"driver": "src.constr_months", "at": 0}
+  Assumptions.F12: {"driver": "src.pre_periods", "at": 0}
+  Assumptions.F16: {"driver": "src.op_months", "at": 0}
+  Assumptions.F23: {"driver": "src.pr", "at": 0}
+  Assumptions.F24: {"driver": "src.net_yield", "at": 0}
+  Assumptions.F27: {"driver": "src.yield_sd", "at": 0}
+  Assumptions.F28: {"driver": "src.p50", "at": 0}
+  Assumptions.F33: {"driver": "src.net_cf", "at": 0}
+  Assumptions.G36: {"driver": "src.mg_jan", "at": 0}
+  Assumptions.I36:J36: [{"driver": "src.mh_jan", "at": 0}, {"driver": "src.mcf_jan", "at": 0}]
+  Assumptions.G175: {"driver": "src.mcf_jan", "at": 0}
+  Assumptions.G37: {"driver": "src.mg_feb", "at": 0}
+  Assumptions.I37:J37: [{"driver": "src.mh_feb", "at": 0}, {"driver": "src.mcf_feb", "at": 0}]
+  Assumptions.G176: {"driver": "src.mcf_feb", "at": 0}
+  Assumptions.G38: {"driver": "src.mg_mar", "at": 0}
+  Assumptions.I38:J38: [{"driver": "src.mh_mar", "at": 0}, {"driver": "src.mcf_mar", "at": 0}]
+  Assumptions.G177: {"driver": "src.mcf_mar", "at": 0}
+  Assumptions.G39: {"driver": "src.mg_apr", "at": 0}
+  Assumptions.I39:J39: [{"driver": "src.mh_apr", "at": 0}, {"driver": "src.mcf_apr", "at": 0}]
+  Assumptions.G178: {"driver": "src.mcf_apr", "at": 0}
+  Assumptions.G40: {"driver": "src.mg_may", "at": 0}
+  Assumptions.I40:J40: [{"driver": "src.mh_may", "at": 0}, {"driver": "src.mcf_may", "at": 0}]
+  Assumptions.G179: {"driver": "src.mcf_may", "at": 0}
+  Assumptions.G41: {"driver": "src.mg_jun", "at": 0}
+  Assumptions.I41:J41: [{"driver": "src.mh_jun", "at": 0}, {"driver": "src.mcf_jun", "at": 0}]
+  Assumptions.G180: {"driver": "src.mcf_jun", "at": 0}
+  Assumptions.G42: {"driver": "src.mg_jul", "at": 0}
+  Assumptions.I42:J42: [{"driver": "src.mh_jul", "at": 0}, {"driver": "src.mcf_jul", "at": 0}]
+  Assumptions.G181: {"driver": "src.mcf_jul", "at": 0}
+  Assumptions.G43: {"driver": "src.mg_aug", "at": 0}
+  Assumptions.I43:J43: [{"driver": "src.mh_aug", "at": 0}, {"driver": "src.mcf_aug", "at": 0}]
+  Assumptions.G182: {"driver": "src.mcf_aug", "at": 0}
+  Assumptions.G44: {"driver": "src.mg_sep", "at": 0}
+  Assumptions.I44:J44: [{"driver": "src.mh_sep", "at": 0}, {"driver": "src.mcf_sep", "at": 0}]
+  Assumptions.G183: {"driver": "src.mcf_sep", "at": 0}
+  Assumptions.G45: {"driver": "src.mg_oct", "at": 0}
+  Assumptions.I45:J45: [{"driver": "src.mh_oct", "at": 0}, {"driver": "src.mcf_oct", "at": 0}]
+  Assumptions.G184: {"driver": "src.mcf_oct", "at": 0}
+  Assumptions.G46: {"driver": "src.mg_nov", "at": 0}
+  Assumptions.I46:J46: [{"driver": "src.mh_nov", "at": 0}, {"driver": "src.mcf_nov", "at": 0}]
+  Assumptions.G185: {"driver": "src.mcf_nov", "at": 0}
+  Assumptions.G47: {"driver": "src.mg_dec", "at": 0}
+  Assumptions.I47:J47: [{"driver": "src.mh_dec", "at": 0}, {"driver": "src.mcf_dec", "at": 0}]
+  Assumptions.G186: {"driver": "src.mcf_dec", "at": 0}
+  Assumptions.G48:J48: [{"driver": "src.mg_total", "at": 0}, {"driver": "src.days_total", "at": 0}, {"driver": "src.mh_total", "at": 0}, {"driver": "src.mcf_total", "at": 0}]
+  Assumptions.G187: {"driver": "src.mcf_total", "at": 0}
+  Assumptions.G64:H64: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_dev_legal", "sign": -1, "total": true}]
+  Assumptions.G65:H65: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_dev_accounting", "sign": -1, "total": true}]
+  Assumptions.G66:H66: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_dev_engineer", "sign": -1, "total": true}]
+  Assumptions.G67:H67: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_dev_misc", "sign": -1, "total": true}]
+  Assumptions.F54:H54: [{"cut": "capex_epc_panel", "sign": -1, "total": true, "per": "src.Assumptions__F20"}, {"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_panel", "sign": -1, "total": true}]
+  Assumptions.G55:H55: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_racking", "sign": -1, "total": true}]
+  Assumptions.F56:H56: [{"cut": "capex_epc_bos", "sign": -1, "total": true, "per": "src.Assumptions__F20"}, {"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_bos", "sign": -1, "total": true}]
+  Assumptions.G57:H57: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_site", "sign": -1, "total": true}]
+  Assumptions.G58:H58: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_special", "sign": -1, "total": true}]
+  Assumptions.G59:H59: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_battery", "sign": -1, "total": true}]
+  Assumptions.G60:H60: [{"driver": "src.capacity", "at": 9}, {"cut": "capex_epc_misc", "sign": -1, "total": true}]
+  Assumptions.F61:H61: [{"driver": "src.epc_per_kw", "at": 0}, {"driver": "src.capacity", "at": 9}, {"cut": "capex_epc", "sign": -1, "total": true}]
+  Assumptions.F68:H68: [{"driver": "src.dev_per_kw", "at": 0}, {"driver": "src.capacity", "at": 9}, {"cut": "capex_dev", "sign": -1, "total": true}]
+  Assumptions.F72: {"driver": "src.om_fee_rate", "at": 0}
+  Assumptions.F97: {"driver": "src.merchant", "at": 0}
+  Assumptions.F100:AT100: {"driver": "src.price_col", "periods": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]}
+  Assumptions.F101:AT101: {"driver": "src.merchant_col", "periods": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]}
+  Assumptions.E113:J113: {"driver": "src.crisis_jan", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E114:J114: {"driver": "src.crisis_feb", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E115:J115: {"driver": "src.crisis_mar", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E116:J116: {"driver": "src.crisis_apr", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E117:J117: {"driver": "src.crisis_may", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E118:J118: {"driver": "src.crisis_jun", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E119:J119: {"driver": "src.crisis_jul", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E120:J120: {"driver": "src.crisis_aug", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E121:J121: {"driver": "src.crisis_sep", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E122:J122: {"driver": "src.crisis_oct", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E123:J123: {"driver": "src.crisis_nov", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.E124:J124: {"driver": "src.crisis_dec", "periods": [0, 1, 2, 3, 4, 5]}
+  Assumptions.F132: {"driver": "src.dscr", "at": 0}
+  Assumptions.F137: {"driver": "src.eq_prorata_share", "at": 0}
+  Assumptions.F157: {"driver": "src.sweep", "at": 0}
+  Scenario.E30: {"driver": "src.scen_merchant", "at": 0}
+  Operating_Data.J5: {"driver": "src.od_J5", "at": 0}
+  Operating_Data.J6: {"driver": "src.od_J6", "at": 0}
+  Operating_Data.J7: {"driver": "src.od_J7", "at": 0}
+  Operating_Data.J8: {"driver": "src.od_J8", "at": 0}
+  Operating_Data.E11:I11: [{"driver": "src.od_E11", "at": 0}, {"driver": "src.od_F11", "at": 0}, {"driver": "src.od_G11", "at": 0}, {"driver": "src.od_H11", "at": 0}, {"driver": "src.od_I11", "at": 0}]
+  Operating_Data.O11:R11: [{"driver": "src.od_O11", "at": 0}, {"driver": "src.od_P11", "at": 0}, {"driver": "src.od_Q11", "at": 0}, {"driver": "src.od_R11", "at": 0}]
+  Operating_Data.F26:AS26: [{"driver": "src.fx_F", "at": 0}, {"driver": "src.fx_G", "at": 0}, {"driver": "src.fx_H", "at": 0}, {"driver": "src.fx_I", "at": 0}, {"driver": "src.fx_J", "at": 0}, {"driver": "src.fx_K", "at": 0}, {"driver": "src.fx_L", "at": 0}, {"driver": "src.fx_M", "at": 0}, {"driver": "src.fx_N", "at": 0}, {"driver": "src.fx_O", "at": 0}, {"driver": "src.fx_P", "at": 0}, {"driver": "src.fx_Q", "at": 0}, {"driver": "src.fx_R", "at": 0}, {"driver": "src.fx_S", "at": 0}, {"driver": "src.fx_T", "at": 0}, {"driver": "src.fx_U", "at": 0}, {"driver": "src.fx_V", "at": 0}, {"driver": "src.fx_W", "at": 0}, {"driver": "src.fx_X", "at": 0}, {"driver": "src.fx_Y", "at": 0}, {"driver": "src.fx_Z", "at": 0}, {"driver": "src.fx_AA", "at": 0}, {"driver": "src.fx_AB", "at": 0}, {"driver": "src.fx_AC", "at": 0}, {"driver": "src.fx_AD", "at": 0}, {"driver": "src.fx_AE", "at": 0}, {"driver": "src.fx_AF", "at": 0}, {"driver": "src.fx_AG", "at": 0}, {"driver": "src.fx_AH", "at": 0}, {"driver": "src.fx_AI", "at": 0}, {"driver": "src.fx_AJ", "at": 0}, {"driver": "src.fx_AK", "at": 0}, {"driver": "src.fx_AL", "at": 0}, {"driver": "src.fx_AM", "at": 0}, {"driver": "src.fx_AN", "at": 0}, {"driver": "src.fx_AO", "at": 0}, {"driver": "src.fx_AP", "at": 0}, {"driver": "src.fx_AQ", "at": 0}, {"driver": "src.fx_AR", "at": 0}, {"driver": "src.fx_AS", "at": 0}]
+  Operating_Data.F28:AS28: [{"driver": "src.fxr_F", "at": 0}, {"driver": "src.fxr_G", "at": 0}, {"driver": "src.fxr_H", "at": 0}, {"driver": "src.fxr_I", "at": 0}, {"driver": "src.fxr_J", "at": 0}, {"driver": "src.fxr_K", "at": 0}, {"driver": "src.fxr_L", "at": 0}, {"driver": "src.fxr_M", "at": 0}, {"driver": "src.fxr_N", "at": 0}, {"driver": "src.fxr_O", "at": 0}, {"driver": "src.fxr_P", "at": 0}, {"driver": "src.fxr_Q", "at": 0}, {"driver": "src.fxr_R", "at": 0}, {"driver": "src.fxr_S", "at": 0}, {"driver": "src.fxr_T", "at": 0}, {"driver": "src.fxr_U", "at": 0}, {"driver": "src.fxr_V", "at": 0}, {"driver": "src.fxr_W", "at": 0}, {"driver": "src.fxr_X", "at": 0}, {"driver": "src.fxr_Y", "at": 0}, {"driver": "src.fxr_Z", "at": 0}, {"driver": "src.fxr_AA", "at": 0}, {"driver": "src.fxr_AB", "at": 0}, {"driver": "src.fxr_AC", "at": 0}, {"driver": "src.fxr_AD", "at": 0}, {"driver": "src.fxr_AE", "at": 0}, {"driver": "src.fxr_AF", "at": 0}, {"driver": "src.fxr_AG", "at": 0}, {"driver": "src.fxr_AH", "at": 0}, {"driver": "src.fxr_AI", "at": 0}, {"driver": "src.fxr_AJ", "at": 0}, {"driver": "src.fxr_AK", "at": 0}, {"driver": "src.fxr_AL", "at": 0}, {"driver": "src.fxr_AM", "at": 0}, {"driver": "src.fxr_AN", "at": 0}, {"driver": "src.fxr_AO", "at": 0}, {"driver": "src.fxr_AP", "at": 0}, {"driver": "src.fxr_AQ", "at": 0}, {"driver": "src.fxr_AR", "at": 0}, {"driver": "src.fxr_AS", "at": 0}]
+not_compared:
+  Operating_Model.G5:H5: "repeats the typed input Assumptions F3 and F4 (months per period before and after COD) (a reading would compare it with itself)"
+  Operating_Model.G8: "repeats the typed input Assumptions F7 (a reading would compare it with itself)"
+  Financing_Model.G5:H5: "repeats the typed input Assumptions F3 and F4 (months per period before and after COD) (a reading would compare it with itself)"
+  Financing_Model.G8: "repeats the typed input Assumptions F7 (a reading would compare it with itself)"
+  Operating_Model.G13: "repeats the typed input Assumptions F20 (kW) (a reading would compare it with itself)"
+  Operating_Model.G14: "repeats the typed input Assumptions F21 (degradation) (a reading would compare it with itself)"
+  Operating_Model.G18: "repeats the typed input Assumptions E36 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G19: "repeats the typed input Assumptions E37 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G20: "repeats the typed input Assumptions E38 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G21: "repeats the typed input Assumptions E39 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G22: "repeats the typed input Assumptions E40 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G23: "repeats the typed input Assumptions E41 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G24: "repeats the typed input Assumptions E42 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G25: "repeats the typed input Assumptions E43 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G26: "repeats the typed input Assumptions E44 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G27: "repeats the typed input Assumptions E45 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G28: "repeats the typed input Assumptions E46 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G29: "repeats the typed input Assumptions E47 (the calendar month number) (a reading would compare it with itself)"
+  Operating_Model.G68: "repeats the typed input Assumptions G72 (a reading would compare it with itself)"
+  Operating_Model.G69: "repeats the typed input Assumptions G74 (a reading would compare it with itself)"
+  Operating_Model.G70: "repeats the typed input Assumptions G75 (a reading would compare it with itself)"
+  Operating_Model.H76: "repeats the typed input Assumptions F4 (through H5) (a reading would compare it with itself)"
+  Operating_Model.G100: "repeats the typed input Assumptions F88 (a reading would compare it with itself)"
+  Operating_Model.G101: "repeats the typed input Assumptions F89 (a reading would compare it with itself)"
+  Operating_Model.K107:DQ107: "calendar years (YEAR of each period's last day), dates the books carry in their periods"
+  Operating_Model.G163: "repeats the typed input Assumptions F128 (tax rate) (a reading would compare it with itself)"
+  Operating_Model.G169: "repeats the typed input Assumptions F103 (a reading would compare it with itself)"
+  Operating_Model.G170: "repeats the typed input Assumptions F104 (a reading would compare it with itself)"
+  Operating_Model.G173: "repeats the typed input Assumptions F103 (through G169) (a reading would compare it with itself)"
+  Financing_Model.G24: "repeats the typed input Assumptions F146 (the base rate) (a reading would compare it with itself)"
+  Financing_Model.K24:DQ24: "repeats the typed input Assumptions F146 in every column (a reading would compare it with itself)"
+  Financing_Model.G55:H55: "G55 repeats the typed input I55; H55 is the computed total read at I121 (the same SUM over the same row)"
+  Financing_Model.G56:H56: "G56 repeats the typed input I56; H56 is the computed total read at I124 (the same SUM over the same row)"
+  Financing_Model.G57:H57: "G57 repeats the typed input I57; H57 is the computed total read at I131 (the same SUM over the same row)"
+  Financing_Model.G61:K61: "no cell here is new: G61 (= H61 = G31) is the sculpted debt, read at G67, G127, G191 and Summary F30; I61 = G58 x J61 is the gearing-sized alternative the F61 switch leaves unused; J61 repeats the typed input Assumptions F133; K61 = I108, read there"
+  Financing_Model.G65:H65: "H65 repeats the typed input Assumptions F136; G65, the up-front equity, is read at G81"
+  Financing_Model.F124:G124: "F124 is G61, the sculpted debt (read at G61, G67, G191 and Summary F30); G124 repeats the typed input Assumptions F151"
+  Financing_Model.G130: "repeats the typed input Assumptions F152 (the commitment fee) (a reading would compare it with itself)"
+  Financing_Model.G146: "an unused memo (G146 feeds only K146:K148, which nothing reads); its formula I131 + I124 also leaves out the IDC I121 (a slip, see the header)"
+  Financing_Model.K146:DQ146: "the unused financing-cost amortisation memo of G146 (nothing reads rows 146-148)"
+  Financing_Model.K147:DQ147: "the unused financing-cost amortisation memo of G146 (nothing reads rows 146-148)"
+  Financing_Model.K148:DQ148: "the unused financing-cost amortisation memo of G146 (nothing reads rows 146-148)"
+  Financing_Model.G160: "repeats the typed input Assumptions F128 (tax rate) (a reading would compare it with itself)"
+  Summary.F12: "repeats the typed input Assumptions G140 (through F140) (a reading would compare it with itself)"
+  Summary.F14: "repeats the typed input Scenario I16 (through Assumptions F10) (a reading would compare it with itself)"
+  Summary.F15: "repeats the typed input Scenario L16 (through Scenario F20) (a reading would compare it with itself)"
+  Assumptions.F10: "repeats the typed input Scenario I16 (a reading would compare it with itself)"
+  Assumptions.F15: "repeats the typed input Scenario J16 (a reading would compare it with itself)"
+  Assumptions.F22: "repeats the typed input Scenario G16 (a reading would compare it with itself)"
+  Assumptions.F99:AT99: "calendar years (Scenario F23:AT23), dates the books carry in their periods"
+  Assumptions.E112: "calendar years (YEAR of the start date), dates the books carry in their periods"
+  Assumptions.G112:H112: "calendar years (F112 + 1, G112 + 1), dates the books carry in their periods"
+  Assumptions.F140: "repeats the typed input Assumptions G140 (a reading would compare it with itself)"
+  Scenario.F20: "repeats the typed input Scenario L16 (a reading would compare it with itself)"
+  Scenario.F23: "calendar years (YEAR of the start date), dates the books carry in their periods"
+  Scenario.G36:H36: "calendar years (the crisis table's years), dates the books carry in their periods"
+  Scenario.G52:H52: "calendar years (the crisis table's years), dates the books carry in their periods"
+  Scenario.G68:H68: "calendar years (the crisis table's years), dates the books carry in their periods"
+  Scenario.G85:BN85: "a calendar of month numbers (1 to 12) for the monthly date list"
+  Scenario.F86:BN86: "calendar years (the monthly date list), dates the books carry in their periods"
+  Operating_Data.E10:R10: "INDEX(rows 5-8, E2): the option row the E2 switch picks, cell for cell the typed inputs of that row (memo: nothing in the model reads the sheet); its ratios, row 11, are read"
+notes: >
+  The figures in the header's "where the books disagree" list are the workbook's own formula slips, kept
+  read so the receipt shows them. Figures left unreported wait on the engine (none is set aside for it):
+  XIRR over the period-end dates (Operating Model G146, G166; Financing Model G181, G202; Summary F2-F5;
+  Scenario R6): the xirr measure takes typed ISO dates, which the traced gate refuses, and cannot take the
+  generator's day counts. NORM.INV (Assumptions F29, F30): the formulas have no inverse normal. A minimum
+  over periods (Financing Model G185, Summary F8) and a ratio of two readings (the LCOE Operating Model G178
+  and Summary F22; the PLCR Financing Model G193, Summary F9, T199:CU199, T213:CU213): no reading divides
+  one reading by another. The up-front equity paid to date (Financing Model K82, K83, K87, K89): the
+  funding records it per period only (paid.up_front, nested), and a running total of a record field is
+  not a reading. The cash sweep paid (K116, K176, K210): the waterfall records tier payments only in its
+  nested 'paid' field (the sweep is nil here, and the engine's sweep share is one number for every period,
+  so F156's start date cannot be applied). The default line (K134-K137, K139, K173, K174, K208, K209): a
+  standby loan that lends the debt-service shortfall MAX(-K172, 0) at the senior rate and is repaid from
+  later surplus; the waterfall leaves a shortfall as arrears and deficit_funding refills only cash below
+  its floor. It never draws here, so K152, K170, K172 and K175 are read without its (nil) interest and
+  repayment, and K115 with the (nil) sweep inside it.
+  Readings worth knowing: the kW cells that repeat F20 inside a row of costs (Assumptions G54:G67) are read
+  as the operating capacity at COD; the typed euro/kW and euro/kW-year rates there and in Operating Model
+  G78:G84 are read back from the books as each line's booked cost over its kW (or kW-years, years); G149
+  (F127 years) is the cost placed in service over a year's depreciation. Summary F27 is the sum of the
+  typed financing costs I55:I57 (a budget the books fund against, not a flow). The sizing ledger and the
+  crisis revenue are memo books (`memo`, `crisis`); a memo balance is read as the running total of its
+  cut. Twelfth roots (monthly degradation, inflation, discounting) are Newton steps truncated at 1e-30, and
+  the indices compounded from them are truncated the same way; the LOOKUPs over typed year rows are exact
+  column choices.

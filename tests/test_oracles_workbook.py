@@ -126,6 +126,58 @@ SLIPS = {
         'Salaires_Avantages.G103:J103', 'Salaires_Avantages.G136:J136', 'Salaires_Avantages.L148',
         'Schema_de_financement.H14:I14', 'Schema_de_financement.H9', 'driver Schema_de_financement.I10',
         'driver Schema_de_financement.I11', 'driver Schema_de_financement.I12'},
+    "bodmer_solar_case_study": {
+        # two slips (120 checks), named with their cells in the translation's header: Operating Model K96
+        # adds the capacity in kW (row 87) to the quarter's opex, which moves the sculpted debt and
+        # everything after it; and the I-column generation totals stop at column BR, not DQ
+        'Financing_Model.G127', 'Financing_Model.G191', 'Financing_Model.G62', 'Financing_Model.G66:H66',
+        'Financing_Model.G67:H67', 'Financing_Model.G68', 'Financing_Model.G69', 'Financing_Model.G81',
+        'Financing_Model.G93', 'Financing_Model.G94', 'Financing_Model.H34', 'Financing_Model.I102',
+        'Financing_Model.I103', 'Financing_Model.I104', 'Financing_Model.I114', 'Financing_Model.I115',
+        'Financing_Model.I120', 'Financing_Model.I121', 'Financing_Model.I122', 'Financing_Model.I124',
+        'Financing_Model.I131', 'Financing_Model.I22', 'Financing_Model.J55', 'Financing_Model.J56',
+        'Financing_Model.J57', 'Financing_Model.J58', 'Financing_Model.K102:DQ102', 'Financing_Model.K103:DQ103',
+        'Financing_Model.K104:DQ104', 'Financing_Model.K110:DQ110', 'Financing_Model.K113:DQ113',
+        'Financing_Model.K114:DQ114', 'Financing_Model.K115:DQ115', 'Financing_Model.K117:DQ117',
+        'Financing_Model.K120:DQ120', 'Financing_Model.K121:DQ121', 'Financing_Model.K122:DQ122',
+        'Financing_Model.K124:DQ124', 'Financing_Model.K127:DQ127', 'Financing_Model.K128:DQ128',
+        'Financing_Model.K129:DQ129', 'Financing_Model.K131:DQ131', 'Financing_Model.K13:DQ13',
+        'Financing_Model.K150:DQ150', 'Financing_Model.K152:DQ152', 'Financing_Model.K153:DQ153',
+        'Financing_Model.K154:DQ154', 'Financing_Model.K155:DQ155', 'Financing_Model.K156:DQ156',
+        'Financing_Model.K157:DQ157', 'Financing_Model.K158:DQ158', 'Financing_Model.K15:DQ15',
+        'Financing_Model.K160:DQ160', 'Financing_Model.K161:DQ161', 'Financing_Model.K166:DQ166',
+        'Financing_Model.K167:DQ167', 'Financing_Model.K169:DQ169', 'Financing_Model.K16:DQ16',
+        'Financing_Model.K170:DQ170', 'Financing_Model.K171:DQ171', 'Financing_Model.K172:DQ172',
+        'Financing_Model.K175:DQ175', 'Financing_Model.K177:DQ177', 'Financing_Model.K180:DQ180',
+        'Financing_Model.K183:DQ183', 'Financing_Model.K184:DQ184', 'Financing_Model.K198:DQ198',
+        'Financing_Model.K206:DQ206', 'Financing_Model.K207:DQ207', 'Financing_Model.K22:DQ22',
+        'Financing_Model.K33:DQ33', 'Financing_Model.K34:DQ34', 'Financing_Model.K35:DQ35',
+        'Financing_Model.K36:DQ36', 'Financing_Model.K37:DQ37', 'Financing_Model.K75:DQ75',
+        'Financing_Model.K76:DQ76', 'Financing_Model.K77:DQ77', 'Financing_Model.K78:DQ78',
+        'Financing_Model.K81:DQ81', 'Financing_Model.K85:DQ85', 'Financing_Model.K88:DQ88',
+        'Financing_Model.K92:DQ92', 'Financing_Model.K93:DQ93', 'Financing_Model.K94:DQ94',
+        'Financing_Model.K96:DQ96', 'Financing_Model.K97:DQ97', 'Financing_Model.L201:DQ201',
+        'Financing_Model.T185:CU185', 'Operating_Model.G31:I31', 'Operating_Model.G32:I32',
+        'Operating_Model.G33:I33', 'Operating_Model.G34:I34', 'Operating_Model.G35:I35', 'Operating_Model.G36:I36',
+        'Operating_Model.G37:I37', 'Operating_Model.G38:I38', 'Operating_Model.G39:I39', 'Operating_Model.G40:I40',
+        'Operating_Model.G41:I41', 'Operating_Model.G42:I42', 'Operating_Model.I96', 'Operating_Model.K104:DQ104',
+        'Operating_Model.K142:DQ142', 'Operating_Model.K144:DQ144', 'Operating_Model.K156:DQ156',
+        'Operating_Model.K157:DQ157', 'Operating_Model.K158:DQ158', 'Operating_Model.K159:DQ159',
+        'Operating_Model.K160:DQ160', 'Operating_Model.K162:DQ162', 'Operating_Model.K163:DQ163',
+        'Operating_Model.K164:DQ164', 'Operating_Model.K96:DQ96', 'Summary.F30', 'Summary.F31', 'Summary.F7',
+        'driver Financing_Model.I10', 'driver Operating_Model.I10', 'driver Operating_Model.I43',
+        # not slips (35 checks): figures that wait on engine pieces the header lists: XIRR on dated
+        # flows, NORM.INV, a minimum over periods, a ratio of two readings, running totals of a record
+        # field, flat per-tier waterfall payments, and a standby loan that lends a service shortfall
+        'Summary.F2', 'Summary.F3', 'Summary.F4', 'Summary.F5', 'Summary.F8', 'Summary.F9', 'Summary.F22',
+        'Assumptions.F29', 'Assumptions.F30', 'Scenario.R6', 'Operating_Model.G146', 'Operating_Model.G166',
+        'Operating_Model.G178', 'Financing_Model.K82:DQ82', 'Financing_Model.K83:DQ83', 'Financing_Model.K87:DQ87',
+        'Financing_Model.K89:DQ89', 'Financing_Model.K116:DQ116', 'Financing_Model.K134:DQ134',
+        'Financing_Model.K135:DQ135', 'Financing_Model.K136:DQ136', 'Financing_Model.K137:DQ137',
+        'Financing_Model.K139:DQ139', 'Financing_Model.K173:DQ173', 'Financing_Model.K174:DQ174',
+        'Financing_Model.K176:DQ176', 'Financing_Model.G181', 'Financing_Model.G185', 'Financing_Model.G193',
+        'Financing_Model.T199:CU199', 'Financing_Model.G202', 'Financing_Model.K208:DQ208',
+        'Financing_Model.K209:DQ209', 'Financing_Model.K210:DQ210', 'Financing_Model.T213:CU213'},
     "modeloff_2015_tax_solution": {
         # not a slip: no reading yet tests a record for nonzero (the first month a loss expires);
         # the row is all zeros here and feeds only F104, a date answer the oracle sets aside
