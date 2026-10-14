@@ -1,4 +1,4 @@
-"""Project-finance rulebooks (packs): funding plan, asset register, income tax, waterfall.
+"""Project-finance rulebooks (packs): pro-rata funding, provisions, forgiveness, withholding, promote.
 
 Each rulebook is configuration read from the case file and installed on a
 :class:`~one_engine.entities.Group` as a handler for one phase. The
@@ -7,35 +7,17 @@ amount is Allocation, a test is Conditions, a ratio is Measures,
 depreciation is Measurement, the base and the loss pool are Tax. That is
 the point of the pack layer: Averta's SPV is an assembly, not an engine.
 
+The funding plan, deficit funding, asset register, income tax, waterfall,
+capital-first distributions and pay-as-due rulebooks were here until
+2026-10-14; three or more archetypes declare each, so they now live in
+:mod:`one_engine.rulebooks` (Ali chose the move; ``one_engine/archetypes.yaml``).
+
 Each rulebook is ``rulebook(group, reader, ctx)`` with ``ctx`` holding the
 case's currency and classification schemes; it may return named checks
 (callables listing failures) that the case runner adds to the verdicts.
 
 Rulebooks
 ---------
-``funding_plan``
-    Construction funding, through period ``until``. Uses are named
-    contract flows of the period (``epc.spend``, ``dsra.prefund``) or
-    claims due (construction interest paid in cash). Sources are loan
-    draw claims, each capped at a share of the uses (or of the uses listed
-    in its ``of``) and at what remains of its commitment, in order; the named residual (``equity.contribute``) closes the gap.
-    The residual may be split between holders by shares (two equity
-    holders). ``from`` (default 0) and ``until`` bound the periods.
-    Sources therefore equal uses at each step, and
-    :func:`sources_equal_uses` re-checks that from the books. The old
-    engine called equity on a schedule instead and left 23.6M of idle cash
-    on the 100MW benchmark (step 6 finding).
-
-``deficit_funding``
-    The holders' support for a cash shortfall: at the end of its phase,
-    in periods ``from`` (default 0) to ``until``, the named equity legs
-    (one, or several with shares, as a funding residual) pay in what
-    brings the cash back up to its floor, which the case must declare. Its
-    handler runs after the phase's flows and after the rulebooks declared
-    before it in the file, so it makes good what they leave. Averta fixed
-    (step 8): the live HoldCo and DevCo run overdrafts nothing funds; here
-    their shareholders cover them as they arise.
-
 ``pro_rata_funding``
     Construction funding as Bodmer's solar model states it (step 7e): a
     budget of total uses less the loan's commitment is the equity
@@ -45,111 +27,6 @@ Rulebooks
     exhausted together when the uses equal the budget. The loan's draw is
     a claim (capped at what is undrawn); equity is the named leg.
 
-``asset_register``
-    At each in-service period (COD, a major maintenance), CWIP moves to
-    fixed assets and becomes a tranche of the register; each period's
-    charge and the disposal at ``dispose_at`` come from
-    :class:`~one_engine.measurement.Register`. ``first_charge`` is
-    required. An optional ``tax`` register depreciates the same tranches
-    over the tax life. With ``weights`` (one per period) in place of
-    ``life_periods`` (stated null), each tranche is spread over the rest of
-    the weights (``Policy.weights``: ModelOff's days of operation left,
-    step 7h). Fixed assets on the opening balance sheet are a tranche from
-    the first in-service period. ``dispose_when`` (default ``end``) is
-    ``start`` for an asset retired at the start of its disposal period
-    (an oven replaced at the start of the year: no charge that year, the
-    golds' ``bakery_disposal``). Either register may instead take a
-    ``declining_rate`` (``Policy.declining_rate``: ModelOff 2012's 40% tax
-    depreciation, step 7i); exactly one of the three is given.
-    ``residual`` (default 0) is the residual value of the cost placed in
-    service at the first in-service period (IAS 16.53: a plant's salvage,
-    the golds' ``arise``): the books depreciate that cost less the
-    residual, which stays in the asset account until the disposal writes
-    it off. A ``tax`` register depreciates the full cost.
-    ``carried_accumulated`` (default 0; the golds' ``isp_levy``) is the
-    depreciation already charged on the fixed assets carried in, before the
-    first period: the books carry them at net book value, and the gross view
-    below shows their cost as that value plus it, and their accumulated
-    depreciation from it. The books and the charge do not change.
-
-    Each period the register records, under the rulebook's own name, its
-    gross view (the golds report cost and accumulated depreciation apart):
-    ``cost`` placed in service and ``accumulated`` depreciation, both
-    closing and both cleared by a disposal; the period's ``charge``; the
-    ``disposed_cost``, ``disposed_accumulated`` and ``disposed_nbv`` taken
-    out by a disposal; and, with a ``tax`` register, its ``tax_charge``,
-    closing ``tax_nbv`` (the tax written-down value) and the
-    ``tax_disposed_nbv`` a disposal deducts.
-
-``income_tax``
-    The base comes from a scheme classifying every profit-and-loss account
-    of the book (:func:`~one_engine.tax.taxable_base`). The charge goes to
-    ``tax_payable``; the waterfall pays it. With ``timing: <register>``,
-    the lines classified ``timing`` (book depreciation and disposal) are
-    replaced in the base by that register's tax depreciation. With
-    ``deferred``, the net deferred tax balance
-    (:func:`~one_engine.tax.deferred_tax`, on the registers' NBVs and the
-    losses carried forward) is kept in its account, its movement charged
-    to a deferred tax expense line. ``deferred.nil_tax_base`` (Macabacus
-    LBO, step 7f) lists assets whose cost was deducted for tax when paid
-    (capitalised financing fees): their carrying amount is a temporary
-    difference with a nil tax base, so the deferred balance moves by the
-    rate times their movement. That mode measures movements only, so a
-    deferred balance carried in from an opening balance sheet keeps the
-    part this rulebook does not track; it cannot be combined with a
-    ``timing`` register. ``from`` (default 0) is the first period charged:
-    a deal's own tax at the close is the acquisition's (step 7f).
-    ``rate`` is a number or one per period (a change of rate, ModelOff 2012
-    "Asset Schedule", step 7i): the deferred balance is measured at each
-    period's rate, and the tax record's ``rate_change`` is the part of its
-    movement due to the change (the new rate less the old, times last
-    period's difference), beside the ``carrying`` amount and ``tax_base``
-    it was measured on. ``deferred.recognise_losses: false`` measures the
-    deferred balance on the assets alone: no deferred tax asset on unused
-    losses, as IAS 12.34 requires when no taxable profit is expected
-    against them (the case states no income).
-
-    ``bands`` replaces ``rate`` with a progressive schedule (the golds'
-    paygo_solar, pharmacy_expiry, printer_cashbasis_v25): a list of
-    ``{upto, rate}``, ceilings rising, the last band ``{rate}`` alone; each
-    band taxes the taxable amount (after losses) inside it. Bands set on a
-    year's income over a grid of shorter periods take ``bands_per_year``:
-    each period's taxable amount is banded at its yearly equivalent (times
-    that number) and the tax brought back to the period (divided by it),
-    which is the year's tax when the periods are level. The record carries
-    ``band<i>_base`` and ``band<i>_tax`` per band, from 1. Built for losses
-    carried forward as base, without ``deferred``.
-
-    ``minimum`` (the golds' pilots: OHADA's "impôt minimum forfaitaire")
-    charges the higher of the profits tax and a minimum on turnover:
-    ``rate`` times the period's ``turnover`` (the income lines listed),
-    raised to ``floor`` and lowered to ``cap`` (each optional; any of the
-    three a number or one per period). ``applies`` (default 1; 0 in a
-    period whose holiday covers the minimum too) says where it is charged;
-    it is computed every period regardless, because the golds report it.
-    The minimum neither feeds nor draws on the loss pool. The tax record
-    then carries ``profit_tax`` (the rate on the base after losses),
-    ``minimum`` and ``tax``, what is charged.
-
-    ``losses_in: tax`` carries losses as tax, at the rate of the period
-    they arose in (``TaxPolicy.losses_in``: ModelOff 2015 "Tax", step 7k);
-    the tax record's ``expired`` is what the period could use but the next
-    cannot.
-
-    ``loss_relief: refund`` (default ``carry_forward``) relieves a loss in
-    the period it arises, at that period's rate: the charge is the rate
-    times the base, a negative base giving a tax credit (a refund, group
-    relief, or an annual tax accrued period by period, as the golds'
-    ``grain`` trader books it month by month). Nothing is carried, so the
-    loss pool stays empty; it cannot be combined with ``deferred``.
-
-    The tax record also carries the loss pool's roll-forward (the golds
-    library reports it): ``losses_opening``, ``loss_added``, ``loss_used``
-    and the ``taxable`` amount left after losses (base mode only), with
-    ``losses`` the closing pool. The record is kept under the rulebook's
-    name (``tax`` in every case so far), so a book may carry two taxes (the
-    golds' ``arise_expiry`` taxes its salvage apart from its operations).
-
 ``tax_instalments``
     Last year's tax, paid this year in instalments: each listed period of
     the year (``period_of_year``, 0 being the first) pays its ``share`` of
@@ -157,12 +34,6 @@ Rulebooks
     grid's years start at period 0, ``periods_per_year`` long. The shares
     sum to one, so a year's liability is paid in full once its last
     instalment falls inside the grid (ModelOff 2015 "Tax", step 7k).
-
-``pay_as_due``
-    The listed claims paid in full when due, whatever the cash: for a case
-    that lets cash go negative to show a shortfall (ModelOff 2013 "Hard
-    Times", step 7l). The overdraft that implies is not modelled, so cash
-    is left unfloored; a waterfall would pay only from cash above the floor.
 
 ``provision``
     A liability charged straight-line and paid once
@@ -173,42 +44,6 @@ Rulebooks
     shareholder loan the sponsor will not be repaid) is forgiven: the
     liability falls and a gain is booked. A forgiven debt is never posted
     as a loss; the kernel's direction check refuses that (card 10).
-
-``waterfall``
-    In the pay phase, all cash above the floor is allocated over ordered
-    tiers: contract claims (``senior.interest``) or payable accounts
-    (``tax_payable``). DSCR is CFADS over the debt service due, where
-    CFADS is the period's cash flow in the named classes less the named
-    tiers (tax), times an optional ``share`` by period (a series: the part
-    of the period the debt is outstanding, ModelOff step 7h; one by
-    default). A minimum balance is a ``keep`` tier, a stock kept back in
-    the stated periods at its place in the order (after debt service, so a
-    minimum balance never makes a senior payment late), not a deduction
-    from each period's flow. Each test
-    blocks the tiers it lists when it fails, or only reports. The residual goes to its leg (a distribution) unless a
-    test blocks it; blocked cash stays in the account and is offered again
-    next period, which is how trapped cash is released when a lock-up
-    clears. Unpaid claims follow their contract: arrears, or PIK.
-    ``sources`` (reserve releases) are taken into cash before anything is
-    paid. CFADS is passed to every claim (``given``), which is how a
-    sculpted loan reads it. A tier with ``share_of_remaining`` takes at
-    most that share of what is still unallocated when its turn comes (a
-    mezzanine cash sweep). The residual may name a distributor rulebook
-    (a promote) instead of a leg, or be null: the company retains it, and
-    it stays in the account (Macabacus LBO, step 7f: no common dividends).
-    ``flow_only`` (``from``, ``until``): in those periods only the period's
-    own net cash flow is offered, never cash carried in. Averta's live S9
-    (step 8) distributes current-period cash flow only, so a HoldCo
-    overdraft (an unfloored cash account) is carried, not made good, until
-    the first period after the window, when all the cash is offered.
-    Cash a test traps inside the window is the exception: it is offered
-    again, with the period's own flow, in the first period whose residual
-    is not blocked (the live S9's distribution suspense, released when the
-    lock-up clears; Averta's buyer, step 8).
-    ``active`` (``from``, ``until``): the waterfall runs in those periods
-    only; outside them nothing is paid and the cash is retained (Averta's
-    live GP, step 8, sweeps its cash and settles its tax once, at the
-    exit).
 
 ``withholding``
     Registers withholding rates on payments (``senior.interest: 0.1``,
@@ -232,13 +67,6 @@ Rulebooks
     ``distribute``. Built on Allocation; the cumulative pref and catch-up
     are this rulebook's state, the unreturned capital is read from the
     books.
-
-``capital_first``
-    Divides the waterfall's residual for one holder (a ``sponsor_equity``
-    contract): its unreturned capital is returned first, through the
-    ``return_capital`` leg, and the rest is distributed. Averta's SPV
-    (engine_v2 S10, step 8) splits each distribution this way, so its
-    contributed capital is back to nil before profit is paid out.
 
 Generators
 ----------
@@ -281,126 +109,19 @@ applies to a finished run to get its outputs' next values:
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import Any, Dict, List, Mapping
+from typing import Any, Dict, Mapping
 
 from one_engine.allocation import Tier, allocate
-from one_engine.conditions import Test, evaluate
-from one_engine.cuts import Scheme, cash_flow_cut
+from one_engine.cuts import Scheme
 from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader
 from one_engine.kernel import Book, Nature, Posting
-from one_engine.measurement import Policy, Provision, Register
-from one_engine.measures import coverage
-from one_engine.tax import LossPool, TaxPolicy, deferred_tax, taxable_base
+from one_engine.measurement import Provision
+from one_engine.rulebooks.allocation import _read_uses, _use_amounts, sources_equal_uses
 from one_engine.units import exact
 
 
-def _ref(group: Group, ref: str):
-    cid, _, part = ref.partition(".")
-    return group.contract(cid), part
-
-
-# ── funding plan ──────────────────────────────────────────────────────────
-
-def _residual_legs(raw, where):
-    """A residual names one leg, or several legs with shares summing to one (equity held by two holders)."""
-    if isinstance(raw, str):
-        return [(raw, Fraction(1))]
-    legs = []
-    for i, item in enumerate(raw):
-        rr = Reader(item, source=f"{where}[{i}]")
-        legs.append((rr.take("leg"), exact(rr.take("share"))))
-        rr.finish()
-    if sum(s for _, s in legs) != 1 or any(s < 0 for _, s in legs):
-        raise InputError(f"{where}: residual shares must be non-negative and sum to 1")
-    return legs
-
-
-def _post_residual(g: Group, legs, amount, t: int, phase: str) -> None:
-    for ref, share in legs:
-        c, leg = _ref(g, ref)
-        g.post_leg(c, leg, amount * share, t, phase)
-
-
-def _read_uses(r: Reader, where: str):
-    """A funding rulebook's uses: (``claim`` or ``flow``, reference), in file order."""
-    uses = []
-    for i, raw in enumerate(r.take("uses")):
-        ur = Reader(raw, source=f"{where}.uses[{i}]")
-        kind = "claim" if "claim" in raw else "flow"
-        uses.append((kind, ur.take(kind)))
-        ur.finish()
-    return uses
-
-
-def _use_amounts(g: Group, t: int, uses, claims) -> Dict[str, Fraction]:
-    """Each use's amount in ``t``: the claim due, or the contract flow of that name."""
-    each = {}
-    for kind, ref in uses:
-        if kind == "claim":
-            each[ref] = claims[ref].due if ref in claims else Fraction(0)
-        else:
-            c, flow = _ref(g, ref)
-            each[ref] = sum((f.amount for f in c.flows(t, g.view(c, t)) if f.spec.name == flow), Fraction(0))
-    return each
-
-
-def funding_plan(group: Group, r: Reader, ctx: Mapping[str, Any]):
-    entity, cash = r.take("entity"), r.take("cash")
-    phase, until = r.take("phase"), int(r.take("until"))
-    start = int(r.take_or_default("from", 0, reason="funding from the first period").value)
-    uses = _read_uses(r, "funding_plan")
-    sources = []
-    for i, raw in enumerate(r.take("sources")):
-        sr = Reader(raw, source=f"funding_plan.sources[{i}]")
-        base = sr.take_or_default("of", [ref for _, ref in uses], reason="share of all uses").value
-        sources.append((sr.take("claim"), exact(sr.take("share")), list(base)))
-        sr.finish()
-    residual = _residual_legs(r.take("residual"), "funding_plan.residual")
-
-    def handler(g: Group, t: int) -> None:
-        if not start <= t <= until:
-            return
-        claims = g.claims(t)
-        each = _use_amounts(g, t, uses, claims)
-        amount = sum(each.values(), Fraction(0))
-        if amount == 0:
-            return
-        tiers = [Tier(ref, min(share * sum((each[u] for u in base), Fraction(0)), claims[ref].due) if ref in claims else 0)
-                 for ref, share, base in sources]
-        a = allocate(amount, tiers, residual="equity")
-        for ref, _, _ in sources:
-            if ref in claims:
-                g.settle(claims[ref], a.paid[ref], phase)
-        _post_residual(g, residual, a.residual, t, phase)
-        for kind, ref in uses:                      # claims funded here are paid now, in full
-            if kind == "claim" and each[ref]:
-                g.settle(claims[ref], each[ref], phase)
-        g.record("funding", t, uses=dict(each), paid=dict(a.paid), residual=a.residual)
-
-    group.register(phase, handler)
-    return {"sources_equal_uses": lambda: sources_equal_uses(group, entity, cash, phase)}
-
-
-def deficit_funding(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    entity, cash, phase = r.take("entity"), r.take("cash"), r.take("phase")
-    start = int(r.take_or_default("from", 0, reason="from the first period").value)
-    until = int(r.take("until"))
-    residual = _residual_legs(r.take("residual"), "deficit_funding.residual")
-    if (entity, cash) not in group.floors:
-        raise InputError(f"deficit_funding: {entity}.{cash} has no floor to fund up to")
-    floor, name = exact(group.floors[(entity, cash)]), ctx["name"]
-
-    def handler(g: Group, t: int) -> None:
-        if not start <= t <= until:
-            return
-        gap = floor - g.book(entity).balance(cash, t)
-        if gap > 0:
-            _post_residual(g, residual, gap, t, phase)
-            g.record(name, t, called=gap)
-
-    group.register(phase, handler)
-
+# ── pro-rata funding ─────────────────────────────────────────────────────
 
 def pro_rata_funding(group: Group, r: Reader, ctx: Mapping[str, Any]):
     entity, cash = r.take("entity"), r.take("cash")
@@ -450,287 +171,10 @@ def pro_rata_funding(group: Group, r: Reader, ctx: Mapping[str, Any]):
     return {"sources_equal_uses": lambda: sources_equal_uses(group, entity, cash, phase)}
 
 
-def sources_equal_uses(group: Group, entity: str, cash: str, phase: str) -> List[int]:
-    """Periods whose funding phase leaves a net cash movement (sources differ from uses)."""
-    net: Dict[int, Fraction] = {}
-    for p in group.book(entity).postings:
-        if p.phase == phase and cash in (p.debit, p.credit):
-            net[p.period] = net.get(p.period, Fraction(0)) + (p.amount if p.debit == cash else -p.amount)
-    return sorted(t for t, v in net.items() if v != 0)
-
-
 # ── asset register ────────────────────────────────────────────────────────
-
-class AssetRegisters:
-    """A rulebook's book register and, if declared, the tax authority's register of the same assets.
-
-    Shared through ``ctx["registers"]`` under the rulebook's name, so the
-    income tax rulebook can replace book depreciation by tax depreciation
-    and measure the temporary difference.
-    """
-
-    def __init__(self, book: Register, tax, expense: str, disposal: str):
-        self.book, self.tax, self.expense, self.disposal = book, tax, expense, disposal
-        self.tax_moves: Dict[int, Fraction] = {}       # period -> tax depreciation + tax disposal
-
-
-def _policy(r: Reader, where: str) -> Policy:
-    """A depreciation policy: ``life_periods`` (stated, null when another basis is given), or ``weights``
-    by period, or a ``declining_rate``; exactly one, and the first-charge convention."""
-    life = r.take("life_periods")
-    weights = r.take_or_default("weights", None, reason="no weights by period").value
-    declining = r.take_or_default("declining_rate", None, reason="not declining balance").value
-    if sum(x is not None for x in (life, weights, declining)) != 1:
-        raise InputError(f"{where}: give life_periods, weights or declining_rate (life_periods: null), exactly one")
-    return Policy(None if life is None else int(life), r.take("first_charge"), weights,
-                  None if declining is None else exact(declining))
-
-
-def asset_register(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    entity, phase, unit = r.take("entity"), r.take("phase"), ctx["currency"]
-    src, fa, dep, loss = r.take("from"), r.take("to"), r.take("expense"), r.take("disposal")
-    raw_in = r.take("in_service")
-    in_service = [int(x) for x in raw_in] if isinstance(raw_in, list) else [int(raw_in)]
-    dispose_at = int(r.take("dispose_at"))
-    dispose_when = r.take_or_default("dispose_when", "end", reason="retired at the end of its period").value
-    if dispose_when not in ("start", "end"):
-        raise InputError(f"asset_register: dispose_when is start or end, not {dispose_when!r}")
-    reg = Register(_policy(r, "asset_register"))
-    residual = exact(r.take_or_default("residual", 0, reason="depreciated to nil").value)
-    carried = exact(r.take_or_default("carried_accumulated", 0,
-                                      reason="nothing was charged on the assets carried in before the first period").value)
-    tax_raw = r.take_or_default("tax", None, reason="the tax authority depreciates as the books do").value
-    tax_reg = None
-    if tax_raw is not None:
-        tr = Reader(tax_raw, source="asset_register.tax")
-        tax_reg = Register(_policy(tr, "asset_register.tax"))
-        tr.finish()
-    regs = AssetRegisters(reg, tax_reg, dep, loss)
-    ctx["registers"][ctx["name"]] = regs
-    for name, nature in ((fa, Nature.ASSET), (dep, Nature.EXPENSE), (loss, Nature.EXPENSE)):
-        group.declare(entity, name, nature, unit)
-
-    name = ctx["name"]
-
-    def post(g, t, debit, credit, amount, event):
-        # every posting here raises a debit-natured account and lowers another; the event id carries the
-        # rulebook's name, so two registers on one book (two asset classes, step 7p) do not collide
-        if amount:
-            g.post(entity, Posting(t, phase, debit, credit, amount, {debit: 1, credit: -1}, "measurement", f"{name}.{event}:{t}"))
-
-    # the register's gross view, for reports that show cost and accumulated depreciation apart (the golds):
-    # what was placed in service, and what has been charged on it, until a disposal clears both
-    gross = {"cost": Fraction(0), "charged": Fraction(0), "tax_charged": Fraction(0)}
-
-    def handler(g: Group, t: int) -> None:
-        book = g.book(entity)
-        disposed = {"cost": Fraction(0), "charged": Fraction(0), "nbv": Fraction(0), "tax_nbv": Fraction(0)}
-
-        def retire() -> None:
-            disposed.update(cost=gross["cost"], charged=gross["charged"], nbv=gross["cost"] - gross["charged"],
-                            tax_nbv=tax_reg.nbv() if tax_reg is not None else Fraction(0))
-            gross.update(cost=Fraction(0), charged=Fraction(0))
-
-        if t == in_service[0] and carried and not book.opening(fa, t):
-            raise InputError(f"asset_register {name}: carried_accumulated is {carried}, but nothing is carried in")
-        if t == in_service[0] and book.opening(fa, t):
-            # the gross view of what is carried in: its cost is its book value plus what was charged on it before
-            gross["cost"] += book.opening(fa, t) + carried
-            gross["charged"] += carried
-            # fixed assets carried in on an opening balance sheet are a tranche from the first in-service
-            # period: otherwise the register would never depreciate them
-            for x in (reg, tax_reg):
-                if x is not None:
-                    x.add(t, book.opening(fa, t))
-        if t in in_service:
-            cost = book.balance(src, t)
-            post(g, t, fa, src, cost, "in_service")
-            # the residual value is held back from the books' first tranche: it stays in the asset account,
-            # never depreciated (IAS 16.53), until the disposal writes it off. Tax depreciates the full cost
-            held = residual if t == in_service[0] else Fraction(0)
-            if held > cost:
-                raise InputError(f"asset_register: residual {held} exceeds the cost {cost} placed in service in {t}")
-            reg.add(t, cost - held)
-            gross["cost"] += cost
-            if tax_reg is not None:
-                tax_reg.add(t, cost)
-        if t == dispose_at and dispose_when == "start":
-            # retired before the period runs: written off at its opening book value, nothing charged after
-            retire()
-            post(g, t, loss, fa, reg.dispose() + residual, "disposal")
-            if tax_reg is not None:
-                regs.tax_moves[t] = tax_reg.dispose()
-        charge = tax_charge = Fraction(0)
-        if t >= in_service[0]:
-            charge = reg.charge(t)
-            gross["charged"] += charge
-            post(g, t, dep, fa, charge, "depreciation")
-            if tax_reg is not None:
-                tax_charge = tax_reg.charge(t)
-                regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_charge
-        if t == dispose_at and dispose_when == "end":
-            retire()
-            post(g, t, loss, fa, reg.dispose() + residual, "disposal")
-            if tax_reg is not None:
-                regs.tax_moves[t] = regs.tax_moves.get(t, Fraction(0)) + tax_reg.dispose()
-        g.record(name, t, cost=gross["cost"], accumulated=gross["charged"], charge=charge,
-                 disposed_cost=disposed["cost"], disposed_accumulated=disposed["charged"], disposed_nbv=disposed["nbv"],
-                 tax_charge=tax_charge, tax_nbv=tax_reg.nbv() if tax_reg is not None else None,
-                 tax_disposed_nbv=disposed["tax_nbv"])
-
-    group.register(phase, handler)
 
 
 # ── income tax ────────────────────────────────────────────────────────────
-
-def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    entity, phase, unit = r.take("entity"), r.take("phase"), ctx["currency"]
-    expense, payable = r.take("expense"), r.take("payable")
-    start = int(r.take_or_default("from", 0, reason="tax is charged from the first period").value)
-    cf = r.take("carry_forward_periods")
-    cf = None if cf is None else int(cf)
-    rates = r.take_or_default("rate", None, reason="the tax is charged in bands").value   # or one per period
-    bands = r.take_or_default("bands", None, reason="one rate on the whole base").value
-    per_year = exact(r.take_or_default("bands_per_year", 1, reason="the bands apply to each period's base").value)
-    if (rates is None) == (bands is None):
-        raise InputError("income_tax: give a rate or bands, not both and not neither")
-    losses_in = r.take_or_default("losses_in", "base", reason="losses are carried as amounts of the base").value
-    relief = r.take_or_default("loss_relief", "carry_forward", reason="a loss is carried to later profit").value
-    if relief not in ("carry_forward", "refund"):
-        raise InputError(f"income_tax: loss_relief is carry_forward or refund, not {relief!r}")
-    if bands is not None:
-        # every band but the last has a ceiling; the last runs on without one
-        bands = [Reader(b, source=f"income_tax.bands[{i}]") for i, b in enumerate(bands)]
-        bands = [(b.take("upto") if i < len(bands) - 1 else None, b.take("rate"), b.finish())[:2]
-                 for i, b in enumerate(bands)]
-        if not bands or losses_in != "base" or relief != "carry_forward":
-            raise InputError("income_tax: bands are built for losses carried forward as base, and need a band")
-    from one_engine.packs.contracts import _at
-    scheme = dict(r.take("scheme"))
-    minimum = r.take_or_default("minimum", None, reason="no minimum tax: the charge is the profits tax").value
-    if minimum is not None:
-        mr = Reader(minimum, source="income_tax.minimum")
-        m_lines, m_rate = list(mr.take("turnover")), mr.take("rate")
-        m_floor = mr.take_or_default("floor", 0, reason="no floor: the minimum is the rate on turnover").value
-        m_cap = mr.take_or_default("cap", None, reason="no cap on the minimum").value
-        m_applies = mr.take_or_default("applies", 1, reason="the minimum is charged in every period").value
-        mr.finish()
-    group.declare(entity, expense, Nature.EXPENSE, unit)
-    group.declare(entity, payable, Nature.LIABILITY, unit)
-    pool = LossPool(cf)
-    timing_name = r.take_or_default("timing", None, reason="no line is measured differently for tax").value
-    deferred = r.take_or_default("deferred", None, reason="no deferred tax recognised").value
-    timing_lines = sorted(k for k, v in scheme.items() if v == "timing")
-    if (timing_name is None) != (not timing_lines):
-        raise InputError("income_tax: lines classified 'timing' need a 'timing' register, and only then")
-    nil_base = []
-    if deferred is not None:
-        dr = Reader(deferred, source="income_tax.deferred")
-        dt_acct, dt_expense = dr.take("account"), dr.take("expense")
-        nil_base = list(dr.take_or_default("nil_tax_base", [], reason="no asset has a nil tax base").value)
-        recognise_losses = dr.take_or_default("recognise_losses", True,
-                                              reason="a deferred tax asset is recognised on unused losses").value
-        if recognise_losses not in (True, False):
-            raise InputError(f"income_tax: deferred.recognise_losses is true or false, got {recognise_losses!r}")
-        dr.finish()
-        if losses_in != "base":
-            raise InputError("income_tax: deferred tax on losses carried as tax (losses_in: tax) is not built")
-        if relief == "refund":
-            raise InputError("income_tax: deferred tax with losses refunded (loss_relief: refund) is not built")
-        if bands is not None:
-            raise InputError("income_tax: deferred tax measured on bands is not built")
-        if nil_base and timing_name is not None:
-            raise InputError("income_tax: deferred.nil_tax_base measures movements and cannot be combined "
-                             "with a 'timing' register")
-        group.declare(entity, dt_acct, Nature.LIABILITY, unit)
-        group.declare(entity, dt_expense, Nature.EXPENSE, unit)
-
-    # the temporary difference (net of recognised losses) and the rate it was measured at, last period:
-    # a change of rate remeasures it, and the tax record shows that part of the deferred movement
-    last = {"diff": Fraction(0), "rate": None}
-
-    def handler(g: Group, t: int) -> None:
-        if t < start:
-            return
-        # with bands the policy only measures what losses leave taxable (a rate of 1); the bands tax that
-        policy = TaxPolicy(Fraction(1) if bands is not None else _at(rates, t), cf, losses_in)
-        base = taxable_base(g.book(entity), t, scheme)
-        if timing_name is not None:
-            regs = ctx["registers"][timing_name]
-            if timing_lines != sorted({regs.expense, regs.disposal}):
-                raise InputError(f"income_tax: 'timing' lines {timing_lines} are not the lines of register "
-                                 f"'{timing_name}' ({regs.expense}, {regs.disposal})")
-            base -= regs.tax_moves.get(t, Fraction(0))
-        opening = pool.available(t)
-        # a refunded loss is relieved now, at the rate: the pool is never fed, so it stays empty
-        tax = policy.rate * base if relief == "refund" else policy.charge(t, base, pool)
-        banded = {}
-        if bands is not None:
-            # the period's taxable amount at its yearly equivalent, banded, and brought back to the period
-            left, floor_, tax = tax * per_year, Fraction(0), Fraction(0)
-            for i, (upto, rate) in enumerate(bands, 1):
-                top = None if upto is None else _at(upto, t)
-                if top is not None and top < floor_:
-                    raise InputError(f"income_tax: bands must rise; band {i} ends at {top}, below {floor_}")
-                inside = left if top is None else min(left, top - floor_)
-                banded[f"band{i}_base"] = inside / per_year
-                banded[f"band{i}_tax"] = _at(rate, t) * inside / per_year
-                tax += banded[f"band{i}_tax"]
-                left -= inside
-                floor_ = top if top is not None else floor_
-        profit_tax = tax
-        if minimum is not None:
-            book = g.book(entity)
-            wrong = [a for a in m_lines if book.accounts[a].nature is not Nature.INCOME]
-            if wrong:
-                raise InputError(f"income_tax: minimum.turnover lists {wrong}, which are not income lines")
-            turnover = sum((book.balance(a, t) - book.opening(a, t) for a in m_lines), Fraction(0))
-            least = max(_at(m_rate, t) * turnover, _at(m_floor, t))
-            least = least if m_cap is None else min(least, _at(m_cap, t))
-            if _at(m_applies, t):
-                tax = max(tax, least)
-        if tax > 0:
-            g.post(entity, Posting(t, phase, expense, payable, tax, {expense: 1, payable: 1}, "tax", f"{ctx['name']}.charge:{t}"))
-        elif tax < 0:
-            # a credit: the expense falls, and the payable with it (below nil it is a refund due)
-            g.post(entity, Posting(t, phase, payable, expense, -tax, {payable: -1, expense: -1}, "tax",
-                                   f"{ctx['name']}.credit:{t}"))
-        # what this period could still use but the next cannot: the vintages that expire at its end
-        rec = dict(base=base, tax=tax, losses=pool.available(t + 1), expired=pool.available(t) - pool.available(t + 1))
-        if minimum is not None:
-            rec.update(profit_tax=profit_tax, minimum=least)
-        rec.update(banded)
-        # the pool's roll-forward (the golds report it): opening + added - used = what this period can still use
-        added = Fraction(0) if relief == "refund" else \
-            max(Fraction(0), -base) if losses_in == "base" else max(Fraction(0), -policy.rate * base)
-        used = opening + added - pool.available(t)
-        rec.update(losses_opening=opening, loss_added=added, loss_used=used,
-                   taxable=max(Fraction(0), base - used) if losses_in == "base" else None)
-        if deferred is not None:
-            book = g.book(entity)
-            if nil_base:
-                # the carrying amount of an asset deducted when paid is all temporary difference
-                move = policy.rate * sum((book.balance(a, t) - book.opening(a, t) for a in nil_base), Fraction(0))
-            else:
-                regs = ctx["registers"][timing_name] if timing_name else None
-                carrying = regs.book.nbv() if regs else Fraction(0)
-                tax_base = regs.tax.nbv() if regs else Fraction(0)
-                losses = pool.available(t + 1) if recognise_losses else Fraction(0)
-                target = deferred_tax(policy.rate, carrying, tax_base, losses)
-                move = target - book.balance(dt_acct, t)
-                # last period's difference at this period's rate, less at last period's: the remeasurement
-                prev = policy.rate if last["rate"] is None else last["rate"]
-                rec.update(carrying=carrying, tax_base=tax_base, rate_change=(policy.rate - prev) * last["diff"])
-                last["diff"], last["rate"] = carrying - tax_base - losses, policy.rate
-            if move > 0:
-                g.post(entity, Posting(t, phase, dt_expense, dt_acct, move, {dt_expense: 1, dt_acct: 1},
-                                       "tax", f"{ctx['name']}.deferred:{t}"))
-            elif move < 0:
-                g.post(entity, Posting(t, phase, dt_acct, dt_expense, -move, {dt_acct: -1, dt_expense: -1},
-                                       "tax", f"{ctx['name']}.deferred:{t}"))
-        g.record(ctx["name"], t, **rec)
-
-    group.register(phase, handler)
 
 
 # ── tax instalments ───────────────────────────────────────────────────────
@@ -767,17 +211,6 @@ def tax_instalments(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
 
 
 # ── pay as due ────────────────────────────────────────────────────────────
-
-def pay_as_due(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    phase, refs = r.take("phase"), list(r.take("claims"))
-
-    def handler(g: Group, t: int) -> None:
-        claims = g.claims(t)
-        for ref in refs:
-            if ref in claims and claims[ref].due:
-                g.settle(claims[ref], claims[ref].due, phase)
-
-    group.register(phase, handler)
 
 
 # ── provision ─────────────────────────────────────────────────────────────
@@ -828,142 +261,6 @@ def forgiveness(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
 
 
 # ── waterfall ─────────────────────────────────────────────────────────────
-
-def waterfall(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    entity, phase, cash = r.take("entity"), r.take("phase"), r.take("cash")
-    sources = list(r.take_or_default("sources", [], reason="no reserve releases into the waterfall").value)
-    tiers_spec = []          # (name, kind, ref, share_of_remaining)
-    for i, raw in enumerate(r.take("tiers")):
-        tr = Reader(raw, source=f"waterfall.tiers[{i}]")
-        if "claim" in raw:
-            name = kind_ref = tr.take("claim")
-            kind = "claim"
-        elif "keep" in raw:
-            # a minimum cash balance: what this tier is "paid" stays in the account
-            name, kind = tr.take("name"), "keep"
-            kind_ref = (exact(tr.take("keep")), int(tr.take("from")), int(tr.take("until")))
-        else:
-            name, kind, kind_ref = tr.take("name"), "account", tr.take("account")
-        share = tr.take_or_default("share_of_remaining", None, reason="the tier takes all it is due").value
-        tiers_spec.append((name, kind, kind_ref, None if share is None else exact(share)))
-        tr.finish()
-    names = [n for n, _, _, _ in tiers_spec]
-    residual = r.take("residual")
-    cr = Reader(r.take("cfads"), source="waterfall.cfads")
-    scheme, classes, less = ctx["schemes"][cr.take("scheme")], cr.take("classes"), cr.take("less")
-    share = cr.take_or_default("share", 1, reason="the debt is outstanding for the whole of each period").value
-    cr.finish()
-    service = r.take("service")
-    fo = r.take_or_default("flow_only", None, reason="all cash above the floor is offered").value
-    flow_only = None
-    if fo is not None:
-        fr = Reader(fo, source="waterfall.flow_only")
-        flow_only = (int(fr.take("from")), int(fr.take("until")))
-        fr.finish()
-    ac = r.take_or_default("active", None, reason="the waterfall runs every period").value
-    active = None
-    if ac is not None:
-        ar = Reader(ac, source="waterfall.active")
-        active = (int(ar.take("from")), int(ar.take("until")))
-        ar.finish()
-    tests = []
-    for i, raw in enumerate(r.take("tests")):
-        tr = Reader(raw, source=f"waterfall.tests[{i}]")
-        test = Test(tr.take("name"), tr.take("op"), exact(tr.take("level")), tr.take("if_missing"))
-        consequence = tr.take("consequence")
-        blocks = tr.take("blocks") if consequence == "block" else []
-        if consequence not in ("block", "report"):
-            raise InputError(f"test '{test.name}': consequence must be 'block' or 'report'")
-        unknown = set(blocks) - set(names) - {residual}
-        if unknown:
-            raise InputError(f"test '{test.name}' blocks unknown tiers {sorted(unknown)}")
-        tests.append((test, consequence, blocks))
-        tr.finish()
-    for n in list(less) + list(service):
-        if n not in names:
-            raise InputError(f"waterfall: '{n}' is not a tier")
-    for n in less:
-        if dict((x[0], x[1]) for x in tiers_spec)[n] != "account":
-            # CFADS is computed before claims are read, because a sculpted loan's claim needs it
-            raise InputError(f"waterfall: '{n}' in cfads.less must be an account tier")
-
-    # cash a test trapped inside the flow_only window: carried in, but offered again when the test clears
-    pending = {"trapped": Fraction(0)}
-
-    def handler(g: Group, t: int) -> None:
-        if active is not None and not active[0] <= t <= active[1]:
-            return                                  # outside its window the cash stays where it is
-        book = g.book(entity)
-        due = {name: book.balance(ref, t) for name, kind, ref, _ in tiers_spec if kind == "account"}
-        flows = cash_flow_cut(book, cash, scheme, classes).values[t - book.start_period]
-        cfads = flows - sum((due[n] for n in less), Fraction(0))
-        if share != 1:
-            # the part of the period's cash flow that falls while the debt is outstanding (a loan that
-            # matures mid-year is covered by the cash flow of its days only)
-            from one_engine.packs.contracts import _at
-            cfads *= _at(share, t)
-        claims = g.claims(t, given={"cfads": cfads})
-        for ref in sources:                         # reserve releases come in before anything is paid
-            if ref in claims:
-                g.settle(claims[ref], claims[ref].due, phase)
-        for name, kind, ref, _ in tiers_spec:
-            if kind == "claim":
-                due[name] = claims[ref].due if ref in claims else Fraction(0)
-            elif kind == "keep":
-                due[name] = ref[0] if ref[1] <= t <= ref[2] else Fraction(0)
-        ds = sum((due[n] for n in service), Fraction(0))
-        dscr = coverage(cfads, ds)
-        blocked: Dict[str, str] = {}
-        for test, consequence, blocks in tests:
-            res = evaluate(test, dscr)
-            g.record("test", t, test=test.name, verdict=res.verdict, value=dscr, level=test.level,
-                     consequence=consequence)
-            if res.verdict == "fail":
-                for b in blocks:
-                    blocked.setdefault(b, test.name)
-        floor = exact(g.floors.get((entity, cash), Fraction(0)))
-        available = max(Fraction(0), book.balance(cash, t) - floor)
-        in_window = flow_only is not None and flow_only[0] <= t <= flow_only[1]
-        if in_window:
-            # only the period's own net cash flow is offered: cash carried in, a surplus or an overdraft,
-            # is neither paid out nor made good (within the floor, when the cash has one); cash trapped
-            # earlier in the window is the exception, offered again once the residual is not blocked
-            own = book.balance(cash, t) - book.opening(cash, t)
-            if residual not in blocked:
-                own += pending["trapped"]
-                pending["trapped"] = Fraction(0)
-            available = max(Fraction(0), min(own, available) if (entity, cash) in g.floors else own)
-
-        def cap(name, share):
-            if share is None:
-                return due[name]
-            # a sweep: a share of what is still unallocated when its turn comes
-            return lambda paid: min(due[name], share * (available - sum(paid.values(), Fraction(0))))
-
-        a = allocate(available, [Tier(n, cap(n, sh), blocked_by=blocked.get(n)) for n, _, _, sh in tiers_spec],
-                     residual=residual or "retained")
-        for name, kind, ref, _ in tiers_spec:
-            if kind == "claim":
-                if ref in claims:
-                    g.settle(claims[ref], a.paid[name], phase)
-            elif kind == "account" and a.paid[name]:
-                g.post(entity, Posting(t, phase, ref, cash, a.paid[name], {ref: -1, cash: -1}, "allocation",
-                                       f"waterfall.{name}:{t}"))
-        if residual is None:
-            pass                                    # retained: the cash stays where it is
-        elif residual in blocked:
-            g.record("trapped", t, amount=a.residual, by=blocked[residual])
-            if in_window:
-                pending["trapped"] += a.residual
-        elif residual in ctx["distributors"]:
-            ctx["distributors"][residual](g, t, a.residual, phase)
-        else:
-            c, leg = _ref(g, residual)
-            g.post_leg(c, leg, a.residual, t, phase)
-        g.record("waterfall", t, cfads=cfads, service=ds, dscr=dscr, available=available,
-                 paid=dict(a.paid), residual=a.residual, blocked=dict(blocked))
-
-    group.register(phase, handler)
 
 
 # ── withholding ───────────────────────────────────────────────────────────
@@ -1039,26 +336,8 @@ def promote(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     ctx["distributors"][ctx["name"]] = distribute
 
 
-# ── capital first (one holder's distributions) ────────────────────────────
-
-def capital_first(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    holder = r.take("holder")
-
-    def distribute(g: Group, t: int, amount: Fraction, phase: str) -> None:
-        # the unreturned capital is the capital account itself: each return of capital lowers it
-        c = g.contract(holder)
-        unreturned = g.book(c.parties["issuer"]).balance(c.acct("{id}.capital"), t)
-        a = allocate(amount, [Tier("return_capital", unreturned)], residual="distribute")
-        g.post_leg(c, "return_capital", a.paid["return_capital"], t, phase)
-        g.post_leg(c, "distribute", a.residual, t, phase)
-
-    ctx["distributors"][ctx["name"]] = distribute
-
-
-RULEBOOKS = {"funding_plan": funding_plan, "deficit_funding": deficit_funding, "pro_rata_funding": pro_rata_funding, "asset_register": asset_register,
-             "income_tax": income_tax, "provision": provision, "forgiveness": forgiveness, "waterfall": waterfall,
-             "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments,
-             "pay_as_due": pay_as_due, "capital_first": capital_first}
+RULEBOOKS = {"pro_rata_funding": pro_rata_funding, "provision": provision, "forgiveness": forgiveness,
+             "withholding": withholding, "promote": promote, "tax_instalments": tax_instalments}
 
 
 # ── loop rules ────────────────────────────────────────────────────────────

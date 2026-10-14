@@ -23,7 +23,7 @@ from one_engine.contracts import Contract
 from one_engine.entities import Group
 from one_engine.inputs import InputError, State, Value, load_yaml_strict
 from one_engine.packs.contracts import CAPEX, SPONSOR_EQUITY
-from one_engine.packs.pf import sources_equal_uses
+from one_engine.rulebooks.allocation import sources_equal_uses
 
 HERE = pathlib.Path(__file__).resolve().parents[1] / "cases"
 CASE = load_yaml_strict((HERE / "vanilla_100mw.yaml").read_text())

@@ -19,14 +19,11 @@ This pack adds only what the golds need and those packs do not have:
 * the generator ``formulas``: named values computed from the gold's inputs,
   so a translation never retypes a number. A gold input is referenced by
   its name; anything derived from it is a formula over those names;
-* the rulebook ``held_balance``: a working-capital account (an inventory, a
-  deposit) held at a target each period, the change moving cash;
-* the rulebook ``settle``: payables paid in full in the period they arise
-  (a small business's tax paid within its year);
-* the rulebook ``transfer``: a stated amount posted from one account to
-  another each period (a payment calendar the business states: a public
-  works contract billed, settled and its retention released on its own
-  timetable);
+* the rulebooks ``held_balance`` (a working-capital account held at a
+  target each period), ``settle`` (payables paid in full in the period they
+  arise) and ``transfer`` (a stated amount posted between accounts each
+  period) began here and moved to :mod:`one_engine.rulebooks.postings` on
+  2026-10-14, because three or more archetypes declare each;
 * the rulebook ``write_down``: a stated amount of an asset written off to
   an expense each period (grain lost in store);
 * the rulebook ``asset_pool``: a pool of like assets in steady state,
@@ -278,111 +275,6 @@ def _at(x: Value, t: int) -> Fraction:
     return exact(x)
 
 
-def held_balance(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    """Working-capital accounts held at a target; the change moves cash.
-
-    Case keys: ``entity``, ``cash``, ``phase``, and ``accounts`` (name ->
-    ``{side: asset | liability, target}``, the target a number or a series,
-    and optionally ``against``: the account the change is posted against
-    instead of cash). A balance carried in on the opening balance sheet is
-    the starting point: the first period moves only the difference to its
-    target.
-
-    ``against`` an expense is an inventory bought as an expense: purchases
-    are expensed (and paid) by a cost contract, and the stock held at the
-    period end is taken back out of the expense, so the expense is the cost
-    of what was used (opening stock plus purchases less closing stock).
-    """
-    entity, cash, phase = r.take("entity"), r.take("cash"), r.take("phase")
-    held = []
-    for acct, raw in r.take("accounts").items():
-        ar = Reader(raw, source=f"held_balance.accounts.{acct}")
-        side, target = ar.take("side"), ar.take("target")
-        against = ar.take_or_default("against", cash, reason="the change moves cash").value
-        ar.finish()
-        if side not in ("asset", "liability"):
-            raise InputError(f"held_balance.accounts.{acct}: side must be asset or liability, not {side!r}")
-        group.declare(entity, acct, Nature.ASSET if side == "asset" else Nature.LIABILITY, ctx["currency"])
-        held.append((acct, side, target, against))
-
-    def handler(g: Group, t: int) -> None:
-        book = g.book(entity)
-        for acct, side, target, against in held:
-            change = _at(target, t) - book.balance(acct, t)
-            if not change:
-                continue
-            # raising an asset debits it; raising a liability credits it; the other leg takes the other
-            # side. Each leg's effect follows its nature: a debit raises a debit-natured account (cash,
-            # an expense) and lowers a credit-natured one, and a credit the reverse
-            up = (change > 0) == (side == "asset")
-            debit, credit = (acct, against) if up else (against, acct)
-            eff = {a: (1 if book.accounts[a].nature.debit_natured == (a == debit) else -1) for a in (debit, credit)}
-            g.post(entity, Posting(t, phase, debit, credit, abs(change), eff, "operating", f"{acct}.held:{t}"))
-
-    group.register(phase, handler)
-
-
-def settle(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    """Pay each listed payable in full at the end of ``phase``, every period.
-
-    Case keys: ``entity``, ``cash``, ``phase``, ``accounts`` (liability
-    accounts another rulebook or contract declares and credits). A payable
-    below nil (a tax credit, ``income_tax`` with ``loss_relief: refund``)
-    is a refund due, and is received the same way.
-    """
-    entity, cash, phase, accounts = r.take("entity"), r.take("cash"), r.take("phase"), list(r.take("accounts"))
-
-    def handler(g: Group, t: int) -> None:
-        for acct in accounts:
-            x = g.book(entity).balance(acct, t)
-            if x > 0:
-                g.post(entity, Posting(t, phase, acct, cash, x, {acct: -1, cash: -1}, "operating", f"{acct}.settle:{t}"))
-            elif x < 0:
-                g.post(entity, Posting(t, phase, cash, acct, -x, {cash: 1, acct: 1}, "operating", f"{acct}.settle:{t}"))
-
-    group.register(phase, handler)
-
-
-def transfer(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
-    """Stated amounts posted between accounts each period.
-
-    Case keys: ``entity``, ``phase``, ``declare`` (optional: account ->
-    nature, for accounts no other piece declares), and ``moves`` (name ->
-    ``{debit, credit, amount}``, the amount a number or a series, posted in
-    the order given). Each leg moves its account by its nature: a debit
-    raises a debit-natured account (cash, an asset, an expense) and lowers
-    a credit-natured one, a credit the reverse. A negative amount is
-    posted the other way round.
-
-    The amounts are the business's own schedule (formulas over the gold's
-    inputs); what the books add is every balance they leave behind, and the
-    cash they move, read back as any other account.
-    """
-    entity, phase = r.take("entity"), r.take("phase")
-    for acct, nature in (r.take_or_default("declare", {}, reason="the accounts are declared elsewhere").value or {}).items():
-        try:
-            group.declare(entity, acct, Nature(nature), ctx["currency"])
-        except ValueError as e:
-            raise InputError(f"transfer.declare.{acct}: {nature!r} is not a nature") from e
-    moves = []
-    for name, raw in r.take("moves").items():
-        mr = Reader(raw, source=f"transfer.moves.{name}")
-        moves.append((name, mr.take("debit"), mr.take("credit"), mr.take("amount")))
-        mr.finish()
-
-    def handler(g: Group, t: int) -> None:
-        book = g.book(entity)
-        for name, debit, credit, amount in moves:
-            x = _at(amount, t)
-            if not x:
-                continue
-            dr, cr = (debit, credit) if x > 0 else (credit, debit)
-            eff = {a: (1 if book.accounts[a].nature.debit_natured == (a == dr) else -1) for a in (dr, cr)}
-            g.post(entity, Posting(t, phase, dr, cr, abs(x), eff, "operating", f"{ctx['name']}.{name}:{t}"))
-
-    group.register(phase, handler)
-
-
 def write_down(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     """A stated amount of an asset written off to an expense each period.
 
@@ -448,5 +340,4 @@ def asset_pool(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     return {"steady_state": lambda: unsteady}
 
 
-RULEBOOKS = {"held_balance": held_balance, "settle": settle, "transfer": transfer, "write_down": write_down,
-             "asset_pool": asset_pool}
+RULEBOOKS = {"write_down": write_down, "asset_pool": asset_pool}

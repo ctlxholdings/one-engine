@@ -83,6 +83,20 @@ def exact(value: Number) -> Fraction:
     raise TypeError(f"not an amount: {value!r} ({type(value).__name__})")
 
 
+def at(value, t: int) -> Fraction:
+    """A term stated as one number or as a series of one value per period, at period ``t``.
+
+    Rulebooks read their terms this way: a tax rate, a target balance or a
+    scheduled amount may be stated once or period by period. A series with
+    no value for ``t`` refuses rather than repeating its last value.
+    """
+    if isinstance(value, (list, tuple)):
+        if t >= len(value):
+            raise ValueError(f"series of {len(value)} values has no period {t}")
+        return exact(value[t])
+    return exact(value)
+
+
 @dataclass(frozen=True)
 class Quantity:
     """An exact amount in one unit, such as ``Quantity("850000", "USD")``.

@@ -29,6 +29,7 @@ built; a case that later needs more is either a different archetype or a
 recorded decision to grow one.
 """
 import fnmatch
+import importlib
 import pathlib
 import sys
 from functools import lru_cache
@@ -45,6 +46,8 @@ KINDS = ("rulebooks", "contracts", "generators")
 #: engine folders that are not modules a case selects: the oracle harness, the tests, and the
 #: case files with the run driver (``cases/__init__``), which every case uses
 NOT_MODULES = ("oracles", "tests", "cases")
+#: a rulebook declared by this many archetypes is shared: it lives in a shared module, not a pack
+SHARED_AT = 3
 #: case-id prefix of each oracle family, with the folder of its translations
 FAMILY_FOLDERS = {"golds": "golds", "pilot": "golds_pilot", "published": "published", "esco": "esco",
                   "external": "external", "workbook": "workbooks"}
@@ -153,6 +156,21 @@ def _module(filename: str) -> Optional[str]:
     return ".".join(rel.with_suffix("").parts)
 
 
+@lru_cache(maxsize=None)
+def _import_all() -> None:
+    """Import every engine module once, before any trace.
+
+    Some modules are imported lazily, inside a function, the first time a
+    case needs them; importing runs the module's body and any calls it
+    makes at import. Traced, those would count for whichever case happened
+    to import the module first, so a case's list would depend on the order
+    cases run in. With everything imported up front, a trace sees only
+    what the run calls.
+    """
+    for m in sorted(engine_modules()):
+        importlib.import_module(f"one_engine.{m}")
+
+
 def modules_used(case: str) -> List[str]:
     """The engine modules a case's run calls, traced while it runs.
 
@@ -164,12 +182,15 @@ def modules_used(case: str) -> List[str]:
     error is the case's and is raised.
     """
     from one_engine.oracles import Blocked
+    _import_all()
     seen: Set[str] = set()
     cache: Dict[str, Optional[str]] = {}
 
     def hook(frame, event, arg):
-        # calls only: a module counts when one of its functions runs, never for being imported
-        if event == "call":
+        # calls only: a module counts when one of its functions runs, never for being imported. Importing a
+        # module runs its body as a "<module>" call, so without this a module first imported during a case
+        # would count for that case only, and the lists would depend on the order cases run in
+        if event == "call" and frame.f_code.co_name != "<module>":
             f = frame.f_code.co_filename
             if f not in cache:
                 cache[f] = _module(f)
@@ -197,4 +218,23 @@ def outside(case: str, kinds: Optional[Mapping[str, Iterable[str]]] = None, modu
     out = [f"module {m}" for m in sorted(set(modules or ()) - set(a["modules"]))]
     for section in KINDS:
         out += [f"{section} {k}" for k in sorted(set((kinds or {}).get(section, ())) - set(a[section]))]
+    return out
+
+
+def misfiled(registry: Mapping[str, Mapping[str, Any]], rulebooks: Mapping[str, Callable]) -> List[str]:
+    """Rulebooks that :data:`SHARED_AT` or more archetypes declare but that still live in a pack.
+
+    A pack holds what one kind of deal needs (``packs/__init__``); a rulebook
+    many kinds of deal declare is shared, and belongs beside its module card
+    (``one_engine.rulebooks``). Ali, 2026-10-14, chose to move them.
+    """
+    users: Dict[str, Set[str]] = {}
+    for code, a in registry.items():
+        for k in a["rulebooks"]:
+            users.setdefault(k, set()).add(code)
+    out = []
+    for k in sorted(users):
+        home = rulebooks[k].__module__.replace("one_engine.", "")
+        if len(users[k]) >= SHARED_AT and home.startswith("packs."):
+            out.append(f"{k} ({home}, {len(users[k])} archetypes)")
     return out

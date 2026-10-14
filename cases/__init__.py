@@ -9,8 +9,8 @@ a key nobody reads stops the run (the nightmare fixture's ignored
 A term is either a plain number (STATED, sourced to the case file and key)
 or ``{value, state, source}`` to carry another state, such as a stand-in.
 
-``rulebooks`` (optional) installs pack rulebooks (:mod:`one_engine.packs.pf`)
-in file order; within a phase, handlers run in that order. A rulebook may
+``rulebooks`` (optional) installs rulebooks, shared (:mod:`one_engine.rulebooks`)
+or from a pack (:mod:`one_engine.packs.pf`), in file order; within a phase, handlers run in that order. A rulebook may
 return named checks, which join the integrity verdicts. Rulebooks share
 asset registers and distributors by rulebook name.
 
@@ -100,6 +100,7 @@ from one_engine.loops import Loop, LoopReport, close
 from one_engine.kernel import Nature
 from one_engine.packs import contracts as _contracts, corporate as _corporate, obligations as _obligations, pf as _pf, solar as _solar, tea as _tea
 from one_engine.packs.pf import LOOP_RULES
+from one_engine import rulebooks as _shared
 from one_engine.units import exact
 
 MEASURES = {"irr": M.irr, "payback": M.payback, "moic": M.moic, "cash_on_cash": M.cash_on_cash}
@@ -117,7 +118,7 @@ def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 REGISTRY = _merge(_contracts.REGISTRY, _corporate.TYPES)
-RULEBOOKS = _merge(_pf.RULEBOOKS, _corporate.RULEBOOKS, _tea.RULEBOOKS, _obligations.RULEBOOKS)
+RULEBOOKS = _merge(_shared.RULEBOOKS, _pf.RULEBOOKS, _corporate.RULEBOOKS, _tea.RULEBOOKS, _obligations.RULEBOOKS)
 LENSES = _merge(_corporate.LENSES)
 CASES = pathlib.Path(__file__).resolve().parent
 

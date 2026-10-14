@@ -15,7 +15,7 @@ mechanisms; the panel's deals and switches are data.
 Every rulebook here posts inside **one book** (``entity``), between
 accounts the case declares with their natures (``opening`` with nil values
 is the usual place). Each leg moves its account by its nature, as
-:func:`one_engine.packs.tea.transfer` does: a debit raises a debit-natured
+:func:`one_engine.rulebooks.postings.transfer` does: a debit raises a debit-natured
 account (an asset, an expense) and lowers a credit-natured one (a
 liability, equity, income), a credit the reverse. Amounts are exact; a
 negative amount refuses, because the direction belongs to the accounts.
