@@ -82,7 +82,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 from one_engine.inputs import State, Value
 from one_engine.kernel import Nature
-from one_engine.units import exact
+from one_engine.units import at, exact
 
 
 class ContractError(ValueError):
@@ -345,3 +345,18 @@ class Contract:
             if amount > 0:
                 out.append(Claim(self, spec, period, amount, self._state))
         return out
+
+
+# ── term conventions the debt types and the loop rules share ─────────────
+# Moved from packs.contracts on 2026-10-15 so the loop rules (one_engine.rulebooks.loops), which size loans
+# from their terms, can read them without importing a pack. They are conventions of the terms' names, not
+# deal-specific arithmetic: every debt type that states these terms means them this way.
+
+def year_fraction(terms, t):
+    """The year fraction of period ``t``: ``days_per_period`` (a number or a series) over ``day_count_basis``."""
+    return at(terms["days_per_period"], t) / exact(terms["day_count_basis"])
+
+
+def maturity(terms):
+    """The last repayment period: ``repay_from`` plus ``repay_periods``, less one."""
+    return int(terms["repay_from"]) + int(terms["repay_periods"]) - 1

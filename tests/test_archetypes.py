@@ -15,8 +15,9 @@ reads it. These tests hold every case to it:
   slowest and are already held by ``test_oracles_workbook.py``; their
   declared kinds are still checked; an ACTUS type with no mechanism yet
   runs nothing and is skipped, named as not built);
-* a rulebook that three or more archetypes declare lives in a shared
-  module, never in a pack (Ali, 2026-10-14: a pack serves one kind of deal);
+* a rulebook or generator that three or more archetypes declare lives in a
+  shared module, never in a pack (Ali, 2026-10-14 and 15: a pack serves one
+  kind of deal);
 * each list names only modules and kinds the engine has, so a typo cannot
   widen an archetype silently; and each check is seen failing on a planted
   case that steps outside its archetype.
@@ -83,15 +84,15 @@ def test_a_traced_run_names_the_modules_it_calls():
     assert {"kernel", "contracts", "measures"} <= set(used) and "packs.actus" not in used
 
 
-def test_a_rulebook_three_archetypes_use_lives_in_a_shared_module():
-    assert A.misfiled(REG, RULEBOOKS) == []
+def test_a_rulebook_or_generator_three_archetypes_use_lives_in_a_shared_module():
+    assert A.misfiled(REG, {"rulebooks": RULEBOOKS, "generators": GENERATORS}) == []
 
 
 def test_a_widely_used_rulebook_left_in_a_pack_is_seen():
     # promote (packs.pf) declared by three archetypes; withholding (packs.pf) by two stays where it is
     planted = {k: {"rulebooks": r} for k, r in
                {"X1": ["promote", "withholding"], "X2": ["promote", "withholding"], "X3": ["promote"]}.items()}
-    assert A.misfiled(planted, RULEBOOKS) == ["promote (packs.pf, 3 archetypes)"]
+    assert A.misfiled(planted, {"rulebooks": RULEBOOKS}) == ["promote (packs.pf, 3 archetypes)"]
 
 
 def test_a_trace_does_not_depend_on_what_ran_before():

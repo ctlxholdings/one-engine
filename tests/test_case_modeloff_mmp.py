@@ -38,7 +38,7 @@ import pytest
 
 from one_engine.cases import run_case
 from one_engine.inputs import InputError, load_yaml_strict
-from one_engine.packs.pf import SizingError
+from one_engine.rulebooks.loops import SizingError
 
 HERE = pathlib.Path(__file__).resolve().parents[1] / "cases"
 CASE_PATH = HERE / "modeloff_more_money_please.yaml"

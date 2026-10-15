@@ -109,6 +109,8 @@ underperforming year costs both parties in proportion.
 from __future__ import annotations
 
 from one_engine.contracts import ClaimSpec, ContractType, FlowSpec, Leg
+# the loan terms' conventions, shared with the loop rules; the short names are the ones used throughout here
+from one_engine.contracts import maturity as _maturity, year_fraction as _days
 from one_engine.kernel import Nature
 from one_engine.units import exact
 
@@ -177,11 +179,6 @@ def _at(x, t):
             raise ValueError(f"series of {len(x)} values has no period {t}")
         return exact(x[t])
     return exact(x)
-
-
-def _days(terms, t):
-    """The year fraction of period ``t``: days_per_period (a number or a series) over the basis."""
-    return _at(terms["days_per_period"], t) / exact(terms["day_count_basis"])
 
 
 def _refund_at(t, terms):
@@ -293,9 +290,6 @@ SHAREHOLDER_LOAN = _loan("shareholder_loan", capitalise=True)
 
 
 # The full facility (nightmare case, step 7) ----------------------------------
-
-def _maturity(terms):
-    return int(terms["repay_from"]) + int(terms["repay_periods"]) - 1
 
 
 def _capitalised(terms, t):

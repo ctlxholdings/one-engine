@@ -22,7 +22,7 @@ import pytest
 from one_engine import oracles as O
 from one_engine.inputs import InputError, Reader
 from one_engine.oracles.golds import GoldFamily, TRANSLATIONS, untraced
-from one_engine.packs.tea import formulas
+from one_engine.formulas import formulas
 
 FAMILY = GoldFamily()
 ORACLES = FAMILY.oracles()

@@ -17,7 +17,7 @@ Translation
 * ``entity``: the entity whose books the rows are read from;
 * ``plant``: the gold input the planted run changes;
 * ``case``: a one_engine case. Its numbers come from the gold: a generator
-  of kind ``formulas`` (:mod:`one_engine.packs.tea`) with ``inputs: gold``
+  of kind ``formulas`` (:mod:`one_engine.formulas`) with ``inputs: gold``
   receives every numeric gold input by name, and every amount the case
   needs is one of those inputs or a formula over them. The only numbers
   typed in the case are structural (``STRUCTURAL``: period indices, counts,

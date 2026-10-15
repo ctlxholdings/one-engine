@@ -221,20 +221,24 @@ def outside(case: str, kinds: Optional[Mapping[str, Iterable[str]]] = None, modu
     return out
 
 
-def misfiled(registry: Mapping[str, Mapping[str, Any]], rulebooks: Mapping[str, Callable]) -> List[str]:
-    """Rulebooks that :data:`SHARED_AT` or more archetypes declare but that still live in a pack.
+def misfiled(registry: Mapping[str, Mapping[str, Any]], kinds: Mapping[str, Mapping[str, Callable]]) -> List[str]:
+    """Rulebooks and generators that :data:`SHARED_AT` or more archetypes declare but that still live in a pack.
 
-    A pack holds what one kind of deal needs (``packs/__init__``); a rulebook
-    many kinds of deal declare is shared, and belongs beside its module card
-    (``one_engine.rulebooks``). Ali, 2026-10-14, chose to move them.
+    ``kinds`` maps a registry section (``rulebooks``, ``generators``) to the
+    engine's registry of that kind. A pack holds what one kind of deal needs
+    (``packs/__init__``); a piece many kinds of deal declare is shared, and
+    belongs beside its module card (``one_engine.rulebooks``, or the card's
+    own module). Ali chose to move the rulebooks on 2026-10-14 and the
+    ``formulas`` generator with the other shared pieces on 2026-10-15.
     """
-    users: Dict[str, Set[str]] = {}
-    for code, a in registry.items():
-        for k in a["rulebooks"]:
-            users.setdefault(k, set()).add(code)
     out = []
-    for k in sorted(users):
-        home = rulebooks[k].__module__.replace("one_engine.", "")
-        if len(users[k]) >= SHARED_AT and home.startswith("packs."):
-            out.append(f"{k} ({home}, {len(users[k])} archetypes)")
+    for section, engine in kinds.items():
+        users: Dict[str, Set[str]] = {}
+        for code, a in registry.items():
+            for k in a.get(section, ()):
+                users.setdefault(k, set()).add(code)
+        for k in sorted(users):
+            home = engine[k].__module__.replace("one_engine.", "")
+            if len(users[k]) >= SHARED_AT and home.startswith("packs."):
+                out.append(f"{k} ({home}, {len(users[k])} archetypes)")
     return out

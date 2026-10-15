@@ -72,8 +72,10 @@ Added for ModelOff 2014 "Time is Money" (step 7p): the ``npv`` measure
 years of a 23-year forecast); without it the whole stream is valued.
 
 Added for the golds library (:mod:`one_engine.oracles.golds`): the
-techno-economic pack (:mod:`one_engine.packs.tea`), its ``formulas``
-generator and its ``held_balance``, ``settle`` and ``asset_pool`` rulebooks.
+techno-economic pack (:mod:`one_engine.packs.tea`), the ``formulas``
+generator (now :mod:`one_engine.formulas`) and the ``held_balance``,
+``settle`` and ``asset_pool`` rulebooks (the first two now in
+:mod:`one_engine.rulebooks.postings`).
 
 Added for the failure panel (``cases/panel``): the obligations pack
 (:mod:`one_engine.packs.obligations`), its ``duty``, ``prohibition``,
@@ -99,7 +101,8 @@ from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.loops import Loop, LoopReport, close
 from one_engine.kernel import Nature
 from one_engine.packs import contracts as _contracts, corporate as _corporate, obligations as _obligations, pf as _pf, solar as _solar, tea as _tea
-from one_engine.packs.pf import LOOP_RULES
+from one_engine.rulebooks.loops import LOOP_RULES
+from one_engine import formulas as _formulas
 from one_engine import rulebooks as _shared
 from one_engine.units import exact
 
@@ -146,7 +149,7 @@ def _run_template(name: str, overrides: Mapping[str, Any]) -> "CaseResult":
     return run_case(data)
 
 
-GENERATORS = _merge(_solar.GENERATORS, _pf.GENERATORS, _tea.GENERATORS,
+GENERATORS = _merge(_formulas.GENERATORS, _solar.GENERATORS, _pf.GENERATORS,
                     {"cohorts": lambda r: _portfolio.cohorts(r, _run_template),
                      "instalments": _portfolio.instalments_generator})
 

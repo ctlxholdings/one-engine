@@ -32,7 +32,7 @@ from one_engine.inputs import InputError, load_yaml_strict
 from one_engine.loops import LoopError
 from one_engine.measures import xirr
 from one_engine.packs.contracts import _at, _days
-from one_engine.packs.pf import SizingError, sculpt
+from one_engine.rulebooks.loops import SizingError, sculpt
 
 HERE = pathlib.Path(__file__).resolve().parents[1] / "cases"
 CASE_PATH = HERE / "bodmer_6mw.yaml"

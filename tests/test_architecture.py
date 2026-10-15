@@ -56,3 +56,14 @@ def test_a_shared_module_imports_no_pack():
         offenders += [f"{path.relative_to(ROOT)}:{line} {name}" for line, name in _imports(path)
                       if name.startswith("one_engine.packs")]
     assert not offenders, "a shared module imports a pack:\n" + "\n".join(offenders)
+
+
+def test_each_shared_piece_lives_where_it_was_decided():
+    # Ali, 2026-10-15 ("Move them"): the formulas generator (ten archetypes) beside Inputs, the loop rules
+    # (three) beside the loop solver, and tax instalments (used by no project-finance case) beside income tax
+    from one_engine.cases import GENERATORS, LOOP_RULES, RULEBOOKS
+    homes = {"formulas": GENERATORS["formulas"].__module__, "tax_instalments": RULEBOOKS["tax_instalments"].__module__}
+    homes.update({f"loop rule {k}": f.__module__ for k, f in LOOP_RULES.items()})
+    wrong = {k: v for k, v in homes.items()
+             if v != {"formulas": "one_engine.formulas", "tax_instalments": "one_engine.rulebooks.tax"}.get(k, "one_engine.rulebooks.loops")}
+    assert wrong == {}

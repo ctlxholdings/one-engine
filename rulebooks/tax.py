@@ -1,4 +1,4 @@
-"""Tax rulebook (module card 9): income tax.
+"""Tax rulebooks (module card 9): income tax and its instalments.
 
 The base, the loss pool and deferred tax are :mod:`one_engine.tax`; this
 rulebook reads the case's tax terms and posts the charge, credits and the
@@ -7,6 +7,16 @@ archetypes declare out of the packs; ``one_engine/archetypes.yaml``).
 
 Rulebooks
 ---------
+``tax_instalments``
+    Last year's tax, paid this year in instalments: each listed period of
+    the year (``period_of_year``, 0 being the first) pays its ``share`` of
+    everything charged to the payable in the previous year's periods. The
+    grid's years start at period 0, ``periods_per_year`` long. The shares
+    sum to one, so a year's liability is paid in full once its last
+    instalment falls inside the grid (ModelOff 2015 "Tax", step 7k).
+    Moved from :mod:`one_engine.packs.pf` on 2026-10-15 (Ali chose to move the shared pieces still in packs; ``one_engine/archetypes.yaml``);
+    no project-finance case uses it.
+
 ``income_tax``
     The base comes from a scheme classifying every profit-and-loss account
     of the book (:func:`~one_engine.tax.taxable_base`). The charge goes to
@@ -238,4 +248,35 @@ def income_tax(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     group.register(phase, handler)
 
 
-RULEBOOKS = {"income_tax": income_tax}
+def tax_instalments(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    entity, phase, cash, payable = r.take("entity"), r.take("phase"), r.take("cash"), r.take("payable")
+    per_year = int(r.take("periods_per_year"))
+    plan = []
+    for i, raw in enumerate(r.take("instalments")):
+        ir = Reader(raw, source=f"tax_instalments.instalments[{i}]")
+        plan.append((int(ir.take("period_of_year")), exact(ir.take("share"))))
+        ir.finish()
+    if sum(x for _, x in plan) != 1 or any(x < 0 for _, x in plan) or \
+            any(not 0 <= k < per_year for k, _ in plan) or len({k for k, _ in plan}) != len(plan):
+        raise InputError(f"tax_instalments: shares must be non-negative and sum to 1, in distinct periods of the "
+                         f"year 0..{per_year - 1}; got {[(k, float(x)) for k, x in plan]}")
+    shares = dict(plan)
+
+    def handler(g: Group, t: int) -> None:
+        year, k = divmod(t, per_year)
+        if year == 0 or k not in shares:
+            return
+        book = g.book(entity)
+        # last year's liability: everything charged to the payable in its periods
+        charged = sum((p.amount for p in book.postings
+                       if p.credit == payable and (year - 1) * per_year <= p.period < year * per_year), Fraction(0))
+        amount = charged * shares[k]
+        if amount:
+            g.post(entity, Posting(t, phase, payable, cash, amount, {payable: -1, cash: -1}, "tax",
+                                   f"tax.instalment:{t}"))
+        g.record("tax_instalment", t, liability=charged, paid=amount)
+
+    group.register(phase, handler)
+
+
+RULEBOOKS = {"income_tax": income_tax, "tax_instalments": tax_instalments}
