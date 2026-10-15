@@ -29,26 +29,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from fractions import Fraction
-from typing import Dict, FrozenSet, Iterable, List, Mapping, Set
+from typing import FrozenSet, Iterable, List, Set
 
-from one_engine.inputs import State
+from one_engine.inputs import Scheme, State    # one Scheme type classifies accounts here and inputs (C1)
 from one_engine.kernel import Book, Nature
 
 
 class CutError(ValueError):
     """A cut cannot be built completely."""
-
-
-@dataclass(frozen=True)
-class Scheme:
-    """A classification scheme: account name -> class name."""
-
-    name: str
-    classes: Mapping[str, str]
-
-    @property
-    def class_names(self) -> FrozenSet[str]:
-        return frozenset(self.classes.values())
 
 
 @dataclass(frozen=True)

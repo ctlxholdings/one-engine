@@ -40,7 +40,7 @@ FINANCE = {
 #: files whose every test checks the software: readers, refusals, guards
 CODE = {
     "test_mutations.py", "test_architecture.py", "test_inputs.py", "test_units.py", "test_cuts.py",
-    "test_loops.py", "test_conditions.py", "test_groups.py", "test_archetypes.py",
+    "test_loops.py", "test_conditions.py", "test_groups.py", "test_archetypes.py", "test_runs.py",
 }
 
 

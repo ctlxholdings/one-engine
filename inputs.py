@@ -13,12 +13,19 @@ Three invariants from the consolidation map (§8) start here:
   passed off as a stated value: :meth:`Reader.take_or_default` tags it
   ``DEFAULT`` and records why. Downstream, the kernel keeps the state on
   each posting (:mod:`one_engine.kernel`), and Reports must show it.
+
+Classes on inputs (credit pilot C1, 2026-10-15): a :class:`Scheme` maps
+names to classes. Cuts classify accounts with it (:mod:`one_engine.cuts`);
+the same type classifies inputs and contract terms by name, so a credit
+scheme can say which risk kind each input moves (``specific_yield`` ->
+``revenue_quantity``). An input the scheme does not classify refuses, as an
+unclassified account refuses a cut.
 """
 from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Dict, FrozenSet, Iterable, Mapping
 
 
 class InputError(ValueError):
@@ -50,6 +57,26 @@ class Value:
     value: Any
     state: State
     source: str
+
+
+@dataclass(frozen=True)
+class Scheme:
+    """A classification scheme: name -> class name (accounts for cuts, inputs for a credit reading)."""
+
+    name: str
+    classes: Mapping[str, str]
+
+    @property
+    def class_names(self) -> FrozenSet[str]:
+        return frozenset(self.classes.values())
+
+    def classify(self, names: Iterable[str]) -> Dict[str, str]:
+        """The class of each name; a name the scheme does not classify refuses (nothing drops out)."""
+        names = list(names)
+        missing = sorted(n for n in names if n not in self.classes)
+        if missing:
+            raise InputError(f"scheme '{self.name}' does not classify: {', '.join(missing)}")
+        return {n: self.classes[n] for n in names}
 
 
 class Reader:

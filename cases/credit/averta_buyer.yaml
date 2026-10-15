@@ -1,0 +1,28 @@
+# Credit lens on Averta's buyer (credit pilot, 2026-10-15; mapping lenders_view/meta/
+# MAPPING_credit_to_one_engine.md §2). Read by one_engine.packs.credit.
+#
+# The deal is cases/averta_buyer.yaml: the portfolio bought at the HoldCo's exit with a senior term
+# loan (65% of the price), a 2-quarter DSRA and a DSCR lock-up at 1.1. Its base is the live model's
+# P50. The P90 world is the live model's own P90: the zones' specific yield at P90 in every SPV run,
+# directly and through the HoldCo (as test_case_averta_buyer.run does). 1443.0 kWh/kWp is
+# report_data.json metadata.p90_specific_yield (01-averta@cab622b); test_case_credit_pilot.py holds
+# it equal to the report. The credit graph's lender case also cuts self-consumption to 0.70; the live
+# P90 does not, so neither does this world.
+#
+# Parties, read from the buyer's cash: the senior lender receives what the buyer pays on the loan (its
+# draw at acquisition counts as paid out by the lender), the buyer's equity what the buyer pays it.
+lens: averta_buyer
+base: averta_buyer.yaml
+parties:
+  senior_lender: {cut: {entity: buyer, account: cash, scheme: cash_flow, include: [senior]}, sign: -1}
+  buyer_equity: {cut: {entity: buyer, account: cash, scheme: cash_flow, include: [equity]}, sign: -1}
+risks:
+  specific_yield: revenue_quantity           # the resource: kWh per kWp a year
+worlds:
+  p90:
+    what: the live model's P90 specific yield in every SPV run, directly and through the HoldCo
+    add:
+      generators.portfolio: {set: {generators.revenue.specific_yield: 1443.0}}
+      generators.holdco: {set: {generators.portfolio.set: {generators.revenue.specific_yield: 1443.0}}}
+runs:
+  p90: {worlds: [p90]}

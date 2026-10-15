@@ -9,8 +9,8 @@ whose path is taken from its referee, ``test_case_eria.CASE``), the switches are
 (``cases/panel/worlds/*.yaml``), and the mechanisms they flip are the
 obligations pack (:mod:`one_engine.packs.obligations`).
 
-The composer (test-side; the engine sees only a plain case)
--------------------------------------------------------------
+The composer (:func:`one_engine.runs.compose`; the engine sees only a plain case)
+---------------------------------------------------------------------------------
 A world file carries::
 
     world, family, what, watch   description (``watch`` is what to look at)
@@ -62,7 +62,6 @@ The combined W2 + W5 stress inherits both differences. Its mechanism holds
 to the cent: the whole revenue loss reappears one for one in the owner's
 position. Its two numbers do not (the revenue loss, and -603,409.83).
 """
-import copy
 import pathlib
 import re
 from fractions import Fraction as F
@@ -71,6 +70,7 @@ import pytest
 
 from one_engine.cases import RULEBOOKS, run_case
 from one_engine.inputs import load_yaml_strict
+from one_engine.runs import WORLD_KEYS, compose
 from one_engine.tests.test_chain import journal_is_ledger
 # ERIA's path comes from its referee test, so this module does not name the
 # file itself: test_chain's referee check must keep seeing test_case_eria as
@@ -81,59 +81,10 @@ CASES = pathlib.Path(__file__).resolve().parents[1] / "cases"
 PANEL = CASES / "panel"
 WORLDS = PANEL / "worlds"
 
-WORLD_KEYS = {"world", "family", "what", "watch", "set", "set_where_present", "add"}
-
-
-# ── the composer ─────────────────────────────────────────────────────────────
+# ── the composer (one_engine.runs) ───────────────────────────────────────────
 
 def read(path):
     return load_yaml_strict(pathlib.Path(path).read_text())
-
-
-def _parent(doc, dotted, world):
-    """The mapping holding the last segment of ``dotted``, or None where the path does not exist."""
-    *parents, leaf = dotted.split(".")
-    node = doc
-    for k in parents:
-        if not isinstance(node, dict) or k not in node:
-            return None, leaf
-        node = node[k]
-    return (node if isinstance(node, dict) else None), leaf
-
-
-def compose(base, *worlds):
-    """Layer world overlays onto a base case (pure data in, pure data out); see the module docstring."""
-    doc = copy.deepcopy(base)
-    for w in worlds:
-        name = w.get("world")
-        unknown = set(w) - WORLD_KEYS
-        if unknown:
-            raise ValueError(f"world {name!r}: unknown keys {sorted(unknown)}")
-        bound = 0
-        for dotted, value in (w.get("set") or {}).items():
-            node, leaf = _parent(doc, dotted, name)
-            if node is None or leaf not in node:
-                raise ValueError(f"world {name!r}: the base has no {dotted} to set")
-            node[leaf] = copy.deepcopy(value)
-            bound += 1
-        for dotted, value in (w.get("set_where_present") or {}).items():
-            node, leaf = _parent(doc, dotted, name)
-            if node is not None and leaf in node:
-                node[leaf] = copy.deepcopy(value)
-                bound += 1
-        for dotted, entries in (w.get("add") or {}).items():
-            node, leaf = _parent(doc, dotted, name)
-            if node is None:
-                raise ValueError(f"world {name!r}: the base has nowhere to add {dotted}")
-            target = node.setdefault(leaf, {})
-            for key, value in entries.items():
-                if key in target:
-                    raise ValueError(f"world {name!r}: {dotted}.{key} is already in the base")
-                target[key] = copy.deepcopy(value)
-                bound += 1
-        if not bound:
-            raise ValueError(f"world {name!r} binds nothing on this base")
-    return doc
 
 
 def base(name):

@@ -1,0 +1,111 @@
+# fi-compass EUR 2m schools EPC with forfaiting, as ONE deal whose performance cases are worlds
+# (credit pilot, 2026-10-15). The oracle translation (cases/esco/ficompass_example.yaml) books the source's
+# three performance cases (achievement 100%, 90%, 75%) as parallel entities, because the oracle harness
+# reads every figure from one run. A credit reading needs them the other way round: one deal, and a world
+# per case, so each party's position in a world can be set against the same party in the base
+# (one_engine.runs.exposure). The worlds are in cases/credit/ficompass.yaml.
+#
+# Inputs: the oracle's inputs (fi-compass, ESIF in Energy Performance Contracting, 2020, §4, pp. 15-16),
+# by the names the esco harness gives them; test_case_credit_pilot.py holds each one equal to the
+# oracle's, so the number has one source. Two are not printed numbers:
+#   * achievement_pct is the source's s100 case (the base); the worlds set 90 and 75;
+#   * esif_pays is a switch, 1 in the base: the source states that the ESIF guarantee instrument pays
+#     the forfeiter the CAPEX-fee shortfall (L608-610, L800-801). The ESIF-default world sets it to 0.
+#
+# The mechanics are the translation's, once instead of three times:
+#   * the provider pays the works in period 0 from its own capital and sells the CAPEX-fee receivables to
+#     the forfeiter at their present value at the forfeiter's rate (the price is its works revenue);
+#   * the municipality books its saving (baseline x guaranteed share x achievement) and pays the EPC fee
+#     (fee_capex + fee_opex + fee_interest, x achievement: the source's proportional reduction); the
+#     fixed CAPEX leg goes to the forfeiter first, capped by what is paid, the rest to the provider;
+#   * where the fee falls below the CAPEX leg, ESIF pays the forfeiter the shortfall (x esif_pays);
+#   * the forfeiter carries the receivables at the price and accretes them at its rate.
+# Periods are years; 0 is completion. No tax (the source has none).
+case: ficompass-deal
+periods: 11
+phases: [accrue]
+currency: EUR
+floors: {}
+generators:
+  src:
+    kind: formulas
+    periods: 11
+    inputs:
+      capex_eur: 2000000
+      fee_capex_eur_per_y: 200000
+      fee_opex_eur_per_y: 24000
+      fee_interest_eur_per_y: 16000
+      baseline_energy_cost_eur_per_y: 700000
+      guaranteed_savings_pct: 35
+      forfeiter_discount_rate_pct: 1.5
+      term_years: 10
+      achievement_pct: 100
+      esif_pays: 1
+    values:
+      r: forfeiter_discount_rate_pct / 100
+      live: (t >= 1) * (t <= term_years)
+      start: t == 0
+      guaranteed: baseline_energy_cost_eur_per_y * guaranteed_savings_pct / 100
+      fee_total: fee_capex_eur_per_y + fee_opex_eur_per_y + fee_interest_eur_per_y
+      capex_leg: live * fee_capex_eur_per_y
+      receivable: fee_capex_eur_per_y * (1 - (1 + r) ** (t - term_years)) / r * (t <= term_years)
+      price: receivable * start
+      accretion: r * lag(receivable, 1) * (t >= 1)
+      works: capex_eur * start
+      savings: live * achievement_pct / 100 * guaranteed
+      fees: live * achievement_pct / 100 * fee_total
+      to_forfeiter: min(fees, capex_leg)
+      to_provider: fees - to_forfeiter
+      esif_paid: (capex_leg - to_forfeiter) * esif_pays
+contracts: {}
+rulebooks:
+  town:
+    kind: transfer
+    entity: town
+    phase: accrue
+    declare: {cash: asset, avoided_energy_cost: income, capex_fee_expense: expense, service_fee_expense: expense}
+    moves:
+      savings: {debit: cash, credit: avoided_energy_cost, amount: {generator: src, output: savings}}
+      capex_fee: {debit: capex_fee_expense, credit: cash, amount: {generator: src, output: to_forfeiter}}
+      service_fee: {debit: service_fee_expense, credit: cash, amount: {generator: src, output: to_provider}}
+  provider:
+    kind: transfer
+    entity: provider
+    phase: accrue
+    declare: {cash: asset, share_capital: equity, works_cost: expense, works_revenue: income, fee_revenue: income}
+    moves:
+      capital: {debit: cash, credit: share_capital, amount: {generator: src, output: works}}
+      works: {debit: works_cost, credit: cash, amount: {generator: src, output: works}}
+      forfaiting: {debit: cash, credit: works_revenue, amount: {generator: src, output: price}}
+      fee: {debit: cash, credit: fee_revenue, amount: {generator: src, output: to_provider}}
+  forfeiter:
+    kind: transfer
+    entity: forfeiter
+    phase: accrue
+    declare: {cash: asset, share_capital: equity, capex_receivables: asset, discount_income: income}
+    moves:
+      capital: {debit: cash, credit: share_capital, amount: {generator: src, output: price}}
+      purchase: {debit: capex_receivables, credit: cash, amount: {generator: src, output: price}}
+      accrete: {debit: capex_receivables, credit: discount_income, amount: {generator: src, output: accretion}}
+      from_town: {debit: cash, credit: capex_receivables, amount: {generator: src, output: to_forfeiter}}
+      from_esif: {debit: cash, credit: capex_receivables, amount: {generator: src, output: esif_paid}}
+  esif:
+    kind: transfer
+    entity: esif
+    phase: accrue
+    declare: {cash: asset, guarantee_calls: expense}
+    moves:
+      cover: {debit: guarantee_calls, credit: cash, amount: {generator: src, output: esif_paid}}
+schemes:
+  cash_flow:
+    avoided_energy_cost: operating
+    capex_fee_expense: capex_fee
+    service_fee_expense: service_fee
+    share_capital: financing
+    works_cost: investing
+    works_revenue: proceeds
+    fee_revenue: operating
+    capex_receivables: receivables
+    guarantee_calls: guarantee
+cuts: {}           # each party's position is a cut the credit lens adds (cases/credit/ficompass.yaml)
+measures: {}

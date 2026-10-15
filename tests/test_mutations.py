@@ -705,6 +705,27 @@ MUTATIONS = [
     # the failure panel's W1 (cases/panel): the put must pay the lenders at par
     ("packs/obligations.py", "par = g.book(entity).balance(acct, t)", "par = g.book(entity).balance(acct, t) / 2",
      "test_case_esco_panel.py::test_w1_metronet_losses_exactly_540_lenders_at_par"),
+    # the credit pilot (2026-10-15): C1 classes on inputs, C2 exposure per party, the credit pack, the deal
+    ("inputs.py", "        if missing:\n            raise InputError(f\"scheme", "        if False:\n            raise InputError(f\"scheme",
+     "test_inputs.py::test_an_input_the_scheme_does_not_classify_refuses"),
+    ("runs.py", "out[party] = [sign * (y - x) for x, y in zip(b, w)]", "out[party] = [(y - x) for x, y in zip(b, w)]",
+     "test_runs.py::test_a_party_seen_from_the_deal_side_takes_its_sign"),
+    ("runs.py", "        if len(b) != len(w):", "        if False:",
+     "test_runs.py::test_an_exposure_on_runs_of_different_lengths_refuses"),
+    ("runs.py", '            names.add(key.split(".")[-1])', "            names.add(key)",
+     "test_runs.py::test_the_inputs_a_world_moves_are_the_names_it_writes_values_to"),
+    ("packs/credit.py", "if sum(xs) < 0)", "if sum(xs) <= 0)",
+     "test_case_credit_pilot.py::test_a_savings_shortfall_lands_on_the_provider_not_the_forfeiter"),
+    ("packs/credit.py", "exposure(results[against], results[run], signs)", "exposure(results[\"base\"], results[run], signs)",
+     "test_case_credit_pilot.py::test_if_esif_does_not_pay_the_forfeiter_bears_exactly_what_esif_covered"),
+    ("packs/credit.py", "        if names[:len(layers[against])] != layers[against]:", "        if False:",
+     "test_case_credit_pilot.py::test_a_run_read_against_a_run_it_does_not_extend_refuses"),
+    ("packs/credit.py", "    if idle:", "    if False:",
+     "test_case_credit_pilot.py::test_a_world_no_run_uses_refuses"),
+    ("cases/ficompass_deal.yaml", "esif_paid: (capex_leg - to_forfeiter) * esif_pays", "esif_paid: (capex_leg - to_forfeiter)",
+     "test_case_credit_pilot.py::test_if_esif_does_not_pay_the_forfeiter_bears_exactly_what_esif_covered"),
+    ("cases/ficompass_deal.yaml", "to_forfeiter: min(fees, capex_leg)", "to_forfeiter: capex_leg",
+     "test_case_credit_pilot.py::test_the_worlds_reproduce_the_translations_parallel_cases"),
 ]
 
 

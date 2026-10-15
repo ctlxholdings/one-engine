@@ -57,3 +57,25 @@ def test_a_merge_keeps_one_source_and_explicit_keys_override_it():
     assert data["other"] == {"rate": Decimal("0.1"), "annual": 7}
     with pytest.raises(InputError):
         load_yaml_strict("other: {annual: 5, annual: 7}\n")
+
+
+# ── classes on inputs (credit pilot C1, 2026-10-15) ─────────────────────────
+
+def test_an_input_scheme_names_the_class_of_each_input():
+    from one_engine.inputs import Scheme
+    credit = Scheme("credit", {"achievement_pct": "operating_performance", "specific_yield": "revenue_quantity"})
+    assert credit.classify(["specific_yield", "achievement_pct"]) == {
+        "specific_yield": "revenue_quantity", "achievement_pct": "operating_performance"}
+
+
+def test_an_input_the_scheme_does_not_classify_refuses():
+    # a shocked input with no class would drop out of the credit reading silently
+    from one_engine.inputs import Scheme
+    credit = Scheme("credit", {"achievement_pct": "operating_performance"})
+    with pytest.raises(InputError, match="credit.*does not classify: rate"):
+        credit.classify(["achievement_pct", "rate"])
+
+
+def test_accounts_and_inputs_are_classified_by_one_scheme_type():
+    from one_engine import cuts, inputs
+    assert cuts.Scheme is inputs.Scheme

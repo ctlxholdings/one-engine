@@ -1,0 +1,34 @@
+# Credit lens on the fi-compass EPC with forfaiting (credit pilot, 2026-10-15; mapping
+# lenders_view/meta/MAPPING_credit_to_one_engine.md §2). Read by one_engine.packs.credit.
+#
+# The deal is cases/ficompass_deal.yaml: one deal, the source's s100 case as the base. Each run below
+# layers worlds on it, and each party's position in the run is set against the same position in the
+# run it is read against (the base unless named): who bears a risk is read from the books, not declared.
+#
+# Parties: each one's own cash from the deal, its own capital left out (a party's position is what the
+# deal pays it or costs it). The credit scheme (risks) says which risk kind each input a world moves
+# belongs to; the kinds are credit_meta.yaml's.
+lens: ficompass
+base: ficompass_deal.yaml
+parties:
+  municipality: {cut: {entity: town, account: cash, scheme: cash_flow, include: [operating, capex_fee, service_fee]}, sign: 1}
+  provider: {cut: {entity: provider, account: cash, scheme: cash_flow, include: [investing, proceeds, operating]}, sign: 1}
+  forfeiter: {cut: {entity: forfeiter, account: cash, scheme: cash_flow, include: [receivables]}, sign: 1}
+  esif: {cut: {entity: esif, account: cash, scheme: cash_flow, include: [guarantee]}, sign: 1}
+risks:
+  achievement_pct: operating_performance     # the measures deliver less than the guaranteed savings
+  esif_pays: counterparty_default            # the ESIF guarantee instrument does not pay
+worlds:
+  s90:
+    what: the source's 90% achievement case (savings and the EPC fee both fall to 90%)
+    set: {generators.src.inputs.achievement_pct: 90}
+  s75:
+    what: the source's 75% achievement case (the fee falls below the CAPEX leg; ESIF pays the shortfall)
+    set: {generators.src.inputs.achievement_pct: 75}
+  esif_default:
+    what: the ESIF guarantee instrument does not pay the shortfall (not in the source; a credit world)
+    set: {generators.src.inputs.esif_pays: 0}
+runs:
+  s90: {worlds: [s90]}
+  s75: {worlds: [s75]}
+  s75_esif_default: {worlds: [s75, esif_default], against: s75}
