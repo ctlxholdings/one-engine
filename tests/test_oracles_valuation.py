@@ -1,0 +1,259 @@
+"""McKinsey *Valuation*'s exhibits through the oracle harness, and the reader that reads them.
+
+The book's exhibits are read mechanically (:mod:`one_engine.oracles.valuation`),
+so each way a translation could pass one dishonestly is pinned here: a
+printed figure no row reads and no set-aside line explains; a row that takes
+one column of a run and leaves the other unread; a number typed into the
+case; a row declared but neither fed, compared nor set aside; a set-aside line
+the excerpt does not print. Each is planted on a copy of a real translation
+and must fail.
+
+Then the excerpts are held to the book: each vendored excerpt is, byte for
+byte, the book lines its manifest origin names (wherever the book is
+present), and an excerpt is never rewritten. The book map finds every
+chapter and gives every exhibit the chapter its number says.
+
+Last, every translated exhibit gets its recorded verdict, with the planted
+error caught.
+"""
+import copy
+import json
+from fractions import Fraction as F
+
+import pytest
+import yaml
+
+from one_engine import oracles as O
+from one_engine.cases import run_case
+from one_engine.cuts import CutError
+from one_engine.oracles import valuation as VO
+from one_engine.oracles.valuation import ValuationFamily, figures_of, read_row
+
+FAMILY = ValuationFamily()
+ORACLES = FAMILY.oracles()
+#: the worked examples, built by hand before the queue, and their number of checks (one per figure row,
+#: plus the family's own); every other translated exhibit is held to the same verdict without a count
+WORKED = {"7.1-3": 58, "7.4-5@home_depot": 40, "7.4-5@lowes": 40}
+BOOK = VO.book_path()
+needs_book = pytest.mark.skipif(BOOK is None, reason="the valuation book is not in this checkout's shared folder")
+
+
+# ── the reader ──────────────────────────────────────────────────────────────
+
+def test_a_printed_number_is_read_with_its_sign_and_precision():
+    assert VO._number("9,790") == (9790, 0)
+    assert VO._number("(1,027)") == (-1027, 0)
+    assert VO._number("37.6%") == (F(376, 10), 1)
+    assert VO._number("$50") == (50, 0)
+    assert VO._number("(12") is None and VO._number("taxes1") is None
+
+
+def test_glued_dashes_are_one_nil_cell_each():
+    assert VO._cells("–––") == [(0, 0)] * 3
+    _li, positions, cells = read_row("Goodwill ––– 15\n", "Goodwill")
+    assert cells == [(0, 0)] * 3 + [(15, 0)]
+    assert positions == [(1, 0), (1, 1), (1, 2), (2, 0)]
+
+
+def test_a_footnote_mark_opening_a_line_is_not_a_figure():
+    text = "1 Assumes a marginal tax of 25% on all income.\n"
+    assert [cells for _li, _ti, cells in figures_of(text)] == [[(25, 0)]]
+
+
+def test_a_label_is_read_at_its_occurrence_and_never_inside_another_word():
+    text = "Interest-bearing debt 225 200\nInterest (20) Operating taxes1 (70)\nInterest 5\n"
+    assert read_row(text, "Interest")[2] == [(-20, 0)]
+    assert read_row(text, "Interest", occurrence=2)[2] == [(5, 0)]
+    with pytest.raises(KeyError):
+        read_row(text, "Interest", occurrence=3)
+
+
+# ── a translation cannot pass dishonestly ───────────────────────────────────
+
+def _tr(oid="7.1-3"):
+    return yaml.safe_load((VO.TRANSLATIONS / f"{oid}.yaml").read_text())
+
+
+def _run_with(tmp_path, tr, oid="7.1-3", plant=False):
+    (tmp_path / f"{oid}.yaml").write_text(yaml.safe_dump(tr, sort_keys=False))
+    checks, _ = ValuationFamily(translations=tmp_path).run(oid, plant)
+    return {c.name: c for c in checks}
+
+
+def test_the_worked_example_passes_as_translated(tmp_path):
+    checks = _run_with(tmp_path, _tr())
+    assert all(c.ok for c in checks.values()), [c for c in checks.values() if not c.ok]
+
+
+def test_a_printed_figure_no_row_reads_fails(tmp_path):
+    tr = _tr()
+    del tr["rows"]["free_cash_flow"], tr["figures"]["free_cash_flow"]
+    c = _run_with(tmp_path, tr)["every printed figure accounted for"]
+    assert not c.ok and "160" in c.got
+
+
+def test_a_row_that_takes_one_year_of_a_run_leaves_the_other_unaccounted(tmp_path):
+    tr = _tr()
+    del tr["rows"]["inventory"], tr["figures"]["inventory"]      # inventory_prior takes 200, nobody 225
+    c = _run_with(tmp_path, tr)["every printed figure accounted for"]
+    assert not c.ok and "225" in c.got
+
+
+def test_a_number_typed_into_the_case_fails(tmp_path):
+    tr = _tr()
+    tr["case"]["generators"]["book"]["values"]["tax_due"] = "-(0.25 * (revenues + operating_costs))"
+    c = _run_with(tmp_path, tr)["translation traced"]
+    assert not c.ok and "0.25" in c.got
+
+
+def test_a_row_neither_fed_compared_nor_set_aside_fails(tmp_path):
+    tr = _tr()
+    del tr["figures"]["noplat"]
+    assert _run_with(tmp_path, tr)["noplat"].got == "not reported"
+
+
+def test_a_figure_mapped_to_no_row_and_a_stale_set_aside_fail(tmp_path):
+    tr = _tr()
+    tr["figures"]["goodwill"] = {"balance": "net_ppe"}
+    tr["set_aside"]["EXHIBIT 7.9 Not in this excerpt"] = "no such line"
+    checks = _run_with(tmp_path, tr)
+    assert not checks["figure map"].ok and "goodwill" in checks["figure map"].got
+    assert not checks["rows read"].ok and "7.9" in checks["rows read"].got
+
+
+def test_a_wrong_figure_is_caught(tmp_path):
+    # the translation books the cash flow statement's inventory line on the wrong side
+    tr = _tr()
+    tr["case"]["rulebooks"]["year"]["moves"]["inventory"] = {
+        "debit": "inventory", "credit": "cash", "amount": {"generator": "book", "output": "inventory_change"}}
+    checks = _run_with(tmp_path, tr)
+    assert not checks["inventory"].ok and checks["inventory"].got == "175"
+    assert not checks["cash_flow_from_operations"].ok and checks["cash_flow_from_operations"].got == "268"
+    # invested capital does not see it: the 50 lands in cash, which this translation classifies as
+    # operating, so only the rows that read inventory or cash on their own catch the slip
+    assert checks["invested_capital"].ok
+
+
+def test_the_plant_moves_the_books_and_not_the_excerpt(tmp_path):
+    before = (O.REFERENCE / FAMILY.source("7.1-3")).read_bytes()
+    checks = _run_with(tmp_path, _tr(), plant=True)
+    assert not checks["noplat"].ok and checks["noplat"].got == "217.5"
+    assert (O.REFERENCE / FAMILY.source("7.1-3")).read_bytes() == before
+
+
+def test_the_other_companys_columns_count_only_as_its_own_translation_reads_them(tmp_path):
+    # Home Depot's translation alone, without Lowe's beside it: Lowe's columns are unaccounted
+    hd = _tr("7.4-5@home_depot")
+    checks = _run_with(tmp_path, hd, oid="7.4-5@home_depot")
+    assert not checks["every printed figure accounted for"].ok
+    assert "columns_of names 'lowes'" in checks["rows read"].got
+    # with Lowe's translation beside it, Lowe's rows account for them
+    (tmp_path / "7.4-5@lowes.yaml").write_text((VO.TRANSLATIONS / "7.4-5@lowes.yaml").read_text())
+    checks = _run_with(tmp_path, hd, oid="7.4-5@home_depot")
+    assert checks["every printed figure accounted for"].ok and "rows read" not in checks
+
+
+def test_a_balance_sheet_that_does_not_balance_moves_the_plug(tmp_path):
+    # the planted run raises Home Depot's inventories by 1%: the stated books no longer balance
+    checks = _run_with(tmp_path, _tr("7.4-5@home_depot"), oid="7.4-5@home_depot", plant=True)
+    assert not checks["books"].ok and "the stated balances balance" in checks["books"].got
+    assert not checks["total_assets"].ok and checks["total_liabilities_and_equity"].ok
+
+
+# ── the lens refuses books it cannot read ───────────────────────────────────
+
+def _case_of(tr):
+    case = copy.deepcopy(tr["case"])
+    rows = {"inventory_prior": "200", "inventory_prior__0": "200"}
+    case["generators"] = {"book": {"kind": "formulas", "periods": 2, "inputs": rows, "values": {}}}
+    case["opening"] = {"company": {"inventory": {"nature": "asset", "value": {"generator": "book",
+                                                                             "output": "inventory_prior__0"}},
+                                   "common_stock": {"nature": "equity", "value": "balancing"}}}
+    case["rulebooks"] = {}
+    case["cuts"] = {}
+    case["schemes"] = {"valuation": {"inventory": "operating_current_asset", "common_stock": "equity"}}
+    case["lenses"]["v"]["marginal_tax_rate"] = 0
+    return case
+
+
+def test_the_lens_reads_a_classified_book():
+    r = run_case(_case_of(_tr()))
+    assert r.cut("v.invested_capital").values == [200, 200]
+    assert r.cut("v.total_funds_sources").values == [200, 200]
+
+
+def test_the_lens_refuses_an_unclassified_account():
+    case = _case_of(_tr())
+    del case["schemes"]["valuation"]["inventory"]
+    with pytest.raises(CutError, match="does not classify: inventory"):
+        run_case(case)
+
+
+def test_the_lens_refuses_a_class_it_does_not_know():
+    case = _case_of(_tr())
+    case["schemes"]["valuation"]["inventory"] = "operating_currnet_asset"
+    with pytest.raises(CutError, match="does not know: operating_currnet_asset"):
+        run_case(case)
+
+
+# ── the excerpts are the book's lines ───────────────────────────────────────
+
+@needs_book
+@pytest.mark.parametrize("excerpt", FAMILY.excerpts())
+def test_each_excerpt_is_the_book_lines_its_manifest_names(excerpt):
+    lines = VO.read_book()
+    text = (O.REFERENCE / VO.FOLDER / f"{excerpt}.txt").read_text(encoding="utf-8")
+    assert text == VO.cut_excerpt(lines, VO.excerpt_ranges(excerpt))
+
+
+def test_an_excerpt_is_never_rewritten(tmp_path):
+    manifest = tmp_path / "MANIFEST.json"
+    manifest.write_text(json.dumps({"files": {}}))
+    lines = ["EXHIBIT 1.1 A", "Revenue 10"]
+    VO.vendor_excerpt("x", [(1, 2)], lines=lines, root=tmp_path, manifest=manifest)
+    assert (tmp_path / "valuation" / "x.txt").read_text() == "EXHIBIT 1.1 A\nRevenue 10\n"
+    assert VO.excerpt_ranges("x", manifest) == [(1, 2)]
+    with pytest.raises(O.OracleChanged, match="never rewritten"):
+        VO.vendor_excerpt("x", [(1, 1)], lines=lines, root=tmp_path, manifest=manifest)
+
+
+def test_a_book_whose_hash_moved_refuses(tmp_path):
+    fake = tmp_path / "book.txt"
+    fake.write_text("EXHIBIT 7.1 An Example of Invested Capital\n")
+    with pytest.raises(O.OracleChanged, match="is not the book's"):
+        VO.read_book(fake)
+
+
+@needs_book
+def test_the_book_map_finds_every_chapter_and_places_every_exhibit():
+    lines = VO.read_book()
+    assert len(VO.chapter_starts(lines)) == len(VO.CHAPTERS) == 41
+    exhibits = VO.book_map(lines)["exhibits"]
+    # every chapter's exhibits run 1..n with none missing and none twice: 384 in the book
+    ids = [e["id"] for e in exhibits]
+    assert len(ids) == len(set(ids)) == 384
+    for ch in {e["chapter"] for e in exhibits}:
+        nums = sorted(int(e["id"].split(".")[1]) for e in exhibits if e["chapter"] == ch)
+        assert nums == list(range(1, len(nums) + 1)), ch
+    # an exhibit's number names its chapter; the page the running heads give it must agree
+    assert [e["id"] for e in exhibits if VO.chapter_of(e["page"]) != e["chapter"]] == []
+
+
+# ── every translated exhibit gets its recorded verdict ──────────────────────
+
+def test_every_translation_reads_a_vendored_excerpt():
+    assert set(WORKED) <= set(ORACLES)
+    names = {p.stem for p in VO.TRANSLATIONS.glob("*.yaml")}
+    assert names <= set(ORACLES), sorted(names - set(ORACLES))
+
+
+@pytest.mark.parametrize("oid", ORACLES)
+def test_every_exhibit_matches_with_its_plant_caught(oid):
+    r = O.receipt(FAMILY, oid, commit="test")
+    if FAMILY.translation(oid) is None:
+        assert r.verdict == "blocked" and "no translation yet" in r.reason
+        return
+    assert r.verdict == "matches", r.reason
+    assert r.planted_caught and r.n_checks > 3
+    if oid in WORKED:
+        assert r.n_checks == WORKED[oid]

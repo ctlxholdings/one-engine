@@ -50,7 +50,7 @@ NOT_MODULES = ("oracles", "tests", "cases")
 SHARED_AT = 3
 #: case-id prefix of each oracle family, with the folder of its translations
 FAMILY_FOLDERS = {"golds": "golds", "pilot": "golds_pilot", "published": "published", "esco": "esco",
-                  "external": "external", "workbook": "workbooks"}
+                  "external": "external", "workbook": "workbooks", "valuation": "valuation"}
 
 
 def load(path: pathlib.Path = REGISTRY_PATH) -> Dict[str, Dict[str, Any]]:
@@ -139,9 +139,11 @@ def _runner(case: str) -> Callable[[], Any]:
     from one_engine.oracles.golds import GoldFamily
     from one_engine.oracles.pilot import PilotFamily
     from one_engine.oracles.published import PublishedFamily
+    from one_engine.oracles.valuation import ValuationFamily
     from one_engine.oracles.workbook import WorkbookFamily
     family = {"actus": ActusFamily, "golds": GoldFamily, "pilot": PilotFamily, "published": PublishedFamily,
-              "esco": EscoFamily, "external": ExternalFamily, "workbook": WorkbookFamily}[prefix]()
+              "esco": EscoFamily, "external": ExternalFamily, "workbook": WorkbookFamily,
+              "valuation": ValuationFamily}[prefix]()
     return lambda: family.run(stem)
 
 

@@ -81,6 +81,12 @@ Added for the failure panel (``cases/panel``): the obligations pack
 (:mod:`one_engine.packs.obligations`), its ``duty``, ``prohibition``,
 ``claim``, ``put``, ``stack`` and ``pool`` rulebooks. Registration only;
 the runner's behaviour is unchanged.
+
+Added for the valuation book (2026-10-18): the valuation pack
+(:mod:`one_engine.packs.valuation`), its ``valuation`` lens (invested
+capital, NOPLAT, FCF, ROIC and economic profit read from the books under a
+classification scheme) and its ``stated`` rulebook (balances held at printed
+figures). Registration only.
 """
 from __future__ import annotations
 
@@ -100,7 +106,7 @@ from one_engine.entities import Group
 from one_engine.inputs import InputError, Reader, State, Value, load_yaml_strict
 from one_engine.loops import Loop, LoopReport, close
 from one_engine.kernel import Nature
-from one_engine.packs import contracts as _contracts, corporate as _corporate, obligations as _obligations, pf as _pf, solar as _solar, tea as _tea
+from one_engine.packs import contracts as _contracts, corporate as _corporate, obligations as _obligations, pf as _pf, solar as _solar, tea as _tea, valuation as _valuation
 from one_engine.rulebooks.loops import LOOP_RULES
 from one_engine import formulas as _formulas
 from one_engine import rulebooks as _shared
@@ -121,8 +127,9 @@ def _merge(*registries: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 REGISTRY = _merge(_contracts.REGISTRY, _corporate.TYPES)
-RULEBOOKS = _merge(_shared.RULEBOOKS, _pf.RULEBOOKS, _corporate.RULEBOOKS, _tea.RULEBOOKS, _obligations.RULEBOOKS)
-LENSES = _merge(_corporate.LENSES)
+RULEBOOKS = _merge(_shared.RULEBOOKS, _pf.RULEBOOKS, _corporate.RULEBOOKS, _tea.RULEBOOKS, _obligations.RULEBOOKS,
+                   _valuation.RULEBOOKS)
+LENSES = _merge(_corporate.LENSES, _valuation.LENSES)
 CASES = pathlib.Path(__file__).resolve().parent
 
 

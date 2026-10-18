@@ -35,7 +35,7 @@ FINANCE = {
     "test_chain.py", "test_kernel.py", "test_checks.py", "test_tax.py", "test_income_tax_options.py",
     "test_measures.py", "test_measures_annuity.py", "test_measurement.py", "test_holders.py",
     "test_obligations.py", "test_allocation.py", "test_portfolio.py", "test_asset_register_carried.py",
-    "test_dates.py", "test_entities.py", "test_contracts.py", "test_market.py",
+    "test_dates.py", "test_entities.py", "test_contracts.py", "test_market.py", "test_valuation_formulas.py",
 }
 #: files whose every test checks the software: readers, refusals, guards
 CODE = {
