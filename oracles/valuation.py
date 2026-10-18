@@ -95,8 +95,10 @@ failed check ("not reported").
 
 Planted error
 -------------
-The input row named by ``plant``, every period times 1.01 (plus 1 where it is
-nil), given to the translation; the excerpt is untouched.
+The input row named by ``plant``, each of its printed periods moved 1% away
+from nil, or by ten units of its last printed digit where that is more (a
+row of small percents, or a nil), given to the translation; the excerpt is
+untouched.
 """
 from __future__ import annotations
 
@@ -443,7 +445,8 @@ _ROW_KEYS = {"label", "line", "continued", "occurrence", "periods", "scale", "sk
 
 class ValuationFamily(Family):
     name = "valuation"
-    planted = "the input row the translation names under 'plant', every period x 1.01 (+1 where it is nil)"
+    planted = ("the input row the translation names under 'plant', each printed period moved 1% away from nil "
+               "(at least ten units of its last printed digit)")
     tolerance = ("each printed figure within one unit of its last printed digit (the book rounds every line "
                  "on its own)")
 
@@ -516,8 +519,14 @@ class ValuationFamily(Family):
             name = tr["plant"]
             if name not in inputs:
                 raise Blocked(f"plant names '{name}', which is not an input row")
-            inputs[name] = [x * Fraction(101, 100) if x else x + 1 for x in inputs[name]]
-            planted = f"{name}: x 1.01"
+            row = rows[name]
+            for p, (x, decimals) in zip(row["periods"], row["cells"]):
+                # 1% of the amount, but never less than ten units of the printed last digit: a small
+                # percent moved by 1% stays inside the one-unit tolerance and no figure could catch it
+                v, unit = inputs[name][p], row["scale"] / 10 ** decimals
+                delta = max(abs(v) / 100, 10 * unit)
+                inputs[name][p] = v + delta if v >= 0 else v - delta
+            planted = f"{name}: +1% away from nil, at least ten units of its last printed digit"
         fed_inputs: Dict[str, Any] = {}
         for name, series in inputs.items():
             fed_inputs[name] = [str(x) for x in series]

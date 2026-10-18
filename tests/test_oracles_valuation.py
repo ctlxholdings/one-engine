@@ -197,6 +197,15 @@ def test_a_balance_sheet_that_does_not_balance_moves_the_plug(tmp_path):
     assert not checks["total_assets"].ok and checks["total_liabilities_and_equity"].ok
 
 
+def test_a_plant_on_a_small_percent_moves_beyond_the_tolerance(tmp_path):
+    # the footnote's 25% moved by 1% would be 25.25%, inside the one-unit tolerance of a printed 25%;
+    # the plant moves it ten units (to 35%), and the computed taxes move with it
+    tr = _tr()
+    tr["plant"] = "marginal_tax"
+    checks = _run_with(tmp_path, tr, plant=True)
+    assert not checks["taxes"].ok and checks["taxes"].got == "-92.4"
+
+
 # ── the lens refuses books it cannot read ───────────────────────────────────
 
 def _case_of(tr):
