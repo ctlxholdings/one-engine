@@ -1,0 +1,61 @@
+# Valuation, Exhibit 12.5 (ch. 12, p. 283): equity of a distressed company valued by scenario.
+#
+# Two scenarios, each with its own enterprise value and the same face value
+# of debt. In each, equity is what is left after the debt, never less than
+# nothing (the exhibit's footnote); the equity values are then weighted by the
+# scenarios' probabilities and summed (pp. 283-284). In the second scenario
+# the enterprise value is below the debt, so its equity, and its weighted
+# equity, print as dashes (nil).
+#
+# Translated as a calculation: the enterprise values, the face values of debt
+# and the probabilities are inputs; each scenario's equity, weighted equity and
+# the total equity value are computed and compared.
+excerpt: "12.5"
+periods: [0]
+entity: company
+plant: enterprise_value_a
+rows:
+  enterprise_value_a: {label: value improvements.}
+  debt_a: {label: value improvements., skip: 1}
+  equity_a: {label: value improvements., skip: 2}
+  probability_a: {label: value improvements., skip: 3, scale: 0.01}
+  weighted_a: {label: value improvements., skip: 4}
+  enterprise_value_b: {label: Company maintains current performance.}
+  debt_b: {label: Company maintains current performance., skip: 1}
+  equity_b: {label: Company maintains current performance., skip: 2}
+  probability_b: {label: Company maintains current performance., skip: 3, scale: 0.01}
+  weighted_b: {label: Company maintains current performance., skip: 4}
+  equity_value: Equity value
+inputs: [enterprise_value_a, debt_a, probability_a, enterprise_value_b, debt_b, probability_b]
+set_aside:
+  "EXHIBIT 12.5 Valuation of Equity Using Scenario Analysis": the exhibit's number
+case:
+  case: valuation-12-5-scenarios
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    scenarios:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # the footnote: enterprise value less the face value of debt, or nothing, whichever is greater
+        equity_a: max(enterprise_value_a - debt_a, 0)
+        equity_b: max(enterprise_value_b - debt_b, 0)
+        weighted_a: equity_a * probability_a
+        weighted_b: equity_b * probability_b
+        equity_value: weighted_a + weighted_b
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  equity_a: {driver: scenarios.equity_a}
+  weighted_a: {driver: scenarios.weighted_a}
+  equity_b: {driver: scenarios.equity_b}
+  weighted_b: {driver: scenarios.weighted_b}
+  equity_value: {driver: scenarios.equity_value}

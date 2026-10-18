@@ -1,0 +1,83 @@
+# Valuation, Exhibit 12.1 (ch. 12, p. 274): the valuation buildup of a hypothetical complex company.
+#
+# The exhibit walks from the DCF value of operations to equity value in one
+# column. Nonoperating assets (excess cash, excess real estate, the stakes in
+# nonconsolidated and financial subsidiaries, tax loss carry-forwards and
+# discontinued operations) are added to reach enterprise value; then the
+# nonequity claims are taken off: interest-bearing debt and the debt
+# equivalents (leases, securitized receivables, unfunded pensions, provisions,
+# contingent liabilities), the hybrid claims (convertible debt, preferred
+# stock, employee options) and minority interests. The claims print negative,
+# so each subtotal is the plain sum of the lines above it as printed.
+#
+# Translated as a calculation: every component is an input, and the three
+# subtotals the exhibit prints (enterprise value, debt and debt equivalents,
+# equity value) are computed by the valuation_formulas generator and compared.
+# There are no books: the exhibit prints no statements.
+excerpt: "12.1"
+periods: [0]
+entity: company
+plant: dcf_value_of_operations
+rows:
+  dcf_value_of_operations: DCF value of operations
+  excess_cash: Excess cash and marketable securities
+  excess_real_estate: Excess real estate
+  nonconsolidated_subsidiaries: Nonconsolidated subsidiaries
+  financial_subsidiary: Financial subsidiary
+  tax_loss_carry_forwards: Tax loss carry-forwards
+  discontinued_operations: Discontinued operations
+  enterprise_value: Enterprise value
+  bank_loans: Bank loans
+  bonds: Bonds
+  operating_leases: Operating leases
+  securitized_receivables: Securitized receivables
+  unfunded_pensions: Unfunded pension liabilities
+  long_term_operating_provisions: Long-term operating provisions
+  nonoperating_provisions: Nonoperating provisions
+  contingent_liabilities: Contingent liabilities
+  debt_and_debt_equivalents: Debt and debt equivalents
+  convertible_debt: Convertible debt
+  # the panel's side label is glued in front of this line's own label
+  preferred_stock: Preferred stock
+  employee_stock_options: Employee stock options
+  minority_interests: Minority interests
+  equity_value: Equity value
+inputs: [dcf_value_of_operations, excess_cash, excess_real_estate, nonconsolidated_subsidiaries,
+         financial_subsidiary, tax_loss_carry_forwards, discontinued_operations, bank_loans, bonds,
+         operating_leases, securitized_receivables, unfunded_pensions, long_term_operating_provisions,
+         nonoperating_provisions, contingent_liabilities, convertible_debt, preferred_stock,
+         employee_stock_options, minority_interests]
+set_aside:
+  "EXHIBIT 12.1 Sample Comprehensive Valuation Buildup": the exhibit's number
+case:
+  case: valuation-12-1-buildup
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    buildup:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        enterprise_value: >-
+          dcf_value_of_operations + excess_cash + excess_real_estate + nonconsolidated_subsidiaries
+          + financial_subsidiary + tax_loss_carry_forwards + discontinued_operations
+        # the claims print negative: each subtotal adds them as printed
+        debt_and_debt_equivalents: >-
+          bank_loans + bonds + operating_leases + securitized_receivables + unfunded_pensions
+          + long_term_operating_provisions + nonoperating_provisions + contingent_liabilities
+        equity_value: >-
+          enterprise_value + debt_and_debt_equivalents + convertible_debt + preferred_stock
+          + employee_stock_options + minority_interests
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  enterprise_value: {driver: buildup.enterprise_value}
+  debt_and_debt_equivalents: {driver: buildup.debt_and_debt_equivalents}
+  equity_value: {driver: buildup.equity_value}

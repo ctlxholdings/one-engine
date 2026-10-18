@@ -1,0 +1,70 @@
+# Valuation, Exhibit 13.4 (ch. 13, pp. 301-302): the key value drivers of two scenarios for a company
+# launching a new product.
+#
+# For the last actual year (2009), six forecast years and the continuing-value
+# period, each scenario prints revenue growth, the after-tax operating margin
+# (NOPLAT over revenue), capital turnover (revenue over invested capital) and
+# their product, return on invested capital: in scenario 1 the launch succeeds
+# and ROIC peaks above 20%; in scenario 2 it fails and ROIC sinks below its
+# starting level (p. 301).
+#
+# Translated as a calculation: margin and turnover are inputs, and ROIC is the
+# pack's roic() of the margin over the invested capital per unit of revenue
+# (the reciprocal of turnover), compared for every column of both scenarios.
+# Revenue growth enters no printed calculation and is an input only.
+#
+# Reading the text: the extraction prints the whole exhibit on two lines, the
+# caption, the column years and the scenario numbers among the rows, so no
+# line can be set aside without hiding the table. The caption's number, the
+# forecast years (the run after "2009A") and the two scenario numbers are
+# therefore read as rows of their own and handed in as inputs that feed
+# nothing. In scenario 2 two labels are glued to the end of the previous
+# sentence ("share.Operating margins", "fall.Return on invested capital") and
+# are read as printed.
+excerpt: "13.4"
+periods: [0, 1, 2, 3, 4, 5, 6, 7]
+entity: company
+plant: margin_1
+notes: >-
+  Columns are periods 0-7: 2009 actual, 2010-2015, and the continuing-value period. Scenario 2 prints its
+  margin as "Operating margins" where scenario 1 prints "After-tax operating margin"; the ROIC column shows
+  both are after-tax margins (ROIC = margin x turnover in both).
+rows:
+  exhibit_number: {label: EXHIBIT, periods: [0]}
+  forecast_years: {label: 2009A, periods: [1, 2, 3, 4, 5, 6]}
+  scenario_1_number: {label: Scenario, occurrence: 1, periods: [0]}
+  scenario_2_number: {label: Scenario, occurrence: 2, periods: [0]}
+  growth_1: {label: Revenue growth, occurrence: 1, scale: 0.01}
+  margin_1: {label: After-tax operating margin, scale: 0.01}
+  turnover_1: {label: Capital turnover (times), occurrence: 1}
+  roic_1: {label: Return on invested capital, occurrence: 1, scale: 0.01}
+  growth_2: {label: Revenue growth, occurrence: 2, scale: 0.01}
+  margin_2: {label: share.Operating margins, scale: 0.01}
+  turnover_2: {label: Capital turnover (times), occurrence: 2}
+  roic_2: {label: fall.Return on invested capital, scale: 0.01}
+inputs: [exhibit_number, forecast_years, scenario_1_number, scenario_2_number, growth_1, margin_1, turnover_1,
+         growth_2, margin_2, turnover_2]
+case:
+  case: valuation-13-4-scenario-drivers
+  periods: 8
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    drivers:
+      kind: valuation_formulas
+      periods: 8
+      inputs: exhibit
+      values:
+        # ROIC = NOPLAT/revenue over invested capital/revenue: the margin over the reciprocal of turnover
+        roic_1: roic(margin_1, 1 / turnover_1)
+        roic_2: roic(margin_2, 1 / turnover_2)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  roic_1: {driver: drivers.roic_1}
+  roic_2: {driver: drivers.roic_2}

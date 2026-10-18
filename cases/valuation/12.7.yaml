@@ -1,0 +1,128 @@
+# Valuation, Exhibit 12.7 (ch. 12, pp. 289-290): Hasbro's equity value per share in November 2008,
+# with its employee options valued three ways.
+#
+# The same bridge as Exhibit 12.6's market-value column (enterprise value less
+# traditional debt, the convertible bond at market value and unfunded
+# pensions), with the employee options deducted at (1) the Black-Scholes value
+# of all outstanding options, (2) the Black-Scholes value of the currently
+# exercisable ones, or (3) the exercise approach: the exercisable options are
+# taken as exercised now, so the cash their exercise brings in is added and the
+# new shares join the share count (p. 290). Value per share is equity over the
+# undiluted count for the two option-value columns and over the diluted count
+# for the exercise approach.
+#
+# Translated as a calculation. The first column's lines are inputs, and the
+# lines repeated in the other columns are compared with them. The two option
+# values, the exercise proceeds and the new shares are inputs (the exhibit
+# prints them as results; their option-model and strike inputs are in the
+# prose). The bond's coupon and maturity, printed in its label, enter no
+# calculation and are inputs only. Equity values, diluted shares and values per
+# share are computed and compared.
+excerpt: "12.7"
+periods: [0]
+entity: hasbro
+plant: enterprise_value_outstanding
+rows:
+  enterprise_value_outstanding: {label: Enterprise value}
+  enterprise_value_exercisable: {label: Enterprise value, skip: 1}
+  enterprise_value_exercise: {label: Enterprise value, skip: 2}
+  traditional_debt_outstanding: {label: Traditional debt}
+  traditional_debt_exercisable: {label: Traditional debt, skip: 1}
+  traditional_debt_exercise: {label: Traditional debt, skip: 2}
+  # the bond's label prints its coupon and maturity: "Convertible debt at 2.75% due 2021"
+  convertible_coupon: {label: Convertible debt at, scale: 0.01}
+  convertible_maturity: {label: due}
+  convertible_outstanding: {label: due, skip: 1}
+  convertible_exercisable: {label: due, skip: 2}
+  convertible_exercise: {label: due, skip: 3}
+  pensions_outstanding: {label: Unfunded pensions}
+  pensions_exercisable: {label: Unfunded pensions, skip: 1}
+  pensions_exercise: {label: Unfunded pensions, skip: 2}
+  options_outstanding: {label: "Employee options: value"}
+  options_exercisable: {label: "Employee options: value", skip: 1}
+  options_exercise: {label: "Employee options: value", skip: 2}
+  proceeds_outstanding: {label: "Employee options: exercise proceeds"}
+  proceeds_exercisable: {label: "Employee options: exercise proceeds", skip: 1}
+  proceeds_exercise: {label: "Employee options: exercise proceeds", skip: 2}
+  equity_outstanding: {label: Equity value}
+  equity_exercisable: {label: Equity value, skip: 1}
+  equity_exercise: {label: Equity value, skip: 2}
+  shares_outstanding: {label: Number of nondiluted shares}
+  shares_exercisable: {label: Number of nondiluted shares, skip: 1}
+  shares_exercise: {label: Number of nondiluted shares, skip: 2}
+  new_shares_outstanding: {label: New shares issued}
+  new_shares_exercisable: {label: New shares issued, skip: 1}
+  new_shares_exercise: {label: New shares issued, skip: 2}
+  diluted_outstanding: {label: Number of diluted shares}
+  diluted_exercisable: {label: Number of diluted shares, skip: 1}
+  diluted_exercise: {label: Number of diluted shares, skip: 2}
+  per_share_outstanding: {label: Value per share (dollars)}
+  per_share_exercisable: {label: Value per share (dollars), skip: 1}
+  per_share_exercise: {label: Value per share (dollars), skip: 2}
+inputs: [enterprise_value_outstanding, traditional_debt_outstanding, convertible_coupon, convertible_maturity,
+         convertible_outstanding, pensions_outstanding, options_outstanding, options_exercisable,
+         proceeds_exercise, shares_outstanding, new_shares_exercise]
+set_aside:
+  "EXHIBIT 12.7 Hasbro Employee Options, November 2008": the exhibit's number and its date
+  "Source: Hasbro 2007 10-K, NASD TRACE system, Black-Scholes option-pricing model.": the source line's year
+case:
+  case: valuation-12-7-hasbro-options
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    hasbro:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # the claims common to every column (they print negative)
+        other_claims: traditional_debt_outstanding + convertible_outstanding + pensions_outstanding
+        # option values deducted (negative as printed); under the exercise approach none is, and the
+        # exercise brings cash in instead
+        options_exercise: 0
+        proceeds_outstanding: 0
+        proceeds_exercisable: 0
+        equity_outstanding: enterprise_value_outstanding + other_claims + options_outstanding + proceeds_outstanding
+        equity_exercisable: enterprise_value_outstanding + other_claims + options_exercisable + proceeds_exercisable
+        equity_exercise: enterprise_value_outstanding + other_claims + options_exercise + proceeds_exercise
+        new_shares_outstanding: 0
+        new_shares_exercisable: 0
+        diluted_outstanding: shares_outstanding + new_shares_outstanding
+        diluted_exercisable: shares_outstanding + new_shares_exercisable
+        diluted_exercise: shares_outstanding + new_shares_exercise
+        per_share_outstanding: equity_outstanding / diluted_outstanding
+        per_share_exercisable: equity_exercisable / diluted_exercisable
+        per_share_exercise: equity_exercise / diluted_exercise
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  enterprise_value_exercisable: {driver: hasbro.enterprise_value_outstanding}
+  enterprise_value_exercise: {driver: hasbro.enterprise_value_outstanding}
+  traditional_debt_exercisable: {driver: hasbro.traditional_debt_outstanding}
+  traditional_debt_exercise: {driver: hasbro.traditional_debt_outstanding}
+  convertible_exercisable: {driver: hasbro.convertible_outstanding}
+  convertible_exercise: {driver: hasbro.convertible_outstanding}
+  pensions_exercisable: {driver: hasbro.pensions_outstanding}
+  pensions_exercise: {driver: hasbro.pensions_outstanding}
+  options_exercise: {driver: hasbro.options_exercise}
+  proceeds_outstanding: {driver: hasbro.proceeds_outstanding}
+  proceeds_exercisable: {driver: hasbro.proceeds_exercisable}
+  equity_outstanding: {driver: hasbro.equity_outstanding}
+  equity_exercisable: {driver: hasbro.equity_exercisable}
+  equity_exercise: {driver: hasbro.equity_exercise}
+  shares_exercisable: {driver: hasbro.shares_outstanding}
+  shares_exercise: {driver: hasbro.shares_outstanding}
+  new_shares_outstanding: {driver: hasbro.new_shares_outstanding}
+  new_shares_exercisable: {driver: hasbro.new_shares_exercisable}
+  diluted_outstanding: {driver: hasbro.diluted_outstanding}
+  diluted_exercisable: {driver: hasbro.diluted_exercisable}
+  diluted_exercise: {driver: hasbro.diluted_exercise}
+  per_share_outstanding: {driver: hasbro.per_share_outstanding}
+  per_share_exercisable: {driver: hasbro.per_share_exercisable}
+  per_share_exercise: {driver: hasbro.per_share_exercise}

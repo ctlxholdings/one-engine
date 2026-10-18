@@ -1,0 +1,93 @@
+# Valuation, Exhibit 10.3 (ch. 10, p. 219): one company's value split between the explicit forecast
+# and the continuing value, for forecast horizons of 5, 8, 10, 15 and 20 years.
+#
+# The chart is the model that Exhibits 10.4 and 10.5 print in full (oracle 10.4-5), read at five
+# horizons: the total stays $893 million and the continuing value's share falls as the horizon grows.
+# Its assumptions box gives the drivers (growth and return on new capital in years 1-5 and from year
+# 6, the WACC printed negative as the term subtracted for the spread). The chart has no money scale,
+# so the excerpt adds the NOPLAT row of Exhibit 10.4 (book line 9093), whose year-1 figure is the
+# model's base; its other figures are compared.
+#
+# Built with the valuation_formulas generator, case period t = year t (to 21, one beyond the longest
+# horizon): FCF is NOPLAT less the reinvested share g / RONIC (depreciation cancels out of FCF); the
+# continuing value at horizon t is the pack's value_driver over NOPLAT of year t+1, discounted t
+# years. Each bar's data labels sit on a line with no label; each such line is read with `line` and
+# placed at the horizons its bars stand for (the shares print in bar order: the continuing value's
+# five, then the explicit period's five). The two lines of axis labels are compared with the horizon
+# the bars are read at.
+excerpt: "10.3"
+periods: [5, 8, 10, 15, 20]
+entity: model
+plant: noplat_1
+rows:
+  growth: {label: Growth, periods: [1, 6], scale: 0.01}
+  ronic: {label: RONIC, periods: [1, 6], scale: 0.01}
+  wacc: {label: WACC, periods: [1, 6], scale: 0.01}
+  spread: {label: Spread, periods: [1, 6], scale: 0.01}
+  total_value: {line: 8}
+  cv_share_5: {line: 9, periods: [5], scale: 0.01}
+  cv_share_8_10: {line: 10, periods: [8, 10], scale: 0.01}
+  cv_share_15: {line: 11, periods: [15], scale: 0.01}
+  cv_share_20: {line: 12, periods: [20], scale: 0.01}
+  explicit_share_5: {line: 13, periods: [5], scale: 0.01}
+  explicit_share_8_10: {line: 14, periods: [8, 10], scale: 0.01}
+  explicit_share_15: {line: 15, periods: [15], scale: 0.01}
+  explicit_share_20: {line: 16, periods: [20], scale: 0.01}
+  horizons_5_8_10: {line: 17, periods: [5, 8, 10]}
+  horizons_15_20: {line: 19, periods: [15, 20]}
+  noplat_1: {label: NOPLAT, periods: [1]}
+  noplat: {label: NOPLAT, periods: [2, 3, 4, 5, 6], skip: 1}
+inputs: [growth, ronic, wacc, noplat_1]
+set_aside:
+  "EXHIBIT 10.3–Comparison of Total-Value Estimates Using Different Forecast Horizons": the exhibit's number
+case:
+  case: valuation-chapter-10-horizons
+  periods: 22
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 22
+      inputs: exhibit
+      values:
+        g_a: growth__1
+        g_b: growth__6
+        ronic_a: ronic__1
+        ronic_b: ronic__6
+        # the box prints the WACC negative, as the term subtracted from RONIC
+        wacc_a: -wacc__1
+        wacc_b: -wacc__6
+        spread_m: "(ronic_a - wacc_a) if t < 6 else (ronic_b - wacc_b)"
+        noplat_m: "noplat_1__1 * (1 + g_a) ** (min(t, 5) - 1) * (1 + g_b) ** max(t - 5, 0)"
+        noplat_next: "noplat_1__1 * (1 + g_a) ** min(t, 4) * (1 + g_b) ** max(t - 4, 0)"
+        reinvestment: "(g_a / ronic_a) if t <= 5 else (g_b / ronic_b)"
+        pv_fcf_m: "noplat_m * (1 - reinvestment) * (1 + wacc_a) ** (-t) if t >= 1 else 0"
+        pv_explicit: cumsum(pv_fcf_m)
+        pv_cv: value_driver(noplat_next, g_b, ronic_b, wacc_b) * (1 + wacc_a) ** (-t)
+        total_m: pv_explicit + pv_cv
+        cv_share_m: pv_cv / total_m
+        explicit_share_m: pv_explicit / total_m
+        horizon_m: t
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  spread: {driver: m.spread_m}
+  total_value: {driver: m.total_m}
+  cv_share_5: {driver: m.cv_share_m}
+  cv_share_8_10: {driver: m.cv_share_m}
+  cv_share_15: {driver: m.cv_share_m}
+  cv_share_20: {driver: m.cv_share_m}
+  explicit_share_5: {driver: m.explicit_share_m}
+  explicit_share_8_10: {driver: m.explicit_share_m}
+  explicit_share_15: {driver: m.explicit_share_m}
+  explicit_share_20: {driver: m.explicit_share_m}
+  horizons_5_8_10: {driver: m.horizon_m}
+  horizons_15_20: {driver: m.horizon_m}
+  noplat: {driver: m.noplat_m}

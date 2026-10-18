@@ -1,0 +1,73 @@
+# Valuation, Exhibit 12.2 (ch. 12, p. 277): Philips's enterprise value in October 2008.
+#
+# Two panels share the text lines. The left one adds to Philips's core
+# operating value the stakes it holds in four associates and its excess cash
+# to reach enterprise value. The right one shows where the largest stake, LG
+# Display, comes from (pp. 276-277): the listed company's market value in won,
+# converted to euros at the exchange rate, times Philips's 19.9% holding.
+#
+# Translated as a calculation. The LG Display stake is computed from the right
+# panel (market value in won, exchange rate, holding) and compared with both
+# printings of it (the right panel's ownership stake and the left panel's LG
+# Display line); the euro market value is compared; the left panel's holding
+# for LG Display is compared with the right panel's percent ownership.
+# Enterprise value adds the computed LG Display stake to the other three
+# stakes, the core operating value and excess cash as printed. The other three
+# stakes come from market values the exhibit does not print, so they and their
+# holdings are inputs only (the holdings enter no printed calculation).
+excerpt: "12.2"
+periods: [0]
+entity: philips
+plant: market_cap_won
+rows:
+  core_operating_value: Core operating value
+  market_cap_won: Market capitalization (millions of won)
+  wons_per_euro: Currency conversion (wons/euro)
+  lg_display_holding: {label: LG Display, scale: 0.01}
+  lg_display_stake: {label: LG Display, skip: 1}
+  market_cap_eur: Market capitalization (millions of euros)
+  tpv_holding: {label: TPV Technologies, scale: 0.01}
+  tpv_stake: {label: TPV Technologies, skip: 1}
+  nxp_holding: {label: NXP Semiconductors, scale: 0.01}
+  nxp_stake: {label: NXP Semiconductors, skip: 1}
+  percent_ownership: {label: Percent ownership, scale: 0.01}
+  pace_holding: {label: Pace Micro Technologies, scale: 0.01}
+  pace_stake: {label: Pace Micro Technologies, skip: 1}
+  ownership_stake: Ownership stake (millions of euros)
+  excess_cash: Excess cash
+  enterprise_value: Enterprise value
+inputs: [core_operating_value, market_cap_won, wons_per_euro, percent_ownership, tpv_holding, tpv_stake,
+         nxp_holding, nxp_stake, pace_holding, pace_stake, excess_cash]
+set_aside:
+  "EXHIBIT 12.2 Philips Enterprise Value, October 2008": the exhibit's number and its date
+  "Source: UBS Analyst Report, October 2008, Thomson First Call.": the source line's date
+case:
+  case: valuation-12-2-philips
+  periods: 1
+  phases: [operate]
+  currency: EUR
+  floors: {}
+  generators:
+    philips:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # LG Display's market value in euros, then Philips's share of it
+        market_cap_eur: market_cap_won / wons_per_euro
+        lg_display_stake: market_cap_eur * percent_ownership
+        lg_display_holding: percent_ownership
+        enterprise_value: >-
+          core_operating_value + lg_display_stake + tpv_stake + nxp_stake + pace_stake + excess_cash
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  market_cap_eur: {driver: philips.market_cap_eur}
+  ownership_stake: {driver: philips.lg_display_stake}
+  lg_display_stake: {driver: philips.lg_display_stake}
+  lg_display_holding: {driver: philips.lg_display_holding}
+  enterprise_value: {driver: philips.enterprise_value}

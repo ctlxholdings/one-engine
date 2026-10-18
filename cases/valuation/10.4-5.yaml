@@ -1,0 +1,148 @@
+# Valuation, Exhibits 10.4-10.5 (ch. 10, pp. 219-220): one company valued with a five-year and an
+# eight-year explicit forecast, to show that the horizon moves value between the forecast and the
+# continuing value but leaves the total unchanged.
+#
+# Both exhibits print the same yearly model; only the cut-off differs. The excerpt also carries the
+# "modeling assumptions" box of Exhibit 10.3 (p. 219), which prints the model's drivers: growth and
+# return on new capital in years 1-5 and from year 6, and the WACC (printed negative, as the term
+# subtracted to give the spread). Exhibits 10.4 and 10.5 print no rates of their own except inside
+# their continuing-value equations, which the text extraction breaks into digit fragments.
+#
+# The model, rebuilt with the valuation_formulas generator (the prose on p. 220 describes it):
+#   * NOPLAT starts at the printed year-1 figure and grows at the first growth rate to year 5, then at
+#     the second;
+#   * depreciation is a fixed share of NOPLAT, the share being the printed year-1 ratio;
+#   * net investment is NOPLAT times growth over return on new capital (9/16 to year 5, 6/12 after),
+#     gross investment adds depreciation back, and FCF is gross cash flow less gross investment;
+#   * discount factors at the WACC from year 1; the continuing value at horizon T is the pack's
+#     value_driver over NOPLAT of year T+1 with the second-stage growth and RONIC, discounted T years
+#     (not T+1, as the book stresses on p. 220).
+# Case period t is book year t (period 0 is the valuation date and holds nothing). Every printed
+# yearly line, the spread, both present-value sums, both continuing values and both totals are
+# compared; 10.5's repeat of the five common years is compared again.
+excerpt: "10.4-5"
+periods: [1, 2, 3, 4, 5]
+entity: model
+plant: noplat_1
+notes: >-
+  The continuing values before discounting (1,246.9 at year 5, 1,485.1 at year 8) are printed only
+  inside the equations, broken into fragments ("1246 9", "1 485 1"); their discounted values (707.5,
+  599.8) are compared, and so the undiscounted ones with them.
+rows:
+  # Exhibit 10.3's assumptions box
+  growth: {label: Growth, periods: [1, 6], scale: 0.01}
+  ronic: {label: RONIC, periods: [1, 6], scale: 0.01}
+  wacc: {label: WACC, periods: [1, 6], scale: 0.01}
+  spread: {label: Spread, periods: [1, 6], scale: 0.01}
+  # Exhibit 10.4
+  noplat_1: {label: NOPLAT, periods: [1]}
+  noplat: {label: NOPLAT, periods: [2, 3, 4, 5, 6], skip: 1}
+  depreciation_1: {label: Depreciation, periods: [1]}
+  depreciation: {label: Depreciation, periods: [2, 3, 4, 5], skip: 1}
+  gross_cash_flow: Gross cash flow
+  gross_investment: Gross investment
+  fcf: Free cash flow (FCF)
+  discount_factor: Discount factor
+  pv_fcf: Present value of FCF
+  pv_fcf_sum: {label: Present value of FCF1–5, periods: [5]}
+  pv_cv: {label: Continuing value, periods: [5]}
+  total_value: {label: Total value, periods: [5]}
+  # Exhibit 10.5
+  noplat_b: {label: NOPLAT, occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8, 9]}
+  depreciation_b: {label: Depreciation, occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8]}
+  gross_cash_flow_b: {label: Gross cash flow, occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8]}
+  gross_investment_b: {label: Gross investment, occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8]}
+  fcf_b: {label: Free cash flow (FCF), occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8]}
+  discount_factor_b: {label: Discount factor, occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8]}
+  pv_fcf_b: {label: Present value of FCF, occurrence: 2, periods: [1, 2, 3, 4, 5, 6, 7, 8]}
+  pv_fcf_sum_b: {label: Present value of FCF1–8, periods: [8]}
+  pv_cv_b: {label: Continuing value, occurrence: 2, periods: [8]}
+  total_value_b: {label: Total value, occurrence: 2, periods: [8]}
+inputs: [growth, ronic, wacc, noplat_1, depreciation_1]
+set_aside:
+  "EXHIBIT 10.4 Valuation Using Five-Year Explicit Forecast Period": the exhibit's number
+  "EXHIBIT 10.5 Valuation Using Eight-Year Explicit Forecast Period": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4 Year 5": the column headings, years
+  "Year 1 Year 2 Year 3 Year 4 Year 5 Year 6 Year 7 Year 8": the column headings, years
+  "WACC 0": a subscript of the continuing-value equation (CV at time 0), broken off by the text extraction
+  "5": a subscript or exponent of 10.4's continuing-value equation (the horizon), broken off by the extraction
+  "8": a subscript or exponent of 10.5's continuing-value equation (the horizon), broken off by the extraction
+  "2": the line break of the percent signs in the continuing-value equation, a fragment
+  "55 1": digit fragments of 10.4's equation (CV5 and its exponent); the value is compared as 707.5
+  "1246 9": the undiscounted CV of 10.4 (1,246.9) split into fragments; compared through its present value 707.5
+  "1 12 = 707 5 + == ( ) (. ) $.": fragments of 10.4's discounting step (1 + 12%, 707.5); 707.5 is compared on its own row
+  "1 149 6 1 6": fragments of 10.4's value driver equation (NOPLAT6 149.6, 1 - 6%/12%); NOPLAT6 is compared on the NOPLAT row
+  "12 6": fragments of the equations' denominator (12% - 6%); both rates are read from the assumptions box
+  "1 246 9 %": the undiscounted CV of 10.4 (1,246.9) again in fragments; compared through 707.5
+  "1 178 2 1 6": fragments of 10.5's value driver equation (NOPLAT9 178.2, 1 - 6%/12%); NOPLAT9 is compared on the NOPLAT row
+  "1 485 1 %": the undiscounted CV of 10.5 (1,485.1) in fragments; compared through its present value 599.8
+  "88 1": digit fragments of 10.5's discounting equation (CV8 and its exponent); compared through 599.8
+  "1 485 1": the undiscounted CV of 10.5 (1,485.1) in fragments again; compared through 599.8
+  "1 12 = 599 8 + == ()": fragments of 10.5's discounting step (1 + 12%, 599.8); 599.8 is compared on its own row
+case:
+  case: valuation-chapter-10-forecast-horizon
+  periods: 10
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 10
+      inputs: exhibit
+      values:
+        g_a: growth__1
+        g_b: growth__6
+        ronic_a: ronic__1
+        ronic_b: ronic__6
+        # the box prints the WACC negative, as the term subtracted from RONIC
+        wacc_a: -wacc__1
+        wacc_b: -wacc__6
+        spread_m: "(ronic_a - wacc_a) if t < 6 else (ronic_b - wacc_b)"
+        # NOPLAT of year t: the first growth to year 5, the second after
+        noplat_m: "noplat_1__1 * (1 + g_a) ** (min(t, 5) - 1) * (1 + g_b) ** max(t - 5, 0)"
+        # NOPLAT of year t + 1, the base of a continuing value at horizon t
+        noplat_next: "noplat_1__1 * (1 + g_a) ** min(t, 4) * (1 + g_b) ** max(t - 4, 0)"
+        depreciation_share: depreciation_1__1 / noplat_1__1
+        depreciation_m: depreciation_share * noplat_m
+        gross_cash_flow_m: noplat_m + depreciation_m
+        # the share of NOPLAT reinvested is growth over return on new capital
+        reinvestment: "(g_a / ronic_a) if t <= 5 else (g_b / ronic_b)"
+        gross_investment_m: -(noplat_m * reinvestment + depreciation_m)
+        fcf_m: gross_cash_flow_m + gross_investment_m
+        discount_factor_m: "(1 + wacc_a) ** (-t)"
+        pv_fcf_m: "fcf_m * discount_factor_m if t >= 1 else 0"
+        pv_fcf_sum_m: cumsum(pv_fcf_m)
+        # the continuing value at horizon t, as of year t, and its present value
+        cv_m: value_driver(noplat_next, g_b, ronic_b, wacc_b)
+        pv_cv_m: cv_m * discount_factor_m
+        total_value_m: pv_fcf_sum_m + pv_cv_m
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  spread: {driver: m.spread_m}
+  noplat: {driver: m.noplat_m}
+  depreciation: {driver: m.depreciation_m}
+  gross_cash_flow: {driver: m.gross_cash_flow_m}
+  gross_investment: {driver: m.gross_investment_m}
+  fcf: {driver: m.fcf_m}
+  discount_factor: {driver: m.discount_factor_m}
+  pv_fcf: {driver: m.pv_fcf_m}
+  pv_fcf_sum: {driver: m.pv_fcf_sum_m}
+  pv_cv: {driver: m.pv_cv_m}
+  total_value: {driver: m.total_value_m}
+  noplat_b: {driver: m.noplat_m}
+  depreciation_b: {driver: m.depreciation_m}
+  gross_cash_flow_b: {driver: m.gross_cash_flow_m}
+  gross_investment_b: {driver: m.gross_investment_m}
+  fcf_b: {driver: m.fcf_m}
+  discount_factor_b: {driver: m.discount_factor_m}
+  pv_fcf_b: {driver: m.pv_fcf_m}
+  pv_fcf_sum_b: {driver: m.pv_fcf_sum_m}
+  pv_cv_b: {driver: m.pv_cv_m}
+  total_value_b: {driver: m.total_value_m}

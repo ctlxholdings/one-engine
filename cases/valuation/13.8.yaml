@@ -1,0 +1,92 @@
+# Valuation, Exhibit 13.8 (ch. 13, p. 307): consolidating two business units that trade with each other.
+#
+# Unit A sells to the market and also supplies Unit B; Unit B sells only to
+# the market and counts what it buys from A among its cost of sales. On
+# consolidation the internal sale is removed twice over: from A's revenues and
+# from B's costs, so only external revenues and costs remain and gross profit
+# is unchanged (p. 307).
+#
+# Translated as a calculation: each unit's external revenues, internal
+# revenues and cost of sales are inputs. Reported revenues and gross profit per
+# unit, the eliminations (internal revenues taken out of revenues and out of
+# cost of sales; nothing taken out of external revenues) and the consolidated
+# column are computed and compared.
+excerpt: "13.8"
+periods: [0]
+entity: company
+plant: internal_revenues_a
+rows:
+  external_revenues_a: {label: External revenues}
+  external_revenues_b: {label: External revenues, skip: 1}
+  external_revenues_elim: {label: External revenues, skip: 2}
+  external_revenues_consolidated: {label: External revenues, skip: 3}
+  internal_revenues_a: {label: Internal revenues}
+  internal_revenues_b: {label: Internal revenues, skip: 1}
+  internal_revenues_elim: {label: Internal revenues, skip: 2}
+  internal_revenues_consolidated: {label: Internal revenues, skip: 3}
+  reported_revenues_a: {label: Reported revenues}
+  reported_revenues_b: {label: Reported revenues, skip: 1}
+  reported_revenues_elim: {label: Reported revenues, skip: 2}
+  reported_revenues_consolidated: {label: Reported revenues, skip: 3}
+  cost_of_sales_a: {label: Cost of sales}
+  cost_of_sales_b: {label: Cost of sales, skip: 1}
+  cost_of_sales_elim: {label: Cost of sales, skip: 2}
+  cost_of_sales_consolidated: {label: Cost of sales, skip: 3}
+  gross_profit_a: {label: Gross profit}
+  gross_profit_b: {label: Gross profit, skip: 1}
+  gross_profit_elim: {label: Gross profit, skip: 2}
+  gross_profit_consolidated: {label: Gross profit, skip: 3}
+inputs: [external_revenues_a, external_revenues_b, internal_revenues_a, internal_revenues_b, cost_of_sales_a,
+         cost_of_sales_b]
+set_aside:
+  "EXHIBIT 13.8 Income Statement: Intercompany Eliminations": the exhibit's number
+case:
+  case: valuation-13-8-eliminations
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    units:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # every internal sale is another unit's cost: both come out on consolidation
+        internal_sales: internal_revenues_a + internal_revenues_b
+        external_revenues_elim: 0
+        internal_revenues_elim: -internal_sales
+        cost_of_sales_elim: internal_sales
+        reported_revenues_a: external_revenues_a + internal_revenues_a
+        reported_revenues_b: external_revenues_b + internal_revenues_b
+        reported_revenues_elim: external_revenues_elim + internal_revenues_elim
+        external_revenues_consolidated: external_revenues_a + external_revenues_b + external_revenues_elim
+        internal_revenues_consolidated: internal_revenues_a + internal_revenues_b + internal_revenues_elim
+        reported_revenues_consolidated: reported_revenues_a + reported_revenues_b + reported_revenues_elim
+        # costs print negative
+        cost_of_sales_consolidated: cost_of_sales_a + cost_of_sales_b + cost_of_sales_elim
+        gross_profit_a: reported_revenues_a + cost_of_sales_a
+        gross_profit_b: reported_revenues_b + cost_of_sales_b
+        gross_profit_elim: reported_revenues_elim + cost_of_sales_elim
+        gross_profit_consolidated: reported_revenues_consolidated + cost_of_sales_consolidated
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  external_revenues_elim: {driver: units.external_revenues_elim}
+  external_revenues_consolidated: {driver: units.external_revenues_consolidated}
+  internal_revenues_elim: {driver: units.internal_revenues_elim}
+  internal_revenues_consolidated: {driver: units.internal_revenues_consolidated}
+  reported_revenues_a: {driver: units.reported_revenues_a}
+  reported_revenues_b: {driver: units.reported_revenues_b}
+  reported_revenues_elim: {driver: units.reported_revenues_elim}
+  reported_revenues_consolidated: {driver: units.reported_revenues_consolidated}
+  cost_of_sales_elim: {driver: units.cost_of_sales_elim}
+  cost_of_sales_consolidated: {driver: units.cost_of_sales_consolidated}
+  gross_profit_a: {driver: units.gross_profit_a}
+  gross_profit_b: {driver: units.gross_profit_b}
+  gross_profit_elim: {driver: units.gross_profit_elim}
+  gross_profit_consolidated: {driver: units.gross_profit_consolidated}

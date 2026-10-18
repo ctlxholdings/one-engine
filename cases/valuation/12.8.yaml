@@ -1,0 +1,87 @@
+# Valuation, Exhibit 12.8 (ch. 12, p. 292): MarineCo's income statement and balance sheet, the data
+# of the chapter's third review question.
+#
+# A manufacturer that has started financing its customers: machinery sales and
+# financing revenue, with the financing business's interest inside operating
+# costs (the layout of FinanceCo in Exhibit 12.3), and a balance sheet with
+# finance receivables and the debt raised against them.
+#
+# How it is booked: the balance sheet is held at its printed balances by the
+# `stated` rulebook (its check is the test that it balances); the income
+# statement's subtotals are computed from its printed lines by the
+# valuation_formulas generator. The exhibit asks for the split into two
+# businesses but prints none, so nothing beyond the statements is compared.
+excerpt: "12.8"
+periods: [0]
+entity: marineco
+plant: sales_of_machinery
+notes: >-
+  The text extraction prints the amount of "Debt related to customer financing" (3,600) at the end of the
+  "Total operating costs" line and the label itself, without its number, after the last row. The amount is
+  read as the second cell of that run.
+rows:
+  sales_of_machinery: Sales of machinery
+  revenues_of_financial_products: Revenues of financial products
+  total_revenues: Total revenues
+  cost_of_goods_sold: Cost of goods sold
+  interest_expense_financial_products: Interest expense of financial products
+  total_operating_costs: Total operating costs
+  operating_profit: Operating profit
+  interest_expense_general_obligation: Interest expense, general obligation
+  net_income: Net income
+  operating_assets: Operating assets
+  financial_receivables: Financial receivables
+  total_assets: Total assets
+  operating_liabilities: Operating liabilities
+  general_obligation_debt: General obligation debt
+  debt_customer_financing: {label: Total operating costs, skip: 1}
+  stockholders_equity: Stockholders’ equity
+  total_liabilities_and_equity: Total liabilities and equity
+inputs: [sales_of_machinery, revenues_of_financial_products, cost_of_goods_sold,
+         interest_expense_financial_products, interest_expense_general_obligation, operating_assets,
+         financial_receivables, operating_liabilities, general_obligation_debt, debt_customer_financing,
+         stockholders_equity]
+set_aside:
+  "EXHIBIT 12.8 MarineCo: Income Statement and Balance Sheet": the exhibit's number
+case:
+  case: valuation-12-8-marineco
+  periods: 1
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # costs print negative: each subtotal adds the lines as printed
+        total_revenues: sales_of_machinery + revenues_of_financial_products
+        total_operating_costs: cost_of_goods_sold + interest_expense_financial_products
+        operating_profit: total_revenues + total_operating_costs
+        net_income: operating_profit + interest_expense_general_obligation
+  opening: {}
+  contracts: {}
+  rulebooks:
+    balance_sheet:
+      kind: stated
+      entity: marineco
+      phase: state
+      plug: unexplained
+      balances:
+        operating_assets: {nature: asset, value: {generator: book, output: operating_assets}}
+        financial_receivables: {nature: asset, value: {generator: book, output: financial_receivables}}
+        operating_liabilities: {nature: liability, value: {generator: book, output: operating_liabilities}}
+        general_obligation_debt: {nature: liability, value: {generator: book, output: general_obligation_debt}}
+        debt_customer_financing: {nature: liability, value: {generator: book, output: debt_customer_financing}}
+        stockholders_equity: {nature: equity, value: {generator: book, output: stockholders_equity}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  total_revenues: {driver: book.total_revenues}
+  total_operating_costs: {driver: book.total_operating_costs}
+  operating_profit: {driver: book.operating_profit}
+  net_income: {driver: book.net_income}
+  total_assets: {balance: operating_assets + financial_receivables}
+  total_liabilities_and_equity: {balance: operating_liabilities + general_obligation_debt + debt_customer_financing + stockholders_equity}

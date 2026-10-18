@@ -1,0 +1,70 @@
+# Valuation, Exhibit 11.11 (ch. 11, p. 259): Home Depot's cost of equity by the Fama-French
+# three-factor model.
+#
+# Each factor's annual premium times Home Depot's regression coefficient on it is that factor's
+# contribution; their sum is the premium over the risk-free rate, and with the risk-free rate the cost
+# of equity. The market premium is printed annual; the SMB and HML premiums are printed monthly and
+# annual, and the annual one is the monthly compounded over twelve months, (1 + m)^12 - 1: that gives
+# 2.79% and 4.91% (printed 2.8 and 5.0), where twelve times the monthly figure would give 4.8 for HML.
+# Built with the valuation_formulas generator; the market term is the pack's capm, the two others are
+# added to it. Percents are read as fractions (scale 0.01).
+excerpt: "11.11"
+periods: [0]
+entity: model
+plant: smb_monthly
+notes: >-
+  The footnote rounding (premium "rounded to one decimal point") is the book's; the exact sum is 6.57.
+rows:
+  market_premium: {label: Market portfolio, scale: 0.01}
+  market_coefficient: {label: Market portfolio, skip: 1}
+  market_contribution: {label: Market portfolio, skip: 2, scale: 0.01}
+  smb_monthly: {label: SMB portfolio, scale: 0.01}
+  smb_annual: {label: SMB portfolio, skip: 1, scale: 0.01}
+  smb_coefficient: {label: SMB portfolio, skip: 2}
+  smb_contribution: {label: SMB portfolio, skip: 3, scale: 0.01}
+  hml_monthly: {label: HML portfolio, scale: 0.01}
+  hml_annual: {label: HML portfolio, skip: 1, scale: 0.01}
+  hml_coefficient: {label: HML portfolio, skip: 2}
+  hml_contribution: {label: HML portfolio, skip: 3, scale: 0.01}
+  premium: {label: Premium over risk-free rate3, scale: 0.01}
+  risk_free: {label: Risk-free rate, scale: 0.01}
+  cost_of_equity: {label: Cost of equity, scale: 0.01}
+inputs: [market_premium, market_coefficient, smb_monthly, smb_coefficient, hml_monthly, hml_coefficient,
+         risk_free]
+set_aside:
+  "EXHIBIT 11.11 Home Depot’s Fama-French Cost of Equity, 2006": the exhibit's number and year
+case:
+  case: valuation-chapter-11-fama-french
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # a monthly premium compounded over the twelve months of a year
+        smb_annual_m: (1 + smb_monthly__0) ** 12 - 1
+        hml_annual_m: (1 + hml_monthly__0) ** 12 - 1
+        market_contribution_m: market_coefficient__0 * market_premium__0
+        smb_contribution_m: smb_coefficient__0 * smb_annual_m
+        hml_contribution_m: hml_coefficient__0 * hml_annual_m
+        premium_m: market_contribution_m + smb_contribution_m + hml_contribution_m
+        cost_of_equity_m: capm(risk_free__0, market_coefficient__0, market_premium__0) + smb_contribution_m + hml_contribution_m
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  market_contribution: {driver: m.market_contribution_m}
+  smb_annual: {driver: m.smb_annual_m}
+  smb_contribution: {driver: m.smb_contribution_m}
+  hml_annual: {driver: m.hml_annual_m}
+  hml_contribution: {driver: m.hml_contribution_m}
+  premium: {driver: m.premium_m}
+  cost_of_equity: {driver: m.cost_of_equity_m}

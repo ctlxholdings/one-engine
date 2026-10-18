@@ -1,0 +1,107 @@
+# Valuation, Exhibit 11.10 (ch. 11, p. 256): an industry beta for Home Depot and Lowe's, unlevered at
+# 2006 capital structures and relevered at 2008 ones.
+#
+# Both companies are read in one oracle (Home Depot the first column, Lowe's the second) because the
+# industry beta is the average of the two companies' unlevered betas: neither column computes alone.
+# The four steps, rebuilt with the valuation_formulas generator:
+#   1. regression betas, inputs;
+#   2. unlevered beta = regression beta at the 2006 market debt-to-equity, by the pack's
+#      unlevered_beta with a riskless debt beta (eq. 11.1, p. 255). The debt-to-equity ratio is the
+#      net debt of the lower panel (short- and long-term debt and operating leases, less excess cash)
+#      over the market value of equity, both inputs from that panel;
+#   3. the industry beta, the mean of the two unlevered betas (the footnote to p. 256 says median and
+#      mean coincide with two companies);
+#   4. relevered beta at each company's 2008 debt-to-equity (an input: the 2008 balances are not in
+#      this exhibit), by the pack's levered_beta.
+# The share price is printed rounded to the dollar while the market value of equity is printed in
+# full, so the market value is the input and the price (market value over shares) is compared.
+excerpt: "11.10"
+periods: [0]
+entity: model
+plant: regression_beta_hd
+rows:
+  regression_beta_hd: Regression beta (step 1)
+  regression_beta_lowes: {label: Regression beta (step 1), skip: 1}
+  de_2006_hd: Debt-to-equity in 2006
+  de_2006_lowes: {label: Debt-to-equity in 2006, skip: 1}
+  unlevered_hd: Unlevered beta (step 2)
+  unlevered_lowes: {label: Unlevered beta (step 2), skip: 1}
+  industry_hd: Industry-average unlevered beta (step 3)
+  industry_lowes: {label: Industry-average unlevered beta (step 3), skip: 1}
+  de_2008_hd: Debt-to-equity in 2008
+  de_2008_lowes: {label: Debt-to-equity in 2008, skip: 1}
+  relevered_hd: Relevered beta (step 4)
+  relevered_lowes: {label: Relevered beta (step 4), skip: 1}
+  short_term_debt_hd: Short-term debt
+  short_term_debt_lowes: {label: Short-term debt, skip: 1}
+  long_term_debt_hd: Long-term debt
+  long_term_debt_lowes: {label: Long-term debt, skip: 1}
+  leases_hd: Operating leases
+  leases_lowes: {label: Operating leases, skip: 1}
+  excess_cash_hd: "Less: Excess cash"
+  excess_cash_lowes: {label: "Less: Excess cash", skip: 1}
+  net_debt_hd: Total net debt
+  net_debt_lowes: {label: Total net debt, skip: 1}
+  share_price_hd: Share price ($)
+  share_price_lowes: {label: Share price ($), skip: 1}
+  shares_hd: Shares outstanding (millions)
+  shares_lowes: {label: Shares outstanding (millions), skip: 1}
+  equity_hd: Market value of equity
+  equity_lowes: {label: Market value of equity, skip: 1}
+  de_ratio_hd: "Debt-to-equity ratio, 2006"
+  de_ratio_lowes: {label: "Debt-to-equity ratio, 2006", skip: 1}
+inputs: [regression_beta_hd, regression_beta_lowes, de_2008_hd, de_2008_lowes, short_term_debt_hd,
+         short_term_debt_lowes, long_term_debt_hd, long_term_debt_lowes, leases_hd, leases_lowes,
+         excess_cash_hd, excess_cash_lowes, shares_hd, shares_lowes, equity_hd, equity_lowes]
+set_aside:
+  "EXHIBIT 11.10 Determining Industry Beta1": the exhibit's number
+  "Debt-to-equity ratio, 2006 ($ million)": the lower panel's heading, a year
+  "1 Even though Home Depot matched the market in aggregate losses during 2007 and 2008, a slight difference in timing caused the two measures to be uncorrelated.": footnote prose; its numbers are years
+  "Prior to 2007, Home Depot’s market beta was relatively stable. For this reason, we measure unlevered beta as of 2006. To determine the current cost of capital, we": footnote prose; its numbers are years
+  "relever the 2006 industry beta at 2008 debt-to-equity levels.": footnote prose; its numbers are years
+case:
+  case: valuation-chapter-11-industry-beta
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        net_debt_hd_m: short_term_debt_hd__0 + long_term_debt_hd__0 + leases_hd__0 - excess_cash_hd__0
+        net_debt_lowes_m: short_term_debt_lowes__0 + long_term_debt_lowes__0 + leases_lowes__0 - excess_cash_lowes__0
+        share_price_hd_m: equity_hd__0 / shares_hd__0
+        share_price_lowes_m: equity_lowes__0 / shares_lowes__0
+        de_hd_m: net_debt_hd_m / equity_hd__0
+        de_lowes_m: net_debt_lowes_m / equity_lowes__0
+        unlevered_hd_m: unlevered_beta(regression_beta_hd__0, net_debt_hd_m, equity_hd__0)
+        unlevered_lowes_m: unlevered_beta(regression_beta_lowes__0, net_debt_lowes_m, equity_lowes__0)
+        industry_m: (unlevered_hd_m + unlevered_lowes_m) / 2
+        # relevered at the 2008 debt-to-equity: debt of that ratio per unit of equity
+        relevered_hd_m: levered_beta(industry_m, de_2008_hd__0, 1)
+        relevered_lowes_m: levered_beta(industry_m, de_2008_lowes__0, 1)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  de_2006_hd: {driver: m.de_hd_m}
+  de_2006_lowes: {driver: m.de_lowes_m}
+  unlevered_hd: {driver: m.unlevered_hd_m}
+  unlevered_lowes: {driver: m.unlevered_lowes_m}
+  industry_hd: {driver: m.industry_m}
+  industry_lowes: {driver: m.industry_m}
+  relevered_hd: {driver: m.relevered_hd_m}
+  relevered_lowes: {driver: m.relevered_lowes_m}
+  net_debt_hd: {driver: m.net_debt_hd_m}
+  net_debt_lowes: {driver: m.net_debt_lowes_m}
+  share_price_hd: {driver: m.share_price_hd_m}
+  share_price_lowes: {driver: m.share_price_lowes_m}
+  de_ratio_hd: {driver: m.de_hd_m}
+  de_ratio_lowes: {driver: m.de_lowes_m}

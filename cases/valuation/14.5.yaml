@@ -1,0 +1,112 @@
+# Valuation, Exhibit 14.5 (ch. 14, pp. 320-321): why EBITDA multiples mislead when one company owns its
+# equipment and the other outsources production.
+#
+# Company A makes its products on its own equipment; Company B buys from a
+# supplier whose depreciation is in B's raw-material price. Their EBITA,
+# NOPLAT, free cash flow and value are the same, but A's large depreciation
+# makes its EBITDA larger and its EV-to-EBITDA multiple lower (pp. 320-321).
+#
+# Translated as a calculation: revenues, raw materials, operating costs,
+# depreciation, operating taxes (no rate is printed), the investment in
+# working capital, capital expenditures and enterprise value are inputs.
+# EBITDA, EBITA, NOPLAT, the free-cash-flow panel (NOPLAT, depreciation added
+# back, gross cash flow, free cash flow) and both multiples are computed and
+# compared.
+#
+# The two panels share the text lines, so a label recurs: the free-cash-flow
+# panel's NOPLAT and depreciation print before the income statement's.
+excerpt: "14.5"
+periods: [0]
+entity: company
+plant: raw_materials_b
+rows:
+  revenues_a: {label: Revenues}
+  revenues_b: {label: Revenues, skip: 1}
+  raw_materials_a: {label: Raw materials}
+  raw_materials_b: {label: Raw materials, skip: 1}
+  operating_costs_a: {label: Operating costs}
+  operating_costs_b: {label: Operating costs, skip: 1}
+  ebitda_a: {label: EBITDA}
+  ebitda_b: {label: EBITDA, skip: 1}
+  depreciation_a: {label: Depreciation, occurrence: 2}
+  depreciation_b: {label: Depreciation, occurrence: 2, skip: 1}
+  ebita_a: {label: EBITA}
+  ebita_b: {label: EBITA, skip: 1}
+  operating_taxes_a: {label: Operating taxes}
+  operating_taxes_b: {label: Operating taxes, skip: 1}
+  noplat_a: {label: NOPLAT, occurrence: 2}
+  noplat_b: {label: NOPLAT, occurrence: 2, skip: 1}
+  fcf_noplat_a: {label: NOPLAT}
+  fcf_noplat_b: {label: NOPLAT, skip: 1}
+  fcf_depreciation_a: {label: Depreciation}
+  fcf_depreciation_b: {label: Depreciation, skip: 1}
+  gross_cash_flow_a: {label: Gross cash flow}
+  gross_cash_flow_b: {label: Gross cash flow, skip: 1}
+  working_capital_a: {label: Investment in working capital}
+  working_capital_b: {label: Investment in working capital, skip: 1}
+  capex_a: {label: Capital expenditures}
+  capex_b: {label: Capital expenditures, skip: 1}
+  free_cash_flow_a: {label: Free cash flow}
+  free_cash_flow_b: {label: Free cash flow, skip: 1}
+  ev_a: {label: Enterprise value}
+  ev_b: {label: Enterprise value, skip: 1}
+  ev_to_ebita_a: {label: EV to EBITA}
+  ev_to_ebita_b: {label: EV to EBITA, skip: 1}
+  ev_to_ebitda_a: {label: EV to EBITDA}
+  ev_to_ebitda_b: {label: EV to EBITDA, skip: 1}
+inputs: [revenues_a, revenues_b, raw_materials_a, raw_materials_b, operating_costs_a, operating_costs_b, depreciation_a, depreciation_b, operating_taxes_a, operating_taxes_b, working_capital_a, working_capital_b, capex_a, capex_b, ev_a, ev_b]
+set_aside:
+  "EXHIBIT 14.5 Enterprise-Value-to-EBITDA Multiple Distorted by Capital Investment": the exhibit's number
+case:
+  case: valuation-14-5
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    ma:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        ebitda_a: revenues_a + raw_materials_a + operating_costs_a
+        ebita_a: ebitda_a + depreciation_a
+        noplat_a: ebita_a + operating_taxes_a
+        fcf_depreciation_a: -depreciation_a
+        gross_cash_flow_a: noplat_a + fcf_depreciation_a
+        free_cash_flow_a: gross_cash_flow_a + working_capital_a + capex_a
+        ev_to_ebita_a: ev_a / ebita_a
+        ev_to_ebitda_a: ev_a / ebitda_a
+        ebitda_b: revenues_b + raw_materials_b + operating_costs_b
+        ebita_b: ebitda_b + depreciation_b
+        noplat_b: ebita_b + operating_taxes_b
+        fcf_depreciation_b: -depreciation_b
+        gross_cash_flow_b: noplat_b + fcf_depreciation_b
+        free_cash_flow_b: gross_cash_flow_b + working_capital_b + capex_b
+        ev_to_ebita_b: ev_b / ebita_b
+        ev_to_ebitda_b: ev_b / ebitda_b
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ebitda_a: {driver: ma.ebitda_a}
+  ebitda_b: {driver: ma.ebitda_b}
+  ebita_a: {driver: ma.ebita_a}
+  ebita_b: {driver: ma.ebita_b}
+  noplat_a: {driver: ma.noplat_a}
+  noplat_b: {driver: ma.noplat_b}
+  fcf_depreciation_a: {driver: ma.fcf_depreciation_a}
+  fcf_depreciation_b: {driver: ma.fcf_depreciation_b}
+  gross_cash_flow_a: {driver: ma.gross_cash_flow_a}
+  gross_cash_flow_b: {driver: ma.gross_cash_flow_b}
+  free_cash_flow_a: {driver: ma.free_cash_flow_a}
+  free_cash_flow_b: {driver: ma.free_cash_flow_b}
+  ev_to_ebita_a: {driver: ma.ev_to_ebita_a}
+  ev_to_ebita_b: {driver: ma.ev_to_ebita_b}
+  ev_to_ebitda_a: {driver: ma.ev_to_ebitda_a}
+  ev_to_ebitda_b: {driver: ma.ev_to_ebitda_b}
+  fcf_noplat_a: {driver: ma.noplat_a}
+  fcf_noplat_b: {driver: ma.noplat_b}

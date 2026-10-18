@@ -1,0 +1,143 @@
+# Valuation, Exhibits 12.3-12.4 (ch. 12, pp. 279-280): FinanceCo, a manufacturer with a customer
+# financing arm, before and after its statements are split between the two businesses.
+#
+# 12.3 prints the consolidated income statement (machinery sales and leasing
+# revenue, cost of goods sold and the interest of the financing business inside
+# operating costs, then the general obligation interest) and the balance sheet.
+# 12.4 splits them (pp. 279-280): the manufacturing business is measured on
+# invested capital (operating assets less operating liabilities) and its
+# operating profit, financed by the general obligation debt and the rest of
+# the equity; the financing business is measured on its net income and the
+# equity left once its own debt is set against its receivables, because its
+# capital structure is part of its operations.
+#
+# How it is booked:
+#   * the balance sheet of 12.3 is held at its printed balances by the
+#     `stated` rulebook, each line its own account; the rulebook's check is
+#     the test that it balances;
+#   * the income statement of 12.3 and both income statements of 12.4 are
+#     computed by the valuation_formulas generator from the printed revenue
+#     and cost lines, the return on invested capital by the pack's roic();
+#   * every subtotal of 12.3 and every line of 12.4's reorganized balance
+#     sheets is read back from the books (or the generator) and compared.
+excerpt: "12.3-4"
+periods: [0]
+entity: company
+plant: sales_of_machinery
+rows:
+  # 12.3, income statement
+  sales_of_machinery: Sales of machinery
+  revenues_of_financial_products: Revenues of financial products
+  total_revenues: Total revenues
+  cost_of_goods_sold: Cost of goods sold
+  interest_expense_financial_products: Interest expense of financial products
+  total_operating_costs: Total operating costs
+  operating_profit: Operating profit
+  interest_expense_general_obligation: Interest expense, general obligation
+  net_income: Net income
+  # 12.3, balance sheet
+  operating_assets: Operating assets
+  financial_receivables: Financial receivables
+  total_assets: Total assets
+  operating_liabilities: Operating liabilities
+  general_obligation_debt: General obligation debt
+  debt_financial_products: Debt related to financial products
+  stockholders_equity: Stockholders’ equity
+  total_liabilities_and_equity: Total liabilities and equity
+  # 12.4, manufacturing subsidiary
+  mfg_sales_of_machinery: {label: Sales of machinery, occurrence: 2}
+  mfg_cost_of_goods_sold: {label: Cost of goods sold, occurrence: 2}
+  mfg_operating_profit: {label: Operating profit, occurrence: 2}
+  mfg_operating_assets: {label: Operating assets, occurrence: 2}
+  mfg_operating_liabilities: {label: Operating liabilities, occurrence: 2}
+  mfg_invested_capital: Invested capital
+  mfg_general_obligation_debt: {label: General obligation debt, occurrence: 2}
+  # the two "Allocated equity" lines: the financing arm's prints first (300), the manufacturer's second
+  fin_allocated_equity: {label: Allocated equity, occurrence: 1}
+  mfg_allocated_equity: {label: Allocated equity, occurrence: 2}
+  mfg_invested_capital_sources: {label: Invested capital, occurrence: 2}
+  mfg_roic: {label: Return on invested capital (percent), scale: 0.01}
+  # 12.4, customer financing subsidiary
+  fin_revenues: {label: Revenues of financial products, occurrence: 2}
+  fin_interest_expense: {label: Interest expense of financial products, occurrence: 2}
+  fin_net_income: {label: Net income, occurrence: 2}
+  fin_financial_receivables: {label: Financial receivables, occurrence: 2}
+  fin_debt: {label: Debt related to financial products, occurrence: 2}
+  fin_liabilities_and_equity: Liabilities and allocated equity
+  fin_return_on_equity: {label: Return on allocated equity (percent), scale: 0.01}
+inputs: [sales_of_machinery, revenues_of_financial_products, cost_of_goods_sold,
+         interest_expense_financial_products, interest_expense_general_obligation, operating_assets,
+         financial_receivables, operating_liabilities, general_obligation_debt, debt_financial_products,
+         stockholders_equity]
+set_aside:
+  "EXHIBIT 12.3 FinanceCo: Income Statement and Balance Sheet": the exhibit's number
+  "EXHIBIT 12.4 FinanceCo: Reorganized Financial Statements": the exhibit's number
+case:
+  case: valuation-12-3-financeco
+  periods: 1
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # 12.3: the costs print negative, so each subtotal adds the lines as printed
+        total_revenues: sales_of_machinery + revenues_of_financial_products
+        total_operating_costs: cost_of_goods_sold + interest_expense_financial_products
+        operating_profit: total_revenues + total_operating_costs
+        net_income: operating_profit + interest_expense_general_obligation
+        # 12.4: each business's own profit and return
+        mfg_operating_profit: sales_of_machinery + cost_of_goods_sold
+        fin_net_income: revenues_of_financial_products + interest_expense_financial_products
+        mfg_roic: roic(mfg_operating_profit, operating_assets - operating_liabilities)
+        fin_return_on_equity: fin_net_income / (financial_receivables - debt_financial_products)
+  opening: {}
+  contracts: {}
+  rulebooks:
+    balance_sheet:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        operating_assets: {nature: asset, value: {generator: book, output: operating_assets}}
+        financial_receivables: {nature: asset, value: {generator: book, output: financial_receivables}}
+        operating_liabilities: {nature: liability, value: {generator: book, output: operating_liabilities}}
+        general_obligation_debt: {nature: liability, value: {generator: book, output: general_obligation_debt}}
+        debt_financial_products: {nature: liability, value: {generator: book, output: debt_financial_products}}
+        stockholders_equity: {nature: equity, value: {generator: book, output: stockholders_equity}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  # 12.3
+  total_revenues: {driver: book.total_revenues}
+  total_operating_costs: {driver: book.total_operating_costs}
+  operating_profit: {driver: book.operating_profit}
+  net_income: {driver: book.net_income}
+  total_assets: {balance: operating_assets + financial_receivables}
+  total_liabilities_and_equity: {balance: operating_liabilities + general_obligation_debt + debt_financial_products + stockholders_equity}
+  # 12.4, manufacturing: the lines it repeats from 12.3 read from the books (liabilities print negative)
+  mfg_sales_of_machinery: {driver: book.sales_of_machinery}
+  mfg_cost_of_goods_sold: {driver: book.cost_of_goods_sold}
+  mfg_operating_profit: {driver: book.mfg_operating_profit}
+  mfg_operating_assets: {balance: operating_assets}
+  mfg_operating_liabilities: {balance: operating_liabilities, sign: -1}
+  mfg_invested_capital: {balance: operating_assets - operating_liabilities}
+  mfg_general_obligation_debt: {balance: general_obligation_debt}
+  # the manufacturer's equity: the capital it uses less the debt that finances it
+  mfg_allocated_equity: {balance: operating_assets - operating_liabilities - general_obligation_debt}
+  mfg_invested_capital_sources: {balance: general_obligation_debt + operating_assets - operating_liabilities - general_obligation_debt}
+  mfg_roic: {driver: book.mfg_roic}
+  # 12.4, customer financing
+  fin_revenues: {driver: book.revenues_of_financial_products}
+  fin_interest_expense: {driver: book.interest_expense_financial_products}
+  fin_net_income: {driver: book.fin_net_income}
+  fin_financial_receivables: {balance: financial_receivables}
+  fin_debt: {balance: debt_financial_products}
+  fin_allocated_equity: {balance: financial_receivables - debt_financial_products}
+  fin_liabilities_and_equity: {balance: debt_financial_products + financial_receivables - debt_financial_products}
+  fin_return_on_equity: {driver: book.fin_return_on_equity}

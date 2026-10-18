@@ -1,0 +1,120 @@
+# Valuation, Exhibit 14.3 (ch. 14, pp. 317-318): how leverage moves the P/E of companies with the same
+# EV-to-EBITA multiple.
+#
+# Four companies with the same EBITA. A and B have the same enterprise value
+# (10 times EBITA) and C and D another (25 times); within each pair only the
+# financing differs: B and D carry debt and pay interest. Leverage lowers the
+# P/E of the pair whose EV/EBITA is below the debt's value-to-interest multiple
+# and raises it for the pair above it (pp. 317-318).
+#
+# Translated as a calculation: EBITA, interest, taxes and the market values of
+# debt and equity are inputs (the exhibit prints taxes but no rate). Earnings
+# before taxes, net income, enterprise value and both multiples are computed
+# and compared.
+excerpt: "14.3"
+periods: [0]
+entity: company
+plant: equity_a
+rows:
+  ebita_a: {label: EBITA}
+  ebita_b: {label: EBITA, skip: 1}
+  ebita_c: {label: EBITA, skip: 2}
+  ebita_d: {label: EBITA, skip: 3}
+  interest_a: {label: Interest expense}
+  interest_b: {label: Interest expense, skip: 1}
+  interest_c: {label: Interest expense, skip: 2}
+  interest_d: {label: Interest expense, skip: 3}
+  ebt_a: {label: Earnings before taxes}
+  ebt_b: {label: Earnings before taxes, skip: 1}
+  ebt_c: {label: Earnings before taxes, skip: 2}
+  ebt_d: {label: Earnings before taxes, skip: 3}
+  taxes_a: {label: Taxes}
+  taxes_b: {label: Taxes, skip: 1}
+  taxes_c: {label: Taxes, skip: 2}
+  taxes_d: {label: Taxes, skip: 3}
+  net_income_a: {label: Net income}
+  net_income_b: {label: Net income, skip: 1}
+  net_income_c: {label: Net income, skip: 2}
+  net_income_d: {label: Net income, skip: 3}
+  debt_a: {label: Debt}
+  debt_b: {label: Debt, skip: 1}
+  debt_c: {label: Debt, skip: 2}
+  debt_d: {label: Debt, skip: 3}
+  equity_a: {label: Equity}
+  equity_b: {label: Equity, skip: 1}
+  equity_c: {label: Equity, skip: 2}
+  equity_d: {label: Equity, skip: 3}
+  ev_a: {label: Enterprise value (EV)}
+  ev_b: {label: Enterprise value (EV), skip: 1}
+  ev_c: {label: Enterprise value (EV), skip: 2}
+  ev_d: {label: Enterprise value (EV), skip: 3}
+  ev_to_ebita_a: {label: EV to EBITA}
+  ev_to_ebita_b: {label: EV to EBITA, skip: 1}
+  ev_to_ebita_c: {label: EV to EBITA, skip: 2}
+  ev_to_ebita_d: {label: EV to EBITA, skip: 3}
+  pe_a: {label: Price to earnings}
+  pe_b: {label: Price to earnings, skip: 1}
+  pe_c: {label: Price to earnings, skip: 2}
+  pe_d: {label: Price to earnings, skip: 3}
+inputs: [ebita_a, ebita_b, ebita_c, ebita_d, interest_a, interest_b, interest_c, interest_d, taxes_a, taxes_b, taxes_c, taxes_d, debt_a, debt_b, debt_c, debt_d, equity_a, equity_b, equity_c, equity_d]
+set_aside:
+  "EXHIBIT 14.3 P/E Multiple Distorted by Capital Structure": the exhibit's number
+case:
+  case: valuation-14-3
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    pe:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        ebt_a: ebita_a + interest_a
+        net_income_a: ebt_a + taxes_a
+        ev_a: debt_a + equity_a
+        ev_to_ebita_a: ev_a / ebita_a
+        pe_a: equity_a / net_income_a
+        ebt_b: ebita_b + interest_b
+        net_income_b: ebt_b + taxes_b
+        ev_b: debt_b + equity_b
+        ev_to_ebita_b: ev_b / ebita_b
+        pe_b: equity_b / net_income_b
+        ebt_c: ebita_c + interest_c
+        net_income_c: ebt_c + taxes_c
+        ev_c: debt_c + equity_c
+        ev_to_ebita_c: ev_c / ebita_c
+        pe_c: equity_c / net_income_c
+        ebt_d: ebita_d + interest_d
+        net_income_d: ebt_d + taxes_d
+        ev_d: debt_d + equity_d
+        ev_to_ebita_d: ev_d / ebita_d
+        pe_d: equity_d / net_income_d
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ebt_a: {driver: pe.ebt_a}
+  ebt_b: {driver: pe.ebt_b}
+  ebt_c: {driver: pe.ebt_c}
+  ebt_d: {driver: pe.ebt_d}
+  net_income_a: {driver: pe.net_income_a}
+  net_income_b: {driver: pe.net_income_b}
+  net_income_c: {driver: pe.net_income_c}
+  net_income_d: {driver: pe.net_income_d}
+  ev_a: {driver: pe.ev_a}
+  ev_b: {driver: pe.ev_b}
+  ev_c: {driver: pe.ev_c}
+  ev_d: {driver: pe.ev_d}
+  ev_to_ebita_a: {driver: pe.ev_to_ebita_a}
+  ev_to_ebita_b: {driver: pe.ev_to_ebita_b}
+  ev_to_ebita_c: {driver: pe.ev_to_ebita_c}
+  ev_to_ebita_d: {driver: pe.ev_to_ebita_d}
+  pe_a: {driver: pe.pe_a}
+  pe_b: {driver: pe.pe_b}
+  pe_c: {driver: pe.pe_c}
+  pe_d: {driver: pe.pe_d}

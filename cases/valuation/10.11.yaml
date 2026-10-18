@@ -1,0 +1,46 @@
+# Valuation, Exhibit 10.11 (ch. 10, p. 226): six continuing-value estimates for one sporting goods
+# company, to show how far apart the techniques the book does not recommend land.
+#
+# Only one estimate can be rebuilt from what the exhibit prints: the market-to-book value is the
+# industry multiple times the book value (1.4 x 268 = 375.2, printed 375), computed here with the
+# formulas generator and compared. The other estimates rest on figures the book prints nowhere (the
+# company's earnings behind the 15x P/E; its working capital and net fixed assets behind the
+# liquidation value; the inflation adjustment behind replacement cost; the normalized FCF and growth
+# behind the perpetuity), so their lines are set aside with that reason.
+excerpt: "10.11"
+periods: [0]
+entity: model
+plant: book_value
+rows:
+  book_value: Per accounting records
+  market_to_book: Market-to-book ratio Industry average of
+  market_to_book_value: {label: "¥", occurrence: 2}
+inputs: [book_value, market_to_book]
+set_aside:
+  "EXHIBIT 10.11 Continuing-Value Estimates for a Sporting Goods Company": the exhibit's number
+  "Liquidation value 80% of working capital 186": the working capital and net fixed assets the recovery rates apply to are printed nowhere in the book
+  "Price-to-earnings ratio Industry average of 15 ¥ 624": the earnings the 15x multiple applies to are printed nowhere in the book
+  "Replacement cost Book value adjusted for inflation 275": the inflation adjustment is printed nowhere in the book
+  "Perpetuity based on final year’s cash flow Normalized FCF growing at inflation rate 428": the normalized FCF, growth and discount rate are printed nowhere in the book
+case:
+  case: valuation-chapter-10-cv-techniques
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        market_to_book_value_m: market_to_book__0 * book_value__0
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  market_to_book_value: {driver: m.market_to_book_value_m}

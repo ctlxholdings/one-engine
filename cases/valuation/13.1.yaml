@@ -1,0 +1,103 @@
+# Valuation, Exhibit 13.1 (ch. 13, p. 298): how two modest trends compound into an implausible ROIC.
+#
+# A hypothetical company in a competitive industry: its price rises 3% a year
+# with inflation while its cost per unit falls 2% a year, and volume and
+# invested capital grow alike. Over ten years ROIC climbs from about 9% to
+# about 39%, which the book uses (p. 297) to show a forecast that is consistent
+# line by line but not economically plausible.
+#
+# Translated as a calculation over ten years (periods 0-9 are years 1-10; the
+# exhibit prints years 1-5 and 10). Price and cost per unit start at year 1's
+# printed values and compound at the printed growth rates. Units and invested
+# capital print no growth rate; theirs is taken from their printed year 2 over
+# year 1. Revenue is price times units, cost is cost per unit times units,
+# profit their difference, ROIC the pack's roic() of profit over the year's
+# invested capital. Every other printed cell is compared.
+#
+# Reading the elided column: each row prints years 1-5, an ellipsis, then year
+# 10 (and, for price and cost per unit, the growth rate). The ellipsis ends a
+# run of numbers, so the year-10 cells are read as the run the ellipsis opens,
+# its k-th occurrence being the k-th row of the table.
+excerpt: "13.1"
+periods: [0, 1, 2, 3, 4]
+entity: company
+plant: price_year_1
+rows:
+  price_year_1: {label: Price, periods: [0]}
+  price: {label: Price, skip: 1, periods: [1, 2, 3, 4]}
+  price_year_10: {label: …, occurrence: 1, periods: [9]}
+  price_growth: {label: …, occurrence: 1, skip: 1, periods: [0], scale: 0.01}
+  units_year_1: {label: Number of units, periods: [0]}
+  units_year_2: {label: Number of units, skip: 1, periods: [1]}
+  units: {label: Number of units, skip: 2, periods: [2, 3, 4]}
+  units_year_10: {label: …, occurrence: 2, periods: [9]}
+  revenue: Revenue
+  revenue_year_10: {label: …, occurrence: 3, periods: [9]}
+  cost_per_unit_year_1: {label: Cost per unit, periods: [0]}
+  cost_per_unit: {label: Cost per unit, skip: 1, periods: [1, 2, 3, 4]}
+  cost_per_unit_year_10: {label: …, occurrence: 4, periods: [9]}
+  cost_growth: {label: …, occurrence: 4, skip: 1, periods: [0], scale: 0.01}
+  # the units line repeats under cost
+  cost_units: {label: Number of units, occurrence: 2}
+  cost_units_year_10: {label: …, occurrence: 5, periods: [9]}
+  cost: Cost
+  cost_year_10: {label: …, occurrence: 6, periods: [9]}
+  profit: Profit
+  profit_year_10: {label: …, occurrence: 7, periods: [9]}
+  invested_capital_year_1: {label: Invested capital, periods: [0]}
+  invested_capital_year_2: {label: Invested capital, skip: 1, periods: [1]}
+  invested_capital: {label: Invested capital, skip: 2, periods: [2, 3, 4]}
+  invested_capital_year_10: {label: …, occurrence: 8, periods: [9]}
+  roic: {label: ROIC (percent), scale: 0.01}
+  roic_year_10: {label: …, occurrence: 9, periods: [9], scale: 0.01}
+inputs: [price_year_1, price_growth, units_year_1, units_year_2, cost_per_unit_year_1, cost_growth,
+         invested_capital_year_1, invested_capital_year_2]
+set_aside:
+  "EXHIBIT 13.1 ROIC Impact of Small Changes: Sample Price and Cost Trends": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4 Year 5 … Year 10": the column headings, years
+case:
+  case: valuation-13-1-price-cost-trends
+  periods: 10
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    trends:
+      kind: valuation_formulas
+      periods: 10
+      inputs: exhibit
+      values:
+        price_t: price_year_1__0 * (1 + price_growth__0) ** t
+        cost_per_unit_t: cost_per_unit_year_1__0 * (1 + cost_growth__0) ** t
+        # volume and capital print no growth rate: their year-on-year factor is year 2 over year 1
+        units_t: units_year_1__0 * (units_year_2__1 / units_year_1__0) ** t
+        invested_capital_t: invested_capital_year_1__0 * (invested_capital_year_2__1 / invested_capital_year_1__0) ** t
+        revenue_t: price_t * units_t
+        cost_t: cost_per_unit_t * units_t
+        profit_t: revenue_t - cost_t
+        roic_t: roic(profit_t, invested_capital_t)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  price: {driver: trends.price_t}
+  price_year_10: {driver: trends.price_t}
+  units: {driver: trends.units_t}
+  units_year_10: {driver: trends.units_t}
+  revenue: {driver: trends.revenue_t}
+  revenue_year_10: {driver: trends.revenue_t}
+  cost_per_unit: {driver: trends.cost_per_unit_t}
+  cost_per_unit_year_10: {driver: trends.cost_per_unit_t}
+  cost_units: {driver: trends.units_t}
+  cost_units_year_10: {driver: trends.units_t}
+  cost: {driver: trends.cost_t}
+  cost_year_10: {driver: trends.cost_t}
+  profit: {driver: trends.profit_t}
+  profit_year_10: {driver: trends.profit_t}
+  invested_capital: {driver: trends.invested_capital_t}
+  invested_capital_year_10: {driver: trends.invested_capital_t}
+  roic: {driver: trends.roic_t}
+  roic_year_10: {driver: trends.roic_t}

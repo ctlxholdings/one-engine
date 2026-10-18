@@ -1,0 +1,105 @@
+# Valuation, Exhibit 10.10 (ch. 10, p. 225): the base year of a continuing value forecast two ways.
+#
+# The exhibit prints a company's year 9 and year 10 and two forecasts of year 11, the first year of
+# the continuing value, at 5% growth. The "incorrect" column grows every line of year 10 by 5%,
+# working-capital investment included; the "correct" one grows the operating lines the same way but
+# holds year-end working capital at year 10's share of revenues, so far less is invested (the prose,
+# pp. 224-225). Columns are case periods: 0 year 9, 1 year 10, 2 year 11 incorrect, 3 year 11 correct.
+#
+# Rebuilt with the valuation_formulas generator:
+#   * year 9 is the input (each operating line, the year's working-capital investment and year-end
+#     working capital), with the printed revenues of years 10 and 11; their ratios give the growth
+#     (10% to year 10, 5% to year 11: the 5% of the heading is glued to a parenthesis and cannot be read);
+#   * every operating line, capital expenditure and year-end working capital of year 10 is year 9's
+#     grown with revenues, and year 10's working-capital investment is the change in its balance;
+#   * the incorrect year 11 grows year 10's investment in working capital by 5% and adds it to the
+#     balance; the correct one sets the balance at year 10's share of revenues and invests the change.
+# Every printed figure of years 10 and 11 is compared, and every subtotal of year 9.
+excerpt: "10.10"
+periods: [0, 1, 2, 3]
+entity: model
+plant: revenues
+notes: >-
+  The book rounds each line and adds the rounded lines, so some year-11 subtotals sit up to 0.9 from the
+  exact sum (gross investment, correct column: 34.65 + 16.5 = 51.15, printed 52); all are within one
+  unit of the printed digit.
+rows:
+  revenues: {label: Revenues, periods: [0, 1, 2]}
+  revenues_correct: {label: Revenues, periods: [3], skip: 3}
+  operating_expenses_9: {label: Operating expenses, periods: [0]}
+  operating_expenses: {label: Operating expenses, periods: [1, 2, 3], skip: 1}
+  ebita: EBITA
+  operating_taxes_9: {label: Operating taxes, periods: [0]}
+  operating_taxes: {label: Operating taxes, periods: [1, 2, 3], skip: 1}
+  noplat: NOPLAT
+  depreciation_9: {label: Depreciation, periods: [0]}
+  depreciation: {label: Depreciation, periods: [1, 2, 3], skip: 1}
+  gross_cash_flow: Gross cash flow
+  capex_9: {label: Capital expenditures, periods: [0]}
+  capex: {label: Capital expenditures, periods: [1, 2, 3], skip: 1}
+  wc_increase_9: {label: Increase in working capital, periods: [0]}
+  wc_increase: {label: Increase in working capital, periods: [1, 2, 3], skip: 1}
+  gross_investment: Gross investment
+  free_cash_flow: Free cash flow
+  working_capital_9: {label: "Working capital, year-end", periods: [0]}
+  working_capital: {label: "Working capital, year-end", periods: [1, 2, 3], skip: 1}
+  wc_to_revenues: {label: Working capital/revenues (percent), scale: 0.01}
+inputs: [revenues, operating_expenses_9, operating_taxes_9, depreciation_9, capex_9, wc_increase_9,
+         working_capital_9]
+set_aside:
+  "EXHIBIT 10.10 Correct and Incorrect Methods of Forecasting Base FCF": the exhibit's number
+  "Year 11 (5% growth)": the column heading, a year; its 5% is read as the ratio of year 11 to year 10 revenues
+  "Year 9 Year 10 Incorrect Correct": the column headings, years
+case:
+  case: valuation-chapter-10-base-fcf
+  periods: 4
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 4
+      inputs: exhibit
+      values:
+        # each column's revenues relative to year 9 (the correct column has the incorrect one's revenues)
+        grown: "1 if t == 0 else (revenues__1 / revenues__0 if t == 1 else revenues__2 / revenues__0)"
+        growth_11: revenues__2 / revenues__1
+        revenues_m: revenues__0 * grown
+        operating_expenses_m: operating_expenses_9__0 * grown
+        ebita_m: revenues_m + operating_expenses_m
+        operating_taxes_m: operating_taxes_9__0 * grown
+        noplat_m: ebita_m + operating_taxes_m
+        depreciation_m: depreciation_9__0 * grown
+        gross_cash_flow_m: noplat_m + depreciation_m
+        capex_m: capex_9__0 * grown
+        # year 10: year-end working capital grows with revenues; its investment is the change
+        wc_10: working_capital_9__0 * revenues__1 / revenues__0
+        wc_increase_10: -(wc_10 - working_capital_9__0)
+        # year 11: incorrect, last year's investment grown 5%; correct, the balance at year 10's share of revenues
+        working_capital_m: "working_capital_9__0 if t == 0 else (wc_10 if t == 1 else (wc_10 - wc_increase_10 * growth_11 if t == 2 else wc_10 / revenues__1 * revenues_m))"
+        wc_increase_m: "wc_increase_9__0 if t == 0 else (wc_increase_10 if t == 1 else (wc_increase_10 * growth_11 if t == 2 else -(working_capital_m - wc_10)))"
+        gross_investment_m: capex_m + wc_increase_m
+        free_cash_flow_m: gross_cash_flow_m + gross_investment_m
+        wc_to_revenues_m: working_capital_m / revenues_m
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  revenues_correct: {driver: m.revenues_m}
+  operating_expenses: {driver: m.operating_expenses_m}
+  ebita: {driver: m.ebita_m}
+  operating_taxes: {driver: m.operating_taxes_m}
+  noplat: {driver: m.noplat_m}
+  depreciation: {driver: m.depreciation_m}
+  gross_cash_flow: {driver: m.gross_cash_flow_m}
+  capex: {driver: m.capex_m}
+  wc_increase: {driver: m.wc_increase_m}
+  gross_investment: {driver: m.gross_investment_m}
+  free_cash_flow: {driver: m.free_cash_flow_m}
+  working_capital: {driver: m.working_capital_m}
+  wc_to_revenues: {driver: m.wc_to_revenues_m}

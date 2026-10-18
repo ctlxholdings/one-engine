@@ -1,0 +1,94 @@
+# Valuation, Exhibit 10.13 (ch. 10, p. 232, the review questions): ApparelCo's free cash flow and
+# economic profit forecasts, today to year 5 and the continuing-value year.
+#
+# Columns are case periods: 0 today, 1-5 years 1-5, 6 the first year of the continuing value. The
+# company grows everything at one rate (review question 1, p. 231); here that rate is the ratio of
+# the printed year-1 and today revenues, and operating costs keep today's share of revenues.
+#   * Operating taxes are taken as printed: the exhibit prints no tax rate, and today's ratio
+#     (6.3 / 25.0) is itself rounded too far to carry to year 5. NOPLAT is operating profit less them.
+#   * Invested capital at the start of year 1 is the input (132.5); it grows at the same rate, so each
+#     year's net investment is the change in capital and FCF is NOPLAT less it.
+#   * The cost of capital is the year-1 figure; the capital charge is it times the opening capital, and
+#     economic profit is the pack's economic_profit over NOPLAT and opening capital.
+# The dashes the exhibit prints (no flow today, no investment or FCF in the continuing-value column)
+# are compared as nils.
+excerpt: "10.13"
+periods: [0, 1, 2, 3, 4, 5, 6]
+entity: model
+plant: revenues
+notes: >-
+  The text extraction breaks the FCF row over three lines and prints two dashes before its five
+  figures; both are read as the nil of the today column. The invested-capital row's label carries the
+  t-1 subscript ("capitalt – 1"); the label claims it.
+rows:
+  revenues: {label: Revenues, periods: [0, 1]}
+  revenues_later: {label: Revenues, periods: [2, 3, 4, 5, 6], skip: 2}
+  operating_costs_today: {label: Operating costs, periods: [0]}
+  operating_costs: {label: Operating costs, periods: [1, 2, 3, 4, 5, 6], skip: 1}
+  operating_profit: Operating profit
+  operating_taxes: Operating taxes
+  noplat: NOPLAT
+  net_investment: Net investment
+  fcf_today: {label: Free cash flow, continued: 2, periods: [0]}
+  fcf: {label: Free cash flow, continued: 2, periods: [0, 1, 2, 3, 4, 5, 6], skip: 1}
+  ep_noplat: {label: NOPLAT, occurrence: 2}
+  ic_opening_1: {label: Invested capitalt – 1, periods: [1], skip: 1}
+  ic_opening_today: {label: Invested capitalt – 1, periods: [0]}
+  ic_opening: {label: Invested capitalt – 1, periods: [2, 3, 4, 5, 6], skip: 2}
+  cost_of_capital_1: {label: ¥ Cost of capital (percent), periods: [1], skip: 1, scale: 0.01}
+  cost_of_capital_today: {label: ¥ Cost of capital (percent), periods: [0], scale: 0.01}
+  cost_of_capital: {label: ¥ Cost of capital (percent), periods: [2, 3, 4, 5, 6], skip: 2, scale: 0.01}
+  capital_charge: {label: Capital charge, periods: [1, 2, 3, 4, 5, 6]}
+  economic_profit: {label: Economic profit}
+inputs: [revenues, operating_costs_today, operating_taxes, ic_opening_1, cost_of_capital_1]
+set_aside:
+  "EXHIBIT 10.13 ApparelCo: Free Cash Flow and Economic Profit Forecasts": the exhibit's number
+  "Today Year 1 Year 2 Year 3 Year 4 Year 5": the column headings, years
+case:
+  case: valuation-chapter-10-apparelco
+  periods: 7
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 7
+      inputs: exhibit
+      values:
+        growth: revenues__1 / revenues__0 - 1
+        revenues_m: revenues__0 * (1 + growth) ** t
+        operating_costs_m: operating_costs_today__0 / revenues__0 * revenues_m
+        operating_profit_m: revenues_m + operating_costs_m
+        noplat_m: operating_profit_m + operating_taxes
+        # invested capital at the start of year t (column t), growing with everything else
+        ic_opening_m: "ic_opening_1__1 * (1 + growth) ** (t - 1) if t >= 1 else 0"
+        # the year's net investment is the growth of capital over it; none today, none printed for the CV year
+        net_investment_m: "-(ic_opening_m * growth) if (1 <= t) * (t <= 5) else 0"
+        fcf_m: "noplat_m + net_investment_m if (1 <= t) * (t <= 5) else 0"
+        ep_noplat_m: "noplat_m if t >= 1 else 0"
+        cost_of_capital_m: "cost_of_capital_1__1 if t >= 1 else 0"
+        capital_charge_m: cost_of_capital_m * ic_opening_m
+        economic_profit_m: "economic_profit(noplat_m, ic_opening_m, cost_of_capital_m) if t >= 1 else 0"
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  revenues_later: {driver: m.revenues_m}
+  operating_costs: {driver: m.operating_costs_m}
+  operating_profit: {driver: m.operating_profit_m}
+  noplat: {driver: m.noplat_m}
+  net_investment: {driver: m.net_investment_m}
+  fcf_today: {driver: m.fcf_m}
+  fcf: {driver: m.fcf_m}
+  ep_noplat: {driver: m.ep_noplat_m}
+  ic_opening_today: {driver: m.ic_opening_m}
+  ic_opening: {driver: m.ic_opening_m}
+  cost_of_capital_today: {driver: m.cost_of_capital_m}
+  cost_of_capital: {driver: m.cost_of_capital_m}
+  capital_charge: {driver: m.capital_charge_m}
+  economic_profit: {driver: m.economic_profit_m}

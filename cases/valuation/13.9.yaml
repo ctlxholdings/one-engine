@@ -1,0 +1,80 @@
+# Valuation, Exhibit 13.9 (ch. 13, p. 308): what ConsumerCo publishes by business unit.
+#
+# The segment disclosure typical of a U.S. listed company (p. 308): revenues,
+# intersegment revenues, operating profit, depreciation (inside operating
+# profit, the footnote says), capital expenditures and assets for each of the
+# three business units and the corporate center, with the consolidated total.
+# Here the consolidated column is the plain sum of the four (intersegment
+# revenues included: the disclosure adds them up rather than eliminating them).
+#
+# Translated as a calculation: the four units' cells are inputs and each
+# consolidated figure is computed as their sum and compared.
+excerpt: "13.9"
+periods: [0]
+entity: consumerco
+plant: operating_profit_branded
+rows:
+  revenues_branded: {label: Revenues}
+  revenues_private_label: {label: Revenues, skip: 1}
+  revenues_organic: {label: Revenues, skip: 2}
+  revenues_corporate: {label: Revenues, skip: 3}
+  revenues_consolidated: {label: Revenues, skip: 4}
+  intersegment_revenues_branded: {label: Intersegment revenues}
+  intersegment_revenues_private_label: {label: Intersegment revenues, skip: 1}
+  intersegment_revenues_organic: {label: Intersegment revenues, skip: 2}
+  intersegment_revenues_corporate: {label: Intersegment revenues, skip: 3}
+  intersegment_revenues_consolidated: {label: Intersegment revenues, skip: 4}
+  operating_profit_branded: {label: Operating profit}
+  operating_profit_private_label: {label: Operating profit, skip: 1}
+  operating_profit_organic: {label: Operating profit, skip: 2}
+  operating_profit_corporate: {label: Operating profit, skip: 3}
+  operating_profit_consolidated: {label: Operating profit, skip: 4}
+  depreciation_branded: {label: Depreciation1}
+  depreciation_private_label: {label: Depreciation1, skip: 1}
+  depreciation_organic: {label: Depreciation1, skip: 2}
+  depreciation_corporate: {label: Depreciation1, skip: 3}
+  depreciation_consolidated: {label: Depreciation1, skip: 4}
+  capital_expenditures_branded: {label: Capital expenditures}
+  capital_expenditures_private_label: {label: Capital expenditures, skip: 1}
+  capital_expenditures_organic: {label: Capital expenditures, skip: 2}
+  capital_expenditures_corporate: {label: Capital expenditures, skip: 3}
+  capital_expenditures_consolidated: {label: Capital expenditures, skip: 4}
+  assets_branded: {label: Assets}
+  assets_private_label: {label: Assets, skip: 1}
+  assets_organic: {label: Assets, skip: 2}
+  assets_corporate: {label: Assets, skip: 3}
+  assets_consolidated: {label: Assets, skip: 4}
+inputs: [revenues_branded, revenues_private_label, revenues_organic, revenues_corporate, intersegment_revenues_branded, intersegment_revenues_private_label, intersegment_revenues_organic, intersegment_revenues_corporate, operating_profit_branded, operating_profit_private_label, operating_profit_organic, operating_profit_corporate, depreciation_branded, depreciation_private_label, depreciation_organic, depreciation_corporate, capital_expenditures_branded, capital_expenditures_private_label, capital_expenditures_organic, capital_expenditures_corporate, assets_branded, assets_private_label, assets_organic, assets_corporate]
+set_aside:
+  "EXHIBIT 13.9 ConsumerCo: Publicly Available Business Unit Data": the exhibit's number
+case:
+  case: valuation-13-9-consumerco-segments
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    segments:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        revenues_consolidated: revenues_branded + revenues_private_label + revenues_organic + revenues_corporate
+        intersegment_revenues_consolidated: intersegment_revenues_branded + intersegment_revenues_private_label + intersegment_revenues_organic + intersegment_revenues_corporate
+        operating_profit_consolidated: operating_profit_branded + operating_profit_private_label + operating_profit_organic + operating_profit_corporate
+        depreciation_consolidated: depreciation_branded + depreciation_private_label + depreciation_organic + depreciation_corporate
+        capital_expenditures_consolidated: capital_expenditures_branded + capital_expenditures_private_label + capital_expenditures_organic + capital_expenditures_corporate
+        assets_consolidated: assets_branded + assets_private_label + assets_organic + assets_corporate
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  revenues_consolidated: {driver: segments.revenues_consolidated}
+  intersegment_revenues_consolidated: {driver: segments.intersegment_revenues_consolidated}
+  operating_profit_consolidated: {driver: segments.operating_profit_consolidated}
+  depreciation_consolidated: {driver: segments.depreciation_consolidated}
+  capital_expenditures_consolidated: {driver: segments.capital_expenditures_consolidated}
+  assets_consolidated: {driver: segments.assets_consolidated}

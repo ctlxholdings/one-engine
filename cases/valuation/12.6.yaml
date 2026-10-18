@@ -1,0 +1,124 @@
+# Valuation, Exhibit 12.6 (ch. 12, pp. 286-288): Hasbro's equity value per share in November 2008,
+# with its convertible bond valued three ways.
+#
+# One enterprise value, less the same traditional debt, unfunded pensions and
+# employee options in each column, with the convertible bond taken at (1) its
+# traded market value, (2) a Black-Scholes value (straight debt plus the
+# conversion option, pp. 287-288), or (3) converted into shares, so the bond
+# drops out and the new shares join the share count. A fourth column prints
+# the debt lines at book value, for comparison only. Value per share is equity
+# value over the share count: the undiluted count for the first two methods,
+# the diluted one for conversion (p. 288).
+#
+# Translated as a calculation. The first column's lines are inputs, and the
+# same lines printed in the other columns are compared with them (one
+# enterprise value and one set of other claims serve every method). The
+# Black-Scholes value of the bond and the new shares on conversion are inputs:
+# the exhibit prints them as results, the conversion price and option inputs
+# being in the prose. The book-value column, and the bond's coupon and
+# maturity (printed in its label), enter no calculation the exhibit prints;
+# they are inputs only. Equity values, diluted shares and values per share
+# are computed and compared.
+excerpt: "12.6"
+periods: [0]
+entity: hasbro
+plant: enterprise_value_market
+rows:
+  enterprise_value_market: {label: Enterprise value}
+  enterprise_value_bs: {label: Enterprise value, skip: 1}
+  enterprise_value_conversion: {label: Enterprise value, skip: 2}
+  traditional_debt_market: {label: Traditional debt}
+  traditional_debt_bs: {label: Traditional debt, skip: 1}
+  traditional_debt_conversion: {label: Traditional debt, skip: 2}
+  traditional_debt_book: {label: Traditional debt, skip: 3}
+  # the bond's label prints its coupon and maturity: "Convertible debt at 2.75% due 2021"
+  convertible_coupon: {label: Convertible debt at, scale: 0.01}
+  convertible_maturity: {label: due}
+  convertible_market: {label: due, skip: 1}
+  convertible_bs: {label: due, skip: 2}
+  convertible_conversion: {label: due, skip: 3}
+  convertible_book: {label: due, skip: 4}
+  pensions_market: {label: Unfunded pensions}
+  pensions_bs: {label: Unfunded pensions, skip: 1}
+  pensions_conversion: {label: Unfunded pensions, skip: 2}
+  pensions_book: {label: Unfunded pensions, skip: 3}
+  options_market: {label: Employee options}
+  options_bs: {label: Employee options, skip: 1}
+  options_conversion: {label: Employee options, skip: 2}
+  equity_market: {label: Equity value}
+  equity_bs: {label: Equity value, skip: 1}
+  equity_conversion: {label: Equity value, skip: 2}
+  shares_market: {label: Number of nondiluted shares}
+  shares_bs: {label: Number of nondiluted shares, skip: 1}
+  shares_conversion: {label: Number of nondiluted shares, skip: 2}
+  new_shares_market: {label: New shares issued}
+  new_shares_bs: {label: New shares issued, skip: 1}
+  new_shares_conversion: {label: New shares issued, skip: 2}
+  diluted_market: {label: Number of diluted shares}
+  diluted_bs: {label: Number of diluted shares, skip: 1}
+  diluted_conversion: {label: Number of diluted shares, skip: 2}
+  per_share_market: {label: Value per share (dollars)}
+  per_share_bs: {label: Value per share (dollars), skip: 1}
+  per_share_conversion: {label: Value per share (dollars), skip: 2}
+inputs: [enterprise_value_market, traditional_debt_market, traditional_debt_book, convertible_coupon,
+         convertible_maturity, convertible_market, convertible_bs, convertible_book, pensions_market,
+         options_market, shares_market, new_shares_conversion]
+set_aside:
+  "EXHIBIT 12.6 Hasbro Convertible Debt, November 2008": the exhibit's number and its date
+  "Source: Hasbro 2007 10-K, NASD TRACE system, Black-Scholes option-pricing model.": the source line's year
+case:
+  case: valuation-12-6-hasbro-convertible
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    hasbro:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # the claims print negative: equity is the enterprise value plus the signed claims
+        equity_market: enterprise_value_market + traditional_debt_market + convertible_market + pensions_market + options_market
+        equity_bs: enterprise_value_market + traditional_debt_market + convertible_bs + pensions_market + options_market
+        # converted: the bond is gone, and its holders own new shares instead
+        convertible_conversion: 0
+        equity_conversion: enterprise_value_market + traditional_debt_market + convertible_conversion + pensions_market + options_market
+        new_shares_market: 0
+        new_shares_bs: 0
+        diluted_market: shares_market + new_shares_market
+        diluted_bs: shares_market + new_shares_bs
+        diluted_conversion: shares_market + new_shares_conversion
+        per_share_market: equity_market / diluted_market
+        per_share_bs: equity_bs / diluted_bs
+        per_share_conversion: equity_conversion / diluted_conversion
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  enterprise_value_bs: {driver: hasbro.enterprise_value_market}
+  enterprise_value_conversion: {driver: hasbro.enterprise_value_market}
+  traditional_debt_bs: {driver: hasbro.traditional_debt_market}
+  traditional_debt_conversion: {driver: hasbro.traditional_debt_market}
+  convertible_conversion: {driver: hasbro.convertible_conversion}
+  pensions_bs: {driver: hasbro.pensions_market}
+  pensions_conversion: {driver: hasbro.pensions_market}
+  pensions_book: {driver: hasbro.pensions_market}
+  options_bs: {driver: hasbro.options_market}
+  options_conversion: {driver: hasbro.options_market}
+  equity_market: {driver: hasbro.equity_market}
+  equity_bs: {driver: hasbro.equity_bs}
+  equity_conversion: {driver: hasbro.equity_conversion}
+  shares_bs: {driver: hasbro.shares_market}
+  shares_conversion: {driver: hasbro.shares_market}
+  new_shares_market: {driver: hasbro.new_shares_market}
+  new_shares_bs: {driver: hasbro.new_shares_bs}
+  diluted_market: {driver: hasbro.diluted_market}
+  diluted_bs: {driver: hasbro.diluted_bs}
+  diluted_conversion: {driver: hasbro.diluted_conversion}
+  per_share_market: {driver: hasbro.per_share_market}
+  per_share_bs: {driver: hasbro.per_share_bs}
+  per_share_conversion: {driver: hasbro.per_share_conversion}
