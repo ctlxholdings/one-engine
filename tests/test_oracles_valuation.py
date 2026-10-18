@@ -106,6 +106,14 @@ def test_a_number_typed_into_the_case_fails(tmp_path):
     assert not c.ok and "0.25" in c.got
 
 
+def test_the_days_of_a_year_may_be_typed_and_nothing_near_them(tmp_path):
+    tr = _tr()
+    tr["case"]["generators"]["book"]["values"]["days"] = "365"
+    assert _run_with(tmp_path, tr)["translation traced"].ok
+    tr["case"]["generators"]["book"]["values"]["days"] = "360"
+    assert not _run_with(tmp_path, tr)["translation traced"].ok
+
+
 def test_a_row_neither_fed_compared_nor_set_aside_fails(tmp_path):
     tr = _tr()
     del tr["figures"]["noplat"]

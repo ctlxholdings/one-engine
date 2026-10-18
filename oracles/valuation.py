@@ -58,8 +58,9 @@ columns. Keys:
   outside the row's periods) and, for each of the row's periods ``p``, as
   the number ``<row>__p``;
 * ``case``: a one_engine case. The only numbers typed in it are structural
-  (:data:`one_engine.oracles.golds.STRUCTURAL`); any other fails the
-  ``translation traced`` check;
+  (:data:`one_engine.oracles.golds.STRUCTURAL`), a reading's sign, and the
+  365 days of a calendar year (:data:`DAYS_PER_YEAR`, for the book's
+  days-based ratios); any other fails the ``translation traced`` check;
 * ``entity``: whose books the figures are read from;
 * ``figures``: row -> where the engine reports it, any reading of
   :meth:`GoldFamily._read <one_engine.oracles.golds.GoldFamily._read>`
@@ -114,6 +115,8 @@ TRANSLATIONS = pathlib.Path(__file__).resolve().parent.parent / "cases" / "valua
 #: the book as Ali supplied it on 2026-10-18 (the same text was attached twice, byte for byte)
 BOOK_SHA256 = "fc62aa5b9ec37a358980a08fcbd093850b82bcd7eebf2e23b3b5b7bc7d17815c"
 BOOK_FILE = pathlib.Path("/mnt/project-files/uploads/hearth/71cd23b5-8adf-47d8-9190-5cd8c65919db")
+#: the calendar year's days, the one constant a translation may type besides the structural ones
+DAYS_PER_YEAR = 365
 #: a row may scale its printed number by a power of ten (0.01: a percent; 1000: printed in thousands)
 SCALES = {Fraction(10) ** k for k in range(-4, 10) if k}
 
@@ -493,9 +496,11 @@ class ValuationFamily(Family):
         if planted:
             record["planted"] = planted
         figures = tr.get("figures") or {}
-        # a reading's sign (+1 or -1: an expense read as the book prints it) is structural, not a figure
+        # a reading's sign (+1 or -1: an expense read as the book prints it) is structural, not a figure;
+        # so are the days of a calendar year, which the book's days-based ratios (days of inventory,
+        # receivables in days) divide by and never print
         gate = [g for g in untraced({"case": tr["case"], "figures": figures})
-                if not re.search(r"\.sign = -?1$", g)]
+                if not re.search(r"\.sign = -?1$", g) and not g.endswith(f" = {DAYS_PER_YEAR}")]
         checks.insert(0, Check("translation traced", "every number in the case", "0 untraced",
                                "; ".join(gate) if gate else "0", not gate))
 
