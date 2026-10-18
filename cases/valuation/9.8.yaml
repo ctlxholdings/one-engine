@@ -1,0 +1,45 @@
+# Valuation, Exhibit 9.8 (ch. 9, p. 201): forecasting receivables as a stock or as a flow.
+#
+# Four years of revenues and accounts receivable, and the two ratios a
+# forecaster might hold steady: receivables as a share of revenues (the stock
+# method) and the change in receivables as a share of the change in revenues
+# (the flow method). The book's point (p. 201) is that the first stays in a
+# narrow band while the second swings. Revenues and receivables are inputs;
+# both ratios are computed by the valuation_formulas generator and compared.
+# The flow ratio has no first-year value (a dash, compared as nil).
+excerpt: "9.8"
+periods: [0, 1, 2, 3]
+entity: company
+plant: receivables
+rows:
+  revenues: Revenues (dollars)
+  receivables: Accounts receivable (dollars)
+  stock_ratio: {label: revenues (percent), scale: 0.01}
+  flow_ratio: {label: the change in revenues (percent), scale: 0.01}
+inputs: [revenues, receivables]
+set_aside:
+  "EXHIBIT 9.8 Stock versus Flow Example": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4": the column headings, years
+case:
+  case: valuation-9-8-stock-flow
+  periods: 4
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    ratios:
+      kind: valuation_formulas
+      periods: 4
+      inputs: exhibit
+      values:
+        stock_ratio: receivables / revenues
+        flow_ratio: ((receivables - lag(receivables, 1)) / (revenues - lag(revenues, 1))) if t > 0 else 0
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  stock_ratio: {driver: ratios.stock_ratio}
+  flow_ratio: {driver: ratios.flow_ratio}

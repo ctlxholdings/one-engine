@@ -207,3 +207,50 @@ def test_an_exhibits_formula_meets_the_packs_refusals():
                 "values": {"cv": "growing_perpetuity(cf, w, g)"}}, source="test")
     with pytest.raises(V.ValuationError, match="not below the discount rate"):
         V.valuation_formulas(r)
+
+
+# ── the two roots and the peer statistics ───────────────────────────────────
+
+def test_annualized_is_the_rate_that_compounds_to_the_cumulative_return():
+    # the book's ten-year interval (ch. 11, p. 245): (1 + 69.1%)^(1/10) - 1 = 5.39%
+    r = V.annualized(F(691, 1000), 10)
+    assert abs(r - F(539, 10000)) < F(1, 10000)
+    assert abs((1 + r) ** 10 - F(1691, 1000)) < F(1, 10 ** 35)        # the root holds to 35 digits
+    assert V.annualized(F(21, 100), 2) == F(1, 10)                       # 1.21 = 1.1 squared, exactly
+    with pytest.raises(V.ValuationError, match="whole number"):
+        V.annualized(F(1, 10), F(5, 2))
+    with pytest.raises(V.ValuationError, match="not positive"):
+        V.annualized(-1, 3)
+
+
+def test_the_peer_statistics_mean_median_and_sample_deviation():
+    assert V.mean(1, 2, 6) == 3 and V.median(5, 1, 3) == 3 and V.median(4, 1, 3, 2) == F(5, 2)
+    s = V.stdev(2, 4, 4, 4, 5, 5, 7, 9)                                  # sample variance 32/7, not 4
+    assert abs(s * s - F(32, 7)) < F(1, 10 ** 35)
+    assert V.stdev(3, 3, 3) == 0
+    for f, args in ((V.mean, ()), (V.median, ()), (V.stdev, (1,))):
+        with pytest.raises(V.ValuationError):
+            f(*args)
+
+
+def test_an_exhibits_formula_takes_a_sample_as_arguments():
+    r = Reader({"periods": 1, "inputs": {"a": 8, "b": 9, "c": 11, "d": 12},
+                "values": {"m": "median(a, b, c, d)", "dev": "stdev(a, b, c, d) / median(a, b, c, d)"}},
+               source="test")
+    out = V.valuation_formulas(r)
+    assert out["m"] == 10 and abs(out["dev"] - F(1826, 10000)) < F(1, 10000)
+
+
+def test_a_bond_prices_at_par_when_its_yield_is_its_coupon_and_the_yield_inverts_the_price():
+    assert abs(V.bond_price(F(5, 100), F(5, 100), 10) - 100) < F(1, 10 ** 30)   # whole periods: par
+    zero = V.bond_price(F(6, 100), 0, F(5, 2))                            # no coupon: 100 / 1.03^5
+    assert abs(zero - 100 / F(103, 100) ** 5) < F(1, 10 ** 30)
+    # a quarter-period stub: the quoted price excludes the accrued coupon, so at par yield it stays near 100
+    assert abs(V.bond_price(F(5, 100), F(5, 100), F(41, 4)) - 100) < F(1, 100)
+    for y in (F(-1, 100), F(762, 10000), F(3, 10)):
+        assert abs(V.bond_yield(V.bond_price(y, F(5875, 100000), F(551, 20)), F(5875, 100000), F(551, 20)) - y) \
+            < F(1, 10 ** 30)
+    with pytest.raises(V.ValuationError, match="no yield"):
+        V.bond_yield(10 ** 9, F(5, 100), 10)
+    with pytest.raises(V.ValuationError, match="not positive"):
+        V.bond_price(F(5, 100), F(5, 100), 0)

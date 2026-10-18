@@ -1,0 +1,137 @@
+# Valuation, Exhibit 9.14 (ch. 9, p. 212): PartsCo's income statement and balance sheet, prior and current year.
+#
+# The review questions' company (p. 211): two years of income statement beside
+# two balance sheets. Period 0 is the prior year and period 1 the current
+# year. The company is booked:
+#   * the prior-year balance sheet is the opening balance sheet, which must
+#     balance on its own;
+#   * the current year posts its income statement as printed (taxes too: the
+#     exhibit gives no rate), each line against working cash, and depreciation
+#     against property and equipment. It then moves receivables, inventory,
+#     property and equipment, payables and both debts to their printed
+#     year-end balances against working cash. Capital expenditures are the
+#     growth in property and equipment plus depreciation. Equity moves only
+#     by the year's net income: nothing is booked for dividends or new
+#     shares. So the books' working cash at year end is what the other lines
+#     leave, and it is compared with the printed 12.3, which tests that equity
+#     rose by net income alone.
+# The prior year's income statement has no balance sheet before it to book
+# against; its subtotals (operating profit, earnings before taxes, net
+# income) are computed by the valuation_formulas generator from its lines.
+# The current year's subtotals and every balance-sheet total are read from
+# the books.
+excerpt: "9.14"
+periods: [0, 1]
+entity: company
+plant: revenues
+rows:
+  revenues: Revenues
+  cost_of_sales: Cost of sales
+  selling_costs: Selling costs
+  depreciation: Depreciation
+  operating_profit_prior: {label: Operating profit, periods: [0]}
+  operating_profit: {label: Operating profit, periods: [1], skip: 1}
+  interest: Interest
+  ebt_prior: {label: Earnings before taxes, periods: [0]}
+  ebt: {label: Earnings before taxes, periods: [1], skip: 1}
+  taxes: Taxes
+  net_income_prior: {label: Net Income, periods: [0]}
+  net_income: {label: Net Income, periods: [1], skip: 1}
+  working_cash_prior: {label: Working cash, periods: [0]}
+  working_cash: {label: Working cash, periods: [1], skip: 1}
+  receivables: Accounts receivable
+  inventory: Inventory
+  current_assets: Current assets
+  ppe: Property and equipment
+  total_assets: Total assets
+  accounts_payable: Accounts payable
+  short_term_debt: Short-term debt
+  current_liabilities: Current liabilities
+  long_term_debt: Long-term debt
+  equity_prior: {label: Shareholders’ equity, periods: [0]}
+  equity: {label: Shareholders’ equity, periods: [1], skip: 1}
+  liabilities_and_equity: Liabilities and equity
+inputs: [revenues, cost_of_sales, selling_costs, depreciation, interest, taxes, working_cash_prior, receivables,
+         inventory, ppe, accounts_payable, short_term_debt, long_term_debt, equity_prior]
+set_aside:
+  "EXHIBIT 9.14 PartsCo: Consolidated Financial Statements": the exhibit's number
+case:
+  case: valuation-9-14-partsco
+  periods: 2
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: valuation_formulas
+      periods: 2
+      inputs: exhibit
+      values:
+        # the prior year's subtotals (each expense prints negative)
+        operating_profit: revenues + cost_of_sales + selling_costs + depreciation
+        ebt: operating_profit + interest
+        net_income: ebt + taxes
+        # the current year's postings (period 0 is the opening balance sheet)
+        revenue_posted: revenues if t > 0 else 0
+        cost_of_sales_posted: cost_of_sales if t > 0 else 0
+        selling_costs_posted: selling_costs if t > 0 else 0
+        depreciation_posted: depreciation if t > 0 else 0
+        interest_posted: interest if t > 0 else 0
+        taxes_posted: taxes if t > 0 else 0
+        receivables_move: (receivables - lag(receivables, 1)) if t > 0 else 0
+        inventory_move: (inventory - lag(inventory, 1)) if t > 0 else 0
+        capex: (ppe - lag(ppe, 1) - depreciation) if t > 0 else 0
+        payables_move: (accounts_payable - lag(accounts_payable, 1)) if t > 0 else 0
+        short_term_debt_move: (short_term_debt - lag(short_term_debt, 1)) if t > 0 else 0
+        long_term_debt_move: (long_term_debt - lag(long_term_debt, 1)) if t > 0 else 0
+  opening:
+    company:
+      working_cash: {nature: asset, value: {generator: book, output: working_cash_prior__0}}
+      receivables: {nature: asset, value: {generator: book, output: receivables__0}}
+      inventory: {nature: asset, value: {generator: book, output: inventory__0}}
+      ppe: {nature: asset, value: {generator: book, output: ppe__0}}
+      accounts_payable: {nature: liability, value: {generator: book, output: accounts_payable__0}}
+      short_term_debt: {nature: liability, value: {generator: book, output: short_term_debt__0}}
+      long_term_debt: {nature: liability, value: {generator: book, output: long_term_debt__0}}
+      equity: {nature: equity, value: {generator: book, output: equity_prior__0}}
+  contracts: {}
+  rulebooks:
+    # each amount signed: a positive one debits the first account, a negative one is reversed
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {revenue: income, cost_of_sales: expense, selling_costs: expense, depreciation: expense,
+                interest: expense, tax_expense: expense}
+      moves:
+        revenues: {debit: working_cash, credit: revenue, amount: {generator: book, output: revenue_posted}}
+        cost_of_sales: {debit: working_cash, credit: cost_of_sales, amount: {generator: book, output: cost_of_sales_posted}}
+        selling_costs: {debit: working_cash, credit: selling_costs, amount: {generator: book, output: selling_costs_posted}}
+        depreciation: {debit: ppe, credit: depreciation, amount: {generator: book, output: depreciation_posted}}
+        interest: {debit: working_cash, credit: interest, amount: {generator: book, output: interest_posted}}
+        taxes: {debit: working_cash, credit: tax_expense, amount: {generator: book, output: taxes_posted}}
+        receivables: {debit: receivables, credit: working_cash, amount: {generator: book, output: receivables_move}}
+        inventory: {debit: inventory, credit: working_cash, amount: {generator: book, output: inventory_move}}
+        capex: {debit: ppe, credit: working_cash, amount: {generator: book, output: capex}}
+        payables: {debit: working_cash, credit: accounts_payable, amount: {generator: book, output: payables_move}}
+        short_term_debt: {debit: working_cash, credit: short_term_debt,
+                          amount: {generator: book, output: short_term_debt_move}}
+        long_term_debt: {debit: working_cash, credit: long_term_debt,
+                         amount: {generator: book, output: long_term_debt_move}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  operating_profit_prior: {driver: book.operating_profit}
+  operating_profit: {change: revenue - cost_of_sales - selling_costs - depreciation}
+  ebt_prior: {driver: book.ebt}
+  ebt: {change: revenue - cost_of_sales - selling_costs - depreciation - interest}
+  net_income_prior: {driver: book.net_income}
+  net_income: {change: revenue - cost_of_sales - selling_costs - depreciation - interest - tax_expense}
+  working_cash: {balance: working_cash}
+  current_assets: {balance: working_cash + receivables + inventory}
+  total_assets: {balance: working_cash + receivables + inventory + ppe}
+  current_liabilities: {balance: accounts_payable + short_term_debt}
+  # the books keep income and expense open: equity as printed includes the year's profit
+  equity: {balance: equity + revenue - cost_of_sales - selling_costs - depreciation - interest - tax_expense}
+  liabilities_and_equity: {balance: accounts_payable + short_term_debt + long_term_debt + equity + revenue - cost_of_sales - selling_costs - depreciation - interest - tax_expense}

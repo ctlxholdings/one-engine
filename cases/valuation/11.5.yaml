@@ -1,0 +1,77 @@
+# Valuation, Exhibit 11.5 (ch. 11, p. 245): U.S. stock, bond and excess returns averaged over holding
+# periods of 1, 2, 4, 5 and 10 years, 1900-2009, and the excess return annualized.
+#
+# Each holding-period row is placed at the case period equal to its length in years (the row "4-year
+# holding periods" at period 4), so the period index is the N of the row. The average cumulative
+# returns (stocks, government bonds, excess) are inputs: they are averages of yearly data the book
+# does not print, and the excess column is not stocks less bonds (1-year: 11.2 - 5.4 = 5.8, printed
+# 6.1), so only the excess one feeds a computation. The annualized column is the cumulative excess
+# return as an annual rate over N years, the pack's annualized(c, n) = (1 + c)^(1/n) - 1, compared.
+# The Blume estimator column is read but not compared (see not_compared).
+excerpt: "11.5"
+periods: [1]
+entity: model
+plant: excess_2
+rows:
+  stocks_1: {label: 1-year holding periods, periods: [1], scale: 0.01}
+  bonds_1: {label: 1-year holding periods, periods: [1], skip: 1, scale: 0.01}
+  excess_1: {label: 1-year holding periods, periods: [1], skip: 2, scale: 0.01}
+  annualized_1: {label: 1-year holding periods, periods: [1], skip: 3, scale: 0.01}
+  blume_1: {label: 1-year holding periods, periods: [1], skip: 4, scale: 0.01}
+  stocks_2: {label: 2-year holding periods, periods: [2], scale: 0.01}
+  bonds_2: {label: 2-year holding periods, periods: [2], skip: 1, scale: 0.01}
+  excess_2: {label: 2-year holding periods, periods: [2], skip: 2, scale: 0.01}
+  annualized_2: {label: 2-year holding periods, periods: [2], skip: 3, scale: 0.01}
+  blume_2: {label: 2-year holding periods, periods: [2], skip: 4, scale: 0.01}
+  stocks_4: {label: 4-year holding periods, periods: [4], scale: 0.01}
+  bonds_4: {label: 4-year holding periods, periods: [4], skip: 1, scale: 0.01}
+  excess_4: {label: 4-year holding periods, periods: [4], skip: 2, scale: 0.01}
+  annualized_4: {label: 4-year holding periods, periods: [4], skip: 3, scale: 0.01}
+  blume_4: {label: 4-year holding periods, periods: [4], skip: 4, scale: 0.01}
+  stocks_5: {label: 5-year holding periods, periods: [5], scale: 0.01}
+  bonds_5: {label: 5-year holding periods, periods: [5], skip: 1, scale: 0.01}
+  excess_5: {label: 5-year holding periods, periods: [5], skip: 2, scale: 0.01}
+  annualized_5: {label: 5-year holding periods, periods: [5], skip: 3, scale: 0.01}
+  blume_5: {label: 5-year holding periods, periods: [5], skip: 4, scale: 0.01}
+  stocks_10: {label: 10-year holding periods, periods: [10], scale: 0.01}
+  bonds_10: {label: 10-year holding periods, periods: [10], skip: 1, scale: 0.01}
+  excess_10: {label: 10-year holding periods, periods: [10], skip: 2, scale: 0.01}
+  annualized_10: {label: 10-year holding periods, periods: [10], skip: 3, scale: 0.01}
+  blume_10: {label: 10-year holding periods, periods: [10], skip: 4, scale: 0.01}
+inputs: [stocks_1, bonds_1, excess_1, stocks_2, bonds_2, excess_2, stocks_4, bonds_4, excess_4, stocks_5, bonds_5, excess_5, stocks_10, bonds_10, excess_10]
+not_compared:
+  blume_1: its geometric-average input and the sample length are not printed in the exhibit (prose, p. 244)
+  blume_2: its geometric-average input and the sample length are not printed in the exhibit (prose, p. 244)
+  blume_4: its geometric-average input and the sample length are not printed in the exhibit (prose, p. 244)
+  blume_5: its geometric-average input and the sample length are not printed in the exhibit (prose, p. 244)
+  blume_10: its geometric-average input and the sample length are not printed in the exhibit (prose, p. 244)
+set_aside:
+  "EXHIBIT 11.5 Cumulative Returns for Various Intervals, 1900–2009": the exhibit's number
+case:
+  case: valuation-chapter-11-holding-period-returns
+  periods: 11
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 11
+      inputs: exhibit
+      values:
+        # each row's cumulative excess return sits at the period of its holding length
+        excess_m: excess_1 + excess_2 + excess_4 + excess_5 + excess_10
+        annualized_m: "annualized(excess_m, t) if t >= 1 else 0"
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  annualized_1: {driver: m.annualized_m}
+  annualized_2: {driver: m.annualized_m}
+  annualized_4: {driver: m.annualized_m}
+  annualized_5: {driver: m.annualized_m}
+  annualized_10: {driver: m.annualized_m}

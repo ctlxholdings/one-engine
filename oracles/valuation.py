@@ -24,9 +24,9 @@ What the family reads from an excerpt
 The text is read mechanically, the way a reader reads a table: a *row* is a
 label followed by its numbers. A number is a whole token: ``9,790``,
 ``(1,027)`` (negative), ``37.6%``, ``$50``; a token of dashes is one nil per
-dash (``–––`` is three nil cells, as the text extraction glues them). A small
-number at the start of a line followed by text is a footnote mark, not a
-figure. Every other number in the excerpt is a *printed figure*, and every
+dash (``–––`` is three nil cells, as the text extraction glues them). A bare
+integer of one or two digits at the start of a line followed by text is a
+footnote mark, not a figure (``67% probability ...`` opens with a figure). Every other number in the excerpt is a *printed figure*, and every
 printed figure must be accounted for: read by a row, or on a line the
 translation sets aside with a reason (column headings, footnote prose). An
 unaccounted figure is a failed check, so a translation cannot skip the
@@ -340,6 +340,9 @@ def _number(tok: str) -> Optional[Tuple[Fraction, int]]:
     return (-x if (m.group(1) or m.group(2)) else x), decimals
 
 
+_FOOTNOTE = re.compile(r"[0-9]{1,2}$")     # a footnote mark: a bare integer, no %, $, comma or point
+
+
 def _cells(tok: str) -> Optional[List[Tuple[Fraction, int]]]:
     """The cells a token prints: one number, or one nil per dash; ``None`` for a word."""
     n = _number(tok)
@@ -353,8 +356,11 @@ def _cells(tok: str) -> Optional[List[Tuple[Fraction, int]]]:
 def figures_of(text: str) -> List[Tuple[int, int, List[Tuple[Fraction, int]]]]:
     """Every printed figure of an excerpt: ``(line index, token index, cells)``.
 
-    A numeric token that opens a line and is followed by a word is a footnote
-    mark (``1 Assumes a marginal tax of 25% ...``), not a figure.
+    A bare integer of one or two digits that opens a line and is followed by
+    a word is a footnote mark (``1 Assumes a marginal tax of 25% ...``), not
+    a figure. Only a bare integer: ``67% probability ...`` and ``$50 per
+    share ...`` open with figures, and a four-digit year is a figure the
+    translation reads or sets aside.
     """
     out = []
     for li, line in enumerate(text.splitlines()):
@@ -363,7 +369,7 @@ def figures_of(text: str) -> List[Tuple[int, int, List[Tuple[Fraction, int]]]]:
             cells = _cells(tok)
             if cells is None:
                 continue
-            if ti == 0 and len(toks) > 1 and _cells(toks[1]) is None and _number(tok) is not None:
+            if ti == 0 and len(toks) > 1 and _cells(toks[1]) is None and _FOOTNOTE.match(tok):
                 continue
             out.append((li, ti, cells))
     return out
@@ -425,15 +431,24 @@ def read_row(text: str, label: str, occurrence: int = 1, continued: int = 0
 
 
 def read_line(text: str, line: int) -> Tuple[List[Position], List[Tuple[Fraction, int]]]:
-    """Every cell of excerpt line ``line`` (1-based), a line of numbers only (a chart's data labels).
+    """Every printed figure of excerpt line ``line`` (1-based), in order, whatever words sit between.
 
-    Raises ``KeyError`` when the line holds a word or no number.
+    For a line no label opens: a chart's data labels, or a scenario line
+    whose figures are separated by words (``67% probability ... 1,954``).
+    The cells are exactly the line's printed figures as :func:`figures_of`
+    counts them, so a footnote mark is not one of them. Raises ``KeyError``
+    when the line prints no figure.
     """
     lines = text.splitlines()
-    toks = lines[line - 1].split() if 1 <= line <= len(lines) else []
-    if not toks or any(_cells(t) is None for t in toks):
-        raise KeyError(f"line {line} is not a line of numbers only")
-    return _line_cells(toks, line - 1, 0)
+    if not 1 <= line <= len(lines):
+        raise KeyError(f"line {line} is not a line of the excerpt")
+    pos, cells = [], []
+    for li, ti, got in figures_of(lines[line - 1]):
+        pos += [(line - 1, ti, k) for k in range(len(got))]
+        cells += got
+    if not cells:
+        raise KeyError(f"line {line} prints no figure")
+    return pos, cells
 
 
 # ── the family ──────────────────────────────────────────────────────────────

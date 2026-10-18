@@ -1,0 +1,190 @@
+# Valuation, Exhibit 7.13 (ch. 7, p. 155), Lowe’s: free cash flow and cash flow to investors.
+#
+# The exhibit builds free cash flow for 2006-2008 (periods 0-2) from NOPLAT
+# (Exhibit 7.10), depreciation and the year's investments in invested capital
+# (changes of Exhibit 7.5's balances), adds the cash flow of the nonoperating
+# items to reach cash flow available to investors, and reconciles that with
+# what went to debt holders and equity holders (pp. 155-158). This oracle
+# reads Lowe's, three columns to the right of Home Depot (7.13@home_depot).
+# Every line is a figure the book takes from those exhibits, so the lines are
+# inputs; what the exhibit adds is its subtotals
+# and the reconciliation, and those are what the case checks.
+#   * The exhibit is booked as one pool of cash: each operating and
+#     nonoperating line a transfer into cash (as printed, an outflow negative)
+#     from an account of its own; each financing line a transfer out of cash
+#     to the investors' account it names (as printed, a payment to investors
+#     positive).
+#   * Capitalized operating leases print twice, as an investment and as a flow
+#     to debt holders: both postings are made from the investment line (the
+#     leased asset and the debt equivalent that finances it, as Exhibit 7.5
+#     books them), and the financing printing is compared.
+#   * Every subtotal is a cut of the cash account by the class of the account
+#     at the other end: gross cash flow, gross investment, free cash flow,
+#     nonoperating cash flow and cash flow available to investors on the
+#     operating side; flows to debt holders, to equity holders, and their sum
+#     on the financing side. The two printings of cash flow available to
+#     investors are read from the two sides, so the reconciliation is tested.
+excerpt: "7.13"
+periods: [0, 1, 2]
+entity: company
+columns_of: [home_depot]
+plant: noplat
+notes: >-
+  The text extraction repeats free cash flow after the footnote; the repeat is read and compared like the row it
+  repeats. Lowe's prints nil for the Home Depot lines (goodwill, nonrecurring, discontinued operations, HD
+  Supply, nonoperating deferred taxes); they are read and booked as nil. The footnote mark of nonoperating
+  deferred taxes is not printed on its row.
+rows:
+  noplat: {label: NOPLAT, skip: 3}
+  depreciation: {label: Depreciation, skip: 3}
+  gross_cash_flow: {label: Gross cash flow, skip: 3}
+  working_capital: {label: Change in operating working capital, skip: 3}
+  net_capex: {label: Net capital expenditures, skip: 3}
+  leases: {label: Decrease (increase) in capitalized operating leases, occurrence: 1, skip: 3}
+  goodwill: {label: Investments in goodwill and acquired intangibles, skip: 3}
+  long_term_operating: {label: Decrease (increase) in net long-term operating assets, skip: 3}
+  aoci: {label: Increase (decrease) in accumulated other comprehensive income, skip: 3}
+  gross_investment: {label: Gross investment, skip: 3}
+  free_cash_flow: {label: Free cash flow, occurrence: 1, skip: 3}
+  interest_income: {label: After-tax interest income, skip: 3}
+  nonrecurring: {label: After-tax nonrecurring charge, skip: 3}
+  discontinued: {label: Loss (gain) from discontinued operations, skip: 3}
+  nonoperating_taxes: {label: Nonoperating taxes, skip: 3}
+  excess_cash: {label: Decrease (increase) in excess cash, skip: 3}
+  long_term_investments: {label: Decrease (increase) in long-term investments, skip: 3}
+  loss_carryforwards: {label: Decrease (increase) in net loss carry-forwards, skip: 3}
+  hd_supply: {label: Sale of HD Supply, skip: 3}
+  nonoperating_cash_flow: {label: Nonoperating cash flow, skip: 3}
+  cash_flow_to_investors: {label: Cash flow available to investors, occurrence: 1, skip: 3}
+  after_tax_interest: {label: After-tax interest expense, skip: 3}
+  after_tax_lease_interest: {label: After-tax operating lease interest expense, skip: 3}
+  short_term_debt: {label: Decrease (increase) in short-term debt, skip: 3}
+  long_term_debt: {label: Decrease (increase) in long-term debt, skip: 3}
+  leases_financing: {label: Decrease (increase) in capitalized operating leases, occurrence: 2, skip: 3}
+  flows_to_debt: {label: Flows to debt holders, skip: 3}
+  nonoperating_deferred_taxes: {label: Decrease (increase) in nonoperating deferred taxes, skip: 3}
+  dividends: {label: Dividends, skip: 3}
+  repurchases: {label: Repurchased and retired shares, skip: 3}
+  retained_earnings_adjustments: {label: Adjustments to retained earnings, skip: 3}
+  flows_to_equity: {label: Flows to equity holders, skip: 3}
+  financing_flows: {label: Cash flow available to investors, occurrence: 2, skip: 3}
+  free_cash_flow_repeat: {label: Free cash flow, occurrence: 2, skip: 3}
+inputs: [noplat, depreciation, working_capital, net_capex, leases, goodwill, long_term_operating, aoci,
+         interest_income, nonrecurring, discontinued, nonoperating_taxes, excess_cash, long_term_investments,
+         loss_carryforwards, hd_supply, after_tax_interest, after_tax_lease_interest, short_term_debt,
+         long_term_debt, nonoperating_deferred_taxes, dividends, repurchases, retained_earnings_adjustments]
+set_aside:
+  "EXHIBIT 7.13 Home Depot and Lowe’s: Free Cash Flow Calculation": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-chapter-7-fcf-lowes
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 3
+      inputs: exhibit
+      values: {}
+  contracts: {}
+  rulebooks:
+    # operating and nonoperating lines: into cash as printed; financing lines: out of cash as printed
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, noplat: income, depreciation: income, working_capital: asset, net_capex: asset,
+                leased_assets: asset, goodwill: asset, long_term_operating: asset, aoci: equity,
+                interest_income: income, nonrecurring: expense, discontinued: income, nonoperating_taxes: expense,
+                excess_cash: asset, long_term_investments: asset, loss_carryforwards: asset, hd_supply: asset,
+                after_tax_interest: liability, after_tax_lease_interest: liability, short_term_debt: liability,
+                long_term_debt: liability, lease_debt: liability, nonoperating_deferred_taxes: equity,
+                dividends: equity, repurchases: equity, retained_earnings_adjustments: equity}
+      moves:
+        noplat: {debit: cash, credit: noplat, amount: {generator: book, output: noplat}}
+        depreciation: {debit: cash, credit: depreciation, amount: {generator: book, output: depreciation}}
+        working_capital: {debit: cash, credit: working_capital, amount: {generator: book, output: working_capital}}
+        net_capex: {debit: cash, credit: net_capex, amount: {generator: book, output: net_capex}}
+        leased_assets: {debit: cash, credit: leased_assets, amount: {generator: book, output: leases}}
+        goodwill: {debit: cash, credit: goodwill, amount: {generator: book, output: goodwill}}
+        long_term_operating: {debit: cash, credit: long_term_operating,
+                              amount: {generator: book, output: long_term_operating}}
+        aoci: {debit: cash, credit: aoci, amount: {generator: book, output: aoci}}
+        interest_income: {debit: cash, credit: interest_income, amount: {generator: book, output: interest_income}}
+        nonrecurring: {debit: cash, credit: nonrecurring, amount: {generator: book, output: nonrecurring}}
+        discontinued: {debit: cash, credit: discontinued, amount: {generator: book, output: discontinued}}
+        nonoperating_taxes: {debit: cash, credit: nonoperating_taxes,
+                             amount: {generator: book, output: nonoperating_taxes}}
+        excess_cash: {debit: cash, credit: excess_cash, amount: {generator: book, output: excess_cash}}
+        long_term_investments: {debit: cash, credit: long_term_investments,
+                                amount: {generator: book, output: long_term_investments}}
+        loss_carryforwards: {debit: cash, credit: loss_carryforwards,
+                             amount: {generator: book, output: loss_carryforwards}}
+        hd_supply: {debit: cash, credit: hd_supply, amount: {generator: book, output: hd_supply}}
+        after_tax_interest: {debit: after_tax_interest, credit: cash,
+                             amount: {generator: book, output: after_tax_interest}}
+        after_tax_lease_interest: {debit: after_tax_lease_interest, credit: cash,
+                                   amount: {generator: book, output: after_tax_lease_interest}}
+        short_term_debt: {debit: short_term_debt, credit: cash, amount: {generator: book, output: short_term_debt}}
+        long_term_debt: {debit: long_term_debt, credit: cash, amount: {generator: book, output: long_term_debt}}
+        # the debt equivalent that finances the leased assets: the same line, paid out to debt holders
+        lease_debt: {debit: lease_debt, credit: cash, amount: {generator: book, output: leases}}
+        nonoperating_deferred_taxes: {debit: nonoperating_deferred_taxes, credit: cash,
+                                      amount: {generator: book, output: nonoperating_deferred_taxes}}
+        dividends: {debit: dividends, credit: cash, amount: {generator: book, output: dividends}}
+        repurchases: {debit: repurchases, credit: cash, amount: {generator: book, output: repurchases}}
+        retained_earnings_adjustments: {debit: retained_earnings_adjustments, credit: cash,
+                                        amount: {generator: book, output: retained_earnings_adjustments}}
+  schemes:
+    flows:
+      noplat: gross_cash_flow
+      depreciation: gross_cash_flow
+      working_capital: investment
+      net_capex: investment
+      leased_assets: investment
+      goodwill: investment
+      long_term_operating: investment
+      aoci: investment
+      interest_income: nonoperating
+      nonrecurring: nonoperating
+      discontinued: nonoperating
+      nonoperating_taxes: nonoperating
+      excess_cash: nonoperating
+      long_term_investments: nonoperating
+      loss_carryforwards: nonoperating
+      hd_supply: nonoperating
+      after_tax_interest: debt_holders
+      after_tax_lease_interest: debt_holders
+      short_term_debt: debt_holders
+      long_term_debt: debt_holders
+      lease_debt: debt_holders
+      nonoperating_deferred_taxes: equity_holders
+      dividends: equity_holders
+      repurchases: equity_holders
+      retained_earnings_adjustments: equity_holders
+  cuts:
+    gross_cash_flow: {entity: company, account: cash, scheme: flows, include: [gross_cash_flow]}
+    gross_investment: {entity: company, account: cash, scheme: flows, include: [investment]}
+    free_cash_flow: {entity: company, account: cash, scheme: flows, include: [gross_cash_flow, investment]}
+    nonoperating_cash_flow: {entity: company, account: cash, scheme: flows, include: [nonoperating]}
+    available_to_investors: {entity: company, account: cash, scheme: flows,
+                             include: [gross_cash_flow, investment, nonoperating]}
+    to_debt_holders: {entity: company, account: cash, scheme: flows, include: [debt_holders]}
+    to_equity_holders: {entity: company, account: cash, scheme: flows, include: [equity_holders]}
+    to_investors: {entity: company, account: cash, scheme: flows, include: [debt_holders, equity_holders]}
+  measures: {}
+figures:
+  gross_cash_flow: {cut: gross_cash_flow}
+  gross_investment: {cut: gross_investment}
+  free_cash_flow: {cut: free_cash_flow}
+  nonoperating_cash_flow: {cut: nonoperating_cash_flow}
+  cash_flow_to_investors: {cut: available_to_investors}
+  # the debt equivalent rises as the leased assets do: an increase printed as a negative flow to debt holders
+  leases_financing: {change: lease_debt, sign: -1}
+  # what leaves the pool for investors is printed positive
+  flows_to_debt: {cut: to_debt_holders, sign: -1}
+  flows_to_equity: {cut: to_equity_holders, sign: -1}
+  financing_flows: {cut: to_investors, sign: -1}
+  free_cash_flow_repeat: {cut: free_cash_flow}

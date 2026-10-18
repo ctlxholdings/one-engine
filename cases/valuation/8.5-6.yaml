@@ -1,0 +1,122 @@
+# Valuation, Exhibits 8.5-8.6 (ch. 8, pp. 172-173): six U.S. airlines in 2008, and the labor branch of their ROIC tree.
+#
+# Exhibit 8.5 prints, for three network carriers (American, Delta, United) and
+# three discount carriers (AirTran, JetBlue, Southwest), revenues, three cost
+# lines and operating profit, then two operating statistics: full-time
+# equivalent employees and available seat-miles. Exhibit 8.6 turns these into
+# one branch of the ROIC tree, and the book (p. 171) says how: each box is
+# the average over the three carriers of a type. That is the mean of each
+# carrier's own ratio, not a ratio of the totals. So the boxes do not multiply
+# into each other exactly; the result file gives the evidence. The two
+# exhibits are one excerpt because 8.6 prints nothing but 8.5 transformed.
+#   * The six carriers are the case's six periods, in the order printed:
+#     0-2 the network carriers, 3-5 the discount carriers. A period here is a
+#     column of 8.5, not a year.
+#   * 8.5's lines are the inputs. Operating profit is computed as revenues
+#     less the three cost lines, and compared.
+#   * Each box of 8.6 is computed per carrier, then averaged over its three
+#     carriers as a trailing mean (this carrier and the two before it). The
+#     network carriers' figure is read at period 2 and the discount carriers'
+#     at period 5. Units follow 8.6's footnotes: revenue and labor per
+#     seat-mile in cents, seat-miles per employee in millions, labor per
+#     employee in $ thousands.
+excerpt: "8.5-6"
+periods: [0, 1, 2, 3, 4, 5]
+entity: company
+plant: salaries
+rows:
+  # 8.5, one column per carrier
+  revenues: Revenues
+  fuel: Aircraft fuel and related taxes
+  salaries: Salaries and related costs
+  other_expenses: Other operating expenses
+  operating_profit: Operating profit (loss)
+  employees: Full-time equivalents
+  seat_miles: Available seat-miles (millions)
+  # 8.6, each box: the network carriers' average, then the discount carriers'
+  network_operating_margin: {label: Network carriers, occurrence: 1, periods: [2], scale: 0.01}
+  discount_operating_margin: {label: Discount carriers, occurrence: 1, periods: [5], scale: 0.01}
+  network_labor_to_revenues: {label: Network carriers, occurrence: 2, periods: [2], scale: 0.01}
+  discount_labor_to_revenues: {label: Discount carriers, occurrence: 2, periods: [5], scale: 0.01}
+  network_fuel_to_revenues: {label: Network carriers, occurrence: 3, periods: [2], scale: 0.01}
+  discount_fuel_to_revenues: {label: Discount carriers, occurrence: 3, periods: [5], scale: 0.01}
+  network_other_to_revenues: {label: Network carriers, occurrence: 4, periods: [2], scale: 0.01}
+  discount_other_to_revenues: {label: Discount carriers, occurrence: 4, periods: [5], scale: 0.01}
+  # cents per seat-mile; the "Other costs/revenues" caption is glued in front of the network figure
+  network_revenue_per_seat_mile: {label: Network carriers, occurrence: 5, periods: [2], scale: 0.01}
+  discount_revenue_per_seat_mile: {label: Discount carriers, occurrence: 5, periods: [5], scale: 0.01}
+  network_labor_per_seat_mile: {label: Network carriers, occurrence: 6, periods: [2], scale: 0.01}
+  discount_labor_per_seat_mile: {label: Discount carriers, occurrence: 6, periods: [5], scale: 0.01}
+  # millions of seat-miles per employee
+  network_seat_miles_per_employee: {label: Network carriers, occurrence: 7, periods: [2]}
+  discount_seat_miles_per_employee: {label: Discount carriers, occurrence: 7, periods: [5]}
+  # $ thousands per employee
+  network_labor_per_employee: {label: Network carriers, occurrence: 8, periods: [2], scale: 0.001}
+  discount_labor_per_employee: {label: Discount carriers, occurrence: 8, periods: [5], scale: 0.001}
+inputs: [revenues, fuel, salaries, other_expenses, employees, seat_miles]
+set_aside:
+  "EXHIBIT 8.5 Financial and Operating Statistics across U.S. Airlines, 2008": the exhibit's number and its year
+  "1 Delta numbers adjusted for the acquisition of Northwest Airlines on October 29, 2008.": footnote prose, the date of the Northwest acquisition
+case:
+  case: valuation-8-5-6-airlines
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    airlines:
+      kind: valuation_formulas
+      periods: 6
+      inputs: exhibit
+      values:
+        operating_profit: revenues - fuel - salaries - other_expenses
+        # each carrier's ratios ($ million over million seat-miles is dollars per seat-mile)
+        operating_margin: operating_profit / revenues
+        labor_to_revenues: salaries / revenues
+        fuel_to_revenues: fuel / revenues
+        other_to_revenues: other_expenses / revenues
+        revenue_per_seat_mile: revenues / seat_miles
+        labor_per_seat_mile: salaries / seat_miles
+        seat_miles_per_employee: seat_miles / employees
+        labor_per_employee: salaries / employees
+        # running totals, so a box is the mean of a carrier and the two before it
+        operating_margin_run: cumsum(operating_margin)
+        labor_to_revenues_run: cumsum(labor_to_revenues)
+        fuel_to_revenues_run: cumsum(fuel_to_revenues)
+        other_to_revenues_run: cumsum(other_to_revenues)
+        revenue_per_seat_mile_run: cumsum(revenue_per_seat_mile)
+        labor_per_seat_mile_run: cumsum(labor_per_seat_mile)
+        seat_miles_per_employee_run: cumsum(seat_miles_per_employee)
+        labor_per_employee_run: cumsum(labor_per_employee)
+        avg_operating_margin: (operating_margin_run - lag(operating_margin_run, 3)) / 3
+        avg_labor_to_revenues: (labor_to_revenues_run - lag(labor_to_revenues_run, 3)) / 3
+        avg_fuel_to_revenues: (fuel_to_revenues_run - lag(fuel_to_revenues_run, 3)) / 3
+        avg_other_to_revenues: (other_to_revenues_run - lag(other_to_revenues_run, 3)) / 3
+        avg_revenue_per_seat_mile: (revenue_per_seat_mile_run - lag(revenue_per_seat_mile_run, 3)) / 3
+        avg_labor_per_seat_mile: (labor_per_seat_mile_run - lag(labor_per_seat_mile_run, 3)) / 3
+        avg_seat_miles_per_employee: (seat_miles_per_employee_run - lag(seat_miles_per_employee_run, 3)) / 3
+        avg_labor_per_employee: (labor_per_employee_run - lag(labor_per_employee_run, 3)) / 3
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  operating_profit: {driver: airlines.operating_profit}
+  network_operating_margin: {driver: airlines.avg_operating_margin}
+  discount_operating_margin: {driver: airlines.avg_operating_margin}
+  network_labor_to_revenues: {driver: airlines.avg_labor_to_revenues}
+  discount_labor_to_revenues: {driver: airlines.avg_labor_to_revenues}
+  network_fuel_to_revenues: {driver: airlines.avg_fuel_to_revenues}
+  discount_fuel_to_revenues: {driver: airlines.avg_fuel_to_revenues}
+  network_other_to_revenues: {driver: airlines.avg_other_to_revenues}
+  discount_other_to_revenues: {driver: airlines.avg_other_to_revenues}
+  network_revenue_per_seat_mile: {driver: airlines.avg_revenue_per_seat_mile}
+  discount_revenue_per_seat_mile: {driver: airlines.avg_revenue_per_seat_mile}
+  network_labor_per_seat_mile: {driver: airlines.avg_labor_per_seat_mile}
+  discount_labor_per_seat_mile: {driver: airlines.avg_labor_per_seat_mile}
+  network_seat_miles_per_employee: {driver: airlines.avg_seat_miles_per_employee}
+  discount_seat_miles_per_employee: {driver: airlines.avg_seat_miles_per_employee}
+  network_labor_per_employee: {driver: airlines.avg_labor_per_employee}
+  discount_labor_per_employee: {driver: airlines.avg_labor_per_employee}

@@ -1,0 +1,188 @@
+# Valuation, Exhibits 7.9-7.10 (ch. 7, pp. 150-151), Lowe's: income statement and NOPLAT.
+#
+# The excerpt groups Home Depot's four linked exhibits (7.9-12@home_depot);
+# Lowe's appears only in the first two, three columns to the right of Home
+# Depot, for 2006-2008 (periods 0-2). The tax reconciliation and operating
+# taxes of 7.11-7.12 are Home Depot's alone.
+#   * The income statement is booked as Home Depot's is: each 7.9 line a
+#     transfer between cash and its account, as printed, income taxes
+#     included (no Lowe's tax reconciliation is printed to rebuild them).
+#   * Operating taxes are an input: the book refers to 7.12 for their
+#     calculation, which shows Home Depot only. The marginal rate Lowe's
+#     after-tax lines use is not printed anywhere; the case takes it as
+#     operating taxes over adjusted EBITA, which is the chapter's definition
+#     of operating taxes (marginal rate times adjusted EBITA, p. 152) when the
+#     company has no operating tax item beyond the marginal rate. The book
+#     shows none for Lowe's, and every after-tax line and the nonoperating
+#     taxes are then compared, so a wrong rate would show.
+#   * The increase in operating deferred taxes is posted from 7.10's row (the
+#     book takes it from the deferred-tax notes, as 7.8 shows for Home
+#     Depot); operating lease interest, from Exhibit 7.14, is the lens's
+#     EBITA adjustment.
+# The lens gives EBITA, adjusted EBITA, cash taxes, NOPLAT and after-tax
+# interest; the reconciliation's after-tax lines are each line times one less
+# the rate; nonoperating taxes are reported taxes less operating taxes plus the
+# rate's tax on the gap between adjusted EBITA and earnings before taxes.
+excerpt: "7.9-12"
+periods: [0, 1, 2]
+entity: company
+columns_of: [home_depot]
+plant: net_sales
+notes: >-
+  Lowe's EBIT equals its EBITA: it records no amortization.
+rows:
+  # 7.9, the income statement
+  net_sales: {label: Net sales, skip: 3}
+  cogs: {label: Cost of merchandise sold, skip: 3}
+  sga: {label: "Selling, general, and administrative", skip: 3}
+  depreciation: {label: Depreciation, skip: 3}
+  amortization: {label: Amortization, skip: 3}
+  ebit: {label: EBIT, skip: 3}
+  investment_income: {label: Interest and investment income, skip: 3}
+  interest_expense: {label: Interest expense, skip: 3}
+  nonrecurring: {label: Nonrecurring charge, skip: 3}
+  ebt: {label: Earnings before taxes, skip: 3}
+  income_taxes: {label: Income taxes, skip: 3}
+  continuing: {label: Earnings from continuing operations, skip: 3}
+  discontinued: {label: Discontinued operations, skip: 3}
+  net_income: {label: Net income, skip: 3}
+  # 7.10, NOPLAT
+  n_net_sales: {label: Net sales, occurrence: 2, skip: 3}
+  n_cogs: {label: Cost of merchandise sold, occurrence: 2, skip: 3}
+  n_sga: {label: "Selling, general, and administrative", occurrence: 2, skip: 3}
+  n_depreciation: {label: Depreciation, occurrence: 2, skip: 3}
+  ebita: {label: EBITA, skip: 3}
+  lease_interest: {label: "Add: Operating lease interest3", skip: 3}
+  adjusted_ebita: {label: Adjusted EBITA, skip: 3}
+  noplat_cash_taxes: {label: Operating cash taxes, occurrence: 1, skip: 3}
+  noplat: {label: NOPLAT, occurrence: 1, skip: 3}
+  operating_taxes: {label: Operating taxes1, skip: 3}
+  deferred_increase: {label: Increase (decrease) in operating deferred taxes2, skip: 3}
+  cash_taxes: {label: Operating cash taxes, occurrence: 2, skip: 3}
+  # 7.10, the reconciliation with net income
+  rec_net_income: {label: Net income, occurrence: 2, skip: 3}
+  rec_deferred: {label: Decrease (increase) in operating deferred taxes2, skip: 3}
+  adjusted_net_income: {label: Adjusted net income, skip: 3}
+  after_tax_interest: {label: After-tax interest expense, skip: 3}
+  after_tax_lease_interest: {label: After-tax operating lease interest expense3, skip: 3}
+  income_to_investors: {label: Total income available to investors, skip: 3}
+  nonoperating_taxes: {label: Nonoperating taxes, skip: 3}
+  rec_discontinued: {label: Loss (gain) from discontinued operations, skip: 3}
+  after_tax_nonrecurring: {label: After-tax nonrecurring charges, skip: 3}
+  after_tax_amortization: {label: After-tax amortization of intangibles, skip: 3}
+  after_tax_interest_income: {label: After-tax interest income, skip: 3}
+  rec_noplat: {label: NOPLAT, occurrence: 2, skip: 3}
+inputs: [net_sales, cogs, sga, depreciation, amortization, investment_income, interest_expense, nonrecurring,
+         income_taxes, discontinued, lease_interest, operating_taxes, deferred_increase]
+set_aside:
+  "EXHIBIT 7.9 Home Depot and Lowe’s: Historical Income Statement": the exhibit's number
+  "EXHIBIT 7.10 Home Depot and Lowe’s: NOPLAT Calculation": the exhibit's number
+  "EXHIBIT 7.11 Home Depot: Tax Reconciliation Tables": the exhibit's number
+  "EXHIBIT 7.12 Home Depot: Operating Taxes and Operating Cash Taxes": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+  "$ million 2006 2007 2008 percent 2006 2007 2008": the column headings, years
+  "2004 2005 2006 2007 2008": the column headings, years
+  "Source: Home Depot 2008 10-K, note 6.": the source's year
+case:
+  case: valuation-chapter-7-noplat-lowes
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        # operating taxes over adjusted EBITA (EBITA, as the income statement prints it, plus lease interest)
+        rate: operating_taxes / (net_sales + cogs + sga + depreciation + lease_interest)
+        keep: 1 - rate
+        # the row prints the change of the net operating deferred-tax asset; the liability moves the other way
+        dtl_change: -deferred_increase
+  contracts: {}
+  rulebooks:
+    # each line as printed, signed: a positive amount debits cash, a negative one credits it
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, net_sales: income, cogs: expense, sga: expense, depreciation: expense,
+                amortization: expense, investment_income: income, interest_expense: expense,
+                nonrecurring: expense, income_taxes: expense, discontinued: income,
+                operating_deferred_tax: liability}
+      moves:
+        net_sales: {debit: cash, credit: net_sales, amount: {generator: book, output: net_sales}}
+        cogs: {debit: cash, credit: cogs, amount: {generator: book, output: cogs}}
+        sga: {debit: cash, credit: sga, amount: {generator: book, output: sga}}
+        depreciation: {debit: cash, credit: depreciation, amount: {generator: book, output: depreciation}}
+        amortization: {debit: cash, credit: amortization, amount: {generator: book, output: amortization}}
+        investment_income: {debit: cash, credit: investment_income,
+                            amount: {generator: book, output: investment_income}}
+        interest_expense: {debit: cash, credit: interest_expense, amount: {generator: book, output: interest_expense}}
+        nonrecurring: {debit: cash, credit: nonrecurring, amount: {generator: book, output: nonrecurring}}
+        income_taxes: {debit: cash, credit: income_taxes, amount: {generator: book, output: income_taxes}}
+        discontinued: {debit: cash, credit: discontinued, amount: {generator: book, output: discontinued}}
+        deferred_taxes: {debit: cash, credit: operating_deferred_tax, amount: {generator: book, output: dtl_change}}
+  schemes:
+    valuation:
+      cash: operating_current_asset
+      operating_deferred_tax: operating_deferred_tax
+      net_sales: revenue
+      cogs: operating_cost
+      sga: operating_cost
+      depreciation: depreciation
+      amortization: amortization
+      investment_income: nonoperating
+      interest_expense: interest
+      nonrecurring: nonoperating
+      income_taxes: tax
+      discontinued: nonoperating
+  cuts: {}
+  lenses:
+    v:
+      kind: valuation
+      entity: company
+      scheme: valuation
+      marginal_tax_rate: {generator: book, output: rate}
+      ebita_adjustments: {operating_lease_interest: {generator: book, output: lease_interest}}
+  measures: {}
+figures:
+  # 7.9
+  ebit: {change: net_sales - cogs - sga - depreciation - amortization}
+  ebt: {change: net_sales + investment_income - cogs - sga - depreciation - amortization - interest_expense - nonrecurring}
+  continuing: {change: net_sales + investment_income - cogs - sga - depreciation - amortization - interest_expense - nonrecurring - income_taxes}
+  net_income: {cut: v.net_income}
+  # 7.10
+  n_net_sales: {cut: v.revenue}
+  n_cogs: {change: cogs, sign: -1}
+  n_sga: {change: sga, sign: -1}
+  n_depreciation: {cut: v.depreciation, sign: -1}
+  ebita: {cut: v.ebita}
+  adjusted_ebita: {cut: v.adjusted_ebita}
+  noplat_cash_taxes: {cut: v.operating_cash_taxes, sign: -1}
+  noplat: {cut: v.noplat}
+  cash_taxes: {cut: v.operating_cash_taxes}
+  rec_net_income: {cut: v.net_income}
+  rec_deferred: {change: operating_deferred_tax}
+  adjusted_net_income: {sum: [{cut: v.net_income}, {change: operating_deferred_tax}]}
+  after_tax_interest: {cut: v.after_tax_interest}
+  after_tax_lease_interest: {driver: book.lease_interest, times: book.keep}
+  income_to_investors: {sum: [{cut: v.net_income}, {change: operating_deferred_tax}, {cut: v.after_tax_interest},
+                              {driver: book.lease_interest, times: book.keep}]}
+  # reported taxes less operating taxes, plus the marginal tax on what separates adjusted EBITA from pretax income
+  nonoperating_taxes: {sum: [{change: income_taxes}, {cut: v.operating_taxes, sign: -1},
+                             {driver: book.lease_interest, times: book.rate},
+                             {change: amortization + interest_expense + nonrecurring - investment_income, times: book.rate}]}
+  rec_discontinued: {change: discontinued, sign: -1}
+  after_tax_nonrecurring: {change: nonrecurring, times: book.keep}
+  after_tax_amortization: {change: amortization, times: book.keep}
+  after_tax_interest_income: {change: investment_income, times: book.keep, sign: -1}
+  # the reconciliation closes: its lines added up
+  rec_noplat: {sum: [{cut: v.net_income}, {change: operating_deferred_tax}, {cut: v.after_tax_interest},
+                     {driver: book.lease_interest, times: book.keep},
+                     {change: income_taxes}, {cut: v.operating_taxes, sign: -1},
+                     {driver: book.lease_interest, times: book.rate},
+                     {change: amortization + interest_expense + nonrecurring - investment_income, times: book.rate},
+                     {change: discontinued, sign: -1}, {change: nonrecurring, times: book.keep},
+                     {change: amortization, times: book.keep}, {change: investment_income, times: book.keep, sign: -1}]}

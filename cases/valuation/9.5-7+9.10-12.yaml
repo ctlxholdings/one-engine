@@ -1,0 +1,453 @@
+# Valuation, Exhibits 9.5-9.7 and 9.10-9.12 (ch. 9, pp. 197-206): the chapter's hypothetical company, forecast one year.
+#
+# Six exhibits print one company's linked statements. 2008 and 2009 are
+# history; 2010 is forecast. 9.5 is the income statement with its forecast
+# worksheet, 9.6 the historical balance sheets, 9.7 the reported taxes split
+# into operating and nonoperating, 9.10 the balance sheet with its forecast
+# ratios (partly filled), 9.11 the statement of retained earnings, and 9.12
+# the balance sheet completed with the plug. Periods 0, 1 and 2 are 2008,
+# 2009 and 2010.
+#
+# The forecast follows the book's method (pp. 194-206). Each 2010 ratio is
+# set to its 2009 value, computed from the history and kept unrounded.
+# Revenues grow at the printed 2009 growth. COGS and SG&A are shares of
+# revenues. Depreciation is a share of the prior year's net PP&E: the
+# subscript "t-1" prints as -1, and that -1 is read and used as the lag.
+# Interest expense is charged on the prior year's total debt, interest income
+# earned on the prior year's excess cash, and nonoperating income grows at
+# its printed growth. Operating taxes are the operating tax rate on EBITA. The
+# 2009 rate is backed out of the provision as provision less the statutory
+# rate on the net nonoperating items, over EBITA. Nonoperating taxes are the
+# statutory rate on the net nonoperating items. Dividends are the 2009 payout
+# ratio on net income. On the balance sheet, operating cash is in days of
+# revenues and inventory and payables in days of COGS, all at 365 days (the
+# calendar year's days). Net PP&E is a share of revenues, equity investments
+# grow at their 2009 growth (nil), and debt and common stock are held.
+# Retained earnings follow clean surplus, and newly issued debt is the plug
+# when assets excluding excess cash exceed the other claims (9.12's step 3);
+# otherwise excess cash is.
+#
+# The company is booked. The opening balance sheet is 2008's (9.6), with
+# retained earnings from 9.11's 2008 roll-forward (36.0 + 36.0 - 16.0). Each
+# year posts its income statement and dividends, then moves every balance
+# but excess cash to its year-end level against excess cash: 2009 to the
+# printed balances, 2010 to the forecast. Capital expenditures are the
+# growth in net PP&E plus depreciation. So excess cash in both years is what
+# the books leave, and the forecast's newly issued debt (nil here) is posted
+# from the plug test. Every figure the six exhibits print is then read back
+# and compared. Balances and income-statement lines come from the books.
+# Ratios are the ratio each year actually shows, computed by the
+# valuation_formulas generator, so a 2010 ratio is checked against the 2010
+# forecast it describes, not copied from 2009.
+excerpt: "9.5-7+9.10-12"
+periods: [1, 2]
+entity: company
+plant: revenues
+notes: >-
+  The 2010 EBITA/revenues cell prints 35.8 (the 2009 value carried), but the exhibit's own 2010 EBITA and
+  revenues give 102.3 / 288.0 = 35.5 percent; the prose on p. 200 instead quotes a 2010 EBITA of 103.2
+  (35.8 percent of 288). Compared as the ratio of the printed statement; it fails, a book inconsistency.
+  The caption "1 + 2 Provision for income taxes" prints the step number 2 as a figure (the 1 reads as a
+  footnote mark); it is read as an input row and used for nothing.
+rows:
+  # ── 9.5, the forecast worksheet (ratios, 2009 and 2010) ──
+  revenue_growth: {label: Revenue growth, periods: [1], scale: 0.01}
+  revenue_growth_2010: {label: Revenue growth, periods: [2], skip: 1, scale: 0.01}
+  cogs_ratio: {label: Cost of goods sold/revenues, scale: 0.01}
+  sga_ratio: {label: Selling and general expenses/revenues, scale: 0.01}
+  # the subscript t-1 prints as -1 before the two ratios: the lag of the driver
+  depreciation_lag: {label: Depreciationt /net PP&Et, periods: [1]}
+  depreciation_ratio: {label: Depreciationt /net PP&Et, skip: 1, scale: 0.01}
+  ebita_ratio: {label: EBITA/revenues, scale: 0.01}
+  interest_rate: {label: Interest expense, occurrence: 2, scale: 0.01}
+  interest_income_rate: {label: Interest income, occurrence: 2, scale: 0.01}
+  nonoperating_growth: {label: Nonoperating income growth, periods: [1], scale: 0.01}
+  nonoperating_growth_2010: {label: Nonoperating income growth, periods: [2], skip: 1, scale: 0.01}
+  operating_tax_rate: {label: Operating tax rate, scale: 0.01}
+  statutory_rate: {label: Statutory tax rate, periods: [1], scale: 0.01}
+  statutory_rate_2010: {label: Statutory tax rate, periods: [2], skip: 1, scale: 0.01}
+  average_tax_rate: {label: Average tax rate, scale: 0.01}
+  # ── 9.5, the income statement (2009 in, 2010 compared) ──
+  revenues: {label: Revenues, periods: [1]}
+  revenues_2010: {label: Revenues, periods: [2], skip: 1}
+  cogs: {label: Cost of goods sold, periods: [1]}
+  cogs_2010: {label: Cost of goods sold, periods: [2], skip: 1}
+  sga: {label: Selling and general expenses, periods: [1]}
+  sga_2010: {label: Selling and general expenses, periods: [2], skip: 1}
+  depreciation: {label: Depreciation, periods: [1]}
+  depreciation_2010: {label: Depreciation, periods: [2], skip: 1}
+  ebita: EBITA
+  interest_expense: {label: Interest expense, periods: [1]}
+  interest_expense_2010: {label: Interest expense, periods: [2], skip: 1}
+  interest_income: {label: Interest income, periods: [1]}
+  interest_income_2010: {label: Interest income, periods: [2], skip: 1}
+  nonoperating_income: {label: Nonoperating income, periods: [1]}
+  nonoperating_income_2010: {label: Nonoperating income, periods: [2], skip: 1}
+  earnings_before_taxes: Earnings before taxes
+  provision: {label: Provision for income taxes, periods: [1]}
+  provision_2010: {label: Provision for income taxes, periods: [2], skip: 1}
+  net_income: Net income
+  # ── 9.6, the historical balance sheets (2008 and 2009) ──
+  operating_cash: {label: Operating cash, periods: [0, 1]}
+  excess_cash_2008: {label: Excess cash, periods: [0]}
+  excess_cash_2009: {label: Excess cash, periods: [1], skip: 1}
+  inventory: {label: Inventory, periods: [0, 1]}
+  current_assets: {label: Current assets, periods: [0, 1]}
+  net_ppe: {label: Net PP&E, periods: [0, 1]}
+  equity_investments: {label: Equity investments, periods: [0, 1]}
+  total_assets: {label: Total assets, periods: [0, 1]}
+  accounts_payable: {label: Accounts payable, periods: [0, 1]}
+  short_term_debt: {label: Short-term debt, periods: [0, 1]}
+  current_liabilities: {label: Current liabilities, periods: [0, 1]}
+  long_term_debt: {label: Long-term debt, periods: [0, 1]}
+  common_stock: {label: Common stock, periods: [0, 1]}
+  retained_earnings: {label: Retained earnings, periods: [0, 1]}
+  total_liabilities_and_equity: {label: Total liabilities and equity, periods: [0, 1]}
+  # ── 9.7, reported taxes (2009 and 2010) ──
+  tx_ebita: {label: EBITA, occurrence: 2}
+  tx_operating_tax_rate: {label: Operating tax rate (percent), scale: 0.01}
+  tx_operating_taxes: = Operating taxes
+  tx_interest_expense: {label: Interest expense, occurrence: 3}
+  tx_interest_income: {label: Interest income, occurrence: 3}
+  tx_nonoperating_income: {label: Nonoperating income, occurrence: 2}
+  tx_nonoperating_net: "Nonoperating income (expenses), net"
+  tx_marginal_rate: {label: Marginal tax rate (percent), scale: 0.01}
+  tx_nonoperating_taxes: = Nonoperating taxes
+  tx_step_two: {label: "1 +", periods: [1]}
+  tx_provision: {label: Provision for income taxes, occurrence: 2}
+  # ── 9.10, the forecast ratios and the partial balance sheet (2009 and 2010) ──
+  cash_days: {label: Operating cash (days sales)}
+  inventory_days: {label: Inventory (days COGS)}
+  payables_days: {label: Accounts payable (days COGS)}
+  ppe_ratio: {label: Net PP&E/revenues (percent), scale: 0.01}
+  equity_investments_growth: {label: Growth in equity investments (percent), scale: 0.01}
+  p_operating_cash: {label: Operating cash, occurrence: 2}
+  p_excess_cash: {label: Excess cash, occurrence: 2, periods: [1]}
+  p_excess_cash_open: {label: Excess cash, occurrence: 2, periods: [2], skip: 1}
+  p_inventory: {label: Inventory, occurrence: 2}
+  p_current_assets: {label: Current assets, occurrence: 2, periods: [1]}
+  p_current_assets_open: {label: Current assets, occurrence: 2, periods: [2], skip: 1}
+  p_net_ppe: {label: Net PP&E, occurrence: 2}
+  p_equity_investments: {label: Equity investments, occurrence: 2}
+  p_total_assets: {label: Total assets, occurrence: 2, periods: [1]}
+  p_total_assets_open: {label: Total assets, occurrence: 2, periods: [2], skip: 1}
+  p_accounts_payable: {label: Accounts payable, occurrence: 2}
+  p_short_term_debt: {label: Short-term debt, occurrence: 2, periods: [1]}
+  p_short_term_debt_open: {label: Short-term debt, occurrence: 2, periods: [2], skip: 1}
+  p_current_liabilities: {label: Current liabilities, occurrence: 2, periods: [1]}
+  p_current_liabilities_open: {label: Current liabilities, occurrence: 2, periods: [2], skip: 1}
+  p_long_term_debt: {label: Long-term debt, occurrence: 2, periods: [1]}
+  p_long_term_debt_open: {label: Long-term debt, occurrence: 2, periods: [2], skip: 1}
+  p_common_stock: {label: Common stock, occurrence: 2, periods: [1]}
+  p_common_stock_open: {label: Common stock, occurrence: 2, periods: [2], skip: 1}
+  p_retained_earnings: {label: Retained earnings, occurrence: 2, periods: [1]}
+  p_retained_earnings_open: {label: Retained earnings, occurrence: 2, periods: [2], skip: 1}
+  p_total_le: {label: Total liabilities and equity, occurrence: 2, periods: [1]}
+  p_total_le_open: {label: Total liabilities and equity, occurrence: 2, periods: [2], skip: 1}
+  # ── 9.11, retained earnings (2008-2010) ──
+  starting_re_2008: {label: Starting retained earnings, periods: [0]}
+  starting_re: {label: Starting retained earnings, periods: [1, 2], skip: 1}
+  net_income_2008: {label: Net income, occurrence: 2, periods: [0]}
+  re_net_income: {label: Net income, occurrence: 2, periods: [1, 2], skip: 1}
+  dividends: {label: Dividends declared, periods: [0, 1]}
+  dividends_2010: {label: Dividends declared, periods: [2], skip: 2}
+  ending_re: {label: Ending retained earnings, periods: [0, 1, 2]}
+  payout: {label: Dividends/net income (percent), periods: [0, 1, 2], scale: 0.01}
+  # ── 9.12, the completed balance sheet (2008, 2009, 2010 before the plug, 2010 completed) ──
+  c_operating_cash: {label: Operating cash, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_excess_cash: {label: Excess cash, occurrence: 3, periods: [0, 1]}
+  c_excess_cash_open: {label: Excess cash, occurrence: 3, periods: [2], skip: 2}
+  c_excess_cash_2010: {label: Excess cash, occurrence: 3, periods: [2], skip: 3}
+  c_inventory: {label: Inventory, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_current_assets: {label: Current assets, occurrence: 3, periods: [0, 1]}
+  c_current_assets_open: {label: Current assets, occurrence: 3, periods: [2], skip: 2}
+  c_current_assets_2010: {label: Current assets, occurrence: 3, periods: [2], skip: 3}
+  c_net_ppe: {label: Net PP&E, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_equity_investments: {label: Equity investments, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_total_assets: {label: Total assets, occurrence: 3, periods: [0, 1]}
+  c_total_assets_open: {label: Total assets, occurrence: 3, periods: [2], skip: 2}
+  c_total_assets_2010: {label: Total assets, occurrence: 3, periods: [2], skip: 3}
+  c_accounts_payable: {label: Accounts payable, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_short_term_debt: {label: Short-term debt, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_current_liabilities: {label: Current liabilities, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_long_term_debt: {label: Long-term debt, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_newly_issued_debt: {label: Newly issued debt, periods: [0, 1, 2, 2]}
+  c_common_stock: {label: Common stock, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_retained_earnings: {label: Retained earnings, occurrence: 3, periods: [0, 1, 2, 2]}
+  c_total_le: {label: Total liabilities and equity, occurrence: 3, periods: [0, 1]}
+  c_total_le_open: {label: Total liabilities and equity, occurrence: 3, periods: [2], skip: 2}
+  c_total_le_2010: {label: Total liabilities and equity, occurrence: 3, periods: [2], skip: 3}
+inputs: [revenue_growth, depreciation_lag, nonoperating_growth, statutory_rate, revenues, cogs, sga, depreciation,
+         interest_expense, interest_income, nonoperating_income, provision, operating_cash, excess_cash_2008,
+         inventory, net_ppe, equity_investments, accounts_payable, short_term_debt, long_term_debt, common_stock,
+         tx_step_two, starting_re_2008, net_income_2008, dividends]
+not_compared:
+  p_excess_cash_open: 9.10 leaves the plug open (a dash); the completed 2010 excess cash is compared in 9.12's last column
+  p_current_assets_open: 9.10 leaves it open (a dash); the completed 2010 figure is compared in 9.12's last column
+  p_total_assets_open: 9.10 leaves it open (a dash); the completed 2010 figure is compared in 9.12's last column
+  p_short_term_debt_open: 9.10 does not yet forecast financing (a dash); 2010 is compared in 9.12
+  p_current_liabilities_open: 9.10 does not yet forecast financing (a dash); 2010 is compared in 9.12
+  p_long_term_debt_open: 9.10 does not yet forecast financing (a dash); 2010 is compared in 9.12
+  p_common_stock_open: 9.10 does not yet forecast financing (a dash); 2010 is compared in 9.12
+  p_retained_earnings_open: 9.10 does not yet forecast financing (a dash); 2010 is compared in 9.11 and 9.12
+  p_total_le_open: 9.10 does not yet forecast financing (a dash); 2010 is compared in 9.12's last column
+  c_excess_cash_open: 9.12's step-1 column leaves the plug open (a dash); its completed column is compared
+  c_current_assets_open: 9.12's step-1 column leaves it open (a dash); its completed column is compared
+  c_total_assets_open: 9.12's step-1 column leaves it open (a dash); its completed column is compared
+  c_total_le_open: 9.12's step-1 column leaves it open (a dash); its completed column is compared
+set_aside:
+  "EXHIBIT 9.5 Completed Forecast of the Income Statement": the exhibit's number
+  "percent 2009": column heading, a year
+  "2010 $ million 2009": column headings, years
+  "2010": column heading, a year
+  "EXHIBIT 9.6 Historical Balance Sheet": the exhibit's number
+  "2008 2009 2008 2009": the column headings, years
+  "EXHIBIT 9.7 Forecast of Reported Taxes": the exhibit's number
+  "2009": column heading, a year
+  "EXHIBIT 9.10 Partial Forecast of the Balance Sheet": the exhibit's number
+  "Forecast ratio 2009": column heading, a year
+  "EXHIBIT 9.11 Statement of Retained Earnings": the exhibit's number
+  "2008 2009": the column headings, years
+  "EXHIBIT 9.12 Forecast Balance Sheet: Sources of Financing": the exhibit's number
+  "2008 2009 2010": the column headings, years
+case:
+  case: valuation-chapter-9-forecast
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    model:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        days_in_year: 365
+        # ── the income statement: 2009 as printed, 2010 from the 2009 ratios ──
+        revenue: revenues + (revenues__1 * (1 + revenue_growth__1) if t == 2 else 0)
+        cogs_line: cogs + (cogs__1 / revenues__1 * revenue if t == 2 else 0)
+        sga_line: sga + (sga__1 / revenues__1 * revenue if t == 2 else 0)
+        ppe_balance: net_ppe + (net_ppe__1 / revenues__1 * revenue if t == 2 else 0)
+        # the driver of depreciation, lagged by the printed subscript (t-1)
+        ppe_driver: lag(ppe_balance, -depreciation_lag__1)
+        depreciation_rate_2009: (-depreciation / ppe_driver) if t == 1 else 0
+        depreciation_line: depreciation + (-lag(depreciation_rate_2009, 1) * ppe_driver if t == 2 else 0)
+        ebita_line: revenue + cogs_line + sga_line + depreciation_line
+        debt_balance: short_term_debt + long_term_debt + (short_term_debt__1 + long_term_debt__1 if t == 2 else 0)
+        interest_rate_2009: -interest_expense__1 / (short_term_debt__0 + long_term_debt__0)
+        interest_expense_line: interest_expense + (-interest_rate_2009 * lag(debt_balance, 1) if t == 2 else 0)
+        # 2009 excess cash, what the 2009 balance sheet leaves after every other line (for 2010's interest income)
+        net_income_2009: >-
+          revenues__1 + cogs__1 + sga__1 + depreciation__1 + interest_expense__1 + interest_income__1
+          + nonoperating_income__1 + provision__1
+        retained_earnings_2008: starting_re_2008__0 + net_income_2008__0 + dividends__0
+        excess_cash_2009: >-
+          accounts_payable__1 + short_term_debt__1 + long_term_debt__1 + common_stock__1
+          + retained_earnings_2008 + net_income_2009 + dividends__1
+          - operating_cash__1 - inventory__1 - net_ppe__1 - equity_investments__1
+        excess_cash_balance: excess_cash_2008 + (excess_cash_2009 if t == 1 else 0)
+        interest_income_rate_2009: interest_income__1 / excess_cash_2008__0
+        interest_income_line: interest_income + (interest_income_rate_2009 * excess_cash_2009 if t == 2 else 0)
+        nonoperating_line: nonoperating_income + (nonoperating_income__1 * (1 + nonoperating_growth__1) if t == 2 else 0)
+        earnings_before_taxes_line: ebita_line + interest_expense_line + interest_income_line + nonoperating_line
+        # taxes: the 2009 operating rate backed out of the provision; nonoperating items at the statutory rate
+        operating_tax_rate_2009: >-
+          (-provision__1 - statutory_rate__1 * (interest_expense__1 + interest_income__1 + nonoperating_income__1))
+          / (revenues__1 + cogs__1 + sga__1 + depreciation__1)
+        operating_taxes: operating_tax_rate_2009 * ebita_line
+        nonoperating_net: interest_expense_line + interest_income_line + nonoperating_line
+        nonoperating_taxes: statutory_rate__1 * nonoperating_net
+        provision_line: provision + (-(operating_taxes + nonoperating_taxes) if t == 2 else 0)
+        net_income_line: earnings_before_taxes_line + provision_line
+        # dividends: 2009's payout ratio on 2010 net income
+        payout_history: (-dividends / (net_income_line + net_income_2008)) if t < 2 else 0
+        dividends_line: dividends + (-lag(payout_history, 1) * net_income_line if t == 2 else 0)
+        dividends_posted: dividends_line if t > 0 else 0
+        retained_earnings_balance: retained_earnings_2008 + cumsum(net_income_line) + cumsum(dividends_posted)
+        # ── the balance sheet: 2009 as printed, 2010 from the 2009 ratios ──
+        # (a constant number of days of revenues is a constant share of them)
+        operating_cash_balance: operating_cash + (operating_cash__1 / revenues__1 * revenue if t == 2 else 0)
+        inventory_balance: inventory + (inventory__1 / cogs__1 * cogs_line if t == 2 else 0)
+        payables_balance: accounts_payable + (accounts_payable__1 / cogs__1 * cogs_line if t == 2 else 0)
+        equity_growth_2009: (equity_investments / lag(equity_investments, 1) - 1) if t == 1 else 0
+        equity_investments_balance: >-
+          equity_investments + (equity_investments__1 * (1 + lag(equity_growth_2009, 1)) if t == 2 else 0)
+        short_term_debt_balance: short_term_debt + (short_term_debt__1 if t == 2 else 0)
+        long_term_debt_balance: long_term_debt + (long_term_debt__1 if t == 2 else 0)
+        common_stock_balance: common_stock + (common_stock__1 if t == 2 else 0)
+        # step 2: assets excluding excess cash against the claims excluding newly issued debt
+        assets_ex_cash: operating_cash_balance + inventory_balance + ppe_balance + equity_investments_balance
+        claims_ex_new_debt: >-
+          payables_balance + short_term_debt_balance + long_term_debt_balance + common_stock_balance
+          + retained_earnings_balance
+        # step 3: newly issued debt plugs a shortfall; otherwise excess cash (the books' residual) does
+        newly_issued_debt: max(0, assets_ex_cash - claims_ex_new_debt) if t == 2 else 0
+        # ── the moves that take each balance to its year-end level ──
+        operating_cash_move: (operating_cash_balance - lag(operating_cash_balance, 1)) if t > 0 else 0
+        inventory_move: (inventory_balance - lag(inventory_balance, 1)) if t > 0 else 0
+        capex: (ppe_balance - lag(ppe_balance, 1) - depreciation_line) if t > 0 else 0
+        equity_investments_move: (equity_investments_balance - lag(equity_investments_balance, 1)) if t > 0 else 0
+        payables_move: (payables_balance - lag(payables_balance, 1)) if t > 0 else 0
+        short_term_debt_move: (short_term_debt_balance - lag(short_term_debt_balance, 1)) if t > 0 else 0
+        long_term_debt_move: (long_term_debt_balance - lag(long_term_debt_balance, 1)) if t > 0 else 0
+        common_stock_move: (common_stock_balance - lag(common_stock_balance, 1)) if t > 0 else 0
+        # ── the ratios each year shows, for comparison ──
+        revenue_growth_shown: (revenue / lag(revenue, 1) - 1) if t == 2 else 0
+        cogs_ratio_shown: (-cogs_line / revenue) if t > 0 else 0
+        sga_ratio_shown: (-sga_line / revenue) if t > 0 else 0
+        depreciation_ratio_shown: (-depreciation_line / ppe_driver) if t > 0 else 0
+        ebita_ratio_shown: (ebita_line / revenue) if t > 0 else 0
+        interest_rate_shown: (-interest_expense_line / lag(debt_balance, 1)) if t > 0 else 0
+        interest_income_rate_shown: (interest_income_line / lag(excess_cash_balance, 1)) if t > 0 else 0
+        nonoperating_growth_shown: (nonoperating_line / lag(nonoperating_line, 1) - 1) if t == 2 else 0
+        operating_tax_rate_shown: (operating_taxes / ebita_line) if t > 0 else 0
+        marginal_rate_shown: (nonoperating_taxes / nonoperating_net) if t > 0 else 0
+        average_tax_rate_shown: (-provision_line / earnings_before_taxes_line) if t > 0 else 0
+        payout_shown: -(dividends_line / (net_income_line + net_income_2008))
+        cash_days_shown: (operating_cash_balance / revenue * days_in_year) if t > 0 else 0
+        inventory_days_shown: (inventory_balance / -cogs_line * days_in_year) if t > 0 else 0
+        payables_days_shown: (payables_balance / -cogs_line * days_in_year) if t > 0 else 0
+        ppe_ratio_shown: (ppe_balance / revenue) if t > 0 else 0
+        equity_growth_shown: (equity_investments_balance / lag(equity_investments_balance, 1) - 1) if t > 0 else 0
+  opening:
+    company:
+      operating_cash: {nature: asset, value: {generator: model, output: operating_cash__0}}
+      excess_cash: {nature: asset, value: {generator: model, output: excess_cash_2008__0}}
+      inventory: {nature: asset, value: {generator: model, output: inventory__0}}
+      net_ppe: {nature: asset, value: {generator: model, output: net_ppe__0}}
+      equity_investments: {nature: asset, value: {generator: model, output: equity_investments__0}}
+      accounts_payable: {nature: liability, value: {generator: model, output: accounts_payable__0}}
+      short_term_debt: {nature: liability, value: {generator: model, output: short_term_debt__0}}
+      long_term_debt: {nature: liability, value: {generator: model, output: long_term_debt__0}}
+      common_stock: {nature: equity, value: {generator: model, output: common_stock__0}}
+      retained_earnings: {nature: equity, value: {generator: model, output: retained_earnings_2008}}
+  contracts: {}
+  rulebooks:
+    # each amount signed: a positive one debits the first account, a negative one is reversed
+    years:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {revenue: income, cogs: expense, sga: expense, depreciation: expense, interest_expense: expense,
+                interest_income: income, nonoperating_income: income, tax_expense: expense,
+                newly_issued_debt: liability}
+      moves:
+        revenue: {debit: excess_cash, credit: revenue, amount: {generator: model, output: revenue}}
+        cogs: {debit: excess_cash, credit: cogs, amount: {generator: model, output: cogs_line}}
+        sga: {debit: excess_cash, credit: sga, amount: {generator: model, output: sga_line}}
+        depreciation: {debit: net_ppe, credit: depreciation, amount: {generator: model, output: depreciation_line}}
+        interest_expense: {debit: excess_cash, credit: interest_expense,
+                           amount: {generator: model, output: interest_expense_line}}
+        interest_income: {debit: excess_cash, credit: interest_income,
+                          amount: {generator: model, output: interest_income_line}}
+        nonoperating_income: {debit: excess_cash, credit: nonoperating_income,
+                              amount: {generator: model, output: nonoperating_line}}
+        taxes: {debit: excess_cash, credit: tax_expense, amount: {generator: model, output: provision_line}}
+        dividends: {debit: excess_cash, credit: retained_earnings,
+                    amount: {generator: model, output: dividends_posted}}
+        operating_cash: {debit: operating_cash, credit: excess_cash,
+                         amount: {generator: model, output: operating_cash_move}}
+        inventory: {debit: inventory, credit: excess_cash, amount: {generator: model, output: inventory_move}}
+        capex: {debit: net_ppe, credit: excess_cash, amount: {generator: model, output: capex}}
+        equity_investments: {debit: equity_investments, credit: excess_cash,
+                             amount: {generator: model, output: equity_investments_move}}
+        payables: {debit: excess_cash, credit: accounts_payable, amount: {generator: model, output: payables_move}}
+        short_term_debt: {debit: excess_cash, credit: short_term_debt,
+                          amount: {generator: model, output: short_term_debt_move}}
+        long_term_debt: {debit: excess_cash, credit: long_term_debt,
+                         amount: {generator: model, output: long_term_debt_move}}
+        common_stock: {debit: excess_cash, credit: common_stock, amount: {generator: model, output: common_stock_move}}
+        newly_issued_debt: {debit: excess_cash, credit: newly_issued_debt,
+                            amount: {generator: model, output: newly_issued_debt}}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  # 9.5, the worksheet
+  revenue_growth_2010: {driver: model.revenue_growth_shown}
+  cogs_ratio: {driver: model.cogs_ratio_shown}
+  sga_ratio: {driver: model.sga_ratio_shown}
+  depreciation_ratio: {driver: model.depreciation_ratio_shown}
+  ebita_ratio: {driver: model.ebita_ratio_shown}
+  interest_rate: {driver: model.interest_rate_shown}
+  interest_income_rate: {driver: model.interest_income_rate_shown}
+  nonoperating_growth_2010: {driver: model.nonoperating_growth_shown}
+  operating_tax_rate: {driver: model.operating_tax_rate_shown}
+  statutory_rate_2010: {driver: model.marginal_rate_shown}
+  average_tax_rate: {driver: model.average_tax_rate_shown}
+  # 9.5, the income statement, from the books
+  revenues_2010: {change: revenue}
+  cogs_2010: {change: cogs, sign: -1}
+  sga_2010: {change: sga, sign: -1}
+  depreciation_2010: {change: depreciation, sign: -1}
+  ebita: {change: revenue - cogs - sga - depreciation}
+  interest_expense_2010: {change: interest_expense, sign: -1}
+  interest_income_2010: {change: interest_income}
+  nonoperating_income_2010: {change: nonoperating_income}
+  earnings_before_taxes: {change: revenue + interest_income + nonoperating_income - cogs - sga - depreciation - interest_expense}
+  provision_2010: {change: tax_expense, sign: -1}
+  net_income: {change: revenue + interest_income + nonoperating_income - cogs - sga - depreciation - interest_expense - tax_expense}
+  # 9.6, from the books
+  excess_cash_2009: {balance: excess_cash}
+  current_assets: {balance: operating_cash + excess_cash + inventory}
+  total_assets: {balance: operating_cash + excess_cash + inventory + net_ppe + equity_investments}
+  current_liabilities: {balance: accounts_payable + short_term_debt}
+  retained_earnings: &re {balance: retained_earnings + revenue + interest_income + nonoperating_income - cogs - sga - depreciation - interest_expense - tax_expense}
+  total_liabilities_and_equity: &tle {balance: accounts_payable + short_term_debt + long_term_debt + newly_issued_debt + common_stock + retained_earnings + revenue + interest_income + nonoperating_income - cogs - sga - depreciation - interest_expense - tax_expense}
+  # 9.7
+  tx_ebita: {change: revenue - cogs - sga - depreciation}
+  tx_operating_tax_rate: {driver: model.operating_tax_rate_shown}
+  tx_operating_taxes: {driver: model.operating_taxes}
+  tx_interest_expense: {change: interest_expense, sign: -1}
+  tx_interest_income: {change: interest_income}
+  tx_nonoperating_income: {change: nonoperating_income}
+  tx_nonoperating_net: {change: interest_income + nonoperating_income - interest_expense}
+  tx_marginal_rate: {driver: model.marginal_rate_shown}
+  tx_nonoperating_taxes: {driver: model.nonoperating_taxes}
+  tx_provision: {change: tax_expense}
+  # 9.10
+  cash_days: {driver: model.cash_days_shown}
+  inventory_days: {driver: model.inventory_days_shown}
+  payables_days: {driver: model.payables_days_shown}
+  ppe_ratio: {driver: model.ppe_ratio_shown}
+  equity_investments_growth: {driver: model.equity_growth_shown}
+  p_operating_cash: {balance: operating_cash}
+  p_excess_cash: {balance: excess_cash}
+  p_inventory: {balance: inventory}
+  p_current_assets: {balance: operating_cash + excess_cash + inventory}
+  p_net_ppe: {balance: net_ppe}
+  p_equity_investments: {balance: equity_investments}
+  p_total_assets: {balance: operating_cash + excess_cash + inventory + net_ppe + equity_investments}
+  p_accounts_payable: {balance: accounts_payable}
+  p_short_term_debt: {balance: short_term_debt}
+  p_current_liabilities: {balance: accounts_payable + short_term_debt}
+  p_long_term_debt: {balance: long_term_debt}
+  p_common_stock: {balance: common_stock}
+  p_retained_earnings: *re
+  p_total_le: *tle
+  # 9.11
+  starting_re: {opening: retained_earnings + revenue + interest_income + nonoperating_income - cogs - sga - depreciation - interest_expense - tax_expense}
+  re_net_income: {change: revenue + interest_income + nonoperating_income - cogs - sga - depreciation - interest_expense - tax_expense}
+  dividends_2010: {change: retained_earnings}
+  ending_re: *re
+  payout: {driver: model.payout_shown}
+  # 9.12
+  c_operating_cash: {balance: operating_cash}
+  c_excess_cash: {balance: excess_cash}
+  c_excess_cash_2010: {balance: excess_cash}
+  c_inventory: {balance: inventory}
+  c_current_assets: {balance: operating_cash + excess_cash + inventory}
+  c_current_assets_2010: {balance: operating_cash + excess_cash + inventory}
+  c_net_ppe: {balance: net_ppe}
+  c_equity_investments: {balance: equity_investments}
+  c_total_assets: {balance: operating_cash + excess_cash + inventory + net_ppe + equity_investments}
+  c_total_assets_2010: {balance: operating_cash + excess_cash + inventory + net_ppe + equity_investments}
+  c_accounts_payable: {balance: accounts_payable}
+  c_short_term_debt: {balance: short_term_debt}
+  c_current_liabilities: {balance: accounts_payable + short_term_debt}
+  c_long_term_debt: {balance: long_term_debt}
+  c_newly_issued_debt: {balance: newly_issued_debt}
+  c_common_stock: {balance: common_stock}
+  c_retained_earnings: *re
+  c_total_le: *tle
+  c_total_le_2010: *tle

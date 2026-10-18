@@ -30,6 +30,9 @@ profit. Both halves live here:
 Conventions
 -----------
 * Rates are fractions of one (``Fraction(11, 100)`` is 11%), never percents.
+* Every formula is exact except the roots and fractional powers
+  (:func:`annualized`, :func:`stdev`, :func:`bond_price`, :func:`bond_yield`),
+  taken in 40-digit decimal arithmetic.
 * Periods follow the book: ``t = 0`` is the valuation date, the first cash
   flow falls at ``t = 1`` and is discounted one full period.
 * A formula outside its domain refuses (:class:`ValuationError`) instead of
@@ -45,6 +48,7 @@ prose. Page numbers are the printed ones.
 """
 from __future__ import annotations
 
+import decimal as _decimal
 from fractions import Fraction
 from typing import Any, Dict, List, Mapping, Sequence
 
@@ -276,6 +280,125 @@ def unlevered_beta(beta_e, d, e, beta_d=0) -> Fraction:
 def capm(rf, beta, mrp) -> Fraction:
     """Cost of equity = risk-free rate + beta x market risk premium, the CAPM (ch. 11, p. 239)."""
     return _f(rf) + _f(beta) * _f(mrp)
+
+
+def annualized(cumulative, n) -> Fraction:
+    """The annual rate that compounds to ``cumulative`` over ``n`` years: (1 + c)^(1/n) - 1 (ch. 11, p. 245).
+
+    The book annualizes a cumulative excess return this way when it averages
+    the market risk premium over intervals longer than a year. This is the
+    pack's one inexact formula: an n-th root is irrational in general, so it
+    is taken in 40-digit decimal arithmetic and returned as the Fraction of
+    that decimal, far below any printed digit. ``n`` must be a positive
+    whole number of years, and ``1 + c`` positive (a loss of everything has
+    no rate).
+    """
+    c, n = _f(cumulative), _f(n)
+    if n <= 0 or n.denominator != 1:
+        raise ValuationError(f"annualized: n = {n} is not a positive whole number of years")
+    if 1 + c <= 0:
+        raise ValuationError(f"annualized: 1 + cumulative = {1 + c} is not positive")
+    with _decimal.localcontext() as ctx:
+        ctx.prec = 40
+        base = _decimal.Decimal(c.numerator) / c.denominator + 1
+        return Fraction((base.ln() / int(n)).exp()) - 1
+
+
+def _dec(x) -> "_decimal.Decimal":
+    x = _f(x)
+    return _decimal.Decimal(x.numerator) / x.denominator
+
+
+def _bond_dirty(y, cp, k, stub, freq):
+    # coupons fall (1 - stub), (2 - stub), ... (k - stub) periods ahead: r^stub times the value of the
+    # same flows one, two ... k periods ahead
+    r = 1 + y / freq
+    return r ** stub * (sum(cp / r ** i for i in range(1, k + 1)) + 100 / r ** k)
+
+
+def bond_price(ytm, coupon, years, freq=2) -> Fraction:
+    """The clean price, per 100 of face, of a bullet bond at yield to maturity ``ytm`` (ch. 11, p. 262).
+
+    The yield to maturity is the discount rate that sets the present value of
+    a bond's promised coupons and face equal to its price. Street convention:
+    ``coupon`` and ``ytm`` are annual rates paid and compounded ``freq`` times
+    a year; ``years`` to maturity may be fractional, so ``k`` coupons remain
+    (the period count rounded up) and the part of the current period already
+    elapsed is ``stub``. The dirty price is the present value of what
+    remains; the quoted (clean) price is that less the coupon accrued over
+    the stub. Taken in 40-digit decimal arithmetic, since a fractional
+    period is a non-integer power.
+    """
+    freq = int(freq)
+    with _decimal.localcontext() as ctx:
+        ctx.prec = 40
+        n = _dec(years) * freq
+        if n <= 0:
+            raise ValuationError(f"bond_price: {years} years to maturity is not positive")
+        k = int(n.to_integral_value(rounding=_decimal.ROUND_CEILING))
+        stub, cp = k - n, 100 * _dec(coupon) / freq
+        return Fraction(_bond_dirty(_dec(ytm), cp, k, stub, freq) - cp * stub)
+
+
+def bond_yield(price, coupon, years, freq=2) -> Fraction:
+    """The yield to maturity that prices the bond at ``price`` (clean, per 100 of face): :func:`bond_price` inverted.
+
+    The price falls as the yield rises, so the root is unique; it is found by
+    bisection on yields from -50% to 200% to 40 digits. A price outside what
+    that range gives refuses.
+    """
+    lo, hi = Fraction(-1, 2), Fraction(2)
+    target = _f(price)
+    if not bond_price(hi, coupon, years, freq) <= target <= bond_price(lo, coupon, years, freq):
+        raise ValuationError(f"bond_yield: no yield between -50% and 200% gives the price {price}")
+    with _decimal.localcontext() as ctx:
+        ctx.prec = 40
+        lo_d, hi_d = _dec(lo), _dec(hi)
+        for _ in range(140):                             # 2.5 / 2^140 is far below 40 digits
+            mid = (lo_d + hi_d) / 2
+            if bond_price(Fraction(mid), coupon, years, freq) > target:
+                lo_d = mid
+            else:
+                hi_d = mid
+        return Fraction((lo_d + hi_d) / 2)
+
+
+# ── statistics over a set of comparable companies (ch. 14, pp. 314-315) ─────
+#
+# A multiples table summarizes its peers by their mean, median and spread.
+# The functions take the sample as separate arguments, so a translation calls
+# them as ``median(a__0, b__0, c__0)``.
+
+def mean(*xs) -> Fraction:
+    """The arithmetic mean of a sample of one or more numbers."""
+    if not xs:
+        raise ValuationError("mean of no numbers")
+    return sum(_f(x) for x in xs) / len(xs)
+
+
+def median(*xs) -> Fraction:
+    """The middle number of a sample, or the mean of the two middle ones when the count is even."""
+    if not xs:
+        raise ValuationError("median of no numbers")
+    v, m = sorted(_f(x) for x in xs), len(xs) // 2
+    return v[m] if len(v) % 2 else (v[m - 1] + v[m]) / 2
+
+
+def stdev(*xs) -> Fraction:
+    """The sample standard deviation (divisor n - 1) of two or more numbers.
+
+    The sample, not the population, statistic: it is the one the book's
+    deviation-over-median row reproduces (ch. 14, p. 314). The variance is
+    exact; its square root is taken in 40-digit decimal arithmetic, as in
+    :func:`annualized`.
+    """
+    if len(xs) < 2:
+        raise ValuationError("stdev needs at least two numbers")
+    m = mean(*xs)
+    var = sum((_f(x) - m) ** 2 for x in xs) / (len(xs) - 1)
+    with _decimal.localcontext() as ctx:
+        ctx.prec = 40
+        return Fraction((_decimal.Decimal(var.numerator) / var.denominator).sqrt())
 
 
 # ── the reorganization of the statements (ch. 7, pp. 133-163) ───────────────
@@ -546,7 +669,8 @@ RULEBOOKS = {"stated": stated}
 FUNCTIONS = {f.__name__: f for f in (
     free_cash_flow, net_investment, roic, investment_rate, growth_from_investment, growing_perpetuity,
     value_driver, economic_profit, ep_value_steady, cv_economic_profit, cv_two_stage, wacc, apv,
-    unlevered_ke, unlevered_ke_kd_shields, levered_ke, levered_beta, unlevered_beta, capm)}
+    unlevered_ke, unlevered_ke_kd_shields, levered_ke, levered_beta, unlevered_beta, capm,
+    annualized, bond_price, bond_yield, mean, median, stdev)}
 
 
 def valuation_formulas(r: Reader) -> Dict[str, Any]:

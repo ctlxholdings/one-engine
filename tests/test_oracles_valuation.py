@@ -34,6 +34,25 @@ ORACLES = FAMILY.oracles()
 #: the worked examples, built by hand before the queue, and their number of checks (one per figure row,
 #: plus the family's own); every other translated exhibit is held to the same verdict without a count
 WORKED = {"7.1-3": 58, "7.4-5@home_depot": 40, "7.4-5@lowes": 40}
+#: the cells where the book's printed figure cannot be reproduced from what it prints, by more than one
+#: unit of its last digit: oracle -> {"<row> at <period>"}. The translation compares the line as the
+#: book means it, so the receipt is near or differs on exactly these and on nothing else; each entry
+#: says what does not add up. A check reports its first failing period, so an entry names that cell.
+BOOK_SLIPS = {
+    # 9.5's 2010 EBITA / revenues prints 35.8%, 2009's value again; its own 2010 EBITA and revenues
+    # give 102.3 / 288.0 = 35.5%, and the text (p. 200) quotes EBITA at 103.2, which the table does not print
+    "9.5-7+9.10-12": {"ebita_ratio at t=2"},
+    # 14.1's revenue-multiple deviation (sample stdev over median) prints 38.1; the one-decimal multiples
+    # it prints give 38.5. Not an arithmetic slip: the book worked from unrounded multiples near 1
+    "14.1": {"deviation_ev_revenue at t=0"},
+    # 14.4's EV-to-EBITA row prints 5.0 in every column; EBITA (EBIT plus amortization) gives 7.5
+    # (1,125 / 150, 375 / 50, 1,500 / 200). 5.0 is EV over EBITDA
+    "14.4": {"ev_to_ebita_a at t=0", "ev_to_ebita_b at t=0", "ev_to_ebita_c at t=0", "ev_to_ebita_ab at t=0",
+             "ev_to_ebita_c_after at t=0"},
+    # 14.7's company C prints 9.0 for debt plus equity minus cash over EBITA; (300 + 500 - 0) / 100 = 8.0,
+    # as the next row prints. 9.0 is what it would be with the minority interest added
+    "14.7": {"dpe_less_cash_to_ebita_c at t=0"},
+}
 BOOK = VO.book_path()
 needs_book = pytest.mark.skipif(BOOK is None, reason="the valuation book is not in this checkout's shared folder")
 
@@ -60,6 +79,11 @@ def test_a_footnote_mark_opening_a_line_is_not_a_figure():
     assert [cells for _li, _ti, cells in figures_of(text)] == [[(25, 0)]]
 
 
+def test_only_a_bare_small_integer_is_a_footnote_mark():
+    text = "67% probability of success 1,954\n$50 per share\n2007 was a good year\n12 Footnote\n"
+    assert [cells for _li, _ti, cells in figures_of(text)] == [[(67, 0)], [(1954, 0)], [(50, 0)], [(2007, 0)]]
+
+
 def test_a_label_is_read_at_its_occurrence_and_never_inside_another_word():
     text = "Interest-bearing debt 225 200\nInterest (20) Operating taxes1 (70)\nInterest 5\n"
     assert read_row(text, "Interest")[1] == [(-20, 0)]
@@ -75,11 +99,15 @@ def test_a_row_broken_over_lines_reads_on_only_through_lines_of_numbers():
         read_row(text, "Free cash flow", continued=3)
 
 
-def test_a_line_of_numbers_alone_is_read_by_its_number_and_a_line_with_words_refuses():
-    text = "Some chart\n67 60\n$893 $893\n"
+def test_a_line_is_read_by_its_number_whatever_words_sit_between_its_figures():
+    text = "Some chart\n67 60\n$893 $893\n67% probability of success 1,954\n1 Assumes 25% tax\n"
     assert read_line(text, 3)[1] == [(893, 0), (893, 0)]
-    with pytest.raises(KeyError):
+    assert read_line(text, 4) == ([(3, 0, 0), (3, 4, 0)], [(67, 0), (1954, 0)])
+    assert read_line(text, 5)[1] == [(25, 0)]                     # the footnote mark is not a figure
+    with pytest.raises(KeyError, match="prints no figure"):
         read_line(text, 1)
+    with pytest.raises(KeyError):
+        read_line(text, 9)
 
 
 def test_numbers_inside_a_label_are_the_labels_own():
@@ -305,7 +333,7 @@ def test_the_book_map_finds_every_chapter_and_places_every_exhibit():
 # ── every translated exhibit gets its recorded verdict ──────────────────────
 
 def test_every_translation_reads_a_vendored_excerpt():
-    assert set(WORKED) <= set(ORACLES)
+    assert set(WORKED) <= set(ORACLES) and set(BOOK_SLIPS) <= set(ORACLES)
     names = {p.stem for p in VO.TRANSLATIONS.glob("*.yaml")}
     assert names <= set(ORACLES), sorted(names - set(ORACLES))
 
@@ -316,7 +344,11 @@ def test_every_exhibit_matches_with_its_plant_caught(oid):
     if FAMILY.translation(oid) is None:
         assert r.verdict == "blocked" and "no translation yet" in r.reason
         return
-    assert r.verdict == "matches", r.reason
+    failing = {f"{c['name']} at {c['at']}" for c in r.checks if not c["ok"]}
+    if oid in BOOK_SLIPS:
+        assert r.verdict in ("near", "differs") and failing == BOOK_SLIPS[oid], failing
+    else:
+        assert r.verdict == "matches", r.reason
     assert r.planted_caught and r.n_checks > 3
     if oid in WORKED:
         assert r.n_checks == WORKED[oid]

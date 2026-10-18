@@ -1,0 +1,153 @@
+# Valuation, Exhibit 7.16 (ch. 7, p. 164): HealthCo's income statement and balance sheet, two years.
+#
+# A review question (p. 164) prints a health care company's income statement
+# and balance sheet for the prior and current year (periods 0 and 1), side by
+# side and interleaved line by line in the text, and asks for NOPLAT,
+# invested capital, ROIC and free cash flow. The exhibit prints none of the
+# answers (the question's tax rates are prose, not the exhibit), so the case
+# books the two years and checks every total the exhibit prints, and that the
+# two balance sheets and the current year's profit tie together.
+#   * The prior year's balance sheet is the opening balance sheet. The prior
+#     year's income statement is posted against equity: that year's profit is
+#     already inside the prior-year equity, and the open P&L accounts show it.
+#   * The current year's income statement is posted line by line as printed
+#     against working cash, and the `stated` rulebook then holds every balance
+#     sheet line except equity at its printed current-year figure against the
+#     plug. Which account each income line lands in first does not matter: the
+#     stated balances absorb it, and the plug stays nil exactly when the
+#     current-year change in net assets equals net income (no dividends, no
+#     share issues). That clean-surplus link is the rulebook's check, and the
+#     current-year equity, read from the books, is compared with the print.
+#   * Taxes are inputs: the exhibit prints no rate.
+excerpt: "7.16"
+periods: [0, 1]
+entity: company
+plant: revenues
+rows:
+  # the income statement, prior year (inputs) and current year (inputs), and its totals (compared)
+  revenues_prior: {label: Revenues, periods: [0]}
+  revenues: {label: Revenues, periods: [1], skip: 1}
+  cost_of_sales_prior: {label: Cost of sales, periods: [0]}
+  cost_of_sales: {label: Cost of sales, periods: [1], skip: 1}
+  selling_prior: {label: Selling costs, periods: [0]}
+  selling: {label: Selling costs, periods: [1], skip: 1}
+  depreciation_prior: {label: Depreciation, periods: [0]}
+  depreciation: {label: Depreciation, periods: [1], skip: 1}
+  operating_profit: Operating profit
+  interest_prior: {label: Interest expense, periods: [0]}
+  interest: {label: Interest expense, periods: [1], skip: 1}
+  gain_prior: {label: Gain on sale, periods: [0]}
+  gain: {label: Gain on sale, periods: [1], skip: 1}
+  earnings_before_taxes: Earnings before taxes
+  taxes_prior: {label: Taxes, periods: [0]}
+  taxes: {label: Taxes, periods: [1], skip: 1}
+  net_income: Net income
+  # the balance sheet, both years (inputs), and its totals (compared)
+  working_cash: Working cash
+  receivables: Accounts receivable
+  inventories: Inventories
+  current_assets: Current assets
+  ppe: Property, plant, and equipment
+  pension_assets: Prepaid pension assets
+  total_assets: Total assets
+  payables: Accounts payable
+  short_term_debt: Short-term debt
+  restructuring_reserves: Restructuring reserves
+  current_liabilities: Current liabilities
+  long_term_debt: Long-term debt
+  equity_prior: {label: Shareholders’ equity, periods: [0]}
+  equity: {label: Shareholders’ equity, periods: [1], skip: 1}
+  liabilities_and_equity: Liabilities and equity
+inputs: [revenues_prior, revenues, cost_of_sales_prior, cost_of_sales, selling_prior, selling, depreciation_prior,
+         depreciation, interest_prior, interest, gain_prior, gain, taxes_prior, taxes, working_cash, receivables,
+         inventories, ppe, pension_assets, payables, short_term_debt, restructuring_reserves, long_term_debt,
+         equity_prior]
+set_aside:
+  "EXHIBIT 7.16 HealthCo: Income Statement and Balance Sheet": the exhibit's number
+case:
+  case: valuation-chapter-7-healthco
+  periods: 2
+  phases: [operate, state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 2
+      inputs: exhibit
+      values: {}
+  opening:
+    company:
+      working_cash: {nature: asset, value: {generator: book, output: working_cash__0}}
+      receivables: {nature: asset, value: {generator: book, output: receivables__0}}
+      inventories: {nature: asset, value: {generator: book, output: inventories__0}}
+      ppe: {nature: asset, value: {generator: book, output: ppe__0}}
+      pension_assets: {nature: asset, value: {generator: book, output: pension_assets__0}}
+      payables: {nature: liability, value: {generator: book, output: payables__0}}
+      short_term_debt: {nature: liability, value: {generator: book, output: short_term_debt__0}}
+      restructuring_reserves: {nature: liability, value: {generator: book, output: restructuring_reserves__0}}
+      long_term_debt: {nature: liability, value: {generator: book, output: long_term_debt__0}}
+      shareholders_equity: {nature: equity, value: {generator: book, output: equity_prior__0}}
+  contracts: {}
+  rulebooks:
+    # the prior year's profit, already inside the prior-year equity: each line against equity, as printed
+    prior_year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {revenues: income, cost_of_sales: expense, selling: expense, depreciation: expense,
+                interest: expense, gain: income, taxes: expense}
+      moves:
+        revenues: {debit: shareholders_equity, credit: revenues, amount: {generator: book, output: revenues_prior}}
+        cost_of_sales: {debit: shareholders_equity, credit: cost_of_sales,
+                        amount: {generator: book, output: cost_of_sales_prior}}
+        selling: {debit: shareholders_equity, credit: selling, amount: {generator: book, output: selling_prior}}
+        depreciation: {debit: shareholders_equity, credit: depreciation,
+                       amount: {generator: book, output: depreciation_prior}}
+        interest: {debit: shareholders_equity, credit: interest, amount: {generator: book, output: interest_prior}}
+        gain: {debit: shareholders_equity, credit: gain, amount: {generator: book, output: gain_prior}}
+        taxes: {debit: shareholders_equity, credit: taxes, amount: {generator: book, output: taxes_prior}}
+    # the current year: each line into working cash, as printed (the stated balances then place it)
+    current_year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {}
+      moves:
+        revenues: {debit: working_cash, credit: revenues, amount: {generator: book, output: revenues}}
+        cost_of_sales: {debit: working_cash, credit: cost_of_sales, amount: {generator: book, output: cost_of_sales}}
+        selling: {debit: working_cash, credit: selling, amount: {generator: book, output: selling}}
+        depreciation: {debit: working_cash, credit: depreciation, amount: {generator: book, output: depreciation}}
+        interest: {debit: working_cash, credit: interest, amount: {generator: book, output: interest}}
+        gain: {debit: working_cash, credit: gain, amount: {generator: book, output: gain}}
+        taxes: {debit: working_cash, credit: taxes, amount: {generator: book, output: taxes}}
+    # every balance sheet line but equity, held at its print; the plug moves only if equity's change is not the profit
+    balance_sheet:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        working_cash: {nature: asset, value: {generator: book, output: working_cash}}
+        receivables: {nature: asset, value: {generator: book, output: receivables}}
+        inventories: {nature: asset, value: {generator: book, output: inventories}}
+        ppe: {nature: asset, value: {generator: book, output: ppe}}
+        pension_assets: {nature: asset, value: {generator: book, output: pension_assets}}
+        payables: {nature: liability, value: {generator: book, output: payables}}
+        short_term_debt: {nature: liability, value: {generator: book, output: short_term_debt}}
+        restructuring_reserves: {nature: liability, value: {generator: book, output: restructuring_reserves}}
+        long_term_debt: {nature: liability, value: {generator: book, output: long_term_debt}}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  operating_profit: {change: revenues - cost_of_sales - selling - depreciation}
+  earnings_before_taxes: {change: revenues + gain - cost_of_sales - selling - depreciation - interest}
+  net_income: {change: revenues + gain - cost_of_sales - selling - depreciation - interest - taxes}
+  current_assets: {balance: working_cash + receivables + inventories}
+  total_assets: {balance: working_cash + receivables + inventories + ppe + pension_assets}
+  current_liabilities: {balance: payables + short_term_debt + restructuring_reserves}
+  # the books keep income and expense open: equity as printed includes the profit to date
+  equity: {balance: shareholders_equity + revenues + gain - cost_of_sales - selling - depreciation - interest - taxes}
+  liabilities_and_equity: {balance: payables + short_term_debt + restructuring_reserves + long_term_debt + shareholders_equity + revenues + gain - cost_of_sales - selling - depreciation - interest - taxes}

@@ -1,0 +1,75 @@
+# Valuation, Exhibits 8.10-8.11 (ch. 8, pp. 178-179), Lowe's: store operating data and the 2008 revenue growth tree.
+#
+# Exhibit 8.10 prints four operating statistics for 2006-2008 (periods 0-2):
+# store revenues, the number of stores, the number of transactions and the
+# square footage. Exhibit 8.11 arranges the growth of these and their ratios
+# into a tree (p. 178). Revenue growth is driven by growth in revenues per
+# store and in the number of stores. Revenues per store split into dollars
+# per transaction and transactions per store, and transactions per store
+# into transactions per square foot and square feet per store. Each box is
+# the 2008 change on 2007 of its quantity, computed from 8.10's figures, so
+# the two exhibits are one excerpt. 8.10's lines are inputs; the seven boxes
+# are computed by the valuation_formulas generator and compared at period 2.
+# The tree's boxes print in the extraction as the k-th "Lowe’s" line, the
+# captions scattered among them. This oracle reads Lowe's's figures, the last three columns of 8.10 (Home Depot is 8.10-11@home_depot).
+excerpt: "8.10-11"
+periods: [0, 1, 2]
+entity: company
+columns_of: [home_depot]
+plant: store_revenues_2008
+rows:
+  # 8.10
+  # store revenues in two rows, the earlier years and 2008, so the planted run can move 2008 alone
+  # (growth is blind to a row moved by the same 1% in every year)
+  store_revenues_prior: {label: Store revenues1 ($ million), periods: [0, 1], skip: 3}
+  store_revenues_2008: {label: Store revenues1 ($ million), periods: [2], skip: 5}
+  stores: {label: Number of stores, skip: 3}
+  transactions: {label: Number of transactions (million), skip: 3}
+  square_feet: {label: Square footage at fiscal year-end (million), skip: 3}
+  # 8.11, growth in 2008
+  revenue_growth: {label: Lowe’s, occurrence: 1, periods: [2], scale: 0.01}
+  revenues_per_store_growth: {label: Lowe’s, occurrence: 2, periods: [2], scale: 0.01}
+  stores_growth: {label: Lowe’s, occurrence: 3, periods: [2], scale: 0.01}
+  transactions_per_store_growth: {label: Lowe’s, occurrence: 4, periods: [2], scale: 0.01}
+  dollars_per_transaction_growth: {label: Lowe’s, occurrence: 5, periods: [2], scale: 0.01}
+  square_feet_per_store_growth: {label: Lowe’s, occurrence: 6, periods: [2], scale: 0.01}
+  transactions_per_square_foot_growth: {label: Lowe’s, occurrence: 7, periods: [2], scale: 0.01}
+inputs: [store_revenues_prior, store_revenues_2008, stores, transactions, square_feet]
+set_aside:
+  "EXHIBIT 8.10 Home Depot and Lowe’s: Operating Data": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+  "EXHIBIT 8.11–Home Depot and Lowe’s: Revenue Growth Analysis, 2008": the exhibit's number and its year
+case:
+  case: valuation-8-10-11-stores-lowes
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    tree:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        # each box: the 2008 value of its quantity over the 2007 value, less one
+        revenue_growth: store_revenues_2008__2 / store_revenues_prior__1 - 1
+        stores_growth: stores__2 / stores__1 - 1
+        revenues_per_store_growth: (store_revenues_2008__2 / stores__2) / (store_revenues_prior__1 / stores__1) - 1
+        dollars_per_transaction_growth: (store_revenues_2008__2 / transactions__2) / (store_revenues_prior__1 / transactions__1) - 1
+        transactions_per_store_growth: (transactions__2 / stores__2) / (transactions__1 / stores__1) - 1
+        transactions_per_square_foot_growth: (transactions__2 / square_feet__2) / (transactions__1 / square_feet__1) - 1
+        square_feet_per_store_growth: (square_feet__2 / stores__2) / (square_feet__1 / stores__1) - 1
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  revenue_growth: {driver: tree.revenue_growth}
+  revenues_per_store_growth: {driver: tree.revenues_per_store_growth}
+  stores_growth: {driver: tree.stores_growth}
+  transactions_per_store_growth: {driver: tree.transactions_per_store_growth}
+  dollars_per_transaction_growth: {driver: tree.dollars_per_transaction_growth}
+  square_feet_per_store_growth: {driver: tree.square_feet_per_store_growth}
+  transactions_per_square_foot_growth: {driver: tree.transactions_per_square_foot_growth}

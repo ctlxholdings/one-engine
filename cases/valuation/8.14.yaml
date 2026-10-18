@@ -1,0 +1,92 @@
+# Valuation, Exhibit 8.14 (ch. 8, pp. 182-183): a livery company's sedan, ROIC over the life of one asset.
+#
+# A sedan bought for 40 (with 5 of working capital) earns the same profit
+# every year of its four-year life. Depreciation wears the asset down, so
+# ROIC on beginning-of-year capital climbs from 8.9 to 26.7 percent (p. 183).
+# Here the sedan is booked, not restated:
+#   * period 0 is year 0, the day of purchase. The opening balance sheet is the
+#     exhibit's year-0 working capital and fixed assets, financed by the
+#     owner's equity, and nothing else happens in it;
+#   * periods 1-4 are the four years. Revenues and operating costs are posted
+#     as printed against cash, and depreciation as printed against the fixed
+#     assets. At the end of the fourth and last year (the life the prose
+#     gives, p. 182) the working capital comes back as cash.
+# The cash the sedan throws off belongs to its owner, not to its operations;
+# it is classified as a nonoperating asset, so invested capital is working
+# capital plus fixed assets, as the exhibit prints it. The exhibit's NOPLAT
+# equals its operating profit, so the example has no taxes and the lens's
+# tax rate is nil. Everything else is read back and compared: working
+# capital and fixed assets from the books, and NOPLAT, invested capital and
+# ROIC (on opening capital, the footnote) from the valuation lens.
+excerpt: "8.14"
+periods: [0, 1, 2, 3, 4]
+entity: company
+plant: operating_costs
+rows:
+  revenues: Revenues
+  operating_costs: Operating costs
+  depreciation: Depreciation
+  noplat: NOPLAT
+  working_capital_0: {label: Working capital, periods: [0]}
+  working_capital: {label: Working capital, periods: [1, 2, 3, 4], skip: 1}
+  fixed_assets_0: {label: Fixed assets, periods: [0]}
+  fixed_assets: {label: Fixed assets, periods: [1, 2, 3, 4], skip: 1}
+  invested_capital: Invested capital
+  roic: {label: ROIC1 (percent), scale: 0.01}
+inputs: [revenues, operating_costs, depreciation, working_capital_0, fixed_assets_0]
+set_aside:
+  "EXHIBIT 8.14 Project-Based Return on Invested Capital": the exhibit's number
+  "Year 0 Year 1 Year 2 Year 3 Year 4": the column headings, years
+case:
+  case: valuation-8-14-livery
+  periods: 5
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    sedan:
+      kind: valuation_formulas
+      periods: 5
+      inputs: exhibit
+      values:
+        owner_equity: working_capital_0__0 + fixed_assets_0__0
+        # the working capital returns when the sedan is retired, at the end of its fourth year
+        working_capital_release: working_capital_0__0 if t == 4 else 0
+  opening:
+    company:
+      working_capital: {nature: asset, value: {generator: sedan, output: working_capital_0__0}}
+      fixed_assets: {nature: asset, value: {generator: sedan, output: fixed_assets_0__0}}
+      owner_equity: {nature: equity, value: {generator: sedan, output: owner_equity}}
+  contracts: {}
+  rulebooks:
+    # each line as printed, signed: a positive amount debits cash (or fixed assets), a negative one credits it
+    years:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, revenue: income, operating_costs: expense, depreciation: expense}
+      moves:
+        revenues: {debit: cash, credit: revenue, amount: {generator: sedan, output: revenues}}
+        operating_costs: {debit: cash, credit: operating_costs, amount: {generator: sedan, output: operating_costs}}
+        depreciation: {debit: fixed_assets, credit: depreciation, amount: {generator: sedan, output: depreciation}}
+        working_capital: {debit: cash, credit: working_capital,
+                          amount: {generator: sedan, output: working_capital_release}}
+  schemes:
+    valuation:
+      cash: nonoperating_asset
+      working_capital: operating_current_asset
+      fixed_assets: operating_long_term
+      owner_equity: equity
+      revenue: revenue
+      operating_costs: operating_cost
+      depreciation: depreciation
+  cuts: {}
+  lenses:
+    v: {kind: valuation, entity: company, scheme: valuation, marginal_tax_rate: 0, roic_on: opening}
+  measures: {}
+figures:
+  noplat: {cut: v.noplat}
+  working_capital: {balance: working_capital}
+  fixed_assets: {balance: fixed_assets}
+  invested_capital: {cut: v.invested_capital}
+  roic: {cut: v.roic}

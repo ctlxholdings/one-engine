@@ -1,0 +1,84 @@
+# Valuation, Exhibit 7.15 (ch. 7, p. 163), Company C: the ratio-analysis review question's statements.
+#
+# A review question (p. 163) prints the income statement and balance sheet
+# of three companies side by side, one column each, and asks for their
+# returns on assets, on equity and on invested capital; the exhibit prints no
+# ratio, so the case books the statements and checks their totals. This
+# oracle reads Company C's column (the third); the other two are
+# 7.15@company_a and 7.15@company_b.
+#   * The balance sheet is held at the print by the `stated` rulebook, every
+#     line its own account, so its check (the plug never moves) is the test
+#     that the printed balance sheet balances.
+#   * The income statement is then posted against equity, line by line as
+#     printed: the balance sheet is the year-end one, so the year's profit is
+#     inside the printed equity, and the books keep it in open P&L accounts
+#     (printed equity = the equity account plus the year's income less its
+#     expenses). Taxes are an input: the exhibit prints no rate.
+excerpt: "7.15"
+periods: [0]
+entity: company
+columns_of: [company_a, company_b]
+plant: operating_profit
+rows:
+  operating_profit: {label: Operating profit, skip: 2}
+  interest: {label: Interest, skip: 2}
+  earnings_before_taxes: {label: Earnings before taxes, skip: 2}
+  taxes: {label: Taxes, skip: 2}
+  net_income: {label: Net income, skip: 2}
+  inventory: {label: Inventory, skip: 2}
+  property_and_equipment: {label: Property and equipment, skip: 2}
+  equity_investments: {label: Equity investments, skip: 2}
+  total_assets: {label: Total assets, skip: 2}
+  accounts_payable: {label: Accounts payable, skip: 2}
+  debt: {label: Debt, skip: 2}
+  equity: {label: Equity, skip: 2}
+  liabilities_and_equity: {label: Liabilities and equity, skip: 2}
+inputs: [operating_profit, interest, taxes, inventory, property_and_equipment, equity_investments, accounts_payable,
+         debt, equity]
+set_aside:
+  "EXHIBIT 7.15 Ratio Analysis: Consolidated Financial Statements": the exhibit's number
+case:
+  case: valuation-chapter-7-ratio-analysis-company-c
+  periods: 1
+  phases: [state, operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 1
+      inputs: exhibit
+      values: {}
+  contracts: {}
+  rulebooks:
+    balance_sheet:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        inventory: {nature: asset, value: {generator: book, output: inventory}}
+        property_and_equipment: {nature: asset, value: {generator: book, output: property_and_equipment}}
+        equity_investments: {nature: asset, value: {generator: book, output: equity_investments}}
+        accounts_payable: {nature: liability, value: {generator: book, output: accounts_payable}}
+        debt: {nature: liability, value: {generator: book, output: debt}}
+        equity: {nature: equity, value: {generator: book, output: equity}}
+    # each income statement line as printed, signed, against equity: a positive amount is income
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {operating_profit: income, interest: expense, taxes: expense}
+      moves:
+        operating_profit: {debit: equity, credit: operating_profit, amount: {generator: book, output: operating_profit}}
+        interest: {debit: equity, credit: interest, amount: {generator: book, output: interest}}
+        taxes: {debit: equity, credit: taxes, amount: {generator: book, output: taxes}}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  earnings_before_taxes: {change: operating_profit - interest}
+  net_income: {change: operating_profit - interest - taxes}
+  total_assets: {balance: inventory + property_and_equipment + equity_investments}
+  liabilities_and_equity: {balance: accounts_payable + debt + equity + operating_profit - interest - taxes}

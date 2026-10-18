@@ -1,0 +1,43 @@
+# Valuation, Exhibit 8.7 (ch. 8, p. 174), Sodexo: reported revenue growth taken apart, 2006-2008.
+#
+# The exhibit splits each year's reported revenue growth into organic growth,
+# the effect of currency movements and the effect of portfolio changes
+# (acquisitions and divestitures). The three parts add up to the reported
+# growth, in percentage points; they are not compounded. The parts are
+# inputs, and the reported growth is computed by the valuation_formulas
+# generator and compared. This oracle reads Sodexo's three columns, the last three (Compass is 8.7@compass).
+excerpt: "8.7"
+periods: [0, 1, 2]
+entity: company
+columns_of: [compass]
+plant: organic_growth
+rows:
+  organic_growth: {label: Organic revenue growth, skip: 3, scale: 0.01}
+  currency_effects: {label: Currency effects, skip: 3, scale: 0.01}
+  portfolio_changes: {label: Portfolio changes, skip: 3, scale: 0.01}
+  reported_growth: {label: Reported revenue growth, skip: 3, scale: 0.01}
+inputs: [organic_growth, currency_effects, portfolio_changes]
+set_aside:
+  "EXHIBIT 8.7 Compass and Sodexo: Revenue Growth Analysis": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-8-7-growth-sodexo
+  periods: 3
+  phases: [operate]
+  currency: GBP
+  floors: {}
+  generators:
+    growth:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        reported_growth: organic_growth + currency_effects + portfolio_changes
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  reported_growth: {driver: growth.reported_growth}

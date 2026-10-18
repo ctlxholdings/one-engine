@@ -1,0 +1,47 @@
+# Valuation, Exhibit 8.4 (ch. 8, p. 171), Home Depot: operating current assets in days.
+#
+# Each operating current asset of 2006-2008 is turned into days of revenues:
+# 365 x balance / revenues (p. 170). Inventories are the exception, taken in
+# days of cost of merchandise sold (the footnote). The exhibit prints the days
+# and their total, not the balances or revenues behind them (those are in
+# exhibits outside this excerpt). So the one relation it holds on its own is
+# the total: operating current assets in days is the sum of the line items'
+# days, mixed bases included. The lines are inputs; the total is computed by
+# the valuation_formulas generator and compared. This oracle reads Home Depot's
+# three columns (Lowe's is 8.4@lowes, three columns on).
+excerpt: "8.4"
+periods: [0, 1, 2]
+entity: company
+columns_of: [lowes]
+plant: inventories
+rows:
+  operating_cash: {label: Operating cash, skip: 0}
+  receivables: {label: "Receivables, net", skip: 0}
+  inventories: {label: Merchandise inventories1, skip: 0}
+  other_current_assets: {label: Other current assets, skip: 0}
+  operating_current_assets: {label: Operating current assets, skip: 0}
+inputs: [operating_cash, receivables, inventories, other_current_assets]
+set_aside:
+  "EXHIBIT 8.4 Home Depot and Lowe’s: Operating Current Assets in Days": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-8-4-days-home-depot
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    days:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        operating_current_assets: operating_cash + receivables + inventories + other_current_assets
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  operating_current_assets: {driver: days.operating_current_assets}

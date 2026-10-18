@@ -1,0 +1,66 @@
+# Valuation, Exhibit 8.9 (ch. 8, pp. 176-177): how an acquisition distorts consolidated revenue growth.
+#
+# A parent and a target each grow by 10 percent a year. The parent buys the
+# target during year 3, and the book (p. 176) has the consolidated accounts
+# take seven months of the target's year-3 revenue (7/12 x 24.2 = 14.1), then
+# full years after it. Consolidated revenue growth spikes in years 3 and 4.
+# Organic growth compares each year with a prior year recast to the same
+# composition: the parent's prior-year revenue plus the share of the target's
+# prior-year revenue that the current year consolidates. That is seven months
+# for year 3 and the full year for year 4 (pp. 176-177). It comes back to 10
+# percent.
+# Translated as a calculation over years 1-5 (periods 0-4). The two companies'
+# revenues are inputs. The months consolidated (7 of 12 in year 3, period 2;
+# all of them after) are the book's stated timing, typed as structural
+# counts. Revenue from each company, consolidated revenues and both growth
+# rates are computed and compared, the year-1 growth cells (dashes) as nil.
+excerpt: "8.9"
+periods: [0, 1, 2, 3, 4]
+entity: company
+plant: parent
+rows:
+  parent: Parent company
+  target: Target company
+  revenue_from_parent: Revenue from parent
+  revenue_from_target: Revenue from target
+  consolidated: Consolidated revenues1
+  consolidated_growth: {label: Consolidated revenue growth, scale: 0.01}
+  organic_growth: {label: Organic growth, scale: 0.01}
+inputs: [parent, target]
+set_aside:
+  "EXHIBIT 8.9 Effect of Acquisitions on Revenue Growth": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4 Year 5": the column headings, years
+case:
+  case: valuation-8-9-acquisition-growth
+  periods: 5
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    growth:
+      kind: valuation_formulas
+      periods: 5
+      inputs: exhibit
+      values:
+        # the share of the target's year the consolidated accounts carry: none before the deal,
+        # seven months in year 3 (period 2), all of it after
+        consolidated_share: (7 / 12 if t == 2 else 0) + (1 if t > 2 else 0)
+        revenue_from_parent: parent
+        revenue_from_target: target * consolidated_share
+        consolidated: revenue_from_parent + revenue_from_target
+        consolidated_growth: (consolidated / lag(consolidated, 1) - 1) if t > 0 else 0
+        # the prior year recast to this year's composition: the target's prior year in the same share
+        pro_forma_prior: lag(parent, 1) + lag(target, 1) * consolidated_share
+        organic_growth: (consolidated / pro_forma_prior - 1) if t > 0 else 0
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  revenue_from_parent: {driver: growth.revenue_from_parent}
+  revenue_from_target: {driver: growth.revenue_from_target}
+  consolidated: {driver: growth.consolidated}
+  consolidated_growth: {driver: growth.consolidated_growth}
+  organic_growth: {driver: growth.organic_growth}

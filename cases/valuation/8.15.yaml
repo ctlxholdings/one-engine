@@ -1,0 +1,106 @@
+# Valuation, Exhibit 8.15 (ch. 8, pp. 183-184): Home Depot's cash flow return on investment (CFROI) in 2008.
+#
+# CFROI is an internal rate of return over a stylized life of the company's
+# assets (p. 184). The outlay is gross invested capital at the start, which
+# is the prior year's invested capital plus its accumulated depreciation. The
+# year's gross cash flow (NOPLAT plus depreciation) is received every year
+# of the asset life. In the last year the working capital comes back as well.
+# The exhibit adds working capital and long-term net operating assets into
+# 2007 invested capital, adds accumulated depreciation to get gross invested
+# capital, adds the working capital returned to the gross cash flow for the
+# final year's total, and solves the stream of a 20-year life (its timeline
+# runs to year 20; p. 184 gives the 20 years) for a CFROI of 7.8 percent.
+#   * The four components are inputs; the sums are computed by the
+#     valuation_formulas generator and compared.
+#   * The stream is booked: periods 0-20 are the timeline's years. The owner's
+#     cash (opening, from the computed gross invested capital) is invested in
+#     the gross operating assets at year 0. Each later year receives the gross
+#     cash flow, and year 20 also receives the working capital back. CFROI is
+#     the engine's IRR measure over that cash cut, compared as a ratio over
+#     one (the reader takes a measure only inside a ratio).
+#   * The years printed inside the labels are compared too: the capital is
+#     dated the year before the cash flow, and the working capital returned
+#     is dated the cash flow's year.
+excerpt: "8.15"
+periods: [0]
+entity: company
+plant: gross_cash_flow
+rows:
+  working_capital: Working capital
+  long_term_operating_assets: Long-term net operating assets
+  invested_capital_year: "Invested capital,"
+  invested_capital: Invested capital, 2007
+  cash_flow_year: "Gross cash flow,"
+  gross_cash_flow: Gross cash flow, 2008
+  accumulated_depreciation: Accumulated depreciation
+  working_capital_returned_year: Return of
+  working_capital_returned: Return of 2008 working capital
+  gross_invested_capital_year: "Gross invested capital,"
+  gross_invested_capital: Gross invested capital, 2007
+  total_cash_flow: Total cash flow
+  cfroi: {label: CFROI1 =, scale: 0.01}
+inputs: [working_capital, long_term_operating_assets, cash_flow_year, gross_cash_flow, accumulated_depreciation]
+set_aside:
+  "EXHIBIT 8.15 Home Depot: CFROI, 2008": the exhibit's number and its year
+  "(48,810) 4,818 4,818 4,818 4,818 8,308": >-
+    the timeline's unlabelled data labels, repeating the gross invested capital (outlay), gross cash flow
+    and total cash flow read on their own rows; the same stream is booked and solved for CFROI
+  "0": the timeline's axis, year 0
+  "123": the timeline's axis, years 1 2 3 glued together
+  "19 20": the timeline's axis, years 19 and 20; the 20-year life is the case's period count
+case:
+  case: valuation-8-15-cfroi
+  periods: 21
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    cfroi:
+      kind: valuation_formulas
+      periods: 21
+      inputs: exhibit
+      values:
+        invested_capital: working_capital__0 + long_term_operating_assets__0
+        gross_invested_capital: invested_capital + accumulated_depreciation__0
+        working_capital_returned: working_capital__0
+        total_cash_flow: gross_cash_flow__0 + working_capital_returned
+        # the capital is measured at the end of the year before the cash flow year
+        capital_year: cash_flow_year__0 - 1
+        outlay: gross_invested_capital if t == 0 else 0
+        annual_cash_flow: gross_cash_flow__0 if t > 0 else 0
+        working_capital_back: working_capital_returned if t == 20 else 0
+        one: 1
+  opening:
+    company:
+      cash: {nature: asset, value: {generator: cfroi, output: gross_invested_capital}}
+      owner_equity: {nature: equity, value: {generator: cfroi, output: gross_invested_capital}}
+  contracts: {}
+  rulebooks:
+    life:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {gross_operating_assets: asset, gross_cash_flow: income}
+      moves:
+        outlay: {debit: gross_operating_assets, credit: cash, amount: {generator: cfroi, output: outlay}}
+        annual: {debit: cash, credit: gross_cash_flow, amount: {generator: cfroi, output: annual_cash_flow}}
+        working_capital: {debit: cash, credit: gross_operating_assets,
+                          amount: {generator: cfroi, output: working_capital_back}}
+  schemes:
+    stream:
+      gross_operating_assets: investing
+      gross_cash_flow: operating
+      owner_equity: financing
+  cuts:
+    project: {entity: company, account: cash, scheme: stream, include: [investing, operating]}
+  measures:
+    cfroi: {measure: irr, cut: project}
+figures:
+  invested_capital_year: {driver: cfroi.capital_year}
+  invested_capital: {driver: cfroi.invested_capital}
+  gross_invested_capital_year: {driver: cfroi.capital_year}
+  gross_invested_capital: {driver: cfroi.gross_invested_capital}
+  working_capital_returned_year: {driver: cfroi.cash_flow_year__0}
+  working_capital_returned: {driver: cfroi.working_capital_returned}
+  total_cash_flow: {driver: cfroi.total_cash_flow}
+  cfroi: {ratio: [{measure: cfroi}, {driver: cfroi.one}]}

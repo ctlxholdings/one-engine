@@ -1,0 +1,145 @@
+# Valuation, Exhibit 7.8 (ch. 7, p. 149), Home Depot: deferred-tax assets and liabilities, reorganized.
+#
+# The left panel is Home Depot's deferred-tax footnote for 2006-2008 (periods
+# 0-2) as the 10-K prints it: five deferred-tax assets less a valuation
+# allowance, four deferred-tax liabilities, and the net position. The right
+# panel sorts the same ten lines into the chapter's three groups (pp. 148-149):
+# tax loss carry-forwards (a nonoperating asset), operating deferred taxes
+# (the ones whose change turns operating taxes into cash taxes), and
+# nonoperating deferred taxes (equity equivalents left out of cash taxes).
+# The panels are interleaved line by line in the text, so most labels print
+# twice; the 10-K panel is the input, the reorganized panel is compared.
+#   * Each footnote line is its own account, held at the print by the
+#     `stated` rulebook: the assets (and the valuation allowance, a negative
+#     asset) as assets, the liabilities as liabilities at the amount the
+#     footnote prints in brackets. One equity account holds the net position,
+#     the part of the balance sheet this exhibit does not print that finances
+#     it, so the plug never moves.
+#   * The valuation scheme classifies them as the right panel does: the
+#     carry-forwards and their allowance nonoperating assets, the operating
+#     lines operating deferred taxes, the rest equity equivalents. The
+#     carry-forwards subtotal is read from the lens; the other subtotals and
+#     totals are the books' balances of the accounts each one gathers.
+# The lens's tax rate is nil: the exhibit prints no income.
+excerpt: "7.8"
+periods: [0, 1, 2]
+entity: company
+plant: accelerated_depreciation
+notes: >-
+  Exhibit 7.5 carries this exhibit's three groups into Home Depot's invested capital (tax loss carry-forwards
+  66, 101, 124; operating deferred taxes 480, 105, 114; nonoperating 464, 159, -111, signed as claims there);
+  7.5 is checked on its own print.
+rows:
+  # the 10-K footnote (left panel)
+  self_insurance: {label: Accrued self-insurance liabilities, occurrence: 1}
+  state_taxes: {label: State income taxes, occurrence: 1}
+  other_accrued: {label: Other accrued liabilities, occurrence: 1}
+  net_operating_losses: {label: Net operating losses, occurrence: 2}
+  other_dta: {label: Other deferred-tax assets, occurrence: 1}
+  deferred_tax_assets: Deferred-tax assets
+  valuation_allowance: {label: Valuation allowance, occurrence: 2}
+  net_deferred_tax_assets: Net deferred-tax assets
+  accelerated_depreciation: {label: Accelerated depreciation, occurrence: 2}
+  inventory_deduction: {label: Accelerated inventory deduction, occurrence: 2}
+  goodwill_intangibles: {label: Goodwill and other intangibles, occurrence: 1}
+  other_dtl: {label: Other deferred-tax liabilities, occurrence: 1}
+  deferred_tax_liabilities: Deferred-tax liabilities
+  net_position: {label: Deferred-tax assets (liabilities), occurrence: 1}
+  # the reorganized financials (right panel)
+  r_net_operating_losses: {label: Net operating losses, occurrence: 1}
+  r_valuation_allowance: {label: Valuation allowance, occurrence: 1}
+  tax_loss_carryforwards: Tax loss carry-forwards
+  r_accelerated_depreciation: {label: Accelerated depreciation, occurrence: 1}
+  r_inventory_deduction: {label: Accelerated inventory deduction, occurrence: 1}
+  r_self_insurance: {label: Accrued self-insurance liabilities, occurrence: 2}
+  r_state_taxes: {label: State income taxes, occurrence: 2}
+  r_other_accrued: {label: Other accrued liabilities, occurrence: 2}
+  operating_deferred_taxes: Operating deferred-tax assets (liabilities)
+  r_goodwill_intangibles: {label: Goodwill and other intangibles, occurrence: 2}
+  r_other_dtl: {label: Other deferred-tax liabilities, occurrence: 2}
+  r_other_dta: {label: Other deferred-tax assets, occurrence: 2}
+  nonoperating_deferred_taxes: Nonoperating deferred-tax assets (liabilities)
+  r_net_position: {label: Deferred-tax assets (liabilities), occurrence: 2}
+inputs: [self_insurance, state_taxes, other_accrued, net_operating_losses, other_dta, valuation_allowance,
+         accelerated_depreciation, inventory_deduction, goodwill_intangibles, other_dtl]
+set_aside:
+  "EXHIBIT 7.8 Home Depot: Deferred-Tax Assets and Liabilities": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-chapter-7-deferred-taxes-home-depot
+  periods: 3
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        # the footnote prints liabilities in brackets; the books hold them as the positive claims they are
+        accelerated_depreciation_dtl: -accelerated_depreciation
+        inventory_deduction_dtl: -inventory_deduction
+        goodwill_intangibles_dtl: -goodwill_intangibles
+        other_dtl_claim: -other_dtl
+        # the net position, financed by the part of the balance sheet this exhibit leaves out
+        financed_elsewhere: self_insurance + state_taxes + other_accrued + net_operating_losses + other_dta + valuation_allowance + accelerated_depreciation + inventory_deduction + goodwill_intangibles + other_dtl
+  contracts: {}
+  rulebooks:
+    footnote:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        self_insurance: {nature: asset, value: {generator: book, output: self_insurance}}
+        state_taxes: {nature: asset, value: {generator: book, output: state_taxes}}
+        other_accrued: {nature: asset, value: {generator: book, output: other_accrued}}
+        net_operating_losses: {nature: asset, value: {generator: book, output: net_operating_losses}}
+        other_dta: {nature: asset, value: {generator: book, output: other_dta}}
+        valuation_allowance: {nature: asset, value: {generator: book, output: valuation_allowance}}
+        accelerated_depreciation: {nature: liability, value: {generator: book, output: accelerated_depreciation_dtl}}
+        inventory_deduction: {nature: liability, value: {generator: book, output: inventory_deduction_dtl}}
+        goodwill_intangibles: {nature: liability, value: {generator: book, output: goodwill_intangibles_dtl}}
+        other_dtl: {nature: liability, value: {generator: book, output: other_dtl_claim}}
+        financed_elsewhere: {nature: equity, value: {generator: book, output: financed_elsewhere}}
+  schemes:
+    valuation:
+      net_operating_losses: nonoperating_asset
+      valuation_allowance: nonoperating_asset
+      self_insurance: operating_deferred_tax
+      state_taxes: operating_deferred_tax
+      other_accrued: operating_deferred_tax
+      accelerated_depreciation: operating_deferred_tax
+      inventory_deduction: operating_deferred_tax
+      goodwill_intangibles: equity_equivalent
+      other_dtl: equity_equivalent
+      other_dta: equity_equivalent
+      financed_elsewhere: equity
+      unexplained: equity
+  cuts: {}
+  lenses:
+    v: {kind: valuation, entity: company, scheme: valuation, marginal_tax_rate: 0}
+  measures: {}
+figures:
+  deferred_tax_assets: {balance: self_insurance + state_taxes + other_accrued + net_operating_losses + other_dta}
+  net_deferred_tax_assets: {balance: self_insurance + state_taxes + other_accrued + net_operating_losses + other_dta + valuation_allowance}
+  deferred_tax_liabilities: {balance: accelerated_depreciation + inventory_deduction + goodwill_intangibles + other_dtl, sign: -1}
+  net_position: {balance: self_insurance + state_taxes + other_accrued + net_operating_losses + other_dta + valuation_allowance - accelerated_depreciation - inventory_deduction - goodwill_intangibles - other_dtl}
+  r_net_operating_losses: {balance: net_operating_losses}
+  r_valuation_allowance: {balance: valuation_allowance}
+  tax_loss_carryforwards: {cut: v.nonoperating_assets}
+  r_accelerated_depreciation: {balance: accelerated_depreciation, sign: -1}
+  r_inventory_deduction: {balance: inventory_deduction, sign: -1}
+  r_self_insurance: {balance: self_insurance}
+  r_state_taxes: {balance: state_taxes}
+  r_other_accrued: {balance: other_accrued}
+  operating_deferred_taxes: {balance: self_insurance + state_taxes + other_accrued - accelerated_depreciation - inventory_deduction}
+  r_goodwill_intangibles: {balance: goodwill_intangibles, sign: -1}
+  r_other_dtl: {balance: other_dtl, sign: -1}
+  r_other_dta: {balance: other_dta}
+  nonoperating_deferred_taxes: {balance: other_dta - goodwill_intangibles - other_dtl}
+  # the reorganized total: the three groups added back together
+  r_net_position: {sum: [{cut: v.nonoperating_assets},
+                         {balance: self_insurance + state_taxes + other_accrued - accelerated_depreciation - inventory_deduction},
+                         {balance: other_dta - goodwill_intangibles - other_dtl}]}

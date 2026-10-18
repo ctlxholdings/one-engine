@@ -1,0 +1,57 @@
+# Valuation, Exhibit 8.12 (ch. 8, p. 181), Lowe's: coverage ratios, 2006-2008.
+#
+# Three earnings measures (EBITA, EBITDA and EBITDAR, which adds back rental
+# expense: the footnote) are set against interest, and EBITDAR also against
+# interest plus rental expense (p. 180). EBITA, EBITDA, interest and rental
+# expense are inputs. EBITDAR is EBITDA with rental expense added back, the
+# interest-plus-rent line is the sum of its two parts, and the three coverage
+# ratios are computed by the valuation_formulas generator; all are compared.
+# This oracle reads Lowe's's three columns, the last three (Home Depot is 8.12@home_depot).
+excerpt: "8.12"
+periods: [0, 1, 2]
+entity: company
+columns_of: [home_depot]
+plant: interest
+rows:
+  ebita: {label: EBITA, skip: 3}
+  ebitda: {label: EBITDA, skip: 3}
+  ebitdar: {label: EBITDAR1, skip: 3}
+  interest: {label: Interest, skip: 3}
+  rental_expense: {label: Rental expense, skip: 3}
+  interest_plus_rental: {label: Interest plus rental expense, skip: 3}
+  ebita_coverage: {label: EBITA/interest, skip: 3}
+  ebitda_coverage: {label: EBITDA/interest, skip: 3}
+  ebitdar_coverage: {label: EBITDAR/interest plus rental expense, skip: 3}
+inputs: [ebita, ebitda, interest, rental_expense]
+set_aside:
+  "EXHIBIT 8.12 Home Depot and Lowe’s: Measuring Coverage": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-8-12-coverage-lowes
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    coverage:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        ebitdar: ebitda + rental_expense
+        interest_plus_rental: interest + rental_expense
+        ebita_coverage: ebita / interest
+        ebitda_coverage: ebitda / interest
+        ebitdar_coverage: ebitdar / interest_plus_rental
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ebitdar: {driver: coverage.ebitdar}
+  interest_plus_rental: {driver: coverage.interest_plus_rental}
+  ebita_coverage: {driver: coverage.ebita_coverage}
+  ebitda_coverage: {driver: coverage.ebitda_coverage}
+  ebitdar_coverage: {driver: coverage.ebitdar_coverage}

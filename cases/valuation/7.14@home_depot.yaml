@@ -1,0 +1,83 @@
+# Valuation, Exhibit 7.14 (ch. 7, p. 160), Home Depot: capitalizing operating leases.
+#
+# The exhibit shows what capitalizing operating leases does to profit, capital
+# and returns, 2006-2008 (periods 0-2; Lowe's is 7.14@lowes, three columns
+# on). The interest embedded in rental expense (the cost of debt times the
+# prior year's lease value, footnote 1) is added back to EBITA, its tax shield
+# is added to operating cash taxes, the capitalized leases are added to
+# invested capital, and ROIC on average capital is computed both ways
+# (pp. 159-161).
+#   * The exhibit prints a calculation, not statements, so it is the
+#     `valuation_formulas` generator: EBITA, the implied interest, the
+#     unadjusted operating cash taxes, the tax shield, invested capital without
+#     leases and the capitalized leases are its inputs (each comes from
+#     another exhibit or a filing: 7.10, the lease note, 7.5); the adjusted
+#     lines, both NOPLATs and the invested capital with leases are computed,
+#     and each ROIC is the pack's `roic` over the average of the year's and the
+#     prior year's capital.
+#   * The 2006 returns are read but not compared: their average needs 2005
+#     invested capital, which neither this exhibit nor Exhibit 7.5 (2006-2008)
+#     prints. The implied interest itself is an input for the same reason (the
+#     2005 lease value and the cost of debt are not printed).
+excerpt: "7.14"
+periods: [0, 1, 2]
+entity: company
+columns_of: [lowes]
+plant: ebita
+rows:
+  ebita: EBITA
+  implied_interest: Implied interest1
+  adjusted_ebita: Adjusted EBITA
+  operating_cash_taxes: Operating cash taxes
+  tax_shield: Tax shield on operating lease interest expense
+  adjusted_cash_taxes: Adjusted operating cash taxes
+  noplat_rental: NOPLAT (using rental expense)
+  noplat_leases: NOPLAT (capitalizing operating leases)
+  invested_capital: Invested capital
+  leases: Capitalized operating leases
+  invested_capital_with_leases: Invested capital (with operating leases)
+  roic_rental_2006: {label: ROIC (using rental expenses), periods: [0], scale: 0.01}
+  roic_rental: {label: ROIC (using rental expenses), periods: [1, 2], skip: 1, scale: 0.01}
+  roic_leases_2006: {label: ROIC (capitalizing operating leases), periods: [0], scale: 0.01}
+  roic_leases: {label: ROIC (capitalizing operating leases), periods: [1, 2], skip: 1, scale: 0.01}
+inputs: [ebita, implied_interest, operating_cash_taxes, tax_shield, invested_capital, leases]
+not_compared:
+  roic_rental_2006: the average capital needs 2005 invested capital, printed neither here nor in Exhibit 7.5 (2006-2008)
+  roic_leases_2006: the average capital needs 2005 invested capital, printed neither here nor in Exhibit 7.5 (2006-2008)
+set_aside:
+  "EXHIBIT 7.14 Home Depot and Lowe’s: Capitalizing Operating Leases": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-chapter-7-leases-home-depot
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        adjusted_ebita: ebita + implied_interest
+        adjusted_cash_taxes: operating_cash_taxes + tax_shield
+        noplat_rental: ebita - operating_cash_taxes
+        noplat_leases: adjusted_ebita - adjusted_cash_taxes
+        invested_capital_with_leases: invested_capital + leases
+        # return on the average of this year's and last year's capital (meaningless in the first year)
+        roic_rental: roic(noplat_rental, (invested_capital + lag(invested_capital, 1)) / 2)
+        roic_leases: roic(noplat_leases, (invested_capital_with_leases + lag(invested_capital_with_leases, 1)) / 2)
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  adjusted_ebita: {driver: book.adjusted_ebita}
+  adjusted_cash_taxes: {driver: book.adjusted_cash_taxes}
+  noplat_rental: {driver: book.noplat_rental}
+  noplat_leases: {driver: book.noplat_leases}
+  invested_capital_with_leases: {driver: book.invested_capital_with_leases}
+  roic_rental: {driver: book.roic_rental}
+  roic_leases: {driver: book.roic_leases}

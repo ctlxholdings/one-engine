@@ -1,0 +1,164 @@
+# Valuation, Exhibit 14.4 (ch. 14, pp. 318-319): amortization of acquired intangibles distorts the
+# EV-to-EBIT multiple.
+#
+# Three companies with the same operating economics before A buys B; after the
+# purchase the combined A + B equals C except for the acquired intangibles
+# (B's price over its book capital) and their amortization, which lower EBIT
+# and raise the EV-to-EBIT multiple without any change in value (p. 319).
+#
+# Translated as a calculation: the before-acquisition columns are inputs,
+# with the year's amortization of the acquired intangibles (its five-year life
+# is prose). A + B is the sum of A and B; C after is C before; acquired
+# intangibles are B's enterprise value less its organic capital. The EV-to-EBITA
+# row is compared as its label means: enterprise value over EBIT before
+# amortization. The book prints 5.0 in every column, which is enterprise value
+# over revenues less cost of sales (EBITDA); EV over EBITA is 7.5 throughout.
+# Those five cells are recorded as book slips.
+excerpt: "14.4"
+periods: [0]
+entity: company
+plant: ev_b
+rows:
+  revenues_a: {label: Revenues}
+  revenues_b: {label: Revenues, skip: 1}
+  revenues_c: {label: Revenues, skip: 2}
+  revenues_ab: {label: Revenues, skip: 3}
+  revenues_c_after: {label: Revenues, skip: 4}
+  cost_of_sales_a: {label: Cost of sales}
+  cost_of_sales_b: {label: Cost of sales, skip: 1}
+  cost_of_sales_c: {label: Cost of sales, skip: 2}
+  cost_of_sales_ab: {label: Cost of sales, skip: 3}
+  cost_of_sales_c_after: {label: Cost of sales, skip: 4}
+  depreciation_a: {label: Depreciation}
+  depreciation_b: {label: Depreciation, skip: 1}
+  depreciation_c: {label: Depreciation, skip: 2}
+  depreciation_ab: {label: Depreciation, skip: 3}
+  depreciation_c_after: {label: Depreciation, skip: 4}
+  amortization_a: {label: Amortization}
+  amortization_b: {label: Amortization, skip: 1}
+  amortization_c: {label: Amortization, skip: 2}
+  amortization_ab: {label: Amortization, skip: 3}
+  amortization_c_after: {label: Amortization, skip: 4}
+  ebit_a: {label: EBIT}
+  ebit_b: {label: EBIT, skip: 1}
+  ebit_c: {label: EBIT, skip: 2}
+  ebit_ab: {label: EBIT, skip: 3}
+  ebit_c_after: {label: EBIT, skip: 4}
+  organic_capital_a: {label: Organic capital}
+  organic_capital_b: {label: Organic capital, skip: 1}
+  organic_capital_c: {label: Organic capital, skip: 2}
+  organic_capital_ab: {label: Organic capital, skip: 3}
+  organic_capital_c_after: {label: Organic capital, skip: 4}
+  acquired_intangibles_a: {label: Acquired intangibles}
+  acquired_intangibles_b: {label: Acquired intangibles, skip: 1}
+  acquired_intangibles_c: {label: Acquired intangibles, skip: 2}
+  acquired_intangibles_ab: {label: Acquired intangibles, skip: 3}
+  acquired_intangibles_c_after: {label: Acquired intangibles, skip: 4}
+  invested_capital_a: {label: Invested capital}
+  invested_capital_b: {label: Invested capital, skip: 1}
+  invested_capital_c: {label: Invested capital, skip: 2}
+  invested_capital_ab: {label: Invested capital, skip: 3}
+  invested_capital_c_after: {label: Invested capital, skip: 4}
+  ev_a: {label: Enterprise value}
+  ev_b: {label: Enterprise value, skip: 1}
+  ev_c: {label: Enterprise value, skip: 2}
+  ev_ab: {label: Enterprise value, skip: 3}
+  ev_c_after: {label: Enterprise value, skip: 4}
+  ev_to_ebita_a: {label: EV to EBITA}
+  ev_to_ebita_b: {label: EV to EBITA, skip: 1}
+  ev_to_ebita_c: {label: EV to EBITA, skip: 2}
+  ev_to_ebita_ab: {label: EV to EBITA, skip: 3}
+  ev_to_ebita_c_after: {label: EV to EBITA, skip: 4}
+  ev_to_ebit_a: {label: EV to EBIT}
+  ev_to_ebit_b: {label: EV to EBIT, skip: 1}
+  ev_to_ebit_c: {label: EV to EBIT, skip: 2}
+  ev_to_ebit_ab: {label: EV to EBIT, skip: 3}
+  ev_to_ebit_c_after: {label: EV to EBIT, skip: 4}
+inputs: [revenues_a, revenues_b, revenues_c, cost_of_sales_a, cost_of_sales_b, cost_of_sales_c, depreciation_a, depreciation_b, depreciation_c, amortization_a, amortization_b, amortization_c, organic_capital_a, organic_capital_b, organic_capital_c, acquired_intangibles_a, acquired_intangibles_b, acquired_intangibles_c, ev_a, ev_b, ev_c, amortization_ab]
+set_aside:
+  "EXHIBIT 14.4 Enterprise-Value-to-EBIT Multiple Distorted by Acquisition Accounting": the exhibit's number
+case:
+  case: valuation-14-4
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    ma:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        revenues_ab: revenues_a + revenues_b
+        revenues_c_after: revenues_c
+        cost_of_sales_ab: cost_of_sales_a + cost_of_sales_b
+        cost_of_sales_c_after: cost_of_sales_c
+        depreciation_ab: depreciation_a + depreciation_b
+        depreciation_c_after: depreciation_c
+        organic_capital_ab: organic_capital_a + organic_capital_b
+        organic_capital_c_after: organic_capital_c
+        ev_ab: ev_a + ev_b
+        ev_c_after: ev_c
+        amortization_c_after: amortization_c
+        acquired_intangibles_ab: ev_b - organic_capital_b
+        acquired_intangibles_c_after: acquired_intangibles_c
+        ebit_a: revenues_a + cost_of_sales_a + depreciation_a + amortization_a
+        invested_capital_a: organic_capital_a + acquired_intangibles_a
+        ev_to_ebita_a: ev_a / (ebit_a - amortization_a)
+        ev_to_ebit_a: ev_a / ebit_a
+        ebit_b: revenues_b + cost_of_sales_b + depreciation_b + amortization_b
+        invested_capital_b: organic_capital_b + acquired_intangibles_b
+        ev_to_ebita_b: ev_b / (ebit_b - amortization_b)
+        ev_to_ebit_b: ev_b / ebit_b
+        ebit_c: revenues_c + cost_of_sales_c + depreciation_c + amortization_c
+        invested_capital_c: organic_capital_c + acquired_intangibles_c
+        ev_to_ebita_c: ev_c / (ebit_c - amortization_c)
+        ev_to_ebit_c: ev_c / ebit_c
+        ebit_ab: revenues_ab + cost_of_sales_ab + depreciation_ab + amortization_ab
+        invested_capital_ab: organic_capital_ab + acquired_intangibles_ab
+        ev_to_ebita_ab: ev_ab / (ebit_ab - amortization_ab)
+        ev_to_ebit_ab: ev_ab / ebit_ab
+        ebit_c_after: revenues_c_after + cost_of_sales_c_after + depreciation_c_after + amortization_c_after
+        invested_capital_c_after: organic_capital_c_after + acquired_intangibles_c_after
+        ev_to_ebita_c_after: ev_c_after / (ebit_c_after - amortization_c_after)
+        ev_to_ebit_c_after: ev_c_after / ebit_c_after
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  revenues_ab: {driver: ma.revenues_ab}
+  revenues_c_after: {driver: ma.revenues_c_after}
+  cost_of_sales_ab: {driver: ma.cost_of_sales_ab}
+  cost_of_sales_c_after: {driver: ma.cost_of_sales_c_after}
+  depreciation_ab: {driver: ma.depreciation_ab}
+  depreciation_c_after: {driver: ma.depreciation_c_after}
+  organic_capital_ab: {driver: ma.organic_capital_ab}
+  organic_capital_c_after: {driver: ma.organic_capital_c_after}
+  ev_ab: {driver: ma.ev_ab}
+  ev_c_after: {driver: ma.ev_c_after}
+  amortization_c_after: {driver: ma.amortization_c_after}
+  acquired_intangibles_ab: {driver: ma.acquired_intangibles_ab}
+  acquired_intangibles_c_after: {driver: ma.acquired_intangibles_c_after}
+  ebit_a: {driver: ma.ebit_a}
+  ebit_b: {driver: ma.ebit_b}
+  ebit_c: {driver: ma.ebit_c}
+  ebit_ab: {driver: ma.ebit_ab}
+  ebit_c_after: {driver: ma.ebit_c_after}
+  invested_capital_a: {driver: ma.invested_capital_a}
+  invested_capital_b: {driver: ma.invested_capital_b}
+  invested_capital_c: {driver: ma.invested_capital_c}
+  invested_capital_ab: {driver: ma.invested_capital_ab}
+  invested_capital_c_after: {driver: ma.invested_capital_c_after}
+  ev_to_ebita_a: {driver: ma.ev_to_ebita_a}
+  ev_to_ebita_b: {driver: ma.ev_to_ebita_b}
+  ev_to_ebita_c: {driver: ma.ev_to_ebita_c}
+  ev_to_ebita_ab: {driver: ma.ev_to_ebita_ab}
+  ev_to_ebita_c_after: {driver: ma.ev_to_ebita_c_after}
+  ev_to_ebit_a: {driver: ma.ev_to_ebit_a}
+  ev_to_ebit_b: {driver: ma.ev_to_ebit_b}
+  ev_to_ebit_c: {driver: ma.ev_to_ebit_c}
+  ev_to_ebit_ab: {driver: ma.ev_to_ebit_ab}
+  ev_to_ebit_c_after: {driver: ma.ev_to_ebit_c_after}

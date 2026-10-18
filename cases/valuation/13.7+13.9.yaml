@@ -1,0 +1,123 @@
+# Valuation, Exhibits 13.7 and 13.9 (ch. 13, pp. 305-308): ConsumerCo valued by segment, read with the
+# segment data it rests on.
+#
+# 13.7 is a chart: the DCF value of each of ConsumerCo's three business units
+# stacked into the cumulative segment valuation, each unit's share of revenues,
+# and each unit's enterprise value over its EBITA (p. 305). 13.9 is the segment
+# disclosure: revenues, operating profit and the rest by unit and for the
+# corporate center (p. 308). 13.7's shares and multiples are 13.9's revenues
+# and operating profits set against 13.7's values, so the two exhibits are one
+# excerpt here (13.9 also stands alone as oracle 13.9).
+#
+# Translated as a calculation:
+#   * 13.9: the four columns are inputs, and each consolidated cell is their
+#     sum (as in oracle 13.9);
+#   * 13.7: the three unit values are inputs (their DCFs are not printed). The
+#     cumulative valuation is their sum; each revenue share is the unit's
+#     revenues over consolidated revenues (the corporate center has none, so
+#     the shares make 100%); each multiple is the unit's value over its
+#     operating profit, taken as EBITA. The aggregate multiple is the
+#     cumulative segment valuation over the three units' operating profit: the
+#     valuation leaves the corporate center out, so its cost is left out of
+#     the denominator too (over the consolidated 69.2 it would be 9.4).
+# The chart's data labels stand on lines no label opens; they are read by line.
+excerpt: "13.7+13.9"
+periods: [0]
+entity: consumerco
+plant: value_organic
+rows:
+  share_branded: {line: 1, scale: 0.01}
+  share_private_label: {line: 2, scale: 0.01}
+  share_organic: {line: 3, scale: 0.01}
+  cumulative_value: {line: 4}
+  share_total: {line: 4, skip: 1, scale: 0.01}
+  value_branded: {line: 5}
+  value_private_label: {line: 6}
+  value_organic: {line: 7}
+  multiple_branded: {label: Enterprise value}
+  multiple_private_label: {line: 23}
+  multiple_organic: {line: 23, skip: 1}
+  multiple_total: {line: 23, skip: 2}
+  revenues_branded: {label: Revenues}
+  revenues_private_label: {label: Revenues, skip: 1}
+  revenues_organic: {label: Revenues, skip: 2}
+  revenues_corporate: {label: Revenues, skip: 3}
+  revenues_consolidated: {label: Revenues, skip: 4}
+  intersegment_revenues_branded: {label: Intersegment revenues}
+  intersegment_revenues_private_label: {label: Intersegment revenues, skip: 1}
+  intersegment_revenues_organic: {label: Intersegment revenues, skip: 2}
+  intersegment_revenues_corporate: {label: Intersegment revenues, skip: 3}
+  intersegment_revenues_consolidated: {label: Intersegment revenues, skip: 4}
+  operating_profit_branded: {label: Operating profit}
+  operating_profit_private_label: {label: Operating profit, skip: 1}
+  operating_profit_organic: {label: Operating profit, skip: 2}
+  operating_profit_corporate: {label: Operating profit, skip: 3}
+  operating_profit_consolidated: {label: Operating profit, skip: 4}
+  depreciation_branded: {label: Depreciation1}
+  depreciation_private_label: {label: Depreciation1, skip: 1}
+  depreciation_organic: {label: Depreciation1, skip: 2}
+  depreciation_corporate: {label: Depreciation1, skip: 3}
+  depreciation_consolidated: {label: Depreciation1, skip: 4}
+  capital_expenditures_branded: {label: Capital expenditures}
+  capital_expenditures_private_label: {label: Capital expenditures, skip: 1}
+  capital_expenditures_organic: {label: Capital expenditures, skip: 2}
+  capital_expenditures_corporate: {label: Capital expenditures, skip: 3}
+  capital_expenditures_consolidated: {label: Capital expenditures, skip: 4}
+  assets_branded: {label: Assets}
+  assets_private_label: {label: Assets, skip: 1}
+  assets_organic: {label: Assets, skip: 2}
+  assets_corporate: {label: Assets, skip: 3}
+  assets_consolidated: {label: Assets, skip: 4}
+inputs: [value_branded, value_private_label, value_organic, revenues_branded, revenues_private_label, revenues_organic, revenues_corporate, intersegment_revenues_branded, intersegment_revenues_private_label, intersegment_revenues_organic, intersegment_revenues_corporate, operating_profit_branded, operating_profit_private_label, operating_profit_organic, operating_profit_corporate, depreciation_branded, depreciation_private_label, depreciation_organic, depreciation_corporate, capital_expenditures_branded, capital_expenditures_private_label, capital_expenditures_organic, capital_expenditures_corporate, assets_branded, assets_private_label, assets_organic, assets_corporate]
+set_aside:
+  "EXHIBIT 13.9 ConsumerCo: Publicly Available Business Unit Data": the exhibit's number
+case:
+  case: valuation-13-7-consumerco-by-segment
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    segments:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        revenues_consolidated: revenues_branded + revenues_private_label + revenues_organic + revenues_corporate
+        intersegment_revenues_consolidated: intersegment_revenues_branded + intersegment_revenues_private_label + intersegment_revenues_organic + intersegment_revenues_corporate
+        operating_profit_consolidated: operating_profit_branded + operating_profit_private_label + operating_profit_organic + operating_profit_corporate
+        depreciation_consolidated: depreciation_branded + depreciation_private_label + depreciation_organic + depreciation_corporate
+        capital_expenditures_consolidated: capital_expenditures_branded + capital_expenditures_private_label + capital_expenditures_organic + capital_expenditures_corporate
+        assets_consolidated: assets_branded + assets_private_label + assets_organic + assets_corporate
+        cumulative_value: value_branded + value_private_label + value_organic
+        share_branded: revenues_branded / revenues_consolidated
+        multiple_branded: value_branded / operating_profit_branded
+        share_private_label: revenues_private_label / revenues_consolidated
+        multiple_private_label: value_private_label / operating_profit_private_label
+        share_organic: revenues_organic / revenues_consolidated
+        multiple_organic: value_organic / operating_profit_organic
+        share_total: (revenues_branded + revenues_private_label + revenues_organic) / revenues_consolidated
+        # the segments' value over the segments' EBITA: the corporate center is in neither
+        multiple_total: cumulative_value / (operating_profit_branded + operating_profit_private_label + operating_profit_organic)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  revenues_consolidated: {driver: segments.revenues_consolidated}
+  intersegment_revenues_consolidated: {driver: segments.intersegment_revenues_consolidated}
+  operating_profit_consolidated: {driver: segments.operating_profit_consolidated}
+  depreciation_consolidated: {driver: segments.depreciation_consolidated}
+  capital_expenditures_consolidated: {driver: segments.capital_expenditures_consolidated}
+  assets_consolidated: {driver: segments.assets_consolidated}
+  cumulative_value: {driver: segments.cumulative_value}
+  share_total: {driver: segments.share_total}
+  multiple_total: {driver: segments.multiple_total}
+  share_branded: {driver: segments.share_branded}
+  multiple_branded: {driver: segments.multiple_branded}
+  share_private_label: {driver: segments.share_private_label}
+  multiple_private_label: {driver: segments.multiple_private_label}
+  share_organic: {driver: segments.share_organic}
+  multiple_organic: {driver: segments.multiple_organic}

@@ -1,0 +1,72 @@
+# Valuation, Exhibit 8.3 (ch. 8, pp. 169-170), Home Depot: the ROIC tree for 2008.
+#
+# The exhibit is a tree of boxes, each printing the figure for Home Depot and
+# for Lowe's, the box's caption on the line after its two figures. Read from
+# the right, the leaves are the operating ratios: gross margin, SG&A and
+# depreciation over revenues, and operating working capital and fixed assets
+# over revenues. The book (p. 170) explains how the boxes combine: operating
+# margin is gross margin less the two cost ratios, and pretax ROIC is operating
+# margin times capital turnover. Capital turnover (revenues over invested
+# capital) is the inverse of the two capital ratios added up, since invested
+# capital without goodwill is operating working capital plus fixed assets.
+# ROIC without goodwill is pretax ROIC kept after the operating cash tax rate,
+# and ROIC with goodwill divides it by one plus the premium over book capital
+# (goodwill and acquired intangibles as a share of the capital without them).
+# Translated as a calculation: the seven leaves (the five ratios, the tax rate
+# and the premium) are inputs; the five boxes built from them are computed by
+# the valuation_formulas generator, each from the unrounded results of the
+# boxes to its right, and compared. This oracle reads Home Depot's figures;
+# 8.3@lowes reads the other company's, the line after each of these.
+excerpt: "8.3"
+periods: [0]
+entity: company
+columns_of: [lowes]
+plant: gross_margin
+rows:
+  roic_with_goodwill: {label: Home Depot, occurrence: 1, scale: 0.01}
+  roic_without_goodwill: {label: Home Depot, occurrence: 2, scale: 0.01}
+  premium_over_book: {label: Home Depot, occurrence: 3, scale: 0.01}
+  pretax_roic: {label: Home Depot, occurrence: 4, scale: 0.01}
+  operating_cash_tax_rate: {label: Home Depot, occurrence: 5, scale: 0.01}
+  operating_margin: {label: Home Depot, occurrence: 6, scale: 0.01}
+  capital_turnover: {label: Home Depot, occurrence: 7}
+  gross_margin: {label: Home Depot, occurrence: 8, scale: 0.01}
+  sga_to_revenues: {label: Home Depot, occurrence: 9, scale: 0.01}
+  depreciation_to_revenues: {label: Home Depot, occurrence: 10, scale: 0.01}
+  owc_to_revenues: {label: Home Depot, occurrence: 11, scale: 0.01}
+  fixed_assets_to_revenues: {label: Home Depot, occurrence: 12, scale: 0.01}
+inputs: [premium_over_book, operating_cash_tax_rate, gross_margin, sga_to_revenues, depreciation_to_revenues,
+         owc_to_revenues, fixed_assets_to_revenues]
+set_aside:
+  "EXHIBIT 8.3–Home Depot and Lowe’s: ROIC Tree, 2008": the exhibit's number and its year
+case:
+  case: valuation-8-3-roic-tree-home-depot
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    tree:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        operating_margin: gross_margin - sga_to_revenues - depreciation_to_revenues
+        # invested capital without goodwill is working capital plus fixed assets, both per unit of revenue
+        capital_turnover: 1 / (owc_to_revenues + fixed_assets_to_revenues)
+        pretax_roic: operating_margin * capital_turnover
+        roic_without_goodwill: pretax_roic * (1 - operating_cash_tax_rate)
+        # goodwill adds the premium to the capital the same NOPLAT is earned on
+        roic_with_goodwill: roic_without_goodwill / (1 + premium_over_book)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  roic_with_goodwill: {driver: tree.roic_with_goodwill}
+  roic_without_goodwill: {driver: tree.roic_without_goodwill}
+  pretax_roic: {driver: tree.pretax_roic}
+  operating_margin: {driver: tree.operating_margin}
+  capital_turnover: {driver: tree.capital_turnover}

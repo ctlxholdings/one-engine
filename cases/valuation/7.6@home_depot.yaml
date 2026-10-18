@@ -1,0 +1,83 @@
+# Valuation, Exhibit 7.6 (ch. 7, p. 144), Home Depot: goodwill and acquired intangibles, adjusted.
+#
+# The exhibit prints, for 2004-2008 (periods 0-4), each company's recorded
+# goodwill and acquired intangibles and the two adjustments the chapter makes
+# to them (pp. 143-144): goodwill a pooling-of-interests merger never recorded,
+# and the amortization and impairments written off since 1999, both added back
+# because goodwill does not wear out. The adjusted total is what Exhibit 7.5
+# carries into invested capital. Home Depot's block is read here; Lowe's,
+# printed below it, is 7.6@lowes (the same translation on the label's second
+# printing).
+#   * The four lines are booked as balances held at the print by the `stated`
+#     rulebook, each an asset in the goodwill class of the valuation scheme.
+#   * Each is booked with what finances it, as Exhibit 7.5 books it: the two
+#     adjustments with equity equivalents of their own (the chapter's offset
+#     to equity, p. 144), the recorded goodwill and intangibles with the rest
+#     of the balance sheet, which this exhibit does not print (one equity
+#     account holding their sum).
+#   * The adjusted total is not added up in the case: it is the lens's
+#     goodwill, the goodwill class of the books, compared with the print.
+# The lens's tax rate is nil: the exhibit prints no income.
+excerpt: "7.6"
+periods: [0, 1, 2, 3, 4]
+entity: company
+columns_of: [lowes]
+plant: goodwill
+notes: >-
+  The 2006-2008 columns repeat figures of Exhibits 7.4 and 7.5 (goodwill, acquired intangibles, cumulative
+  amortization); they are read here from this exhibit's own print.
+rows:
+  goodwill: Goodwill
+  acquired_intangibles: Acquired intangibles
+  pooling_goodwill: Unrecorded goodwill related to pooling
+  cumulative_amortization: Cumulative amortization and impairments
+  adjusted_goodwill: Adjusted goodwill and acquired intangibles
+inputs: [goodwill, acquired_intangibles, pooling_goodwill, cumulative_amortization]
+set_aside:
+  "EXHIBIT 7.6 Home Depot and Lowe’s: Adjustments to Goodwill and Acquired": the exhibit's number
+  "2004 2005 2006 2007 2008": the column headings, years
+case:
+  case: valuation-chapter-7-goodwill-home-depot
+  periods: 5
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 5
+      inputs: exhibit
+      values:
+        # the recorded goodwill and intangibles are financed by the balance sheet this exhibit leaves out
+        financed_elsewhere: goodwill + acquired_intangibles
+  contracts: {}
+  rulebooks:
+    balance_sheet:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        goodwill: {nature: asset, value: {generator: book, output: goodwill}}
+        acquired_intangibles: {nature: asset, value: {generator: book, output: acquired_intangibles}}
+        financed_elsewhere: {nature: equity, value: {generator: book, output: financed_elsewhere}}
+        pooling_goodwill: {nature: asset, value: {generator: book, output: pooling_goodwill}}
+        pooling_equivalent: {nature: equity, value: {generator: book, output: pooling_goodwill}}
+        cumulative_amortization: {nature: asset, value: {generator: book, output: cumulative_amortization}}
+        amortization_equivalent: {nature: equity, value: {generator: book, output: cumulative_amortization}}
+  schemes:
+    valuation:
+      goodwill: goodwill
+      acquired_intangibles: goodwill
+      pooling_goodwill: goodwill
+      cumulative_amortization: goodwill
+      financed_elsewhere: equity
+      pooling_equivalent: equity_equivalent
+      amortization_equivalent: equity_equivalent
+      unexplained: equity
+  cuts: {}
+  lenses:
+    v: {kind: valuation, entity: company, scheme: valuation, marginal_tax_rate: 0}
+  measures: {}
+figures:
+  adjusted_goodwill: {cut: v.goodwill}

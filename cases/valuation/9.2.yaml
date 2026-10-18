@@ -1,0 +1,63 @@
+# Valuation, Exhibit 9.2 (ch. 9, p. 192): Boeing's current liabilities as reported, and the note behind one line.
+#
+# The balance sheet's current liabilities for 2007 and 2008 (periods 0-1),
+# then note 11's breakdown of the one aggregated line, "accounts payable and
+# other liabilities", into operating items (payables, accrued compensation,
+# warranties) and nonoperating ones the book points out (p. 192:
+# environmental remediation is a debt equivalent, forward loss recognition
+# an equity equivalent). The note's six items are inputs. The aggregated line
+# is computed from them and compared twice, on the balance sheet and as the
+# note's total; current liabilities is computed from it and the other three
+# balance-sheet lines. The exhibit prints liabilities only, no assets, so
+# there is no balance sheet to hold in books: this is translated as a
+# calculation.
+excerpt: "9.2"
+periods: [0, 1]
+entity: company
+plant: accounts_payable
+rows:
+  bs_payables_and_other: Accounts payable and other liabilities
+  advances: Advances in excess of related costs
+  income_taxes_payable: Income taxes payable
+  short_term_debt: Short-term debt and current portion of long-term debt
+  current_liabilities: Current liabilities
+  accounts_payable: Accounts payable
+  accrued_compensation: Accrued compensation and employee benefit costs
+  product_warranty: Product warranty liabilities
+  environmental_remediation: Environmental remediation
+  forward_loss: Forward loss recognition
+  other_liabilities: Other liabilities
+  note_payables_and_other: {label: Accounts payable and other liabilities, occurrence: 2}
+inputs: [advances, income_taxes_payable, short_term_debt, accounts_payable, accrued_compensation, product_warranty,
+         environmental_remediation, forward_loss, other_liabilities]
+set_aside:
+  "EXHIBIT 9.2 Boeing Company: Current Liabilities in Balance Sheet": the exhibit's number
+  "2007 2008": the column headings, years
+  "From note 11: Liabilities, commitments, and contingencies": the note's number
+  "Source: Boeing Company annual report, 2008.": the source, a year
+case:
+  case: valuation-9-2-boeing
+  periods: 2
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    note:
+      kind: valuation_formulas
+      periods: 2
+      inputs: exhibit
+      values:
+        payables_and_other: >-
+          accounts_payable + accrued_compensation + product_warranty + environmental_remediation
+          + forward_loss + other_liabilities
+        current_liabilities: payables_and_other + advances + income_taxes_payable + short_term_debt
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  bs_payables_and_other: {driver: note.payables_and_other}
+  current_liabilities: {driver: note.current_liabilities}
+  note_payables_and_other: {driver: note.payables_and_other}

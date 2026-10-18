@@ -1,0 +1,121 @@
+# Valuation, Exhibit 14.7 (ch. 14, pp. 323-324): enterprise value multiples when a company holds
+# nonoperating assets or has minority shareholders.
+#
+# Three companies with the same core operations: A has only debt and equity;
+# B also holds excess cash and a nonconsolidated stake; C has outside
+# shareholders in a consolidated subsidiary. Only net enterprise value (the
+# core operations) over EBITA gives the same multiple for all three (p. 323).
+#
+# Translated as a calculation, the lines read literally: debt plus equity is
+# the debt and the market value of equity, minority interest not included.
+# Company C's "Debt plus equity minus cash to EBITA" prints 9.0, but its lines
+# give (300 + 500 - 0) / 100 = 8.0, the same as the next row, which prints 8.0
+# for C. That cell is compared as computed and recorded as a book slip.
+excerpt: "14.7"
+periods: [0]
+entity: company
+plant: core_b
+rows:
+  ebita_a: {label: EBITA}
+  ebita_b: {label: EBITA, skip: 1}
+  ebita_c: {label: EBITA, skip: 2}
+  interest_income_a: {label: Interest income}
+  interest_income_b: {label: Interest income, skip: 1}
+  interest_income_c: {label: Interest income, skip: 2}
+  interest_expense_a: {label: Interest expense}
+  interest_expense_b: {label: Interest expense, skip: 1}
+  interest_expense_c: {label: Interest expense, skip: 2}
+  ebt_a: {label: Earnings before taxes}
+  ebt_b: {label: Earnings before taxes, skip: 1}
+  ebt_c: {label: Earnings before taxes, skip: 2}
+  core_a: {label: Value of core operations}
+  core_b: {label: Value of core operations, skip: 1}
+  core_c: {label: Value of core operations, skip: 2}
+  excess_cash_a: {label: Excess cash}
+  excess_cash_b: {label: Excess cash, skip: 1}
+  excess_cash_c: {label: Excess cash, skip: 2}
+  subsidiaries_a: {label: Nonconsolidated subsidiaries}
+  subsidiaries_b: {label: Nonconsolidated subsidiaries, skip: 1}
+  subsidiaries_c: {label: Nonconsolidated subsidiaries, skip: 2}
+  gross_ev_a: {label: Gross enterprise value}
+  gross_ev_b: {label: Gross enterprise value, skip: 1}
+  gross_ev_c: {label: Gross enterprise value, skip: 2}
+  debt_a: {label: Debt}
+  debt_b: {label: Debt, skip: 1}
+  debt_c: {label: Debt, skip: 2}
+  minority_a: {label: Minority interest}
+  minority_b: {label: Minority interest, skip: 1}
+  minority_c: {label: Minority interest, skip: 2}
+  equity_a: {label: Market value of equity}
+  equity_b: {label: Market value of equity, skip: 1}
+  equity_c: {label: Market value of equity, skip: 2}
+  gross_ev_sources_a: {label: Gross enterprise value, occurrence: 2}
+  gross_ev_sources_b: {label: Gross enterprise value, occurrence: 2, skip: 1}
+  gross_ev_sources_c: {label: Gross enterprise value, occurrence: 2, skip: 2}
+  net_ev_to_ebita_a: {label: Net enterprise value to EBITA}
+  net_ev_to_ebita_b: {label: Net enterprise value to EBITA, skip: 1}
+  net_ev_to_ebita_c: {label: Net enterprise value to EBITA, skip: 2}
+  dpe_less_cash_to_ebita_a: {label: Debt plus equity minus cash to EBITA}
+  dpe_less_cash_to_ebita_b: {label: Debt plus equity minus cash to EBITA, skip: 1}
+  dpe_less_cash_to_ebita_c: {label: Debt plus equity minus cash to EBITA, skip: 2}
+  dpe_to_ebita_a: {label: Debt plus equity to EBITA}
+  dpe_to_ebita_b: {label: Debt plus equity to EBITA, skip: 1}
+  dpe_to_ebita_c: {label: Debt plus equity to EBITA, skip: 2}
+inputs: [ebita_a, ebita_b, ebita_c, interest_income_a, interest_income_b, interest_income_c, interest_expense_a, interest_expense_b, interest_expense_c, core_a, core_b, core_c, excess_cash_a, excess_cash_b, excess_cash_c, subsidiaries_a, subsidiaries_b, subsidiaries_c, debt_a, debt_b, debt_c, minority_a, minority_b, minority_c, equity_a, equity_b, equity_c]
+set_aside:
+  "EXHIBIT 14.7 Enterprise Value Multiples and Complex Ownership": the exhibit's number
+case:
+  case: valuation-14-7
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    ev:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        ebt_a: ebita_a + interest_income_a + interest_expense_a
+        gross_ev_a: core_a + excess_cash_a + subsidiaries_a
+        gross_ev_sources_a: debt_a + minority_a + equity_a
+        net_ev_to_ebita_a: (gross_ev_a - excess_cash_a - subsidiaries_a) / ebita_a
+        dpe_less_cash_to_ebita_a: (debt_a + equity_a - excess_cash_a) / ebita_a
+        dpe_to_ebita_a: (debt_a + equity_a) / ebita_a
+        ebt_b: ebita_b + interest_income_b + interest_expense_b
+        gross_ev_b: core_b + excess_cash_b + subsidiaries_b
+        gross_ev_sources_b: debt_b + minority_b + equity_b
+        net_ev_to_ebita_b: (gross_ev_b - excess_cash_b - subsidiaries_b) / ebita_b
+        dpe_less_cash_to_ebita_b: (debt_b + equity_b - excess_cash_b) / ebita_b
+        dpe_to_ebita_b: (debt_b + equity_b) / ebita_b
+        ebt_c: ebita_c + interest_income_c + interest_expense_c
+        gross_ev_c: core_c + excess_cash_c + subsidiaries_c
+        gross_ev_sources_c: debt_c + minority_c + equity_c
+        net_ev_to_ebita_c: (gross_ev_c - excess_cash_c - subsidiaries_c) / ebita_c
+        dpe_less_cash_to_ebita_c: (debt_c + equity_c - excess_cash_c) / ebita_c
+        dpe_to_ebita_c: (debt_c + equity_c) / ebita_c
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  ebt_a: {driver: ev.ebt_a}
+  ebt_b: {driver: ev.ebt_b}
+  ebt_c: {driver: ev.ebt_c}
+  gross_ev_a: {driver: ev.gross_ev_a}
+  gross_ev_b: {driver: ev.gross_ev_b}
+  gross_ev_c: {driver: ev.gross_ev_c}
+  gross_ev_sources_a: {driver: ev.gross_ev_sources_a}
+  gross_ev_sources_b: {driver: ev.gross_ev_sources_b}
+  gross_ev_sources_c: {driver: ev.gross_ev_sources_c}
+  net_ev_to_ebita_a: {driver: ev.net_ev_to_ebita_a}
+  net_ev_to_ebita_b: {driver: ev.net_ev_to_ebita_b}
+  net_ev_to_ebita_c: {driver: ev.net_ev_to_ebita_c}
+  dpe_less_cash_to_ebita_a: {driver: ev.dpe_less_cash_to_ebita_a}
+  dpe_less_cash_to_ebita_b: {driver: ev.dpe_less_cash_to_ebita_b}
+  dpe_less_cash_to_ebita_c: {driver: ev.dpe_less_cash_to_ebita_c}
+  dpe_to_ebita_a: {driver: ev.dpe_to_ebita_a}
+  dpe_to_ebita_b: {driver: ev.dpe_to_ebita_b}
+  dpe_to_ebita_c: {driver: ev.dpe_to_ebita_c}

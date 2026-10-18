@@ -1,0 +1,72 @@
+# Valuation, Exhibit 13.5 (ch. 13, pp. 302-303): a distressed company valued scenario by scenario.
+#
+# Two scenarios for a new-product launch. Each builds its own enterprise value
+# (DCF value of operations plus nonoperating assets) and takes off the debt.
+# In scenario 1 the launch succeeds and the debt is worth its face value. In
+# scenario 2 it fails, the enterprise is worth less than the face value of the
+# debt, the lenders end up with the whole enterprise and the equity is worth
+# nothing (p. 303). The scenarios' equity values are then weighted by their
+# probabilities.
+#
+# Translated as a calculation: the values of operations, nonoperating assets,
+# the face value of debt (scenario 1's line, which the prose says is at face)
+# and the two probabilities are inputs. Each enterprise value, scenario 2's
+# debt (the smaller of the face value and the enterprise value), both equity
+# values and the probability-weighted equity value are computed and compared.
+# The probabilities and the weighted value print on lines no label opens; they
+# are read by line.
+excerpt: "13.5"
+periods: [0]
+entity: company
+plant: operations_1
+rows:
+  weighted_equity: {line: 6}
+  probability_1: {line: 8, scale: 0.01}
+  operations_1: {label: Value of operations, occurrence: 1}
+  nonoperating_1: {label: Nonoperating assets, occurrence: 1}
+  enterprise_value_1: {label: Enterprise value, occurrence: 1}
+  debt_1: {label: Interest-bearing debt, occurrence: 1}
+  equity_1: {label: Equity value, occurrence: 1}
+  probability_2: {line: 20, scale: 0.01}
+  operations_2: {label: Value of operations, occurrence: 2}
+  nonoperating_2: {label: Nonoperating assets, occurrence: 2}
+  enterprise_value_2: {label: Enterprise value, occurrence: 2}
+  debt_2: {label: Interest-bearing debt, occurrence: 2}
+  equity_2: {label: Equity value, occurrence: 2}
+inputs: [probability_1, operations_1, nonoperating_1, debt_1, probability_2, operations_2, nonoperating_2]
+set_aside:
+  "EXHIBIT 13.5 Example of a Scenario Approach to DCF Valuation": the exhibit's number
+  "Scenario 1": the scenario's number, a heading
+  "Scenario 2": the scenario's number, a heading
+case:
+  case: valuation-13-5-scenario-dcf
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    scenarios:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        enterprise_value_1: operations_1 + nonoperating_1
+        enterprise_value_2: operations_2 + nonoperating_2
+        # debt prints negative; in scenario 2 the lenders can take no more than the whole enterprise
+        debt_2: -min(-debt_1, enterprise_value_2)
+        equity_1: max(enterprise_value_1 + debt_1, 0)
+        equity_2: max(enterprise_value_2 + debt_2, 0)
+        weighted_equity: probability_1 * equity_1 + probability_2 * equity_2
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  measures: {}
+figures:
+  weighted_equity: {driver: scenarios.weighted_equity}
+  enterprise_value_1: {driver: scenarios.enterprise_value_1}
+  equity_1: {driver: scenarios.equity_1}
+  enterprise_value_2: {driver: scenarios.enterprise_value_2}
+  debt_2: {driver: scenarios.debt_2}
+  equity_2: {driver: scenarios.equity_2}
