@@ -182,6 +182,23 @@ def test_the_lens_reads_a_classified_book():
     assert r.cut("v.total_funds_sources").values == [200, 200]
 
 
+def test_roic_before_there_is_capital_is_named_undefined_not_zero():
+    # the business is funded in period 1: period 0 has no capital, and the books open on nothing
+    case = _case_of(_tr())
+    del case["opening"]
+    case["generators"]["book"]["inputs"] = {"funding": ["0", "200"]}
+    case["rulebooks"] = {"fund": {"kind": "transfer", "entity": "company", "phase": "operate",
+                                  "declare": {"inventory": "asset", "common_stock": "equity"},
+                                  "moves": {"fund": {"debit": "inventory", "credit": "common_stock",
+                                                     "amount": {"generator": "book", "output": "funding"}}}}}
+    case["lenses"]["v"]["roic_on"] = "opening"
+    r = run_case(case)
+    assert r.lenses["v"]["roic_undefined"] == [0, 1]       # opening capital is nil in both periods
+    assert r.cut("v.roic").values == [0, 0]
+    case["lenses"]["v"]["roic_on"] = "closing"
+    assert run_case(case).lenses["v"]["roic_undefined"] == [0]
+
+
 def test_the_lens_refuses_an_unclassified_account():
     case = _case_of(_tr())
     del case["schemes"]["valuation"]["inventory"]

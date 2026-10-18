@@ -358,6 +358,10 @@ def valuation(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, Any]
     the increase in nonoperating assets); and ``roic``,
     ``roic_ex_goodwill``, ``economic_profit`` when asked for.
 
+    Values: with ``roic_on``, ``roic_undefined`` and
+    ``roic_ex_goodwill_undefined``, the periods whose capital is nil (ROIC
+    reads nil there and means nothing).
+
     Raises
     ------
     CutError
@@ -458,6 +462,7 @@ def valuation(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, Any]
         "gross_cash_flow": add(noplat, depreciation), "net_investment": net_inv, "fcf": fcf,
         "cash_flow_to_investors": sub(add(fcf, after_tax_nonop), sub(nonop, nonop_open)),
     }
+    values: Dict[str, Any] = {}
     if roic_on is not None:
         def capital(close, open_):
             if roic_on == "closing":
@@ -465,12 +470,15 @@ def valuation(group: Group, r: Reader, ctx: Mapping[str, Any]) -> Dict[str, Any]
             if roic_on == "opening":
                 return open_
             return [(a + b) / 2 for a, b in zip(close, open_)]
-        series["roic"] = [roic(x, c) for x, c in zip(noplat, capital(ic, ic_open))]
-        series["roic_ex_goodwill"] = [roic(x, c) for x, c in zip(noplat, capital(ic_x, ic_x_open))]
+        # before a business has capital (a project's years before construction) ROIC is undefined: those
+        # periods read nil and are named in the lens's values, so nothing reads them as a return of zero
+        for key, cap in (("roic", capital(ic, ic_open)), ("roic_ex_goodwill", capital(ic_x, ic_x_open))):
+            series[key] = [roic(x, c) if c else Fraction(0) for x, c in zip(noplat, cap)]
+            values[f"{key}_undefined"] = [first + i for i, c in enumerate(cap) if not c]
     if wacc_ is not None:
         series["economic_profit"] = [economic_profit(x, c, _at(wacc_, first + i))
                                      for i, (x, c) in enumerate(zip(noplat, ic_open))]
-    return {"series": {k: _series(k, v) for k, v in series.items()}, "values": {}}
+    return {"series": {k: _series(k, v) for k, v in series.items()}, "values": values}
 
 
 LENSES = {"valuation": valuation}
