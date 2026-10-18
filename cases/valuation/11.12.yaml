@@ -1,0 +1,117 @@
+# Valuation, Exhibit 11.12 (ch. 11, p. 262): TRACE trades in Home Depot's 5.875% bond due December
+# 2036 on May 28, 2009, and the default premium read from them.
+#
+# Each trade prints its volume, clean price and yield to maturity. The yield is computed here from the
+# price by the pack's bond_yield (semiannual coupons, clean price per 100 of face, a stub period
+# accruing) and compared with the printed one. Years to maturity run from the trade date of the Source
+# line to the maturity of the bond line. The maturity day is not printed: it is taken as the middle of
+# December (the 15th) and stated here; any December day gives 55.0 to 55.2 semiannual periods, and
+# every trade's computed yield moves by under 0.004 across them and stays within 0.0065 of the print.
+# The bond yield the book uses is the large trades' (the prose, p. 262: trades of $1 million or more,
+# a volume above 1000 in this $-thousand column): the mean of their printed yields, 7.616, printed 7.62.
+# The default premium is that yield less the 30-year Treasury yield (printed negative, as subtracted).
+# Each printed yield is therefore read twice: as an input to the large-trade mean, and as a figure
+# compared with the yield computed from its price.
+excerpt: "11.12"
+periods: [0]
+entity: model
+plant: price_5
+rows:
+  coupon: {label: "Bond:", scale: 0.01}
+  maturity_year: due December
+  volume_1: {label: "16:15:51"}
+  price_1: {label: "16:15:51", skip: 1}
+  printed_yield_1: {label: "16:15:51", skip: 2, scale: 0.01}
+  yield_1: {label: "16:15:51", skip: 2, scale: 0.01}
+  volume_2: {label: "16:15:51", occurrence: 2}
+  price_2: {label: "16:15:51", occurrence: 2, skip: 1}
+  printed_yield_2: {label: "16:15:51", occurrence: 2, skip: 2, scale: 0.01}
+  yield_2: {label: "16:15:51", occurrence: 2, skip: 2, scale: 0.01}
+  volume_3: {label: "14:48:00"}
+  price_3: {label: "14:48:00", skip: 1}
+  printed_yield_3: {label: "14:48:00", skip: 2, scale: 0.01}
+  yield_3: {label: "14:48:00", skip: 2, scale: 0.01}
+  volume_4: {label: "14:03:19"}
+  price_4: {label: "14:03:19", skip: 1}
+  printed_yield_4: {label: "14:03:19", skip: 2, scale: 0.01}
+  yield_4: {label: "14:03:19", skip: 2, scale: 0.01}
+  volume_5: {label: "12:08:43"}
+  price_5: {label: "12:08:43", skip: 1}
+  printed_yield_5: {label: "12:08:43", skip: 2, scale: 0.01}
+  yield_5: {label: "12:08:43", skip: 2, scale: 0.01}
+  volume_6: {label: "12:08:00"}
+  price_6: {label: "12:08:00", skip: 1}
+  printed_yield_6: {label: "12:08:00", skip: 2, scale: 0.01}
+  yield_6: {label: "12:08:00", skip: 2, scale: 0.01}
+  volume_7: {label: "12:08:00", occurrence: 2}
+  price_7: {label: "12:08:00", occurrence: 2, skip: 1}
+  printed_yield_7: {label: "12:08:00", occurrence: 2, skip: 2, scale: 0.01}
+  yield_7: {label: "12:08:00", occurrence: 2, skip: 2, scale: 0.01}
+  volume_8: {label: "12:08:00", occurrence: 3}
+  price_8: {label: "12:08:00", occurrence: 3, skip: 1}
+  printed_yield_8: {label: "12:08:00", occurrence: 3, skip: 2, scale: 0.01}
+  yield_8: {label: "12:08:00", occurrence: 3, skip: 2, scale: 0.01}
+  volume_9: {label: "12:06:22"}
+  price_9: {label: "12:06:22", skip: 1}
+  printed_yield_9: {label: "12:06:22", skip: 2, scale: 0.01}
+  yield_9: {label: "12:06:22", skip: 2, scale: 0.01}
+  bond_yield: {label: Home Depot bond yield, scale: 0.01}
+  treasury: {label: 30-year U.S. Treasury yield, scale: 0.01}
+  default_premium: {label: Home Depot default premium, scale: 0.01}
+  trade_date: {label: "TRACE system, May", periods: [0, 1]}
+inputs: [coupon, maturity_year, treasury, trade_date, volume_1, price_1, printed_yield_1, volume_2, price_2, printed_yield_2, volume_3, price_3, printed_yield_3, volume_4, price_4, printed_yield_4, volume_5, price_5, printed_yield_5, volume_6, price_6, printed_yield_6, volume_7, price_7, printed_yield_7, volume_8, price_8, printed_yield_8, volume_9, price_9, printed_yield_9]
+set_aside:
+  "EXHIBIT 11.12 Home Depot: Trading Data on Corporate Debt": the exhibit's number
+case:
+  case: valuation-chapter-11-home-depot-bond
+  periods: 2
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 2
+      inputs: exhibit
+      values:
+        # the trade date (May, day and year as printed) to the middle of December of the maturity year
+        years: (DATE(maturity_year__0, 12, 15) - DATE(trade_date__1, 5, trade_date__0)) / 365
+        yield_1_m: bond_yield(price_1__0, coupon__0, years)
+        large_1: volume_1__0 > 1000
+        yield_2_m: bond_yield(price_2__0, coupon__0, years)
+        large_2: volume_2__0 > 1000
+        yield_3_m: bond_yield(price_3__0, coupon__0, years)
+        large_3: volume_3__0 > 1000
+        yield_4_m: bond_yield(price_4__0, coupon__0, years)
+        large_4: volume_4__0 > 1000
+        yield_5_m: bond_yield(price_5__0, coupon__0, years)
+        large_5: volume_5__0 > 1000
+        yield_6_m: bond_yield(price_6__0, coupon__0, years)
+        large_6: volume_6__0 > 1000
+        yield_7_m: bond_yield(price_7__0, coupon__0, years)
+        large_7: volume_7__0 > 1000
+        yield_8_m: bond_yield(price_8__0, coupon__0, years)
+        large_8: volume_8__0 > 1000
+        yield_9_m: bond_yield(price_9__0, coupon__0, years)
+        large_9: volume_9__0 > 1000
+        bond_yield_m: (large_1 * printed_yield_1__0 + large_2 * printed_yield_2__0 + large_3 * printed_yield_3__0 + large_4 * printed_yield_4__0 + large_5 * printed_yield_5__0 + large_6 * printed_yield_6__0 + large_7 * printed_yield_7__0 + large_8 * printed_yield_8__0 + large_9 * printed_yield_9__0) / (large_1 + large_2 + large_3 + large_4 + large_5 + large_6 + large_7 + large_8 + large_9)
+        default_premium_m: bond_yield_m + treasury__0
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  yield_1: {driver: m.yield_1_m}
+  yield_2: {driver: m.yield_2_m}
+  yield_3: {driver: m.yield_3_m}
+  yield_4: {driver: m.yield_4_m}
+  yield_5: {driver: m.yield_5_m}
+  yield_6: {driver: m.yield_6_m}
+  yield_7: {driver: m.yield_7_m}
+  yield_8: {driver: m.yield_8_m}
+  yield_9: {driver: m.yield_9_m}
+  bond_yield: {driver: m.bond_yield_m}
+  default_premium: {driver: m.default_premium_m}
