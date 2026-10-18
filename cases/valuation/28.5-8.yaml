@@ -1,0 +1,247 @@
+# Valuation, Exhibits 28.5-28.8 (ch. 28, pp. 598-601): Adobe Systems with its R&D expensed and capitalized.
+#
+# Exhibit 28.5 reorganizes Adobe's balance sheets for 2004-2008 (periods
+# 0-4) into invested capital, then adds the capitalized R&D asset (built as
+# in Exhibit 28.4), goodwill, other intangibles and the cumulative
+# amortization of acquired intangibles. Exhibit 28.6 computes NOPLAT twice:
+# as reported, and with R&D expense replaced by the amortization of the
+# R&D asset (operating taxes unchanged, since the expense is deductible in
+# full, p. 599). Exhibit 28.7 gives ROIC on year-end capital both ways, with
+# and without goodwill; Exhibit 28.8 gives free cash flow both ways for
+# 2005-2008 (excluding goodwill and acquired intangibles) and shows it is
+# the same.
+# Booked, one book read through two schemes:
+#   * The year's P&L is posted from 28.6's unadjusted lines (revenues, cost
+#     of revenue, SG&A, R&D) against one account for the rest of the books.
+#   * Each printed invested-capital balance is moved to its value against
+#     that account. Other assets, net is the printed invested capital
+#     without goodwill less the other three lines, and is compared with its
+#     printing (the book rounds each line, and the total is what its ROICs
+#     and cash flows rest on: LEARNINGS, continue from the printed total).
+#   * The R&D asset: each year's R&D is capitalized against a contra-cost,
+#     and amortized at one tenth (Exhibit 28.4's footnoted ten-year life,
+#     typed as the structural 10) of the prior year-end asset. 2004's asset
+#     and amortization are inputs (they rest on years before 2004, which
+#     Exhibit 28.4 prints only through 1989); the pre-2004 asset enters at
+#     2004 against an equity equivalent. 2005-2008 are compared.
+#   * Scheme `expensed`: the capitalization and amortization are
+#     nonoperating and the asset with its claim sit among the equity
+#     equivalents, so the books read as reported. Scheme `capitalized`: the
+#     contra-cost is an operating cost (it cancels the R&D expense), the
+#     amortization is depreciation, and the asset is operating capital.
+#   * Operating taxes are the printed line in both lenses (the book carries
+#     it from the reported statements: other operating taxes, rate nil).
+#   * Depreciation is printed only in 28.8 and sits inside the cost lines;
+#     it is an input, used for gross cash flow and capital expenditures.
+# ROIC divides by year-end capital (the book's 2008 ROICs are NOPLAT over
+# the printed 2008 capital).
+excerpt: "28.5-8"
+periods: [0, 1, 2, 3, 4]
+entity: company
+plant: revenues
+rows:
+  # 28.5
+  owc: Operating working capital
+  ppe: Property, plant, and equipment
+  lease_receivable: Investment in lease receivable
+  other_assets: Other assets, net
+  ic_without_goodwill: Invested capital without goodwill
+  capitalized_rd_first: {label: Capitalized R&D asset, periods: [0]}
+  capitalized_rd: {label: Capitalized R&D asset, skip: 1, periods: [1, 2, 3, 4]}
+  adjusted_ic_without_goodwill: Adjusted invested capital without goodwill
+  goodwill: Goodwill
+  other_intangibles: Other intangibles
+  cumulative_amortization: Cumulative amortization of acquired intangibles
+  adjusted_ic: Adjusted invested capital
+  # 28.6, unadjusted
+  revenues: Revenues
+  cost_of_revenue: Cost of revenue
+  sga: Selling, general, and administrative
+  rd_expense: R&D expense
+  ebita: EBITA1
+  operating_taxes: Operating taxes
+  noplat: NOPLAT
+  # 28.6, adjusted
+  a_revenues: {label: Revenues, occurrence: 2}
+  a_cost_of_sales: Cost of sales
+  a_selling_expenses: Selling expenses
+  amortization_first: {label: Amortization of R&D asset, periods: [0]}
+  a_amortization: {label: Amortization of R&D asset, skip: 1, periods: [1, 2, 3, 4]}
+  a_ebita: EBITA
+  a_operating_taxes: {label: Operating taxes, occurrence: 2}
+  a_noplat: {label: NOPLAT, occurrence: 2}
+  # 28.7
+  roic_expensed_ex_goodwill: {label: ROIC with R&D expensed, scale: 0.01}
+  roic_capitalized_ex_goodwill: {label: ROIC with R&D capitalized, scale: 0.01}
+  roic_expensed: {label: ROIC with R&D expensed, occurrence: 2, scale: 0.01}
+  roic_capitalized: {label: ROIC with R&D capitalized, occurrence: 2, scale: 0.01}
+  # 28.8, 2005-2008
+  f_noplat: {label: NOPLAT, occurrence: 3, periods: [1, 2, 3, 4]}
+  depreciation: {label: Depreciation, periods: [1, 2, 3, 4]}
+  f_gross_cash_flow: {label: Gross cash flow, periods: [1, 2, 3, 4]}
+  f_working_capital: {label: Investments in working capital, periods: [1, 2, 3, 4]}
+  f_capex: {label: Capital expenditures, periods: [1, 2, 3, 4]}
+  f_other: {label: Other operating investments, periods: [1, 2, 3, 4]}
+  f_fcf: {label: Free cash flow, periods: [1, 2, 3, 4]}
+  fa_noplat: {label: Adjusted NOPLAT, periods: [1, 2, 3, 4]}
+  fa_depreciation: {label: Depreciation, occurrence: 2, periods: [1, 2, 3, 4]}
+  fa_amortization: {label: Amortization of R&D, periods: [1, 2, 3, 4]}
+  fa_gross_cash_flow: {label: Gross cash flow, occurrence: 2, periods: [1, 2, 3, 4]}
+  fa_working_capital: {label: Investments in working capital, occurrence: 2, periods: [1, 2, 3, 4]}
+  fa_capex: {label: Capital expenditures, occurrence: 2, periods: [1, 2, 3, 4]}
+  fa_other: {label: Other operating investments, occurrence: 2, periods: [1, 2, 3, 4]}
+  fa_rd_investment: {label: Investment in R&D, periods: [1, 2, 3, 4]}
+  fa_fcf: {label: Free cash flow, occurrence: 2, periods: [1, 2, 3, 4]}
+inputs: [owc, ppe, lease_receivable, ic_without_goodwill, capitalized_rd_first, goodwill, other_intangibles,
+         cumulative_amortization, revenues, cost_of_revenue, sga, rd_expense, operating_taxes, amortization_first,
+         depreciation]
+set_aside:
+  "EXHIBIT 28.5 Adobe Systems: Adjusted Invested Capital": the exhibit's number
+  "EXHIBIT 28.6 Adobe Systems: Net Operating Profit Less Adjusted Taxes": the exhibit's number
+  "EXHIBIT 28.7 Adobe Systems: Return on Invested Capital": the exhibit's number
+  "EXHIBIT 28.8 Adobe Systems: Free Cash Flow (excluding Goodwill and": the exhibit's number
+  "2004 2005 2006 2007 2008": the column headings, years
+  "2005 2006 2007 2008": the column headings, years
+case:
+  case: valuation-adobe-capitalized-rd
+  periods: 5
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    g:
+      kind: formulas
+      periods: 5
+      inputs: exhibit
+      values:
+        # each printed balance moved to its value
+        owc_move: "owc - lag(owc, 1) if t > 0 else owc"
+        ppe_move: "ppe - lag(ppe, 1) if t > 0 else ppe"
+        lease_move: "lease_receivable - lag(lease_receivable, 1) if t > 0 else lease_receivable"
+        other_assets_m: ic_without_goodwill - owc - ppe - lease_receivable
+        other_move: "other_assets_m - lag(other_assets_m, 1) if t > 0 else other_assets_m"
+        goodwill_move: "goodwill - lag(goodwill, 1) if t > 0 else goodwill"
+        intangibles_move: "other_intangibles - lag(other_intangibles, 1) if t > 0 else other_intangibles"
+        cumulative_move: "cumulative_amortization - lag(cumulative_amortization, 1) if t > 0 else cumulative_amortization"
+        # the R&D asset: what stays of last year's asset, plus the year's R&D (printed negative)
+        keep: 1 - 1 / 10
+        k_first: capitalized_rd_first__0
+        k_second: k_first * keep - rd_expense__1
+        k_third: k_second * keep - rd_expense__2
+        k_fourth: k_third * keep - rd_expense__3
+        k_fifth: k_fourth * keep - rd_expense__4
+        rd_asset: "k_first if t == 0 else (k_second if t == 1 else (k_third if t == 2 else (k_fourth if t == 3 else k_fifth)))"
+        rd_added: -rd_expense
+        rd_amortized: "-amortization_first__0 if t == 0 else (1 - keep) * lag(rd_asset, 1)"
+        # the asset built before 2004 enters with 2004
+        rd_before: "k_first + rd_expense__0 + rd_amortized if t == 0 else 0"
+        taxes_m: -operating_taxes
+        depreciation_m: depreciation
+  opening: {}
+  contracts: {}
+  rulebooks:
+    # each amount signed: a positive one debits the first account, a negative one is reversed
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {rest: equity, owc: asset, ppe: asset, lease_receivable: asset, other_assets: asset, goodwill: asset,
+                other_intangibles: asset, cumulative_amortization: asset, capitalized_rd: asset, rd_before: equity,
+                revenue: income, cost_of_revenue: expense, sga: expense, rd_expense: expense,
+                rd_capitalized: income, rd_amortization: expense}
+      moves:
+        revenues: {debit: rest, credit: revenue, amount: {generator: g, output: revenues}}
+        cost_of_revenue: {debit: rest, credit: cost_of_revenue, amount: {generator: g, output: cost_of_revenue}}
+        sga: {debit: rest, credit: sga, amount: {generator: g, output: sga}}
+        rd_expense: {debit: rest, credit: rd_expense, amount: {generator: g, output: rd_expense}}
+        owc: {debit: owc, credit: rest, amount: {generator: g, output: owc_move}}
+        ppe: {debit: ppe, credit: rest, amount: {generator: g, output: ppe_move}}
+        lease_receivable: {debit: lease_receivable, credit: rest, amount: {generator: g, output: lease_move}}
+        other_assets: {debit: other_assets, credit: rest, amount: {generator: g, output: other_move}}
+        goodwill: {debit: goodwill, credit: rest, amount: {generator: g, output: goodwill_move}}
+        other_intangibles: {debit: other_intangibles, credit: rest, amount: {generator: g, output: intangibles_move}}
+        cumulative_amortization: {debit: cumulative_amortization, credit: rest,
+                                  amount: {generator: g, output: cumulative_move}}
+        rd_before: {debit: capitalized_rd, credit: rd_before, amount: {generator: g, output: rd_before}}
+        rd_capitalized: {debit: capitalized_rd, credit: rd_capitalized, amount: {generator: g, output: rd_added}}
+        rd_amortization: {debit: rd_amortization, credit: capitalized_rd, amount: {generator: g, output: rd_amortized}}
+  schemes:
+    expensed:
+      rest: equity
+      owc: operating_current_asset
+      ppe: operating_long_term
+      lease_receivable: operating_long_term
+      other_assets: operating_long_term
+      goodwill: goodwill
+      other_intangibles: goodwill
+      cumulative_amortization: goodwill
+      # off the reported books: the asset and what financed it
+      capitalized_rd: equity_equivalent
+      rd_before: equity_equivalent
+      revenue: revenue
+      cost_of_revenue: operating_cost
+      sga: operating_cost
+      rd_expense: operating_cost
+      rd_capitalized: nonoperating
+      rd_amortization: nonoperating
+    capitalized:
+      rest: equity
+      owc: operating_current_asset
+      ppe: operating_long_term
+      lease_receivable: operating_long_term
+      other_assets: operating_long_term
+      goodwill: goodwill
+      other_intangibles: goodwill
+      cumulative_amortization: goodwill
+      capitalized_rd: operating_long_term
+      rd_before: equity_equivalent
+      revenue: revenue
+      cost_of_revenue: operating_cost
+      sga: operating_cost
+      rd_expense: operating_cost
+      rd_capitalized: operating_cost
+      rd_amortization: depreciation
+  cuts: {}
+  lenses:
+    u: {kind: valuation, entity: company, scheme: expensed, marginal_tax_rate: 0,
+        other_operating_taxes: {generator: g, output: taxes_m}, roic_on: closing}
+    a: {kind: valuation, entity: company, scheme: capitalized, marginal_tax_rate: 0,
+        other_operating_taxes: {generator: g, output: taxes_m}, roic_on: closing}
+  measures: {}
+figures:
+  # 28.5
+  other_assets: {balance: other_assets}
+  capitalized_rd: {balance: capitalized_rd}
+  adjusted_ic_without_goodwill: {cut: a.invested_capital_ex_goodwill}
+  adjusted_ic: {cut: a.invested_capital}
+  # 28.6
+  ebita: {cut: u.ebita}
+  noplat: {cut: u.noplat}
+  a_revenues: {cut: a.revenue}
+  a_cost_of_sales: {change: cost_of_revenue, sign: -1}
+  a_selling_expenses: {change: sga, sign: -1}
+  a_amortization: {change: rd_amortization, sign: -1}
+  a_ebita: {cut: a.ebita}
+  a_operating_taxes: {cut: a.operating_taxes, sign: -1}
+  a_noplat: {cut: a.noplat}
+  # 28.7
+  roic_expensed_ex_goodwill: {cut: u.roic_ex_goodwill}
+  roic_capitalized_ex_goodwill: {cut: a.roic_ex_goodwill}
+  roic_expensed: {cut: u.roic}
+  roic_capitalized: {cut: a.roic}
+  # 28.8: free cash flow leaves out goodwill and acquired intangibles, so their change is added back
+  f_noplat: {cut: u.noplat}
+  f_gross_cash_flow: {sum: [{cut: u.gross_cash_flow}, {driver: g.depreciation_m}]}
+  f_working_capital: {change: owc, sign: -1}
+  f_capex: {sum: [{change: ppe}, {driver: g.depreciation_m}], sign: -1}
+  f_other: {change: lease_receivable + other_assets, sign: -1}
+  f_fcf: {sum: [{cut: u.fcf}, {change: goodwill + other_intangibles + cumulative_amortization}]}
+  fa_noplat: {cut: a.noplat}
+  fa_depreciation: {driver: g.depreciation_m}
+  fa_amortization: {cut: a.depreciation}
+  fa_gross_cash_flow: {sum: [{cut: a.gross_cash_flow}, {driver: g.depreciation_m}]}
+  fa_working_capital: {change: owc, sign: -1}
+  fa_capex: {sum: [{change: ppe}, {driver: g.depreciation_m}], sign: -1}
+  fa_other: {change: lease_receivable + other_assets, sign: -1}
+  fa_rd_investment: {sum: [{change: capitalized_rd}, {cut: a.depreciation}], sign: -1}
+  fa_fcf: {sum: [{cut: a.fcf}, {change: goodwill + other_intangibles + cumulative_amortization}]}

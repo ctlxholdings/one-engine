@@ -1,0 +1,71 @@
+# Valuation, Exhibit 27.7 (ch. 27, p. 588): DuPont's pension note, funded status, 2005-2007.
+#
+# Two plans side by side, pension benefits and other (retiree medical)
+# benefits, for 2005-2007 (periods 0-2); the second block is read three
+# cells on. For each plan the note gives the benefit obligation and the
+# plan assets, their difference (the funded status), and the amounts the
+# balance sheet recognizes. Before SFAS 158 (2005) the recognized amounts
+# lagged the funded status; from 2006 they equal it (p. 588).
+# Translated as the note's arithmetic: obligation, assets and each
+# recognized line are inputs; the funded status (assets less obligation)
+# and the net amount recognized (the sum of the recognized lines, the
+# accumulated loss included) are computed and compared for both plans.
+excerpt: "27.7"
+periods: [0, 1, 2]
+entity: company
+plant: obligation
+rows:
+  obligation: Benefit obligation at end of year
+  plan_assets: Fair value of plan assets at end of year
+  funded_status: Funded status
+  other_assets: Other assets
+  intangible_assets: Intangible assets
+  accrued_liabilities: Other accrued liabilities
+  other_liabilities: Other liabilities
+  aoci: Accumulated other comprehensive loss
+  net_recognized: Net amount recognized
+  obligation_other: {label: Benefit obligation at end of year, skip: 3}
+  plan_assets_other: {label: Fair value of plan assets at end of year, skip: 3}
+  funded_status_other: {label: Funded status, skip: 3}
+  other_assets_other: {label: Other assets, skip: 3}
+  intangible_assets_other: {label: Intangible assets, skip: 3}
+  accrued_liabilities_other: {label: Other accrued liabilities, skip: 3}
+  other_liabilities_other: {label: Other liabilities, skip: 3}
+  aoci_other: {label: Accumulated other comprehensive loss, skip: 3}
+  net_recognized_other: {label: Net amount recognized, skip: 3}
+inputs: [obligation, plan_assets, other_assets, intangible_assets, accrued_liabilities, other_liabilities, aoci,
+         obligation_other, plan_assets_other, other_assets_other, intangible_assets_other, accrued_liabilities_other,
+         other_liabilities_other, aoci_other]
+set_aside:
+  "EXHIBIT 27.7 DuPont: Pension Note in Annual Report, Funded Status": the exhibit's number
+  "2005 2006 2007 2005 2006 2007": the column headings, years
+  "SFAS 158": the name of the accounting standard (Statement 158), a column caption
+  "Source: DuPont 2007 annual report.": source line; its year names the report
+case:
+  case: valuation-dupont-funded-status
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        funded: plan_assets - obligation
+        recognized: other_assets + intangible_assets + accrued_liabilities + other_liabilities + aoci
+        funded_other: plan_assets_other - obligation_other
+        recognized_other: other_assets_other + intangible_assets_other + accrued_liabilities_other + other_liabilities_other + aoci_other
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  funded_status: {driver: m.funded}
+  net_recognized: {driver: m.recognized}
+  funded_status_other: {driver: m.funded_other}
+  net_recognized_other: {driver: m.recognized_other}

@@ -1,0 +1,372 @@
+# Valuation, Exhibits 25.1-25.5 (ch. 25, pp. 544-548): the chapter's global company, its taxes by geography,
+# and three ways to estimate its operating taxes.
+#
+# The five exhibits print one hypothetical company for one year (period 0):
+#   * 25.1 its internal income statement by column: a domestic subsidiary, a
+#     foreign one, and two columns of tax credits (ongoing R&D credits, one-time
+#     credits), beside the company total;
+#   * 25.2 its operating taxes and NOPLAT by the same columns;
+#   * 25.3 the company income statement as published, with the tax
+#     reconciliation table in percent of earnings before taxes;
+#   * 25.4 the comprehensive estimate of operating taxes from published data;
+#   * 25.5 the two simple estimates (nonoperating items all domestic, or spread
+#     like profits).
+# Here the company is booked from 25.1 alone. Every cell of 25.1's four
+# columns above the tax line is a posting to its own account (a dash posts
+# nil), against cash. Each subsidiary's taxes are not taken from the print:
+# they are its statutory rate (25.1's rate row) on its earnings before taxes;
+# the two credit columns post the credits 25.1 prints (their rate is nil).
+# Everything else the five exhibits print is read back and compared: each
+# column's subtotals from its accounts, the company column from the valuation
+# lens, and the estimates of 25.3-25.5 as the book computes them from the
+# booked lines: the reconciliation percentages are tax amounts over the
+# company's earnings before taxes; the shields are the line times the rate
+# of the place it is booked (amortization and interest domestic, the gain
+# foreign, as the text on p. 547 places them).
+# The lens taxes EBITA at the domestic rate, and carries the foreign rate
+# difference and the R&D credits as other operating taxes (step 3 of ch. 7):
+# that is how 25.2 builds the company's operating taxes.
+excerpt: "25.1-5"
+periods: [0]
+entity: company
+plant: ebita_d
+notes: >-
+  Dashes for a rate the book does not print (the company's statutory rate, each column's effective and
+  operating tax rate) are read and not compared, with the reason. Every dash for an amount is a nil
+  posting or a nil compared.
+rows:
+  # 25.1, by column: domestic (d), foreign (f), R&D tax credits (r), one-time credits (o), company (c)
+  ebita_d: {label: EBITA1}
+  ebita_f: {label: EBITA1, skip: 1}
+  ebita_r: {label: EBITA1, skip: 2}
+  ebita_o: {label: EBITA1, skip: 3}
+  ebita_c: {label: EBITA1, skip: 4}
+  amort_d: {label: Amortization}
+  amort_f: {label: Amortization, skip: 1}
+  amort_r: {label: Amortization, skip: 2}
+  amort_o: {label: Amortization, skip: 3}
+  amort_c: {label: Amortization, skip: 4}
+  ebit_d: {label: EBIT1}
+  ebit_f: {label: EBIT1, skip: 1}
+  ebit_r: {label: EBIT1, skip: 2}
+  ebit_o: {label: EBIT1, skip: 3}
+  ebit_c: {label: EBIT1, skip: 4}
+  interest_d: {label: Interest expense}
+  interest_f: {label: Interest expense, skip: 1}
+  interest_r: {label: Interest expense, skip: 2}
+  interest_o: {label: Interest expense, skip: 3}
+  interest_c: {label: Interest expense, skip: 4}
+  gains_d: {label: Gains on asset sales}
+  gains_f: {label: Gains on asset sales, skip: 1}
+  gains_r: {label: Gains on asset sales, skip: 2}
+  gains_o: {label: Gains on asset sales, skip: 3}
+  gains_c: {label: Gains on asset sales, skip: 4}
+  ebt_d: {label: Earnings before taxes}
+  ebt_f: {label: Earnings before taxes, skip: 1}
+  ebt_r: {label: Earnings before taxes, skip: 2}
+  ebt_o: {label: Earnings before taxes, skip: 3}
+  ebt_c: {label: Earnings before taxes, skip: 4}
+  taxes_d: {label: Taxes}
+  taxes_f: {label: Taxes, skip: 1}
+  taxes_r: {label: Taxes, skip: 2}
+  taxes_o: {label: Taxes, skip: 3}
+  taxes_c: {label: Taxes, skip: 4}
+  ni_d: {label: Net income}
+  ni_f: {label: Net income, skip: 1}
+  ni_r: {label: Net income, skip: 2}
+  ni_o: {label: Net income, skip: 3}
+  ni_c: {label: Net income, skip: 4}
+  stat_d: {label: Statutory tax rate, scale: 0.01}
+  stat_f: {label: Statutory tax rate, skip: 1, scale: 0.01}
+  stat_r: {label: Statutory tax rate, skip: 2, scale: 0.01}
+  stat_o: {label: Statutory tax rate, skip: 3, scale: 0.01}
+  stat_c: {label: Statutory tax rate, skip: 4, scale: 0.01}
+  eff_d: {label: Effective tax rate, scale: 0.01}
+  eff_f: {label: Effective tax rate, skip: 1, scale: 0.01}
+  eff_r: {label: Effective tax rate, skip: 2, scale: 0.01}
+  eff_o: {label: Effective tax rate, skip: 3, scale: 0.01}
+  eff_c: {label: Effective tax rate, skip: 4, scale: 0.01}
+  # 25.2, operating taxes and NOPLAT by column
+  ebita2_d: {label: EBITA}
+  ebita2_f: {label: EBITA, skip: 1}
+  ebita2_r: {label: EBITA, skip: 2}
+  ebita2_o: {label: EBITA, skip: 3}
+  ebita2_c: {label: EBITA, skip: 4}
+  optax_d: {label: Operating taxes}
+  optax_f: {label: Operating taxes, skip: 1}
+  optax_r: {label: Operating taxes, skip: 2}
+  optax_o: {label: Operating taxes, skip: 3}
+  optax_c: {label: Operating taxes, skip: 4}
+  noplat_d: {label: NOPLAT1}
+  noplat_f: {label: NOPLAT1, skip: 1}
+  noplat_r: {label: NOPLAT1, skip: 2}
+  noplat_o: {label: NOPLAT1, skip: 3}
+  noplat_c: {label: NOPLAT1, skip: 4}
+  stat2_d: {label: Statutory tax rate, occurrence: 2, scale: 0.01}
+  stat2_f: {label: Statutory tax rate, occurrence: 2, skip: 1, scale: 0.01}
+  stat2_r: {label: Statutory tax rate, occurrence: 2, skip: 2, scale: 0.01}
+  stat2_o: {label: Statutory tax rate, occurrence: 2, skip: 3, scale: 0.01}
+  stat2_c: {label: Statutory tax rate, occurrence: 2, skip: 4, scale: 0.01}
+  oprate_d: {label: Operating tax rate, scale: 0.01}
+  oprate_f: {label: Operating tax rate, skip: 1, scale: 0.01}
+  oprate_r: {label: Operating tax rate, skip: 2, scale: 0.01}
+  oprate_o: {label: Operating tax rate, skip: 3, scale: 0.01}
+  oprate_c: {label: Operating tax rate, skip: 4, scale: 0.01}
+  # 25.3, the published income statement and the tax reconciliation table
+  ebita3: {label: EBITA, occurrence: 2}
+  amort3: {label: Amortization, occurrence: 2}
+  ebit3: EBIT
+  interest3: {label: Interest expense, occurrence: 2}
+  gains3: {label: Gains on asset sales, occurrence: 2}
+  ebt3: {label: Earnings before taxes, occurrence: 2}
+  taxes3: {label: Taxes, occurrence: 2}
+  ni3: {label: Net income, occurrence: 2}
+  rec_statutory: {label: Taxes at statutory rate, scale: 0.01}
+  rec_foreign: {label: Foreign-income adjustment, scale: 0.01}
+  rec_rd: {label: R&D tax credits, scale: 0.01}
+  rec_audit: {label: "Audit revision, etc.", scale: 0.01}
+  rec_effective: {label: Effective tax rate, occurrence: 2, scale: 0.01}
+  # 25.4, the comprehensive approach
+  reported_taxes: Reported taxes
+  audit_removed: {label: "Audit revision, etc.", occurrence: 2}
+  reported_operating: "Reported taxes: Operating only"
+  amortization_shield: "Plus: Amortization tax shield (at 35%)"
+  interest_shield: "Plus: Interest tax shield (at 35%)"
+  gains_taxes: "Less: Taxes on gains (at 20%)"
+  operating_taxes4: {label: Operating taxes, occurrence: 2}
+  operating_rate4: {label: Operating tax rate on EBITA (percent), scale: 0.01}
+  # 25.5, the simple approaches: panel A (domestic) and panel B (global)
+  statutory5: {label: Statutory tax rate (percent), scale: 0.01}
+  blended5: {label: Blended global rate (percent)1, scale: 0.01}
+  ebita5a: {label: EBITA, occurrence: 3}
+  ebita5b: {label: EBITA, occurrence: 4}
+  statutory_taxes5: Statutory taxes on EBITA
+  global_taxes5: Global taxes on EBITA
+  foreign5: {label: Foreign-income adjustment, occurrence: 2}
+  rd5a: R&D tax credit
+  rd5b: {label: R&D tax credit, occurrence: 2}
+  estimated5a: Estimated operating taxes
+  estimated5b: {label: Estimated operating taxes, occurrence: 2}
+  estimated_rate5a: {label: Estimated operating tax rate (percent), scale: 0.01}
+  estimated_rate5b: {label: Estimated operating tax rate (percent), occurrence: 2, scale: 0.01}
+  note_statutory: {label: Blended global rate equals, scale: 0.01}
+  note_foreign: {label: percent statutory rate minus, scale: 0.01}
+inputs: [ebita_d, ebita_f, ebita_r, ebita_o, amort_d, amort_f, amort_r, amort_o, interest_d, interest_f,
+         interest_r, interest_o, gains_d, gains_f, gains_r, gains_o, taxes_r, taxes_o, stat_d, stat_f, stat_r,
+         stat_o]
+not_compared:
+  stat_c: the exhibit prints no statutory rate for the company column (a dash); the company's statutory rate is compared in Exhibit 25.3's reconciliation (35.0)
+  eff_d: the exhibit prints the effective rate for the company column only (a dash here); the domestic taxes are compared on the Taxes row
+  eff_f: the exhibit prints the effective rate for the company column only (a dash here); the foreign taxes are compared on the Taxes row
+  eff_r: the exhibit prints the effective rate for the company column only (a dash here); the credit is compared on the Net income row
+  eff_o: the exhibit prints the effective rate for the company column only (a dash here); the credit is compared on the Net income row
+  stat2_c: as stat_c, a dash for the company's statutory rate; compared in Exhibit 25.3 (35.0)
+  oprate_d: Exhibit 25.2 prints the operating tax rate for the company column only (a dash here); the column's operating taxes are compared
+  oprate_f: Exhibit 25.2 prints the operating tax rate for the company column only (a dash here); the column's operating taxes are compared
+  oprate_r: Exhibit 25.2 prints the operating tax rate for the company column only (a dash here); the column's operating taxes are compared
+  oprate_o: Exhibit 25.2 prints the operating tax rate for the company column only (a dash here); the column's operating taxes are compared
+set_aside:
+  "EXHIBIT 25.1 Income Statement by Geography": the exhibit's number
+  "EXHIBIT 25.2 Operating Taxes and NOPLAT by Geography": the exhibit's number
+  "EXHIBIT 25.3 Income Statement and Tax Reconciliation Table": the exhibit's number
+  "EXHIBIT 25.4 Comprehensive Approach for Estimating Operating Taxes": the exhibit's number
+  "EXHIBIT 25.5 Simple Approach for Estimating Operating Taxes": the exhibit's number
+case:
+  case: valuation-25-1-5-global-company
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    g:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        rate_d: stat_d
+        rate_f: stat_f
+        rate_r: stat_r
+        rate_o: stat_o
+        ebt_d: ebita_d + amort_d + interest_d + gains_d
+        ebt_f: ebita_f + amort_f + interest_f + gains_f
+        ebt_r: ebita_r + amort_r + interest_r + gains_r
+        ebt_o: ebita_o + amort_o + interest_o + gains_o
+        # each column's taxes: its statutory rate on its earnings before taxes, plus the credits it prints
+        tax_d: -(stat_d * ebt_d)
+        tax_f: -(stat_f * ebt_f)
+        tax_r: -(stat_r * ebt_r) + taxes_r
+        tax_o: -(stat_o * ebt_o) + taxes_o
+        # 25.2: each column's operating taxes, its rate on its EBITA; the R&D credits are operating, the one-time
+        # credits are not
+        optax_d: -(stat_d * ebita_d)
+        optax_f: -(stat_f * ebita_f)
+        optax_r: -(stat_r * ebita_r) + taxes_r
+        optax_o: -(stat_o * ebita_o)
+        noplat_d: ebita_d + optax_d
+        noplat_f: ebita_f + optax_f
+        noplat_r: ebita_r + optax_r
+        noplat_o: ebita_o + optax_o
+        # the lens taxes EBITA at the domestic rate; the other columns' rate differences and the R&D credits are
+        # other operating taxes (a positive amount is a tax)
+        other_operating_taxes: (stat_f - stat_d) * ebita_f + (stat_r - stat_d) * ebita_r + (stat_o - stat_d) * ebita_o - taxes_r
+        # 25.5 panel B: the statutory rate less the foreign-income adjustment over the company's EBT
+        blended: stat_d - (stat_d - stat_f) * ebt_f / (ebt_d + ebt_f + ebt_r + ebt_o)
+  opening: {}
+  contracts: {}
+  rulebooks:
+    # each cell as printed, signed: a positive amount debits cash, a negative one credits it
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset,
+                d_ebita: income, d_amortization: expense, d_interest: expense, d_gains: income, d_tax: expense,
+                f_ebita: income, f_amortization: expense, f_interest: expense, f_gains: income, f_tax: expense,
+                r_ebita: income, r_amortization: expense, r_interest: expense, r_gains: income, r_tax: expense,
+                o_ebita: income, o_amortization: expense, o_interest: expense, o_gains: income, o_tax: expense}
+      moves:
+        d_ebita: {debit: cash, credit: d_ebita, amount: {generator: g, output: ebita_d}}
+        d_amortization: {debit: cash, credit: d_amortization, amount: {generator: g, output: amort_d}}
+        d_interest: {debit: cash, credit: d_interest, amount: {generator: g, output: interest_d}}
+        d_gains: {debit: cash, credit: d_gains, amount: {generator: g, output: gains_d}}
+        d_tax: {debit: cash, credit: d_tax, amount: {generator: g, output: tax_d}}
+        f_ebita: {debit: cash, credit: f_ebita, amount: {generator: g, output: ebita_f}}
+        f_amortization: {debit: cash, credit: f_amortization, amount: {generator: g, output: amort_f}}
+        f_interest: {debit: cash, credit: f_interest, amount: {generator: g, output: interest_f}}
+        f_gains: {debit: cash, credit: f_gains, amount: {generator: g, output: gains_f}}
+        f_tax: {debit: cash, credit: f_tax, amount: {generator: g, output: tax_f}}
+        r_ebita: {debit: cash, credit: r_ebita, amount: {generator: g, output: ebita_r}}
+        r_amortization: {debit: cash, credit: r_amortization, amount: {generator: g, output: amort_r}}
+        r_interest: {debit: cash, credit: r_interest, amount: {generator: g, output: interest_r}}
+        r_gains: {debit: cash, credit: r_gains, amount: {generator: g, output: gains_r}}
+        r_tax: {debit: cash, credit: r_tax, amount: {generator: g, output: tax_r}}
+        o_ebita: {debit: cash, credit: o_ebita, amount: {generator: g, output: ebita_o}}
+        o_amortization: {debit: cash, credit: o_amortization, amount: {generator: g, output: amort_o}}
+        o_interest: {debit: cash, credit: o_interest, amount: {generator: g, output: interest_o}}
+        o_gains: {debit: cash, credit: o_gains, amount: {generator: g, output: gains_o}}
+        o_tax: {debit: cash, credit: o_tax, amount: {generator: g, output: tax_o}}
+  schemes:
+    valuation:
+      cash: operating_current_asset
+      d_ebita: revenue
+      f_ebita: revenue
+      r_ebita: revenue
+      o_ebita: revenue
+      d_amortization: amortization
+      f_amortization: amortization
+      r_amortization: amortization
+      o_amortization: amortization
+      d_interest: interest
+      f_interest: interest
+      r_interest: interest
+      o_interest: interest
+      d_gains: nonoperating
+      f_gains: nonoperating
+      r_gains: nonoperating
+      o_gains: nonoperating
+      d_tax: tax
+      f_tax: tax
+      r_tax: tax
+      o_tax: tax
+  cuts: {}
+  lenses:
+    v:
+      kind: valuation
+      entity: company
+      scheme: valuation
+      marginal_tax_rate: {generator: g, output: rate_d}
+      other_operating_taxes: {generator: g, output: other_operating_taxes}
+  measures: {}
+figures:
+  # 25.1, the columns from their accounts
+  ebita_c: {cut: v.ebita}
+  amort_c: {change: d_amortization + f_amortization + r_amortization + o_amortization, sign: -1}
+  ebit_d: {change: d_ebita - d_amortization}
+  ebit_f: {change: f_ebita - f_amortization}
+  ebit_r: {change: r_ebita - r_amortization}
+  ebit_o: {change: o_ebita - o_amortization}
+  ebit_c: {change: d_ebita + f_ebita + r_ebita + o_ebita - d_amortization - f_amortization - r_amortization - o_amortization}
+  interest_c: {change: d_interest + f_interest + r_interest + o_interest, sign: -1}
+  gains_c: {change: d_gains + f_gains + r_gains + o_gains}
+  ebt_d: {change: d_ebita - d_amortization - d_interest + d_gains}
+  ebt_f: {change: f_ebita - f_amortization - f_interest + f_gains}
+  ebt_r: {change: r_ebita - r_amortization - r_interest + r_gains}
+  ebt_o: {change: o_ebita - o_amortization - o_interest + o_gains}
+  ebt_c: &ebt {change: d_ebita + f_ebita + r_ebita + o_ebita - d_amortization - f_amortization - r_amortization - o_amortization - d_interest - f_interest - r_interest - o_interest + d_gains + f_gains + r_gains + o_gains}
+  taxes_d: {change: d_tax, sign: -1}
+  taxes_f: {change: f_tax, sign: -1}
+  taxes_c: {change: d_tax + f_tax + r_tax + o_tax, sign: -1}
+  ni_d: {change: d_ebita - d_amortization - d_interest + d_gains - d_tax}
+  ni_f: {change: f_ebita - f_amortization - f_interest + f_gains - f_tax}
+  ni_r: {change: r_ebita - r_amortization - r_interest + r_gains - r_tax}
+  ni_o: {change: o_ebita - o_amortization - o_interest + o_gains - o_tax}
+  ni_c: {cut: v.net_income}
+  # the effective rate: reported taxes over earnings before taxes
+  eff_c: {ratio: [{change: d_tax + f_tax + r_tax + o_tax}, *ebt]}
+  # 25.2
+  ebita2_d: {change: d_ebita}
+  ebita2_f: {change: f_ebita}
+  ebita2_r: {change: r_ebita}
+  ebita2_o: {change: o_ebita}
+  ebita2_c: {cut: v.ebita}
+  optax_d: {driver: g.optax_d}
+  optax_f: {driver: g.optax_f}
+  optax_r: {driver: g.optax_r}
+  optax_o: {driver: g.optax_o}
+  optax_c: {cut: v.operating_taxes, sign: -1}
+  noplat_d: {driver: g.noplat_d}
+  noplat_f: {driver: g.noplat_f}
+  noplat_r: {driver: g.noplat_r}
+  noplat_o: {driver: g.noplat_o}
+  noplat_c: {cut: v.noplat}
+  stat2_d: {driver: g.rate_d}
+  stat2_f: {driver: g.rate_f}
+  stat2_r: {driver: g.rate_r}
+  stat2_o: {driver: g.rate_o}
+  oprate_c: {ratio: [{cut: v.operating_taxes}, {cut: v.ebita}]}
+  # 25.3, the company column again
+  ebita3: {cut: v.ebita}
+  amort3: {change: d_amortization + f_amortization + r_amortization + o_amortization, sign: -1}
+  ebit3: {change: d_ebita + f_ebita + r_ebita + o_ebita - d_amortization - f_amortization - r_amortization - o_amortization}
+  interest3: {change: d_interest + f_interest + r_interest + o_interest, sign: -1}
+  gains3: {change: d_gains + f_gains + r_gains + o_gains}
+  ebt3: *ebt
+  taxes3: {change: d_tax + f_tax + r_tax + o_tax, sign: -1}
+  ni3: {cut: v.net_income}
+  # the reconciliation: each tax amount over the company's earnings before taxes
+  rec_statutory: {driver: g.rate_d}
+  # foreign income taxed at its own rate rather than the domestic one: the foreign taxes less the domestic
+  # rate on the foreign earnings before taxes
+  rec_foreign: &foreign_pct {ratio: [{sum: [{change: f_tax}, {change: f_ebita - f_amortization - f_interest + f_gains, times: g.rate_d, sign: -1}]}, *ebt]}
+  rec_rd: {ratio: [{change: r_tax}, *ebt]}
+  rec_audit: {ratio: [{change: o_tax}, *ebt]}
+  rec_effective: {ratio: [{change: d_tax + f_tax + r_tax + o_tax}, *ebt]}
+  # 25.4: reported taxes, the one-time credit removed, then each nonoperating line's tax at its place's rate
+  reported_taxes: {change: d_tax + f_tax + r_tax + o_tax}
+  audit_removed: {change: o_tax, sign: -1}
+  reported_operating: {change: d_tax + f_tax + r_tax}
+  amortization_shield: {change: d_amortization, times: g.rate_d}
+  interest_shield: {change: d_interest, times: g.rate_d}
+  gains_taxes: {change: f_gains, times: g.rate_f, sign: -1}
+  operating_taxes4: &comprehensive {sum: [{change: d_tax + f_tax + r_tax}, {change: d_amortization, times: g.rate_d},
+                                         {change: d_interest, times: g.rate_d}, {change: f_gains, times: g.rate_f, sign: -1}]}
+  operating_rate4: {ratio: [*comprehensive, {cut: v.ebita}]}
+  # 25.5 panel A: the domestic rate on EBITA, less the foreign-income adjustment and the R&D credits
+  statutory5: {driver: g.rate_d}
+  ebita5a: {cut: v.ebita}
+  statutory_taxes5: {cut: v.ebita, times: g.rate_d}
+  foreign5: {sum: [{change: f_tax, sign: -1}, {change: f_ebita - f_amortization - f_interest + f_gains, times: g.rate_d}], sign: -1}
+  rd5a: {change: r_tax}
+  estimated5a: &panel_a {sum: [{cut: v.ebita, times: g.rate_d}, {change: f_tax},
+                               {change: f_ebita - f_amortization - f_interest + f_gains, times: g.rate_d, sign: -1},
+                               {change: r_tax}]}
+  estimated_rate5a: {ratio: [*panel_a, {cut: v.ebita}]}
+  # panel B: the blended rate on EBITA, less the R&D credits
+  blended5: {driver: g.blended}
+  ebita5b: {cut: v.ebita}
+  global_taxes5: {cut: v.ebita, times: g.blended}
+  rd5b: {change: r_tax}
+  estimated5b: &panel_b {sum: [{cut: v.ebita, times: g.blended}, {change: r_tax}]}
+  estimated_rate5b: {ratio: [*panel_b, {cut: v.ebita}]}
+  note_statutory: {driver: g.rate_d}
+  note_foreign: {ratio: [{sum: [{change: f_tax}, {change: f_ebita - f_amortization - f_interest + f_gains, times: g.rate_d, sign: -1}]}, *ebt], sign: -1}

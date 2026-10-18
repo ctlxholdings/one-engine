@@ -1,0 +1,109 @@
+# Valuation, Exhibit 26.1 (ch. 26, p. 561): Boston Scientific's income statement, as reported and reorganized.
+#
+# The left panel is the accounting income statement for 2006-2008 (periods
+# 0-2), down to the reported operating (loss) income; the right panel keeps
+# only the expenses that grow with revenue and stops at EBITA (pp. 561-562).
+# The company is booked: each accounting line is posted as printed against
+# cash, and the subtotals of both panels are read back. The valuation scheme
+# classifies the lines as the text does: cost of products sold, SG&A, R&D and
+# royalties are operating; amortization and the goodwill impairment are
+# amortization of acquired intangibles; purchased R&D, restructuring,
+# litigation and gains on asset sales are nonoperating. The reorganized
+# panel is the lens's EBITA and its margin on revenue.
+# The lens's tax rate is nil: the exhibit stops above taxes.
+excerpt: "26.1"
+periods: [0, 1, 2]
+entity: company
+plant: sga
+rows:
+  net_sales: Net sales
+  cost_of_products: Cost of products sold
+  gross_profit: Gross profit
+  sga: SG&A expenses
+  rd: R&D expenses
+  royalty: Royalty expense
+  amortization: Amortization expense
+  impairment: Impairment of goodwill
+  purchased_rd: Purchased R&D expenses
+  restructuring: Restructuring charges
+  litigation: Litigation-related charges
+  asset_sales: (Loss) gain on assets sales
+  operating_income: Operating (loss) income
+  r_net_sales: {label: Net sales, occurrence: 2}
+  r_cost_of_products: {label: Cost of products sold, occurrence: 2}
+  r_gross_profit: {label: Gross profit, occurrence: 2}
+  r_sga: {label: SG&A expenses, occurrence: 2}
+  r_rd: {label: R&D expenses, occurrence: 2}
+  r_royalty: {label: Royalty expense, occurrence: 2}
+  ebita: EBITA
+  ebita_margin: {label: EBITA margin (percent), scale: 0.01}
+inputs: [net_sales, cost_of_products, sga, rd, royalty, amortization, impairment, purchased_rd, restructuring,
+         litigation, asset_sales]
+set_aside:
+  "EXHIBIT 26.1 Boston Scientific: Income Statement": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+  "Source: Boston Scientific annual report, 2008.": source line; its year names the report
+case:
+  case: valuation-boston-scientific-income-statement
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 3
+      inputs: exhibit
+      values: {}
+  opening: {}
+  contracts: {}
+  rulebooks:
+    # each line as printed, signed: a positive amount debits cash, a negative one credits it
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, net_sales: income, cost_of_products: expense, sga: expense, rd: expense,
+                royalty: expense, amortization: expense, impairment: expense, purchased_rd: expense,
+                restructuring: expense, litigation: expense, asset_sales: income}
+      moves:
+        net_sales: {debit: cash, credit: net_sales, amount: {generator: book, output: net_sales}}
+        cost_of_products: {debit: cash, credit: cost_of_products, amount: {generator: book, output: cost_of_products}}
+        sga: {debit: cash, credit: sga, amount: {generator: book, output: sga}}
+        rd: {debit: cash, credit: rd, amount: {generator: book, output: rd}}
+        royalty: {debit: cash, credit: royalty, amount: {generator: book, output: royalty}}
+        amortization: {debit: cash, credit: amortization, amount: {generator: book, output: amortization}}
+        impairment: {debit: cash, credit: impairment, amount: {generator: book, output: impairment}}
+        purchased_rd: {debit: cash, credit: purchased_rd, amount: {generator: book, output: purchased_rd}}
+        restructuring: {debit: cash, credit: restructuring, amount: {generator: book, output: restructuring}}
+        litigation: {debit: cash, credit: litigation, amount: {generator: book, output: litigation}}
+        asset_sales: {debit: cash, credit: asset_sales, amount: {generator: book, output: asset_sales}}
+  schemes:
+    valuation:
+      cash: operating_current_asset
+      net_sales: revenue
+      cost_of_products: operating_cost
+      sga: operating_cost
+      rd: operating_cost
+      royalty: operating_cost
+      amortization: amortization
+      impairment: amortization
+      purchased_rd: nonoperating
+      restructuring: nonoperating
+      litigation: nonoperating
+      asset_sales: nonoperating
+  cuts: {}
+  lenses:
+    v: {kind: valuation, entity: company, scheme: valuation, marginal_tax_rate: 0}
+  measures: {}
+figures:
+  gross_profit: {change: net_sales - cost_of_products}
+  operating_income: {cut: v.net_income}
+  r_net_sales: {cut: v.revenue}
+  r_cost_of_products: {change: cost_of_products, sign: -1}
+  r_gross_profit: {change: net_sales - cost_of_products}
+  r_sga: {change: sga, sign: -1}
+  r_rd: {change: rd, sign: -1}
+  r_royalty: {change: royalty, sign: -1}
+  ebita: {cut: v.ebita}
+  ebita_margin: {ratio: [{cut: v.ebita}, {cut: v.revenue}]}

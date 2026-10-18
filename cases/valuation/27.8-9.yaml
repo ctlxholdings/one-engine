@@ -1,0 +1,97 @@
+# Valuation, Exhibits 27.8-27.9 (ch. 27, pp. 589-591): DuPont's pension expense, and operating profit
+# adjusted for it, 2005-2007.
+#
+# Exhibit 27.8 is the pension note's breakdown of the net periodic pension
+# cost (periods 0-2 are 2005-2007): service cost and amortization of prior
+# service cost (the operating part, the compensation promised to employees),
+# then interest cost, expected return on plan assets, amortization of loss
+# and other (the nonoperating part). Exhibit 27.9 takes operating profit as
+# reported, adds the whole pension cost back and deducts only the operating
+# part (pp. 590-591).
+# Translated as the exhibits' arithmetic: 27.8's lines are inputs and the
+# net periodic cost is their sum. In 27.9 revenues and operating costs are
+# inputs; the pension lines it repeats are compared with 27.8 (the net cost
+# with 27.8's computed total, service and prior service cost with 27.8's
+# lines, deducted); the operating profits and margins are computed and
+# compared, and so is the margin note "-$455 in 2007": the 2007 adjustment,
+# adjusted less unadjusted operating profit, in the year the column heading
+# names.
+excerpt: "27.8-9"
+periods: [0, 1, 2]
+entity: company
+plant: expected_return
+rows:
+  # 27.8
+  service_cost: Service cost
+  prior_service_cost: Amortization of prior service cost
+  interest_cost: Interest cost
+  expected_return: Expected return on plan assets
+  loss_amortization: Amortization of loss
+  other: Other
+  net_periodic_cost: Net periodic (benefit) cost
+  # 27.9
+  years: {line: 13}
+  revenues: Revenues
+  operating_costs: Operating costs
+  operating_profit: Operating profits, unadjusted
+  revenues_adjusted: {label: Revenues, occurrence: 2}
+  operating_costs_adjusted: {label: Operating costs, occurrence: 2}
+  net_periodic_cost_added: {label: Net periodic (benefit) cost, occurrence: 2}
+  less_service_cost: "Less: service cost"
+  adjustment_2007: {label: "Less: service cost", skip: 3, periods: [2]}
+  adjustment_year: {line: 22, skip: 4, periods: [2]}
+  less_prior_service_cost: "Less: amortization of prior service cost"
+  operating_profit_adjusted: Operating profits, adjusted
+  margin: {label: "Operating margin, unadjusted", scale: 0.01}
+  margin_adjusted: {label: "Operating margin, adjusted", scale: 0.01}
+inputs: [service_cost, prior_service_cost, interest_cost, expected_return, loss_amortization, other, years,
+         revenues, operating_costs]
+set_aside:
+  "EXHIBIT 27.8 DuPont: Pension Note in Annual Report, Pension Expense": the exhibit's number
+  "EXHIBIT 27.9 DuPont: Adjusted Operating Profits": the exhibit's number
+  "2005 2006 2007": the column headings, years (27.9's are read as the years row)
+  "Source: DuPont 2007 annual report.": source line; its year names the report
+case:
+  case: valuation-dupont-pension-expense
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        net_cost: service_cost + prior_service_cost + interest_cost + expected_return + loss_amortization + other
+        profit: revenues + operating_costs
+        # the pension cost (an expense inside operating costs) added back, its operating part deducted
+        profit_adjusted: profit + net_cost - service_cost - prior_service_cost
+        adjustment: profit_adjusted - profit
+        margin_m: profit / revenues
+        margin_adjusted_m: profit_adjusted / revenues
+        revenues_m: revenues
+        operating_costs_m: operating_costs
+        less_service_m: -service_cost
+        less_prior_m: -prior_service_cost
+        year_m: years
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  net_periodic_cost: {driver: m.net_cost}
+  operating_profit: {driver: m.profit}
+  revenues_adjusted: {driver: m.revenues_m}
+  operating_costs_adjusted: {driver: m.operating_costs_m}
+  net_periodic_cost_added: {driver: m.net_cost}
+  less_service_cost: {driver: m.less_service_m}
+  adjustment_2007: {driver: m.adjustment}
+  adjustment_year: {driver: m.year_m}
+  less_prior_service_cost: {driver: m.less_prior_m}
+  operating_profit_adjusted: {driver: m.profit_adjusted}
+  margin: {driver: m.margin_m}
+  margin_adjusted: {driver: m.margin_adjusted_m}

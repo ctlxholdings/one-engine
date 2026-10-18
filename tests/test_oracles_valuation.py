@@ -62,6 +62,16 @@ BOOK_SLIPS = {
     # 30.8's adjusted foreign-exchange gain reads 201: the extraction glues footnote mark 1 to the 20 the
     # exhibit means (its dollar cell is 20 x 0.85 = 17)
     "30.8": {"fx_gain_adj at t=0"},
+    # input rounding, not arithmetic slips: the book worked from unrounded figures the exhibit prints rounded.
+    # 27.1-6's year-3 NOPLAT 101.1 and operating taxes 43.6 come out at 101.2 and 43.5 from the printed lines
+    "27.1-6": {"u_noplat at t=3", "u_rec_noplat at t=3", "u_fcf_noplat at t=3", "a_operating_taxes at t=3"},
+    # 28.4's ending balance prints 23.4; its own printed cells give 23.3
+    "28.4": {"ending_early at t=2"},
+    # 28.5-8's EBITA and NOPLAT print 973 and 773 against 971.9 and 771.9 from the printed lines; its ROICs
+    # divide by capital printed to the unit (4 to 435), too coarse for a ROIC printed to a tenth (12,707.7%
+    # against 11,350% on a capital of 4; every period of that row), and 621 / 1,751 is 35.5, printed 35.4
+    "28.5-8": {"a_ebita at t=1", "a_noplat at t=1", "fa_noplat at t=1", "roic_expensed_ex_goodwill at t=0",
+               "roic_expensed at t=0", "roic_capitalized at t=0"},
 }
 BOOK = VO.book_path()
 needs_book = pytest.mark.skipif(BOOK is None, reason="the valuation book is not in this checkout's shared folder")

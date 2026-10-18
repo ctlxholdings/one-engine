@@ -1,0 +1,262 @@
+# Valuation, Exhibits 26.5-26.7 (ch. 26, pp. 569-572): a company with four kinds of provision, its
+# statements, its NOPLAT and invested capital, and its DCF.
+#
+# The hypothetical company (p. 569) pays no taxes and has no debt; it runs
+# for four years and winds up in the fourth (periods 0-4: today, years 1-4).
+# Exhibit 26.5 prints its income statement and balance sheet; 26.6 its
+# NOPLAT, invested capital and ROIC with each provision treated as the
+# chapter says (p. 570-573); 26.7 its free cash flow, the investor-side
+# reconciliation and the enterprise DCF.
+# The company is booked:
+#   * today's balance sheet (26.5) is the opening balance sheet;
+#   * each year posts revenue and operating costs against operating assets,
+#     and each provision against its reserve, all as printed. Each reserve is
+#     then moved to the balance 26.5 prints against operating assets: that
+#     move is the reserve's use (returns honoured, severance paid, the
+#     smoothing reversed). The decommissioning reserve is only built until
+#     the plant closes and is then paid out whole (p. 570), so its use is the
+#     whole reserve in the year its printed balance falls to nil; its printed
+#     year-1 balance (144) sits one unit above what the rounded provisions
+#     build (119 + 24), within tolerance. Dividends (26.7) are paid from
+#     operating assets.
+#     Operating assets and equity are what the postings leave, compared with
+#     the print.
+#   * The valuation scheme follows Exhibit 26.4: the returns reserve is an
+#     operating liability; the decommissioning and restructuring reserves
+#     are debt equivalents; the income-smoothing reserve is an equity
+#     equivalent whose change turns the accrual provision into cash, as for
+#     deferred taxes (p. 573), so the lens's operating deferred tax class
+#     carries it (the tax rate is nil). The restructuring provision is
+#     nonoperating. The interest inside the decommissioning provision is
+#     added back to EBITA (an EBITA adjustment), read from 26.6's first
+#     interest row: its 10% rate is in the text only (p. 570).
+#   * 26.7 discounts the lens's free cash flow at the 10% the exhibit prints
+#     ("Present value at 10%"): the pack's npv measure for the value of
+#     operations, and the same measure over the restructuring cash paid (a
+#     cash-flow cut of operating assets) for the restructuring provision.
+excerpt: "26.5-7"
+periods: [0, 1, 2, 3, 4]
+entity: company
+plant: revenue
+notes: >-
+  The book's figures are rounded from a model with unrounded provisions (the decommissioning provision
+  is 24.5 in year 1, the text's footnote table, p. 571); the booked year-1 operating assets, equity and
+  NOPLAT come out one unit from the print, within tolerance.
+rows:
+  # 26.5, income statement
+  revenue: Revenue
+  operating_costs: Operating costs
+  provision_returns: Provision for product returns
+  provision_decommissioning: Provision for plant decommissioning
+  provision_smoothing: Income-smoothing provision
+  ebita: EBITA
+  provision_restructuring: Provision for restructuring
+  net_income: Net income
+  # 26.5, balance sheet
+  operating_assets_today: {label: Operating assets, periods: [0]}
+  operating_assets: {label: Operating assets, periods: [1, 2, 3, 4], skip: 1}
+  returns_reserve_today: {label: Reserve for product returns, periods: [0]}
+  returns_reserve: {label: Reserve for product returns, periods: [1, 2, 3, 4], skip: 1}
+  decommissioning_reserve_today: {label: Reserve for plant decommissioning, periods: [0]}
+  decommissioning_reserve: {label: Reserve for plant decommissioning, periods: [1, 2, 3, 4], skip: 1}
+  restructuring_reserve: Reserve for restructuring
+  smoothing_reserve: Reserve for income smoothing
+  equity_today: {label: Equity, periods: [0]}
+  equity: {label: Equity, periods: [1, 2, 3, 4], skip: 1}
+  liabilities_and_equity: Liabilities and shareholders’ equity
+  # 26.6, NOPLAT
+  reported_ebita: Reported EBITA
+  decommissioning_interest: Interest associated with plant decommissioning
+  smoothing_change: Increase (decrease) in income-smoothing reserve
+  noplat: NOPLAT
+  rec_net_income: {label: Net income, occurrence: 2}
+  rec_decommissioning_interest: {label: Interest associated with plant decommissioning, occurrence: 2}
+  rec_smoothing_change: {label: Increase (decrease) in income-smoothing reserve, occurrence: 2}
+  rec_provision_restructuring: {label: Provision for restructuring, occurrence: 2}
+  rec_noplat: {label: NOPLAT, occurrence: 2}
+  # 26.6, invested capital
+  ic_operating_assets: {label: Operating assets, occurrence: 2}
+  ic_returns_reserve: {label: Reserve for product returns, occurrence: 2}
+  invested_capital: Invested capital
+  src_decommissioning_reserve: {label: Reserve for plant decommissioning, occurrence: 2}
+  src_restructuring_reserve: {label: Reserve for restructuring, occurrence: 2}
+  src_smoothing_reserve: {label: Reserve for income smoothing, occurrence: 2}
+  src_equity: {label: Equity, occurrence: 2}
+  src_invested_capital: {label: Invested capital, occurrence: 2}
+  roic: {label: "ROIC (on beginning-of-year capital, percent)", scale: 0.01}
+  # 26.7, free cash flow and the investor's side
+  fcf_noplat: {label: NOPLAT, occurrence: 3}
+  net_investment: Net investment in invested capital
+  fcf: Free cash flow
+  inv_provision_restructuring: {label: Provision for restructuring, occurrence: 3}
+  inv_restructuring_reserve: (Increase) decrease in restructuring reserve
+  cash_restructuring: Cash-based restructuring provision
+  inv_decommissioning_interest: {label: Interest associated with plant decommissioning, occurrence: 3}
+  inv_decommissioning_reserve: (Increase) decrease in plant closure reserve
+  dividends: Dividends
+  inv_fcf: {label: Free cash flow, occurrence: 2}
+  dcf_fcf: {label: Free cash flow, occurrence: 3}
+  discount_factor: {label: Discount factor (at 10%)}
+  discounted_cash_flow: Discounted cash flow
+  # 26.7, the valuation (the today column)
+  rate: {label: at, periods: [0], scale: 0.01}
+  pv_restructuring: {label: "=", periods: [0]}
+  value_of_operations: {label: Value of operations, periods: [0]}
+  value_of_restructuring: {label: Value of restructuring provision, periods: [0]}
+  rate_again: {label: at, occurrence: 2, periods: [0], scale: 0.01}
+  val_decommissioning_reserve: {label: Reserve for plant decommissioning, occurrence: 3, periods: [0]}
+  equity_value: {label: Equity value, periods: [0]}
+inputs: [revenue, operating_costs, provision_returns, provision_decommissioning, provision_smoothing,
+         provision_restructuring, operating_assets_today, returns_reserve_today, returns_reserve,
+         decommissioning_reserve_today, decommissioning_reserve, restructuring_reserve, smoothing_reserve,
+         equity_today, decommissioning_interest, dividends, rate]
+set_aside:
+  "EXHIBIT 26.5 Provisions and Reserves in the Financial Statements": the exhibit's number
+  "EXHIBIT 26.6 ROIC with Provisions and Reserves": the exhibit's number
+  "EXHIBIT 26.7 Enterprise DCF with Provisions and Reserves": the exhibit's number
+  "Today Year 1 Year 2 Year 3 Year 4": the column headings, years
+case:
+  case: valuation-provisions-and-reserves
+  periods: 5
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 5
+      inputs: exhibit
+      values:
+        # each reserve's printed balance, today and years 1-4
+        returns_target: returns_reserve_today + returns_reserve
+        decommissioning_target: decommissioning_reserve_today + decommissioning_reserve
+        # what each reserve's printed balance says was used: the opening balance plus the year's provision
+        # (printed negative) less the closing balance
+        returns_use: "(lag(returns_target, 1) - provision_returns - returns_target) if t > 0 else 0"
+        # the decommissioning reserve is only built until the plant closes, then paid out whole (p. 570): its
+        # use is everything the provisions built, in the year its printed balance falls to nil
+        decommissioning_built: decommissioning_reserve_today__0 - cumsum(provision_decommissioning)
+        decommissioning_use: "decommissioning_built if (t > 0) * (decommissioning_target == 0) * (lag(decommissioning_target, 1) > 0) else 0"
+        restructuring_use: "(lag(restructuring_reserve, 1) - provision_restructuring - restructuring_reserve) if t > 0 else 0"
+        smoothing_use: "(lag(smoothing_reserve, 1) - provision_smoothing - smoothing_reserve) if t > 0 else 0"
+        pv_rate: rate__0
+        discount_factor: "1 / (1 + rate__0) ** t if t > 0 else 0"
+        one: 1
+  opening:
+    company:
+      operating_assets: {nature: asset, value: {generator: m, output: operating_assets_today__0}}
+      returns_reserve: {nature: liability, value: {generator: m, output: returns_reserve_today__0}}
+      decommissioning_reserve: {nature: liability, value: {generator: m, output: decommissioning_reserve_today__0}}
+      equity: {nature: equity, value: {generator: m, output: equity_today__0}}
+  contracts: {}
+  rulebooks:
+    # each line as printed, signed: a positive amount debits the first account, a negative one is reversed
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {restructuring_reserve: liability, smoothing_reserve: liability, revenue: income,
+                operating_costs: expense, provision_returns: expense, provision_decommissioning: expense,
+                provision_smoothing: expense, provision_restructuring: expense}
+      moves:
+        revenue: {debit: operating_assets, credit: revenue, amount: {generator: m, output: revenue}}
+        operating_costs: {debit: operating_assets, credit: operating_costs, amount: {generator: m, output: operating_costs}}
+        provision_returns: {debit: returns_reserve, credit: provision_returns,
+                            amount: {generator: m, output: provision_returns}}
+        provision_decommissioning: {debit: decommissioning_reserve, credit: provision_decommissioning,
+                                    amount: {generator: m, output: provision_decommissioning}}
+        provision_smoothing: {debit: smoothing_reserve, credit: provision_smoothing,
+                              amount: {generator: m, output: provision_smoothing}}
+        provision_restructuring: {debit: restructuring_reserve, credit: provision_restructuring,
+                                  amount: {generator: m, output: provision_restructuring}}
+        returns_use: {debit: returns_reserve, credit: operating_assets, amount: {generator: m, output: returns_use}}
+        decommissioning_use: {debit: decommissioning_reserve, credit: operating_assets,
+                              amount: {generator: m, output: decommissioning_use}}
+        restructuring_use: {debit: restructuring_reserve, credit: operating_assets,
+                            amount: {generator: m, output: restructuring_use}}
+        smoothing_use: {debit: smoothing_reserve, credit: operating_assets, amount: {generator: m, output: smoothing_use}}
+        dividends: {debit: equity, credit: operating_assets, amount: {generator: m, output: dividends}}
+  schemes:
+    valuation:
+      operating_assets: operating_current_asset
+      returns_reserve: operating_current_liability
+      decommissioning_reserve: debt_equivalent
+      restructuring_reserve: debt_equivalent
+      smoothing_reserve: operating_deferred_tax
+      equity: equity
+      revenue: revenue
+      operating_costs: operating_cost
+      provision_returns: operating_cost
+      provision_decommissioning: operating_cost
+      provision_smoothing: operating_cost
+      provision_restructuring: nonoperating
+    # the other end of each movement of operating assets
+    flows:
+      revenue: operating
+      operating_costs: operating
+      returns_reserve: operating
+      decommissioning_reserve: decommissioning
+      restructuring_reserve: restructuring
+      smoothing_reserve: operating
+      equity: financing
+  cuts:
+    restructuring_paid: {entity: company, account: operating_assets, scheme: flows, include: [restructuring]}
+  lenses:
+    v:
+      kind: valuation
+      entity: company
+      scheme: valuation
+      marginal_tax_rate: 0
+      roic_on: opening
+      ebita_adjustments:
+        decommissioning_interest: {generator: m, output: decommissioning_interest}
+  measures:
+    value_of_operations: {measure: npv, cut: v.fcf, rate: {generator: m, output: pv_rate}}
+    restructuring_value: {measure: npv, cut: restructuring_paid, rate: {generator: m, output: pv_rate}}
+figures:
+  ebita: {cut: v.ebita}
+  net_income: {cut: v.net_income}
+  operating_assets: {balance: operating_assets}
+  equity: {balance: equity + revenue - operating_costs - provision_returns - provision_decommissioning - provision_smoothing - provision_restructuring}
+  liabilities_and_equity: {sum: [{cut: v.total_funds_sources}, {balance: returns_reserve}]}
+  reported_ebita: {cut: v.ebita}
+  smoothing_change: {change: smoothing_reserve}
+  noplat: {cut: v.noplat}
+  rec_net_income: {cut: v.net_income}
+  rec_decommissioning_interest: {driver: m.decommissioning_interest}
+  rec_smoothing_change: {change: smoothing_reserve}
+  rec_provision_restructuring: {change: provision_restructuring}
+  rec_noplat: {sum: [{cut: v.net_income}, {driver: m.decommissioning_interest}, {change: smoothing_reserve},
+                     {change: provision_restructuring}]}
+  ic_operating_assets: {balance: operating_assets}
+  ic_returns_reserve: {balance: returns_reserve, sign: -1}
+  invested_capital: {cut: v.invested_capital}
+  src_decommissioning_reserve: {balance: decommissioning_reserve}
+  src_restructuring_reserve: {balance: restructuring_reserve}
+  src_smoothing_reserve: {balance: smoothing_reserve}
+  src_equity: {balance: equity + revenue - operating_costs - provision_returns - provision_decommissioning - provision_smoothing - provision_restructuring}
+  src_invested_capital: {cut: v.total_funds_sources}
+  roic: {cut: v.roic}
+  fcf_noplat: {cut: v.noplat}
+  net_investment: {cut: v.net_investment, sign: -1}
+  fcf: {cut: v.fcf}
+  inv_provision_restructuring: {change: provision_restructuring}
+  inv_restructuring_reserve: {change: restructuring_reserve, sign: -1}
+  cash_restructuring: {sum: [{change: provision_restructuring}, {change: restructuring_reserve, sign: -1}]}
+  inv_decommissioning_interest: {driver: m.decommissioning_interest}
+  inv_decommissioning_reserve: {change: decommissioning_reserve, sign: -1}
+  # the investor's side: cash-based restructuring, the reserve's interest less its growth, and dividends
+  inv_fcf: {sum: [{change: provision_restructuring}, {change: restructuring_reserve, sign: -1},
+                  {driver: m.decommissioning_interest}, {change: decommissioning_reserve, sign: -1},
+                  {change: equity, sign: -1}]}
+  dcf_fcf: {cut: v.fcf}
+  discount_factor: {driver: m.discount_factor}
+  discounted_cash_flow: {cut: v.fcf, times: m.discount_factor}
+  pv_restructuring: {ratio: [{measure: restructuring_value}, {driver: m.one}], sign: -1}
+  value_of_operations: {ratio: [{measure: value_of_operations}, {driver: m.one}]}
+  value_of_restructuring: {ratio: [{measure: restructuring_value}, {driver: m.one}]}
+  rate_again: {driver: m.pv_rate}
+  val_decommissioning_reserve: {balance: decommissioning_reserve, sign: -1}
+  equity_value: {sum: [{ratio: [{measure: value_of_operations}, {driver: m.one}]},
+                       {ratio: [{measure: restructuring_value}, {driver: m.one}]},
+                       {balance: decommissioning_reserve, sign: -1}]}

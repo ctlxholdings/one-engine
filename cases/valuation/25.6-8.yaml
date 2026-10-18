@@ -1,0 +1,149 @@
+# Valuation, Exhibits 25.6-25.8 (ch. 25, pp. 550-553): the chapter's company's deferred taxes, sorted, then
+# placed on its reorganized balance sheet.
+#
+# Exhibit 25.6 is the deferred-tax footnote for the prior and current year
+# (periods 0 and 1): two deferred-tax assets and three deferred-tax
+# liabilities. Exhibit 25.7 sorts the same five lines as the chapter does
+# (pp. 551-552): the operating ones netted (accelerated depreciation less
+# warranty reserves), the nonoperating asset (tax loss carry-forwards), and
+# the nonoperating liabilities (pensions, nondeductible intangibles).
+# Exhibit 25.8 is the current year's reorganized balance sheet with the
+# five lines in place.
+#   * The books hold every printed balance with the `stated` rulebook: the
+#     five footnote lines in both years, and in the current year the other
+#     balances 25.8 prints (operating assets and liabilities, intangibles,
+#     both debts, owners' equity). The current year's balance sheet is then
+#     complete, and the rulebook's check (the plug never moves) tests that
+#     it balances. The prior year prints only the footnote: an equity account
+#     holds its net position, the part of that balance sheet left unprinted.
+#   * The scheme classifies each line where 25.8 puts it: the nondeductible
+#     intangibles liability netted against intangibles (goodwill class), the
+#     carry-forwards a nonoperating asset, the pension liability a debt
+#     equivalent, the two operating lines operating deferred taxes (an
+#     equity equivalent). Subtotals are read from the books and the lens.
+# The lens's tax rate is nil: the exhibits print no income.
+excerpt: "25.6-8"
+periods: [0, 1]
+entity: company
+plant: accelerated_depreciation
+rows:
+  # 25.6, the footnote
+  tax_loss_carryforwards: Tax loss carry-forwards
+  warranty_reserves: Warranty reserves
+  deferred_tax_assets: Deferred tax assets (DTAs)
+  accelerated_depreciation: Accelerated depreciation
+  pensions: Pension and postretirement benefits
+  nondeductible_intangibles: Nondeductible intangibles
+  deferred_tax_liabilities: Deferred tax liabilities (DTLs)
+  # 25.7, the reorganization
+  r_accelerated_depreciation: {label: Accelerated depreciation, occurrence: 2}
+  r_warranty_reserves: {label: Warranty reserves, occurrence: 2}
+  operating_net: "Operating DTLs, net of operating DTAs"
+  r_tax_loss_carryforwards: {label: Tax loss carry-forwards, occurrence: 2}
+  nonoperating_dtas: Nonoperating DTAs
+  r_pensions: Pensions and postretirement benefits
+  r_nondeductible_intangibles: {label: Nondeductible intangibles, occurrence: 2}
+  nonoperating_dtls: Nonoperating DTLs
+  # 25.8, the current year's reorganized balance sheet: uses
+  operating_assets: {label: Operating assets, periods: [1]}
+  operating_liabilities: {label: Operating liabilities, periods: [1]}
+  ic_without_intangibles: {label: Invested capital without intangibles, periods: [1]}
+  intangibles: {label: Intangibles, periods: [1]}
+  bs_nondeductible_intangibles: {label: Nondeductible intangibles (DTL), periods: [1]}
+  ic_with_intangibles: {label: Invested capital with intangibles, periods: [1]}
+  bs_tax_loss_carryforwards: {label: Tax loss carry-forwards (DTA), periods: [1]}
+  total_funds_uses: {label: Total funds invested, periods: [1]}
+  # sources
+  short_term_debt: {label: Short-term debt, periods: [1]}
+  long_term_debt: {label: Long-term debt, periods: [1]}
+  bs_pensions: {label: Pension and postretirement benefits (DTL), periods: [1]}
+  debt_and_equivalents: {label: Debt and debt equivalents, periods: [1]}
+  bs_accelerated_depreciation: {label: Accelerated depreciation (DTL), periods: [1]}
+  bs_warranty_reserves: {label: Warranty reserves (DTA), periods: [1]}
+  owners_equity: {label: Owners’ equity, periods: [1]}
+  equity_and_equivalents: {label: Equity and equity equivalents, periods: [1]}
+  total_funds_sources: {label: Total funds invested, occurrence: 2, periods: [1]}
+inputs: [tax_loss_carryforwards, warranty_reserves, accelerated_depreciation, pensions, nondeductible_intangibles,
+         operating_assets, operating_liabilities, intangibles, short_term_debt, long_term_debt, owners_equity]
+set_aside:
+  "EXHIBIT 25.6 Deferred Tax Assets and Liabilities": the exhibit's number
+  "EXHIBIT 25.7 Deferred Tax Asset and Liability Reorganization": the exhibit's number
+  "EXHIBIT 25.8 Reorganized Balance Sheet: Treatment of Deferred Taxes": the exhibit's number
+case:
+  case: valuation-chapter-taxes-deferred
+  periods: 2
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 2
+      inputs: exhibit
+      values:
+        # 25.8 prints operating liabilities in brackets; the books hold the claim
+        operating_liabilities_claim: -operating_liabilities
+        # the prior year prints only the footnote: its net deferred-tax position is financed by the rest of a
+        # balance sheet the book does not print (negative: the liabilities exceed the assets)
+        financed_elsewhere: "(tax_loss_carryforwards + warranty_reserves - accelerated_depreciation - pensions - nondeductible_intangibles) if t == 0 else 0"
+  contracts: {}
+  rulebooks:
+    balance_sheet:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        tax_loss_carryforwards: {nature: asset, value: {generator: book, output: tax_loss_carryforwards}}
+        warranty_reserves: {nature: asset, value: {generator: book, output: warranty_reserves}}
+        accelerated_depreciation: {nature: liability, value: {generator: book, output: accelerated_depreciation}}
+        pensions: {nature: liability, value: {generator: book, output: pensions}}
+        nondeductible_intangibles: {nature: liability, value: {generator: book, output: nondeductible_intangibles}}
+        operating_assets: {nature: asset, value: {generator: book, output: operating_assets}}
+        operating_liabilities: {nature: liability, value: {generator: book, output: operating_liabilities_claim}}
+        intangibles: {nature: asset, value: {generator: book, output: intangibles}}
+        short_term_debt: {nature: liability, value: {generator: book, output: short_term_debt}}
+        long_term_debt: {nature: liability, value: {generator: book, output: long_term_debt}}
+        owners_equity: {nature: equity, value: {generator: book, output: owners_equity}}
+        financed_elsewhere: {nature: equity, value: {generator: book, output: financed_elsewhere}}
+  schemes:
+    valuation:
+      operating_assets: operating_long_term
+      operating_liabilities: operating_current_liability
+      intangibles: goodwill
+      nondeductible_intangibles: goodwill
+      tax_loss_carryforwards: nonoperating_asset
+      short_term_debt: debt
+      long_term_debt: debt
+      pensions: debt_equivalent
+      accelerated_depreciation: operating_deferred_tax
+      warranty_reserves: operating_deferred_tax
+      owners_equity: equity
+      financed_elsewhere: equity
+      unexplained: equity
+  cuts: {}
+  lenses:
+    v: {kind: valuation, entity: company, scheme: valuation, marginal_tax_rate: 0}
+  measures: {}
+figures:
+  deferred_tax_assets: {balance: tax_loss_carryforwards + warranty_reserves}
+  deferred_tax_liabilities: {balance: accelerated_depreciation + pensions + nondeductible_intangibles}
+  r_accelerated_depreciation: {balance: accelerated_depreciation}
+  r_warranty_reserves: {balance: warranty_reserves, sign: -1}
+  operating_net: {balance: accelerated_depreciation - warranty_reserves}
+  r_tax_loss_carryforwards: {balance: tax_loss_carryforwards}
+  nonoperating_dtas: {cut: v.nonoperating_assets}
+  r_pensions: {balance: pensions}
+  r_nondeductible_intangibles: {balance: nondeductible_intangibles}
+  nonoperating_dtls: {balance: pensions + nondeductible_intangibles}
+  ic_without_intangibles: {cut: v.invested_capital_ex_goodwill}
+  bs_nondeductible_intangibles: {balance: nondeductible_intangibles, sign: -1}
+  ic_with_intangibles: {cut: v.invested_capital}
+  bs_tax_loss_carryforwards: {balance: tax_loss_carryforwards}
+  total_funds_uses: {cut: v.total_funds_invested}
+  bs_pensions: {balance: pensions}
+  debt_and_equivalents: {cut: v.debt_and_equivalents}
+  bs_accelerated_depreciation: {balance: accelerated_depreciation}
+  bs_warranty_reserves: {balance: warranty_reserves, sign: -1}
+  equity_and_equivalents: {cut: v.equity_and_equivalents}
+  total_funds_sources: {cut: v.total_funds_sources}

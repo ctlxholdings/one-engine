@@ -1,0 +1,83 @@
+# Valuation, Exhibit 28.4 (ch. 28, pp. 597-598): Adobe Systems' R&D asset, built and amortized.
+#
+# The exhibit prints Adobe's revenue and R&D for 1987-1989 and 2006-2008
+# (periods 0-2 and 3-5; the years between are left out), then the R&D
+# asset: each year's starting balance, plus the year's R&D, less
+# amortization, gives the ending balance. The asset starts at nil in 1987;
+# amortization is one over the footnote's asset life times the starting
+# balance (p. 598, the chapter's note 2: a share of the preceding year's
+# ending balance, not a straight line over each year's spend).
+# Translated as the exhibit's arithmetic, since there are no statements to
+# book: the chain runs from 1987 through 1989, and again from the printed
+# 2006 starting balance (the 1990-2005 years are not printed, so 2006's
+# start is the one input of the second run). Starting, amortization and
+# ending balances are compared, and so is the R&D line repeated in the
+# asset block. The no-self-lag rule makes each year's ending a formula of
+# the year before, written out year by year.
+# The revenue line enters no computation here; it is read as an input (the
+# 2006-08 revenues reappear rounded in Exhibit 28.6, which books its own).
+excerpt: "28.4"
+periods: [0, 1, 2, 3, 4, 5]
+entity: company
+plant: rd_early
+rows:
+  revenue_early: {label: Revenue, periods: [0, 1, 2]}
+  revenue_late: {label: ". . .", occurrence: 2, periods: [3, 4, 5]}
+  rd_early: {label: R&D expense, periods: [0, 1, 2]}
+  rd_late: {label: ". . .", occurrence: 3, periods: [3, 4, 5]}
+  starting_early: {label: "R&D intangible, starting", periods: [0, 1, 2]}
+  start_late: {label: ". . .", occurrence: 4, periods: [3]}
+  starting_late: {label: ". . .", occurrence: 4, skip: 1, periods: [4, 5]}
+  rd_asset_early: {label: R&D expense, occurrence: 2, periods: [0, 1, 2]}
+  rd_asset_late: {label: ". . .", occurrence: 5, periods: [3, 4, 5]}
+  amortization_early: {label: Amortization, periods: [0, 1, 2]}
+  amortization_late: {label: ". . .", occurrence: 6, periods: [3, 4, 5]}
+  ending_early: {label: "R&D intangible, ending", periods: [0, 1, 2]}
+  ending_late: {label: ". . .", occurrence: 7, periods: [3, 4, 5]}
+  life: {label: Estimated asset life =, periods: [0]}
+inputs: [revenue_early, revenue_late, rd_early, rd_late, start_late, life]
+set_aside:
+  "EXHIBIT 28.4 Adobe Systems: Capitalization of R&D1": the exhibit's number
+  "1987 1988 1989 . . . 2006 2007 2008": the column headings, years
+  "Source: Adobe Systems annual reports.": the source line
+case:
+  case: valuation-adobe-rd-asset
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    g:
+      kind: formulas
+      periods: 6
+      inputs: exhibit
+      values:
+        rate: 1 / life__0
+        # 1987-1989: the asset starts at nil
+        e_first: rd_early__0
+        e_second: e_first * (1 - rate) + rd_early__1
+        e_third: e_second * (1 - rate) + rd_early__2
+        # 2006-2008: from the printed 2006 starting balance
+        e_fourth: start_late__3 * (1 - rate) + rd_late__3
+        e_fifth: e_fourth * (1 - rate) + rd_late__4
+        e_sixth: e_fifth * (1 - rate) + rd_late__5
+        starting: "0 if t == 0 else (e_first if t == 1 else (e_second if t == 2 else (start_late__3 if t == 3 else (e_fourth if t == 4 else e_fifth))))"
+        additions: "rd_early if t < 3 else rd_late"
+        amortization: -(rate * starting)
+        ending: "e_first if t == 0 else (e_second if t == 1 else (e_third if t == 2 else (e_fourth if t == 3 else (e_fifth if t == 4 else e_sixth))))"
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  starting_early: {driver: g.starting}
+  starting_late: {driver: g.starting}
+  rd_asset_early: {driver: g.additions}
+  rd_asset_late: {driver: g.additions}
+  amortization_early: {driver: g.amortization}
+  amortization_late: {driver: g.amortization}
+  ending_early: {driver: g.ending}
+  ending_late: {driver: g.ending}

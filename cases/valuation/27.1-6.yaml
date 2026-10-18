@@ -1,0 +1,366 @@
+# Valuation, Exhibits 27.1-27.6 (ch. 27, pp. 578-582): the leasing example, its statements, NOPLAT and
+# invested capital with and without capitalized operating leases, its capital structure, WACC and DCF.
+#
+# The hypothetical company (p. 578) leases most of its assets and liquidates
+# in year 3 (periods 0-3: today, years 1-3). Exhibit 27.1 prints its income
+# statement, balance sheet and the value of its operating leases; 27.2 and
+# 27.3 reorganize NOPLAT and invested capital, left as reported, right with
+# the leases capitalized; 27.4 the capital structure today; 27.5 the two
+# WACCs; 27.6 free cash flow and the equity valuation, both ways.
+# The company is booked:
+#   * today's balance sheet is the opening balance sheet, with the leased
+#     assets (27.1's supplemental value of operating leases) booked as an
+#     asset financed by a lease debt of the same amount;
+#   * each year posts the income statement as printed against short-term
+#     assets, moves long-term assets, operating liabilities and debt to their
+#     printed balances against short-term assets, pays the cash flows to
+#     equity that 27.6 prints as dividends, and moves the lease asset and its
+#     debt to the year's value. Short-term assets and equity are what the
+#     postings leave, compared with the print; in year 3 everything winds up.
+#   * Two valuation lenses read the one book: `u` as reported (the lease
+#     asset and its debt are an equity equivalent pair that cancels), and `a`
+#     with the lease asset operating capital and the lease debt a debt
+#     equivalent, the lease interest added back to EBITA. The lease interest
+#     is the rental expense less the lease depreciation 27.2 prints (the 5%
+#     rate behind it is in the text only, p. 580).
+#   * The tax rate is each year's taxes over earnings before taxes. The
+#     company has no nonoperating items and books everything at home, so its
+#     effective rate is its marginal rate; the 25% the text states (p. 581)
+#     is not printed.
+#   * 27.6 discounts at the rate its own year-3 line implies (free cash flow
+#     over discounted cash flow, annualized over three years): the printed
+#     WACCs of 27.5 are rounded, the book discounts unrounded. Those rates
+#     are compared with 27.5's 10.1% and 6.3%; the value of operations is the
+#     npv measure over each lens's free cash flow.
+excerpt: "27.1-6"
+periods: [0, 1, 2, 3]
+entity: company
+plant: revenues
+notes: >-
+  The text extraction breaks two labels over lines ("Value of operating" / "leases1", "Capitalized" /
+  "operating leases", "Adjusted operating" / "assets"); each is read by the line that holds its numbers.
+  Exhibit 27.5 prints its weights and rates inside parentheses ("value at 12.0%)"); the reader takes
+  those tokens for words, so the weighted averages themselves are not computed here.
+rows:
+  # 27.1, income statement
+  revenues_today: {label: Revenues, periods: [0]}
+  revenues: {label: Revenues, periods: [1, 2, 3], skip: 1}
+  expenses: Expenses
+  rental: Rental expense
+  operating_income: Operating income
+  interest: Interest
+  ebt: Earnings before taxes
+  taxes: Taxes
+  net_income: Net income
+  rental_disclosed: {label: Rental expense n/a, periods: [1, 2, 3]}
+  lease_value: leases1
+  # 27.1, balance sheet
+  short_term_assets_today: {label: Short-term assets, periods: [0]}
+  short_term_assets: {label: Short-term assets, periods: [1, 2, 3], skip: 1}
+  long_term_assets: Long-term assets
+  operating_assets: Operating assets
+  operating_liabilities: Operating liabilities
+  debt: Debt
+  equity_today: {label: Equity, periods: [0]}
+  equity: {label: Equity, periods: [1, 2, 3], skip: 1}
+  liabilities_and_equity: Liabilities and equity
+  # 27.2, NOPLAT as reported (left) and adjusted for leases (right)
+  u_revenues: {label: Revenues, occurrence: 2, periods: [1, 2, 3]}
+  u_operating_expenses: {label: Operating expenses, periods: [1, 2, 3]}
+  u_rental: {label: Rental expense, occurrence: 2, periods: [1, 2, 3]}
+  u_operating_income: {label: Operating income, occurrence: 2, periods: [1, 2, 3]}
+  u_operating_taxes: {label: Operating taxes, periods: [1, 2, 3]}
+  u_noplat: {label: NOPLAT, periods: [1, 2, 3]}
+  u_net_income: {label: Net income, occurrence: 2, periods: [1, 2, 3]}
+  u_after_tax_interest: {label: After-tax interest expense, periods: [1, 2, 3]}
+  u_rec_noplat: {label: NOPLAT, occurrence: 3, periods: [1, 2, 3]}
+  u_roic: {label: "capital, percent)", periods: [1, 2, 3], scale: 0.01}
+  a_revenues: {label: Revenues, occurrence: 3, periods: [1, 2, 3]}
+  a_operating_expenses: {label: Operating expenses, occurrence: 2, periods: [1, 2, 3]}
+  lease_depreciation: {label: Lease depreciation, periods: [1, 2, 3]}
+  a_operating_income: {label: Operating income, occurrence: 3, periods: [1, 2, 3]}
+  a_operating_taxes: {label: Operating taxes, occurrence: 2, periods: [1, 2, 3]}
+  a_noplat: {label: NOPLAT, occurrence: 2, periods: [1, 2, 3]}
+  a_net_income: {label: Net income, occurrence: 3, periods: [1, 2, 3]}
+  a_after_tax_interest: {label: After-tax interest expense, occurrence: 2, periods: [1, 2, 3]}
+  a_after_tax_lease_interest: {label: After-tax lease interest, periods: [1, 2, 3]}
+  a_rec_noplat: {label: NOPLAT, occurrence: 4, periods: [1, 2, 3]}
+  a_roic: {label: "capital, percent)", occurrence: 2, periods: [1, 2, 3], scale: 0.01}
+  # 27.3, invested capital as reported (left) and adjusted (right)
+  u_operating_assets: {label: Operating assets, occurrence: 2}
+  u_operating_liabilities: {label: Operating liabilities, occurrence: 2}
+  u_invested_capital: Invested capital
+  u_debt: {label: Debt, occurrence: 2}
+  u_equity: {label: Equity, occurrence: 2}
+  u_src_invested_capital: {label: Invested capital, occurrence: 2}
+  a_operating_assets: {label: Operating assets, occurrence: 3}
+  a_capitalized_leases: operating leases
+  a_adjusted_operating_assets: Reconciliation assets
+  a_operating_liabilities: {label: Operating liabilities, occurrence: 3}
+  a_invested_capital: {label: Invested capital, occurrence: 3}
+  a_debt: {label: Debt, occurrence: 3}
+  a_src_capitalized_leases: {label: operating leases, occurrence: 2}
+  a_equity: {label: Equity, occurrence: 3}
+  a_src_invested_capital: {label: Invested capital, occurrence: 4}
+  # 27.4, today's capital structure
+  u_debt_value: {label: Debt value, periods: [0]}
+  u_debt_weight: {label: Debt value, skip: 1, periods: [0], scale: 0.01}
+  a_debt_value: {label: Debt value, occurrence: 2, periods: [0]}
+  a_debt_weight: {label: Debt value, occurrence: 2, skip: 1, periods: [0], scale: 0.01}
+  market_equity: {label: Market value of equity, periods: [0]}
+  u_equity_weight: {label: Market value of equity, skip: 1, periods: [0], scale: 0.01}
+  a_market_equity: {label: Market value of equity, occurrence: 2, periods: [0]}
+  a_equity_weight: {label: Market value of equity, occurrence: 2, skip: 1, periods: [0], scale: 0.01}
+  u_enterprise_value: {label: Enterprise value, periods: [0]}
+  u_total_weight: {label: Enterprise value, skip: 1, periods: [0], scale: 0.01}
+  a_lease_value: {label: Value of operating leases, periods: [0]}
+  a_lease_weight: {label: Value of operating leases, skip: 1, periods: [0], scale: 0.01}
+  a_enterprise_value: {label: Enterprise value, occurrence: 2, periods: [0]}
+  a_total_weight: {label: Enterprise value, occurrence: 2, skip: 1, periods: [0], scale: 0.01}
+  # 27.5, the two costs of capital
+  u_wacc: {label: WACC, periods: [0], scale: 0.01}
+  a_wacc: {label: WACC, occurrence: 2, periods: [0], scale: 0.01}
+  # 27.6, free cash flow and valuation as reported (left)
+  u_fcf_noplat: {label: NOPLAT, occurrence: 5, periods: [1, 2, 3]}
+  u_net_investment: {label: (Increase) decrease in invested capital, periods: [1, 2, 3]}
+  u_fcf: {label: Free cash flow, periods: [1, 2, 3]}
+  u_fcf_year3: {label: Free cash flow, skip: 2, periods: [3]}
+  u_rec_after_tax_interest: {label: After-tax interest, periods: [1, 2, 3]}
+  u_cf_debt: {label: Cash flows to debt, periods: [1, 2, 3]}
+  cf_equity: {label: Cash flows to equity, periods: [1, 2, 3]}
+  u_rec_fcf: {label: Reconciliation of free cash flow, periods: [1, 2, 3]}
+  u_discount_factor: {label: Discount factor, periods: [1, 2, 3]}
+  u_dcf: {label: Discounted cash flow, periods: [1, 2]}
+  u_dcf_year3: {label: Discounted cash flow, skip: 2, periods: [3]}
+  u_value: {label: Enterprise value, occurrence: 3, periods: [0]}
+  u_val_debt: {label: Debt, occurrence: 4, periods: [0]}
+  u_equity_value: {label: Equity value, periods: [0]}
+  # 27.6, adjusted for leases (right)
+  a_fcf_noplat: {label: NOPLAT, occurrence: 6, periods: [1, 2, 3]}
+  a_net_investment: {label: (Increase) decrease in invested capital, occurrence: 2, periods: [1, 2, 3]}
+  a_fcf: {label: Free cash flow, occurrence: 2, periods: [1, 2, 3]}
+  a_fcf_year3: {label: Free cash flow, occurrence: 2, skip: 2, periods: [3]}
+  a_rec_after_tax_interest: {label: After-tax interest, occurrence: 2, periods: [1, 2, 3]}
+  a_rec_after_tax_lease_interest: {label: After-tax lease interest, occurrence: 2, periods: [1, 2, 3]}
+  a_cf_debt: {label: Cash flows to debt, occurrence: 2, periods: [1, 2, 3]}
+  a_cf_lease_debt: {label: Cash flows to lease debt, periods: [1, 2, 3]}
+  a_cf_equity: {label: Cash flows to equity, occurrence: 2, periods: [1, 2, 3]}
+  a_rec_fcf: {label: Reconciliation of free cash flow, occurrence: 2, periods: [1, 2, 3]}
+  a_discount_factor: {label: Discount factor, occurrence: 2, periods: [1, 2, 3]}
+  a_dcf: {label: Discounted cash flow, occurrence: 2, periods: [1, 2]}
+  a_dcf_year3: {label: Discounted cash flow, occurrence: 2, skip: 2, periods: [3]}
+  a_value: {label: Enterprise value, occurrence: 4, periods: [0]}
+  a_val_debt: {label: Debt, occurrence: 5, periods: [0]}
+  a_val_leases: {label: Operating leases, periods: [0]}
+  a_equity_value: {label: Equity value, occurrence: 2, periods: [0]}
+inputs: [revenues, expenses, rental, interest, taxes, lease_value, short_term_assets_today, long_term_assets,
+         operating_liabilities, debt, equity_today, lease_depreciation, market_equity, cf_equity, u_fcf_year3,
+         u_dcf_year3, a_fcf_year3, a_dcf_year3]
+not_compared:
+  revenues_today: the prior year's revenues; the exhibits print none of that year's other lines and nothing is computed from it
+set_aside:
+  "EXHIBIT 27.1 Leasing Example: Financial Statements": the exhibit's number
+  "EXHIBIT 27.2 Leasing Example: NOPLAT Calculation": the exhibit's number
+  "EXHIBIT 27.3 Leasing Example: Invested Capital Calculation": the exhibit's number
+  "EXHIBIT 27.4 Leasing Example: Current Capital Structure": the exhibit's number
+  "EXHIBIT 27.6 Leasing Example: Free Cash Flow and Equity Valuation": the exhibit's number
+  "Today Year 1 Year 2 Year 3 Today Year 1 Year 2 Year 3": the column headings, years
+  "Year 1 Year 2 Year 3 Year 1 Year 2 Year 3": the column headings, years
+case:
+  case: valuation-leasing-example
+  periods: 4
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 4
+      inputs: exhibit
+      values:
+        ebt_m: revenues + expenses + rental + interest
+        # the effective rate, each year: taxes over earnings before taxes (printed negative)
+        tax_rate: "-taxes / ebt_m if t > 0 else 0"
+        # the interest inside the rental: the rental less the lease depreciation (both printed negative)
+        lease_interest: lease_depreciation - rental
+        after_tax_lease_interest: lease_interest * (1 - tax_rate)
+        long_term_move: "(long_term_assets - lag(long_term_assets, 1)) if t > 0 else 0"
+        liabilities_move: "(operating_liabilities - lag(operating_liabilities, 1)) if t > 0 else 0"
+        debt_move: "(debt - lag(debt, 1)) if t > 0 else 0"
+        lease_move: "(lease_value - lag(lease_value, 1)) if t > 0 else 0"
+        # the rate each side discounts at, as its own year-3 line implies
+        u_rate: annualized(u_fcf_year3__3 / u_dcf_year3__3 - 1, 3)
+        a_rate: annualized(a_fcf_year3__3 / a_dcf_year3__3 - 1, 3)
+        u_factor: (1 + u_rate) ** t
+        a_factor: (1 + a_rate) ** t
+        one: 1
+  opening:
+    company:
+      short_term_assets: {nature: asset, value: {generator: m, output: short_term_assets_today__0}}
+      long_term_assets: {nature: asset, value: {generator: m, output: long_term_assets__0}}
+      operating_liabilities: {nature: liability, value: {generator: m, output: operating_liabilities__0}}
+      debt: {nature: liability, value: {generator: m, output: debt__0}}
+      equity: {nature: equity, value: {generator: m, output: equity_today__0}}
+      lease_asset: {nature: asset, value: {generator: m, output: lease_value__0}}
+      lease_debt: {nature: liability, value: {generator: m, output: lease_value__0}}
+  contracts: {}
+  rulebooks:
+    # each amount signed: a positive one debits the first account, a negative one is reversed
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {revenue: income, expenses: expense, rental: expense, interest: expense, tax_expense: expense}
+      moves:
+        revenues: {debit: short_term_assets, credit: revenue, amount: {generator: m, output: revenues}}
+        expenses: {debit: short_term_assets, credit: expenses, amount: {generator: m, output: expenses}}
+        rental: {debit: short_term_assets, credit: rental, amount: {generator: m, output: rental}}
+        interest: {debit: short_term_assets, credit: interest, amount: {generator: m, output: interest}}
+        taxes: {debit: short_term_assets, credit: tax_expense, amount: {generator: m, output: taxes}}
+        long_term_assets: {debit: long_term_assets, credit: short_term_assets, amount: {generator: m, output: long_term_move}}
+        operating_liabilities: {debit: short_term_assets, credit: operating_liabilities,
+                                amount: {generator: m, output: liabilities_move}}
+        debt: {debit: short_term_assets, credit: debt, amount: {generator: m, output: debt_move}}
+        dividends: {debit: equity, credit: short_term_assets, amount: {generator: m, output: cf_equity}}
+        leases: {debit: lease_asset, credit: lease_debt, amount: {generator: m, output: lease_move}}
+  schemes:
+    reported:
+      short_term_assets: operating_current_asset
+      long_term_assets: operating_long_term
+      operating_liabilities: operating_current_liability
+      debt: debt
+      equity: equity
+      # off the reported balance sheet: the pair cancels among the equity equivalents
+      lease_asset: equity_equivalent
+      lease_debt: equity_equivalent
+      revenue: revenue
+      expenses: operating_cost
+      rental: operating_cost
+      interest: interest
+      tax_expense: tax
+    adjusted:
+      short_term_assets: operating_current_asset
+      long_term_assets: operating_long_term
+      operating_liabilities: operating_current_liability
+      debt: debt
+      equity: equity
+      lease_asset: operating_long_term
+      lease_debt: debt_equivalent
+      revenue: revenue
+      expenses: operating_cost
+      rental: operating_cost
+      interest: interest
+      tax_expense: tax
+  cuts: {}
+  lenses:
+    u:
+      kind: valuation
+      entity: company
+      scheme: reported
+      marginal_tax_rate: {generator: m, output: tax_rate}
+      roic_on: opening
+    a:
+      kind: valuation
+      entity: company
+      scheme: adjusted
+      marginal_tax_rate: {generator: m, output: tax_rate}
+      roic_on: opening
+      ebita_adjustments:
+        lease_interest: {generator: m, output: lease_interest}
+  measures:
+    u_value: {measure: npv, cut: u.fcf, rate: {generator: m, output: u_rate}}
+    a_value: {measure: npv, cut: a.fcf, rate: {generator: m, output: a_rate}}
+figures:
+  # 27.1
+  operating_income: {change: revenue - expenses - rental}
+  ebt: {change: revenue - expenses - rental - interest}
+  net_income: {cut: u.net_income}
+  rental_disclosed: {change: rental}
+  short_term_assets: {balance: short_term_assets}
+  operating_assets: {balance: short_term_assets + long_term_assets}
+  equity: {balance: equity + revenue - expenses - rental - interest - tax_expense}
+  liabilities_and_equity: {balance: operating_liabilities + debt + equity + revenue - expenses - rental - interest - tax_expense}
+  # 27.2, left
+  u_revenues: {cut: u.revenue}
+  u_operating_expenses: {change: expenses, sign: -1}
+  u_rental: {change: rental, sign: -1}
+  u_operating_income: {cut: u.ebita}
+  u_operating_taxes: {cut: u.operating_taxes, sign: -1}
+  u_noplat: {cut: u.noplat}
+  u_net_income: {cut: u.net_income}
+  u_after_tax_interest: {cut: u.after_tax_interest}
+  u_rec_noplat: {sum: [{cut: u.net_income}, {cut: u.after_tax_interest}]}
+  u_roic: {cut: u.roic}
+  # 27.2, right
+  a_revenues: {cut: a.revenue}
+  a_operating_expenses: {change: expenses, sign: -1}
+  a_operating_income: {cut: a.adjusted_ebita}
+  a_operating_taxes: {cut: a.operating_taxes, sign: -1}
+  a_noplat: {cut: a.noplat}
+  a_net_income: {cut: a.net_income}
+  a_after_tax_interest: {cut: a.after_tax_interest}
+  a_after_tax_lease_interest: {driver: m.after_tax_lease_interest}
+  a_rec_noplat: {sum: [{cut: a.net_income}, {cut: a.after_tax_interest}, {driver: m.after_tax_lease_interest}]}
+  a_roic: {cut: a.roic}
+  # 27.3
+  u_operating_assets: {balance: short_term_assets + long_term_assets}
+  u_operating_liabilities: {balance: operating_liabilities, sign: -1}
+  u_invested_capital: {cut: u.invested_capital}
+  u_debt: {balance: debt}
+  u_equity: {balance: equity + revenue - expenses - rental - interest - tax_expense}
+  u_src_invested_capital: {cut: u.total_funds_sources}
+  a_operating_assets: {balance: short_term_assets + long_term_assets}
+  a_capitalized_leases: {balance: lease_asset}
+  a_adjusted_operating_assets: {balance: short_term_assets + long_term_assets + lease_asset}
+  a_operating_liabilities: {balance: operating_liabilities, sign: -1}
+  a_invested_capital: {cut: a.invested_capital}
+  a_debt: {balance: debt}
+  a_src_capitalized_leases: {balance: lease_debt}
+  a_equity: {balance: equity + revenue - expenses - rental - interest - tax_expense}
+  a_src_invested_capital: {cut: a.total_funds_sources}
+  # 27.4: debt at book value, equity at market value, today
+  u_debt_value: {balance: debt}
+  u_debt_weight: {ratio: [{balance: debt, at: 0}, {sum: [{balance: debt}, {driver: m.market_equity}], at: 0}]}
+  a_debt_value: {balance: debt}
+  a_debt_weight: {ratio: [{balance: debt, at: 0}, {sum: [{balance: debt + lease_debt}, {driver: m.market_equity}], at: 0}]}
+  u_equity_weight: {ratio: [{driver: m.market_equity, at: 0}, {sum: [{balance: debt}, {driver: m.market_equity}], at: 0}]}
+  a_market_equity: {driver: m.market_equity}
+  a_equity_weight: {ratio: [{driver: m.market_equity, at: 0}, {sum: [{balance: debt + lease_debt}, {driver: m.market_equity}], at: 0}]}
+  u_enterprise_value: {sum: [{balance: debt}, {driver: m.market_equity}]}
+  u_total_weight: {ratio: [{sum: [{balance: debt}, {driver: m.market_equity}], at: 0}, {sum: [{balance: debt}, {driver: m.market_equity}], at: 0}]}
+  a_lease_value: {balance: lease_debt}
+  a_lease_weight: {ratio: [{balance: lease_debt, at: 0}, {sum: [{balance: debt + lease_debt}, {driver: m.market_equity}], at: 0}]}
+  a_enterprise_value: {sum: [{balance: debt + lease_debt}, {driver: m.market_equity}]}
+  a_total_weight: {ratio: [{sum: [{balance: debt + lease_debt}, {driver: m.market_equity}], at: 0}, {sum: [{balance: debt + lease_debt}, {driver: m.market_equity}], at: 0}]}
+  # 27.5: the rates 27.6 discounts at
+  u_wacc: {driver: m.u_rate}
+  a_wacc: {driver: m.a_rate}
+  # 27.6, left
+  u_fcf_noplat: {cut: u.noplat}
+  u_net_investment: {cut: u.net_investment, sign: -1}
+  u_fcf: {cut: u.fcf}
+  u_rec_after_tax_interest: {cut: u.after_tax_interest}
+  u_cf_debt: {change: debt, sign: -1}
+  u_rec_fcf: {sum: [{cut: u.after_tax_interest}, {change: debt, sign: -1}, {change: equity, sign: -1}]}
+  u_discount_factor: {driver: m.u_factor}
+  u_dcf: {cut: u.fcf, per: m.u_factor}
+  u_value: {ratio: [{measure: u_value}, {driver: m.one}]}
+  u_val_debt: {balance: debt, sign: -1}
+  u_equity_value: {sum: [{ratio: [{measure: u_value}, {driver: m.one}]}, {balance: debt, sign: -1}]}
+  # 27.6, right
+  a_fcf_noplat: {cut: a.noplat}
+  a_net_investment: {cut: a.net_investment, sign: -1}
+  a_fcf: {cut: a.fcf}
+  a_rec_after_tax_interest: {cut: a.after_tax_interest}
+  a_rec_after_tax_lease_interest: {driver: m.after_tax_lease_interest}
+  a_cf_debt: {change: debt, sign: -1}
+  a_cf_lease_debt: {change: lease_debt, sign: -1}
+  a_cf_equity: {change: equity, sign: -1}
+  a_rec_fcf: {sum: [{cut: a.after_tax_interest}, {driver: m.after_tax_lease_interest}, {change: debt, sign: -1},
+                    {change: lease_debt, sign: -1}, {change: equity, sign: -1}]}
+  a_discount_factor: {driver: m.a_factor}
+  a_dcf: {cut: a.fcf, per: m.a_factor}
+  a_value: {ratio: [{measure: a_value}, {driver: m.one}]}
+  a_val_debt: {balance: debt, sign: -1}
+  a_val_leases: {balance: lease_debt, sign: -1}
+  a_equity_value: {sum: [{ratio: [{measure: a_value}, {driver: m.one}]}, {balance: debt + lease_debt, sign: -1}]}

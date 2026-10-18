@@ -1,0 +1,66 @@
+# Valuation, Exhibit 25.10 (ch. 25, p. 556, the review questions): ToyCo's deferred-tax assets and
+# liabilities, years 1-3.
+#
+# The footnote lists four deferred-tax assets and three deferred-tax
+# liabilities with their totals (periods 0-2 are years 1-3). As in Exhibit
+# 7.8, each line is its own account held at the print by the `stated`
+# rulebook: assets as assets, liabilities as liabilities. One equity account
+# holds the net position, the part of the balance sheet the footnote does
+# not print, so the plug never moves. The two totals are read back from the
+# balances. The reorganization the review question asks for (question 4) is
+# not printed, so there is nothing more to compare.
+excerpt: "25.10"
+periods: [0, 1, 2]
+entity: company
+plant: depreciation
+rows:
+  receivables: Accounts receivable
+  inventories: Inventories
+  carryforwards: Losses and tax credit carry-forwards
+  pension: Pension
+  deferred_tax_assets: Deferred tax assets
+  convertible_debentures: Convertible debentures
+  depreciation: Depreciation of long-lived assets
+  equity_method: Equity method investment
+  deferred_tax_liabilities: Deferred tax liabilities
+inputs: [receivables, inventories, carryforwards, pension, convertible_debentures, depreciation, equity_method]
+set_aside:
+  "EXHIBIT 25.10 ToyCo: Deferred Tax Assets and Liabilities": the exhibit's number
+  "Year 1 Year 2 Year 3": the column headings, years
+case:
+  case: valuation-toyco-deferred-taxes
+  periods: 3
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        # the net position, financed by the part of the balance sheet the footnote leaves out
+        financed_elsewhere: receivables + inventories + carryforwards + pension - convertible_debentures - depreciation - equity_method
+  contracts: {}
+  rulebooks:
+    footnote:
+      kind: stated
+      entity: company
+      phase: state
+      plug: unexplained
+      balances:
+        receivables: {nature: asset, value: {generator: book, output: receivables}}
+        inventories: {nature: asset, value: {generator: book, output: inventories}}
+        carryforwards: {nature: asset, value: {generator: book, output: carryforwards}}
+        pension: {nature: asset, value: {generator: book, output: pension}}
+        convertible_debentures: {nature: liability, value: {generator: book, output: convertible_debentures}}
+        depreciation: {nature: liability, value: {generator: book, output: depreciation}}
+        equity_method: {nature: liability, value: {generator: book, output: equity_method}}
+        financed_elsewhere: {nature: equity, value: {generator: book, output: financed_elsewhere}}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  deferred_tax_assets: {balance: receivables + inventories + carryforwards + pension}
+  deferred_tax_liabilities: {balance: convertible_debentures + depreciation + equity_method}

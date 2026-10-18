@@ -1,0 +1,57 @@
+# Valuation, Exhibit 28.1 (ch. 28, p. 594): PharmaCo's reorganized statements, 2005-2010.
+#
+# The hypothetical drug company (pp. 594-595) spends a fixed 60% of revenues
+# on cost of sales, expenses its R&D, and holds revenue at three times
+# invested capital (periods 0-5 are 2005-2010). Translated as the exhibit's
+# arithmetic: revenues, R&D and operating taxes are inputs (the R&D rule,
+# $20 million plus 15% of revenues, and the 40% tax rate are in the text
+# only); cost of sales is the printed 60% of revenues; operating profit and
+# NOPLAT are computed and compared.
+# Invested capital is not compared: the revenue-to-capital multiple prints
+# as "3¥" (the 3 glued to the extraction's multiplication sign), which the
+# reader takes for a word, so no figure gives the 3.
+excerpt: "28.1"
+periods: [0, 1, 2, 3, 4, 5]
+entity: company
+plant: revenues
+rows:
+  revenues: Revenues
+  cost_of_sales: Cost of sales
+  cost_share: {label: Fixed at, periods: [0], scale: 0.01}
+  rd: R&D expense
+  operating_profit: Operating profit
+  operating_taxes: Operating taxes
+  noplat: NOPLAT1
+  invested_capital: Invested capital
+inputs: [revenues, cost_share, rd, operating_taxes]
+not_compared:
+  invested_capital: revenue over the printed multiple, which prints as "3¥" and is no figure to the reader (see 28.1's result); nothing else in the exhibits computes it
+set_aside:
+  "EXHIBIT 28.1 PharmaCo: Reorganized Financial Statements": the exhibit's number
+  "2005 2006 2007 2008 2009 2010": the column headings, years
+case:
+  case: valuation-pharmaco-statements
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 6
+      inputs: exhibit
+      values:
+        cost_of_sales_m: -(cost_share__0 * revenues)
+        operating_profit_m: revenues + cost_of_sales_m + rd
+        noplat_m: operating_profit_m + operating_taxes
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  cost_of_sales: {driver: m.cost_of_sales_m}
+  operating_profit: {driver: m.operating_profit_m}
+  noplat: {driver: m.noplat_m}
