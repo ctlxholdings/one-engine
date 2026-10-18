@@ -24,6 +24,7 @@ import pytest
 import sympy as sp
 from hypothesis import given, settings, strategies as st
 
+from one_engine.inputs import Reader
 from one_engine.packs import valuation as V
 
 ic, noplat, roic, ronic, w, g, ir = sp.symbols("IC NOPLAT ROIC RONIC WACC g IR", positive=True)
@@ -190,3 +191,19 @@ def test_appendix_d_levered_and_unlevered_beta_are_inverses(beta_u, debt, equity
 def test_the_capm_cost_of_equity():
     # the book's bank example (ch. 36, p. 772): 4.5% + 1.27 x 5.0% = 10.85%
     assert V.capm(F(45, 1000), F(127, 100), F(5, 100)) == F(1085, 10000)
+
+
+# ── the formulas lent to an exhibit's arithmetic ────────────────────────────
+
+def test_an_exhibits_formula_calls_the_packs_code_beside_an_input_of_the_same_name():
+    # the input ``wacc`` is a series, so the value is too: the name read is the input, the name called the code
+    r = Reader({"periods": 2, "inputs": {"wacc": ["0.11", "0.10"], "noplat": 100, "g": "0.06", "ronic": "0.12"},
+                "values": {"cv": "value_driver(noplat, g, ronic, wacc)"}}, source="test")
+    assert V.valuation_formulas(r)["cv"] == [1000, 1250]
+
+
+def test_an_exhibits_formula_meets_the_packs_refusals():
+    r = Reader({"periods": 1, "inputs": {"w": "0.06", "cf": 50, "g": "0.06"},
+                "values": {"cv": "growing_perpetuity(cf, w, g)"}}, source="test")
+    with pytest.raises(V.ValuationError, match="not below the discount rate"):
+        V.valuation_formulas(r)

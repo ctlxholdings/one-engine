@@ -20,6 +20,12 @@ profit. Both halves live here:
   from a case's books under a classification scheme (one class per account),
   so NOPLAT, invested capital, FCF, ROIC and economic profit come out of any
   case without changing a posting.
+* **The** ``stated`` **rulebook**: a book held at a source's printed balances,
+  every change against a plug that must never move (an exhibit's balance
+  sheet that does not balance fails).
+* **The** ``valuation_formulas`` **generator**: the shared formulas generator
+  with the formulas here callable by name, so an exhibit's printed
+  calculation is checked against this code.
 
 Conventions
 -----------
@@ -28,8 +34,8 @@ Conventions
   flow falls at ``t = 1`` and is discounted one full period.
 * A formula outside its domain refuses (:class:`ValuationError`) instead of
   returning a number the book says is meaningless: a perpetuity whose growth
-  is not below the discount rate (ch. 10, p. 230: "Otherwise the formula goes
-  to infinity"), a value driver formula with a nil RONIC.
+  is not below the discount rate (ch. 10, p. 230), a value driver formula
+  with a nil RONIC.
 
 Source and copyright
 --------------------
@@ -44,6 +50,7 @@ from typing import Any, Dict, List, Mapping, Sequence
 
 from one_engine.cuts import CutError, Series
 from one_engine.entities import Group
+from one_engine.formulas import formulas as _formulas
 from one_engine.inputs import InputError, Reader
 from one_engine.kernel import Nature, Posting
 from one_engine.units import at as _at
@@ -522,3 +529,28 @@ def stated(group: Group, r: Reader, ctx: Mapping[str, Any]):
 
 
 RULEBOOKS = {"stated": stated}
+
+
+# ── the book's formulas lent to an exhibit's arithmetic ──────────────────────
+
+#: the formulas above a case's formulas may call by name (each takes and returns exact numbers); the
+#: two that take whole streams (``discounted``, ``ep_value``) are left out, as a formula reads one period
+FUNCTIONS = {f.__name__: f for f in (
+    free_cash_flow, net_investment, roic, investment_rate, growth_from_investment, growing_perpetuity,
+    value_driver, economic_profit, ep_value_steady, cv_economic_profit, cv_two_stage, wacc, apv,
+    unlevered_ke, unlevered_ke_kd_shields, levered_ke, levered_beta, unlevered_beta, capm)}
+
+
+def valuation_formulas(r: Reader) -> Dict[str, Any]:
+    """The ``formulas`` generator, its formulas able to call the book's formulas (:data:`FUNCTIONS`).
+
+    An exhibit that prints a calculation (a WACC, a continuing value, a
+    levered beta) is translated as inputs and one call, ``wacc(d, e, kd, ke,
+    tm)``, so the figure it prints is checked against this pack's code, not
+    against the formula retyped in the case. A refusal (growth at the
+    discount rate, a nil RONIC) stops the run as it does anywhere.
+    """
+    return _formulas(r, functions=FUNCTIONS)
+
+
+GENERATORS = {"valuation_formulas": valuation_formulas}

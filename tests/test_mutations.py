@@ -783,6 +783,8 @@ MUTATIONS = [
      "test_oracles_valuation.py::test_the_other_companys_columns_count_only_as_its_own_translation_reads_them"),
     ("packs/valuation.py", "if book.balance(plug, t)]", "if False]",
      "test_oracles_valuation.py::test_a_balance_sheet_that_does_not_balance_moves_the_plug"),
+    ("formulas.py", "if isinstance(n, ast.Name) and id(n) not in called}", "if isinstance(n, ast.Name) and n.id not in self.funcs}",
+     "test_valuation_formulas.py::test_an_exhibits_formula_calls_the_packs_code_beside_an_input_of_the_same_name"),
     ("packs/valuation.py", '    if missing:', '    if False:',
      "test_oracles_valuation.py::test_the_lens_refuses_an_unclassified_account"),
     ("packs/valuation.py", '    if unknown:', '    if False:',

@@ -26,6 +26,11 @@ in a formula is read from its text (``0.3`` is 3/10). A formula that reads
 number. ``{each_period: formula}`` is a series even when every period is
 the same (a spend schedule a contract reads period by period). A name that
 is neither an input nor an earlier value refuses.
+
+A pack's own generator may lend its formulas more functions by name
+(:func:`formulas`, ``functions``): the valuation pack's ``valuation_formulas``
+generator lends the book's formulas, so an exhibit's arithmetic runs the
+pack's code (added 2026-10-18).
 """
 from __future__ import annotations
 
@@ -33,7 +38,7 @@ import ast
 import datetime
 import math
 from fractions import Fraction
-from typing import Any, Dict, List, Mapping, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 from one_engine.inputs import InputError, Reader
 from one_engine.units import exact
@@ -94,8 +99,10 @@ def _number(v: Any, where: str) -> Fraction:
 class _Formula:
     """One formula, parsed once and evaluated at a period; see the module docstring."""
 
-    def __init__(self, text: Any, where: str):
+    def __init__(self, text: Any, where: str, functions: Optional[Mapping[str, Callable]] = None):
         self.where, self.text = where, str(text)
+        # the functions a formula may call: the shared ones, plus any a pack's generator lends it
+        self.funcs = {**_FUNCS, **(functions or {})}
         if not isinstance(text, str):
             self.tree = ast.Constant(_number(text, where))
             return
@@ -110,7 +117,10 @@ class _Formula:
                 n.value = exact(ast.get_source_segment(self.text, n) or repr(n.value))
 
     def names(self) -> set:
-        return {n.id for n in ast.walk(self.tree) if isinstance(n, ast.Name)} - set(_FUNCS) - {"lag", "cumsum"}
+        # a name called is a function; any other name is a value (an input may share a function's name:
+        # an exhibit's ``wacc`` row beside the pack's ``wacc(...)``)
+        called = {id(n.func) for n in ast.walk(self.tree) if isinstance(n, ast.Call)}
+        return {n.id for n in ast.walk(self.tree) if isinstance(n, ast.Name) and id(n) not in called}
 
     def lags(self) -> bool:
         """Whether the formula reads other periods (``lag``, ``cumsum``): it is then a series."""
@@ -187,8 +197,8 @@ class _Formula:
                 # a number is the same every period: its running total is that many of it
                 return sum(v[:t + 1], Fraction(0)) if isinstance(v, list) else v * (t + 1)
             return cumsum
-        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _FUNCS and not n.keywords:
-            fn, args = _FUNCS[n.func.id], [self._compile(a) for a in n.args]
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in self.funcs and not n.keywords:
+            fn, args = self.funcs[n.func.id], [self._compile(a) for a in n.args]
             return lambda t, ns: Fraction(fn(*[a(t, ns) for a in args]))
         if isinstance(n, ast.Constant) and not isinstance(n.value, bool) and isinstance(n.value, (int, float, Fraction)):
             # literals were made exact from their own text when the formula was parsed
@@ -212,13 +222,18 @@ class _Formula:
         return refuse
 
 
-def formulas(r: Reader) -> Dict[str, Value]:
+def formulas(r: Reader, functions: Optional[Mapping[str, Callable]] = None) -> Dict[str, Value]:
     """Named values from named inputs (a generator); see the module docstring.
 
     Case keys: ``periods``; ``inputs`` (name -> number, or a list of numbers: the gold's inputs,
     filled in by the oracle family from the vendored gold); ``values``
     (name -> formula, in order, each reading inputs and earlier values).
     Outputs: every input, and every value.
+
+    ``functions`` (for a pack's own generator, not a case key): more
+    functions its formulas may call by name, each taking and returning exact
+    numbers (the valuation pack lends the book's formulas this way, so an
+    exhibit's calculation runs the pack's code rather than a retyped formula).
     """
     periods = int(r.take("periods"))
     # an input is a number, or a list of numbers (a series the source prints period by period)
@@ -233,7 +248,7 @@ def formulas(r: Reader) -> Dict[str, Value]:
             if set(text) != {"each_period"}:
                 raise InputError(f"formulas.values.{name}: a mapping value takes only each_period")
             text = text["each_period"]
-        f = _Formula(text, f"formulas.values.{name}")
+        f = _Formula(text, f"formulas.values.{name}", functions)
         series = each or f.lags() or "t" in f.names() or any(isinstance(ns.get(x), list) for x in f.names())
         ns[name] = [f.at(t, ns) for t in range(periods)] if series else f.at(0, ns)
     return ns

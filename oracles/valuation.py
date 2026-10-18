@@ -52,7 +52,8 @@ columns. Keys:
   engine's amount (0.01 for a percent), ``skip`` how many numbers after the
   label belong to other columns (the second company of a side-by-side
   exhibit);
-* ``inputs``: the rows handed to the case. A ``formulas`` generator with
+* ``inputs``: the rows handed to the case. A ``formulas`` (or
+  ``valuation_formulas``: the book's formulas callable by name) generator with
   ``inputs: exhibit`` receives each as a series over the case periods (nil
   outside the row's periods) and, for each of the row's periods ``p``, as
   the number ``<row>__p``;
@@ -481,7 +482,7 @@ class ValuationFamily(Family):
         case = copy.deepcopy(tr["case"])
         fed = []
         for gname, g in (case.get("generators") or {}).items():
-            if g.get("kind") == "formulas" and g.get("inputs") == "exhibit":
+            if g.get("kind") in ("formulas", "valuation_formulas") and g.get("inputs") == "exhibit":
                 g["inputs"] = fed_inputs
                 fed.append(gname)
         if inputs and not fed:
