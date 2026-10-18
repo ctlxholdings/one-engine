@@ -65,6 +65,7 @@ def test_a_printed_number_is_read_with_its_sign_and_precision():
     assert VO._number("37.6%") == (F(376, 10), 1)
     assert VO._number("$50") == (50, 0)
     assert VO._number("(12") is None and VO._number("taxes1") is None
+    assert VO._number("2009.") == (2009, 0) and VO._number("28,") == (28, 0)    # a number ending a sentence
 
 
 def test_glued_dashes_are_one_nil_cell_each():

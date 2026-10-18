@@ -163,7 +163,8 @@ _EVEN = re.compile(r"^(\d{1,3}) [A-Z][A-Z0-9 ,:’&\-\.]{3,}$")      # "142 REOR
 _ODD = re.compile(r"^[A-Z][A-Z0-9 ,:’&\-\.]{3,} (\d{1,3})$")       # "REORGANIZING ...: KEY CONCEPTS 137"
 #: a caption; usually a line of its own, once glued after a chart's axis label ("Revenue ($ million) EXHIBIT 5.6–...")
 _EXHIBIT = re.compile(r"(?:^|(?<= ))EXHIBIT ([0-9]{1,2}|[A-E])\.([0-9]{1,2})(?=[ –]|$)[ –]?(.*)$")
-_NUMBER = re.compile(r"^(\()?(-|–)?\$?([0-9][0-9,]*(?:\.[0-9]+)?)(%)?(\))?$")
+# a number may end a sentence: "2009." is 2009 (a trailing comma already falls inside the digits)
+_NUMBER = re.compile(r"^(\()?(-|–)?\$?([0-9][0-9,]*(?:\.[0-9]+)?)(%)?(\))?\.?$")
 _DASHES = re.compile(r"^[–—-]+$")
 
 

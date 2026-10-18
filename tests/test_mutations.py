@@ -819,6 +819,8 @@ MUTATIONS = [
     ("packs/valuation.py", "    if not bond_price(hi, coupon, years, freq) <= target <= bond_price(lo, coupon, years, freq):",
      "    if False:",
      "test_valuation_formulas.py::test_a_bond_prices_at_par_when_its_yield_is_its_coupon_and_the_yield_inverts_the_price"),
+    ("oracles/valuation.py", '(%)?(\\))?\\.?$")', '(%)?(\\))?$")',
+     "test_oracles_valuation.py::test_a_printed_number_is_read_with_its_sign_and_precision"),
     ("packs/valuation.py", '    if missing:', '    if False:',
      "test_oracles_valuation.py::test_the_lens_refuses_an_unclassified_account"),
     ("packs/valuation.py", '    if unknown:', '    if False:',
