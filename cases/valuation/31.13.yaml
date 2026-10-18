@@ -1,0 +1,82 @@
+# Valuation, Exhibit 31.13 (ch. 31, p. 652): Heineken's revenue growth split into its sources,
+# 2004-2008, with the compound annual rate of each source over the five years.
+#
+# Translated as a calculation. Volume, price and mix, first-time consolidations, currency and
+# accounting changes are inputs for each year. Organic growth at constant currency is volume plus
+# price and mix; nominal growth adds the other three, as the book adds them (p. 652). The last
+# column is each row's compound annual rate: the five years' growth factors multiplied together
+# and taken back to an annual rate with the pack's annualized() over five years, the organic and
+# nominal rows from their computed yearly values.
+excerpt: "31.13"
+periods: [0, 1, 2, 3, 4]
+entity: heineken
+plant: acquisitions
+rows:
+  volume: {label: Organic volume growth, scale: 0.01}
+  volume_cagr: {label: Organic volume growth, periods: [4], skip: 5, scale: 0.01}
+  price: {label: Price increase/mix change, scale: 0.01}
+  price_cagr: {label: Price increase/mix change, periods: [4], skip: 5, scale: 0.01}
+  organic: {label: Organic growth at constant currency, scale: 0.01}
+  organic_cagr: {label: Organic growth at constant currency, periods: [4], skip: 5, scale: 0.01}
+  acquisitions: {label: 'Acquisitions: First-time consolidations', scale: 0.01}
+  acquisitions_cagr: {label: 'Acquisitions: First-time consolidations', periods: [4], skip: 5, scale: 0.01}
+  currency: {label: Currency movements, scale: 0.01}
+  currency_cagr: {label: Currency movements, periods: [4], skip: 5, scale: 0.01}
+  accounting: {label: 'Accounting changes, other', scale: 0.01}
+  accounting_cagr: {label: 'Accounting changes, other', periods: [4], skip: 5, scale: 0.01}
+  nominal: {label: Nominal revenue growth (euros-based), scale: 0.01}
+  nominal_cagr: {label: Nominal revenue growth (euros-based), periods: [4], skip: 5, scale: 0.01}
+inputs: [volume, price, acquisitions, currency, accounting]
+set_aside:
+  "EXHIBIT 31.13 Heineken: Revenue Growth Analysis": the exhibit's caption; its number is the exhibit's
+  "2004 2005 2006 2007 2008": the column headings
+  "2004–2008": the heading of the compound-rate column, naming its years
+case:
+  case: valuation-heineken-revenue-growth-sources
+  periods: 5
+  phases: [operate]
+  currency: EUR
+  floors: {}
+  generators:
+    g:
+      kind: valuation_formulas
+      periods: 5
+      inputs: exhibit
+      values:
+        organic: volume + price
+        nominal: volume + price + acquisitions + currency + accounting
+        # each row's five growth factors multiplied (read at 2008, the last year), then annualized
+        volume_cum: (1 + volume) * (1 + lag(volume, 1)) * (1 + lag(volume, 2)) * (1 + lag(volume, 3)) * (1 + lag(volume, 4)) - 1
+        price_cum: (1 + price) * (1 + lag(price, 1)) * (1 + lag(price, 2)) * (1 + lag(price, 3)) * (1 + lag(price, 4)) - 1
+        organic_cum: (1 + organic) * (1 + lag(organic, 1)) * (1 + lag(organic, 2)) * (1 + lag(organic, 3)) * (1 + lag(organic, 4)) - 1
+        acquisitions_cum: (1 + acquisitions) * (1 + lag(acquisitions, 1)) * (1 + lag(acquisitions, 2)) * (1 + lag(acquisitions, 3)) * (1 + lag(acquisitions, 4)) - 1
+        currency_cum: (1 + currency) * (1 + lag(currency, 1)) * (1 + lag(currency, 2)) * (1 + lag(currency, 3)) * (1 + lag(currency, 4)) - 1
+        accounting_cum: (1 + accounting) * (1 + lag(accounting, 1)) * (1 + lag(accounting, 2)) * (1 + lag(accounting, 3)) * (1 + lag(accounting, 4)) - 1
+        nominal_cum: (1 + nominal) * (1 + lag(nominal, 1)) * (1 + lag(nominal, 2)) * (1 + lag(nominal, 3)) * (1 + lag(nominal, 4)) - 1
+        volume_cagr: annualized(volume_cum, 5)
+        price_cagr: annualized(price_cum, 5)
+        organic_cagr: annualized(organic_cum, 5)
+        acquisitions_cagr: annualized(acquisitions_cum, 5)
+        currency_cagr: annualized(currency_cum, 5)
+        accounting_cagr: annualized(accounting_cum, 5)
+        nominal_cagr: annualized(nominal_cum, 5)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  organic: {driver: g.organic}
+  nominal: {driver: g.nominal}
+  volume_cagr: {driver: g.volume_cagr}
+  price_cagr: {driver: g.price_cagr}
+  organic_cagr: {driver: g.organic_cagr}
+  acquisitions_cagr: {driver: g.acquisitions_cagr}
+  currency_cagr: {driver: g.currency_cagr}
+  accounting_cagr: {driver: g.accounting_cagr}
+  nominal_cagr: {driver: g.nominal_cagr}
+notes: >-
+  The 2005-2008 columns are the history columns of 31.18 (oracle 31.3-12+31.18-35), which reads them
+  again for its forecast assumptions. The compound rates run over the five yearly rates 2004-2008.

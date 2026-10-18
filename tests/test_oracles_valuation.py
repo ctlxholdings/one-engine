@@ -72,6 +72,14 @@ BOOK_SLIPS = {
     # against 11,350% on a capital of 4; every period of that row), and 621 / 1,751 is 35.5, printed 35.4
     "28.5-8": {"a_ebita at t=1", "a_noplat at t=1", "fa_noplat at t=1", "roic_expensed_ex_goodwill at t=0",
                "roic_expensed at t=0", "roic_capitalized at t=0"},
+    # Heineken (ch. 31), where exhibits disagree with each other or a ratio repeats another year's:
+    # 31.11's 2007 EBITA and NOPLAT growth print 14.2 and 18.0, 31.5's own lines give 14.0 and 17.8;
+    # 31.18's 2008 interest-income and associates returns (17.7, 10.2) and 31.19's dividend payout (18.2)
+    # repeat the forecast's ratios, not 2008's (27.2, 14.3, 16.9); 31.19's goodwill prints 526 and 75 where
+    # 31.10 prints 582 and 95; 31.21's other deferred taxes print 2.2% of revenue every year while the balance
+    # gives 2.0 by 2012; 31.30's short-term debt 686 is 31.34's 1,073 less excess cash, deducted twice
+    "31.3-12+31.18-35": {"k_ebitag at t=3", "k_noplatg at t=3", "a_ii_h at t=7", "a_assoc_h at t=7",
+                         "b_gwinv at t=1", "b_dp_h at t=7", "b_odt at t=11", "cs_std_b at t=7"},
 }
 BOOK = VO.book_path()
 needs_book = pytest.mark.skipif(BOOK is None, reason="the valuation book is not in this checkout's shared folder")
