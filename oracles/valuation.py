@@ -44,7 +44,13 @@ columns. Keys:
 * ``periods``: the case periods each row's numbers fall in, in order (the
   default for every row); the case may have more periods than any row;
 * ``rows``: name -> the row's label as printed (with its footnote mark if
-  glued to it), or ``{label, occurrence, periods, scale, skip}``:
+  glued to it), or ``{label, occurrence, continued, periods, scale, skip}``
+  or ``{line, periods, scale, skip}``. ``line``: every cell of that excerpt
+  line (1-based), a line of numbers only, such as a chart's data labels.
+  ``continued``: the run goes on over that many following lines of numbers
+  only (a row the extraction broke). A number printed inside a label
+  ("Debt-to-equity in 2006") is part of the label, accounted for by it, and
+  listed in the receipt. Further keys:
   ``occurrence`` the k-th time the label opens a run of numbers in the
   excerpt (default 1; the toy exhibits print two statements side by side,
   so a label recurs on one line), ``periods`` this row's own periods,
@@ -361,42 +367,78 @@ def figures_of(text: str) -> List[Tuple[int, int, List[Tuple[Fraction, int]]]]:
     return out
 
 
-def read_row(text: str, label: str, occurrence: int = 1
-             ) -> Tuple[int, List[Tuple[int, int]], List[Tuple[Fraction, int]]]:
-    """The ``occurrence``-th run of numbers that ``label`` opens: its line, cell positions and cells.
+Position = Tuple[int, int, int]          # (line index, token index, cell within the token)
 
-    A cell's position is ``(token index, cell within the token)``: a token
-    of three dashes holds three cells, so a row that takes one of them
-    leaves the other two for another row to account for. The label must
-    stand on token boundaries and be followed by at least one number.
-    Raises ``KeyError`` when there is no such occurrence.
+
+def _line_cells(toks: Sequence[str], li: int, start: int) -> Tuple[List[Position], List[Tuple[Fraction, int]]]:
+    """The run of cells from token ``start`` of a line up to its first word."""
+    j, cells, pos = start, [], []
+    while j < len(toks) and _cells(toks[j]) is not None:
+        got = _cells(toks[j])
+        cells += got
+        pos += [(li, j, k) for k in range(len(got))]
+        j += 1
+    return pos, cells
+
+
+def read_row(text: str, label: str, occurrence: int = 1, continued: int = 0
+             ) -> Tuple[List[Position], List[Tuple[Fraction, int]], List[Position]]:
+    """The ``occurrence``-th run of numbers that ``label`` opens: cell positions, cells, and label cells.
+
+    A cell's position is ``(line index, token index, cell within the
+    token)``: a token of three dashes holds three cells, so a row that takes
+    one of them leaves the other two for another row to account for. The
+    label must stand on token boundaries and be followed by at least one
+    number. ``continued`` extends the run over that many following lines,
+    each of which must hold numbers only (a row the extraction broke over
+    lines). Numbers inside the label itself ("Debt-to-equity in 2006", a
+    subscript "t – 1") are returned as the label's cells: text the
+    translation declares, not figures. Raises ``KeyError`` when there is no
+    such occurrence, or a continuation line holds a word.
     """
     want = label.split()
+    lines = text.splitlines()
     seen = 0
-    for li, line in enumerate(text.splitlines()):
+    for li, line in enumerate(lines):
         toks = line.split()
         for start in range(len(toks) - len(want) + 1):
             if toks[start:start + len(want)] != want:
                 continue
-            j, cells, idx = start + len(want), [], []
-            while j < len(toks) and _cells(toks[j]) is not None:
-                got = _cells(toks[j])
-                cells += got
-                idx += [(j, k) for k in range(len(got))]
-                j += 1
+            pos, cells = _line_cells(toks, li, start + len(want))
             if not cells:
                 continue
             seen += 1
-            if seen == occurrence:
-                return li, idx, cells
+            if seen != occurrence:
+                continue
+            for lj in range(li + 1, li + 1 + continued):
+                more = lines[lj].split() if lj < len(lines) else []
+                if not more or any(_cells(t) is None for t in more):
+                    raise KeyError(f"label {label!r}: continuation line {lj + 1} is not numbers only")
+                p2, c2 = _line_cells(more, lj, 0)
+                pos, cells = pos + p2, cells + c2
+            in_label = [(li, start + i, k) for i, t in enumerate(want) if _cells(t) is not None
+                        for k in range(len(_cells(t)))]
+            return pos, cells, in_label
     raise KeyError(f"label {label!r} opens no run of numbers (occurrence {occurrence}; found {seen})")
+
+
+def read_line(text: str, line: int) -> Tuple[List[Position], List[Tuple[Fraction, int]]]:
+    """Every cell of excerpt line ``line`` (1-based), a line of numbers only (a chart's data labels).
+
+    Raises ``KeyError`` when the line holds a word or no number.
+    """
+    lines = text.splitlines()
+    toks = lines[line - 1].split() if 1 <= line <= len(lines) else []
+    if not toks or any(_cells(t) is None for t in toks):
+        raise KeyError(f"line {line} is not a line of numbers only")
+    return _line_cells(toks, line - 1, 0)
 
 
 # ── the family ──────────────────────────────────────────────────────────────
 
 _KEYS = {"excerpt", "periods", "rows", "inputs", "case", "entity", "figures", "not_compared", "set_aside",
          "plant", "notes", "columns_of"}
-_ROW_KEYS = {"label", "occurrence", "periods", "scale", "skip"}
+_ROW_KEYS = {"label", "line", "continued", "occurrence", "periods", "scale", "skip"}
 
 
 class ValuationFamily(Family):
@@ -437,7 +479,7 @@ class ValuationFamily(Family):
         text = (REFERENCE / self.source(oid)).read_text(encoding="utf-8")
         n = max(_case_periods(tr["case"]), 1)
 
-        rows, claimed, problems = _read_rows(tr, text, path.name)
+        rows, claimed, problems, rows_meta = _read_rows(tr, text, path.name)
         for other in tr.get("columns_of") or []:
             # a side-by-side exhibit: the other company's columns are accounted for only by its own
             # translation reading them, never by this one saying they are someone else's
@@ -493,6 +535,8 @@ class ValuationFamily(Family):
         record = {"translation": f"cases/{self.translations.name}/{path.name}",
                   "translation_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                   "inputs": sorted(inputs), "fed_to": fed}
+        if rows_meta["labels_with_numbers"]:
+            record["labels_with_numbers"] = rows_meta["labels_with_numbers"]
         if planted:
             record["planted"] = planted
         figures = tr.get("figures") or {}
@@ -529,24 +573,35 @@ class ValuationFamily(Family):
 
 
 def _read_rows(tr: Mapping[str, Any], text: str, where: str
-               ) -> Tuple[Dict[str, Dict[str, Any]], set, List[str]]:
-    """A translation's rows read from the excerpt: the rows, the cells they take, and what could not be read."""
+               ) -> Tuple[Dict[str, Dict[str, Any]], set, List[str], Dict[str, Any]]:
+    """A translation's rows read from the excerpt: the rows, the cells they take, what could not be read,
+    and the labels that hold numbers of their own (listed in the receipt, for a reviewer to see)."""
     default_periods = list(tr["periods"])
     rows: Dict[str, Dict[str, Any]] = {}
     claimed = set()
-    problems = []
+    problems: List[str] = []
+    labelled: List[str] = []
     for name, raw in (tr.get("rows") or {}).items():
         spec = {"label": raw} if isinstance(raw, str) else dict(raw)
         bad = sorted(set(spec) - _ROW_KEYS)
-        if bad or "label" not in spec:
-            raise ValueError(f"{where}: row {name}: keys {bad} unknown, or no label")
+        if bad or ("label" in spec) == ("line" in spec) or ("line" in spec and "continued" in spec):
+            raise ValueError(f"{where}: row {name}: keys {bad} unknown, or not one of label and line "
+                             f"(continued goes with a label)")
         periods = list(spec.get("periods", default_periods))
         scale = Fraction(str(spec.get("scale", 1)))
         if scale != 1 and scale not in SCALES:
             raise ValueError(f"{where}: row {name}: scale {scale} is not a power of ten")
         skip = int(spec.get("skip", 0))
         try:
-            li, idx, cells = read_row(text, spec["label"], int(spec.get("occurrence", 1)))
+            if "line" in spec:
+                idx, cells = read_line(text, int(spec["line"]))
+            else:
+                idx, cells, in_label = read_row(text, spec["label"], int(spec.get("occurrence", 1)),
+                                                int(spec.get("continued", 0)))
+                # a number printed inside the label is the label's text, declared in the translation
+                claimed |= set(in_label)
+                if in_label:
+                    labelled.append(spec["label"])
         except KeyError as e:
             problems.append(f"{name}: {e.args[0]}")
             continue
@@ -556,9 +611,10 @@ def _read_rows(tr: Mapping[str, Any], text: str, where: str
             continue
         # only the cells the row takes are accounted for: a run's other cells (the second
         # company's columns, the current year of a row read for its prior year) need a row of their own
-        claimed |= {(li,) + pos for pos in idx[skip:skip + len(periods)]}
+        claimed |= set(idx[skip:skip + len(periods)])
         rows[name] = {"periods": periods, "scale": scale, "cells": mine}
-    return rows, claimed, problems
+    rows_meta = {"labels_with_numbers": labelled}
+    return rows, claimed, problems, rows_meta
 
 
 def _case_periods(case: Mapping[str, Any]) -> int:

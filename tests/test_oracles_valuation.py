@@ -27,7 +27,7 @@ from one_engine import oracles as O
 from one_engine.cases import run_case
 from one_engine.cuts import CutError
 from one_engine.oracles import valuation as VO
-from one_engine.oracles.valuation import ValuationFamily, figures_of, read_row
+from one_engine.oracles.valuation import ValuationFamily, figures_of, read_line, read_row
 
 FAMILY = ValuationFamily()
 ORACLES = FAMILY.oracles()
@@ -50,9 +50,9 @@ def test_a_printed_number_is_read_with_its_sign_and_precision():
 
 def test_glued_dashes_are_one_nil_cell_each():
     assert VO._cells("–––") == [(0, 0)] * 3
-    _li, positions, cells = read_row("Goodwill ––– 15\n", "Goodwill")
+    positions, cells, _ = read_row("Goodwill ––– 15\n", "Goodwill")
     assert cells == [(0, 0)] * 3 + [(15, 0)]
-    assert positions == [(1, 0), (1, 1), (1, 2), (2, 0)]
+    assert positions == [(0, 1, 0), (0, 1, 1), (0, 1, 2), (0, 2, 0)]
 
 
 def test_a_footnote_mark_opening_a_line_is_not_a_figure():
@@ -62,10 +62,29 @@ def test_a_footnote_mark_opening_a_line_is_not_a_figure():
 
 def test_a_label_is_read_at_its_occurrence_and_never_inside_another_word():
     text = "Interest-bearing debt 225 200\nInterest (20) Operating taxes1 (70)\nInterest 5\n"
-    assert read_row(text, "Interest")[2] == [(-20, 0)]
-    assert read_row(text, "Interest", occurrence=2)[2] == [(5, 0)]
+    assert read_row(text, "Interest")[1] == [(-20, 0)]
+    assert read_row(text, "Interest", occurrence=2)[1] == [(5, 0)]
     with pytest.raises(KeyError):
         read_row(text, "Interest", occurrence=3)
+
+
+def test_a_row_broken_over_lines_reads_on_only_through_lines_of_numbers():
+    text = "Free cash flow –\n–\n11.9 12.6\nNOPLAT 5\n"
+    assert read_row(text, "Free cash flow", continued=2)[1] == [(0, 0), (0, 0), (F(119, 10), 1), (F(126, 10), 1)]
+    with pytest.raises(KeyError, match="not numbers only"):
+        read_row(text, "Free cash flow", continued=3)
+
+
+def test_a_line_of_numbers_alone_is_read_by_its_number_and_a_line_with_words_refuses():
+    text = "Some chart\n67 60\n$893 $893\n"
+    assert read_line(text, 3)[1] == [(893, 0), (893, 0)]
+    with pytest.raises(KeyError):
+        read_line(text, 1)
+
+
+def test_numbers_inside_a_label_are_the_labels_own():
+    positions, cells, in_label = read_row("Debt-to-equity in 2006 0.26 0.16\n", "Debt-to-equity in 2006")
+    assert cells == [(F(26, 100), 2), (F(16, 100), 2)] and in_label == [(0, 2, 0)]
 
 
 # ── a translation cannot pass dishonestly ───────────────────────────────────
@@ -97,6 +116,16 @@ def test_a_row_that_takes_one_year_of_a_run_leaves_the_other_unaccounted(tmp_pat
     del tr["rows"]["inventory"], tr["figures"]["inventory"]      # inventory_prior takes 200, nobody 225
     c = _run_with(tmp_path, tr)["every printed figure accounted for"]
     assert not c.ok and "225" in c.got
+
+
+def test_a_label_holding_a_figure_is_accounted_for_but_shown_in_the_receipt(tmp_path):
+    # the translation reads 7.2's revenue line with the figure inside its label: accounted for, and listed
+    tr = _tr()
+    tr["rows"]["revenues"] = {"label": "Revenues 1,000 Revenues", "periods": [1]}
+    (tmp_path / "7.1-3.yaml").write_text(yaml.safe_dump(tr, sort_keys=False))
+    checks, record = ValuationFamily(translations=tmp_path).run("7.1-3")
+    assert all(c.ok for c in checks)
+    assert record["labels_with_numbers"] == ["Revenues 1,000 Revenues"]
 
 
 def test_a_number_typed_into_the_case_fails(tmp_path):
