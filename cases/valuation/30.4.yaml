@@ -1,0 +1,43 @@
+# Valuation, Exhibit 30.4 (ch. 30, p. 628): for twelve European stock market indexes, the share of
+# return variation that the index's industry composition explains (adjusted R-squared), and their
+# average.
+#
+# The bars' data labels are market statistics (Roll, 1992) with nothing in the exhibit to compute them
+# from. The extraction prints the twelve country names, then the twelve labels one per line, in the
+# chart's order (Sweden first, Norway last); the labels are read as one row over those lines
+# (`line: [a, b]`), case periods 0-11 in that order, and taken as the input. The printed average sits
+# at period 0 and is compared with their mean (the pack's mean).
+excerpt: "30.4"
+periods: [0]
+entity: model
+plant: shares
+rows:
+  shares: {line: [14, 25], periods: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], scale: 0.01}
+  average: {label: Average, scale: 0.01}
+inputs: [shares]
+set_aside:
+  "Source: R. Roll, “Industrial Structure and the Comparative Behaviour of International Stock Market Indexes,” Journal of Finance 47, no. 1 (1992): 3–42.": the source line (journal volume, issue, year and pages)
+  "EXHIBIT 30.4–Share of Equity Returns Explained by Industry Composition of Index": the exhibit's number
+  "Adjusted R 2, percent": the axis title (the 2 is R-squared's exponent)
+case:
+  case: valuation-industry-composition
+  periods: 12
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 12
+      inputs: exhibit
+      values:
+        average_m: mean(shares__0, shares__1, shares__2, shares__3, shares__4, shares__5, shares__6, shares__7, shares__8, shares__9, shares__10, shares__11)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  average: {driver: m.average_m}

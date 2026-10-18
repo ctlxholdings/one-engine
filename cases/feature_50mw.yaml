@@ -118,6 +118,43 @@ schemes:
     shl.capitalised_interest: shareholder
     equity.capital: equity
     equity.distributions: equity
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    ppa.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    om_fixed.payable: operating_current_liability
+    insurance.payable: operating_current_liability
+    land_lease.payable: operating_current_liability
+    om_variable.payable: operating_current_liability
+    fixed_assets: operating_long_term
+    cwip: operating_long_term
+    senior.debt: debt
+    senior.interest_payable: debt
+    senior.fee_payable: debt
+    shl.debt: debt
+    shl.interest_payable: debt
+    shl.fee_payable: debt
+    shl.capitalised_interest: debt
+    dsra.fee_payable: debt      # the letter of credit's fee owed
+    decommissioning: debt_equivalent      # a long-term operating provision: a debt equivalent (ch. 7)
+    equity.capital: equity
+    equity.distributions: equity
+    ppa.revenue: revenue
+    decommissioning_expense: operating_cost      # the provision's accrual, an operating cost
+    om_fixed.expense: operating_cost
+    insurance.expense: operating_cost
+    land_lease.expense: operating_cost
+    om_variable.expense: operating_cost
+    depreciation: depreciation
+    disposal_loss: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation (averta_spv's income scheme reads it so)
+    shl_forgiven: nonoperating      # a one-time gain on the loan forgiven
+    senior.interest: interest
+    senior.fees: interest
+    shl.interest: interest
+    shl.fees: interest
+    dsra.fee: interest      # the letter of credit's fee: a financing cost
+    tax_expense: tax
 rulebooks:
   funding:
     kind: funding_plan
@@ -222,6 +259,14 @@ cuts:
   equity_flows: {entity: spv, account: cash, scheme: cash_flow, include: [equity]}
   sponsor_flows: {entity: spv, account: cash, scheme: cash_flow, include: [equity, shareholder]}
   project_flows: {entity: spv, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: spv
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.25      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures:
   equity_irr: {measure: irr, cut: equity_flows, per_year: 4}
   sponsor_irr: {measure: irr, cut: sponsor_flows, per_year: 4}

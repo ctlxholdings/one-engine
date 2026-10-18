@@ -340,6 +340,82 @@ schemes:
     deferred_tax_expense: tax
     transaction_costs: deal
     deal_tax_benefit: deal
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    receivables: operating_current_asset
+    prepaid: operating_current_asset
+    payables: operating_current_liability
+    accrued: operating_current_liability
+    other_current_liabilities: operating_current_liability
+    tax_payable: operating_current_liability
+    ppe_gross: operating_long_term
+    accumulated_depreciation: operating_long_term
+    other_lt_assets: operating_long_term      # not explained by the source; read as operating
+    other_lt_liabilities: operating_long_term      # not explained by the source; read as operating
+    goodwill: goodwill
+    intangibles: goodwill      # acquired intangibles (the deal's mark), with goodwill
+    deal.purchase: goodwill      # the purchase's clearing account, nil at every close
+    cash: nonoperating_asset      # excess cash: kept above the 100 minimum and earning interest_income (ch. 7: nonoperating)
+    legacy_debt: debt      # refinanced at the close
+    revolver.debt: debt
+    revolver.capitalised_interest: debt
+    revolver.interest_payable: debt
+    revolver.fee_payable: debt
+    revolver.deferred_fees: debt
+    term_loan_a.debt: debt
+    term_loan_a.capitalised_interest: debt
+    term_loan_a.interest_payable: debt
+    term_loan_a.fee_payable: debt
+    term_loan_a.deferred_fees: debt
+    senior_note.debt: debt
+    senior_note.capitalised_interest: debt
+    senior_note.interest_payable: debt
+    senior_note.fee_payable: debt
+    senior_note.deferred_fees: debt
+    subordinated_note.debt: debt
+    subordinated_note.capitalised_interest: debt
+    subordinated_note.interest_payable: debt
+    subordinated_note.fee_payable: debt
+    subordinated_note.deferred_fees: debt
+    revolver_fee.deferred: debt      # fees capitalised: netted from the debt
+    term_loan_a_fee.deferred: debt      # fees capitalised: netted from the debt
+    senior_note_fee.deferred: debt      # fees capitalised: netted from the debt
+    subordinated_note_fee.deferred: debt      # fees capitalised: netted from the debt
+    preferred_a.capital: debt_equivalent      # preferred stock: a debt equivalent (ch. 7)
+    preferred_a.discount: debt_equivalent      # the preferred's issue discount, against it
+    preferred_a.dividend_payable: debt_equivalent      # the preferred's coupon owed
+    common_par: equity
+    apic: equity
+    retained_earnings: equity
+    preferred_issue_costs: equity      # netted from paid-in capital, as the case's balance_sheet scheme reads it
+    preferred_a.dividends: equity      # the coupon charged to common equity (the balance_sheet scheme's retained earnings)
+    sponsor.capital: equity
+    sponsor.distributions: equity
+    management.capital: equity
+    management.distributions: equity
+    net_dtl: equity_equivalent      # deferred tax on the deal's marks and on fees deducted at the close: nonoperating
+    sales: revenue
+    cogs: operating_cost
+    sga: operating_cost
+    sbc: operating_cost      # share compensation: an operating cost
+    depreciation: depreciation
+    amortisation: amortization
+    transaction_costs: nonoperating      # the deal's one-time cost
+    interest_income: nonoperating      # the excess cash's interest
+    revolver.interest: interest
+    revolver.fees: interest
+    term_loan_a.interest: interest
+    term_loan_a.fees: interest
+    senior_note.interest: interest
+    senior_note.fees: interest
+    subordinated_note.interest: interest
+    subordinated_note.fees: interest
+    revolver_fee.amortisation: interest
+    term_loan_a_fee.amortisation: interest
+    senior_note_fee.amortisation: interest
+    subordinated_note_fee.amortisation: interest
+    deal_tax_benefit: tax      # the tax refunded on the close's deductions
+    tax_expense: tax
+    deferred_tax_expense: tax
 rulebooks:
   deal:
     kind: acquisition
@@ -498,6 +574,13 @@ lenses:
       layers:                   # kickers, then the management performance pool, which dilutes them too
         - {subordinated_note: 0.02, preferred_a: 0.0025}
         - {management: 0.005}
+  valuation:
+    kind: valuation
+    entity: company
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.350003      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures:
   subordinated_note_irr: {measure: xirr, cut: exit.subordinated_note, dates: ['2023-12-31', '2024-12-31', '2025-12-31', '2026-12-31', '2027-12-31', '2028-12-31', '2029-12-31', '2030-12-31', '2031-12-31', '2032-12-31', '2033-12-31']}
   subordinated_note_moic: {measure: moic, cut: exit.subordinated_note}

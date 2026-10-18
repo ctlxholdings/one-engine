@@ -248,6 +248,37 @@ schemes:
     tax_expense: tax
     deferred_tax_expense: tax
     mmr.return: other
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    autoconsumo.receivable: operating_current_asset
+    surplus.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    insurance.payable: operating_current_liability
+    rent.payable: operating_current_liability
+    om_sub.payable: operating_current_liability
+    am_admin.payable: operating_current_liability
+    am_margin.payable: operating_current_liability
+    monitoring.payable: operating_current_liability
+    fixed_assets: operating_long_term
+    cwip: operating_long_term
+    mmr: nonoperating_asset      # a cash reserve set aside, not operating capital until it is spent
+    equity.capital: equity
+    equity.distributions: equity
+    deferred_tax: operating_deferred_tax      # the timing difference of the assets' tax depreciation: operating
+    autoconsumo.revenue: revenue
+    surplus.revenue: revenue
+    insurance.expense: operating_cost
+    rent.expense: operating_cost
+    om_sub.expense: operating_cost
+    am_admin.expense: operating_cost
+    am_margin.expense: operating_cost
+    monitoring.expense: operating_cost
+    depreciation: depreciation
+    disposal_loss: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation (averta_spv's income scheme reads it so)
+    mmr.return: nonoperating      # the reserve's return
+    tax_expense: tax
+    deferred_tax_expense: tax
 rulebooks:
   funding:
     kind: funding_plan
@@ -322,6 +353,14 @@ cuts:
   equity_flows: {entity: spv, account: cash, scheme: cash_flow, include: [equity]}
   revenue: {kind: pnl, entity: spv, scheme: income, include: [revenue]}
   opex: {kind: pnl, entity: spv, scheme: income, include: [opex]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: spv
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.25      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (its discount_factor 0.85 is a tariff discount), so no economic profit
 measures:
   unlevered_irr: {measure: irr, cut: unlevered_flows, per_year: 4}
   equity_irr: {measure: irr, cut: equity_flows, per_year: 4}

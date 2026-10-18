@@ -135,7 +135,38 @@ schemes:
     debt.fee_payable: financing
     debt.capitalised_interest: financing
     debt.deferred_fees: financing
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    opening_receivables: operating_current_asset
+    sales.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    opening_payables: operating_current_liability
+    direct.payable: operating_current_liability
+    indirect.payable: operating_current_liability
+    cwip: operating_long_term
+    fixed_assets: operating_long_term
+    debt.debt: debt
+    debt.capitalised_interest: debt
+    debt.interest_payable: debt
+    debt.fee_payable: debt
+    debt.deferred_fees: debt
+    retained_earnings: equity
+    sales.revenue: revenue
+    direct.expense: operating_cost
+    indirect.expense: operating_cost
+    depreciation: depreciation
+    disposal_loss: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation (averta_spv's income scheme reads it so)
+    debt.interest: interest
+    debt.fees: interest
 cuts:
   operating: {entity: company, account: cash, scheme: cash_flow, include: [operating]}
   financing: {entity: company, account: cash, scheme: cash_flow, include: [financing]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: company
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}                    # the answers are amounts read from the books

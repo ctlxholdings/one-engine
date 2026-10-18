@@ -148,6 +148,39 @@ schemes:
     warehouse.capitalised_interest: warehouse, warehouse.deferred_fees: warehouse, shl.debt: shl, shl.interest_payable: shl,
     shl.fee_payable: shl, shl.capitalised_interest: shl, shl.deferred_fees: shl, lp.capital: lp, lp.distributions: lp,
     gp.capital: gp, gp.distributions: gp}
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    spv_distributions.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    admin.payable: operating_current_liability
+    fixed_assets: operating_long_term
+    cwip: operating_long_term
+    exit_proceeds.receivable: nonoperating_asset      # the sale's proceeds owed
+    exit_fee.payable: nonoperating_asset      # the sale's fee owed (a liability read as a negative nonoperating asset)
+    warehouse.debt: debt
+    warehouse.capitalised_interest: debt
+    warehouse.interest_payable: debt
+    warehouse.fee_payable: debt
+    warehouse.deferred_fees: debt
+    shl.debt: debt
+    shl.capitalised_interest: debt
+    shl.interest_payable: debt
+    shl.fee_payable: debt
+    shl.deferred_fees: debt
+    lp.capital: equity
+    lp.distributions: equity
+    gp.capital: equity
+    gp.distributions: equity
+    spv_distributions.revenue: revenue      # the holding's business: the SPVs' distributions
+    admin.expense: operating_cost
+    depreciation: depreciation
+    disposal_loss: nonoperating      # the SPVs derecognised at their sale: part of the exit
+    exit_proceeds.revenue: nonoperating      # the sale of the portfolio: nonoperating (the case's cash_flow scheme sets the exit apart)
+    exit_fee.expense: nonoperating      # the cost of the sale
+    warehouse.interest: interest
+    warehouse.fees: interest
+    shl.interest: interest
+    shl.fees: interest
 rulebooks:
   funding:
     kind: funding_plan
@@ -226,6 +259,14 @@ cuts:
     account: cash
     scheme: cash_flow
     include: [exit]
+lenses:
+  valuation:
+    kind: valuation
+    entity: holdco
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures:
   lp_equity_irr: {measure: irr, cut: lp_equity_flows, per_year: 4}
   lp_irr: {measure: irr, cut: lp_flows, per_year: 4}

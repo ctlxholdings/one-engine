@@ -1,0 +1,180 @@
+# Valuation, Exhibit 29.4 (ch. 29, p. 610): the chapter's steady company once inflation starts in
+# year 2, when it passes inflation on in full: its free cash flow, not only its earnings, grows with
+# inflation, which keeps its value (p. 609).
+#
+# The company (pp. 607-608, and Exhibit 29.2) holds fifteen equal groups of assets with one to fifteen
+# years of life left; each year-end it replaces the group that has just been fully depreciated, and
+# each group is depreciated straight-line over fifteen years from the year after it is bought. Before
+# year 2 every group cost the year-1 capital expenditure, so the opening balance sheet is 15 groups
+# at cost (gross PP&E) and 0 + 1 + ... + 14 fifteenths of one group written off (cumulative
+# depreciation), all derived from the printed year-1 capex. From year 2 on, capex and cash costs (the
+# year-1 sales less EBITDA) rise with the price level, and free cash flow is year-1 FCF (EBITDA less
+# capex) grown at inflation; EBITDA is that FCF plus capex, sales EBITDA plus the cash costs. The
+# inflation rate is read from the year-2 FCF growth the exhibit prints, as that is the one place the
+# exhibit gives it (the 15% of the prose, p. 607, is not read).
+#
+# Booked as 29.3 is: case period t is year t, period 0 the steady balance sheet before year 1. Each
+# year the sales, the cash costs, the depreciation, the capex and the retirement of the oldest group
+# are posted with the transfer rulebook; no taxes, so the lens's marginal tax rate is 0 and NOPLAT is
+# EBITA. Gross PP&E and cumulative depreciation are read from their accounts, invested capital,
+# EBITA, FCF and ROIC (on opening capital) from the valuation lens, capex from the cash the PP&E took,
+# the growth and margin rows from the model. The cash the company accumulates is held as a
+# nonoperating asset so it stays out of invested capital.
+#
+# The exhibit prints years 1-4 and 16-17; the columns after each ". . ." are read with that mark as
+# their label, the k-th data line's run being occurrence k.
+excerpt: "29.4"
+periods: [1, 2, 3, 4]
+entity: company
+plant: sales_1
+rows:
+  sales_1: {label: Sales, periods: [1]}
+  sales: {label: Sales, periods: [2, 3, 4], skip: 1}
+  sales_late: {label: ". . .", occurrence: 1, periods: [16, 17]}
+  ebitda_1: {label: EBITDA, periods: [1]}
+  ebitda: {label: EBITDA, periods: [2, 3, 4], skip: 1}
+  ebitda_late: {label: ". . .", occurrence: 2, periods: [16, 17]}
+  depreciation: Depreciation
+  depreciation_late: {label: ". . .", occurrence: 3, periods: [16, 17]}
+  ebita: EBITA
+  ebita_late: {label: ". . .", occurrence: 4, periods: [16, 17]}
+  gross_ppe: Gross property, plant, and equipment
+  gross_ppe_late: {label: ". . .", occurrence: 5, periods: [16, 17]}
+  cumulative_depreciation: Cumulative depreciation
+  cumulative_depreciation_late: {label: ". . .", occurrence: 6, periods: [16, 17]}
+  invested_capital: Invested capital
+  invested_capital_late: {label: ". . .", occurrence: 7, periods: [16, 17]}
+  fcf_ebitda: {label: EBITDA, occurrence: 2}
+  fcf_ebitda_late: {label: ". . .", occurrence: 8, periods: [16, 17]}
+  capex_1: {label: Capital expenditures, periods: [1]}
+  capex: {label: Capital expenditures, periods: [2, 3, 4], skip: 1}
+  capex_late: {label: ". . .", occurrence: 9, periods: [16, 17]}
+  fcf: Free cash flow (FCF)
+  fcf_late: {label: ". . .", occurrence: 10, periods: [16, 17]}
+  ebita_growth: {label: EBITA growth (percent), scale: 0.01}
+  ebita_growth_late: {label: ". . .", occurrence: 11, periods: [16, 17], scale: 0.01}
+  ebita_margin: {label: EBITA/sales (percent), scale: 0.01}
+  ebita_margin_late: {label: ". . .", occurrence: 12, periods: [16, 17], scale: 0.01}
+  roic: {label: Return on invested capital (percent), scale: 0.01}
+  roic_late: {label: ". . .", occurrence: 13, periods: [16, 17], scale: 0.01}
+  fcf_growth_1: {label: FCF growth (percent), periods: [1], scale: 0.01}
+  inflation: {label: FCF growth (percent), periods: [2], skip: 1, scale: 0.01}
+  fcf_growth: {label: FCF growth (percent), periods: [3, 4], skip: 2, scale: 0.01}
+  fcf_growth_late: {label: ". . .", occurrence: 14, periods: [16, 17], scale: 0.01}
+inputs: [sales_1, ebitda_1, capex_1, inflation]
+set_aside:
+  "EXHIBIT 29.4 Financial Projections with Inflation and Full Inflation Pass-On": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4 . . . Year 16 Year 17 . . .": the column headings
+case:
+  case: valuation-inflation-full-pass-on
+  periods: 18
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 18
+      inputs: exhibit
+      values:
+        cap1: -capex_1__1
+        # the steady balance sheet before year 1: fifteen groups at the year-1 capex, written off 0 to 14
+        # fifteenths each (seven groups' cost in all)
+        gross_0: cap1 * 15
+        cumdep_0: cap1 * (15 - 1) / 2
+        equity_0: gross_0 - cumdep_0
+        infl: inflation__2
+        # the price level: 1 up to year 1, compounding at the inflation rate from year 2
+        price: (1 + infl) ** max(t - 1, 0)
+        capex_m: cap1 * price
+        cumcap: cumsum(capex_m)
+        # a year's depreciation is a fifteenth of the fifteen groups bought at the ends of the fifteen
+        # years before it; groups bought before period 0 each cost the year-1 capex
+        dep_m: "(lag(cumcap, 1) - lag(cumcap, 16) + cap1 * max(15 - t, 0)) / 15 if t >= 1 else 0"
+        # the group retired at the end of year t is the one bought at the end of year t - 15
+        retire_m: "(lag(capex_m, 15) if t >= 16 else cap1) if t >= 1 else 0"
+        costs_m: (sales_1__1 - ebitda_1__1) * price
+        # full pass-on: free cash flow keeps pace with inflation
+        fcf_m: (ebitda_1__1 - cap1) * price
+        ebitda_m: fcf_m + capex_m
+        ebita_m: ebitda_m - dep_m
+        sales_m: ebitda_m + costs_m
+        sales_post: "sales_m if t >= 1 else 0"
+        costs_post: "costs_m if t >= 1 else 0"
+        capex_post: "capex_m if t >= 1 else 0"
+        ebita_growth_m: "ebita_m / lag(ebita_m, 1) - 1 if t >= 2 else 0"
+        ebita_margin_m: "ebita_m / sales_m if t >= 1 else 0"
+        fcf_growth_m: "fcf_m / lag(fcf_m, 1) - 1 if t >= 2 else 0"
+  opening:
+    company:
+      gross_ppe: {nature: asset, value: {generator: m, output: gross_0}}
+      cumulative_depreciation: {nature: liability, value: {generator: m, output: cumdep_0}}
+      equity: {nature: equity, value: {generator: m, output: equity_0}}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, revenue: income, operating_costs: expense, depreciation: expense}
+      moves:
+        sales: {debit: cash, credit: revenue, amount: {generator: m, output: sales_post}}
+        costs: {debit: operating_costs, credit: cash, amount: {generator: m, output: costs_post}}
+        depreciation: {debit: depreciation, credit: cumulative_depreciation, amount: {generator: m, output: dep_m}}
+        capex: {debit: gross_ppe, credit: cash, amount: {generator: m, output: capex_post}}
+        retirement: {debit: cumulative_depreciation, credit: gross_ppe, amount: {generator: m, output: retire_m}}
+  schemes:
+    valuation:
+      cash: nonoperating_asset
+      gross_ppe: operating_long_term
+      cumulative_depreciation: operating_long_term
+      equity: equity
+      revenue: revenue
+      operating_costs: operating_cost
+      depreciation: depreciation
+    cash_flow:
+      revenue: operating
+      operating_costs: operating
+      gross_ppe: investing
+  cuts:
+    investing: {entity: company, account: cash, scheme: cash_flow, include: [investing]}
+  lenses:
+    v:
+      kind: valuation
+      entity: company
+      scheme: valuation
+      # the example has no taxes
+      marginal_tax_rate: 0
+      roic_on: opening
+  measures: {}
+figures:
+  sales: {change: revenue}
+  sales_late: {change: revenue}
+  ebitda: {change: revenue - operating_costs}
+  ebitda_late: {change: revenue - operating_costs}
+  depreciation: {cut: v.depreciation, sign: -1}
+  depreciation_late: {cut: v.depreciation, sign: -1}
+  ebita: {cut: v.ebita}
+  ebita_late: {cut: v.ebita}
+  gross_ppe: {balance: gross_ppe}
+  gross_ppe_late: {balance: gross_ppe}
+  cumulative_depreciation: {balance: cumulative_depreciation, sign: -1}
+  cumulative_depreciation_late: {balance: cumulative_depreciation, sign: -1}
+  invested_capital: {cut: v.invested_capital}
+  invested_capital_late: {cut: v.invested_capital}
+  # with no taxes, NOPLAT plus depreciation is EBITDA
+  fcf_ebitda: {cut: v.gross_cash_flow}
+  fcf_ebitda_late: {cut: v.gross_cash_flow}
+  capex: {cut: investing}
+  capex_late: {cut: investing}
+  fcf: {cut: v.fcf}
+  fcf_late: {cut: v.fcf}
+  ebita_growth: {driver: m.ebita_growth_m}
+  ebita_growth_late: {driver: m.ebita_growth_m}
+  ebita_margin: {driver: m.ebita_margin_m}
+  ebita_margin_late: {driver: m.ebita_margin_m}
+  roic: {cut: v.roic}
+  roic_late: {cut: v.roic}
+  fcf_growth_1: {driver: m.fcf_growth_m}
+  fcf_growth: {driver: m.fcf_growth_m}
+  fcf_growth_late: {driver: m.fcf_growth_m}

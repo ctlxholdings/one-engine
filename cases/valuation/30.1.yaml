@@ -1,0 +1,78 @@
+# Valuation, Exhibit 30.1 (ch. 30, p. 623): a Swiss subsidiary's cash flows, 2010-2015, in Swiss francs
+# and translated into euros at forward rates that follow interest rate parity.
+#
+# Case period t is year 2009 + t; period 0 is the valuation date, when the spot rate is quoted. Both
+# currencies are built the same way (pp. 622-624): each year's nominal forward interest rate compounds
+# that year's real rate with that year's inflation, (1 + real)(1 + inflation) - 1; the nominal yield
+# for t years is the annual rate that compounds to the product of the first t forward rates (the
+# pack's annualized); the forward exchange rate for year t is the spot rate times the ratio of the two
+# currencies' compounded forward rates to year t (interest rate parity, p. 624). The nominal franc
+# cash flows are the exhibit's projection, an input; the nominal euro cash flows are them at the
+# forward rates, compared. Real cash flows are nominal cash flows deflated by each currency's price
+# level since the valuation date (inflation compounded from 2010), compared.
+excerpt: "30.1"
+periods: [1, 2, 3, 4, 5, 6]
+entity: model
+plant: chf_nominal_cash_flow
+rows:
+  chf_nominal_cash_flow: Nominal cash flow
+  chf_real_cash_flow: Real cash flow
+  chf_inflation: {label: Inflation (percent), scale: 0.01}
+  chf_real_rate: {label: Real interest rate, scale: 0.01}
+  chf_forward_rate: {label: Nominal forward interest rate, scale: 0.01}
+  chf_yield: {label: Nominal interest yield, scale: 0.01}
+  spot: {label: Spot exchange rate, periods: [0]}
+  forward_fx: Forward exchange rate
+  eur_yield: {label: Nominal interest yield, occurrence: 2, scale: 0.01}
+  eur_forward_rate: {label: Nominal forward interest rate, occurrence: 2, scale: 0.01}
+  eur_real_rate: {label: Real interest rate, occurrence: 2, scale: 0.01}
+  eur_inflation: {label: Inflation (percent), occurrence: 2, scale: 0.01}
+  eur_real_cash_flow: {label: Real cash flow, occurrence: 2}
+  eur_nominal_cash_flow: {label: Nominal cash flow, occurrence: 2}
+inputs: [chf_nominal_cash_flow, chf_inflation, chf_real_rate, spot, eur_real_rate, eur_inflation]
+set_aside:
+  "EXHIBIT 30.1 Projecting and Discounting Foreign Cash Flows": the exhibit's number
+  "2010 2011 2012 2013 2014 2015": the column headings
+case:
+  case: valuation-foreign-cash-flows
+  periods: 7
+  phases: [operate]
+  currency: EUR
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 7
+      inputs: exhibit
+      values:
+        chf_fwd: "(1 + chf_real_rate) * (1 + chf_inflation) - 1 if t >= 1 else 0"
+        eur_fwd: "(1 + eur_real_rate) * (1 + eur_inflation) - 1 if t >= 1 else 0"
+        # compounded to year t: the product of the forward rates so far (lag reads nil before year 1)
+        chf_cum: (1 + chf_fwd) * (1 + lag(chf_fwd, 1)) * (1 + lag(chf_fwd, 2)) * (1 + lag(chf_fwd, 3)) * (1 + lag(chf_fwd, 4)) * (1 + lag(chf_fwd, 5))
+        eur_cum: (1 + eur_fwd) * (1 + lag(eur_fwd, 1)) * (1 + lag(eur_fwd, 2)) * (1 + lag(eur_fwd, 3)) * (1 + lag(eur_fwd, 4)) * (1 + lag(eur_fwd, 5))
+        chf_yield_m: "annualized(chf_cum - 1, t) if t >= 1 else 0"
+        eur_yield_m: "annualized(eur_cum - 1, t) if t >= 1 else 0"
+        # interest rate parity: francs per euro drift with the ratio of the compounded rates
+        fx: "spot__0 * chf_cum / eur_cum if t >= 1 else 0"
+        eur_nominal: "chf_nominal_cash_flow / fx if t >= 1 else 0"
+        # price levels since the valuation date
+        chf_px: (1 + chf_inflation) * (1 + lag(chf_inflation, 1)) * (1 + lag(chf_inflation, 2)) * (1 + lag(chf_inflation, 3)) * (1 + lag(chf_inflation, 4)) * (1 + lag(chf_inflation, 5))
+        eur_px: (1 + eur_inflation) * (1 + lag(eur_inflation, 1)) * (1 + lag(eur_inflation, 2)) * (1 + lag(eur_inflation, 3)) * (1 + lag(eur_inflation, 4)) * (1 + lag(eur_inflation, 5))
+        chf_real: chf_nominal_cash_flow / chf_px
+        eur_real: eur_nominal / eur_px
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  chf_real_cash_flow: {driver: m.chf_real}
+  chf_forward_rate: {driver: m.chf_fwd}
+  chf_yield: {driver: m.chf_yield_m}
+  forward_fx: {driver: m.fx}
+  eur_yield: {driver: m.eur_yield_m}
+  eur_forward_rate: {driver: m.eur_fwd}
+  eur_real_cash_flow: {driver: m.eur_real}
+  eur_nominal_cash_flow: {driver: m.eur_nominal}

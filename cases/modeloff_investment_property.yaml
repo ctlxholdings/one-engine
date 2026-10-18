@@ -131,6 +131,27 @@ schemes:
     mortgage.deferred_fees: cost
     equity.capital: other
     equity.distributions: other
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    vat_receivable: operating_current_asset
+    rent.receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    agency.payable: operating_current_liability
+    maintenance.payable: operating_current_liability
+    cwip: operating_long_term
+    mortgage.debt: debt
+    mortgage.capitalised_interest: debt
+    mortgage.interest_payable: debt
+    mortgage.fee_payable: debt
+    mortgage.deferred_fees: debt
+    equity.capital: equity
+    equity.distributions: equity
+    rent.revenue: revenue
+    agency.expense: operating_cost
+    maintenance.expense: operating_cost
+    mortgage.interest: interest
+    mortgage.fees: interest
+    tax_expense: tax
 rulebooks:
   funding:
     kind: funding_plan
@@ -198,6 +219,13 @@ lenses:
   sale_8: {<<: *sale, period: 8}
   sale_9: {<<: *sale, period: 9}
   sale_10: {<<: *sale, period: 10}
+  valuation:
+    kind: valuation
+    entity: company
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.35      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures:
   irr_1: {measure: irr, cut: sale_1.owner}
   irr_2: {measure: irr, cut: sale_2.owner}

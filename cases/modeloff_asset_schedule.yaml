@@ -42,6 +42,17 @@ contracts:
 schemes:
   cash_flow:
     cwip: investing
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    vat_receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    fixed_assets: operating_long_term
+    cwip: operating_long_term
+    cash: nonoperating_asset      # never positive: what the capex costs, the case stating no funding; not operating capital
+    deferred_tax: operating_deferred_tax      # the timing difference of the assets' tax depreciation: operating
+    depreciation: depreciation
+    disposal_loss: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation (averta_spv's income scheme reads it so)
+    tax_expense: tax
+    deferred_tax_expense: tax
 rulebooks:
   assets:
     kind: asset_register
@@ -73,4 +84,12 @@ rulebooks:
       deferred_tax_expense: non_deductible
 cuts:
   capex: {entity: company, account: cash, scheme: cash_flow, include: [investing]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: company
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: [0.3, 0.3, 0.3, 0.3, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28]      # the income_tax rulebook's rate, period by period
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}                    # the answers are amounts read from the books and records

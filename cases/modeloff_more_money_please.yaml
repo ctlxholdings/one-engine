@@ -150,6 +150,36 @@ schemes:
     refi_fee.deferred: financing
     equity.capital: equity
     equity.distributions: equity
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    sales.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    opex.payable: operating_current_liability
+    fixed_assets: operating_long_term
+    cwip: operating_long_term
+    senior.debt: debt
+    senior.capitalised_interest: debt
+    senior.interest_payable: debt
+    senior.fee_payable: debt
+    senior.deferred_fees: debt
+    refi.debt: debt
+    refi.capitalised_interest: debt
+    refi.interest_payable: debt
+    refi.fee_payable: debt
+    refi.deferred_fees: debt
+    refi_fee.deferred: debt      # fees capitalised: netted from the debt
+    retained_earnings: equity
+    equity.capital: equity
+    equity.distributions: equity
+    sales.revenue: revenue
+    opex.expense: operating_cost
+    depreciation: depreciation
+    disposal_loss: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation (averta_spv's income scheme reads it so)
+    senior.interest: interest
+    senior.fees: interest
+    refi.interest: interest
+    refi.fees: interest
+    refi_fee.amortisation: interest
 rulebooks:
   assets:
     kind: asset_register
@@ -188,4 +218,12 @@ rulebooks:
 cuts:
   project: {entity: company, account: cash, scheme: cash_flow, include: [operating, investing]}
   dividends: {entity: company, account: cash, scheme: cash_flow, include: [equity]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: company
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}                    # the answers are amounts and a ratio, read from the books and records

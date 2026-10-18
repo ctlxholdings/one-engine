@@ -88,6 +88,26 @@ schemes:
     tax_payable: tax
     owner.capital: equity
     owner.distributions: equity
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    sales.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    costs.payable: operating_current_liability
+    class_a_assets: operating_long_term
+    class_b_assets: operating_long_term
+    class_a: operating_long_term
+    class_b: operating_long_term
+    retained_earnings: equity
+    owner.capital: equity
+    owner.distributions: equity
+    sales.revenue: revenue
+    costs.expense: operating_cost
+    class_a_depreciation: depreciation
+    class_a_disposal: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation
+    class_b_depreciation: depreciation
+    class_b_disposal: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation
+    tax_expense: tax
 rulebooks:
   class_a_register:                       # double declining balance, no cut-off
     kind: asset_register
@@ -143,6 +163,14 @@ rulebooks:
     tests: []
 cuts:
   free_cash_flow: {entity: division, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: division
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.4      # the income_tax rulebook's rate
+    wacc: 0.1                         # the npv measure's rate (npv_10); the periods are years
 measures:
   npv_10: {measure: npv, cut: free_cash_flow, rate: 0.1, through: 10}
   xnpv_10:

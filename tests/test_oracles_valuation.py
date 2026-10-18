@@ -52,6 +52,16 @@ BOOK_SLIPS = {
     # 14.7's company C prints 9.0 for debt plus equity minus cash over EBITA; (300 + 500 - 0) / 100 = 8.0,
     # as the next row prints. 9.0 is what it would be with the minority interest added
     "14.7": {"dpe_less_cash_to_ebita_c at t=0"},
+    # 29.7's year-25 perpetuity value prints 31,064; its own FCF, growth and rate give 31,066.2, which is
+    # also the real-terms value indexed to nominal, as the book says it should be. A rounded-input gap
+    "29.6-7": {"cv_perpetuity_n25 at t=25"},
+    # 30.1's real cash flows deflate each year's nominal flow by that year's inflation only (106.6 / 1.01
+    # = 105.5, printed 105.6), not by the price index compounded from the first year (105.0); every year
+    # from 2011 on, in both currencies, and the check names the first
+    "30.1": {"chf_real_cash_flow at t=2", "eur_real_cash_flow at t=2"},
+    # 30.8's adjusted foreign-exchange gain reads 201: the extraction glues footnote mark 1 to the 20 the
+    # exhibit means (its dollar cell is 20 x 0.85 = 17)
+    "30.8": {"fx_gain_adj at t=0"},
 }
 BOOK = VO.book_path()
 needs_book = pytest.mark.skipif(BOOK is None, reason="the valuation book is not in this checkout's shared folder")
@@ -138,6 +148,14 @@ def test_a_printed_figure_no_row_reads_fails(tmp_path):
     del tr["rows"]["free_cash_flow"], tr["figures"]["free_cash_flow"]
     c = _run_with(tmp_path, tr)["every printed figure accounted for"]
     assert not c.ok and "160" in c.got
+
+
+def test_a_run_of_lines_is_read_as_one_row():
+    text = "Bars\n12%\n49% 50%\nAverage 37%\n"
+    rows, claimed, problems, _ = VO._read_rows({"periods": [0, 1, 2], "rows": {"bars": {"line": [2, 3]}}},
+                                               text, "test")
+    assert problems == [] and rows["bars"]["cells"] == [(12, 0), (49, 0), (50, 0)]
+    assert claimed == {(1, 0, 0), (2, 0, 0), (2, 1, 0)}
 
 
 def test_a_row_that_takes_one_year_of_a_run_leaves_the_other_unaccounted(tmp_path):

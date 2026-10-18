@@ -94,6 +94,23 @@ contracts:
 schemes:
   cash_flow: {mgmt_fee.receivable: operating, exit_income.receivable: operating, opex.payable: operating, tax_payable: tax,
     topco.capital: topco, topco.distributions: topco, cwip: investing}
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    mgmt_fee.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    exit_income.receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    opex.payable: operating_current_liability
+    coinvest: operating_long_term      # the GP's stake in the fund it runs; its return is in exit_income (revenue)
+    cwip: operating_long_term      # the co-invest as it is called
+    topco.capital: equity
+    topco.distributions: equity
+    mgmt_fee.revenue: revenue
+    exit_income.revenue: revenue      # the GP's carry and co-invest return, booked as income as the case books it
+    coinvest_cost: operating_cost      # the stake's cost, set against its return in exit_income
+    opex.expense: operating_cost
+    coinvest_depreciation: depreciation
+    tax_expense: tax
 rulebooks:
   tax:
     kind: income_tax
@@ -139,6 +156,14 @@ cuts:
     account: cash
     scheme: cash_flow
     include: [topco]
+lenses:
+  valuation:
+    kind: valuation
+    entity: gp
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.25      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}
 wind_down:
   gp: [cash, tax_payable, mgmt_fee.receivable, exit_income.receivable, opex.payable, topco.capital, cwip, coinvest]

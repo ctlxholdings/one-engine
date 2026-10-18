@@ -79,9 +79,48 @@ schemes:
     bob_account: bob_account
     charlie_account: charlie_account
     diana_account: diana_account
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: nonoperating_asset      # the savers' cash: none of them runs a business
+    alice_account: nonoperating_asset
+    bob_account: nonoperating_asset
+    charlie_account: nonoperating_asset
+    diana_account: nonoperating_asset
+    alice_account.return: nonoperating
+    bob_account.return: nonoperating
+    charlie_account.return: nonoperating
+    diana_account.return: nonoperating
 cuts:
   alice: {entity: alice, account: cash, scheme: cash_flow, include: [alice_account]}
   bob: {entity: bob, account: cash, scheme: cash_flow, include: [bob_account]}
   charlie: {entity: charlie, account: cash, scheme: cash_flow, include: [charlie_account]}
   diana: {entity: diana, account: cash, scheme: cash_flow, include: [diana_account]}
+lenses:
+  valuation_alice:
+    kind: valuation
+    entity: alice
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
+  valuation_bob:
+    kind: valuation
+    entity: bob
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
+  valuation_charlie:
+    kind: valuation
+    entity: charlie
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
+  valuation_diana:
+    kind: valuation
+    entity: diana
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}                    # the answers are balances, sums and years read from the books

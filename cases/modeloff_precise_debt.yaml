@@ -99,7 +99,31 @@ schemes:
     loan_2.fee_payable: loan_2
     loan_2.capitalised_interest: loan_2
     loan_2.deferred_fees: loan_2
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: nonoperating_asset      # the loans' proceeds held: the case has no operations to use them
+    loan_1.debt: debt
+    loan_1.capitalised_interest: debt
+    loan_1.interest_payable: debt
+    loan_1.fee_payable: debt
+    loan_1.deferred_fees: debt
+    loan_2.debt: debt
+    loan_2.capitalised_interest: debt
+    loan_2.interest_payable: debt
+    loan_2.fee_payable: debt
+    loan_2.deferred_fees: debt
+    loan_1.interest: interest
+    loan_1.fees: interest
+    loan_2.interest: interest
+    loan_2.fees: interest
 cuts:
   loan_1: {entity: company, account: cash, scheme: cash_flow, include: [loan_1]}
   loan_2: {entity: company, account: cash, scheme: cash_flow, include: [loan_2]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: company
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}                    # the answers are amounts and counts read from the books and the dates

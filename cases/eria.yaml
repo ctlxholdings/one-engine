@@ -37,9 +37,39 @@ schemes:
     shared_savings_revenue: operating
     avoided_energy_cost: operating
     shared_savings_fee: operating
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    equipment: operating_long_term
+    share_capital: equity
+    shared_savings_revenue: revenue
+    avoided_energy_cost: operating_cost      # a saving: an operating cost avoided
+    shared_savings_fee: operating_cost
+    # the accounts the esco panel's w5 world adds to this deal (cases/panel/worlds/w5_wrapper_priority.yaml),
+    # so the lens still reads the esco under that world: the realization is a one-time, nonoperating event
+    estate_proceeds: nonoperating_asset      # the cash swept into the estate at realization
+    wrapper_creditors: nonoperating          # what the wrapper's lien takes from the estate
+    wrapper_lien_claim: debt                 # the wrapper creditors' claim, ranked first
+    capital_recovery_claim: equity           # the owner's capital, recovered at par
+    claims_book: equity                      # the claims' counter-entry
+    equity_pocket: equity                    # the owner's residual
 cuts:
   provider_project_cash_flow: {entity: esco, account: cash, scheme: cash_flow, include: [operating, investing]}
   client_cash_flow: {entity: hospital, account: cash, scheme: cash_flow, include: [operating, investing]}
+lenses:
+  valuation_esco:
+    kind: valuation
+    entity: esco
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
+  valuation_hospital:
+    kind: valuation
+    entity: hospital
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0                # the case has no income tax
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures:
   irr: {measure: irr, cut: provider_project_cash_flow}
   payback: {measure: payback, cut: provider_project_cash_flow}

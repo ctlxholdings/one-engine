@@ -1,0 +1,455 @@
+# Valuation, Exhibits 29.6 and 29.7 (ch. 29, pp. 613-615): one company valued under high inflation
+# twice, in real and in nominal terms, from one set of assumptions (29.6), to the same DCF value (29.7).
+#
+# The model (pp. 612-617, steps 1-5): real revenues grow at a constant real rate from year 1; real
+# EBITDA, net working capital and real net PP&E are constant shares of real revenues; depreciation is a
+# fixed share of the year's opening net PP&E (the asset lifetime), and capex is what takes net PP&E
+# from its opening to its closing. Year 1 is the base year (the forecast runs from year 2; the
+# exhibit prints its FCF, ratios and discount factor as dashes): net PP&E opens year 1 at its printed
+# 400 and working capital at its year-1 level. Nominal revenues, EBITDA and capex are the real ones
+# times the inflation index; nominal net PP&E rolls forward from the same opening with nominal capex
+# and depreciation; nominal working capital is the same share of nominal revenues. Taxes are the tax
+# rate on nominal EBITA; real taxes are the nominal ones deflated (step 3), and the real investment in
+# working capital adds the monetary loss on last year's working capital, NWC(t-1) x (1 - IX(t-1)/IX(t))
+# (step 4). The nominal WACC compounds the real WACC with inflation (step 5); each year's discount
+# factor runs from year 1. The continuing value at year 25 uses NOPLAT of year 25 grown one year and
+# year 25's ROIC as the return on new capital: the nominal one is the pack's value_driver; the real
+# one is the book's adjusted formula (p. 617), whose growth in the numerator adds the monetary loss
+# share NWC/IC x i/(1 + i) to real growth (the sign the FCF identity on p. 617 gives, and the only one
+# that reproduces 2,891; the text extraction of the formula reads it as a minus); the perpetuity CVs
+# are the pack's growing_perpetuity over year 26's FCF. The DCF value is the sum of every discounted
+# flow and the discounted continuing value (value driver); the generator holds that sum at the
+# horizon, so the printed year-1 DCF value is read at period 25.
+#
+# The nominal side is booked: case period t is year t, period 0 the balance sheet at the start of
+# year 1; each year's nominal sales, cash costs, depreciation, capex and working-capital investment
+# are posted with the transfer rulebook, and NOPLAT (at the tax rate), invested capital, FCF and ROIC
+# (on opening capital) are read through the valuation lens, capex and working-capital investment from
+# the cash they took. The real side is the generator's arithmetic.
+#
+# Inputs, from 29.6 unless named: year-1 real revenues and year-2 real revenues (the real growth
+# rate is their ratio: the extraction glues the printed growth row into "2–" and "2222", which no row
+# can read), year-1 real EBITDA, working-capital and net PP&E ratios, tax rate, year-2 real WACC, the
+# year-2 and year-3 inflation rates (the extraction moved year 2's 20 to the end of its line; the
+# index, 1.20 / 1.00, places it), and from 29.7 the year-1 real depreciation and opening net PP&E (the
+# lifetime is their ratio: its row is glued into "––––5" too); the horizon is the "Year 25" heading.
+# Every other cell is compared. Three nominal year-25 cells of 29.7 are glued to the next label
+# ("30Net", "36FCF", "12DCF") and so are words, not figures. The columns after each ". . ." are read
+# with that mark as their label, the k-th such run in the excerpt being occurrence k.
+excerpt: "29.6-7"
+periods: [1, 2, 3, 4, 5]
+entity: company
+plant: r_ebitda_1
+rows:
+  # 29.6
+  year_1: {line: 2, periods: [1]}
+  years: {line: 4, periods: [2, 3, 4, 5]}
+  horizon: {line: 4, periods: [25], skip: 4}
+  r_revenues_12: {label: Real revenues, periods: [1, 2]}
+  r_revenues: {label: Real revenues, periods: [3, 4, 5], skip: 2}
+  r_revenues_25: {label: ". . .", occurrence: 1, periods: [25]}
+  r_ebitda_1: {label: Real EBITDA, periods: [1]}
+  r_ebitda: {label: Real EBITDA, periods: [2, 3, 4, 5], skip: 1}
+  r_ebitda_25: {label: ". . .", occurrence: 2, periods: [25]}
+  nwc_ratio_1: {label: Net working capital/revenues (percent), periods: [1], scale: 0.01}
+  nwc_ratio: {label: Net working capital/revenues (percent), periods: [2, 3, 4, 5], skip: 1, scale: 0.01}
+  nwc_ratio_25: {label: ". . .", occurrence: 3, periods: [25], scale: 0.01}
+  ppe_ratio_1: {label: Real net PP&E/real revenues (percent), periods: [1], scale: 0.01}
+  ppe_ratio: {label: Real net PP&E/real revenues (percent), periods: [2, 3, 4, 5], skip: 1, scale: 0.01}
+  ppe_ratio_25: {label: ". . .", occurrence: 4, periods: [25], scale: 0.01}
+  inflation_1: {label: Inflation rate (percent), periods: [1], scale: 0.01}
+  inflation_3: {label: Inflation rate (percent), periods: [3], skip: 1, scale: 0.01}
+  inflation_45: {label: Inflation rate (percent), periods: [4, 5], skip: 2, scale: 0.01}
+  inflation_25: {label: ". . .", occurrence: 6, periods: [25], scale: 0.01}
+  inflation_2: {label: ". . .", occurrence: 6, periods: [2], skip: 1, scale: 0.01}
+  index: Inflation index
+  index_25: {label: ". . .", occurrence: 7, periods: [25]}
+  tax_1: {label: Tax rate (percent), periods: [1], scale: 0.01}
+  tax: {label: Tax rate (percent), periods: [2, 3, 4, 5], skip: 1, scale: 0.01}
+  tax_25: {label: ". . .", occurrence: 8, periods: [25], scale: 0.01}
+  wacc_r_1: {label: Real WACC (percent), periods: [1], scale: 0.01}
+  wacc_r_2: {label: Real WACC (percent), periods: [2], skip: 1, scale: 0.01}
+  wacc_r: {label: Real WACC (percent), periods: [3, 4, 5], skip: 2, scale: 0.01}
+  wacc_r_25: {label: ". . .", occurrence: 9, periods: [25], scale: 0.01}
+  wacc_n: {label: Nominal WACC (percent), scale: 0.01}
+  wacc_n_25: {label: ". . .", occurrence: 10, periods: [25], scale: 0.01}
+  # 29.7: each line prints real years 1-5, then after ". . ." real year 25 and nominal years 1-5, then
+  # after a second ". . ." nominal year 25
+  revenues_r: {label: "EXHIBIT 29.7 DCF under Inflation: Real and Nominal Models Real projections Nominal projections Year 1 Year 2 Year 3 Year 4 Year 5 . . . Year 25 Year 1 Year 2 Year 3 Year 4 Year 5 . . . Year 25 NOPLAT Revenues"}
+  revenues_r25: {label: ". . .", occurrence: 11, periods: [25]}
+  revenues_n: {label: ". . .", occurrence: 11, periods: [1, 2, 3, 4, 5], skip: 1}
+  revenues_n25: {label: ". . .", occurrence: 12, periods: [25]}
+  ebitda_r: {label: EBITDA, occurrence: 2}
+  ebitda_r25: {label: ". . .", occurrence: 13, periods: [25]}
+  ebitda_n: {label: ". . .", occurrence: 13, periods: [1, 2, 3, 4, 5], skip: 1}
+  ebitda_n25: {label: ". . .", occurrence: 14, periods: [25]}
+  depreciation_r_1: {label: Depreciation, periods: [1]}
+  depreciation_r: {label: Depreciation, periods: [2, 3, 4, 5], skip: 1}
+  depreciation_r25: {label: ". . .", occurrence: 15, periods: [25]}
+  depreciation_n: {label: ". . .", occurrence: 15, periods: [1, 2, 3, 4, 5], skip: 1}
+  depreciation_n25: {label: ". . .", occurrence: 16, periods: [25]}
+  ebita_r: {label: EBITA}
+  ebita_r25: {label: ". . .", occurrence: 17, periods: [25]}
+  ebita_n: {label: ". . .", occurrence: 17, periods: [1, 2, 3, 4, 5], skip: 1}
+  ebita_n25: {label: ". . .", occurrence: 18, periods: [25]}
+  taxes_r: {label: Taxes}
+  taxes_r25: {label: ". . .", occurrence: 19, periods: [25]}
+  taxes_n: {label: ". . .", occurrence: 19, periods: [1, 2, 3, 4, 5], skip: 1}
+  taxes_n25: {label: ". . .", occurrence: 20, periods: [25]}
+  noplat_r: {label: NOPLAT 1}
+  noplat_r25: {label: ". . .", occurrence: 21, periods: [25]}
+  noplat_n: {label: ". . .", occurrence: 21, periods: [1, 2, 3, 4, 5], skip: 1}
+  noplat_n25: {label: ". . .", occurrence: 22, periods: [25]}
+  fcf_noplat_r: {label: Free cash flow NOPLAT}
+  fcf_noplat_r25: {label: ". . .", occurrence: 23, periods: [25]}
+  fcf_noplat_n: {label: ". . .", occurrence: 23, periods: [1, 2, 3, 4, 5], skip: 1}
+  fcf_noplat_n25: {label: ". . .", occurrence: 24, periods: [25]}
+  fcf_depreciation_r: {label: Depreciation, occurrence: 2}
+  fcf_depreciation_r25: {label: ". . .", occurrence: 25, periods: [25]}
+  fcf_depreciation_n: {label: ". . .", occurrence: 25, periods: [1, 2, 3, 4, 5], skip: 1}
+  fcf_depreciation_n25: {label: ". . .", occurrence: 26, periods: [25]}
+  capex_r: {label: Capital expenditures}
+  capex_r25: {label: ". . .", occurrence: 27, periods: [25]}
+  capex_n: {label: ". . .", occurrence: 27, periods: [1, 2, 3, 4, 5], skip: 1}
+  capex_n25: {label: ". . .", occurrence: 28, periods: [25]}
+  nwc_investment_r: {label: Investment in net working capital}
+  nwc_investment_r25: {label: ". . .", occurrence: 29, periods: [25]}
+  nwc_investment_n: {label: ". . .", occurrence: 29, periods: [1, 2, 3, 4, 5], skip: 1}
+  nwc_investment_n25: {label: ". . .", occurrence: 30, periods: [25]}
+  fcf_r: {label: Free cash flow}
+  fcf_r25: {label: ". . .", occurrence: 31, periods: [25]}
+  fcf_n: {label: ". . .", occurrence: 31, periods: [1, 2, 3, 4, 5], skip: 1}
+  fcf_n25: {label: ". . .", occurrence: 32, periods: [25]}
+  ppe_beginning_r_1: {label: Net PP&E (beginning of year), periods: [1]}
+  ppe_beginning_r: {label: Net PP&E (beginning of year), periods: [2, 3, 4, 5], skip: 1}
+  ppe_beginning_r25: {label: ". . .", occurrence: 33, periods: [25]}
+  ppe_beginning_n: {label: ". . .", occurrence: 33, periods: [1, 2, 3, 4, 5], skip: 1}
+  ppe_beginning_n25: {label: ". . .", occurrence: 34, periods: [25]}
+  ic_depreciation_r: {label: Depreciation, occurrence: 3}
+  ic_depreciation_r25: {label: ". . .", occurrence: 35, periods: [25]}
+  ic_depreciation_n: {label: ". . .", occurrence: 35, periods: [1, 2, 3, 4, 5], skip: 1}
+  ic_depreciation_n25: {label: ". . .", occurrence: 36, periods: [25]}
+  ic_capex_r: {label: Capital expenditures, occurrence: 2}
+  ic_capex_r25: {label: ". . .", occurrence: 37, periods: [25]}
+  ic_capex_n: {label: ". . .", occurrence: 37, periods: [1, 2, 3, 4, 5], skip: 1}
+  ic_capex_n25: {label: ". . .", occurrence: 38, periods: [25]}
+  ppe_end_r: {label: Net PP&E (end of year)}
+  ppe_end_r25: {label: ". . .", occurrence: 39, periods: [25]}
+  ppe_end_n: {label: ". . .", occurrence: 39, periods: [1, 2, 3, 4, 5], skip: 1}
+  ppe_end_n25: {label: ". . .", occurrence: 40, periods: [25]}
+  nwc_r: {label: Net working capital}
+  nwc_r25: {label: ". . .", occurrence: 41, periods: [25]}
+  nwc_n: {label: ". . .", occurrence: 41, periods: [1, 2, 3, 4, 5], skip: 1}
+  nwc_n25: {label: ". . .", occurrence: 42, periods: [25]}
+  ic_r: {label: Invested capital}
+  ic_r25: {label: ". . .", occurrence: 43, periods: [25]}
+  ic_n: {label: ". . .", occurrence: 43, periods: [1, 2, 3, 4, 5], skip: 1}
+  ic_n25: {label: ". . .", occurrence: 44, periods: [25]}
+  ppe_to_revenues_r: {label: "(percent)Net PP&E/revenues", scale: 0.01}
+  ppe_to_revenues_r25: {label: ". . .", occurrence: 45, periods: [25], scale: 0.01}
+  ppe_to_revenues_n: {label: ". . .", occurrence: 45, periods: [1, 2, 3, 4, 5], skip: 1, scale: 0.01}
+  nwc_to_revenues_r: {label: working capital/revenues, scale: 0.01}
+  nwc_to_revenues_r25: {label: ". . .", occurrence: 46, periods: [25], scale: 0.01}
+  nwc_to_revenues_n: {label: ". . .", occurrence: 46, periods: [1, 2, 3, 4, 5], skip: 1, scale: 0.01}
+  nwc_to_revenues_n25: {label: ". . .", occurrence: 47, periods: [25], scale: 0.01}
+  roic_r: {label: ROIC, scale: 0.01}
+  roic_r25: {label: ". . .", occurrence: 48, periods: [25], scale: 0.01}
+  roic_n: {label: ". . .", occurrence: 48, periods: [1, 2, 3, 4, 5], skip: 1, scale: 0.01}
+  fcf_growth_r: {label: growth rate, scale: 0.01}
+  fcf_growth_r25: {label: ". . .", occurrence: 49, periods: [25], scale: 0.01}
+  fcf_growth_n: {label: ". . .", occurrence: 49, periods: [1, 2, 3, 4, 5], skip: 1, scale: 0.01}
+  dcf_fcf_r: {label: valuationFree cash flow}
+  dcf_fcf_r25: {label: ". . .", occurrence: 50, periods: [25]}
+  dcf_fcf_n: {label: ". . .", occurrence: 50, periods: [1, 2, 3, 4, 5], skip: 1}
+  dcf_fcf_n25: {label: ". . .", occurrence: 51, periods: [25]}
+  cv_value_driver_r: {label: Continuing value (value driver formula) 2}
+  cv_value_driver_r25: {label: ". . .", occurrence: 52, periods: [25]}
+  cv_value_driver_n: {label: ". . .", occurrence: 52, periods: [1, 2, 3, 4, 5], skip: 1}
+  cv_value_driver_n25: {label: ". . .", occurrence: 53, periods: [25]}
+  cv_perpetuity_r: {label: Continuing value (cash flow perpetuity formula)}
+  cv_perpetuity_r25: {label: ". . .", occurrence: 54, periods: [25]}
+  cv_perpetuity_n: {label: ". . .", occurrence: 54, periods: [1, 2, 3, 4, 5], skip: 1}
+  cv_perpetuity_n25: {label: ". . .", occurrence: 55, periods: [25]}
+  pv_factor_r: {label: Present value factor}
+  pv_factor_r25: {label: ". . .", occurrence: 56, periods: [25]}
+  pv_factor_n: {label: ". . .", occurrence: 56, periods: [1, 2, 3, 4, 5], skip: 1}
+  pv_factor_n25: {label: ". . .", occurrence: 57, periods: [25]}
+  # the value at the start of the forecast is read at the horizon, where the generator has summed
+  # every discounted flow (see the header)
+  dcf_value_r_1: {label: DCF value, periods: [25]}
+  dcf_value_r: {label: DCF value, periods: [2, 3, 4, 5], skip: 1}
+  dcf_value_r25: {label: ". . .", occurrence: 58, periods: [25]}
+  dcf_value_n_1: {label: ". . .", occurrence: 58, periods: [25], skip: 1}
+  dcf_value_n: {label: ". . .", occurrence: 58, periods: [2, 3, 4, 5], skip: 2}
+  dcf_value_n25: {label: ". . .", occurrence: 59, periods: [25]}
+inputs: [horizon, r_revenues_12, r_ebitda_1, nwc_ratio_1, ppe_ratio_1, inflation_2, inflation_3, tax_1, wacc_r_2,
+         depreciation_r_1, ppe_beginning_r_1]
+set_aside:
+  "EXHIBIT 29.6 DCF under Inflation: Operational and Financial Assumptions": the exhibit's number
+  "Real growth rate (percent) 2– 2222": the extraction glued the row's cells ("2–", "2222"); the real growth is taken from the real revenues and compared through them
+  "Lifetime of net PP&E ––––5 . . . –": the extraction glued the row's cells ("––––5"); the lifetime is taken from year-1 depreciation over opening net PP&E and compared through every later year's depreciation
+case:
+  case: valuation-inflation-real-and-nominal
+  periods: 26
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 26
+      inputs: exhibit
+      values:
+        nil: 0
+        year_m: t
+        forecast: "1 if t >= 2 else 0"
+        # step 1, real operations
+        r1: r_revenues_12__1
+        g: r_revenues_12__2 / r_revenues_12__1 - 1
+        rev_r: "r1 * (1 + g) ** (t - 1) if t >= 1 else 0"
+        ebitda_r: r_ebitda_1__1 / r1 * rev_r
+        w: nwc_ratio_1__1
+        pr: ppe_ratio_1__1
+        ppe0: ppe_beginning_r_1__1
+        # depreciation per unit of opening net PP&E: one over the asset lifetime
+        d: -depreciation_r_1__1 / ppe0
+        ppe_end_r: pr * rev_r
+        ppe_beg_r: "(ppe0 if t == 1 else lag(ppe_end_r, 1)) if t >= 1 else 0"
+        dep_r: d * ppe_beg_r
+        capex_r: ppe_end_r - ppe_beg_r + dep_r
+        nwc_r: w * rev_r
+        nwc0: w * r1
+        # inflation: year 2's rate, then year 3's for every later year
+        infl_m: "inflation_2__2 if t == 2 else (inflation_3__3 if t >= 3 else 0)"
+        ix: "(1 + inflation_2__2) * (1 + inflation_3__3) ** (t - 2) if t >= 2 else 1"
+        # step 2, nominal statements
+        rev_n: rev_r * ix
+        ebitda_n: ebitda_r * ix
+        capex_n: capex_r * ix
+        # nominal net PP&E rolls forward as closing = (1 - d) x opening + capex: the closed form of that
+        q: 1 - d
+        capex_scaled: "capex_n * q ** (-t)"
+        ppe_end_n: "q ** t * (ppe0 + cumsum(capex_scaled)) if t >= 1 else ppe0"
+        ppe_beg_n: "lag(ppe_end_n, 1) if t >= 1 else 0"
+        dep_n: d * ppe_beg_n
+        nwc_n: w * rev_n
+        nwc_inv_n: "nwc_n - (lag(nwc_n, 1) if t >= 2 else nwc0) if t >= 1 else 0"
+        tax_rate: tax_1__1
+        ebita_n: ebitda_n - dep_n
+        noplat_n: ebita_n * (1 - tax_rate)
+        fcf_n: "noplat_n + dep_n - capex_n - nwc_inv_n if t >= 2 else 0"
+        ic_n: ppe_end_n + nwc_n
+        # step 3, real taxes deflated from nominal ones
+        ebita_r: ebitda_r - dep_r
+        tax_r: tax_rate * ebita_n / ix
+        noplat_r: ebita_r - tax_r
+        # step 4, real FCF with the monetary loss on last year's working capital
+        nwc_inv_r: "nwc_r - lag(nwc_r, 1) + lag(nwc_r, 1) * (1 - lag(ix, 1) / ix) if t >= 2 else 0"
+        fcf_r: "noplat_r + dep_r - capex_r - nwc_inv_r if t >= 2 else 0"
+        ic_r: ppe_end_r + nwc_r
+        # 29.6's printed assumption rows, and 29.7's ratios
+        r_ebitda_share: r_ebitda_1__1 / r1
+        nwc_ratio_m: w
+        ppe_ratio_m: pr
+        ppe_rev_r: "ppe_end_r / rev_r if t >= 2 else 0"
+        ppe_rev_n: "ppe_end_n / rev_n if t >= 2 else 0"
+        nwc_rev_r: "nwc_r / rev_r if t >= 2 else 0"
+        nwc_rev_n: "nwc_n / rev_n if t >= 2 else 0"
+        roic_r: "noplat_r / lag(ic_r, 1) if t >= 2 else 0"
+        roic_n: "noplat_n / lag(ic_n, 1) if t >= 2 else 0"
+        fcf_growth_r: "fcf_r / lag(fcf_r, 1) - 1 if t >= 3 else 0"
+        fcf_growth_n: "fcf_n / lag(fcf_n, 1) - 1 if t >= 3 else 0"
+        tax_m: tax_rate
+        # step 5, discount rates and factors from year 1
+        wr: wacc_r_2__2
+        wacc_r_m: "wr if t >= 2 else 0"
+        wacc_n_m: "(1 + wr) * (1 + infl_m) - 1 if t >= 2 else 0"
+        pvf_r: "(1 + wr) ** (1 - t) if t >= 2 else 0"
+        pvf_n: pvf_r / ix
+        # continuing value at the horizon, perpetuity growth and inflation as from year 3
+        i_cv: inflation_3__3
+        g_n: (1 + g) * (1 + i_cv) - 1
+        last: "1 if t == horizon__25 else 0"
+        cv_vd_n: "value_driver(noplat_n * (1 + g_n), g_n, roic_n, wacc_n_m) if t == horizon__25 else 0"
+        g_adj: "g + nwc_r / ic_r * i_cv / (1 + i_cv) if t >= 1 else 0"
+        cv_vd_r: "noplat_r * (1 + g) * (1 - g_adj / roic_r) / (wr - g) if t == horizon__25 else 0"
+        cv_perp_n: "growing_perpetuity(fcf_n * (1 + g_n), wacc_n_m, g_n) if t == horizon__25 else 0"
+        cv_perp_r: "growing_perpetuity(fcf_r * (1 + g), wr, g) if t == horizon__25 else 0"
+        pv_flow_r: fcf_r * pvf_r + cv_vd_r * pvf_r
+        pv_flow_n: fcf_n * pvf_n + cv_vd_n * pvf_n
+        dcf_r: cumsum(pv_flow_r)
+        dcf_n: cumsum(pv_flow_n)
+        # the postings: nothing happens before year 1
+        rev_post: "rev_n if t >= 1 else 0"
+        costs_post: "rev_n - ebitda_n if t >= 1 else 0"
+        capex_post: "capex_n if t >= 1 else 0"
+        equity0: ppe0 + nwc0
+  opening:
+    company:
+      net_ppe: {nature: asset, value: {generator: m, output: ppe0}}
+      nwc: {nature: asset, value: {generator: m, output: nwc0}}
+      equity: {nature: equity, value: {generator: m, output: equity0}}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, revenue: income, operating_costs: expense, depreciation: expense}
+      moves:
+        sales: {debit: cash, credit: revenue, amount: {generator: m, output: rev_post}}
+        costs: {debit: operating_costs, credit: cash, amount: {generator: m, output: costs_post}}
+        depreciation: {debit: depreciation, credit: net_ppe, amount: {generator: m, output: dep_n}}
+        capex: {debit: net_ppe, credit: cash, amount: {generator: m, output: capex_post}}
+        working_capital: {debit: nwc, credit: cash, amount: {generator: m, output: nwc_inv_n}}
+  schemes:
+    valuation:
+      cash: nonoperating_asset
+      net_ppe: operating_long_term
+      nwc: operating_current_asset
+      equity: equity
+      revenue: revenue
+      operating_costs: operating_cost
+      depreciation: depreciation
+    cash_flow:
+      revenue: operating
+      operating_costs: operating
+      net_ppe: investing
+      nwc: working
+  cuts:
+    investing: {entity: company, account: cash, scheme: cash_flow, include: [investing]}
+    working: {entity: company, account: cash, scheme: cash_flow, include: [working]}
+  lenses:
+    v:
+      kind: valuation
+      entity: company
+      scheme: valuation
+      marginal_tax_rate: {generator: m, output: tax_rate}
+      roic_on: opening
+  measures: {}
+figures:
+  year_1: {driver: m.year_m}
+  years: {driver: m.year_m}
+  r_revenues: {driver: m.rev_r}
+  r_revenues_25: {driver: m.rev_r}
+  r_ebitda: {driver: m.ebitda_r}
+  r_ebitda_25: {driver: m.ebitda_r}
+  nwc_ratio: {driver: m.nwc_ratio_m}
+  nwc_ratio_25: {driver: m.nwc_ratio_m}
+  ppe_ratio: {driver: m.ppe_ratio_m}
+  ppe_ratio_25: {driver: m.ppe_ratio_m}
+  inflation_1: {driver: m.infl_m}
+  inflation_45: {driver: m.infl_m}
+  inflation_25: {driver: m.infl_m}
+  index: {driver: m.ix}
+  index_25: {driver: m.ix}
+  tax: {driver: m.tax_m}
+  tax_25: {driver: m.tax_m}
+  wacc_r_1: {driver: m.wacc_r_m}
+  wacc_r: {driver: m.wacc_r_m}
+  wacc_r_25: {driver: m.wacc_r_m}
+  wacc_n: {driver: m.wacc_n_m}
+  wacc_n_25: {driver: m.wacc_n_m}
+  revenues_r: {driver: m.rev_r}
+  revenues_r25: {driver: m.rev_r}
+  revenues_n: {change: revenue}
+  revenues_n25: {change: revenue}
+  ebitda_r: {driver: m.ebitda_r}
+  ebitda_r25: {driver: m.ebitda_r}
+  ebitda_n: {change: revenue - operating_costs}
+  ebitda_n25: {change: revenue - operating_costs}
+  depreciation_r: {driver: m.dep_r, sign: -1}
+  depreciation_r25: {driver: m.dep_r, sign: -1}
+  depreciation_n: {cut: v.depreciation, sign: -1}
+  depreciation_n25: {cut: v.depreciation, sign: -1}
+  ebita_r: {driver: m.ebita_r}
+  ebita_r25: {driver: m.ebita_r}
+  ebita_n: {cut: v.ebita}
+  ebita_n25: {cut: v.ebita}
+  taxes_r: {driver: m.tax_r, sign: -1}
+  taxes_r25: {driver: m.tax_r, sign: -1}
+  taxes_n: {cut: v.operating_taxes, sign: -1}
+  taxes_n25: {cut: v.operating_taxes, sign: -1}
+  noplat_r: {driver: m.noplat_r}
+  noplat_r25: {driver: m.noplat_r}
+  noplat_n: {cut: v.noplat}
+  noplat_n25: {cut: v.noplat}
+  fcf_noplat_r: {driver: m.noplat_r}
+  fcf_noplat_r25: {driver: m.noplat_r}
+  fcf_noplat_n: {cut: v.noplat}
+  fcf_noplat_n25: {cut: v.noplat}
+  fcf_depreciation_r: {driver: m.dep_r}
+  fcf_depreciation_r25: {driver: m.dep_r}
+  fcf_depreciation_n: {cut: v.depreciation}
+  fcf_depreciation_n25: {cut: v.depreciation}
+  capex_r: {driver: m.capex_r, sign: -1}
+  capex_r25: {driver: m.capex_r, sign: -1}
+  capex_n: {cut: investing}
+  capex_n25: {cut: investing}
+  nwc_investment_r: {driver: m.nwc_inv_r, sign: -1}
+  nwc_investment_r25: {driver: m.nwc_inv_r, sign: -1}
+  nwc_investment_n: {cut: working}
+  nwc_investment_n25: {cut: working}
+  fcf_r: {driver: m.fcf_r}
+  fcf_r25: {driver: m.fcf_r}
+  fcf_n: {cut: v.fcf, times: m.forecast}
+  fcf_n25: {cut: v.fcf, times: m.forecast}
+  ppe_beginning_r: {driver: m.ppe_beg_r}
+  ppe_beginning_r25: {driver: m.ppe_beg_r}
+  ppe_beginning_n: {opening: net_ppe}
+  ppe_beginning_n25: {opening: net_ppe}
+  ic_depreciation_r: {driver: m.dep_r, sign: -1}
+  ic_depreciation_r25: {driver: m.dep_r, sign: -1}
+  ic_depreciation_n: {cut: v.depreciation, sign: -1}
+  ic_depreciation_n25: {cut: v.depreciation, sign: -1}
+  ic_capex_r: {driver: m.capex_r}
+  ic_capex_r25: {driver: m.capex_r}
+  ic_capex_n: {cut: investing, sign: -1}
+  ic_capex_n25: {cut: investing, sign: -1}
+  ppe_end_r: {driver: m.ppe_end_r}
+  ppe_end_r25: {driver: m.ppe_end_r}
+  ppe_end_n: {balance: net_ppe}
+  ppe_end_n25: {balance: net_ppe}
+  nwc_r: {driver: m.nwc_r}
+  nwc_r25: {driver: m.nwc_r}
+  nwc_n: {balance: nwc}
+  nwc_n25: {balance: nwc}
+  ic_r: {driver: m.ic_r}
+  ic_r25: {driver: m.ic_r}
+  ic_n: {cut: v.invested_capital}
+  ic_n25: {cut: v.invested_capital}
+  ppe_to_revenues_r: {driver: m.ppe_rev_r}
+  ppe_to_revenues_r25: {driver: m.ppe_rev_r}
+  ppe_to_revenues_n: {driver: m.ppe_rev_n}
+  nwc_to_revenues_r: {driver: m.nwc_rev_r}
+  nwc_to_revenues_r25: {driver: m.nwc_rev_r}
+  nwc_to_revenues_n: {driver: m.nwc_rev_n}
+  nwc_to_revenues_n25: {driver: m.nwc_rev_n}
+  roic_r: {driver: m.roic_r}
+  roic_r25: {driver: m.roic_r}
+  roic_n: {cut: v.roic, times: m.forecast}
+  fcf_growth_r: {driver: m.fcf_growth_r}
+  fcf_growth_r25: {driver: m.fcf_growth_r}
+  fcf_growth_n: {driver: m.fcf_growth_n}
+  dcf_fcf_r: {driver: m.fcf_r}
+  dcf_fcf_r25: {driver: m.fcf_r}
+  dcf_fcf_n: {cut: v.fcf, times: m.forecast}
+  dcf_fcf_n25: {cut: v.fcf, times: m.forecast}
+  cv_value_driver_r: {driver: m.cv_vd_r}
+  cv_value_driver_r25: {driver: m.cv_vd_r}
+  cv_value_driver_n: {driver: m.cv_vd_n}
+  cv_value_driver_n25: {driver: m.cv_vd_n}
+  cv_perpetuity_r: {driver: m.cv_perp_r}
+  cv_perpetuity_r25: {driver: m.cv_perp_r}
+  cv_perpetuity_n: {driver: m.cv_perp_n}
+  cv_perpetuity_n25: {driver: m.cv_perp_n}
+  pv_factor_r: {driver: m.pvf_r}
+  pv_factor_r25: {driver: m.pvf_r}
+  pv_factor_n: {driver: m.pvf_n}
+  pv_factor_n25: {driver: m.pvf_n}
+  dcf_value_r_1: {driver: m.dcf_r}
+  dcf_value_r: {driver: m.nil}
+  dcf_value_r25: {driver: m.nil}
+  dcf_value_n_1: {driver: m.dcf_n}
+  dcf_value_n: {driver: m.nil}
+  dcf_value_n25: {driver: m.nil}

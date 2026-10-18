@@ -226,6 +226,25 @@ schemes:
     topco.distributions: topco}
   income: {dev_fees.revenue: income, am_fees.revenue: income, am_costs.expense: income, overhead.expense: income,
     post_exit_overhead.expense: income, pipeline.expense: income, tax_expense: income}
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    dev_fees.receivable: operating_current_asset
+    am_fees.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    am_costs.payable: operating_current_liability
+    overhead.payable: operating_current_liability
+    post_exit_overhead.payable: operating_current_liability
+    pipeline.payable: operating_current_liability
+    topco.capital: equity
+    topco.distributions: equity
+    dev_fees.revenue: revenue
+    am_fees.revenue: revenue
+    am_costs.expense: operating_cost
+    overhead.expense: operating_cost
+    post_exit_overhead.expense: operating_cost
+    pipeline.expense: operating_cost
+    tax_expense: tax
 rulebooks:
   tax:
     kind: income_tax
@@ -264,6 +283,14 @@ cuts:
     account: cash
     scheme: cash_flow
     include: [topco]
+lenses:
+  valuation:
+    kind: valuation
+    entity: devco
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.25      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures: {}
 wind_down:
   devco: [tax_payable, dev_fees.receivable, am_fees.receivable, am_costs.payable, overhead.payable, post_exit_overhead.payable,

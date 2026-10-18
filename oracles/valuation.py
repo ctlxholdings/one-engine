@@ -45,8 +45,10 @@ columns. Keys:
   default for every row); the case may have more periods than any row;
 * ``rows``: name -> the row's label as printed (with its footnote mark if
   glued to it), or ``{label, occurrence, continued, periods, scale, skip}``
-  or ``{line, periods, scale, skip}``. ``line``: every cell of that excerpt
-  line (1-based), a line of numbers only, such as a chart's data labels.
+  or ``{line, periods, scale, skip}``. ``line``: every printed figure of
+  that excerpt line (1-based), whatever words sit between (a chart's data
+  labels, a scenario line); ``line: [a, b]`` reads lines a to b as one row
+  (a column of one-per-line bar labels).
   ``continued``: the run goes on over that many following lines of numbers
   only (a row the extraction broke). A number printed inside a label
   ("Debt-to-equity in 2006") is part of the label, accounted for by it, and
@@ -619,7 +621,12 @@ def _read_rows(tr: Mapping[str, Any], text: str, where: str
         skip = int(spec.get("skip", 0))
         try:
             if "line" in spec:
-                idx, cells = read_line(text, int(spec["line"]))
+                # one line, or a run of lines [a, b] read as one row (a column of one-per-line labels)
+                first, last = (spec["line"], spec["line"]) if isinstance(spec["line"], int) else spec["line"]
+                idx, cells = [], []
+                for k in range(int(first), int(last) + 1):
+                    i, c = read_line(text, k)
+                    idx, cells = idx + i, cells + c
             else:
                 idx, cells, in_label = read_row(text, spec["label"], int(spec.get("occurrence", 1)),
                                                 int(spec.get("continued", 0)))

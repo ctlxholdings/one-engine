@@ -188,6 +188,74 @@ schemes:
     lp.distributions: lp
     gp.capital: gp
     gp.distributions: gp
+  valuation:                      # the valuation lens's reading of every money account (McKinsey, Valuation, ch. 7)
+    cash: operating_current_asset      # operating cash: the books cannot split off excess cash (as valuation/7.1-3)
+    solar.receivable: operating_current_asset
+    battery.receivable: operating_current_asset
+    grid_services.receivable: operating_current_asset
+    vat_receivable: operating_current_asset
+    tax_payable: operating_current_liability
+    om_fixed.payable: operating_current_liability
+    insurance.payable: operating_current_liability
+    land_lease.payable: operating_current_liability
+    grid_charges.payable: operating_current_liability
+    am_fee.payable: operating_current_liability
+    regulatory_levy.payable: operating_current_liability
+    om_variable.payable: operating_current_liability
+    fixed_assets: operating_long_term
+    cwip: operating_long_term
+    dsra: nonoperating_asset      # restricted cash held for the lenders, not needed for operations
+    mmr: nonoperating_asset      # a cash reserve set aside, not operating capital until it is spent
+    decom_reserve: nonoperating_asset      # a sinking fund in cash for the decommissioning
+    senior_a.debt: debt
+    senior_a.interest_payable: debt
+    senior_a.fee_payable: debt
+    senior_b.debt: debt
+    senior_b.capitalised_interest: debt
+    senior_b.interest_payable: debt
+    senior_b.fee_payable: debt
+    senior_b.deferred_fees: debt
+    mezzanine.debt: debt
+    mezzanine.capitalised_interest: debt
+    mezzanine.interest_payable: debt
+    mezzanine.fee_payable: debt
+    mezzanine.deferred_fees: debt
+    shl.debt: debt
+    shl.interest_payable: debt
+    shl.fee_payable: debt
+    shl.capitalised_interest: debt
+    decommissioning: debt_equivalent      # a long-term operating provision: a debt equivalent (ch. 7)
+    wht_payable: debt_equivalent      # tax withheld from interest and distributions: the investors' money in transit
+    lp.capital: equity
+    lp.distributions: equity
+    gp.capital: equity
+    gp.distributions: equity
+    deferred_tax: operating_deferred_tax      # the timing difference of the assets' tax depreciation: operating
+    solar.revenue: revenue
+    battery.revenue: revenue
+    grid_services.revenue: revenue
+    decommissioning_expense: operating_cost      # the provision's accrual, an operating cost
+    om_fixed.expense: operating_cost
+    insurance.expense: operating_cost
+    land_lease.expense: operating_cost
+    grid_charges.expense: operating_cost
+    am_fee.expense: operating_cost
+    regulatory_levy.expense: operating_cost
+    om_variable.expense: operating_cost
+    depreciation: depreciation
+    disposal_loss: depreciation      # the NBV left at the end of the horizon written off: the asset's last depreciation (averta_spv's income scheme reads it so)
+    shl_forgiven: nonoperating      # a one-time gain on the loan forgiven
+    senior_a.interest: interest
+    senior_a.fees: interest
+    senior_b.interest: interest
+    senior_b.fees: interest
+    senior_b.fx_loss: interest      # the dollar loan's revaluation: a financing cost
+    mezzanine.interest: interest
+    mezzanine.fees: interest
+    shl.interest: interest
+    shl.fees: interest
+    tax_expense: tax
+    deferred_tax_expense: tax
 rulebooks:
   construction:
     kind: funding_plan
@@ -360,6 +428,14 @@ cuts:
   equity_flows: {entity: spv, account: cash, scheme: cash_flow, include: [lp, gp]}
   sponsor_flows: {entity: spv, account: cash, scheme: cash_flow, include: [lp, gp, shareholder]}
   project_flows: {entity: spv, account: cash, scheme: cash_flow, include: [operating, investing, tax]}
+lenses:
+  valuation:
+    kind: valuation
+    entity: spv
+    scheme: valuation
+    roic_on: opening
+    marginal_tax_rate: 0.25      # the income_tax rulebook's rate
+    # no wacc: the case holds no discount rate (no npv measure, no stated WACC), so no economic profit
 measures:
   lp_irr: {measure: irr, cut: lp_flows, per_year: 4}
   gp_irr: {measure: irr, cut: gp_flows, per_year: 4}
