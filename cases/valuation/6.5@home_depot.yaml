@@ -1,0 +1,80 @@
+# Valuation, Exhibit 6.5 (ch. 6, p. 109), Home Depot: NOPLAT, invested capital and ROIC, 2006-2008.
+#
+# The exhibit summarizes chapter 7's reorganization for both retailers (Home Depot's columns are the first three; Lowe's are 6.5@lowes): adjusted
+# EBITA is net sales less the cost of merchandise, SG&A and depreciation, plus the interest inside
+# operating lease payments; NOPLAT is adjusted EBITA less operating cash taxes; invested capital
+# excluding goodwill adds operating working capital, net property and equipment, capitalized
+# operating leases and the other operating items (net of operating liabilities), and goodwill with
+# its cumulative amortization takes it to invested capital including goodwill. ROIC divides NOPLAT by
+# the average of the year's and the prior year's invested capital (p. 108), by the pack's roic.
+# The lines are inputs (they come from chapter 7's exhibits); the subtotals and ROICs are computed
+# and compared. Case periods 0-2 are 2006-2008. 2006's average needs the 2005 capital, which the
+# exhibit does not print, so 2006's ROICs are read but not compared.
+excerpt: "6.5"
+periods: [0, 1, 2]
+entity: model
+columns_of: [lowes]
+plant: net_sales
+rows:
+  net_sales: {label: Net sales}
+  cost_of_merchandise: {label: Cost of merchandise sold}
+  sga: {label: "Selling, general, and administrative"}
+  depreciation: {label: Depreciation}
+  lease_interest: {label: "Add: Operating lease interest"}
+  adjusted_ebita: {label: Adjusted EBITA}
+  operating_cash_taxes: {label: Operating cash taxes}
+  noplat: {label: NOPLAT}
+  working_capital: {label: Operating working capital}
+  ppe: {label: Net property and equipment}
+  leases: {label: Capitalized operating leases}
+  other_operating: {label: "Other operating assets, net of operating liabilities"}
+  ic_ex_goodwill: {label: Invested capital (excluding goodwill)1}
+  goodwill: {label: Goodwill and acquired intangibles}
+  cumulative_amortization: {label: Cumulative amortization and unreported goodwill}
+  ic_with_goodwill: {label: Invested capital (including goodwill)1}
+  roic_ex_goodwill_2006: {label: ROIC excluding goodwill (average)1, periods: [0], scale: 0.01}
+  roic_ex_goodwill: {label: ROIC excluding goodwill (average)1, periods: [1, 2], skip: 1, scale: 0.01}
+  roic_with_goodwill_2006: {label: ROIC including goodwill (average)1, periods: [0], scale: 0.01}
+  roic_with_goodwill: {label: ROIC including goodwill (average)1, periods: [1, 2], skip: 1, scale: 0.01}
+inputs: [net_sales, cost_of_merchandise, sga, depreciation, lease_interest, operating_cash_taxes, working_capital,
+         ppe, leases, other_operating, goodwill, cumulative_amortization]
+not_compared:
+  roic_ex_goodwill_2006: its average needs the 2005 invested capital excluding goodwill; Exhibit 7.5, where the book builds invested capital, starts in 2006
+  roic_with_goodwill_2006: its average needs the 2005 invested capital; Exhibit 6.12 prints it as 2006's beginning capital (39,389), and with it the printed 14.5 follows (6,245 over the mean of 39,389 and 46,543)
+set_aside:
+  "EXHIBIT 6.5 Home Depot and Lowe’s: Historical ROIC Analysis": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-chapter-6-roic-home-depot
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 3
+      inputs: exhibit
+      values:
+        # costs print negative, the lease interest added back positive
+        adjusted_ebita_m: net_sales + cost_of_merchandise + sga + depreciation + lease_interest
+        noplat_m: adjusted_ebita_m + operating_cash_taxes
+        ic_ex_goodwill_m: working_capital + ppe + leases + other_operating
+        ic_with_goodwill_m: ic_ex_goodwill_m + goodwill + cumulative_amortization
+        # average capital: this year's and last year's (2006's prior year is not printed; not compared)
+        roic_ex_goodwill_m: roic(noplat_m, (ic_ex_goodwill_m + lag(ic_ex_goodwill_m, 1)) / 2)
+        roic_with_goodwill_m: roic(noplat_m, (ic_with_goodwill_m + lag(ic_with_goodwill_m, 1)) / 2)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  adjusted_ebita: {driver: m.adjusted_ebita_m}
+  noplat: {driver: m.noplat_m}
+  ic_ex_goodwill: {driver: m.ic_ex_goodwill_m}
+  ic_with_goodwill: {driver: m.ic_with_goodwill_m}
+  roic_ex_goodwill: {driver: m.roic_ex_goodwill_m}
+  roic_with_goodwill: {driver: m.roic_with_goodwill_m}

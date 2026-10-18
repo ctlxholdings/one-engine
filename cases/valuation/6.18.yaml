@@ -1,0 +1,75 @@
+# Valuation, Exhibit 6.18 (ch. 6, p. 132, the review questions): BrandCo's income statement and
+# reorganized balance sheet, today and year 1.
+#
+# The left panel is an income statement: revenues less operating costs and depreciation give
+# operating profit; less interest, earnings before taxes; less taxes, net income. Its lines are
+# inputs and the three subtotals are computed and compared. The taxes are taken as printed: the 25%
+# operating tax rate is given only in review question 1's text (p. 131), not in the exhibit.
+# The right panel is a reorganized balance sheet: operating working capital (payables already
+# netted against inventory, the footnote) plus property and equipment is invested capital, financed
+# by debt and shareholders' equity, and the total of the financing prints as invested capital again.
+# The four balances are held at their printed values by the stated rulebook, every change posted
+# against a plug that must never move, so the sheet is checked to balance in both columns; both
+# printings of invested capital are read from the books. Case periods: 0 today, 1 year 1.
+excerpt: "6.18"
+periods: [0, 1]
+entity: brandco
+plant: revenues
+rows:
+  revenues: Revenues
+  operating_costs: Operating costs
+  depreciation: Depreciation
+  operating_profit: Operating profit
+  interest: Interest expense
+  earnings_before_taxes: Earnings before taxes
+  taxes: Taxes
+  net_income: Net income
+  working_capital: Operating working capital1
+  ppe: Property and equipment
+  invested_capital: {label: Invested capital, occurrence: 1}
+  debt: Debt
+  equity: Shareholders’ equity
+  invested_capital_financed: {label: Invested capital, occurrence: 2}
+inputs: [revenues, operating_costs, depreciation, interest, taxes, working_capital, ppe, debt, equity]
+set_aside:
+  "EXHIBIT 6.18 BrandCo: Income Statement and Reorganized Balance Sheet": the exhibit's number
+  "Today Year 1 Today Year 1": the column headings
+case:
+  case: valuation-chapter-6-brandco
+  periods: 2
+  phases: [state]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: valuation_formulas
+      periods: 2
+      inputs: exhibit
+      values:
+        # costs, interest and taxes print negative
+        operating_profit_m: revenues + operating_costs + depreciation
+        earnings_before_taxes_m: operating_profit_m + interest
+        net_income_m: earnings_before_taxes_m + taxes
+  opening: {}
+  contracts: {}
+  rulebooks:
+    balance_sheet:
+      kind: stated
+      entity: brandco
+      phase: state
+      plug: unexplained
+      balances:
+        working_capital: {nature: asset, value: {generator: book, output: working_capital}}
+        ppe: {nature: asset, value: {generator: book, output: ppe}}
+        debt: {nature: liability, value: {generator: book, output: debt}}
+        equity: {nature: equity, value: {generator: book, output: equity}}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  operating_profit: {driver: book.operating_profit_m}
+  earnings_before_taxes: {driver: book.earnings_before_taxes_m}
+  net_income: {driver: book.net_income_m}
+  invested_capital: {balance: working_capital + ppe}
+  invested_capital_financed: {balance: debt + equity}

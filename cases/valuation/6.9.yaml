@@ -1,0 +1,78 @@
+# Valuation, Exhibit 6.9 (ch. 6, p. 112): Home Depot's free cash flow, three historical years and
+# three forecast years.
+#
+# The historical columns (2006-2008) repeat Exhibit 6.6; the forecast columns (2009-2011) carry the
+# chapter-9 style forecast summarized (p. 112). Gross cash flow is NOPLAT plus depreciation; gross
+# investment adds the year's investments in invested capital; free cash flow is the two together.
+# The lines are inputs and the three subtotals are compared. Booked as one pool of cash, as 6.6 is:
+# each line a transfer into cash (as printed, an outflow negative) from an account of its own, and
+# each subtotal a cut of the cash account by the class of that account. Case periods 0-5 are
+# 2006-2011.
+excerpt: "6.9"
+periods: [0, 1, 2, 3, 4, 5]
+entity: company
+plant: noplat
+rows:
+  noplat: NOPLAT
+  depreciation: Depreciation
+  gross_cash_flow: Gross cash flow
+  working_capital: Change in operating working capital
+  net_capex: Net capital expenditures
+  leases: Decrease (increase) in capitalized operating leases
+  goodwill: Investments in goodwill and acquired intangibles
+  other_operating: Decrease (increase) in net other operating assets
+  aoci: Increase (decrease) in accumulated other comprehensive income
+  gross_investment: Gross investment
+  free_cash_flow: Free cash flow
+inputs: [noplat, depreciation, working_capital, net_capex, leases, goodwill, other_operating, aoci]
+set_aside:
+  "EXHIBIT 6.9 Home Depot: Projected Free Cash Flow": the exhibit's number
+  "2006 2007 2008 2009 2010 2011": the column headings, years
+case:
+  case: valuation-chapter-6-projected-fcf
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 6
+      inputs: exhibit
+      values: {}
+  contracts: {}
+  rulebooks:
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, noplat: income, depreciation: income, working_capital: asset, net_capex: asset,
+                leased_assets: asset, goodwill: asset, other_operating: asset, aoci: equity}
+      moves:
+        noplat: {debit: cash, credit: noplat, amount: {generator: book, output: noplat}}
+        depreciation: {debit: cash, credit: depreciation, amount: {generator: book, output: depreciation}}
+        working_capital: {debit: cash, credit: working_capital, amount: {generator: book, output: working_capital}}
+        net_capex: {debit: cash, credit: net_capex, amount: {generator: book, output: net_capex}}
+        leased_assets: {debit: cash, credit: leased_assets, amount: {generator: book, output: leases}}
+        goodwill: {debit: cash, credit: goodwill, amount: {generator: book, output: goodwill}}
+        other_operating: {debit: cash, credit: other_operating, amount: {generator: book, output: other_operating}}
+        aoci: {debit: cash, credit: aoci, amount: {generator: book, output: aoci}}
+  schemes:
+    flows:
+      noplat: gross_cash_flow
+      depreciation: gross_cash_flow
+      working_capital: investment
+      net_capex: investment
+      leased_assets: investment
+      goodwill: investment
+      other_operating: investment
+      aoci: investment
+  cuts:
+    gross_cash_flow: {entity: company, account: cash, scheme: flows, include: [gross_cash_flow]}
+    gross_investment: {entity: company, account: cash, scheme: flows, include: [investment]}
+    free_cash_flow: {entity: company, account: cash, scheme: flows, include: [gross_cash_flow, investment]}
+  measures: {}
+figures:
+  gross_cash_flow: {cut: gross_cash_flow}
+  gross_investment: {cut: gross_investment}
+  free_cash_flow: {cut: free_cash_flow}

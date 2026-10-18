@@ -1,0 +1,148 @@
+# Valuation, Exhibit 6.6 (ch. 6, p. 110), Lowe's: free cash flow and cash flow to investors, 2006-2008.
+#
+# The exhibit is chapter 7's free cash flow (Exhibit 7.13) in summary form (Lowe's columns are the last three; Home Depot's are 6.6@home_depot): gross cash
+# flow (NOPLAT plus depreciation) less the year's investments in invested capital gives free cash
+# flow; the after-tax nonoperating income and the change in nonoperating assets (each one line here,
+# several in 7.13) give cash flow available to investors, which is reconciled with the flows to debt
+# holders (debt in one line here) and to equity holders (p. 108). Every line is a figure the book
+# takes from chapter 7, so the lines are inputs; what the exhibit adds is its subtotals and the
+# reconciliation, and those are what the case checks. Case periods 0-2 are 2006-2008.
+#   * Booked as one pool of cash, as 7.13 is: each operating and nonoperating line a transfer into
+#     cash (as printed, an outflow negative) from an account of its own; each financing line a
+#     transfer out of cash to the investors' account it names (as printed, a payment to investors
+#     positive).
+#   * Capitalized operating leases print twice, as an investment and as a flow to debt holders: both
+#     postings are made from the investment line (the leased asset and the debt equivalent that
+#     finances it), and the financing printing is compared.
+#   * Every subtotal is a cut of the cash account by the class of the account at the other end; the
+#     two printings of cash flow available to investors are read from the two sides, so the
+#     reconciliation is tested.
+excerpt: "6.6"
+periods: [0, 1, 2]
+entity: company
+columns_of: [home_depot]
+plant: noplat
+rows:
+  noplat: {label: NOPLAT, skip: 3}
+  depreciation: {label: Depreciation, skip: 3}
+  gross_cash_flow: {label: Gross cash flow, skip: 3}
+  working_capital: {label: Change in operating working capital, skip: 3}
+  net_capex: {label: Net capital expenditures, skip: 3}
+  leases: {label: Decrease (increase) in capitalized operating leases, occurrence: 1, skip: 3}
+  goodwill: {label: Investments in goodwill and acquired intangibles, skip: 3}
+  other_operating: {label: Decrease (increase) in net other operating assets, skip: 3}
+  aoci: {label: Increase (decrease) in accumulated other comprehensive income, skip: 3}
+  gross_investment: {label: Gross investment, skip: 3}
+  free_cash_flow: {label: Free cash flow, skip: 3}
+  nonoperating_income: {label: After-tax nonoperating income, skip: 3}
+  nonoperating_assets: {label: Decrease (increase) in nonoperating assets, skip: 3}
+  cash_flow_to_investors: {label: Cash flow available to investors, occurrence: 1, skip: 3}
+  after_tax_interest: {label: After-tax interest expense, skip: 3}
+  after_tax_lease_interest: {label: After-tax operating lease interest expense, skip: 3}
+  debt: {label: Decrease (increase) in debt, skip: 3}
+  leases_financing: {label: Decrease (increase) in capitalized operating leases, occurrence: 2, skip: 3}
+  flows_to_debt: {label: Flows to debt holders, skip: 3}
+  nonoperating_deferred_taxes: {label: Decrease (increase) in nonoperating deferred taxes, skip: 3}
+  dividends: {label: Dividends, skip: 3}
+  repurchases: {label: Repurchased and retired shares, skip: 3}
+  retained_earnings_adjustments: {label: Adjustments to retained earnings, skip: 3}
+  flows_to_equity: {label: Flows to equity holders, skip: 3}
+  financing_flows: {label: Cash flow available to investors, occurrence: 2, skip: 3}
+inputs: [noplat, depreciation, working_capital, net_capex, leases, goodwill, other_operating, aoci, nonoperating_income,
+         nonoperating_assets, after_tax_interest, after_tax_lease_interest, debt, nonoperating_deferred_taxes, dividends,
+         repurchases, retained_earnings_adjustments]
+set_aside:
+  "EXHIBIT 6.6 Home Depot and Lowe’s: Historical Free Cash Flow": the exhibit's number
+  "2006 2007 2008 2006 2007 2008": the column headings, years
+case:
+  case: valuation-chapter-6-fcf-lowes
+  periods: 3
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    book:
+      kind: formulas
+      periods: 3
+      inputs: exhibit
+      values: {}
+  contracts: {}
+  rulebooks:
+    # operating and nonoperating lines: into cash as printed; financing lines: out of cash as printed
+    year:
+      kind: transfer
+      entity: company
+      phase: operate
+      declare: {cash: asset, noplat: income, depreciation: income, working_capital: asset, net_capex: asset,
+                leased_assets: asset, goodwill: asset, other_operating: asset, aoci: equity,
+                nonoperating_income: income, nonoperating_assets: asset, after_tax_interest: liability,
+                after_tax_lease_interest: liability, debt: liability, lease_debt: liability,
+                nonoperating_deferred_taxes: equity, dividends: equity, repurchases: equity,
+                retained_earnings_adjustments: equity}
+      moves:
+        noplat: {debit: cash, credit: noplat, amount: {generator: book, output: noplat}}
+        depreciation: {debit: cash, credit: depreciation, amount: {generator: book, output: depreciation}}
+        working_capital: {debit: cash, credit: working_capital, amount: {generator: book, output: working_capital}}
+        net_capex: {debit: cash, credit: net_capex, amount: {generator: book, output: net_capex}}
+        leased_assets: {debit: cash, credit: leased_assets, amount: {generator: book, output: leases}}
+        goodwill: {debit: cash, credit: goodwill, amount: {generator: book, output: goodwill}}
+        other_operating: {debit: cash, credit: other_operating, amount: {generator: book, output: other_operating}}
+        aoci: {debit: cash, credit: aoci, amount: {generator: book, output: aoci}}
+        nonoperating_income: {debit: cash, credit: nonoperating_income,
+                              amount: {generator: book, output: nonoperating_income}}
+        nonoperating_assets: {debit: cash, credit: nonoperating_assets,
+                              amount: {generator: book, output: nonoperating_assets}}
+        after_tax_interest: {debit: after_tax_interest, credit: cash,
+                             amount: {generator: book, output: after_tax_interest}}
+        after_tax_lease_interest: {debit: after_tax_lease_interest, credit: cash,
+                                   amount: {generator: book, output: after_tax_lease_interest}}
+        debt: {debit: debt, credit: cash, amount: {generator: book, output: debt}}
+        # the debt equivalent that finances the leased assets: the same line, paid out to debt holders
+        lease_debt: {debit: lease_debt, credit: cash, amount: {generator: book, output: leases}}
+        nonoperating_deferred_taxes: {debit: nonoperating_deferred_taxes, credit: cash,
+                                      amount: {generator: book, output: nonoperating_deferred_taxes}}
+        dividends: {debit: dividends, credit: cash, amount: {generator: book, output: dividends}}
+        repurchases: {debit: repurchases, credit: cash, amount: {generator: book, output: repurchases}}
+        retained_earnings_adjustments: {debit: retained_earnings_adjustments, credit: cash,
+                                        amount: {generator: book, output: retained_earnings_adjustments}}
+  schemes:
+    flows:
+      noplat: gross_cash_flow
+      depreciation: gross_cash_flow
+      working_capital: investment
+      net_capex: investment
+      leased_assets: investment
+      goodwill: investment
+      other_operating: investment
+      aoci: investment
+      nonoperating_income: nonoperating
+      nonoperating_assets: nonoperating
+      after_tax_interest: debt_holders
+      after_tax_lease_interest: debt_holders
+      debt: debt_holders
+      lease_debt: debt_holders
+      nonoperating_deferred_taxes: equity_holders
+      dividends: equity_holders
+      repurchases: equity_holders
+      retained_earnings_adjustments: equity_holders
+  cuts:
+    gross_cash_flow: {entity: company, account: cash, scheme: flows, include: [gross_cash_flow]}
+    gross_investment: {entity: company, account: cash, scheme: flows, include: [investment]}
+    free_cash_flow: {entity: company, account: cash, scheme: flows, include: [gross_cash_flow, investment]}
+    available_to_investors: {entity: company, account: cash, scheme: flows,
+                             include: [gross_cash_flow, investment, nonoperating]}
+    to_debt_holders: {entity: company, account: cash, scheme: flows, include: [debt_holders]}
+    to_equity_holders: {entity: company, account: cash, scheme: flows, include: [equity_holders]}
+    to_investors: {entity: company, account: cash, scheme: flows, include: [debt_holders, equity_holders]}
+  measures: {}
+figures:
+  gross_cash_flow: {cut: gross_cash_flow}
+  gross_investment: {cut: gross_investment}
+  free_cash_flow: {cut: free_cash_flow}
+  cash_flow_to_investors: {cut: available_to_investors}
+  # the debt equivalent rises as the leased assets do: an increase printed as a negative flow to debt holders
+  leases_financing: {change: lease_debt, sign: -1}
+  # what leaves the pool for investors is printed positive
+  flows_to_debt: {cut: to_debt_holders, sign: -1}
+  flows_to_equity: {cut: to_equity_holders, sign: -1}
+  financing_flows: {cut: to_investors, sign: -1}

@@ -1,0 +1,55 @@
+# Valuation, Exhibit 6.3 (ch. 6, p. 106): enterprise value of a multibusiness company, a waterfall.
+#
+# The value of operations is the three operating units' values less the present value of the
+# corporate center's costs (printed as the bar's height, 30); adding the nonoperating assets gives
+# enterprise value, and subtracting the value of debt gives equity value (p. 105). The bars' labels
+# come out of the extraction as lines of numbers without their captions, in waterfall order: the
+# three units (200, 125, 225; which of the last two is Unit B and which Unit C changes no total), the
+# corporate center, the value of operations, the nonoperating assets, enterprise value, debt and
+# equity value. The units, the center, the nonoperating assets and the debt are inputs; the value of
+# operations, enterprise value and equity value are rebuilt and compared. One period; built with the
+# valuation_formulas generator.
+excerpt: "6.3"
+periods: [0]
+entity: model
+plant: unit_a
+rows:
+  unit_a: {line: 2}
+  unit_b: {line: 3}
+  unit_c: {line: 4}
+  corporate_center: {line: 4, skip: 1}
+  value_of_operations: {line: 5}
+  nonoperating_assets: {line: 6}
+  enterprise_value: {line: 6, skip: 1}
+  debt: {line: 6, skip: 2}
+  equity_value: {line: 7}
+inputs: [unit_a, unit_b, unit_c, corporate_center, nonoperating_assets, debt]
+set_aside:
+  "EXHIBIT 6.3–Enterprise Valuation of a Multibusiness Company": the exhibit's number
+case:
+  case: valuation-chapter-6-multibusiness
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        # the corporate center's bar is the present value of its costs, a deduction
+        value_of_operations_m: unit_a__0 + unit_b__0 + unit_c__0 - corporate_center__0
+        enterprise_value_m: value_of_operations_m + nonoperating_assets__0
+        equity_value_m: enterprise_value_m - debt__0
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  value_of_operations: {driver: m.value_of_operations_m}
+  enterprise_value: {driver: m.enterprise_value_m}
+  equity_value: {driver: m.equity_value_m}

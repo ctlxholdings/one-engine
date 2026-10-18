@@ -1,0 +1,60 @@
+# Valuation, Exhibit 2.2 (ch. 2, p. 19), Volume Inc.: the last five columns.
+#
+# The exhibit sets two companies side by side with the same revenues and earnings, five years each.
+# Both grow revenues and earnings 5 percent a year; Value Inc. reinvests a quarter of its earnings,
+# Volume Inc. half, so their cash flows differ (pp. 19-20). The rates are only in the prose, so here
+# they are read from the exhibit's own first columns: growth is year 2's revenue over year 1's, the
+# margin is year-1 earnings over year-1 revenue, and the investment rate is year-1 investment over
+# year-1 earnings. From those, the case rebuilds every later year (revenue compounding at the
+# growth, earnings at the margin, investment at the rate) and every cash flow (earnings less
+# investment), with the valuation_formulas generator, case period t = year t.
+# Value Inc., the first five columns, is 2.2@value_inc.
+excerpt: "2.2"
+periods: [1, 2, 3, 4, 5]
+entity: model
+columns_of: [value_inc]
+plant: revenue_12
+rows:
+  revenue_12: {label: Revenue, periods: [1, 2], skip: 5}
+  revenue: {label: Revenue, periods: [3, 4, 5], skip: 7}
+  earnings_1: {label: Earnings, periods: [1], skip: 5}
+  earnings: {label: Earnings, periods: [2, 3, 4, 5], skip: 6}
+  investment_1: {label: Investment, periods: [1], skip: 5}
+  investment: {label: Investment, periods: [2, 3, 4, 5], skip: 6}
+  cash_flow: {label: Cash flow, skip: 5}
+inputs: [revenue_12, earnings_1, investment_1]
+set_aside:
+  "EXHIBIT 2.2 Tale of Two Companies: Same Earnings, Different Cash Flows": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4 Year 5 Year 1 Year 2 Year 3 Year 4 Year 5": the column headings, years
+case:
+  case: valuation-chapter-2-volume-inc
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 6
+      inputs: exhibit
+      values:
+        growth: revenue_12__2 / revenue_12__1 - 1
+        margin: earnings_1__1 / revenue_12__1
+        # investment prints negative, as a use of the earnings
+        investment_rate: -investment_1__1 / earnings_1__1
+        revenue_m: revenue_12__1 * (1 + growth) ** (t - 1)
+        earnings_m: margin * revenue_m
+        investment_m: -(investment_rate * earnings_m)
+        cash_flow_m: earnings_m + investment_m
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  revenue: {driver: m.revenue_m}
+  earnings: {driver: m.earnings_m}
+  investment: {driver: m.investment_m}
+  cash_flow: {driver: m.cash_flow_m}

@@ -1,0 +1,67 @@
+# Valuation, Exhibit 6.2 (ch. 6, p. 105): enterprise value and equity value of a single-business
+# company.
+#
+# The diagram prints five years of free cash flow split into the after-tax flows to debt holders and
+# the flows to equity holders, and the values each stream is worth: enterprise value $427.5 million
+# (printed twice) is debt $200.0 million plus equity $227.5 million (pp. 104-105). The bars' labels
+# come out of the extraction one panel at a time and are paired here by their numbers: the
+# debt-holder bars (lines 2-6) and the equity-holder bars (lines 8-9) are read in year order, and each
+# year's free cash flow bar (lines 1, 10-12) is their sum. The diagram prints no discount rate, so
+# the present values cannot be rebuilt; what it states is the split, and that is what is checked:
+# each free cash flow bar is the two flows added, and enterprise value is debt value plus equity
+# value. Periods 1-5 are the bars' years; the values sit at period 0. Built with the
+# valuation_formulas generator.
+excerpt: "6.2"
+periods: [0]
+entity: model
+plant: equity_value
+rows:
+  fcf_1: {line: 1, periods: [1]}
+  debt_flow_1: {line: 2, periods: [1]}
+  debt_flow_2: {line: 3, periods: [2]}
+  debt_flow_3: {line: 4, periods: [3]}
+  debt_flow_4: {line: 5, periods: [4]}
+  debt_flow_5: {line: 6, periods: [5]}
+  enterprise_value: {line: 7}
+  equity_flows_1_3: {line: 8, periods: [1, 2, 3]}
+  equity_flows_4_5: {line: 9, periods: [4, 5]}
+  fcf_2: {line: 10, periods: [2]}
+  fcf_3_4: {line: 11, periods: [3, 4]}
+  fcf_5: {line: 12, periods: [5]}
+  enterprise_value_again: {line: 13}
+  debt_value: {line: 26}
+  equity_value: {line: 28}
+inputs: [debt_flow_1, debt_flow_2, debt_flow_3, debt_flow_4, debt_flow_5, equity_flows_1_3, equity_flows_4_5,
+         debt_value, equity_value]
+set_aside:
+  "EXHIBIT 6.2–Enterprise Valuation of a Single-Business Company": the exhibit's number
+case:
+  case: valuation-chapter-6-single-business
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 6
+      inputs: exhibit
+      values:
+        to_debt_holders: debt_flow_1 + debt_flow_2 + debt_flow_3 + debt_flow_4 + debt_flow_5
+        to_equity_holders: equity_flows_1_3 + equity_flows_4_5
+        fcf_m: to_debt_holders + to_equity_holders
+        enterprise_value_m: debt_value__0 + equity_value__0
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  fcf_1: {driver: m.fcf_m}
+  fcf_2: {driver: m.fcf_m}
+  fcf_3_4: {driver: m.fcf_m}
+  fcf_5: {driver: m.fcf_m}
+  enterprise_value: {driver: m.enterprise_value_m}
+  enterprise_value_again: {driver: m.enterprise_value_m}

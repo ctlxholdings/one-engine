@@ -1,0 +1,50 @@
+# Valuation, Exhibit 6.10 (ch. 6, p. 113): Home Depot's continuing value by the key value driver
+# formula.
+#
+# NOPLAT of 2019 (the first year after the explicit forecast), the perpetual growth, the return on
+# new capital and the WACC go into the key value driver formula, NOPLAT x (1 - g / RONIC) /
+# (WACC - g), which is the pack's value_driver; the exhibit prints the result, 91,440, and the case
+# computes and compares it. The formula itself is printed between the inputs, broken over several
+# lines by the extraction; its "1", "t + 1" and minus signs are text, not figures. The footnote says
+# the valuation uses the unrounded $92,239 million: that figure follows from inputs the exhibit
+# prints rounded (with the rounded ones the formula gives 91,440), so it is set aside here; Exhibit
+# 6.4 prints it and its translation reads it. One period; valuation_formulas generator.
+excerpt: "6.10"
+periods: [0]
+entity: model
+plant: noplat
+rows:
+  noplat: Projected NOPLAT in 2019
+  continuing_value: "="
+  growth: {label: NOPLAT growth rate in perpetuity (g ), scale: 0.01}
+  ronic: {label: Return on new invested capital (RONIC), scale: 0.01}
+  wacc: {label: Weighted average cost of capital (WACC), scale: 0.01}
+inputs: [noplat, growth, ronic, wacc]
+set_aside:
+  "EXHIBIT 6.10 Home Depot: Continuing Value": the exhibit's number
+  "NOPLATt + 1": the formula's text (the subscript t + 1), not a figure
+  "1 –": the formula's text (one minus the reinvestment rate; the extraction prints the minus as a dash)
+  "WACC – g": the formula's text (the minus sign, extracted as a dash)
+  "1 Enterprise valuation based on $92,239 million; the precise calculation without rounding.": the unrounded continuing value, which the exhibit's rounded inputs do not give; Exhibit 6.4 prints it and is checked with it
+case:
+  case: valuation-chapter-6-home-depot-continuing-value
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        continuing_value_m: value_driver(noplat__0, growth__0, ronic__0, wacc__0)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  continuing_value: {driver: m.continuing_value_m}

@@ -1,0 +1,61 @@
+# Valuation, Exhibit 6.11 (ch. 6, p. 114): Home Depot's weighted average cost of capital.
+#
+# For debt and equity the exhibit prints the share of total capital, the cost of capital, the
+# marginal tax rate (debt only), the after-tax cost and each one's contribution to the weighted
+# average, then the WACC (pp. 113-114; the same table is Exhibit 11.2, where chapter 11 derives each
+# input). The shares, the costs and the tax rate are inputs; the after-tax costs, the contributions,
+# the total of the shares and the WACC, by the pack's wacc(d, e, kd, ke, tm), are computed and
+# compared. The footnote warns that the contributions (1.3 + 7.1) do not add to the 8.5 printed:
+# each is rounded on its own. One period; percents read as fractions (scale 0.01).
+excerpt: "6.11"
+periods: [0]
+entity: model
+plant: equity_cost
+rows:
+  debt_share: {label: Debt, scale: 0.01}
+  debt_cost: {label: Debt, skip: 1, scale: 0.01}
+  marginal_tax: {label: Debt, skip: 2, scale: 0.01}
+  debt_after_tax: {label: Debt, skip: 3, scale: 0.01}
+  debt_contribution: {label: Debt, skip: 4, scale: 0.01}
+  equity_share: {label: Equity, scale: 0.01}
+  equity_cost: {label: Equity, skip: 1, scale: 0.01}
+  equity_after_tax: {label: Equity, skip: 2, scale: 0.01}
+  equity_contribution: {label: Equity, skip: 3, scale: 0.01}
+  total_capital: {label: WACC, scale: 0.01}
+  wacc: {label: WACC, skip: 1, scale: 0.01}
+inputs: [debt_share, debt_cost, marginal_tax, equity_share, equity_cost]
+set_aside:
+  "EXHIBIT 6.11 Home Depot: Weighted Average Cost of Capital": the exhibit's number
+case:
+  case: valuation-chapter-6-home-depot-wacc
+  periods: 1
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 1
+      inputs: exhibit
+      values:
+        debt_after_tax_m: debt_cost__0 * (1 - marginal_tax__0)
+        debt_contribution_m: debt_share__0 * debt_after_tax_m
+        # equity's cost carries no tax shield
+        equity_after_tax_m: equity_cost__0
+        equity_contribution_m: equity_share__0 * equity_after_tax_m
+        total_capital_m: debt_share__0 + equity_share__0
+        wacc_m: wacc(debt_share__0, equity_share__0, debt_cost__0, equity_cost__0, marginal_tax__0)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  debt_after_tax: {driver: m.debt_after_tax_m}
+  debt_contribution: {driver: m.debt_contribution_m}
+  equity_after_tax: {driver: m.equity_after_tax_m}
+  equity_contribution: {driver: m.equity_contribution_m}
+  total_capital: {driver: m.total_capital_m}
+  wacc: {driver: m.wacc_m}

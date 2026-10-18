@@ -1,0 +1,77 @@
+# Valuation, Exhibit 2.3 (ch. 2, p. 20): Value Inc.'s cash flows of Exhibit 2.2 discounted to today.
+#
+# Each of the first five years' cash flow is discounted at the cost of capital printed in the
+# exhibit's notes (10%), and the sum column holds the present value of every future cash flow,
+# $1,500 million (p. 20): the year-1 cash flow growing forever at the company's growth, which is
+# the pack's growing_perpetuity. As in 2.2, the growth and the investment rate are read from the
+# exhibit's own first columns (year-2 earnings over year-1, year-1 investment over year-1 earnings);
+# the later earnings, all investment after year 1, every cash flow and every present value are
+# rebuilt with the valuation_formulas generator and compared.
+# Case periods: t = year t for years 1-5, and period 6 for the sum column. The sum column prints a
+# dash for earnings, investment and cash flow (the book sums only the present values); the model
+# leaves those flows nil there and the dashes are compared as nils. The two notes point at the
+# present values of year 1 (75) and year 4 (87); their cash flows and the rate are compared too.
+excerpt: "2.3"
+periods: [1, 2, 3, 4, 5]
+entity: model
+plant: earnings_12
+rows:
+  earnings_12: {label: Earnings, periods: [1, 2]}
+  earnings: {label: Earnings, periods: [3, 4, 5], skip: 2}
+  earnings_sum: {line: 5, periods: [6], skip: 5}
+  investment_1: {label: Investment, periods: [1]}
+  investment: {label: Investment, periods: [2, 3, 4, 5], skip: 1}
+  investment_sum: {line: 6, periods: [6], skip: 5}
+  cash_flow: Cash flow
+  cash_flow_sum: {line: 7, periods: [6], skip: 5}
+  value_today: Value today
+  value_sum: {line: 8, periods: [6], skip: 5}
+  rate: {label: discounted at, periods: [1], scale: 0.01}
+  rate_again: {label: discounted at, occurrence: 2, periods: [4], scale: 0.01}
+  note_cash_flow_1: {label: Present value of, periods: [1]}
+  note_cash_flow_4: {label: Present value of, occurrence: 2, periods: [4]}
+inputs: [earnings_12, investment_1, rate]
+set_aside:
+  "EXHIBIT 2.3 Value Inc.: DCF Valuation": the exhibit's number
+  "Year 1 Year 2 Year 3 Year 4 Year 5 Year X Sum": the column headings, years
+case:
+  case: valuation-chapter-2-value-inc-dcf
+  periods: 7
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 7
+      inputs: exhibit
+      values:
+        growth: earnings_12__2 / earnings_12__1 - 1
+        # investment prints negative, as a use of the earnings
+        investment_rate: -investment_1__1 / earnings_12__1
+        r: rate__1
+        rate_m: r
+        earnings_m: "earnings_12__1 * (1 + growth) ** (t - 1) if (1 <= t) * (t <= 5) else 0"
+        investment_m: -(investment_rate * earnings_m)
+        cash_flow_m: earnings_m + investment_m
+        # the sum column: every future cash flow, the year-1 flow growing forever at the growth
+        value_m: "growing_perpetuity(earnings_12__1 * (1 - investment_rate), r, growth) if t == 6 else cash_flow_m * (1 + r) ** (-t)"
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  earnings: {driver: m.earnings_m}
+  earnings_sum: {driver: m.earnings_m}
+  investment: {driver: m.investment_m}
+  investment_sum: {driver: m.investment_m}
+  cash_flow: {driver: m.cash_flow_m}
+  cash_flow_sum: {driver: m.cash_flow_m}
+  value_today: {driver: m.value_m}
+  value_sum: {driver: m.value_m}
+  rate_again: {driver: m.rate_m}
+  note_cash_flow_1: {driver: m.cash_flow_m}
+  note_cash_flow_4: {driver: m.cash_flow_m}

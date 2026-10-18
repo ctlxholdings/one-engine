@@ -1,0 +1,66 @@
+# Valuation, Exhibit 6.12 (ch. 6, p. 118): Home Depot's economic profit, 2006-2011, two ways.
+#
+# Method 1 multiplies the spread of ROIC over WACC by the invested capital at the start of the
+# year; method 2 subtracts a capital charge (that capital times the WACC) from NOPLAT (pp. 117-118).
+# The inputs are NOPLAT, the beginning-of-year capital and the capital charge. The capital charge is
+# an input because the WACC row prints the book's year-by-year rate rounded to a tenth, while the
+# book charges the unrounded rate (8.4% of 39,389 would be 3,309, not the 3,295 printed): the rate
+# is therefore the charge over the capital, and both printings of the WACC are compared with it.
+# ROIC is the pack's roic over the beginning capital (the exhibit's footnote), the spread is ROIC
+# less WACC, both printings of economic profit are the pack's economic_profit, the capital charge's
+# second printing is its negative, and the capital's second printing is the first. Case periods 0-5
+# are 2006-2011; percents are read as fractions (scale 0.01).
+excerpt: "6.12"
+periods: [0, 1, 2, 3, 4, 5]
+entity: model
+plant: noplat
+rows:
+  roic: {label: Return on invested capital (percent)1, scale: 0.01}
+  wacc: {label: Weighted average cost of capital (percent), scale: 0.01}
+  spread: {label: Economic spread (percent), scale: 0.01}
+  invested_capital: {label: Invested capital (beginning of year)}
+  economic_profit: {label: Economic profit (loss)}
+  invested_capital_again: {label: Invested capital (beginning of year), occurrence: 2}
+  wacc_again: {label: Weighted average cost of capital (percent), occurrence: 2, scale: 0.01}
+  capital_charge: {label: Capital charge}
+  noplat: NOPLAT
+  capital_charge_deducted: {label: Capital charge, occurrence: 2}
+  economic_profit_again: {label: Economic profit (loss), occurrence: 2}
+inputs: [invested_capital, capital_charge, noplat]
+set_aside:
+  "EXHIBIT 6.12 Home Depot: Economic Profit Summary": the exhibit's number
+  "2006 2007 2008 2009 2010 2011": the column headings, years
+case:
+  case: valuation-chapter-6-home-depot-economic-profit
+  periods: 6
+  phases: [operate]
+  currency: USD
+  floors: {}
+  generators:
+    m:
+      kind: valuation_formulas
+      periods: 6
+      inputs: exhibit
+      values:
+        wacc_m: capital_charge / invested_capital
+        roic_m: roic(noplat, invested_capital)
+        spread_m: roic_m - wacc_m
+        invested_capital_m: invested_capital
+        capital_charge_m: capital_charge
+        economic_profit_m: economic_profit(noplat, invested_capital, wacc_m)
+  opening: {}
+  contracts: {}
+  rulebooks: {}
+  schemes: {}
+  cuts: {}
+  lenses: {}
+  measures: {}
+figures:
+  roic: {driver: m.roic_m}
+  wacc: {driver: m.wacc_m}
+  spread: {driver: m.spread_m}
+  economic_profit: {driver: m.economic_profit_m}
+  invested_capital_again: {driver: m.invested_capital_m}
+  wacc_again: {driver: m.wacc_m}
+  capital_charge_deducted: {driver: m.capital_charge_m, sign: -1}
+  economic_profit_again: {driver: m.economic_profit_m}
