@@ -1,0 +1,151 @@
+# Indiana Toll Road v2 — leveraged concession, accreting rate path, actual vs
+# underwritten traffic (failure-world fixture, data only; inputs from
+# blind_briefs/orc-c31v2.md)
+#
+# Inputs (the brief): 75-year lease 2006; consortium pays USD 3.8bn upfront to
+# the state — kept regardless; funding at close 3,030m senior bank debt + 748m
+# equity (374+374); 9-year interest-only bullet with rates PRESET to escalate
+# from ~3% to ~11.3% by 2023 via an accreting swap schedule; underwriting
+# assumed +22% traffic growth over 7 years, actual traffic FELL ~11% over 8
+# years (2013 volume 10.7% below 2007); flat real per-unit revenue per trip;
+# June 2014: missed interest payment of ~USD 102m; sale of the concession
+# 2015. Non-recourse.
+#
+# Modeling conventions (config-expressible, recorded per the brief — each
+# mirrors the prior independent blind run):
+#   periods are half-years (interest settles semi-annually, Jun/Dec; t=0 is
+#   H2-2006 .. t=17 ends June 2015, the bullet's 9-year maturity and the sale
+#   date). The preset accreting schedule is carried as the period-rate path
+#   (the monthly linear ramp 3.0% -> 11.3% over 204 months from Jul-06,
+#   summed /1200 per six-month window: charge(t) = [18% + 8.3% (36t+15)/204]/
+#   1200 — linear in t); actual traffic index: flat 2006-07, geometric decline
+#   to 0.893 by 2013, flat after (the brief's data ends 2013); underwritten:
+#   geometric 1.22 by 2013, flat after. Revenue level is not an anchored
+#   input: the 2006 base 219.3531 USD m/yr is CALIBRATED (root-found to 1e-10,
+#   rounded up at 1e-6) as the lowest base paying every interest claim in full
+#   through the Dec-2013 payment — making June 2014 the first miss, as
+#   anchored. Opex = 30% of revenue (waterfall rank 1); no DSRA, no other
+#   waterfall ranks, no pre-default distributions to equity — surplus cash is
+#   retained as the buffer the 2010-2013 coverage shortfall drains. The 22m
+#   gap between funded 3,778 and the 3,800 price is paid by the sponsors at
+#   close. The 2015 sale price = the underwriting multiple marked to actual
+#   volume: 3,800 x 0.893 / 1.22 = 2,781.4754 (multiple = 3,800/1.22 per unit
+#   of underwritten volume x actual 0.893). Basis note (R-orc-8): the
+#   debt-at-default and recovery figures are CASH-basis (capitalized misses
+#   only); claim-basis divergence is not expected.
+# Expected (prior independent run; published anchors): first missed payment
+# June 2014 ~102.5 (t=15); debt at default ~3,132 (3,030 + capitalized miss);
+# distribution ~2,987 against ~3,360 face = ~88.9c on the dollar; equity wiped;
+# the state's +3,800 never reverses (tests/test_m4.py asserts the bands and
+# reports the point values).
+deal: indiana-toll-road-v2
+horizon: 18
+settings:
+  op7_clock: {period_granularity: half-year, phases: [open, accrue, settle, close],
+              opening_balance_lag: true}
+  op8_ledger: {accounts: [spv_cash, senior_lenders, sponsors, state_cash,
+                          concession_asset, sponsor_equity, senior_debt,
+                          interest_claim, interest_expense, road_users,
+                          opex_payees, buyer_2015],
+               duality_enforcement: strict}
+parties:
+  - {name: concession-co, role: borrower}
+  - {name: senior-lenders, role: lender}
+  - {name: sponsors, role: equity}
+  - {name: the-state, role: grantor}
+  - {name: road-users, role: payer}
+  - {name: operators, role: opex-payee}
+  - {name: 2015-buyer, role: buyer}
+instruments:
+  # close (t=0, open): the cash legs — senior draw, sponsor equity (+ the 22m
+  # close gap), and the upfront lease payment to the state (kept regardless)
+  - operator: op1_instrument_generation
+    instrument_type: fixed_fee
+    terms: 1
+    notional: 3030.0
+    payer: senior_lenders
+    payee: spv_cash
+    schedule_ref: {start: 0, phase: open}
+  - operator: op1_instrument_generation
+    instrument_type: fixed_fee
+    terms: 1
+    notional: 770.0
+    payer: sponsors
+    payee: spv_cash
+    schedule_ref: {start: 0, phase: open}
+  - operator: op1_instrument_generation
+    instrument_type: fixed_fee
+    terms: 1
+    notional: 3800.0
+    payer: spv_cash
+    payee: state_cash
+    schedule_ref: {start: 0, phase: open}
+  # recognition: the 3,800 concession asset is financed 3,030 debt + 770 equity
+  # (the interest_only bullet below recognizes its own notional onto senior_debt)
+  - operator: op1_instrument_generation
+    instrument_type: fixed_fee
+    terms: 1
+    notional: 770.0
+    payer: concession_asset
+    payee: sponsor_equity
+    schedule_ref: {start: 0, phase: accrue}
+  # toll revenue: calibrated base x actual traffic volume x half-year share
+  - operator: op4_transform
+    index_ref: {calibrated_base_revenue_m_per_yr: 219.3531, semiannual_share: 0.5,
+                traffic_volume_index: [1.0, 1.0, 1.0, 0.981315, 0.981315, 0.96298,
+                                       0.96298, 0.944987, 0.944987, 0.92733, 0.92733,
+                                       0.910003, 0.910003, 0.893, 0.893, 0.893, 0.893,
+                                       0.893]}
+    payer: road_users
+    payee: spv_cash
+    schedule_ref: {start: 0, terms: 18, phase: accrue}
+  # operating costs (waterfall rank 1): 30% of revenue
+  - operator: op4_transform
+    index_ref: {calibrated_base_revenue_m_per_yr: 219.3531, semiannual_share: 0.5,
+                opex_share: 0.30,
+                traffic_volume_index: [1.0, 1.0, 1.0, 0.981315, 0.981315, 0.96298,
+                                       0.96298, 0.944987, 0.944987, 0.92733, 0.92733,
+                                       0.910003, 0.910003, 0.893, 0.893, 0.893, 0.893,
+                                       0.893]}
+    payer: spv_cash
+    payee: opex_payees
+    schedule_ref: {start: 0, terms: 18, phase: accrue}
+  # the 2015 sale (fires before the bullet's maturity sweep, config order):
+  # the underwriting multiple marked to actual volume at sale
+  - operator: op4_transform
+    index_ref: {actual_volume_at_sale: 0.893}
+    coefficient: 3114.754098
+    payer: buyer_2015
+    payee: spv_cash
+    schedule_ref: {start: 17, terms: 1, phase: settle}
+  # the bullet: notional recognized onto senior_debt; each period's claim is
+  # paid from cash when it covers it, capitalized after a payment default,
+  # swept against the whole cash balance at maturity
+  - operator: op1_instrument_generation
+    instrument_type: interest_only
+    terms: 18
+    notional: 3030.0
+    payer: spv_cash
+    payee: senior_lenders
+    debt_account: senior_debt
+    interest_claim: interest_claim
+    interest_expense: interest_expense
+    funding_source: concession_asset
+    schedule_ref: {start: 0, phase: accrue}
+  # the PRESET accreting rate path (an OP4 transform on rates): the period
+  # charge applied to the debt balance at fire time (the one-step-lag
+  # opening-balance accrual — capitalizations settle in a later phase)
+  - operator: op4_transform
+    index_ref: {period_charge: [0.015509, 0.016729, 0.01795, 0.01917, 0.020391,
+                                0.021612, 0.022832, 0.024053, 0.025273, 0.026494,
+                                0.027714, 0.028935, 0.030156, 0.031376, 0.032597,
+                                0.033817, 0.035038, 0.036259]}
+    apply_to: {account: senior_debt, read: closing_balance}
+    payer: interest_expense
+    payee: interest_claim
+    schedule_ref: {start: 0, terms: 18, phase: accrue}
+  # the reduction: per-party positions and horizon totals over the run
+  - operator: op9_metric_reduction
+    metrics: [position, horizon]
+    horizon: 18
+    position_scope: [senior_lenders, spv_cash, state_cash, senior_debt]

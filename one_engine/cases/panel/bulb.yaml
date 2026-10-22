@@ -1,0 +1,105 @@
+# BULB ENERGY: a fixed-price commitment against an unhedged wholesale shock
+# (esco-product engine/tests/fixtures/bulb.yaml, translated; inputs from
+# esco-product's blind brief orc-c05, expected values in its
+# engine/tests/test_m4.py).
+#
+# The deal. 1.5m domestic customers on a fixed tariff of about GBP 1,275 a
+# year (12,000 kWh gas and 2,900 kWh electricity each). Wholesale gas rose from
+# about 35 p/therm early 2021 to 205 p/therm by December 2021 and electricity
+# about fourfold, with no hedges. The supplier went into special administration
+# in November 2021, kept trading, and was sold in December 2022. The state
+# financed the deficit and recovered it as a levy on all energy bills.
+# Published band for the accumulated deficit: GBP 2.0-2.58bn.
+#
+# Conventions, each esco-product's fixture's own:
+#   * the tariff is the band's midpoint, 1,275; the gas anchor 35 p/therm;
+#     the December 2021 peak 205 p/therm; the electricity end multiple 4x;
+#   * consumption is spread by heating-season cosines (the monthly shares are
+#     inputs at the fixture's six decimals); 2021 prices ramp as convex
+#     quadratics, 2022 holds the peak;
+#   * break-even calibration: at anchor prices the margin is exactly nil, so
+#     the supplier's margin each month is the anchor allowance less the spot
+#     cost on actual consumption. Revenue in and the non-wholesale charge out
+#     are both tariff x the month's combined share;
+#   * administration changes nothing financial; at the December 2022 sale the
+#     accumulated deficit is handed to the state's fund (the book transfers,
+#     the loss does not), and a levy on all bills recovers it.
+#
+# One book ("deal"). Every party's position is an asset account: positive is
+# net received, negative net paid in (the customers' bill base, the supplier's
+# trading pocket, the wholesale market, networks and policy, the state's
+# administration fund, all energy bill payers). Months, horizon 24 (Jan 2021
+# to Dec 2022); amounts are GBP.
+case: bulb-fixed-price-unhedged
+periods: 24
+phases: [open, accrue, settle, close]
+currency: GBP
+floors: {}
+generators:
+  bulb:
+    kind: formulas
+    periods: 24
+    inputs:
+      customers: 1500000
+      tariff_annual_gbp: 1275.0
+      therms: 409.457094
+      anchor_gas_price_gbp: 0.35
+      pence_to_gbp: 0.01
+      w_comb: [0.143624, 0.135547, 0.113479, 0.083333, 0.053188, 0.03112, 0.023043, 0.03112, 0.053188, 0.083333,
+               0.113479, 0.135547, 0.143624, 0.135547, 0.113479, 0.083333, 0.053188, 0.03112, 0.023043, 0.03112,
+               0.053188, 0.083333, 0.113479, 0.135547]
+      w_gas: [0.154167, 0.144677, 0.11875, 0.083333, 0.047917, 0.02199, 0.0125, 0.02199, 0.047917, 0.083333,
+              0.11875, 0.144677, 0.154167, 0.144677, 0.11875, 0.083333, 0.047917, 0.02199, 0.0125, 0.02199,
+              0.047917, 0.083333, 0.11875, 0.144677]
+      w_elec: [0.1, 0.097767, 0.091667, 0.083333, 0.075, 0.0689, 0.066667, 0.0689, 0.075, 0.083333, 0.091667,
+               0.097767, 0.1, 0.097767, 0.091667, 0.083333, 0.075, 0.0689, 0.066667, 0.0689, 0.075, 0.083333,
+               0.091667, 0.097767]
+      gas_price_p_per_therm: [35.0, 36.404959, 40.619835, 47.644628, 57.479339, 70.123967, 85.578512, 103.842975,
+                              124.917355, 148.801653, 175.495868, 205.0, 205.0, 205.0, 205.0, 205.0, 205.0, 205.0,
+                              205.0, 205.0, 205.0, 205.0, 205.0, 205.0]
+      elec_wholesale_multiple: [1.0, 1.024793, 1.099174, 1.22314, 1.396694, 1.619835, 1.892562, 2.214876,
+                                2.586777, 3.008264, 3.479339, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0,
+                                4.0, 4.0, 4.0]
+    values:
+      tariff_revenue: tariff_annual_gbp * w_comb * customers
+      gas_allowance: therms * anchor_gas_price_gbp * w_gas * customers
+      elec_allowance: therms * anchor_gas_price_gbp * w_elec * customers
+      gas_spot: therms * w_gas * gas_price_p_per_therm * customers * pence_to_gbp
+      elec_spot: therms * anchor_gas_price_gbp * w_elec * elec_wholesale_multiple * customers
+opening:
+  deal:
+    customers_billbase: {nature: asset, value: 0}
+    supplier_trading: {nature: asset, value: 0}
+    wholesale_market: {nature: asset, value: 0}
+    network_policy: {nature: asset, value: 0}
+    state_admin_fund: {nature: asset, value: 0}
+    energy_bill_payers: {nature: asset, value: 0}
+contracts: {}
+rulebooks:
+  # the supplier's month: fixed tariff in, non-wholesale charge out, anchor allowances back, unhedged spot costs out
+  trading:
+    kind: transfer
+    entity: deal
+    phase: accrue
+    moves:
+      tariff: {debit: supplier_trading, credit: customers_billbase, amount: {generator: bulb, output: tariff_revenue}}
+      non_wholesale: {debit: network_policy, credit: supplier_trading, amount: {generator: bulb, output: tariff_revenue}}
+      gas_allowance: {debit: supplier_trading, credit: network_policy, amount: {generator: bulb, output: gas_allowance}}
+      elec_allowance: {debit: supplier_trading, credit: network_policy, amount: {generator: bulb, output: elec_allowance}}
+      gas_spot: {debit: wholesale_market, credit: supplier_trading, amount: {generator: bulb, output: gas_spot}}
+      elec_spot: {debit: wholesale_market, credit: supplier_trading, amount: {generator: bulb, output: elec_spot}}
+  # the December 2022 sale: the state's fund takes the accumulated deficit (minus the supplier's
+  # negative balance, read when it fires); then the levy on all bills makes the fund whole
+  # (minus the fund's balance, read after the hand-off). Measured postings, in file order.
+  resolution:
+    kind: claim
+    entity: deal
+    phase: settle
+    claims:
+      handoff: {claim: state_admin_fund, against: supplier_trading, share: -1,
+                of: {account: supplier_trading, read: balance}, from: 23, until: 23}
+      levy: {claim: energy_bill_payers, against: state_admin_fund, share: -1,
+             of: {account: state_admin_fund, read: balance}, from: 23, until: 23}
+schemes: {}
+cuts: {}
+measures: {}

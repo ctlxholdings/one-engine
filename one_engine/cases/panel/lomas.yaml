@@ -1,0 +1,53 @@
+# LOMAS: a payment suspended while the other party's default continues
+# (esco-product engine/tests/fixtures/lomas.yaml, translated; the published
+# ruling from esco-product's blind brief orc-lomas, expected values in its
+# engine/tests/test_m3.py).
+#
+# The provision (ISDA 2(a)(iii), as Lomas v JFB Firth Rixson read it): the
+# payer owes 1,000 a period, on condition that no Event of Default of the
+# OTHER party has occurred and is continuing. The payee is in administration,
+# an Event of Default that continues. Published ruling: the obligation is
+# SUSPENDED, not extinguished. Nothing is paid while the default continues; a
+# cure revives the duty with no new agreement; only termination extinguishes
+# it, for good; the payer's own default never excuses it (no self-excuse); the
+# payee's demand changes nothing.
+#
+# How it is written here: facts are numbers, one per period (1 true, 0 false).
+# The condition precedent is "not (occurred and continuing)": 1 - min(...).
+# The payer's own default and the payee's demand are inputs no formula reads,
+# so they cannot move anything. Termination is the duty's extinguish_on.
+case: lomas-payment-suspension
+periods: 4
+phases: [open, accrue, settle, close]
+currency: LCU
+floors: {}
+generators:
+  facts:
+    kind: formulas
+    periods: 4
+    inputs:
+      counterparty_default_occurred: [1, 1, 1, 1]     # the payee's administration: an Event of Default
+      counterparty_default_continuing: [1, 1, 1, 1]   # and it continues (not cured)
+      agreement_terminated: [0, 0, 0, 0]              # the payer does not terminate
+      payer_default_occurred: [0, 0, 0, 0]            # read by no formula: no self-excuse
+      payer_default_continuing: [0, 0, 0, 0]
+      payment_demanded: [1, 1, 1, 1]                  # read by no formula: inert
+      payment: 1000
+    values:
+      precedent_holds: 1 - min(counterparty_default_occurred, counterparty_default_continuing)
+opening:
+  deal:
+    payee_cash: {nature: asset, value: 0}
+    payer_cash: {nature: asset, value: 0}
+contracts: {}
+rulebooks:
+  payment_duty:
+    kind: duty
+    entity: deal
+    phase: settle
+    condition: {generator: facts, output: precedent_holds}
+    extinguish_on: {generator: facts, output: agreement_terminated}
+    perform: {debit: payee_cash, credit: payer_cash, amount: {generator: facts, output: payment}}
+schemes: {}
+cuts: {}
+measures: {}

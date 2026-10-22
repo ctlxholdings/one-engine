@@ -1,0 +1,47 @@
+# Lomas v JFB Firth Rixson payment-suspension provision (M3 fixture, data only)
+#
+# Inputs (blind_briefs/orc-lomas.md): each party's obligation to make payments is
+# subject to the condition precedent that no Event of Default has occurred and is
+# continuing with respect to the OTHER party; a party's own default does not
+# excuse it, the counterparty's continuing default suspends the duty to pay
+# without terminating. Facts (2008-2010): the payee is in administration (an EoD
+# under the agreement) and it is continuing; the payee demands payment; the payer
+# has no Event of Default of its own and does NOT terminate. Facts as data — the
+# payer's own affairs are simply absent from the precedent expression (no
+# self-excuse by construction), and the demand fact is read by no expression
+# (inert). The performance amount is NOT stated in the facts; a notional 1,000
+# per period is configured to make the posting gate observable — the
+# classification is amount-independent. Expected values are the published ruling
+# (tests/test_m3.py): SUSPENDED every period, no payment posts; cure revives
+# (payments resume); termination extinguishes (nothing further ever posts).
+deal: lomas-payment-suspension
+horizon: 4
+settings:
+  op7_clock: {period_granularity: year, phases: [open, accrue, settle, close],
+              opening_balance_lag: true}
+  op8_ledger: {accounts: [payee_cash, payer_cash], duality_enforcement: strict}
+parties:
+  - {name: payee-party, role: payee}
+  - {name: payer-party, role: payer}
+instruments:
+  # the provision as an obligation norm: the precedent is the NEGATION of the
+  # other party's EoD occurred-and-continuing; termination is the extinguisher
+  - operator: op6_deontic_evaluation
+    norm_set:
+      - id: payment-duty
+        kind: obligation
+        bearer: payer-party
+        counterparty: payee-party
+        condition_precedent:
+          not:
+            all:
+              - {fact: counterparty_default_occurred}
+              - {fact: counterparty_default_continuing}
+        extinguish_on: {fact: agreement_terminated}
+        performance: {payer: payer_cash, payee: payee_cash, amount: 1000.0}
+    conditions:
+      counterparty_default_occurred: true    # the payee's administration — an EoD under the agreement
+      counterparty_default_continuing: true  # and it is continuing (not cured)
+      agreement_terminated: false            # the payer does not terminate
+      payment_demanded: true                 # the payee demands — read by no expression (inert)
+    schedule_ref: {start: 0, terms: 4, phase: settle}

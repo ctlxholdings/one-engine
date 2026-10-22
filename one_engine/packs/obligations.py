@@ -39,7 +39,10 @@ Rulebooks
     records its state. Each period's record (kind = the rulebook's name)
     carries ``status`` (``operative`` | ``suspended``), ``satisfied`` and the
     ``amount`` posted. A suspension is read from the condition each period;
-    a stop with no cure is a condition that stays false.
+    a stop with no cure is a condition that stays false. ``extinguish_on``
+    (a fact, optional) ends the duty for good: from the first period it
+    holds the duty is *extinguished*, posts nothing, and stays so even if
+    the fact reads false again (a terminated agreement does not revive).
 
 ``prohibition``
     A forbidden act and its reparation. In each period where ``forbidden``
@@ -75,8 +78,12 @@ Rulebooks
     (:func:`one_engine.allocation.allocate`) over ``tiers`` in order. Each tier
     is due its ``claim``'s balance. A tier's payment moves cash from the
     pool to its ``to`` account and discharges the claim against
-    ``claims_book`` (the account claims were recognised against). What a
-    tier is not paid follows its ``shortfall``:
+    ``claims_book`` (the account claims were recognised against). A tier
+    may instead be a *reserve*: ``{name, target, to}``, due what lifts the
+    ``to`` account's balance to ``target`` (nothing once it is there),
+    paid in rank like any tier and discharging nothing; a reserve topped
+    before the claims is ranked first. What a claim tier is not paid
+    follows its ``shortfall``:
 
     * ``carry``: it stays due (arrears);
     * ``extinguish``: it is written off unpaid into ``extinguished`` (the
@@ -96,7 +103,9 @@ Rulebooks
 ``pool``
     An origination pool: ``members`` (id -> ``{quantity, performance,
     account}``) stream into ``pool_to`` for the ``terms`` of their stint from
-    their ``entry`` period (``entries``: one stint per member). Each period
+    their ``entry`` period (``entries``). A member may have several stints,
+    never overlapping: a lot that rolls over into a new cycle enters again,
+    and each entry is gated on its own. Each period
     a member pays ``quantity`` x its ``performance`` (a number, or a series
     indexed by the period *of its stint*), credited to its own ``account``
     (its sub-ledger). ``thresholds`` gate entry: an ``origination_floor``
@@ -110,6 +119,25 @@ Rulebooks
     books: in every period the members' sub-ledgers move by exactly what
     the pool posted into ``pool_to``, so a posting into a member's account
     from anywhere else turns it red.
+
+``serviced_bullet``
+    A non-recourse interest-only bullet serviced from cash (esco-product's
+    ``interest_only`` type path; ACTUS PAM family). The interest is not
+    computed here: a ``claim`` recognises each period's charge on ``claim``.
+    In each period of the window, in good standing, the claim is paid *in
+    full* out of ``cash`` to ``lender`` when the cash covers it, and
+    nothing is paid otherwise: that miss is a payment default, and from
+    then on every claim *capitalises* into ``debt`` whatever the cash. At
+    ``maturity`` the whole cash balance is swept against claim plus debt
+    (claim first, then principal); what it does not reach stays on ``debt``
+    as the lenders' shortfall and any excess cash stays in ``cash``. A
+    paid claim is discharged back through ``expense`` (where the claim was
+    recognised), repaid principal back to ``funding`` (where the debt was
+    recognised). The record carries ``paid``, ``capitalised``,
+    ``defaulted`` and, at maturity, ``swept``. Why all or nothing: a
+    coupon is a single payment; a partial payment is still a missed one,
+    and the source (Indiana Toll Road, June 2014) is a missed payment,
+    not a partial one.
 
 Not here: index paths. A regime switch or an escalation ramp is a series,
 written as data or as a formula of the ``formulas`` generator
@@ -195,17 +223,22 @@ def duty(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     first, last = _window(r, group.periods, where)
     raw = r.take_or_default("perform", None, reason="a pure determination: the duty records its state only").value
     perform = None if raw is None else _posting(raw, f"{where}.perform")
+    extinguish_on = r.take_or_default("extinguish_on", False, reason="nothing ends the duty for good").value
+    state = {"extinguished": False}
 
     def handler(g: Group, t: int) -> None:
         if not first <= t <= last:
             return
-        operative = _fact(condition, t, f"{where}.condition")
+        # termination is terminal: once the fact holds the duty is gone, whatever the fact reads later
+        state["extinguished"] = state["extinguished"] or _fact(extinguish_on, t, f"{where}.extinguish_on")
+        operative = not state["extinguished"] and _fact(condition, t, f"{where}.condition")
         x = Fraction(0)
         if operative and perform is not None:
             debit, credit, amount = perform
             x = _at(amount, t, f"{where}.perform.amount")
             _move(g, entity, t, phase, debit, credit, x, f"{name}.perform:{t}")
-        g.record(name, t, status="operative" if operative else "suspended", satisfied=operative, amount=x)
+        status = "extinguished" if state["extinguished"] else "operative" if operative else "suspended"
+        g.record(name, t, status=status, satisfied=operative, amount=x)
 
     group.register(phase, handler)
 
@@ -322,7 +355,15 @@ def stack(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     tiers = []
     for i, raw in enumerate(r.take("tiers")):
         tr = Reader(raw, source=f"{where}.tiers[{i}]")
-        tier = (tr.take("name"), tr.take("claim"), tr.take("to"), tr.take("shortfall"))
+        if "target" in raw:
+            # a reserve tier: due what lifts its account to target; no claim, nothing carried
+            tier = (tr.take("name"), None, tr.take("to"), "reserve", exact(tr.take("target")))
+            tr.finish()
+            if tier[4] < 0:
+                raise InputError(f"{where}.tiers[{i}]: a reserve target is never negative")
+            tiers.append(tier)
+            continue
+        tier = (tr.take("name"), tr.take("claim"), tr.take("to"), tr.take("shortfall"), None)
         tr.finish()
         if tier[3] not in _SHORTFALL:
             raise InputError(f"{where}.tiers[{i}]: shortfall must be one of {_SHORTFALL}, not {tier[3]!r}")
@@ -347,7 +388,8 @@ def stack(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         available = book.balance(pool, t)
         if available < 0:
             raise ObligationError(f"{where}, period {t}: the pool {pool} is overdrawn ({available}) before the stack")
-        due = {n: book.balance(c, t) for n, c, _, _ in tiers}
+        due = {n: (max(Fraction(0), target - book.balance(to, t)) if c is None else book.balance(c, t))
+               for n, c, to, _, target in tiers}
         for n, x in due.items():
             if x < 0:
                 raise ObligationError(f"{where}, period {t}: tier {n} is due a negative {x}")
@@ -358,9 +400,11 @@ def stack(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
         a = allocate(available + call, [Tier(n, due[n]) for n in names], residual="residual")
         _move(g, entity, t, phase, pool, residual or pool, call, f"{name}.call:{t}")
         gone = {}
-        for n, c, to, shortfall in tiers:
+        for n, c, to, shortfall, _ in tiers:
             paid = a.paid[n]
             _move(g, entity, t, phase, to, pool, paid, f"{name}.{n}.paid:{t}")
+            if c is None:
+                continue                     # a reserve tier discharges no claim
             _move(g, entity, t, phase, c, book_acct, paid, f"{name}.{n}.discharged:{t}")
             unpaid = due[n] - paid
             if unpaid and shortfall == "extinguish":
@@ -394,8 +438,11 @@ def pool(group: Group, r: Reader, ctx: Mapping[str, Any]):
         er.finish()
         if entry[0] not in members:
             raise InputError(f"{where}.entries[{i}]: unknown member '{entry[0]}'")
-        if any(e[0] == entry[0] for e in entries):
-            raise InputError(f"{where}: member '{entry[0]}' enters twice; one stint per member")
+        for mid, at, terms in entries:
+            # a member may roll over into a new stint, but is never in two at once
+            if mid == entry[0] and at < entry[1] + entry[2] and entry[1] < at + terms:
+                raise InputError(f"{where}: member '{mid}' has overlapping stints "
+                                 f"{at}..{at + terms - 1} and {entry[1]}..{entry[1] + entry[2] - 1}")
         entries.append(entry)
     thresholds = []
     for i, raw in enumerate(r.take("thresholds")):
@@ -408,7 +455,7 @@ def pool(group: Group, r: Reader, ctx: Mapping[str, Any]):
             raise InputError(f"{where}.thresholds[{i}]: an entry is taken or not: if_missing is pass or fail")
         thresholds.append((Test(tid, ">=", exact(tr.take("floor")), if_missing), tr.take("measure")))
         tr.finish()
-    active: Dict[str, Tuple[int, int]] = {}
+    active: Dict[str, List[Tuple[int, int]]] = {}
 
     def handler(g: Group, t: int) -> None:
         entered: List[str] = []
@@ -423,12 +470,14 @@ def pool(group: Group, r: Reader, ctx: Mapping[str, Any]):
             if failed:
                 skipped[mid] = failed
             else:
-                active[mid] = (at, terms)
+                active.setdefault(mid, []).append((at, terms))
                 entered.append(mid)
         receipts = {}
-        for mid, (at, terms) in active.items():
-            if not at <= t < at + terms:
+        for mid, stints in active.items():
+            live = [at for at, terms in stints if at <= t < at + terms]
+            if not live:
                 continue
+            at = live[0]                     # stints never overlap: at most one is live
             quantity, performance, acct = members[mid]
             x = quantity * _at(performance, t - at, f"{where}.members.{mid}.performance")
             _move(g, entity, t, phase, pool_to, acct, x, f"{name}.{mid}:{t}")
@@ -456,4 +505,49 @@ def pool(group: Group, r: Reader, ctx: Mapping[str, Any]):
     return {"composition": composition}
 
 
-RULEBOOKS = {"duty": duty, "prohibition": prohibition, "claim": claim, "put": put, "stack": stack, "pool": pool}
+# ── serviced bullet ──────────────────────────────────────────────────────────
+
+def serviced_bullet(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    """An interest-only bullet paid all or nothing, capitalising after a default; see the module docstring."""
+    name, where = ctx["name"], f"serviced_bullet {ctx['name']}"
+    entity, phase = r.take("entity"), r.take("phase")
+    cash, lender, debt, acct = r.take("cash"), r.take("lender"), r.take("debt"), r.take("claim")
+    expense, funding = r.take("expense"), r.take("funding")
+    first, last = _window(r, group.periods, where)
+    maturity = int(r.take("maturity"))
+    if not first <= maturity <= last:
+        raise InputError(f"{where}: maturity {maturity} is not inside the window {first}..{last}")
+    state = {"defaulted": False}
+
+    def handler(g: Group, t: int) -> None:
+        if not first <= t <= maturity:
+            return
+        book = g.book(entity)
+        due = book.balance(acct, t)
+        if t == maturity:
+            # the estate is swept: the claim is discharged first, then principal
+            pay = max(Fraction(0), min(book.balance(cash, t), book.balance(debt, t) + due))
+            on_claim = min(pay, due)
+            _move(g, entity, t, phase, lender, cash, pay, f"{name}.bullet:{t}")
+            _move(g, entity, t, phase, acct, expense, on_claim, f"{name}.bullet.claim:{t}")
+            _move(g, entity, t, phase, debt, funding, pay - on_claim, f"{name}.bullet.debt:{t}")
+            g.record(name, t, swept=pay, defaulted=state["defaulted"])
+            return
+        if due == 0:
+            g.record(name, t, paid=Fraction(0), capitalised=Fraction(0), defaulted=state["defaulted"])
+            return
+        if not state["defaulted"] and book.balance(cash, t) >= due:
+            _move(g, entity, t, phase, lender, cash, due, f"{name}.interest:{t}")
+            _move(g, entity, t, phase, acct, expense, due, f"{name}.interest.claim:{t}")
+            g.record(name, t, paid=due, capitalised=Fraction(0), defaulted=False)
+            return
+        # a claim the cash cannot cover is a payment default; it and every later claim capitalise
+        state["defaulted"] = True
+        _move(g, entity, t, phase, acct, debt, due, f"{name}.capitalise:{t}")
+        g.record(name, t, paid=Fraction(0), capitalised=due, defaulted=True)
+
+    group.register(phase, handler)
+
+
+RULEBOOKS = {"duty": duty, "prohibition": prohibition, "claim": claim, "put": put, "stack": stack, "pool": pool,
+             "serviced_bullet": serviced_bullet}

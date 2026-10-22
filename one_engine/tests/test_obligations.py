@@ -69,6 +69,18 @@ def test_a_duty_runs_only_inside_its_window():
     assert set(res.records("route")) == {1}
 
 
+
+def test_a_duty_extinguished_stays_extinguished():
+    """Termination ends a duty for good: once ``extinguish_on`` holds, the duty is extinguished in that
+    period and every later one, even if the fact reads false again and the condition holds (Lomas)."""
+    res = run_case(case({"route": {"kind": "duty", "entity": "deal", "phase": "accrue", "condition": True,
+                                   "extinguish_on": [False, True, False],
+                                   "perform": {"debit": "pool", "credit": "payer", "amount": 10}}}, POCKETS))
+    assert [flow(res, "pool", t) for t in range(3)] == [10, 0, 0]
+    recs = res.records("route")
+    assert [recs[t]["status"] for t in range(3)] == ["operative", "extinguished", "extinguished"]
+    assert [recs[t]["satisfied"] for t in range(3)] == [True, False, False]
+
 # ── prohibition ───────────────────────────────────────────────────────────
 
 def test_a_prohibition_pays_its_remedy_only_when_violated():
@@ -252,8 +264,9 @@ def test_the_pool_composition_check_fails_on_a_posting_to_a_member_from_outside_
     assert any("pool.composition" in f for f in res.failed_checks())
 
 
-def test_a_pool_refuses_an_unknown_member_and_a_second_stint():
+def test_a_pool_refuses_an_unknown_member_and_overlapping_stints():
+    # a second stint that follows the first is a rollover (tests/test_case_esco_berlin.py); one that overlaps it is not
     with pytest.raises(InputError, match="unknown member"):
         _pool([{"member": "m9", "entry": 0, "terms": 1}])
-    with pytest.raises(InputError, match="twice"):
-        _pool([{"member": "m1", "entry": 0, "terms": 1}, {"member": "m1", "entry": 2, "terms": 1}])
+    with pytest.raises(InputError, match="overlapping stints"):
+        _pool([{"member": "m1", "entry": 0, "terms": 2}, {"member": "m1", "entry": 1, "terms": 1}])

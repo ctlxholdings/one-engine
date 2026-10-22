@@ -1,0 +1,157 @@
+# Bulb Energy — fixed-price commitment vs an unhedged wholesale input shock
+# (failure-world fixture, data only; inputs from blind_briefs/orc-c05.md)
+#
+# Inputs (the brief): 1.5m domestic customers, typical consumption 12,000 kWh
+# gas + 2,900 kWh electricity per year; fixed tariff effectively capped near
+# GBP 1,250-1,300 per typical customer over 2021; wholesale gas ~30-40 p/th
+# early 2021 rising above 200 p/th by Dec 2021, electricity up ~3-5x, no
+# hedges; special administration Nov 2021, trades on, sold Dec 2022; deficit
+# recovered later as a levy on all energy bills.
+#
+# Modeling conventions (config-expressible, recorded per the brief — each
+# mirrors the prior independent blind run):
+#   tariff 1,275/yr — midpoint of the 1,250-1,300 band; gas anchor 35 p/th —
+#   midpoint of 30-40; Dec-21 peak 205 p/th; electricity end multiple 4x —
+#   midpoint of 3-5x; consumption spread by heating-season cosines (gas
+#   amplitude 0.85, electricity 0.20); 2021 price paths are convex quadratic
+#   ramps ((m-1)/11)^2), 2022 held at the peak (no-reversion rule: the brief
+#   gives no 2022 path); gas anchor cost per customer-year = therms x 0.35 =
+#   143.309983 GBP, the electricity wholesale anchor equals it (spend parity)
+#   implying the electricity multiple applies to the same anchor; BREAK-EVEN
+#   CALIBRATION: at anchor prices the annual margin is exactly zero (a
+#   competitive supplier's non-wholesale cost = tariff - 2 x anchor = 988.38
+#   GBP/customer/yr as the residual), so the whole shock lands in the margin:
+#   monthly margin = anchor cost - spot cost on actual seasonal consumption.
+# Ledger convention: the supplier's monthly margin accrues on supplier_trading
+# (revenue in, non-wholesale charge out at the tariff's consumption share,
+# anchor-price allowances back in from the non-wholesale sink, unhedged spot
+# costs out). Administration from Nov 2021 changes nothing financial by itself
+# (tariff unchanged, trading continues); at the Dec-2022 sale the accumulated
+# deficit is handed to the state's administration fund (transfers book, not
+# loss — the sale carries no loss away) and socialized as a levy on ALL energy
+# bills. Shareholders' equity is wiped (no input parameterizes it — the
+# deficit is financed publicly throughout).
+#
+# Data derivations (computed once, recorded here as data):
+#   therms = 12,000 / 29.3071 kWh-per-therm = 409.457094
+#   w_gas(m) = (1 + 0.85 cos(2 pi (m-1)/12)) / 12 ; w_elec amplitude 0.20
+#   w_comb(m) = (12,000 w_gas + 2,900 w_elec) / 14,900
+#   p_gas 2021 = 35 + 170 ((m-1)/11)^2 p/th ; elec mult 2021 = 1 + 3 ((m-1)/11)^2
+# Expected (prior independent run; published band): accumulated deficit
+# -1,526.60 GBP/customer => ~GBP -2.29bn aggregate, in the 2.0-2.58bn band
+# (tests/test_m4.py asserts the band and reports the point value).
+deal: bulb-fixed-price-unhedged
+horizon: 24
+settings:
+  op7_clock: {period_granularity: month, phases: [open, accrue, settle, close],
+              opening_balance_lag: true}
+  op8_ledger: {accounts: [customers_billbase, supplier_trading, wholesale_market,
+                          network_policy, state_admin_fund, energy_bill_payers],
+               duality_enforcement: strict}
+parties:
+  - {name: supplier, role: supplier}
+  - {name: customer-base, role: customers}
+  - {name: wholesale-market, role: market}
+  - {name: networks-and-policy, role: counterparties}
+  - {name: the-state, role: authority}
+  - {name: energy-bill-payers, role: levy-base}
+instruments:
+  # fixed-tariff revenue: tariff x the month's combined consumption share x customers
+  - operator: op4_transform
+    index_ref: {tariff_annual_gbp: 1275.0,
+                w_comb: [0.143624, 0.135547, 0.113479, 0.083333, 0.053188, 0.03112,
+                         0.023043, 0.03112, 0.053188, 0.083333, 0.113479, 0.135547,
+                         0.143624, 0.135547, 0.113479, 0.083333, 0.053188, 0.03112,
+                         0.023043, 0.03112, 0.053188, 0.083333, 0.113479, 0.135547]}
+    coefficient: 1500000
+    payer: customers_billbase
+    payee: supplier_trading
+    schedule_ref: {start: 0, terms: 24, phase: accrue}
+  # non-wholesale charge out at the same share (networks + policy + opex vehicle)
+  - operator: op4_transform
+    index_ref: {tariff_annual_gbp: 1275.0,
+                w_comb: [0.143624, 0.135547, 0.113479, 0.083333, 0.053188, 0.03112,
+                         0.023043, 0.03112, 0.053188, 0.083333, 0.113479, 0.135547,
+                         0.143624, 0.135547, 0.113479, 0.083333, 0.053188, 0.03112,
+                         0.023043, 0.03112, 0.053188, 0.083333, 0.113479, 0.135547]}
+    coefficient: 1500000
+    payer: supplier_trading
+    payee: network_policy
+    schedule_ref: {start: 0, terms: 24, phase: accrue}
+  # anchor-price gas allowance back in (the breakeven calibration's anchor leg)
+  - operator: op4_transform
+    index_ref: {therms: 409.457094, anchor_gas_price_gbp: 0.35,
+                w_gas: [0.154167, 0.144677, 0.11875, 0.083333, 0.047917, 0.02199,
+                        0.0125, 0.02199, 0.047917, 0.083333, 0.11875, 0.144677,
+                        0.154167, 0.144677, 0.11875, 0.083333, 0.047917, 0.02199,
+                        0.0125, 0.02199, 0.047917, 0.083333, 0.11875, 0.144677]}
+    coefficient: 1500000
+    payer: network_policy
+    payee: supplier_trading
+    schedule_ref: {start: 0, terms: 24, phase: accrue}
+  # anchor-price electricity allowance back in (spend parity with gas)
+  - operator: op4_transform
+    index_ref: {therms: 409.457094, anchor_gas_price_gbp: 0.35,
+                w_elec: [0.1, 0.097767, 0.091667, 0.083333, 0.075, 0.0689,
+                         0.066667, 0.0689, 0.075, 0.083333, 0.091667, 0.097767,
+                         0.1, 0.097767, 0.091667, 0.083333, 0.075, 0.0689,
+                         0.066667, 0.0689, 0.075, 0.083333, 0.091667, 0.097767]}
+    coefficient: 1500000
+    payer: network_policy
+    payee: supplier_trading
+    schedule_ref: {start: 0, terms: 24, phase: accrue}
+  # unhedged gas spot procurement: therms x heating share x price (pence -> GBP)
+  - operator: op4_transform
+    index_ref: {therms: 409.457094,
+                w_gas: [0.154167, 0.144677, 0.11875, 0.083333, 0.047917, 0.02199,
+                        0.0125, 0.02199, 0.047917, 0.083333, 0.11875, 0.144677,
+                        0.154167, 0.144677, 0.11875, 0.083333, 0.047917, 0.02199,
+                        0.0125, 0.02199, 0.047917, 0.083333, 0.11875, 0.144677],
+                gas_price_p_per_therm: [35.0, 36.404959, 40.619835, 47.644628, 57.479339,
+                                        70.123967, 85.578512, 103.842975, 124.917355,
+                                        148.801653, 175.495868, 205.0, 205.0, 205.0,
+                                        205.0, 205.0, 205.0, 205.0, 205.0, 205.0, 205.0,
+                                        205.0, 205.0, 205.0]}
+    coefficient: 1500000
+    unit_conversion: {pence_to_gbp: 0.01}
+    payer: supplier_trading
+    payee: wholesale_market
+    schedule_ref: {start: 0, terms: 24, phase: accrue}
+  # unhedged electricity spot procurement: anchor cost x share x multiple
+  - operator: op4_transform
+    index_ref: {therms: 409.457094, anchor_gas_price_gbp: 0.35,
+                w_elec: [0.1, 0.097767, 0.091667, 0.083333, 0.075, 0.0689,
+                         0.066667, 0.0689, 0.075, 0.083333, 0.091667, 0.097767,
+                         0.1, 0.097767, 0.091667, 0.083333, 0.075, 0.0689,
+                         0.066667, 0.0689, 0.075, 0.083333, 0.091667, 0.097767],
+                elec_wholesale_multiple: [1.0, 1.024793, 1.099174, 1.22314, 1.396694,
+                                          1.619835, 1.892562, 2.214876, 2.586777,
+                                          3.008264, 3.479339, 4.0, 4.0, 4.0, 4.0, 4.0,
+                                          4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]}
+    coefficient: 1500000
+    payer: supplier_trading
+    payee: wholesale_market
+    schedule_ref: {start: 0, terms: 24, phase: accrue}
+  # Dec-2022 sale: the accumulated deficit is handed to the state's
+  # administration fund (one pocket cleared; transfers book, not loss)
+  - operator: op4_transform
+    index_ref: 1.0
+    coefficient: -1
+    apply_to: {account: supplier_trading, read: closing_balance}
+    payer: state_admin_fund
+    payee: supplier_trading
+    schedule_ref: {start: 23, terms: 1, phase: settle}
+  # ... and socialized: a levy on ALL energy bills recovers it from the state
+  - operator: op4_transform
+    index_ref: 1.0
+    coefficient: -1
+    apply_to: {account: state_admin_fund, read: closing_balance}
+    payer: energy_bill_payers
+    payee: state_admin_fund
+    schedule_ref: {start: 23, terms: 1, phase: settle}
+  # the reduction: per-party positions and horizon totals over the run
+  - operator: op9_metric_reduction
+    metrics: [position, horizon]
+    horizon: 24
+    position_scope: [supplier_trading, customers_billbase, wholesale_market,
+                     network_policy, energy_bill_payers, state_admin_fund]

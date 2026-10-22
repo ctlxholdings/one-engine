@@ -1,0 +1,129 @@
+# INDIANA TOLL ROAD v2: a leveraged concession whose accreting bullet meets
+# falling traffic (esco-product engine/tests/fixtures/indiana-toll-road.yaml,
+# translated; inputs from esco-product's blind brief orc-c31v2, expected values
+# in its engine/tests/test_m4.py).
+#
+# The deal. A 75-year lease, 2006: the consortium pays the state USD 3,800m up
+# front, which the state keeps whatever happens. It is funded by 3,030m of
+# senior bank debt and 770m from the sponsors (748m equity plus the 22m gap to
+# the price). The debt is a 9-year interest-only bullet whose rate was PRESET
+# to climb from about 3% to 11.3% by 2023. Underwriting assumed +22% traffic
+# over 7 years; actual traffic fell to 0.893 of 2007 by 2013. Interest is paid
+# while the cash covers it; June 2014 is the first miss, after which every
+# claim capitalises. The concession is sold in 2015 at the underwriting
+# multiple marked to actual volume, and the estate is swept to the lenders.
+#
+# Conventions, each esco-product's fixture's own:
+#   * half-year periods; t = 0 is H2-2006, t = 17 ends June 2015 (maturity
+#     and sale);
+#   * the preset accreting schedule is the period charge on the debt balance,
+#     read when the claim is recognised (after any earlier capitalisation);
+#   * the 2006 revenue base 219.3531 USD m a year is CALIBRATED (esco-product
+#     root-found it as the lowest base that pays every claim through Dec 2013,
+#     so that June 2014 is the first miss, as anchored); it is an input here;
+#   * opex 30% of revenue, paid first; no reserve, no distributions before
+#     default: surplus cash is the buffer the coverage shortfall drains;
+#   * the sale price 3,114.754098 x 0.893 is esco-product's coefficient (3,800
+#     / 1.22, at its six decimals) times the actual volume at sale.
+#
+# One book ("deal"). Every party's position is an asset account: positive is
+# net received, negative net paid in (lenders, sponsors, the state, road users,
+# operators, the 2015 buyer, and the concession's cash). The concession asset is
+# financed by the debt and the sponsors' equity. The interest claim is a
+# liability recognised against interest expense, and discharged back through
+# it when paid. Amounts are USD m.
+case: indiana-toll-road-v2
+periods: 18
+phases: [open, accrue, settle, close]
+currency: USDm
+floors: {}
+generators:
+  itr:
+    kind: formulas
+    periods: 18
+    inputs:
+      senior_debt_drawn: 3030
+      sponsor_funding: 770
+      lease_price: 3800
+      base_revenue_per_year: 219.3531
+      half_year_share: 0.5
+      opex_share: 0.30
+      sale_coefficient: 3114.754098
+      volume_at_sale: 0.893
+      sale_period: 17
+      traffic_volume_index: [1.0, 1.0, 1.0, 0.981315, 0.981315, 0.96298, 0.96298, 0.944987, 0.944987,
+                             0.92733, 0.92733, 0.910003, 0.910003, 0.893, 0.893, 0.893, 0.893, 0.893]
+      period_charge: [0.015509, 0.016729, 0.01795, 0.01917, 0.020391, 0.021612, 0.022832, 0.024053, 0.025273,
+                      0.026494, 0.027714, 0.028935, 0.030156, 0.031376, 0.032597, 0.033817, 0.035038, 0.036259]
+    values:
+      close_draw: senior_debt_drawn if t == 0 else 0
+      close_equity: sponsor_funding if t == 0 else 0
+      close_price: lease_price if t == 0 else 0
+      revenue: base_revenue_per_year * half_year_share * traffic_volume_index
+      opex: base_revenue_per_year * half_year_share * opex_share * traffic_volume_index
+      sale: sale_coefficient * volume_at_sale if t == sale_period else 0
+opening:
+  deal:
+    spv_cash: {nature: asset, value: 0}
+    senior_lenders: {nature: asset, value: 0}
+    sponsors: {nature: asset, value: 0}
+    state_cash: {nature: asset, value: 0}
+    road_users: {nature: asset, value: 0}
+    opex_payees: {nature: asset, value: 0}
+    buyer_2015: {nature: asset, value: 0}
+    concession_asset: {nature: asset, value: 0}
+    sponsor_equity: {nature: equity, value: 0}
+    senior_debt: {nature: liability, value: 0}
+    interest_claim: {nature: liability, value: 0}
+    interest_expense: {nature: expense, value: 0}
+contracts: {}
+rulebooks:
+  # close: the senior draw and the sponsors' money in, the lease price out to the state (kept regardless)
+  close:
+    kind: transfer
+    entity: deal
+    phase: open
+    moves:
+      senior_draw: {debit: spv_cash, credit: senior_lenders, amount: {generator: itr, output: close_draw}}
+      sponsor_funding: {debit: spv_cash, credit: sponsors, amount: {generator: itr, output: close_equity}}
+      lease_price: {debit: state_cash, credit: spv_cash, amount: {generator: itr, output: close_price}}
+  # the concession asset financed by the sponsors' equity and the debt; tolls in, opex (rank 1) out
+  operations:
+    kind: transfer
+    entity: deal
+    phase: accrue
+    moves:
+      equity_recognised: {debit: concession_asset, credit: sponsor_equity, amount: {generator: itr, output: close_equity}}
+      tolls: {debit: spv_cash, credit: road_users, amount: {generator: itr, output: revenue}}
+      opex: {debit: opex_payees, credit: spv_cash, amount: {generator: itr, output: opex}}
+      debt_recognised: {debit: concession_asset, credit: senior_debt, amount: {generator: itr, output: close_draw}}
+  # the preset accreting rate: each period's charge on the debt balance as it stands when recognised
+  interest:
+    kind: claim
+    entity: deal
+    phase: accrue
+    claims:
+      interest: {claim: interest_claim, against: interest_expense, share: 1,
+                 index: {generator: itr, output: period_charge}, of: {account: senior_debt, read: balance}}
+  # the 2015 sale, before the maturity sweep
+  sale:
+    kind: transfer
+    entity: deal
+    phase: settle
+    moves:
+      sale: {debit: spv_cash, credit: buyer_2015, amount: {generator: itr, output: sale}}
+  # the bullet: each claim paid in full while the cash covers it, capitalised from the first miss, swept at maturity
+  bullet:
+    kind: serviced_bullet
+    entity: deal
+    phase: settle
+    cash: spv_cash
+    lender: senior_lenders
+    debt: senior_debt
+    claim: interest_claim
+    expense: interest_expense
+    funding: concession_asset
+    maturity: 17
+schemes: {}
+cuts: {}
+measures: {}

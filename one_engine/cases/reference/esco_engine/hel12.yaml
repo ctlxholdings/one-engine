@@ -1,0 +1,62 @@
+# ISDA Hellenic Republic 2012 restructuring credit event (M3 fixture, data only)
+#
+# Inputs (blind_briefs/orc-hel12.md): the Restructuring Credit Event definition —
+# (a) a reduction in principal or interest, OR a deferral/postponement of payment;
+# AND (b) the action at the direction or with the consent of the issuer's
+# government; AND (c) the action binds holders (a supermajority can impose it on
+# all). Facts (March 2012): the government enacted collective-action clauses into
+# local-law bonds after issuance, then launched an exchange offer reducing the
+# bonds' principal by ~53.5% (0.535 per unit face); accepting supermajorities
+# approved the exchange and, under the new clauses, their acceptance bound all
+# holders including dissenting minorities; the government directed and consented
+# to the whole operation. Facts carried as data: the principal-reduction fact is
+# the given FIGURE (the limb test is fraction > 0); the interest-reduction and
+# deferral disjuncts have no grounding fact and are false under the closed world.
+# Expected values are the published ruling (tests/test_m3.py): determination YES
+# with limbs (a)(b)(c) all TRUE; leave-one-out flips on the principal-reduction,
+# approval and binding facts only.
+deal: isda-hellenic-restructuring-2012
+horizon: 1
+settings:
+  op7_clock: {period_granularity: year, phases: [open, accrue, settle, close],
+              opening_balance_lag: true}
+  op8_ledger: {accounts: [determination], duality_enforcement: strict}
+parties:
+  - {name: reference-entity, role: issuer}
+  - {name: government, role: sovereign}
+instruments:
+  # the credit-event definition as a constitutive norm: three named limbs plus
+  # the occurrence conjunction over them; the Greek facts as the state config
+  - operator: op6_deontic_evaluation
+    norm_set:
+      - id: named-event
+        kind: definition
+        limbs:
+          reduction_or_deferral:
+            any:
+              - {fact: principal_reduction_fraction, exceeds: 0}
+              - {fact: interest_reduction}
+              - {fact: payment_deferral}
+          direction_or_consent:
+            any:
+              - {fact: government_directed_action}
+              - {fact: government_consented_to_action}
+              - {fact: action_launched_by_government}
+          binds_holders:
+            all:
+              - {fact: supermajority_acceptance_binds_all}
+              - {fact: supermajority_approved}
+        occurs:
+          all:
+            - {limb: reduction_or_deferral}
+            - {limb: direction_or_consent}
+            - {limb: binds_holders}
+    conditions:
+      government_enacted_cac_after_issuance: true   # background — no limb reads it
+      principal_reduction_fraction: 0.535           # the ~53.5% principal reduction
+      action_launched_by_government: true           # direction a fortiori
+      supermajority_approved: true                  # the imposition exercised
+      supermajority_acceptance_binds_all: true      # the imposition force (incl. dissenters)
+      government_directed_action: true
+      government_consented_to_action: true
+    schedule_ref: {start: 0, terms: 1, phase: settle}

@@ -1,0 +1,66 @@
+# ISDA HELLENIC 2012: was the Greek debt exchange a Restructuring Credit Event?
+# (esco-product engine/tests/fixtures/hel12.yaml, translated; the published
+# ruling and its leave-one-out table from esco-product's blind brief orc-hel12,
+# expected values in its engine/tests/test_m3.py).
+#
+# The definition is a constitutive rule over facts: the event occurs when all
+# three limbs hold.
+#   (a) reduction or deferral: a principal reduction above nil, or an
+#       interest reduction, or a payment deferral;
+#   (b) direction or consent: the government directed the action, or consented
+#       to it, or launched it itself;
+#   (c) binds holders: a supermajority approved AND its acceptance binds all
+#       holders (dissenters included).
+# The Greek facts are the inputs: a 53.5% principal reduction, an action the
+# government launched, directed and consented to, a supermajority that
+# approved and bound everyone. One fact is background no limb reads (the
+# collective action clause enacted after issuance). Published ruling: YES,
+# all three limbs true; leaving one fact out flips the answer only on the
+# principal reduction, the approval and the binding force.
+#
+# How it is written here: each fact is a number (1 true, 0 false; the
+# reduction is its fraction); "any" is max, "all" is min, a comparison gives
+# 1 or 0 (the formulas generator). esco-product reads an absent fact as false
+# (closed world); here a fact is always stated, and leaving one out is
+# setting it to 0, so a fact the case forgot refuses instead of passing as
+# false. The determination is a duty with no performance: it posts nothing
+# and records "operative" when the event occurs, "suspended" when it does not.
+case: isda-hellenic-restructuring-2012
+periods: 1
+phases: [open, accrue, settle, close]
+currency: LCU
+floors: {}
+generators:
+  facts:
+    kind: formulas
+    periods: 1
+    inputs:
+      government_enacted_cac_after_issuance: 1      # background: no limb reads it
+      principal_reduction_fraction: 0.535           # the ~53.5% principal reduction
+      interest_reduction: 0
+      payment_deferral: 0
+      action_launched_by_government: 1
+      supermajority_approved: 1
+      supermajority_acceptance_binds_all: 1
+      government_directed_action: 1
+      government_consented_to_action: 1
+    values:
+      reduction_or_deferral: max(principal_reduction_fraction > 0, interest_reduction, payment_deferral)
+      direction_or_consent: max(government_directed_action, government_consented_to_action, action_launched_by_government)
+      binds_holders: min(supermajority_acceptance_binds_all, supermajority_approved)
+      occurs:
+        each_period: min(reduction_or_deferral, direction_or_consent, binds_holders)
+opening:
+  deal:
+    determination: {nature: asset, value: 0}
+contracts: {}
+rulebooks:
+  # the credit-event determination: a pure determination, recorded per period
+  named_event:
+    kind: duty
+    entity: deal
+    phase: settle
+    condition: {generator: facts, output: occurs}
+schemes: {}
+cuts: {}
+measures: {}
