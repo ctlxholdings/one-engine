@@ -722,6 +722,17 @@ MUTATIONS = [
      "test_case_esco_failures.py::test_bullet_pays_capitalises_and_sweeps_as_esco_product[income1-lender_flows1-debt_closings1-0]"),
     ("packs/obligations.py", "    if not first <= maturity <= last:\n        raise InputError", "    if False:\n        raise InputError",
      "test_case_esco_failures.py::test_a_bullet_refuses_a_maturity_outside_its_window"),
+    # the ranked distribution (packs/obligations.py; esco-product's OP3 as its case converter writes it)
+    ("packs/obligations.py", '                if remainder >= 0 or shortfall == "absorb":', "                if remainder >= 0:",
+     "test_case_esco_converter.py::test_a_fixed_shortfall_is_absorbed_borne_or_recovered[absorb-0-senior0-junior0]"),
+    ("packs/obligations.py", "paid[c] = share if remainder < 0 else min(due[c], share)", "paid[c] = share",
+     "test_case_esco_converter.py::test_a_surplus_is_shared_pro_rata_and_capped_at_each_claim"),
+    ("packs/obligations.py", '                    if shortfall == "deferred" and var_total:', "                    if False:",
+     "test_case_esco_converter.py::test_a_fixed_shortfall_is_absorbed_borne_or_recovered[deferred-2-senior2-junior2]"),
+    ("packs/obligations.py", "_move(g, entity, t, phase, c, book_acct, due[c],", "_move(g, entity, t, phase, c, book_acct, max(paid[c], Fraction(0)),",
+     "test_case_esco_converter.py::test_a_fixed_shortfall_is_absorbed_borne_or_recovered[none-0-senior1-junior1]"),
+    ("packs/obligations.py", '    if (shortfall == "deferred") != (lag > 0):', "    if False:",
+     "test_case_esco_converter.py::test_a_lag_belongs_to_a_deferred_recovery_only"),
     # shared savings: performance by year of the term (the panel's W2 on ERIA)
     ("packs/contracts.py", "        if len(performance) != n:", "        if False:",
      "test_contracts.py::test_a_performance_series_must_cover_the_term_exactly"),

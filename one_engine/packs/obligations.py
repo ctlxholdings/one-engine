@@ -139,6 +139,32 @@ Rulebooks
     and the source (Indiana Toll Road, June 2014) is a missed payment,
     not a partial one.
 
+``ranked_distribution``
+    Fixed claims paid first, variable claims sharing what is left
+    (esco-product's OP3 as its case converter writes it: direct assignee,
+    pro rata). Each period of the window, each level's claim is what
+    accrued on its ``claim`` account in the period; ``performance`` (a
+    number or a series) x their total is collected from ``collect_from``
+    into ``pool``. Every accrual is then discharged against
+    ``claims_book``, whatever is paid against it, and the pool pays each
+    level's ``to``. Fixed levels are paid in full when the cash covers
+    them, and the variable levels share the remainder pro rata to their
+    claims, each capped at its claim (what the caps leave stays in the
+    pool). When the cash falls short of the fixed levels, ``shortfall``
+    says who bears it:
+
+    * ``absorb``: the fixed levels are paid in full anyway and the variable
+      levels pay the deficit into the pool, pro rata, the same period;
+    * ``none``: the fixed levels share the cash pro rata and bear the rest;
+      the variable levels get nothing;
+    * ``deferred``: as ``none``, and ``lag`` periods later each variable
+      payee pays its pro rata share of the deficit to each fixed payee, pro
+      rata to the fixed claims (a recovery due past the grid is not
+      collected).
+
+    The record carries ``available``, ``paid`` (claim account -> amount,
+    negative when absorbed), ``deficit`` and ``recovered``.
+
 Not here: index paths. A regime switch or an escalation ramp is a series,
 written as data or as a formula of the ``formulas`` generator
 (:mod:`one_engine.packs.tea`), and read by a claim's ``index`` or a
@@ -549,5 +575,88 @@ def serviced_bullet(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
     group.register(phase, handler)
 
 
+# ── ranked distribution ──────────────────────────────────────────────────────
+
+_ABSORPTION = ("absorb", "none", "deferred")
+
+
+def ranked_distribution(group: Group, r: Reader, ctx: Mapping[str, Any]) -> None:
+    """Fixed claims paid first, variable claims sharing the rest, a shortfall absorbed or recovered; see the module docstring."""
+    name, where = ctx["name"], f"ranked_distribution {ctx['name']}"
+    entity, phase = r.take("entity"), r.take("phase")
+    source, pool, book_acct = r.take("collect_from"), r.take("pool"), r.take("claims_book")
+    first, last = _window(r, group.periods, where)
+    performance = r.take_or_default("performance", 1, reason="the claims are collected in full").value
+    shortfall = r.take("shortfall")
+    if shortfall not in _ABSORPTION:
+        raise InputError(f"{where}: shortfall must be one of {_ABSORPTION}, not {shortfall!r}")
+    lag = int(r.take_or_default("lag", 0, reason="no recovery is deferred").value)
+    if (shortfall == "deferred") != (lag > 0):
+        raise InputError(f"{where}: a deferred recovery waits at least one period (lag), and only it has a lag")
+    levels = []
+    for i, raw in enumerate(r.take("levels")):
+        lr = Reader(raw, source=f"{where}.levels[{i}]")
+        level = (lr.take("claim"), lr.take("to"), lr.take("kind"))
+        lr.finish()
+        if level[2] not in ("fixed", "variable"):
+            raise InputError(f"{where}.levels[{i}]: kind must be fixed or variable, not {level[2]!r}")
+        levels.append(level)
+    claims = [x[0] for x in levels]
+    if len(set(claims)) != len(claims):
+        raise InputError(f"{where}: a claim account ranks twice: {claims}")
+    # recoveries owed: period -> [(variable payee, fixed payee, amount)]
+    pending: Dict[int, List[Tuple[str, str, Fraction]]] = {}
+
+    def handler(g: Group, t: int) -> None:
+        book = g.book(entity)
+        paid: Dict[str, Fraction] = {}
+        available = deficit = Fraction(0)
+        if first <= t <= last:
+            # each level's claim is what accrued on its account this period
+            due = {c: book.balance(c, t) - book.opening(c, t) for c in claims}
+            total = sum(due.values(), Fraction(0))
+            if total:
+                available = _at(performance, t, f"{where}.performance") * total
+                _move(g, entity, t, phase, pool, source, available, f"{name}.collect:{t}")
+                fixed = [c for c, _, k in levels if k == "fixed"]
+                variable = [c for c, _, k in levels if k == "variable"]
+                fixed_total = sum((due[c] for c in fixed), Fraction(0))
+                var_total = sum((due[c] for c in variable), Fraction(0))
+                remainder = available - fixed_total
+                if remainder >= 0 or shortfall == "absorb":
+                    paid = {c: due[c] for c in fixed}
+                    for c in variable:
+                        # a deficit is shared pro rata to the claims; a surplus too, capped at each claim
+                        share = remainder * due[c] / var_total if var_total else Fraction(0)
+                        paid[c] = share if remainder < 0 else min(due[c], share)
+                else:
+                    # the fixed levels share the cash; the variable levels get nothing now
+                    paid = {c: available * due[c] / fixed_total for c in fixed}
+                    paid.update({c: Fraction(0) for c in variable})
+                    deficit = -remainder
+                    if shortfall == "deferred" and var_total:
+                        to = {c: x for c, x, _ in levels}
+                        for v in variable:
+                            for f in fixed:
+                                pending.setdefault(t + lag, []).append(
+                                    (to[v], to[f], deficit * due[v] / var_total * due[f] / fixed_total))
+                for c, to_acct, _ in levels:
+                    # every accrual is extinguished, whatever is paid against it
+                    _move(g, entity, t, phase, c, book_acct, due[c], f"{name}.{c}.discharged:{t}")
+                    x = paid[c]
+                    if x >= 0:
+                        _move(g, entity, t, phase, to_acct, pool, x, f"{name}.{c}.paid:{t}")
+                    else:
+                        # an absorbed deficit: the variable payee pays its share into the pool
+                        _move(g, entity, t, phase, pool, to_acct, -x, f"{name}.{c}.absorbed:{t}")
+        recovered = Fraction(0)
+        for payer, payee, x in pending.pop(t, []):
+            _move(g, entity, t, phase, payee, payer, x, f"{name}.recover:{t}")
+            recovered += x
+        g.record(name, t, available=available, paid=paid, deficit=deficit, recovered=recovered)
+
+    group.register(phase, handler)
+
+
 RULEBOOKS = {"duty": duty, "prohibition": prohibition, "claim": claim, "put": put, "stack": stack, "pool": pool,
-             "serviced_bullet": serviced_bullet}
+             "serviced_bullet": serviced_bullet, "ranked_distribution": ranked_distribution}
