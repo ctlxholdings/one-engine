@@ -1,6 +1,26 @@
 # one-engine
 
-One engine for every financial model: an exact double-entry ledger, shared modules and packs, held to known answers. Built in `ctlxholdings/generic-framework` (branch `claude/project-thread-odlsa1`, through `1db9136`) and moved here with its history on 2026-10-22, so that every project consumes the same engine.
+One engine for every financial model. Contracts and operations generate dated economic events. Each event is recorded as balanced two-ended postings in exact ledgers, in money or in physical units (tonnes, MWh, head), so value and matter are both conserved. Statements, metrics and returns are read off the ledgers. The structure follows Unified Financial Analysis (Brammertz et al., 2009) and ACTUS.
+
+Built in `ctlxholdings/generic-framework` (branch `claude/project-thread-odlsa1`, through `1db9136`) and moved here with its history on 2026-10-22, so that every project consumes the same engine.
+
+## Architecture
+
+| Layer | Modules |
+|---|---|
+| **Inputs** | Time and units · Inputs and provenance · Market data · Entities |
+| **Event generation** | Contracts · Portfolio and grain · Allocation · Conditions · Tax · Measurement · Holders · Loop solver |
+| **Ledger** | Ledger kernel |
+| **Analysis** | Cuts and lenses · Measures · Reports\* |
+| **Control** | Run driver · Checks · Versions and governance\* |
+
+\* Not yet built.
+
+Domain content lives in **packs**: asset generators, contract types and rulebooks (PF, corporate, ACTUS, solar, process). A **case** is one model, declared in YAML.
+
+## Invariants
+
+Every posting has two ends, in one unit. Every balance equals opening plus postings, and no balance is written directly. Every run passes the integrity checks, and every check has been seen failing.
 
 ## Use it from another project
 
