@@ -23,7 +23,7 @@ from one_engine.units import exact
 HERE = pathlib.Path(__file__).resolve().parents[1] / "cases"
 CASE = load_yaml_strict((HERE / "nightmare_500mw.yaml").read_text())
 OLD = json.loads((HERE / "reference" / "nightmare_old_engine.json").read_text())["ledgers"]
-FIXTURE = HERE.parents[1] / "generic_engine" / "tests" / "fixtures" / "500mw_nightmare.yaml"
+FIXTURE = HERE / "reference" / "nightmare" / "500mw_nightmare.yaml"   # vendored from generic_engine/tests/fixtures
 N = 121
 Q = F(9125, 36000)                                    # 91.25 / 360
 FX = [exact(x) for x in CASE["contracts"]["senior_b"]["terms"]["fx_rate"]]

@@ -1,0 +1,57 @@
+# pyproject.toml — one_engine packaging
+#
+# one_engine left generic-framework on 2026-10-22 so that every project
+# (esco-product first) consumes one engine, pinned by commit:
+#
+#   pip install "git+https://github.com/ctlxholdings/one-engine@<commit>"
+#
+# What ships: the engine, packs, rulebooks, oracle harness and the case
+# translations (cases/**/*.yaml, archetypes.yaml), because run_case and the
+# archetype checks read them at run time.
+# What does not: tests/ and cases/reference/ (about 26 MB of vendored oracle
+# sources). They are the referee, used from a checkout of this repository,
+# not by consumers. one_engine/tests/test_standalone.py builds the wheel
+# into a fresh environment and runs a case from it, so a missing file or an
+# undeclared import turns red here before it reaches a consumer.
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "one-engine"
+version = "0.1.0"
+description = "One engine for every financial model: an exact double-entry ledger, shared modules and packs, held to known answers."
+requires-python = ">=3.10"
+authors = [
+    { name = "Ali Adoudou", email = "aliadoudou@outlook.com" },
+]
+# The engine itself is stdlib plus PyYAML (exact Fractions, no numpy).
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# one_engine.oracles.workbook reads Excel workbooks as oracles
+workbook = ["openpyxl>=3.1"]
+test = [
+    "pytest>=7.0",
+    "openpyxl>=3.1",
+    "sympy>=1.12",      # valuation identities proved symbolically (tests only)
+    "hypothesis>=6.0",  # valuation identities fuzzed on random inputs (tests only)
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["one_engine*"]
+exclude = ["one_engine.tests*", "one_engine.cases.reference*"]
+
+[tool.setuptools.package-data]
+one_engine = ["*.yaml", "cases/**/*.yaml"]
+
+[tool.setuptools.exclude-package-data]
+one_engine = ["cases/reference/**"]
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+testpaths = ["one_engine/tests"]
